@@ -1,0 +1,17 @@
+# Dependency directories
+node_modules/
+dist/
+
+# Windows/OS Metadata
+*.Identifier
+*.Zone.Identifier
+.DS_Store
+Thumbs.db
+
+# Private keys (CRITICAL)
+olv-mint-keypair.json
+*.json:Zone.*
+
+# Local env files
+.env
+.env.local
