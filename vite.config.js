@@ -5,14 +5,14 @@ export default defineConfig({
   plugins: [
     nodePolyfills({
       globals: {
-        Buffer: true,
+        Buffer: true, // This fixes the Assertion failed
         global: true,
         process: true,
       },
     }),
   ],
   define: {
-    'process.env': {}, // Fixes some deep Anchor dependencies
+    'process.env': {}, 
   },
   build: {
     target: 'esnext',
