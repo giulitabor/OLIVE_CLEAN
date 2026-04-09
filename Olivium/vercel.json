@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://indecipherably-trifurcate-rhea.ngrok-free.dev/admin/api/$1" }
-  ]
-}
