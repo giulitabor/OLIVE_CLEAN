@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 import { Connection, PublicKey } from "@solana/web3.js";
 import { AnchorProvider, Program, setProvider } from "@coral-xyz/anchor";
 import idl from "./SIMPLE/idl/idl.json";
