@@ -1,16 +1,40 @@
 // ─────────────────────────────────────────────────────────────
-// functions.ts — UI logic extracted from index.html
-// Imported as a plain <script src="functions.js"> after bundling,
-// or used directly if your bundler handles .ts imports.
+// functions.ts — Olivium DAO UI Functions
+//
+// FIXES APPLIED:
+// 1. Removed top-level await outside async context
+// 2. All bare `program`, `protocolPda`, `web3` refs replaced with
+//    window globals or proper imports
+// 3. Removed all duplicate function definitions (kept the best version)
+// 4. Fixed fillAdminProtocol pause logic (was reading obj as bool, inverted)
+// 5. Fixed loadUserTreePositions acc.shares → acc.sharesOwned
+// 6. Removed dead OOLMfillAdminDashboard
+// 7. Stub-defined missing helpers so nothing throws on call
+// 8. getProtocolData null-check moved before usage
 // ─────────────────────────────────────────────────────────────
 
+import { PublicKey } from "@solana/web3.js";
+import { BN } from "bn.js";
+import * as anchor from "@coral-xyz/anchor";
+
+console.log('[functions.ts] LOADING...');
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+
+// Safe shorthand for DOM text updates
+function setEl(id: string, value: string) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
 
 // ─────────────────────────────────────────────────────────────
 // TAB ROUTING
 // ─────────────────────────────────────────────────────────────
 const PANELS = ['hero', 'home', 'dash', 'rewards', 'admin'];
 
-function switchTab(tab: string) {
+async function switchTab(tab: string) {
   PANELS.forEach(p => {
     const el = document.getElementById('panel-' + p);
     if (el) el.classList.toggle('hidden', p !== tab);
@@ -21,15 +45,61 @@ function switchTab(tab: string) {
     if (!btn) return;
     btn.classList.toggle('active', t === tab);
   });
+  console.log("TREEES");
+loadUserTreePositions();
+if (tab === 'rewards') {
+console.log('REWARDS TAB');
+
+  return;
+}
+
 
   if (tab === 'weather') {
-      if ((window as any).refreshWeatherUI) {
-        (window as any).refreshWeatherUI();
+    if ((window as any).refreshWeatherUI) {
+      (window as any).refreshWeatherUI();
+    }
+    return;
+  }
+
+  if (tab === 'home') {
+    console.log('[TAB] home');
+    document.querySelectorAll('.shimmer').forEach(el => el.classList.remove('shimmer'));
+
+    // FIX: read program and protocolPda from window globals
+    const program     = (window as any)._program;
+    const protocolPda = (window as any).protocolPda;
+
+    if (!program) {
+      console.warn('[TAB home] program not ready yet');
+    } else {
+      try {
+        const config       = await program.account.protocolConfig.fetch(protocolPda);
+        const treesOnChain = await program.account.tree.all();
+        const allPositions = await program.account.sharePosition.all();
+        const uniqueStakers = new Set(allPositions.map((p: any) => p.account.owner.toBase58())).size;
+
+        console.log('[TAB home] trees:', treesOnChain.length, '| stakers:', uniqueStakers);
+
+        const userPositionTtrees = await (window as any).loadUserTreePositions?.();
+        (window as any).loadAllTrees?.();
+console.log("DONE WITH TREES NOW FARM", userPositionTtrees);
+
+
+          await update_FarmOwnership(userPositionTtrees, config);
+
+        await (window as any).renderTreesGrid?.();
+      } catch (e) {
+        console.warn('[TAB home] data fetch error:', e);
       }
     }
+  }
+
   if (tab === 'admin') {
-    const protocol = (window as any)._protocol;
+    const protocol = (window as any).protocol;
     const program  = (window as any)._program;
+    console.log('[TAB admin] protocol:', protocol, 'program:', program);
+
+    (window as any).fillAdminDashboard?.();
 
     if (protocol && typeof (window as any).fillAdminProtocol === 'function') {
       (window as any).fillAdminProtocol(protocol);
@@ -39,8 +109,6 @@ function switchTab(tab: string) {
 
     if (typeof (window as any).refreshAdminStatus === 'function') {
       (window as any).refreshAdminStatus();
-    } else {
-      console.warn('[ADMIN TAB] refreshAdminStatus not defined');
     }
 
     if (program) {
@@ -56,8 +124,56 @@ function switchTab(tab: string) {
 (window as any).switchTab = switchTab;
 
 
+async function update_FarmOwnership(positions: any[], protocol: any) {
+    console.log("START FARM UPDATE", positions, protocol);
+
+    const program = (window as any)._program;
+    const wallet  = (window as any).solana;
+
+    if (!program || !wallet?.publicKey) {
+      console.warn('[FARM] Missing program or wallet');
+      return;
+    }
+
+
+    // FIX: You were using userTotal before defining it.
+    // We calculate the total shares owned by the user here.
+    const userTotal = positions.reduce((sum, p) => {
+        const amt = p.account?.sharesOwned ?? p.sharesOwned ?? 0;
+        return sum + (typeof amt === 'object' ? amt.toNumber() : Number(amt));
+    }, 0);
+
+    console.log(`FOUND USERTOTAL: ${userTotal}`);
+
+    // FIX: Capacity calculation (Using fallback of 240,000 if cache is empty)
+    const cachedTreesMap = (window as any)._cachedTrees || {};
+    const cachedTrees = Object.values(cachedTreesMap);
+
+    const groveCapacity = cachedTrees.reduce((sum: number, t: any) => {
+        const cap = t.account?.totalShares?.toNumber?.() ?? t.account?.totalShares ?? 1000;
+        return sum + Number(cap);
+    }, 0) || 240000;
+    // 3. Ownership %
+    const percentage = groveCapacity > 0 ? (userTotal / groveCapacity) * 100 : 0;
+    const formattedPct = `${percentage.toFixed(4)}%`;
+
+    // 4. Update DOM Elements
+    const targets = ['farm-ownership-percent', 'farm-ownership-pct', 'farmSharePct','farm-ownership-percent2'];
+    targets.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = formattedPct;
+    });
+
+    const shareEls = ['total-grove-shares', 'grove-share-count', 'portfolioShares','farm-trees-stat'];
+    shareEls.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = userTotal.toLocaleString();
+    });
+
+    console.log(`[OWNERSHIP] ✅ User: ${userTotal} / Capacity: ${groveCapacity} (${formattedPct})`);
+}
 // ─────────────────────────────────────────────────────────────
-// WALLET CONNECTED — called by test.ts after wallet connects
+// WALLET CONNECTED
 // ─────────────────────────────────────────────────────────────
 (window as any).onWalletConnected = function(addr: string, isAdmin: boolean) {
   document.getElementById('panel-hero')?.classList.add('hidden');
@@ -82,1067 +198,1342 @@ function switchTab(tab: string) {
   }
 
   switchTab('home');
+  loadAllTrees();
+
 };
 
-
 // ─────────────────────────────────────────────────────────────
-// SHIMMER REMOVAL — called by test.ts after loadDashboard
+// SHIMMER REMOVAL
 // ─────────────────────────────────────────────────────────────
 (window as any).clearShimmers = function() {
   document.querySelectorAll('.shimmer').forEach(el => el.classList.remove('shimmer'));
 };
 
-
 // ─────────────────────────────────────────────────────────────
-// FILL ADMIN PROTOCOL CARD — called by test.ts
-// Bug fix: was defined twice with conflicting bodies; merged into one correct version.
+// ADMIN DASHBOARD POPULATION
 // ─────────────────────────────────────────────────────────────
-(window as any).fillAdminProtocol = function(protocol: any, vaultSol?: number, totalSold?: number) {
-  console.log('[fillAdminProtocol] Updating Admin UI...', { protocol, vaultSol, totalSold });
+(window as any).fillAdminDashboard = async function() {
+  const program    = (window as any)._program;
+  const protocol   = (window as any).protocol;
+  const sb         = (window as any)._sb;
+  const connection = (window as any)._connection;
 
-  const set = (id: string, v: string) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = v;
-  };
+  console.log('[fillAdminDashboard] start', { sb: !!sb, program: !!program, protocol: !!protocol });
 
-  // 1. FORMAT DATA
-  const price = (protocol.sharePriceLamports.toNumber() / 1e9).toFixed(4);
-  const totalTrees = String(protocol.totalTrees ?? '240');
+  if (!program || !sb) return;
 
-  // 2. UPDATE ADMIN SECTION (Existing)
-  set('admin-share-price', price + ' SOL');
-  set('admin-total-trees', totalTrees);
-  set('admin-tree-count',  totalTrees);
-  set('admin-paused', protocol.paused ? '⏸ Paused' : '✅ Live');
+  try {
+    const treesOnChain = await program.account.tree.all();
+    console.log('[fillAdminDashboard] trees:', treesOnChain.length);
 
-  // 3. UPDATE GROVE HEADER (The Fix for the "Blank" Header)
-  set('totalTrees', totalTrees);        // Matches id="totalTrees" in Grove Header
-  set('sharePrice', price + ' SOL');    // Matches id="sharePrice" in Grove Header
+    setEl('admin-total-trees', treesOnChain.length.toString());
 
-  // Update Hero Section if applicable
-  set('hero-temp-placeholder', '19°C'); // Optional: sync with your weather data
+    const totalSold = treesOnChain.reduce((acc: number, t: any) => acc + t.account.sharesSold.toNumber(), 0);
+    setEl('admin-total-shares', totalSold.toLocaleString());
 
-  // 4. THE REST OF YOUR LOGIC (Fees, Vault, etc.)
-  const buyFee = protocol.buyFeeBps != null
-    ? (protocol.buyFeeBps.toNumber?.() ?? protocol.buyFeeBps) / 100
-    : null;
-  const sellFee = protocol.sellFeeBps != null
-    ? (protocol.sellFeeBps.toNumber?.() ?? protocol.sellFeeBps) / 100
-    : null;
+    // Revenue vault balance
+    const [revenueVaultPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("revenue_vault")],
+      program.programId
+    );
+    const revenueVaultBalance = await connection.getBalance(revenueVaultPda);
+    const revenueVaultSol = revenueVaultBalance / 1_000_000_000;
+    setEl('admin-revenue-vault', `${revenueVaultSol.toFixed(4)} SOL`);
+    setEl('admin-total-revenue', `${revenueVaultSol.toFixed(4)} SOL`);
 
-  set('admin-fee',
-    buyFee != null && sellFee != null
-      ? `Buy ${buyFee.toFixed(2)}% / Sell ${sellFee.toFixed(2)}%`
-      : '—'
-  );
+    // Active stakers
+    const allPositions = await program.account.sharePosition.all();
+    const uniqueStakers = new Set(allPositions.map((p: any) => p.account.owner.toBase58())).size;
+    setEl('admin-active-stakers', uniqueStakers.toString());
 
-  // IDL has guardianThreshold (u64), not guardianPerksEnabled (bool)
-  const threshold = protocol.guardianThreshold != null
-    ? (protocol.guardianThreshold.toNumber?.() ?? protocol.guardianThreshold)
-    : null;
-  set('admin-guardian-perks',
-    threshold != null ? `${threshold.toLocaleString()} shares` : '—'
-  );
-
-  // ── Vault SOL ──────────────────────────────────────────────────────────────
-  if (vaultSol !== undefined) {
-    set('admin-vault-sol',     vaultSol.toFixed(2) + ' SOL');
-    set('admin-treasury-sol',  vaultSol.toFixed(2) + ' SOL');
+    console.log('[fillAdminDashboard] ✅ done');
+  } catch (err) {
+    console.error('[fillAdminDashboard] failed:', err);
   }
-
-  // ── Total sold — if not passed, derive from cached trees ──────────────────
-  let resolvedSold = totalSold;
-  if (resolvedSold === undefined) {
-    const cached: any[] = (window as any)._cachedTrees ?? [];
-    if (cached.length > 0) {
-      resolvedSold = cached.reduce((sum: number, t: any) => {
-        const sold = t.account?.sharesSold;
-        return sum + (sold?.toNumber?.() ?? Number(sold) ?? 0);
-      }, 0);
-    }
-  }
-  if (resolvedSold !== undefined) {
-    set('admin-shares-sold',       resolvedSold.toLocaleString());
-    set('admin-total-shares-sold', resolvedSold.toLocaleString());
-    set('admin-total-circulation', resolvedSold.toLocaleString());
-    // 0.02 L per share sold = 20ml bottle per share (matches original logic)
-    set('admin-oil-debt', (resolvedSold * 0.02).toFixed(1) + ' Liters');
-  }
-
-  console.log('[fillAdminProtocol] Admin panel populated');
 };
 
-
 // ─────────────────────────────────────────────────────────────
-// ADMIN STATUS TABLE — called by test.ts / Refresh button
+// ADMIN PROTOCOL POPULATION
 // ─────────────────────────────────────────────────────────────
-(window as any).refreshAdminStatus = async function() {
-  console.log('[refreshAdminStatus] Starting...');
-  const sb      = (window as any)._sb;
-  const program = (window as any)._program;
+(window as any).fillAdminProtocol = async function(protocol: any) {
+  console.log('[fillAdminProtocol] incoming protocol:', protocol);
 
-  if (!sb || !program) {
-    console.warn('[refreshAdminStatus] Missing sb or program, aborting');
+  const proto      = (window as any).protocol || protocol;
+  const connection = (window as any)._connection;
+  const program    = (window as any)._program;
+
+  if (!proto || !connection) {
+    console.warn('[fillAdminProtocol] Protocol not ready');
+    const addrEl = document.getElementById('admin-protocol-address');
+    if (addrEl) addrEl.textContent = "NOT INITIALIZED - RUN SETUP";
     return;
   }
 
-  const tbody     = document.getElementById('admin-tree-table');
-  const sbTotal   = document.getElementById('admin-sb-total');
-  const sbMinted  = document.getElementById('admin-sb-minted');
-  const sbPending = document.getElementById('admin-sb-pending');
+  // Treasury balance
+  let vaultSol = 0;
+  try {
+    const treasuryBalance = await connection.getBalance(proto.treasury);
+    vaultSol = treasuryBalance / 1_000_000_000;
+  } catch (e) {
+    console.error('[fillAdminProtocol] treasury balance fetch failed:', e);
+  }
 
-  if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-stone-400">Loading…</td></tr>`;
+  const authStr = proto.authority?.toBase58().slice(0, 8) + '…' || 'N/A';
+  setEl('admin-authority', authStr);
+  setEl('admin-treasury', proto.treasury?.toBase58().slice(0, 8) + '…' || 'N/A');
+
+  const sharePrice = (proto.sharePriceLamports.toNumber() / 1e9).toFixed(2);
+  setEl('admin-share-price', `${sharePrice} SOL`);
+
+  setEl('admin-buy-fee',  `${proto.buyFeeBps?.toString() || "0"} BPS`);
+  setEl('admin-sell-fee', `${proto.sellFeeBps?.toString() || "500"} BPS`);
+
+  const treeCount = proto.totalTrees?.toString() || "0";
+  setEl('admin-total-trees', treeCount);
+  setEl('admin-tree-count', treeCount);
+  setEl('totalTrees', treeCount);
+
+  // FIX: Fetch live config for pause status (was incorrectly using the proto
+  // object itself as a boolean, and the true/false labels were inverted).
+  if (program) {
+    try {
+      const protocolPda = (window as any).protocolPda;
+      const liveConfig = await program.account.protocolConfig.fetch(protocolPda);
+      const isPaused = liveConfig.paused ?? false;
+
+      setEl('admin-paused', isPaused ? "PAUSED" : "ACTIVE");
+      const pausedEl = document.getElementById('admin-paused');
+      if (pausedEl) {
+        pausedEl.className = isPaused
+          ? "text-2xl font-bold text-red-500"
+          : "text-2xl font-bold text-emerald-400";
+      }
+    } catch (e) {
+      console.warn('[fillAdminProtocol] Could not fetch live paused status:', e);
+    }
+  }
+
+  setEl('admin-treasury-sol', `${vaultSol.toFixed(2)} SOL`);
+
+  // Shares sold — try live data first, fall back to cached trees
+  let resolvedSold: number | undefined = proto.totalSold;
+  if (resolvedSold === undefined) {
+    const cached: any[] = (window as any)._cachedTrees ?? [];
+    // _cachedTrees can be either a Record<string,any> map or an array
+    const treeList: any[] = Array.isArray(cached) ? cached : Object.values(cached);
+    resolvedSold = treeList.reduce((sum: number, t: any) => {
+      const sold = t.account?.sharesSold || 0;
+      return sum + (typeof sold === 'object' ? sold.toNumber() : Number(sold));
+    }, 0);
+  }
+
+  setEl('admin-shares-sold', resolvedSold.toLocaleString());
+  setEl('admin-total-circulation', resolvedSold.toLocaleString());
+  setEl('admin-oil-debt', (resolvedSold * 0.02).toFixed(1) + ' Liters');
+
+  console.log('[fillAdminProtocol] ✅ done');
+};
+
+// ─────────────────────────────────────────────────────────────
+// REFRESH ADMIN STATUS
+// ─────────────────────────────────────────────────────────────
+(window as any).refreshAdminStatus = async function() {
+  const program = (window as any)._program;
+  const sb      = (window as any)._sb;
+  const tbody   = document.getElementById('admin-tree-table');
+
+  if (!program || !tbody) return;
 
   try {
-    const { data: trees, error } = await sb
-      .from('trees')
-      .select('tree_id,name,variety,mint,status')
-      .order('tree_id', { ascending: true });
+    const onChain = await program.account.tree.all();
+
+    const { data: meta, error } = await sb
+      .from('tree_metadata')
+      .select('tree_id, on_chain, on_chain_address, mint');
 
     if (error) throw error;
-    if (!trees) { console.warn('[refreshAdminStatus] No trees returned'); return; }
 
-    const minted  = trees.filter((t: any) => t.mint).length;
-    const pending = trees.length - minted;
+    const rows = onChain.map((t: any) => {
+      const dbMatch  = meta?.find((m: any) => m.on_chain_address === t.publicKey.toBase58());
+      const isSynced = dbMatch?.on_chain === true;
+      const mintDisplay = dbMatch?.mint ? `${dbMatch.mint.slice(0, 4)}...${dbMatch.mint.slice(-4)}` : '—';
 
-    if (sbTotal)   sbTotal.textContent   = trees.length;
-    if (sbMinted)  sbMinted.textContent  = minted;
-    if (sbPending) sbPending.textContent = pending;
-    const countEl = document.getElementById('admin-tree-count');
-    if (countEl) countEl.textContent = minted;
-
-    const rows = trees.map((tree: any) => {
-      const hasMint = !!tree.mint;
-      const mintDisp = hasMint ? tree.mint.slice(0, 8) + '…' : '—';
-      const [statusLabel, statusCls] = !hasMint
-        ? ['Needs ad2.ts bootstrap', 'text-amber-600']
-        : ['Mint OK', 'text-green-600'];
-
-      return `<tr class="hover:bg-stone-50">
-        <td class="px-4 py-2.5 font-mono font-medium text-stone-700">${tree.tree_id}</td>
-        <td class="px-4 py-2.5">${tree.name ?? '—'}</td>
-        <td class="px-4 py-2.5 text-stone-400">${tree.variety ?? '—'}</td>
-        <td class="px-4 py-2.5 font-mono text-xs">${mintDisp}</td>
-        <td class="px-4 py-2.5 font-medium ${statusCls}">${statusLabel}</td>
-      </tr>`;
+      return `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+          <td class="px-4 py-3 font-mono text-emerald-400">${t.account.treeId}</td>
+          <td class="px-4 py-3 text-stone-300 text-xs font-mono">${mintDisplay}</td>
+          <td class="px-4 py-3 text-stone-300">${t.account.name}</td>
+          <td class="px-4 py-3 text-stone-400">${t.account.sharesSold.toString()}/${t.account.totalShares.toString()}</td>
+          <td class="px-4 py-3 font-medium ${isSynced ? 'text-emerald-500' : 'text-amber-500'}">
+            ${isSynced ? '✅ Synced' : '⚠️ Missing Meta'}
+          </td>
+        </tr>
+      `;
     });
 
-    if (tbody) tbody.innerHTML = rows.join('');
-  } catch(e: any) {
-    console.error('[refreshAdminStatus] Error:', e);
-    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-400">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = rows.length > 0
+      ? rows.join('')
+      : '<tr><td colspan="5" class="text-center py-10 text-stone-500">No trees found on-chain.</td></tr>';
+  } catch (e) {
+    console.error("[ADMIN] Sync Failed:", e);
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-red-400">Error loading data. Check console.</td></tr>`;
   }
 };
 
-
 // ─────────────────────────────────────────────────────────────
-// TREE ID NORMALISER
-// tree_id can arrive as:
-//   • plain number  (Anchor-decoded u32)         → 3
-//   • Anchor BN     (large-number object)         → { words:[3], ... }
-//   • numeric string from Supabase               → "3"
-//   • prefixed string from Supabase tree_id col  → "tree_003" / "TREE-3"
-// The on-chain instruction expects a plain u32 number.
+// MODAL CLOSE UTILITY
 // ─────────────────────────────────────────────────────────────
-function toSafeTreeId(raw: any): number {
-  if (raw == null) throw new Error('[toSafeTreeId] treeId is null/undefined');
-  if (typeof raw === 'object' && typeof raw.toNumber === 'function') return raw.toNumber();
-  if (typeof raw === 'number') return raw;
-  const match = String(raw).match(/(\d+)$/);
-  if (match) return parseInt(match[1], 10);
-  throw new Error(`[toSafeTreeId] Cannot parse treeId: ${raw}`);
-}
-(window as any).toSafeTreeId = toSafeTreeId;
-
-// ─────────────────────────────────────────────────────────────
-// ADOPT MODAL
-// openAdoptModal lives in test.ts — it owns _cachedTrees and sets
-// window._modalTree / window._modalProtocol then calls updateModalCalc.
-// We only own: updateModalCalc, confirmAdopt, closeAdoptModal.
-// ─────────────────────────────────────────────────────────────
-
-(window as any).closeAdoptModal = function() {
-  document.getElementById('adopt-modal')!.classList.add('hidden');
-};
-
-function updateModalCalc() {
-  // Read from window globals — test.ts's openAdoptModal sets these
-  const _modalProtocol = (window as any)._modalProtocol;
-  if (!_modalProtocol) return;
-  const shares   = parseInt((document.getElementById('modal-slider') as HTMLInputElement).value, 10);
-  const priceSOL = _modalProtocol.sharePriceLamports.toNumber() / 1e9;
-  const cost     = (shares * priceSOL).toFixed(4);
-  const pct      = ((shares / 1000) * 100).toFixed(1);
-
-  document.getElementById('modal-shares-val')!.textContent = String(shares);
-  document.getElementById('modal-pct')!.textContent        = pct;
-  document.getElementById('modal-cost')!.textContent       = cost + ' SOL';
-  document.getElementById('modal-btn-cost')!.textContent   = cost;
-
-  const tierIcon  = document.getElementById('modal-tier-icon')!;
-  const tierLabel = document.getElementById('modal-tier-label')!;
-  const tierRow   = document.getElementById('modal-tier-row')!;
-  tierRow.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium ';
-
-  if (shares >= 1000) {
-    tierIcon.textContent  = '👑';
-    tierLabel.textContent = 'Full Guardian — annual Tuscany stay + 24 bottles';
-    tierRow.className    += 'bg-amber-50 text-amber-800';
-  } else if (shares >= 500) {
-    tierIcon.textContent  = '🌿';
-    tierLabel.textContent = 'Eco Guardian — carbon data + early harvest access';
-    tierRow.className    += 'bg-emerald-50 text-emerald-700';
-  } else if (shares >= 100) {
-    tierIcon.textContent  = '🫒';
-    tierLabel.textContent = 'Olive Lover — quarterly oil + harvest reports';
-    tierRow.className    += 'bg-green-50 text-green-700';
-  } else {
-    tierIcon.textContent  = '—';
-    tierLabel.textContent = 'Need at least 100 shares for Olive Lover perks';
-    tierRow.className    += 'bg-stone-100 text-stone-400';
+(window as any).closeModal = function(modalId: string) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
+};
+async function ensureTreesCached() {
+    const program = (window as any)._program;
+    if (!program) return [];
 
-  checkModalBuyBtn();
-}
-(window as any).updateModalCalc = updateModalCalc;
-
-function checkModalBuyBtn() {
-  const agreed = (document.getElementById('modal-agree') as HTMLInputElement).checked;
-  (document.getElementById('modal-buy-btn') as HTMLButtonElement).disabled = !agreed;
-}
-(window as any).checkModalBuyBtn = checkModalBuyBtn;
-
-(window as any).confirmAdopt = async () => {
-    // Unify the ID check
-    const modal = document.getElementById('adoption-modal') || document.getElementById('adopt-modal');
-    if (!modal) return;
-
-    const treeId = modal.dataset.treeId; // This is now correctly "F1-FR-001"
-    const amount = parseInt((document.getElementById('modal-slider') as HTMLInputElement).value);
-
-    if (!treeId || isNaN(amount)) {
-        console.error("Missing treeId or amount");
-        return;
+    // Only fetch if the cache is empty
+    if (!(window as any)._cachedTrees || (window as any)._cachedTrees.length === 0) {
+        console.log("[CACHE] 🔄 Cache empty, fetching trees from chain...");
+        const trees = await program.account.tree.all();
+        (window as any)._cachedTrees = trees;
+        return trees;
     }
-
-    try {
-        // Use the global wrapper you defined
-        await (window as any)._buyShares(treeId, amount);
-
-        // Hide modal
-        modal.classList.add('hidden');
-        await (window as any).loadDashboard();
-    } catch (e) {
-        console.error("Purchase failed", e);
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('modal-agree')?.addEventListener('change', checkModalBuyBtn);
-  document.getElementById('adopt-modal')?.addEventListener('click', function(e) {
-    if (e.target === this) (window as any).closeAdoptModal();
-  });
-});
-
-
-// ─────────────────────────────────────────────────────────────
-// SELL MODAL
-// ─────────────────────────────────────────────────────────────
-(window as any).openSellModal = (treeId: string, ownedShares: number) => {
-    console.log("[SELL] Opening sell modal for Tree:", treeId);
-
-    // 1. Find the tree in our cache (handling both string and BN IDs)
-    const treeData = Object.values((window as any)._cachedTrees || {}).find((t: any) => {
-        const id = t.account.treeId;
-        return (typeof id === 'string' ? id : id.toString()) === treeId;
-    }) as any;
-
-    if (!treeData) {
-        console.error("[SELL] Could not find cached data for treeId:", treeId);
-        return;
-    }
-
-    const modal = document.getElementById('sell-modal'); // Ensure this ID matches your HTML
-    if (!modal) return;
-
-    // 2. Stash data in the modal for the confirm button
-    modal.dataset.treeId = treeId;
-    modal.dataset.maxShares = ownedShares.toString();
-
-    // 3. Update UI Elements
-    const acc = treeData.account;
-    const setText = (id: string, val: any) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = String(val);
-    };
-
-    setText('sell-modal-tree-name', `Tree #${acc.treeId}`);
-    setText('sell-modal-tree-meta', `${acc.variety || 'Frantoio'} · ${acc.age || 15} yrs`);
-    setText('sell-modal-owned-display', ownedShares.toLocaleString());
-    setText('sell-modal-value-display', (ownedShares * 0.001).toFixed(4) + " SOL");
-
-    // 4. Configure Slider
-    const slider = document.getElementById('sell-modal-slider') as HTMLInputElement;
-    if (slider) {
-        slider.max = ownedShares.toString();
-        slider.value = Math.ceil(ownedShares / 2).toString(); // Default to half
-    }
-
-    modal.classList.remove('hidden');
-    if (typeof (window as any).updateSellCalc === 'function') {
-        (window as any).updateSellCalc();
-    }
-};
-
-(window as any).closeSellModal = function() {
-  document.getElementById('sell-modal')!.classList.add('hidden');
-  (document.getElementById('sell-modal-agree') as HTMLInputElement).checked = false;
-};
-
-(window as any).updateSellCalc = () => {
-    const slider = document.getElementById('sell-modal-slider') as HTMLInputElement;
-    const amount = parseInt(slider?.value || "0");
-    const pricePerShare = 0.001; // Ensure this matches your protocol price
-
-    const amountDisplay = document.getElementById('sell-amount-display');
-    const payoutDisplay = document.getElementById('sell-payout-display');
-    const btnPayout = document.getElementById('sell-btn-payout');
-
-    if (amountDisplay) amountDisplay.textContent = `${amount} shares`;
-    if (payoutDisplay) payoutDisplay.textContent = `${(amount * pricePerShare).toFixed(3)} SOL`;
-    if (btnPayout) btnPayout.textContent = `${(amount * pricePerShare).toFixed(3)}`;
-};
-
-(window as any).checkSellModalBtn = function() {
-  const agreed = (document.getElementById('sell-modal-agree') as HTMLInputElement).checked;
-  (document.getElementById('sell-modal-btn') as HTMLButtonElement).disabled = !agreed;
-};
-
-(window as any).confirmSell = async () => {
-    const modal = document.getElementById('sell-modal');
-    if (!modal) return;
-
-    // Retrieve the stashed data from the dataset
-    const treeId = modal.dataset.treeId;
-    const maxShares = parseInt(modal.dataset.maxShares || "0");
-
-    const slider = document.getElementById('sell-modal-slider') as HTMLInputElement;
-    const amountToSell = parseInt(slider?.value || "0");
-
-    if (!treeId || amountToSell <= 0) {
-        console.error("[SELL] Missing treeId or invalid amount");
-        return;
-    }
-
-    try {
-        console.log(`[SELL] Initiating sale: ${amountToSell} shares of ${treeId}`);
-
-        // 1. Blockchain Transaction
-        const tx = await (window as any).sellShares(treeId, amountToSell);
-
-        // 2. Supabase Sync (Using the correct 'shares' column for transactions table)
-        const wallet = (window as any).solana.publicKey.toBase58();
-        const newTotal = maxShares - amountToSell;
-
-        await (window as any).syncTransactionToSupabase(
-            wallet,
-            treeId,
-            amountToSell,
-            'SELL',
-            tx,
-            newTotal,
-            false // isGuardian
-        );
-
-        // 3. UI Cleanup
-        modal.classList.add('hidden');
-        alert(`Successfully sold ${amountToSell} shares!`);
-
-        // Refresh the dashboard to show updated share counts
-        if (typeof (window as any).loadDashboard === 'function') {
-            await (window as any).loadDashboard();
-        }
-    } catch (e) {
-        console.error("[SELL] Transaction failed:", e);
-    }
-};
-
-// ─────────────────────────────────────────────────────────────
-// TREE DETAIL MODAL
-// ─────────────────────────────────────────────────────────────
-(window as any).openTreeDetailModal = function(tree: any, _position?: any) {
-  document.getElementById('tree-detail-name')!.textContent     = `${tree.name || 'Tree #' + tree.treeId} — ${tree.variety}`;
-  document.getElementById('tree-detail-location')!.textContent = tree.location || 'San Vincenzo, Tuscany';
-  document.getElementById('tree-detail-age')!.textContent      = tree.age || '—';
-  document.getElementById('tree-detail-height')!.textContent   = tree.height || '4.2';
-  document.getElementById('tree-detail-variety')!.textContent  = tree.variety || '—';
-  document.getElementById('tree-detail-meta-id')!.textContent  = tree.treeId || '—';
-  document.getElementById('tree-detail-meta-mint')!.textContent = tree.mint ? tree.mint.slice(0, 8) + '...' : '—';
-  document.getElementById('tree-detail-meta-sold')!.textContent = String(tree.sharesSold?.toNumber?.() ?? tree.sharesSold ?? '—');
-
-  document.getElementById('tree-detail-modal')!.classList.remove('hidden');
-  (window as any).switchTreeDetailTab('overview');
-};
-
-(window as any).closeTreeDetailModal = function() {
-  document.getElementById('tree-detail-modal')!.classList.add('hidden');
-};
-
-(window as any).switchTreeDetailTab = function(tab: string) {
-  document.querySelectorAll('.tree-detail-tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll<HTMLElement>('.tree-detail-tab').forEach(btn => {
-    btn.classList.remove('active', 'border-green-600', 'text-green-600');
-    btn.classList.add('border-transparent', 'text-stone-500');
-  });
-
-  document.getElementById(`tree-detail-tab-${tab}`)?.classList.remove('hidden');
-
-  // Highlight the active tab button using event delegation
-  const activeBtn = document.querySelector<HTMLElement>(`.tree-detail-tab[onclick*="${tab}"]`);
-  if (activeBtn) {
-    activeBtn.classList.add('active', 'border-green-600', 'text-green-600');
-    activeBtn.classList.remove('border-transparent', 'text-stone-500');
-  }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('tree-detail-modal')?.addEventListener('click', function(e) {
-    if (e.target === this) (window as any).closeTreeDetailModal();
-  });
-});
-
-
-// ─────────────────────────────────────────────────────────────
-// TOAST
-// ─────────────────────────────────────────────────────────────
-(window as any).showGlobalToast = function(msg: string, isError = false) {
-  const t = document.createElement('div');
-  t.className = `toast fixed top-20 right-4 z-[100] px-4 py-2.5 rounded-xl shadow-xl text-sm font-medium max-w-xs
-    ${isError ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-green-100 text-green-800 border border-green-200'}`;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
-};
-
-
-// ─────────────────────────────────────────────────────────────
-// FILTER BUTTONS (tree grid)
-// ─────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll<HTMLElement>('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll<HTMLElement>('.filter-btn').forEach(b => {
-        b.style.background  = '';
-        b.style.color       = '';
-        b.style.borderColor = '';
-        b.classList.remove('active');
-      });
-      this.style.background  = 'var(--olive)';
-      this.style.color       = 'white';
-      this.style.borderColor = 'var(--olive)';
-      this.classList.add('active');
-
-      const f = (this as HTMLElement).dataset.filter!;
-      document.querySelectorAll<HTMLElement>('.tree-card-wrap').forEach(card => {
-        const show = f === 'all'
-          || (f === 'available' && card.dataset.available === 'true')
-          || (f === 'mine'      && card.dataset.mine      === 'true')
-          || (f === 'guardian'  && card.dataset.guardian  === 'true');
-        card.classList.toggle('hidden', !show);
-      });
-    });
-  });
-});
-
-
-// ─────────────────────────────────────────────────────────────
-// USER DASHBOARD — called by test.ts after loadDashboard
-// ─────────────────────────────────────────────────────────────
-(window as any).updateUserDashboard = function(analytics: any, positions: any[]) {
-  const set = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  const pct = ((analytics.totalShares / (240 * 1000)) * 100).toFixed(4);
-
-  set('farmSharePct',    pct + '%');
-  set('dash-trees',      positions.length);
-  set('dash-shares',     analytics.totalShares);
-  set('dash-oil',        analytics.totalOil.toFixed(1) + ' L');
-  set('dash-bottles',    analytics.totalBottles);
-  set('benefit-oil',     analytics.totalOil.toFixed(1) + ' L / yr');
-  set('benefit-carbon',  analytics.carbonKg.toFixed(1) + ' kg / yr');
-  set('carbon-sequestered', analytics.carbonKg.toFixed(1));
-  set('carbon-trees',    positions.length);
-  set('yourTrees',       positions.length);
-  set('portfolioShares', analytics.totalShares);
-  set('oilLiters',       analytics.totalOil.toFixed(1) + ' L');
-  set('bottles',         analytics.totalBottles);
-  set('carbonEst',       analytics.carbonKg.toFixed(1) + ' kg');
-  set('portfolioValue',  (analytics.portfolioValue ?? 0).toFixed(4) + ' SOL');
-
-  const visitEl = document.getElementById('benefit-visit');
-  if (visitEl) {
-    if (analytics.totalShares >= 20000)     visitEl.textContent = '🏡 Premium villa access';
-    else if (analytics.totalShares >= 5000) visitEl.textContent = '🚶 1 night eco-stay';
-    else                                     visitEl.textContent = 'Earn with 5,000+ shares';
-  }
-
-  const hasGuardian = positions.some((p: any) => p.is_guardian ?? p.account?.isGuardian ?? false);
-  document.getElementById('guardian-benefit')?.classList.toggle('hidden', !hasGuardian);
-};
-
-
-// ─────────────────────────────────────────────────────────────
-// REWARDS TAB — TIER CALCULATION
-// ─────────────────────────────────────────────────────────────
-(window as any).updateRewardsPanel = function(analytics: any, positions: any[]) {
-  const totalShares = analytics.totalShares || 0;
-
-  let tier = 0, tierName = 'Olive Enthusiast', tierIcon = '🌱';
-  let tierDesc = 'Start your olive grove journey';
-  let progress = 0;
-  let progressText = `${totalShares} / 100 shares to unlock Olive Lover`;
-
-  if (totalShares >= 5000) {
-    tier = 4; tierName = 'Legacy Holder'; tierIcon = '🏛️';
-    tierDesc = 'Elite 5-tree portfolio owner';
-    progress = 100; progressText = 'Maximum tier achieved!';
-  } else if (totalShares >= 1000) {
-    tier = 3; tierName = 'Grove Patron'; tierIcon = '👑';
-    tierDesc = 'Full tree guardian';
-    progress = (totalShares / 5000) * 100;
-    progressText = `${totalShares} / 5,000 shares to unlock Legacy Holder`;
-  } else if (totalShares >= 500) {
-    tier = 2; tierName = 'Eco Guardian'; tierIcon = '🌿';
-    tierDesc = 'Carbon-conscious steward';
-    progress = (totalShares / 1000) * 100;
-    progressText = `${totalShares} / 1,000 shares to unlock Grove Patron`;
-  } else if (totalShares >= 100) {
-    tier = 1; tierName = 'Olive Lover'; tierIcon = '🫒';
-    tierDesc = 'Quarterly oil recipient';
-    progress = (totalShares / 500) * 100;
-    progressText = `${totalShares} / 500 shares to unlock Eco Guardian`;
-  } else {
-    progress = (totalShares / 100) * 100;
-  }
-
-  document.getElementById('tier-icon')!.textContent          = tierIcon;
-  document.getElementById('tier-name')!.textContent          = tierName;
-  document.getElementById('tier-desc')!.textContent          = tierDesc;
-  (document.getElementById('tier-progress-bar') as HTMLElement).style.width = progress + '%';
-  document.getElementById('tier-progress-text')!.textContent = progressText;
-
-  document.querySelectorAll<HTMLElement>('.tier-card-item').forEach((card, idx) => {
-    card.style.borderColor = idx < tier ? 'var(--gold)'   : '';
-    card.style.background  = idx < tier ? 'var(--gold-l)' : '';
-  });
-
-  const perksGrid = document.getElementById('active-perks-grid')!;
-  const perks: string[] = [];
-
-  if (tier >= 1) {
-    perks.push(`<div class="bg-green-50 border border-green-200 rounded-xl p-4"><div class="text-2xl mb-2">🍾</div><h5 class="font-semibold text-green-900 mb-1">Quarterly Oil</h5><p class="text-xs text-green-700">250ml premium EVOO every 3 months</p></div>`);
-    perks.push(`<div class="bg-green-50 border border-green-200 rounded-xl p-4"><div class="text-2xl mb-2">📊</div><h5 class="font-semibold text-green-900 mb-1">Harvest Reports</h5><p class="text-xs text-green-700">Detailed quarterly updates on your trees</p></div>`);
-  }
-  if (tier >= 2) {
-    perks.push(`<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><div class="text-2xl mb-2">🌿</div><h5 class="font-semibold text-emerald-900 mb-1">Carbon Credits</h5><p class="text-xs text-emerald-700">${analytics.carbonKg.toFixed(1)} kg/yr verified sequestration</p></div>`);
-    perks.push(`<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><div class="text-2xl mb-2">🏡</div><h5 class="font-semibold text-emerald-900 mb-1">1 Night Villa Stay</h5><p class="text-xs text-emerald-700">Complimentary eco-stay at Toscagialla</p></div>`);
-  }
-  if (tier >= 3) {
-    perks.push(`<div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><div class="text-2xl mb-2">🫒</div><h5 class="font-semibold text-amber-900 mb-1">24 Bottles/Year</h5><p class="text-xs text-amber-700">Full tree harvest allocation</p></div>`);
-    perks.push(`<div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><div class="text-2xl mb-2">🏡</div><h5 class="font-semibold text-amber-900 mb-1">3-Night Villa</h5><p class="text-xs text-amber-700">Premium suite at Toscagialla</p></div>`);
-  }
-  if (tier >= 4) {
-    perks.push(`<div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><div class="text-2xl mb-2">🍷</div><h5 class="font-semibold text-amber-900 mb-1">7-Night Luxury</h5><p class="text-xs text-amber-700">Annual week at villa + wine tasting</p></div>`);
-    perks.push(`<div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><div class="text-2xl mb-2">🗳️</div><h5 class="font-semibold text-amber-900 mb-1">Governance Rights</h5><p class="text-xs text-amber-700">Vote on farm management decisions</p></div>`);
-  }
-
-  perksGrid.innerHTML = perks.length
-    ? perks.join('')
-    : `<div class="text-center py-12 col-span-full text-stone-400"><p class="text-sm">Adopt 100+ shares to unlock your first perks</p></div>`;
-};
-
-async function updateGlobalTreeMetadata(treeId, sharesSold) {
-    const { error } = await supabase.rpc('update_tree_shares_on_sale', {
-        target_tree_id: treeId,
-        shares_to_remove: sharesSold
-    });
-
-    if (error) console.error("Error updating global metadata:", error);
+    return (window as any)._cachedTrees;
 }
 
 /**
- * my-grove-functions.ts
- * Helper functions for the redesigned My Grove dashboard
- * Add these to your test.ts or functions.ts file
+ * Fills the My Grove Dashboard UI with user-specific data
  */
+(window as any).fillUserDashboard = function(positions: any[], walletStats: any) {
+  // 1. Summarize Tree Data
+  const treeCount = positions.length;
+  const shareCount = positions.reduce((sum, p) => sum + p.shares, 0);
+  console.log(shareCount);
 
-// ══════════════════════════════════════════════════════════════
-// DYNAMIC PRICING FUNCTION (from your spec)
-// ══════════════════════════════════════════════════════════════
-function getSharePrice(filledPercent: number): number {
-  if (filledPercent < 25) return 0.01;
-  if (filledPercent < 60) return 0.015;
-  if (filledPercent < 85) return 0.02;
-  return 0.03;
-}
 
-// ══════════════════════════════════════════════════════════════
-// FETCH WALLET BALANCES
-// ══════════════════════════════════════════════════════════════
-async function fetchWalletBalances(walletPublicKey: PublicKey) {
-  try {
-    // 1. Fetch SOL balance
-    const solBalance = await connection.getBalance(walletPublicKey);
-    const solAmount = solBalance / 1e9; // lamports to SOL
+  // 2. Ecological Math (Standard Coefficients)
+  const oilLiters = shareCount * 0.05;
+  const carbonKg = shareCount * 0.15;
+  const estSolValue = shareCount * 0.05; // Base price per share
+  const estUsdValue = estSolValue * (walletStats.solPrice || 0);
+  console.log(estUsdValue,'=',estSolValue,'sarecount',shareCount);
 
-    // 2. Fetch OLV token balance (if OLV mint exists)
-    const OLV_MINT = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa"); // Your OLV mint
-    let olvBalance = 0;
 
-    try {
-      const olvTokenAccount = await connection.getTokenAccountsByOwner(
-        walletPublicKey,
-        { mint: OLV_MINT }
-      );
+  // 3. Populate Summary & Stats
+  setEl('grove-tree-count', treeCount.toString());
+  setEl('grove-share-count', shareCount.toLocaleString());
+  setEl('stat-oil', `${oilLiters.toFixed(1)}L`);
+  setEl('stat-carbon', `${carbonKg.toFixed(1)}kg`);
+  setEl('stat-value-sol', `${estSolValue.toFixed(2)} SOL`);
+  setEl('stat-value-usd', `$${estUsdValue.toFixed(2)}`);
 
-      if (olvTokenAccount.value.length > 0) {
-        const accountInfo = olvTokenAccount.value[0].account.data;
-        // Parse token account data (amount is at offset 64, 8 bytes)
-        const buffer = Buffer.from(accountInfo);
-        const amount = buffer.readBigUInt64LE(64);
-        olvBalance = Number(amount) / 1e9; // Assuming 9 decimals
-      }
-    } catch (err) {
-      console.warn("[WALLET] OLV token account not found or error:", err);
+  // 4. Populate Wallet Section
+  setEl('wallet-sol-balance', `${walletStats.solBalance.toFixed(4)} SOL`);
+  setEl('wallet-sol-usd', `$${walletStats.solUsd.toFixed(2)}`);
+  setEl('wallet-olv-balance', `${walletStats.olvBalance.toLocaleString()} OLV`);
+  setEl('wallet-olv-usd', `$${walletStats.olvUsd.toFixed(2)}`);
+  setEl('wallet-total-usd', `$${walletStats.totalUsd.toFixed(2)}`);
+
+  // 5. Loyalty Tier Logic
+  updateDashboardTier(shareCount);
+
+  // 6. Tree Positions Grid
+  const grid = document.getElementById('tree-position-cards');
+  const emptyState = document.getElementById('tree-positions-empty');
+
+  if (grid && emptyState) {
+    if (treeCount === 0) {
+      grid.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      grid.classList.remove('hidden');
+      grid.innerHTML = positions.map(p => renderPositionCard(p)).join('');
+    }
+  }
+};
+/**
+
+ * Renders individual tree ownership cards with metadata integration
+ */
+ function renderUserPositions(positions: any[]) {
+     const container = document.getElementById('tree-position-cards');
+     const emptyState = document.getElementById('tree-positions-empty');
+     if (!container) return;
+
+     if (!positions || positions.length === 0) {
+         container.innerHTML = "";
+         emptyState?.classList.remove('hidden');
+         return;
+     }
+     emptyState?.classList.add('hidden');
+
+     const treeMap = new Map();
+     const rawTrees = (window as any)._cachedTrees || [];
+     const trees = Array.isArray(rawTrees) ? rawTrees : Object.values(rawTrees);
+     trees.forEach((t: any) => {
+         const id = t.account?.treeId || t.account?.treeid || t.treeId || t.treeid;
+         if (id) treeMap.set(String(id), t.account || t);
+     });
+
+     container.innerHTML = positions.map(pos => {
+         const treeId = (pos.account?.treeId || pos.treeId || "Unknown").toString();
+         const shares = pos.account?.sharesOwned?.toNumber?.() || pos.sharesOwned || 0;
+         const treeAcc = treeMap.get(treeId);
+         const meta = ((window as any)._treeMetadata || {})[treeId] || {};
+
+         return `
+         <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden hover:shadow-md transition mb-4">
+             <div class="p-5">
+                 <div class="flex justify-between items-start mb-4">
+                     <div class="flex items-center gap-3">
+                         <div class="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center text-2xl overflow-hidden">
+                             ${meta.image_url ? `<img src="${meta.image_url}" class="w-full h-full object-cover" />` : "🌳"}
+                         </div>
+                         <div>
+                             <h3 class="font-bold text-lg text-stone-900">Tree ${treeId}</h3>
+                             <p class="text-xs text-stone-500">${meta.location || "San Vincenzo, Italy"}</p>
+                         </div>
+                     </div>
+                     <div class="text-right">
+                         <p class="font-bold text-lg text-green-700">${shares} Shares</p>
+                         <p class="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Current Holding</p>
+                     </div>
+                 </div>
+
+                 <div class="grid grid-cols-2 gap-3 mt-2">
+                     <button onclick="openTreeDetailModal('${treeId}')"
+                         class="flex items-center justify-center gap-2 py-2 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition">
+                         <span>🔍 Details</span>
+                     </button>
+                     <button onclick="openSellModal('${treeId}', ${shares})"
+                         class="flex items-center justify-center gap-2 py-2 px-4 border border-amber-200 hover:bg-amber-50 text-amber-700 rounded-xl text-xs font-bold transition">
+                         <span>💰 Sell Shares</span>
+                     </button>
+                 </div>
+             </div>
+         </div>`;
+     }).join('');
+ }
+
+ (window as any).updateSellModalCalc = function() {
+    const slider = document.getElementById('sell-modal-slider') as HTMLInputElement;
+    const sharesVal = document.getElementById('sell-modal-shares-val');
+    const proceedsEl = document.getElementById('sell-modal-proceeds');
+    const btnProceeds = document.getElementById('sell-modal-btn-proceeds');
+    const valueEl = document.getElementById('sell-modal-value');
+
+    if (!slider || !sharesVal) return;
+
+    const sharesToSell = parseInt(slider.value);
+    const pricePerShare = 0.1; // Fallback: 0.1 SOL per share
+    const totalProceeds = (sharesToSell * pricePerShare).toFixed(3);
+    const totalCurrentValue = (parseInt(slider.max) * pricePerShare).toFixed(2);
+
+    sharesVal.innerText = sharesToSell.toString();
+    if (proceedsEl) proceedsEl.innerText = `${totalProceeds} SOL`;
+    if (btnProceeds) btnProceeds.innerText = totalProceeds;
+    if (valueEl) valueEl.innerText = `${totalCurrentValue} SOL`;
+};
+
+(window as any).checkSellModalBtn = function() {
+    const agree = document.getElementById('sell-modal-agree') as HTMLInputElement;
+    const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
+    if (agree && btn) {
+        btn.disabled = !agree.checked;
+    }
+};
+
+(window as any).closeSellModal = () => {
+    document.getElementById('sell-modal')?.classList.add('hidden');
+};
+(window as any).openSellModal = function(treeId: string, sharesOwned: number) {
+    console.log(`[SELL] Opening sell modal for tree ${treeId}, owning ${sharesOwned}`);
+
+    const modal = document.getElementById('sell-modal');
+    if (!modal) return;
+
+    // Set basic text
+    document.getElementById('sell-modal-tree-name')!.innerText = `Tree #${treeId}`;
+    document.getElementById('sell-modal-owned')!.innerText = sharesOwned.toString();
+
+    // Store data on the modal for the transaction function
+    modal.dataset.treeId = treeId;
+    modal.dataset.maxShares = sharesOwned.toString();
+
+    // Setup Slider
+    const slider = document.getElementById('sell-modal-slider') as HTMLInputElement;
+    if (slider) {
+        slider.max = sharesOwned.toString();
+        slider.value = Math.ceil(sharesOwned / 2).toString(); // Default to half
     }
 
-    // 3. Fetch USD prices (mock for now - in production use a price feed)
-    const solPriceUSD = 140; // Mock - replace with real price feed
-    const olvPriceUSD = 0.05; // Mock - replace with real price feed
+    // Reset UI state
+    const agree = document.getElementById('sell-modal-agree') as HTMLInputElement;
+    if (agree) agree.checked = false;
 
-    const solValueUSD = solAmount * solPriceUSD;
-    const olvValueUSD = olvBalance * olvPriceUSD;
-    const totalUSD = solValueUSD + olvValueUSD;
+    const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
+    if (btn) btn.disabled = true;
 
-    return {
-      sol: solAmount,
-      solUSD: solValueUSD,
-      olv: olvBalance,
-      olvUSD: olvValueUSD,
-      totalUSD: totalUSD
-    };
+    // Trigger initial calculation
+    (window as any).updateSellModalCalc();
 
-  } catch (err) {
-    console.error("[WALLET] Error fetching balances:", err);
-    return {
-      sol: 0,
-      solUSD: 0,
-      olv: 0,
-      olvUSD: 0,
-      totalUSD: 0
-    };
+    modal.classList.remove('hidden');
+};
+  function updateDashboardGlobalStats(treeCount, shares, oil, carbon, valueSol, solPrice) {
+    // 1. Header Summaries
+    const treeCountEl = document.getElementById('grove-tree-count');
+    const shareCountEl = document.getElementById('grove-share-count');
+    if (treeCountEl) treeCountEl.innerText = treeCount;
+    if (shareCountEl) shareCountEl.innerText = shares.toLocaleString();
+
+    // 2. Quick Stats Cards
+    const statOil = document.getElementById('stat-oil');
+    const statCarbon = document.getElementById('stat-carbon');
+    const statValueSol = document.getElementById('stat-value-sol');
+    const statValueUsd = document.getElementById('stat-value-usd');
+
+    if (statOil) statOil.innerText = `${oil.toFixed(1)}L`;
+    if (statCarbon) statCarbon.innerText = `${carbon.toFixed(0)}kg`;
+    if (statValueSol) statValueSol.innerText = `${valueSol.toFixed(2)} SOL`;
+    if (statValueUsd) statValueUsd.innerText = `≈ $${(valueSol * solPrice).toFixed(2)}`;
+
+    // 3. Tier Status Logic
+    const tierName = document.getElementById('tier-status-name');
+    const tierIcon = document.getElementById('tier-status-icon');
+    const tierProgress = document.getElementById('tier-status-progress');
+
+    let currentTier = "Olive Enthusiast";
+    let icon = "🫒";
+    let nextTierShares = 1000;
+
+    if (shares >= 5000) {
+        currentTier = "Estate Baron";
+        icon = "🏰";
+        nextTierShares = 0;
+    } else if (shares >= 1000) {
+        currentTier = "Grove Guardian";
+        icon = "🛡️";
+        nextTierShares = 5000;
+    } else {
+        nextTierShares = 1000;
+    }
+
+    if (tierName) tierName.innerText = currentTier;
+    if (tierIcon) tierIcon.innerText = icon;
+    if (tierProgress) {
+        tierProgress.innerText = nextTierShares > 0
+            ? `${(nextTierShares - shares).toLocaleString()} shares to next tier`
+            : "Maximum Tier Achieved";
+    }
+}
+/**
+ * Updates Tier Status UI based on share count
+ */
+function updateDashboardTier(shares: number) {
+  let tier = { icon: '🌱', name: 'New Harvester', next: 10 };
+console.log("EEEEENNTTTTEconsole.log(EEEEENNTTTTEEERRREED");
+console.log("EEEEENNTTTTEEERRREED");
+console.log("EEEEENNTTTTEEERRREED");
+console.log("EEEEENNTTTTEEERRREED");
+
+  if (shares >= 500) tier = { icon: '🛡️', name: 'Grove Guardian', next: 0 };
+  else if (shares >= 100) tier = { icon: '🌍', name: 'Eco Guardian', next: 500 };
+  else if (shares >= 10) tier = { icon: '🌿', name: 'Olive Lover', next: 100 };
+console.log('shares---',shares);
+
+  setEl('tier-status-icon', tier.icon);
+  setEl('tier-status-name', tier.name);
+
+  const progressText = tier.next > 0
+    ? `${tier.next - shares} more shares to reach next tier`
+    : 'Maximum tier achieved';
+  setEl('tier-status-progress', progressText);
+}
+// ─────────────────────────────────────────────────────────────
+// LOAD USER TREE POSITIONS
+// ─────────────────────────────────────────────────────────────
+(window as any).loadUserTreePositions = async function() {
+  const program = (window as any)._program;
+  const wallet  = (window as any).solana;
+
+  if (!program || !wallet?.publicKey) {
+    console.warn('[POSITIONS] Missing program or wallet');
+    return [];
   }
+
+  try {
+    console.log('[POSITIONS] 🔄 Loading user positions...');
+
+    // 1. Fetch all positions for this wallet
+    const allPositions = await program.account.sharePosition.all([
+      {
+        memcmp: {
+          offset: 8,
+          bytes: wallet.publicKey.toBase58(),
+        },
+      },
+    ]);
+
+    console.log(`[POSITIONS] Found ${allPositions.length} raw position accounts.`);
+    if (allPositions.length === 0) return [];
+
+    // 2. Fetch all trees to cross-reference the IDs with Names
+    const allTrees = await program.account.tree.all();
+
+    // 3. Normalize the data into a readable array
+    const positions = allPositions.map((pos: any) => {
+      const acc  = pos.account;
+
+      // Find the matching tree in the list
+      const tree = allTrees.find(
+        (t: any) => t.account.treeId.toString() === acc.treeId.toString()
+      );
+
+      return {
+        treeName:    tree?.account.name || "Unknown",
+        treeId:      acc.treeId.toString(),
+        sharesOwned: acc.sharesOwned.toNumber(),
+        positionPDA: pos.publicKey.toBase58(),
+        totalTreeShares: tree?.account.totalShares.toNumber() || 0,
+      };
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // CONSOLE DISPLAY: Which trees are they?
+    // ─────────────────────────────────────────────────────────────
+    console.log("╔══════════════════════════════════════════════╗");
+    console.log("║           USER TREE POSITIONS FOUND          ║");
+    console.log("╚══════════════════════════════════════════════╝");
+
+    // This provides a beautiful, sortable table in your browser console
+    console.table(positions, ["treeName", "treeId", "sharesOwned"]);
+
+    // Store globally for other UI components
+    (window as any)._userPositions = positions;
+
+
+    // 4. Update UI Banner if function exists
+    const uniqueTreeCount = positions.length;
+    const totalSharesOwned = positions.reduce((sum: number, p: any) => sum + p.sharesOwned, 0);
+
+    if (typeof (window as any).updateGlobalBanner === 'function') {
+      (window as any).updateGlobalBanner(uniqueTreeCount, totalSharesOwned, 0.05);
+    }
+
+// Update the Badge
+updateTierBadge(totalSharesOwned);
+console.log("TIME TO RENDER POSITION ",positions);
+
+    // 5. Trigger standard UI render
+        await renderUserPositions(positions);
+
+console.log("I DID MY BEST");
+
+// 4. THIS IS THE KEY: Return the variable to the caller
+    console.log('[POSITIONS] ✅ Returning positions to caller:', positions);
+    return positions;
+  } catch (err) {
+    console.error('[POSITIONS] ❌ Failed to load positions:', err);
+    return [];
+  }
+};
+
+
+function updateGrovePulse() {
+    const activeCountEl = document.getElementById('global-active-count');
+    const container = activeCountEl?.closest('.bg-gradient-to-br'); // The Pulse Card
+
+    if (!activeCountEl) return;
+
+    // 1. Get the data from the global cache
+    const rawTrees = (window as any)._cachedTrees || [];
+    const trees = Array.isArray(rawTrees) ? rawTrees : Object.values(rawTrees);
+
+    if (trees.length === 0) {
+        activeCountEl.innerText = "OFFLINE";
+        return;
+    }
+
+    // 2. Calculate Global Stats
+    let totalSharesSold = 0;
+    let totalCapacity = 0;
+
+    trees.forEach((t: any) => {
+        const acc = t.account || t;
+        totalSharesSold += acc.sharesSold?.toNumber() || 0;
+        totalCapacity += acc.totalShares?.toNumber() || 1000;
+    });
+
+    const adoptionRate = ((totalSharesSold / totalCapacity) * 100).toFixed(1);
+
+    // 3. Update the Header Badge
+    activeCountEl.innerHTML = `<span class="text-emerald-600">${trees.length} TREES ONLINE</span>`;
+
+    // 4. Inject Pulse Content (if not already present in HTML)
+    // This fills the empty space in your provided snippet
+    const pulseContentId = 'grove-pulse-metrics';
+    let contentEl = document.getElementById(pulseContentId);
+
+    if (!contentEl) {
+        contentEl = document.createElement('div');
+        contentEl.id = pulseContentId;
+        contentEl.className = "grid grid-cols-2 gap-4 mt-2";
+        container.appendChild(contentEl);
+    }
+
+    contentEl.innerHTML = `
+        <div class="bg-white/50 p-3 rounded-2xl border border-stone-100">
+            <p class="text-[10px] uppercase text-stone-400 font-bold mb-1">Global Adoption</p>
+            <div class="flex items-end gap-1">
+                <span class="text-xl font-black text-stone-800">${adoptionRate}%</span>
+                <span class="text-[10px] text-emerald-600 font-bold mb-1">↑ LIVE</span>
+            </div>
+        </div>
+        <div class="bg-white/50 p-3 rounded-2xl border border-stone-100">
+            <p class="text-[10px] uppercase text-stone-400 font-bold mb-1">Total Impact</p>
+            <div class="flex items-end gap-1">
+                <span class="text-xl font-black text-stone-800">${(totalSharesSold * 0.25).toFixed(0)}kg</span>
+                <span class="text-[10px] text-stone-500 font-medium mb-1">CO₂/YR</span>
+            </div>
+        </div>
+    `;
+}
+// ─────────────────────────────────────────────────────────────
+// LOAD ALL TREES
+// ─────────────────────────────────────────────────────────────
+(window as any).loadAllTrees = async () => {
+  console.log("[TREES] 🔄 Loading all trees from chain...");
+
+  try {
+    const program = (window as any)._program;
+    if (!program) {
+      console.error("[TREES] ❌ Program not initialized");
+      return [];
+    }
+
+    const trees = await program.account.tree.all();
+    console.log("[TREES] Found", trees.length, "trees");
+
+    const normalizedTrees = trees.map((t: any, index: number) => ({
+      publicKey: t.publicKey,
+      account: {
+        ...t.account,
+        treeId:       t.account.treeId,
+        variety:      t.account.variety || "Tuscan",
+        healthStatus: t.account.healthStatus ?? 1,
+      },
+      index,
+    }));
+
+    // Build cache as a Record keyed by treeId (string)
+    const map: Record<string, any> = {};
+    normalizedTrees.forEach((t: any) => {
+      map[t.account.treeId] = t;
+    });
+
+    (window as any)._cachedTrees = map;
+    console.log("[CACHE] ✅ Trees FIRST cached:", Object.keys(map));
+//ensureTreesCached
+ await ensureTreesCached();
+ console.log("ENSURED CASHED");
+ // Inside your existing trees loading function
+(window as any)._cachedTrees = trees;
+
+// NEW CALL
+if (typeof updateGrovePulse === 'function') {
+    updateGrovePulse();
 }
 
-// ══════════════════════════════════════════════════════════════
-// UPDATE WALLET BALANCE UI
-// ══════════════════════════════════════════════════════════════
-function updateWalletBalanceUI(balances: any) {
-  const set = (id: string, value: string) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  };
+    return normalizedTrees;
+  } catch (err) {
+    console.error("[TREES] ❌ Failed:", err);
+    return [];
+  }
+};
 
-  set('wallet-sol-balance', balances.sol.toFixed(4));
-  set('wallet-sol-usd', `$${balances.solUSD.toFixed(2)}`);
-  set('wallet-olv-balance', balances.olv.toFixed(2));
-  set('wallet-olv-usd', `$${balances.olvUSD.toFixed(2)}`);
-  set('wallet-total-usd', `$${balances.totalUSD.toFixed(2)}`);
-}
-
-// ══════════════════════════════════════════════════════════════
-// RENDER TREE POSITION CARDS (My Grove view)
-// ══════════════════════════════════════════════════════════════
-function renderTreePositionCards(positions: any[], trees: any[], protocol: any) {
-  const container = document.getElementById('tree-position-cards');
-  const emptyState = document.getElementById('tree-positions-empty');
+// ─────────────────────────────────────────────────────────────
+// RENDER TREES GRID
+// ─────────────────────────────────────────────────────────────
+(window as any).renderTreesGrid = async function() {
+  const container   = document.getElementById('trees-grid');
+  const placeholder = document.getElementById('trees-placeholder');
 
   if (!container) return;
 
-  // Show/hide empty state
-  if (positions.length === 0) {
-    if (emptyState) emptyState.classList.remove('hidden');
-    container.innerHTML = '';
+  if (placeholder) placeholder.classList.remove('hidden');
+
+  const trees = await (window as any).loadAllTrees();
+  container.innerHTML = '';
+
+  if (!trees || trees.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-20 text-center text-stone-400">
+        <div class="text-5xl mb-3">🌳</div>
+        <p class="font-semibold text-lg">No trees found</p>
+        <p class="text-sm mt-1">The grove is empty (for now)</p>
+      </div>
+    `;
     return;
   }
 
-  if (emptyState) emptyState.classList.add('hidden');
+  if (placeholder) placeholder.classList.add('hidden');
 
-  // Build position cards
-  container.innerHTML = positions.map((pos: any) => {
-    const treeId = String(pos.tree_id ?? pos.account?.treeId);
-    const sharesOwned = Number(pos.shares_owned ?? pos.account?.sharesOwned ?? 0);
-
-    // Find the tree data
-    const treeData = trees.find((t: any) => String(t.account.treeId) === treeId);
-    if (!treeData) return '';
-
-    const tree = treeData.account;
-    const totalShares = Number(tree.totalShares);
-    const sharesSold = Number(tree.sharesSold);
-    const ownershipPct = ((sharesOwned / totalShares) * 100).toFixed(1);
-    const adoptionPct = ((sharesSold / totalShares) * 100).toFixed(1);
-    const sharesRemaining = totalShares - sharesSold;
-
-    // Calculate benefits
-    const oilPerYear = (sharesOwned / totalShares) * 24; // 24L per tree
-    const carbonPerYear = (sharesOwned / totalShares) * 85; // 85kg per tree
-
-    // Calculate current value with dynamic pricing
-    const filledPercent = (sharesSold / totalShares) * 100;
-    const currentPrice = getSharePrice(filledPercent);
-    const estimatedValue = sharesOwned * currentPrice;
-
-    // Tier badge
-    const isGuardian = sharesOwned >= 1000;
+  container.innerHTML = trees.map((t: any) => {
+    const acc       = t.account;
+    const total     = acc.totalShares.toNumber();
+    const sold      = acc.sharesSold.toNumber();
+    const available = total - sold;
+    const progress  = total > 0 ? Math.round((sold / total) * 100) : 0;
 
     return `
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 hover:shadow-md transition">
-        <div class="flex justify-between items-start mb-3">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center text-2xl">
-              🫒
-            </div>
-            <div>
-              <h3 class="font-bold text-lg text-stone-900">${tree.name}</h3>
-              <p class="text-xs text-stone-500">${tree.variety} · ${tree.age} yrs · ${tree.location}</p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="text-xs text-stone-400">You own</p>
-            <p class="font-bold text-lg text-green-700">${sharesOwned} shares</p>
-            <p class="text-xs text-stone-500">${ownershipPct}% ownership</p>
-            ${isGuardian ? '<p class="text-xs font-semibold text-amber-600 mt-1">👑 Guardian</p>' : ''}
-          </div>
+      <div class="bg-white/5 backdrop-blur rounded-2xl p-4 border border-white/10
+                  hover:border-emerald-400/40 transition">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-semibold text-lg text-white">Tree ${acc.treeId}</div>
+          <div class="text-xs text-stone-400">#${acc.treeId}</div>
         </div>
-
-        <!-- Progress bar -->
-        <div class="w-full bg-stone-100 h-2 rounded-full mb-3">
-          <div class="bg-green-700 h-2 rounded-full transition-all" style="width:${adoptionPct}%"></div>
+        <div class="text-sm text-stone-400 mb-3">${acc.variety || 'Unknown variety'}</div>
+        <div class="text-xs text-stone-400 mb-1">${sold} / ${total} shares</div>
+        <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+          <div class="bg-emerald-400 h-2" style="width:${progress}%"></div>
         </div>
-        <p class="text-xs text-stone-500 mb-4">
-          <span class="font-semibold text-green-700">${adoptionPct}% adopted</span> ·
-          ${sharesRemaining} shares remaining
-        </p>
-
-        <!-- Benefits grid -->
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-stone-50 rounded-xl p-3 text-center">
-            <p class="font-bold text-lg" style="color:var(--olive)">${oilPerYear.toFixed(1)}L</p>
-            <p class="text-xs text-stone-400">oil/year</p>
-          </div>
-          <div class="bg-stone-50 rounded-xl p-3 text-center">
-            <p class="font-bold text-lg text-emerald-600">${carbonPerYear.toFixed(0)}kg</p>
-            <p class="text-xs text-stone-400">CO₂/year</p>
-          </div>
-          <div class="bg-stone-50 rounded-xl p-3 text-center">
-            <p class="font-bold text-lg text-amber-600">${estimatedValue.toFixed(2)} SOL</p>
-            <p class="text-xs text-stone-400">est. value</p>
-          </div>
+        <div class="flex justify-between mt-3 text-xs text-stone-400">
+          <span>${progress}% sold</span>
+          <span>${available} left</span>
         </div>
-
-        <!-- Action buttons -->
-        <div class="flex gap-2 mt-4 pt-4 border-t border-stone-100">
-          <button onclick="openTreeDetailModal(${trees.indexOf(treeData)})"
-                  class="flex-1 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-medium rounded-lg transition">
-            View Details
-          </button>
-          <button onclick="window.openAdoptModal(${trees.indexOf(treeData)})"
-                  class="flex-1 px-3 py-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-lg transition">
-            Buy More
-          </button>
-          <button onclick="window.openSellModal('${treeId}', ${sharesOwned})"
-                  class="px-3 py-2 border border-stone-300 hover:bg-stone-50 text-stone-600 text-sm font-medium rounded-lg transition">
-            Sell
-          </button>
-        </div>
+        <button onclick="openAdoptModal('${acc.treeId}')"
+                class="mt-4 w-full py-2 rounded-xl bg-emerald-500/90 hover:bg-emerald-400
+                       text-black text-sm font-semibold transition">
+          View Tree
+        </button>
       </div>
     `;
   }).join('');
-}
 
-// ══════════════════════════════════════════════════════════════
-// UPDATE MY GROVE DASHBOARD (Main function to call)
-// ══════════════════════════════════════════════════════════════
-async function updateMyGroveDashboard(positions: any[], trees: any[], protocol: any) {
-  const wallet = getWallet();
-
-  // 1. Update header stats
-  const set = (id: string, value: string) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  };
-
-  const totalTrees = positions.length;
-  const totalShares = positions.reduce((sum: number, p: any) =>
-    sum + Number(p.shares_owned ?? p.account?.sharesOwned ?? 0), 0);
-
-  set('grove-tree-count', totalTrees.toString());
-  set('grove-share-count', totalShares.toString());
-
-  // 2. Fetch and update wallet balances
-  const balances = await fetchWalletBalances(wallet);
-  updateWalletBalanceUI(balances);
-
-  // 3. Update quick stats
-  const totalOil = positions.reduce((sum: number, p: any) => {
-    const shares = Number(p.shares_owned ?? p.account?.sharesOwned ?? 0);
-    const tree = trees.find((t: any) =>
-      String(t.account.treeId) === String(p.tree_id ?? p.account?.treeId));
-    if (!tree) return sum;
-    const oilPerTree = 24; // liters
-    return sum + (shares / Number(tree.account.totalShares)) * oilPerTree;
-  }, 0);
-
-  const totalCarbon = totalShares * 0.085; // 85kg per 1000 shares
-  const totalValueSOL = positions.reduce((sum: number, p: any) => {
-    const shares = Number(p.shares_owned ?? p.account?.sharesOwned ?? 0);
-    const tree = trees.find((t: any) =>
-      String(t.account.treeId) === String(p.tree_id ?? p.account?.treeId));
-    if (!tree) return sum;
-    const filled = Number(tree.account.sharesSold) / Number(tree.account.totalShares) * 100;
-    const price = getSharePrice(filled);
-    return sum + (shares * price);
-  }, 0);
-
-  set('stat-oil', `${totalOil.toFixed(1)}L`);
-  set('stat-carbon', `${totalCarbon.toFixed(0)}kg`);
-  set('stat-value-sol', `${totalValueSOL.toFixed(2)} SOL`);
-  set('stat-value-usd', `$${(totalValueSOL * 140).toFixed(2)}`); // Mock price
-
-  // 4. Update tier status
-  const getTierInfo = (shares: number) => {
-    if (shares >= 5000) return { icon: '🏛️', name: 'Legacy Holder', next: 10000 };
-    if (shares >= 1000) return { icon: '👑', name: 'Grove Patron', next: 5000 };
-    if (shares >= 500) return { icon: '🌿', name: 'Eco Guardian', next: 1000 };
-    if (shares >= 100) return { icon: '🫒', name: 'Olive Lover', next: 500 };
-    return { icon: '🌱', name: 'Olive Enthusiast', next: 100 };
-  };
-
-  const tierInfo = getTierInfo(totalShares);
-  set('tier-status-icon', tierInfo.icon);
-  set('tier-status-name', tierInfo.name);
-  set('tier-status-progress', `${tierInfo.next - totalShares} shares to ${getTierInfo(tierInfo.next).name}`);
-
-  // 5. Update farm ownership
-  const totalGroveShares = 240 * 1000; // 240 trees × 1000 shares each
-  const ownershipPct = ((totalShares / totalGroveShares) * 100).toFixed(4);
-console.log(ownershipPct);
-
-  set('farm-ownership-pct', `${ownershipPct}%`);
-  set('farm-trees-stat', totalTrees.toString());
-  set('farm-shares-stat', totalShares.toString());
-
-  // 6. Render position cards
-  renderTreePositionCards(positions, trees, protocol);
-
-  // 7. Update activity feed (mock data for now)
-  // In production, fetch from Supabase transaction log
-  renderActivityFeed([
-    { icon: '🫒', text: 'Bought 50 shares', time: '2 days ago' },
-    { icon: '🌿', text: 'Tree #12 reached 80% adoption', time: '5 days ago' },
-    { icon: '📦', text: 'Harvest estimate updated', time: '1 week ago' }
-  ]);
-}
-
-
-(window as any).DEBUG = {
-  trees: [],
-  positions: [],
-  protocol: null
+  console.log('[UI] 🌳 Trees rendered:', trees.length);
 };
 
-function debug(label: string, data?: any) {
-  console.log(`🧠 ${label}`, data);
-}
+(window as any).openAdoptModal = (idx: string) => {
+  console.log("[MODAL] Opening tree with ID:", idx);
 
-
-// ─────────────────────────────────────────────────────────────
-// DASHBOARD & BANNER SYNC — Updates all stat IDs in index.html
-// ─────────────────────────────────────────────────────────────
-(window as any).updateDashboardStats = function(totalShares: number, treeCount: number) {
-  // 1. Identify all Banner and Hero Elements
-  const elements = {
-    // Top Sticky Banner
-    bannerTrees:    document.getElementById('yourTrees'),
-    bannerShares:   document.getElementById('portfolioShares'),
-    bannerOil:      document.getElementById('oilLiters'),
-    bannerBottles:  document.getElementById('bottles'),
-    bannerCarbon:   document.getElementById('carbonEst'),
-    bannerValue:    document.getElementById('portfolioValue'),
-    // Main Dashboard Hero
-    dashPct:        document.getElementById('farmSharePct'),
-
-    dashPct2:        document.getElementById('farm-ownership-pct'),
-    dashTrees2:      document.getElementById('farm-trees-stat'),
-    dashShares2:     document.getElementById('farm-shares-stat'),
-
-
-
-
-    dashTrees:      document.getElementById('dash-trees'),
-    dashShares:     document.getElementById('dash-shares'),
-
-    dashOil:        document.getElementById('dash-oil'),
-    dashBottles:    document.getElementById('dash-bottles'),
-    // Benefits Grid
-    benefitOil:     document.getElementById('benefit-oil'),
-    benefitCarbon:  document.getElementById('benefit-carbon'),
-    benefitVisit:   document.getElementById('benefit-visit')
-  };
-
-  // 2. Perform Calculations
-  const protocol = (window as any)._protocol;
-  const globalTotal = protocol?.totalShares?.toNumber?.() || 1000000;
-
-  const ownershipPct = (totalShares / globalTotal) * 100;
-  const annualLiters = totalShares * 0.024; // 24L per 1k shares
-  const annualBottles = Math.floor(annualLiters / 0.75);
-  const carbonKg = (totalShares / 1000) * 25; // 25kg per tree
-  const estValueSol = totalShares * 0.5; // Current Share Price
-
-  // 3. Helper to update text and kill the shimmer animation
-  const render = (el: HTMLElement | null, value: string) => {
-    if (el) {
-      el.textContent = value;
-      el.classList.remove('shimmer'); // Critical: Stops the "blank" loading look
-    }
-  };
-
-  // 4. Apply Updates
-  render(elements.bannerTrees,   treeCount.toString());
-  render(elements.bannerShares,  totalShares.toLocaleString());
-  render(elements.bannerOil,     `${annualLiters.toFixed(1)}L`);
-  render(elements.bannerBottles, annualBottles.toString());
-  render(elements.bannerCarbon,  `${carbonKg.toFixed(1)}kg`);
-  render(elements.bannerValue,   `${estValueSol.toFixed(2)} SOL`);
-
-  render(elements.dashPct2,       `${ownershipPct.toFixed(4)}%`);
-  render(elements.dashTrees2,     treeCount.toString());
-  render(elements.dashShares2,    totalShares.toLocaleString());
-
-
-  render(elements.dashPct,       `${ownershipPct.toFixed(4)}%`);
-  render(elements.dashTrees,     treeCount.toString());
-  render(elements.dashShares,    totalShares.toLocaleString());
-  render(elements.dashOil,       `${annualLiters.toFixed(1)}L`);
-  render(elements.dashBottles,   annualBottles.toString());
-
-  render(elements.benefitOil,    `${annualLiters.toFixed(1)} L`);
-  render(elements.benefitCarbon, `${carbonKg.toFixed(1)} kg/yr`);
-
-  // Update Rewards Progress Bar
-  const rewardProgress = document.getElementById('reward-progress-text');
-  const rewardBar = document.getElementById('reward-progress-bar');
-
-  if (rewardProgress) {
-      rewardProgress.innerHTML = `<span class="font-bold text-stone-900">${totalShares}</span> / 1000 shares to reach Grove Patron`;
-  }
-  if (rewardBar) {
-      const progressWidth = Math.min((totalShares / 1000) * 100, 100);
-      rewardBar.style.width = `${progressWidth}%`;
-  }
-
-  // Reward Logic for Farm Access
-  if (elements.benefitVisit) {
-    let access = "View only";
-    if (totalShares >= 1000) access = "Full Villa Access";
-    else if (totalShares >= 500) access = "Day Visit Unlocked";
-    render(elements.benefitVisit, access);
-  }
-
-  // 5. Ensure the banner is visible
-  document.getElementById('stats')?.classList.remove('hidden');
-};
-
-// 👉 THIS LINE FIXES YOUR UI
-(window as any).switchTab = switchTab;
-
-//------refreshWalletBalances
-
-import { getAssociatedTokenAddress } from "@solana/spl-token";
-
-async function refreshWalletBalances(walletPubKey: any) {
-    if (!walletPubKey || !(window as any)._connection) return;
-    const connection = (window as any)._connection;
-    const program = (window as any)._program;
-
-    // The OVL Mint Address
-    const OLV_MINT = new anchor.web3.PublicKey("47qeu9Mmcn3PU77Y6h3zKv39EUfhQjsgXskaYohPJ5sd");
-
-    try {
-        // 1. Fetch SOL
-        const solBalance = (await connection.getBalance(walletPubKey)) / 1_000_000_000;
-
-        // 2. Fetch OVL from ATA
-        let totalOlv = 0;
-        try {
-            const ataAddress = await getAssociatedTokenAddress(OLV_MINT, walletPubKey);
-            const tokenAccount = await connection.getTokenAccountBalance(ataAddress);
-            totalOlv = tokenAccount.value.uiAmount || 0;
-        } catch (e) {
-            // ATA doesn't exist, balance is 0
-            totalOlv = 0;
-        }
-
-        // 3. Update the UI IDs from your index.html
-        const updateUI = (id: string, val: string) => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = val;
-        };
-
-        updateUI('wallet-sol-balance', solBalance.toFixed(3));
-        updateUI('wallet-sol-usd', `$${(solBalance * 150).toFixed(2)}`); // Using $150/SOL
-
-        updateUI('wallet-olv-balance', totalOlv.toLocaleString());
-        updateUI('wallet-olv-usd', `$${(totalOlv * 0.50).toFixed(2)}`); // Using $0.50/OLV
-
-        const totalUsd = (solBalance * 150) + (totalOlv * 0.50);
-        updateUI('wallet-total-usd', `$${totalUsd.toLocaleString(undefined, {minimumFractionDigits: 2})}`);
-
-    } catch (err) {
-        console.error("[BALANCES] Failed to refresh:", err);
-    }
-}
-// ══════════════════════════════════════════════════════════════
-// RENDER ACTIVITY FEED
-// ══════════════════════════════════════════════════════════════
-function renderActivityFeed(activities: any[]) {
-  const container = document.getElementById('activity-feed');
-  const emptyState = document.getElementById('activity-empty');
-
-  if (!container) return;
-
-  if (activities.length === 0) {
-    if (emptyState) emptyState.classList.remove('hidden');
+  const rawTrees = (window as any)._cachedTrees;
+  if (!rawTrees) {
+    console.error("[MODAL] _cachedTrees not populated yet");
     return;
   }
 
-  if (emptyState) emptyState.classList.add('hidden');
+  // FIX: Convert to array if it's an object, then FIND the matching ID
+  const trees = Array.isArray(rawTrees) ? rawTrees : Object.values(rawTrees);
+  const treeData = trees.find((t: any) => {
+      const id = t.account?.treeId || t.account?.treeid || t.treeId || t.treeid;
+      return String(id) === String(idx);
+  });
 
-  container.innerHTML = activities.map(activity => `
-    <div class="flex items-start gap-3 pb-3 border-b border-stone-100 last:border-0">
-      <span class="text-lg shrink-0">${activity.icon}</span>
-      <div class="flex-1 min-w-0">
-        <p class="text-sm text-stone-700">${activity.text}</p>
-        <p class="text-xs text-stone-400">${activity.time}</p>
-      </div>
-    </div>
-  `).join('');
+  if (!treeData) {
+    console.error("❌ No tree data found for ID:", idx);
+    return;
+  }
+
+  const modal = document.getElementById('adopt-modal');
+  if (!modal) return;
+
+  // Standardize the account reference
+  const account = treeData.account || treeData;
+
+  // Use the ID from the account to be safe
+  const treeIdString = (account.treeId || account.treeid).toString();
+  modal.dataset.treeId    = treeIdString;
+  modal.dataset.treeIndex = treeIdString;
+
+  (window as any)._modalTree     = account;
+  (window as any)._modalProtocol = (window as any)._protocol;
+
+  const setText = (id: string, val: any) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(val);
+  };
+
+  // Calculations
+  const total = account.totalShares?.toNumber?.() ?? account.totalShares ?? 1000;
+  const sold  = account.sharesSold?.toNumber?.() ?? account.sharesSold ?? 0;
+  const available = total - sold;
+
+  setText('modal-tree-name', `Tree ${treeIdString}`);
+
+  const variety = account.variety || 'Tuscan';
+  const healthStatus =
+    account.healthStatus === 1 ? 'Excellent' :
+    account.healthStatus === 2 ? 'Good' :
+    account.healthStatus === 3 ? 'Fair' : 'Poor';
+
+  setText('modal-tree-meta',    `Variety: ${variety} · Health: ${healthStatus}`);
+  setText('modal-shares-left',  available.toLocaleString());
+  setText('modal-health',       healthStatus);
+  setText('modal-harvests',     account.harvestCount?.toNumber?.() ?? 0);
+
+  const slider = document.getElementById('modal-slider') as HTMLInputElement;
+  if (slider) {
+    slider.max   = available.toString();
+    slider.value = Math.min(10, available).toString(); // Default to 10 for better UX
+  }
+
+  // UI Resets
+  ['adopt-confirm', 'modal-agree'].forEach(id => {
+    const cb = document.getElementById(id) as HTMLInputElement;
+    if (cb) cb.checked = false;
+  });
+
+  // Trigger UI updates
+  if ((window as any).updateModalCalc) (window as any).updateModalCalc();
+
+  modal.classList.remove('hidden');
+  console.log("✅ Modal opened for tree:", treeIdString);
+};
+// ─────────────────────────────────────────────────────────────
+// CLOSE ADOPT MODAL
+// ─────────────────────────────────────────────────────────────
+(window as any).closeAdoptModal = () => {
+  const modal = document.getElementById('adopt-modal');
+  if (modal) modal.classList.add('hidden');
+};
+
+// ─────────────────────────────────────────────────────────────
+// UPDATE MODAL CALCULATIONS
+// ─────────────────────────────────────────────────────────────
+(window as any).updateModalCalc = function() {
+  const protocol = (window as any)._protocol || (window as any)._modalProtocol;
+  if (!protocol) {
+    console.warn("Protocol not available for calculations");
+    return;
+  }
+
+  const slider = document.getElementById('modal-slider') as HTMLInputElement;
+  if (!slider) return;
+
+  const shares       = parseInt(slider.value) || 0;
+  const pricePerShare = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
+  const feeBps       = protocol.buyFeeBps || 0;
+  const subtotal     = shares * pricePerShare;
+  const fee          = (subtotal * feeBps) / 10000;
+  const total        = subtotal + fee;
+
+  setEl('modal-amount-display', shares.toLocaleString());
+  setEl('modal-cost-sol',       subtotal.toFixed(4));
+  setEl('modal-fee-sol',        fee.toFixed(4));
+  setEl('modal-cost',           total.toFixed(4) + ' SOL');
+  setEl('modal-btn-cost',       total.toFixed(3));
+  setEl('modal-btn-amount',     total.toFixed(3));
+
+  const tree = (window as any)._modalTree;
+  if (tree) {
+    const pct = (shares / tree.totalShares.toNumber() * 100).toFixed(1);
+    setEl('modal-pct', pct);
+  }
+
+  (window as any)._lastCalculatedTotal = total.toFixed(3);
+
+  updateTierDisplay(shares);
+};
+
+function updateTierBadge(totalShares: number) {
+    const iconEl = document.getElementById('tier-icon');
+    const nameEl = document.getElementById('tier-name');
+    const descEl = document.getElementById('tier-desc');
+    const barEl  = document.getElementById('tier-progress-bar');
+    const textEl = document.getElementById('tier-progress-text');
+
+    if (!iconEl || !nameEl || !descEl || !barEl || !textEl) return;
+
+    // Define your Tiers here
+    const tiers = [
+        { name: "Olive Enthusiast", min: 0,   max: 100,  icon: "🫒", desc: "Start your journey in the Tuscan groves." },
+        { name: "Olive Lover",       min: 100, max: 500,  icon: "🌿", desc: "You're becoming a staple of our community." },
+        { name: "Grove Guardian",    min: 500, max: 1000, icon: "🌳", desc: "A true protector of ancient traditions." },
+        { name: "Master Miller",     min: 1000, max: 5000, icon: "🏺", desc: "The gold of Tuscany flows through your hands." }
+    ];
+
+    // Find current tier
+    let currentTier = tiers[0];
+    let nextTier = tiers[1];
+
+    for (let i = 0; i < tiers.length; i++) {
+        if (totalShares >= tiers[i].min) {
+            currentTier = tiers[i];
+            nextTier = tiers[i + 1] || tiers[i]; // Stay on last tier if maxed
+        }
+    }
+
+    // Calculate Progress Percentage
+    let progressPct = 0;
+    if (nextTier !== currentTier) {
+        const range = nextTier.min - currentTier.min;
+        const earned = totalShares - currentTier.min;
+        progressPct = Math.min(100, (earned / range) * 100);
+        textEl.innerText = `${totalShares} / ${nextTier.min} shares to unlock ${nextTier.name}`;
+    } else {
+        progressPct = 100;
+        textEl.innerText = `Maximum Tier Reached! (${totalShares} shares)`;
+    }
+
+    // Update UI
+    iconEl.innerText = currentTier.icon;
+    nameEl.innerText = currentTier.name;
+    descEl.innerText = currentTier.desc;
+    barEl.style.width = `${progressPct}%`;
+}
+// ─────────────────────────────────────────────────────────────
+// UPDATE TIER DISPLAY IN MODAL
+// ─────────────────────────────────────────────────────────────
+function updateTierDisplay(shares: number) {
+  const tierRow   = document.getElementById('modal-tier-row');
+  const tierIcon  = document.getElementById('modal-tier-icon');
+  const tierLabel = document.getElementById('modal-tier-label');
+
+  if (!tierRow || !tierIcon || !tierLabel) return;
+
+  let icon    = '—';
+  let label   = 'Select shares to see your tier';
+  let bgClass = 'bg-stone-100 text-stone-500';
+
+  if (shares >= 5000) {
+    icon = '🏛️'; label = 'Legacy Holder — Premium benefits!';
+    bgClass = 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-900';
+  } else if (shares >= 1000) {
+    icon = '🫒'; label = 'Grove Patron — Exclusive perks!';
+    bgClass = 'bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800';
+  } else if (shares >= 500) {
+    icon = '🌱'; label = 'Eco Steward — Great rewards!';
+    bgClass = 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800';
+  } else if (shares >= 100) {
+    icon = '🫒'; label = 'Olive Lover — Welcome to the grove!';
+    bgClass = 'bg-gradient-to-r from-lime-100 to-green-100 text-green-700';
+  }
+
+  tierIcon.textContent  = icon;
+  tierLabel.textContent = label;
+  tierRow.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium ' + bgClass;
 }
 
-// ══════════════════════════════════════════════════════════════
-// EXPORT FUNCTIONS
-// ══════════════════════════════════════════════════════════════
-(window as any).updateMyGroveDashboard = updateMyGroveDashboard;
-(window as any).fetchWalletBalances = fetchWalletBalances;
-(window as any).getSharePrice = getSharePrice;
+// ─────────────────────────────────────────────────────────────
+// TOGGLE MODAL BUTTON (Enable/Disable based on checkbox)
+// ─────────────────────────────────────────────────────────────
+(window as any).toggleModalButton = function() {
+  const checkbox = document.getElementById('modal-agree') as HTMLInputElement;
+  const btn      = document.getElementById('modal-buy-btn') as HTMLButtonElement;
+
+  if (checkbox && btn) {
+    const isChecked = checkbox.checked;
+    btn.disabled = !isChecked;
+    if (isChecked) {
+      btn.classList.remove('opacity-40', 'pointer-events-none');
+    } else {
+      btn.classList.add('opacity-40', 'pointer-events-none');
+    }
+  }
+};
+
+// Wire checkbox if it exists
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    const checkbox = document.getElementById('modal-agree') as HTMLInputElement;
+    if (checkbox) {
+      checkbox.addEventListener('change', () => {
+        (window as any).toggleModalButton();
+      });
+    }
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────────────────────
+// TOGGLE CONFIRM BUTTON
+// ─────────────────────────────────────────────────────────────
+(window as any).toggleConfirm = function() {
+  const checkbox = document.getElementById('adopt-confirm')     as HTMLInputElement;
+  const btn      = document.getElementById('btn-confirm-adopt') as HTMLButtonElement;
+
+  if (checkbox && btn) {
+    const isChecked = checkbox.checked;
+    btn.disabled = !isChecked;
+    if (isChecked) {
+      btn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
+      btn.classList.add('hover:scale-105', 'active:scale-95');
+    } else {
+      btn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+      btn.classList.remove('hover:scale-105', 'active:scale-95');
+    }
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// CONFIRM ADOPT / BUY
+// ─────────────────────────────────────────────────────────────
+(window as any).confirmAdopt = async function() {
+  console.log("🚀 CONFIRM ADOPT TRIGGERED");
+
+  try {
+    const modal = document.getElementById('adopt-modal');
+    if (!modal) throw new Error("Modal not found");
+
+    const treeId = modal.dataset.treeId;
+    if (!treeId) throw new Error("Missing tree data in modal");
+
+    const slider = document.getElementById('modal-slider') as HTMLInputElement;
+    if (!slider) throw new Error("Slider not found");
+
+    const shares = parseInt(slider.value);
+    if (shares <= 0) throw new Error("Invalid share amount");
+
+    const program  = (window as any)._program;
+    const provider = (window as any)._provider;
+    const protocol = (window as any)._protocol;
+
+    // FIX: use window.walletPubKey (set directly from wallet.publicKey in connectWallet).
+    // provider.wallet.publicKey is the Anchor adapter wrapper and its .toBuffer() can
+    // produce a different byte representation, causing ConstraintSeeds on the position PDA.
+    const walletPubKey = (window as any).walletPubKey
+      ?? (window as any).wallet?.publicKey;
+
+    if (!program || !provider || !protocol || !walletPubKey) {
+      throw new Error("Program/Provider/Protocol not initialized");
+    }
+
+    console.log("📋 Transaction Details:", {
+      treeId, shares,
+      wallet: walletPubKey.toBase58(),
+      walletSource: (window as any).walletPubKey ? 'window.walletPubKey' : 'window.wallet.publicKey'
+    });
+
+    const btn = document.getElementById('modal-buy-btn') as HTMLButtonElement;
+    const reset_btn      = document.getElementById('btn-confirm-adopt') as HTMLButtonElement;
+
+    if (btn) { btn.disabled = true; btn.textContent = "Processing..."; }
+
+    const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("protocol")],
+      program.programId
+    );
+    const [treePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("tree"), Buffer.from(treeId)],
+      program.programId
+    );
+    const [positionPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeId)],
+      program.programId
+    );
+
+    // treasury comes from the on-chain protocol config (matches IDL purchase_shares)
+    const treasuryPda = protocol.treasury;
+
+    console.log("📍 PDAs derived:", {
+      protocol: protocolPda.toBase58(),
+      tree:     treePda.toBase58(),
+      position: positionPda.toBase58(),
+      treasury: treasuryPda.toBase58(),
+    });
+
+    console.log("⚡ Sending transaction...");
+    const tx = await program.methods
+      .purchaseShares(treeId, new BN(shares))
+      .accounts({
+        tree:          treePda,
+        position:      positionPda,
+        protocol:      protocolPda,
+        treasury:      treasuryPda,
+        buyer:         walletPubKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("✅ Transaction successful:", tx);
+    alert(`🎉 Successfully adopted ${shares} shares of ${treeId}!\n\nTransaction: ${tx.slice(0, 8)}...`);
+    console.log(`[BUY] ✅ On-chain success: ${tx}`);
+
+    const currentShares = (window as any).userPositions?.[treeId] || 0;
+    const newTotal = currentShares + shares;
+    const isGuardian = newTotal >= 1000; // Match your lib.rs constant
+
+    await (window as any).syncTransactionToSupabase(
+        walletPubKey.toBase58(),
+        treeId,
+        shares,
+        'BUY',
+        tx,
+        newTotal,
+        isGuardian
+    );
+console.log("syncing----BUY--");
+
+
+
+        const btn2 = document.getElementById('modal-buy-btn') as HTMLButtonElement;
+        if (btn2) {
+          btn2.disabled = false;
+          const total = (window as any)._lastCalculatedTotal || '0.000';
+          btn2.innerHTML = `Adopt — pay <span id="modal-btn-cost">${total}</span> SOL`;
+        }
+
+
+    (window as any).closeAdoptModal();
+
+    (window as any).loadUserTreePositions?.();
+    (window as any).renderTreesGrid?.();
+
+  } catch (err: any) {
+    console.error("❌ Transaction failed:", err);
+    alert(`Transaction failed: ${err.message || err}`);
+  }
+};
+
+// Alias for compatibility
+(window as any).confirmBuy = (window as any).confirmAdopt;
+
+(window as any).confirmSell = async function() {
+    console.log("🚀 CONFIRM SELL TRIGGERED");
+
+    try {
+        const modal = document.getElementById('sell-modal');
+        if (!modal) throw new Error("Sell modal not found");
+
+        const treeId = modal.dataset.treeId;
+        if (!treeId) throw new Error("Missing tree ID in sell modal");
+
+        const slider = document.getElementById('sell-modal-slider') as HTMLInputElement;
+        const sharesToSell = parseInt(slider?.value || "0");
+        if (sharesToSell <= 0) throw new Error("Invalid share amount");
+
+        const program = (window as any)._program;
+        const protocol = (window as any)._protocol;
+        const walletPubKey = (window as any).walletPubKey ?? (window as any).wallet?.publicKey;
+
+        if (!program || !protocol || !walletPubKey) throw new Error("Initialization error");
+
+        const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
+        if (btn) { btn.disabled = true; btn.textContent = "Processing..."; }
+
+        // 1. Calculate newTotal BEFORE the transaction for sync preparation
+        // We look into the global _allUserPositions cache created during dashboard load
+        const allPositions = (window as any)._allUserPositions || [];
+        const currentPos = allPositions.find((p: any) => p.treeId === treeId);
+        const oldBalance = currentPos ? parseInt(currentPos.sharesOwned) : 0;
+
+        const newTotal = Math.max(0, oldBalance - sharesToSell);
+        const isGuardian = newTotal >= 1000; // Matches GUARDIAN_THRESHOLD in lib.rs
+
+        // 2. Re-derive PDAs
+        const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync(
+            [Buffer.from("protocol")],
+            program.programId
+        );
+
+        const [treePda] = anchor.web3.PublicKey.findProgramAddressSync(
+            [Buffer.from("tree"), Buffer.from(treeId)],
+            program.programId
+        );
+
+        const [positionPda] = anchor.web3.PublicKey.findProgramAddressSync(
+            [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeId)],
+            program.programId
+        );
+
+        const treasuryPda = protocol.treasury;
+
+        console.log("⚡ Sending Sell Transaction...", { treeId, sharesToSell, newTotal });
+
+        // 3. Execute On-Chain
+        const tx = await program.methods
+            .sellShares(treeId, new BN(sharesToSell))
+            .accounts({
+                tree: treePda,
+                position: positionPda,
+                protocol: protocolPda,
+                treasury: treasuryPda,
+                seller: walletPubKey,
+                systemProgram: anchor.web3.SystemProgram.programId,
+            })
+            .rpc();
+
+        console.log(`✅ On-chain success: ${tx}`);
+
+        // 4. Comprehensive Supabase sync
+        // Pass wallet as string, and ensure numbers are clean
+        await (window as any).syncTransactionToSupabase(
+            walletPubKey.toBase58(),
+            treeId,
+            sharesToSell,
+            'SELL',
+            tx,
+            newTotal,
+            isGuardian
+        );
+
+        alert(`Successfully sold ${sharesToSell} shares!`);
+
+        (window as any).closeSellModal();
+
+        // Refresh the UI to show updated numbers
+        if (typeof (window as any).loadDashboard === 'function') {
+            await (window as any).loadDashboard();
+        }
+
+    } catch (err: any) {
+        console.error("❌ Sell failed:", err);
+        const msg = err.logs ? "Check console for program logs" : (err.message || err);
+        alert(`Sell failed: ${msg}`);
+
+        const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
+        if (btn) { btn.disabled = false; btn.textContent = "Sell Shares"; }
+    }
+};
+/**
+ * Synchronizes a Solana transaction result with Supabase.
+ * Updates both the transaction log and the user's current tree position.
+ */
+ async function syncTransactionToSupabase(
+     wallet: string,
+     treeId: string,
+     amount: number,
+     type: 'BUY' | 'SELL',
+     signature: string,
+     newTotal: number,
+     isGuardian: boolean
+ ) {
+     const supabase = (window as any)._sb;
+     if (!supabase) return console.error("Supabase client missing");
+
+     try {
+         // MATCHING YOUR SCHEMA: tx_type, new_total_shares, is_guardian, wallet_address, signature
+         const { error } = await supabase
+             .from('transactions') // Ensure your table name is correct (e.g., 'transactions' or 'logs')
+             .insert([{
+                 wallet_address: wallet,
+                 tree_id: treeId,           // Ensure this column exists in your table
+                 amount: amount,
+                 tx_type: type,             // Your schema says 'tx_type'
+                 signature: signature,
+                 new_total_shares: newTotal, // Your schema says 'new_total_shares'
+                 is_guardian: isGuardian,    // Your schema says 'is_guardian'
+                 timestamp: new Date().toISOString()
+             }]);
+
+         if (error) throw error;
+         console.log("✅ Supabase Sync Successful");
+     } catch (err) {
+         console.error("❌ Supabase Sync Error:", err);
+     }
+ }
+ 
+// Expose to window for your confirmAdopt/confirmSell functions
+(window as any).syncTransactionToSupabase = syncTransactionToSupabase;
+// ─────────────────────────────────────────────────────────────
+// GET PROTOCOL DATA
+// ─────────────────────────────────────────────────────────────
+export async function getProtocolData() {
+  // FIX: null-check program BEFORE using it
+  const program      = (window as any)._program;
+  const walletPubKey = (window as any).walletPubKey;
+
+  if (!program) {
+    throw new Error("Program not initialized. Connect wallet first.");
+  }
+
+  try {
+    const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("protocol")],
+      program.programId
+    );
+    const config       = await program.account.protocolConfig.fetch(protocolPda);
+    const treesOnChain = await program.account.tree.all();
+
+    let totalStakedOlv = 0;
+    if (walletPubKey) {
+      try {
+        const [stakePda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("stake"), walletPubKey.toBuffer()],
+          program.programId
+        );
+        const stakeAccount = await program.account.stakeAccount.fetch(stakePda);
+        totalStakedOlv = (stakeAccount.amount?.toNumber() || 0) / 1_000_000_000;
+      } catch (e) {
+        console.log("[getProtocolData] No StakeAccount found for this user.");
+      }
+    }
+
+    console.log("[getProtocolData] Fetched:", { config, treesCount: treesOnChain.length, totalStakedOlv });
+
+    (window as any)._protocol      = config;
+    (window as any)._treesOnChain  = treesOnChain;
+    (window as any)._stakedOlv     = totalStakedOlv;
+
+    return { config, treesOnChain, totalStakedOlv };
+
+  } catch (err) {
+    console.error("[getProtocolData] Error:", err);
+    throw err;
+  }
+}
+
+(window as any).getProtocolData     = getProtocolData;
+(window as any).refreshProtocolData = getProtocolData;
+
+// ─────────────────────────────────────────────────────────────
+// CLOSE TREE DETAIL MODAL
+// ─────────────────────────────────────────────────────────────
+// Note: oracleUpdateInterval, startOracleUpdates, and switchTreeDetailTab
+// are defined in test.ts and exposed to window. We just wire the close here.
+(window as any).closeTreeDetailModal = () => {
+  const interval = (window as any)._oracleUpdateInterval;
+  if (interval) {
+    clearInterval(interval);
+    (window as any)._oracleUpdateInterval = null;
+  }
+  document.getElementById('tree-detail-modal')?.classList.add('hidden');
+};
+// ─────────────────────────────────────────────────────────────
+// GLOBAL BANNER UPDATE
+// ─────────────────────────────────────────────────────────────
+(window as any).updateGlobalBanner = function(treeCount: number, shareCount: number, solPrice: number = 0.05) {
+  // 1. Define Ecosystem Coefficients
+  const OIL_PER_SHARE = 0.05;    // 50ml per share
+  const CO2_PER_SHARE = 0.15;    // 0.15kg per share
+  const BOTTLE_SIZE = 0.75;      // 750ml standard bottle
+
+  // 2. Perform Calculations
+  const totalOil = shareCount * OIL_PER_SHARE;
+  const totalBottles = Math.floor(totalOil / BOTTLE_SIZE);
+  const totalCarbon = shareCount * CO2_PER_SHARE;
+  const ecosystemValue = shareCount * solPrice;
+
+  // 3. Update DOM Elements using your setText/setEl utility
+  setEl('yourTrees', treeCount.toLocaleString());
+  setEl('dash-trees',treeCount.toLocaleString());
+  setEl('user-trees-stat',treeCount.toLocaleString());
+
+
+  setEl('portfolioShares', shareCount.toLocaleString());
+  setEl('dash-shares', shareCount.toLocaleString());
+  setEl('farm-shares-stat', shareCount.toLocaleString());
+
+
+  setEl('oilLiters', `${totalOil.toFixed(1)}L`);
+  setEl('dash-oil', `${totalOil.toFixed(1)}L`);
+
+  setEl('bottles', totalBottles.toString());
+  setEl('dash-bottles', totalBottles.toString());
+
+  setEl('carbonEst', `${totalCarbon.toFixed(1)}kg`);
+  setEl('portfolioValue', `${ecosystemValue.toFixed(2)} SOL`);
+
+  // 4. Clean up UI (Remove Shimmer effects)
+  const statsBanner = document.getElementById('stats');
+  if (statsBanner) {
+    statsBanner.querySelectorAll('.shimmer').forEach(el => el.classList.remove('shimmer'));
+  }
+
+  console.log(`[BANNER] Updated: ${shareCount} shares across ${treeCount} trees.`);
+};
+
+console.log("[functions.ts] ✅ Module loaded with all fixes applied");

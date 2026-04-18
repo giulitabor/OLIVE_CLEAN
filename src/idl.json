@@ -202,7 +202,7 @@
       "args": [
         {
           "name": "tree_id",
-          "type": "string"
+          "type": "u32"
         },
         {
           "name": "amount",
@@ -278,7 +278,7 @@
       "args": [
         {
           "name": "tree_id",
-          "type": "string"
+          "type": "u32"
         },
         {
           "name": "name",
@@ -294,18 +294,6 @@
         },
         {
           "name": "location",
-          "type": "string"
-        },
-        {
-          "name": "total_shares",
-          "type": "u64"
-        },
-        {
-          "name": "carbon_credit_id",
-          "type": "string"
-        },
-        {
-          "name": "last_inspection_url",
           "type": "string"
         }
       ]
@@ -395,24 +383,7 @@
         },
         {
           "name": "treasury",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121
-                ]
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "seller",
@@ -426,8 +397,8 @@
       ],
       "args": [
         {
-          "name": "tree_id",
-          "type": "string"
+          "name": "_tree_id",
+          "type": "u32"
         },
         {
           "name": "amount",
@@ -574,7 +545,7 @@
           },
           {
             "name": "tree_id",
-            "type": "string"
+            "type": "u32"
           },
           {
             "name": "shares_owned",
@@ -589,34 +560,12 @@
     },
     {
       "name": "Tree",
-      "docs": [
-        "─────────────────────────────────────────────────────────────────────────────",
-        "MINIMAL ON-CHAIN TREE STORAGE (NFT-style architecture)",
-        "",
-        "AUDIT-CRITICAL DATA STORED ON-CHAIN:",
-        "- tree_id: Unique identifier (String for \"F1-FR-001\" format)",
-        "- shares_sold: Trading state (MUST be on-chain)",
-        "- has_guardian: Ownership threshold flag",
-        "- metadata_uri: Points to off-chain JSON with full details",
-        "- carbon_hash: Hash of carbon certificate (audit verification)",
-        "- inspection_hash: Hash of last inspection report (liability protection)",
-        "- last_inspection_ts: Timestamp of last verification",
-        "",
-        "OFF-CHAIN STORAGE (Arweave/IPFS - recommended Arweave for immutability):",
-        "- name, variety, age, location, field, images, full carbon cert, inspection photos",
-        "",
-        "SECURITY MODEL:",
-        "- Carbon certificates: Store full PDF on Arweave, hash on-chain for verification",
-        "- Inspections: Store photos + report on Arweave, hash + timestamp on-chain",
-        "- Auditors can verify integrity by comparing Arweave content hash",
-        "─────────────────────────────────────────────────────────────────────────────"
-      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "tree_id",
-            "type": "string"
+            "type": "u32"
           },
           {
             "name": "name",
@@ -627,15 +576,11 @@
             "type": "string"
           },
           {
+            "name": "age",
+            "type": "u8"
+          },
+          {
             "name": "location",
-            "type": "string"
-          },
-          {
-            "name": "carbon_credit_id",
-            "type": "string"
-          },
-          {
-            "name": "last_inspection_url",
             "type": "string"
           },
           {
@@ -647,32 +592,16 @@
             "type": "u64"
           },
           {
-            "name": "last_harvest_yield_ml",
-            "type": "u64"
-          },
-          {
-            "name": "total_co2_kg",
-            "type": "u64"
-          },
-          {
-            "name": "age",
-            "type": "u8"
+            "name": "has_guardian",
+            "type": "bool"
           },
           {
             "name": "health_status",
             "type": "u8"
           },
           {
-            "name": "guardian_count",
-            "type": "u8"
-          },
-          {
-            "name": "has_guardian",
-            "type": "bool"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
+            "name": "total_harvests",
+            "type": "u32"
           }
         ]
       }

@@ -1,5 +1,22 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://indecipherably-trifurcate-rhea.ngrok-free.dev/admin/api/$1" }
+    { 
+      "source": "/api/(.*)", 
+      "destination": "https://indecipherably-trifurcate-rhea.ngrok-free.dev/admin/api/$1" 
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
   ]
 }

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OLIVIUM — MASTER DEBUG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    <style>
+        body { background: #0c0a09; color: #e7e5e4; font-family: 'Courier New', monospace; }
+        .card { background: #1c1917; border: 1px solid #444; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        .stat-val { color: #10b981; font-weight: bold; }
+    </style>
+</head>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ADOPT MODAL
+     Opened when user clicks a tree card.
+     test.ts can call window.openAdoptModal(treeAccount, protocol)
+══════════════════════════════════════════════════════════════ -->
+<div id="adopt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="background:rgba(20,15,5,.7); backdrop-filter:blur(6px)">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden"
+       onclick="event.stopPropagation()">
+
+    <!-- Header image strip -->
+    <div class="h-20 flex items-center justify-center text-5xl"
+         style="background:linear-gradient(135deg,#1e2d0f,#3d5a1a)">
+      🫒
+      <p class="text-xs text-amber-600 mt-1">
+  ⚡ Price increases as this tree fills
+</p>
+    </div>
+
+    <!-- Close -->
+    <button onclick="closeAdoptModal()"
+      class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition">
+      ✕
+    </button>
+
+    <div class="p-6">
+      <h2 id="modal-tree-name" class="serif text-2xl font-bold text-stone-900 mb-0.5">Tree #1</h2>
+      <p id="modal-tree-meta" class="text-sm text-stone-400 mb-5">Frantoio · 15 yrs · Grove A</p>
+
+      <!-- Stats row -->
+      <div class="flex gap-3 mb-5">
+        <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
+          <p id="modal-shares-left" class="font-bold text-stone-800">—</p>
+          <p class="text-xs text-stone-400 mt-0.5">Shares left</p>
+        </div>
+        <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
+          <p id="modal-health" class="font-bold text-stone-800">—</p>
+          <p class="text-xs text-stone-400 mt-0.5">Health</p>
+        </div>
+        <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
+          <p id="modal-harvests" class="font-bold text-stone-800">—</p>
+          <p class="text-xs text-stone-400 mt-0.5">Harvests</p>
+        </div>
+      </div>
+
+      <!-- Shares slider -->
+      <label class="block text-sm font-medium text-stone-700 mb-2">How many shares?</label>
+      <input id="modal-slider" type="range" min="1" max="1000" value="100" step="1"
+        class="w-full mb-3 accent-green-700"
+        oninput="updateModalCalc()" />
+
+      <div class="flex justify-between items-baseline mb-5">
+        <div>
+          <span id="modal-shares-val" class="text-2xl font-bold serif text-stone-900">100</span>
+          <span class="text-sm text-stone-400 ml-1">shares (<span id="modal-pct">10.0</span>%)</span>
+        </div>
+        <div>
+          <span class="text-sm text-stone-400">Cost:</span>
+          <span id="modal-cost" class="text-xl font-bold ml-1" style="color:var(--olive)">0.100 SOL</span>
+        </div>
+      </div>
+
+      <!-- Tier indicator -->
+      <div id="modal-tier-row" class="flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium bg-stone-100 text-stone-500">
+        <span id="modal-tier-icon">—</span>
+        <span id="modal-tier-label">Select at least 100 shares for Olive Lover tier</span>
+      </div>
+
+      <!-- Disclaimer -->
+      <p class="text-xs text-stone-400 leading-relaxed mb-4">
+        ⚖️ Not an investment. Benefits subject to harvest. You may receive less oil than estimated. Shares may have no resale value.
+      </p>
+
+      <!-- Legal check -->
+      <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-500">
+        <input id="modal-agree" type="checkbox" class="mt-0.5 accent-green-700" />
+        I confirm I am NOT a US/CA/UK resident and I have read the
+        <a href="#" class="underline ml-0.5" style="color:var(--olive)">Terms of Service</a>
+      </label>
+
+      <!-- Buy button -->
+      <button id="modal-buy-btn" disabled
+        onclick="confirmAdopt()"
+        class="w-full py-3 text-base font-bold rounded-xl text-white transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+        style="background:var(--olive)">
+        Adopt — pay <span id="modal-btn-cost">0.100</span> SOL
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-emerald-500 mb-6">Master Blockchain Trace</h1>
+
+        <div class="flex gap-4 mb-8">
+            <button onclick="runDiagnostic()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold transition">
+                🚀 EXECUTE FULL SCAN
+            </button>
+            <button onclick="location.reload()" class="border border-stone-700 px-6 py-3 rounded-lg">
+                🔄 RESET
+            </button>
+        </div>
+
+        <div id="output" class="space-y-4">
+            <div class="card">System idle. Click scan to begin...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as web3 from "https://esm.sh/@solana/web3.js";
+        import * as anchor from "https://esm.sh/@coral-xyz/anchor";
+
+        window.Buffer = window.buffer.Buffer;
+
+        const PROGRAM_ID_STR = "9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV";
+        const output = document.getElementById('output');
+
+        const print = (title, msg, type = 'success') => {
+            const div = document.createElement('div');
+            div.className = `card ${type}`;
+            div.innerHTML = `<h3 class="font-bold text-emerald-400 mb-1">${title}</h3><div class="text-sm opacity-90">${msg}</div>`;
+            output.appendChild(div);
+            window.scrollTo(0, document.body.scrollHeight);
+        };
+
+      window.runDiagnostic = async () => {
+            output.innerHTML = "";
+            print("Initialization", "Starting raw blockchain sync...");
+
+            try {
+                // 1. Connection & Wallet
+                const connection = new web3.Connection("http://localhost:8899", "confirmed");
+                const wallet = window.solana || window.phantom?.solana;
+                if (!wallet) throw new Error("Wallet not found!");
+                await wallet.connect();
+
+                print("Wallet", `Connected: <span class="stat-val">${wallet.publicKey.toBase58()}</span>`);
+
+                // 2. IDL Definition (Exact mapping from your uploaded file)
+                const idl = {
+                    "version": "0.1.0",
+                    "name": "olivium_dao",
+                    "address": PROGRAM_ID_STR,
+                    "instructions": [
+                        { "name": "dummy", "discriminator": [0,0,0,0,0,0,0,0], "accounts": [], "args": [] }
+                    ],
+                    "accounts": [
+                        { "name": "ProtocolConfig", "discriminator": [207, 91, 250, 28, 152, 179, 215, 209] },
+                        { "name": "SharePosition", "discriminator": [239, 228, 59, 88, 149, 73, 218, 15] },
+                        { "name": "Tree", "discriminator": [100, 9, 213, 154, 6, 136, 109, 55] }
+                    ],
+                    "types": [
+                        { "name": "ProtocolConfig", "type": { "kind": "struct", "fields": [
+                            { "name": "authority", "type": "pubkey" },
+                            { "name": "treasury", "type": "pubkey" },
+                            { "name": "sharePriceLamports", "type": "u64" },
+                            { "name": "totalTrees", "type": "u32" }
+                        ]}},
+                        { "name": "Tree", "type": { "kind": "struct", "fields": [
+                            { "name": "treeId", "type": "string" },
+                            { "name": "name", "type": "string" },
+                            { "name": "variety", "type": "string" },
+                            { "name": "totalShares", "type": "u64" },
+                            { "name": "sharesSold", "type": "u64" }
+                        ]}},
+                        { "name": "SharePosition", "type": { "kind": "struct", "fields": [
+                            { "name": "owner", "type": "pubkey" },
+                            { "name": "treeId", "type": "string" },
+                            { "name": "sharesOwned", "type": "u64" }
+                        ]}}
+                    ]
+                };
+
+                const provider = new anchor.AnchorProvider(connection, wallet, {});
+                const program = new anchor.Program(idl, provider);
+
+              // 3. Trace Protocol
+                                const [protoPDA] = web3.PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
+                                const protocol = await program.account.protocolConfig.fetchNullable(protoPDA);
+
+                                // Set global references for the modal
+                                window._protocol = protocol;
+                                window._modalProtocol = protocol;
+
+                                if (protocol) {
+                                    print("Protocol Config",
+                                        `PDA: ${protoPDA.toBase58()}<br>` +
+                                        `Price: <span class="stat-val">${(protocol.sharePriceLamports.toNumber() / 1e9)} SOL</span><br>` +
+                                        `Total Trees: <span class="stat-val">${protocol.totalTrees}</span>`);
+                                } else {
+                                    print("Protocol Config", "❌ NOT FOUND. Run 'Initialize Protocol' in Admin panel.", "error");
+                                }
+
+                                // 4. Trace Trees & Make Clickable
+                                const trees = (await program.account.tree.all()) || [];
+                                window._cachedTrees = trees; // CRITICAL: This allows openAdoptModal to find the data
+
+                                if (trees.length > 0) {
+                                    // Map items to clickable divs
+                                    let treeList = trees.map((t, idx) => `
+                                        <div class="mt-2 p-2 border border-stone-800 rounded hover:border-emerald-500 hover:bg-emerald-900/20 cursor-pointer transition-all group"
+                                             onclick="window.openAdoptModal('${idx}')">
+                                            <div class="flex justify-between items-center">
+                                                <span>• [${t.account.treeId}] <b>${t.account.name}</b></span>
+                                                <span class="text-[10px] bg-emerald-600 px-2 py-1 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity">CLICK TO ADOPT</span>
+                                            </div>
+                                            <div class="text-[10px] text-stone-500">Sold: ${t.account.sharesSold.toString()}</div>
+                                        </div>
+                                    `).join('');
+
+                                    print("Trees On-Chain", `Found <span class="stat-val">${trees.length}</span> trees (Click to open modal):<br>${treeList}`);
+                                } else {
+                                    print("Trees On-Chain", "⚠️ 0 Trees found. Run 'Bootstrap' or 'Register Tree'.", "error");
+                                }
+
+                                // 5. Trace Positions
+                                const positions = (await program.account.sharePosition.all([
+                                    { memcmp: { offset: 8, bytes: wallet.publicKey.toBase58() } }
+                                ])) || [];
+
+                                if (positions.length > 0) {
+                                    let posList = positions.map(p => `• Tree ${p.account.treeId}: <span class="stat-val">${p.account.sharesOwned.toString()} shares</span>`).join('<br>');
+                                    print("Your Grove", `Found <span class="stat-val">${positions.length}</span> positions:<br>${posList}`);
+                                } else {
+                                    print("Your Grove", "ℹ️ You don't own any shares yet.");
+                                }
+                                    print("System Health", "✅ All on-chain checks passed. If the main UI is empty, the issue is your <b>render function</b> timing or <b>Supabase</b> metadata mapping.", "success");
+
+            } catch (err) {
+                print("Fatal Error", err.message, "error");
+                console.error(err);
+            }
+        };
+
+  /**
+   * Opens the Adopt Modal and populates it with tree data
+   * @param {string} index - The index in the window._cachedTrees array
+   */
+   window.openAdoptModal = function(index) {
+     const treeWrap = window._cachedTrees[index];
+     if (!treeWrap) return;
+
+     const tree = treeWrap.account;
+     window._activeTree = treeWrap;
+
+     // Use BN to handle large share counts
+     const sharesLeftBN = tree.totalShares.sub(tree.sharesSold);
+
+     // Populate UI with tree_metadata
+     document.getElementById('modal-tree-name').innerText = tree.name;
+     document.getElementById('modal-tree-meta').innerText = `${tree.variety} · ID: ${tree.treeId}`;
+     document.getElementById('modal-shares-left').innerText = sharesLeftBN.toString();
+
+     const slider = document.getElementById('modal-slider');
+
+     // Safely determine the slider maximum
+     const maxSafe = sharesLeftBN.gt(new anchor.BN(Number.MAX_SAFE_INTEGER.toString()))
+       ? Number.MAX_SAFE_INTEGER
+       : sharesLeftBN.toNumber();
+
+     slider.max = maxSafe;
+     slider.value = Math.min(100, maxSafe);
+
+     document.getElementById('adopt-modal').classList.remove('hidden');
+     updateModalCalc();
+   };
+
+  window.closeAdoptModal = function() {
+    document.getElementById('adopt-modal').classList.add('hidden');
+  };
+
+  window.updateModalCalc = function() {
+    const slider = document.getElementById('modal-slider');
+    // Fix: Define 'val' immediately to prevent ReferenceError
+    const val = parseInt(slider.value) || 100;
+
+    const amountToBuyBN = new anchor.BN(val);
+    const protocol = window._protocol;
+    const tree = window._activeTree?.account;
+
+    if (!protocol || !tree) return;
+
+    // 1. Safe Percentage Calculation
+    // (Amount * 100) / Total
+    const pct = amountToBuyBN.mul(new anchor.BN(100)).div(tree.totalShares).toString();
+
+    // 2. Safe Cost Calculation (Zero-Footprint 53-bit Fix)
+    // Calculate total lamports as a BN first
+    const totalCostLamports = amountToBuyBN.mul(protocol.sharePriceLamports);
+
+    // Convert to SOL by treating it as a string and inserting a decimal point
+    // This avoids .toNumber() on large values entirely
+    const s = totalCostLamports.toString().padStart(10, '0');
+    const solCost = (s.slice(0, -9) || "0") + "." + s.slice(-9, -6);
+
+    // 3. Update UI
+    document.getElementById('modal-shares-val').innerText = val;
+    document.getElementById('modal-pct').innerText = pct;
+    document.getElementById('modal-cost').innerText = `${solCost} SOL`;
+    document.getElementById('modal-btn-cost').innerText = solCost;
+
+    // 4. Tier Logic
+    const tierRow = document.getElementById('modal-tier-row');
+    const tierLabel = document.getElementById('modal-tier-label');
+
+    if (val >= 500) {
+        tierRow.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium bg-emerald-100 text-emerald-700";
+        tierLabel.innerText = "Master Grower Tier Unlocked";
+    } else {
+        tierRow.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium bg-stone-100 text-stone-500";
+        tierLabel.innerText = "Select more shares for higher tiers";
+    }
+    checkRequirements();
+  };
+
+  function checkRequirements() {
+    const agreed = document.getElementById('modal-agree').checked;
+    const btn = document.getElementById('modal-buy-btn');
+    btn.disabled = !agreed;
+  }
+
+  // Listen for checkbox changes
+  document.getElementById('modal-agree').addEventListener('change', checkRequirements);
+
+  window.confirmAdopt = async function() {
+    alert(`Transaction would start here for ${document.getElementById('modal-shares-val').innerText} shares.`);
+    // Here you would call your anchor program:
+    // await program.methods.buyShares(new anchor.BN(shares)).accounts({...}).rpc();
+  };
+    </script>
+</body>
+</html>

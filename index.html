@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Olivium DAO — Adopt a Tuscan Olive Tree</title>
@@ -631,7 +632,7 @@
         <div class="flex items-center gap-2">
           <span id="tier-status-icon" class="text-2xl">🫒</span>
           <div class="flex-1">
-            <h3 id="tier-status-name" class="font-bold text-lg leading-tight">Olive Enthusiast</h3>
+            <h3 id="tier-status-name2" class="font-bold text-lg leading-tight">Olive Enthusiast</h3>
           </div>
         </div>
         <p id="tier-status-progress" class="text-xs mt-2 opacity-80">
@@ -717,7 +718,7 @@
           <!-- Empty State -->
           <div id="tree-positions-empty" class="bg-white border-2 border-dashed border-stone-200 rounded-2xl p-12 text-center">
             <div class="text-6xl mb-4">🌱</div>
-            <p class="font-semibold text-stone-600 text-lg mb-2">You haven't adopted any trees yet</p>
+            <p class="font-semibold text-stone-600 text-lg mb-2">You PLEASE haven't adopted any trees yet</p>
             <p class="text-sm text-stone-400 mb-6">Start building your Tuscan olive grove portfolio</p>
             <button onclick="switchTab('home')" class="px-6 py-3 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-xl transition shadow-md">
               Explore Trees
@@ -762,7 +763,7 @@
         <!-- Recent Activity -->
         <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
           <h3 class="font-semibold text-stone-900 mb-4">Recent Activity</h3>
-          <div id="activity-feed" class="space-y-3">
+          <div id="global-activity-feed" class="space-y-3">
             <!-- Dynamically filled -->
             <!-- Example: -->
             <!--
@@ -782,19 +783,33 @@
           </div>
         </div>
 
+        <div class="bg-gradient-to-br from-green-700 to-emerald-600 text-white rounded-2xl p-4 hover:shadow-lg transition">
+    <p class="text-xs opacity-80 mb-2">Your Status</p>
+    <div class="flex items-center gap-2">
+        <span id="tier-status-icon" class="text-2xl">🫒</span>
+        <div class="flex-1">
+            <h3 id="tier-status-name" class="font-bold text-lg leading-tight">Olive Enthusiast</h3>
+            <p class="text-xs opacity-90"><span id="farm-ownership-percent2">0.0000%</span> Total Ownership</p>
+        </div>
+    </div>
+    <p class="text-xs mt-2 opacity-80">
+        <span id="total-grove-shares">0</span> total shares all trees
+    </p>
+</div>
+
         <!-- Farm Ownership Share -->
         <div class="bg-gradient-to-br from-stone-900 to-stone-800 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
           <div class="absolute -right-8 -top-8 w-32 h-32 bg-white opacity-5 rounded-full"></div>
           <div class="relative">
             <p class="text-xs text-stone-400 uppercase tracking-wider mb-2">Farm Ownership</p>
-            <p id="farm-ownership-pct" class="serif text-4xl font-bold mb-1">0.00%</p>
+            <p id="farm-ownership-percent" class="serif text-4xl font-bold mb-1">0.00%</p>
             <p class="text-xs text-stone-400">
               of <span class="text-amber-400 font-medium">Toscagialla Heritage Grove</span>
             </p>
 
             <div class="grid grid-cols-2 gap-3 mt-5">
               <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                <p id="farm-trees-stat" class="font-bold text-xl">—</p>
+                <p id="user-trees-stat" class="font-bold text-xl">—</p>
                 <p class="text-xs text-stone-300">Trees</p>
               </div>
               <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
@@ -1489,7 +1504,7 @@
 
       <div class="flex justify-between items-baseline mb-5">
         <div>
-          <span id="modal-shares-val" class="text-2xl font-bold serif text-stone-900">100</span>
+          <span id="modal-amount-display" class="text-2xl font-bold serif text-stone-900">100</span>
           <span class="text-sm text-stone-400 ml-1">shares (<span id="modal-pct">10.0</span>%)</span>
         </div>
         <div>
@@ -1511,8 +1526,9 @@
 
       <!-- Legal check -->
       <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-500">
-        <input id="modal-agree" type="checkbox" class="mt-0.5 accent-green-700" />
-        I confirm I am NOT a US/CA/UK resident and I have read the
+        <!-- ADD onchange handler: -->
+        <input id="modal-agree" type="checkbox" class="mt-0.5 accent-green-700" onchange="toggleModalButton()" />
+                I confirm I am NOT a US/CA/UK resident and I have read the
         <a href="#" class="underline ml-0.5" style="color:var(--olive)">Terms of Service</a>
       </label>
 
@@ -1904,38 +1920,12 @@
     </div>
   </div>
 </div>
-
-<!--
-  QUICK FIX: Add this BEFORE your script tags in index.html
-  This uses CDN imports - no build step required
--->
-
-<!-- Add BEFORE line 1825 in your index.html -->
-<script type="module">
-  // Import Buffer from CDN
-  import { Buffer } from 'https://cdn.skypack.dev/buffer@6.0.3';
-
-  // Install globally
-  window.Buffer = Buffer;
-  window.global = window;
-  window.process = {
-    env: {},
-    version: '',
-    nextTick: (fn) => setTimeout(fn, 0)
-  };
-
-  console.log('[CDN POLYFILL] Buffer installed from Skypack CDN');
-</script>
-
-<!-- Your existing scripts -->
-<script type="module" src="/src/functions.ts"></script>
-<script type="module" src="/src/test.ts"></script>
 <!-- ═══════════════════════════════════════════════════════════
      SCRIPTS
 ══════════════════════════════════════════════════════════════ -->
-
-<script type="module" src="/src/functions.ts"></script>
+<script type="module" src="/src/connection.ts"></script>
 <script type="module" src="/src/test.ts"></script>
+<script type="module" src="/src/functions.ts"></script>
 <script type="module" src="/src/weatherEngine.ts"></script>
 
 

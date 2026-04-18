@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OLIVIUM — FULL SYNC TRACE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    <style>
+        body { background: #0c0a09; color: #e7e5e4; font-family: 'Courier New', monospace; }
+        .card { background: #1c1917; border: 1px solid #333; padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+        .match-ok { border-left: 4px solid #10b981; }
+        .match-fail { border-left: 4px solid #f59e0b; }
+        .error-crit { border-left: 4px solid #ef4444; background: #2d1616; }
+        .stat-label { color: #a8a29e; font-size: 0.75rem; text-transform: uppercase; }
+        .stat-val { color: #10b981; font-weight: bold; font-size: 1rem; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-emerald-500">Full System Sync Trace</h1>
+            <p class="text-stone-500 italic">Validating Blockchain &lt;-&gt; Supabase alignment</p>
+        </header>
+
+        <div class="flex gap-4 mb-8">
+            <button onclick="runFullTrace()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-xl font-bold transition flex items-center gap-2">
+                <span>🔍</span> RUN FULL ALIGNMENT CHECK
+            </button>
+        </div>
+
+        <div id="output" class="space-y-4">
+            <div class="card text-stone-500">Ready for diagnostic...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as web3 from "https://esm.sh/@solana/web3.js";
+        import * as anchor from "https://esm.sh/@coral-xyz/anchor";
+
+        window.Buffer = window.buffer.Buffer;
+
+        const PROGRAM_ID_STR = "9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV";
+        const RPC_URL = "http://localhost:8899";
+        const output = document.getElementById('output');
+
+        const printCard = (html, type = '') => {
+            const div = document.createElement('div');
+            div.className = `card ${type}`;
+            div.innerHTML = html;
+            output.appendChild(div);
+        };
+
+        window.runFullTrace = async () => {
+            output.innerHTML = "";
+
+            // 🛠️ HANDSHAKE FIX: Try to get sb from window or wait for connection.ts
+            let activeSb = window._sb || window.sb;
+
+            if (!activeSb) {
+                printCard("⏳ Supabase not found in window. Attempting to initialize connection...", "text-amber-400");
+                try {
+                    // Try to trigger the connection logic if it's available
+                    if (window.connectWallet) await window.connectWallet(true);
+                    activeSb = window._sb || window.sb;
+                } catch (e) { console.error("Auto-init failed", e); }
+            }
+
+            if (!activeSb) {
+                printCard("❌ CRITICAL: Supabase client not found. Ensure connection.ts is running and window._sb is set.", "error-crit");
+                return;
+            }
+
+            try {
+                const connection = new web3.Connection(RPC_URL, "confirmed");
+                const wallet = window.solana || window.phantom?.solana;
+                if (!wallet.publicKey) await wallet.connect();
+
+                const idl = {
+                    "version": "0.1.0", "name": "olivium_dao", "address": PROGRAM_ID_STR,
+                    "instructions": [{ "name": "dummy", "discriminator": [0,0,0,0,0,0,0,0], "accounts": [], "args": [] }],
+                    "accounts": [
+                        { "name": "ProtocolConfig", "discriminator": [207, 91, 250, 28, 152, 179, 215, 209] },
+                        { "name": "Tree", "discriminator": [100, 9, 213, 154, 6, 136, 109, 55] },
+                        { "name": "SharePosition", "discriminator": [239, 228, 59, 88, 149, 73, 218, 15] }
+                    ],
+                    "types": [
+                        { "name": "ProtocolConfig", "type": { "kind": "struct", "fields": [
+                            { "name": "authority", "type": "pubkey" }, { "name": "treasury", "type": "pubkey" },
+                            { "name": "sharePriceLamports", "type": "u64" }, { "name": "totalTrees", "type": "u32" }
+                        ]}},
+                        { "name": "Tree", "type": { "kind": "struct", "fields": [
+                            { "name": "treeId", "type": "string" }, { "name": "name", "type": "string" },
+                            { "name": "variety", "type": "string" }, { "name": "sharesSold", "type": "u64" }
+                        ]}},
+                        { "name": "SharePosition", "type": { "kind": "struct", "fields": [
+                            { "name": "owner", "type": "pubkey" }, { "name": "treeId", "type": "string" }, { "name": "sharesOwned", "type": "u64" }
+                        ]}}
+                    ]
+                };
+
+                const provider = new anchor.AnchorProvider(connection, wallet, {});
+                const program = new anchor.Program(idl, provider);
+
+                // Parallel Fetch
+                const [allTrees, allPositions, { data: sbTrees, error: sbError }] = await Promise.all([
+                    program.account.tree.all(),
+                    program.account.sharePosition.all(),
+                    activeSb.from('tree_metadata').select('*')
+                ]);
+
+                if (sbError) throw new Error("Supabase Error: " + sbError.message);
+
+                printCard(`
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><p class="stat-label">On-Chain Trees</p><p class="stat-val">${allTrees.length}</p></div>
+                        <div><p class="stat-label">Supabase Rows</p><p class="stat-val">${sbTrees.length}</p></div>
+                    </div>
+                `, "match-ok");
+
+                // Audit
+                allTrees.forEach(t => {
+                    const tid = t.account.treeId;
+                    const meta = sbTrees.find(s => s.tree_id === tid);
+                    if (meta) {
+                        printCard(`✅ MATCH: <b>${tid}</b> found in both.`, "match-ok");
+                    } else {
+                        printCard(`⚠️ MISMATCH: <b>${tid}</b> missing in Supabase.`, "match-fail");
+                    }
+                });
+
+            } catch (err) {
+                printCard(`FATAL ERROR: ${err.message}`, "error-crit");
+            }
+        };
+    </script>
+
+    <script type="module">
+        import { connectWallet } from "/src/connection.ts";
+        window.connectWallet = connectWallet;
+        // Auto-run if trusted
+        connectWallet(true).catch(() => console.log("Waiting for manual connect..."));
+    </script>
+</body>
+</html>

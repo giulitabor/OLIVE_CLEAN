@@ -1,183 +1,158 @@
+/**
+ * OliviumTour - Professional Guided Onboarding
+ * Logic: Creates a focused overlay, highlights active elements, and manages tab flow.
+ */
 export class OliviumTour {
     private currentStep = 0;
     private overlay: HTMLElement | null = null;
     private modal: HTMLElement | null = null;
+    private highlightBox: HTMLElement | null = null;
 
     private steps = [
-
-      // Inside tour.ts -> steps array
-      {
-          target: '#connectBtn',
-          title: "1. Identity & Legal Consent",
-          content: `Connect your wallet to begin.
-          <br><br>
-          <b style="color:#22c55e;">AUDIT NOTE:</b> You will be asked to sign a 'Proof of Intent'. This confirms you understand these trees are <b>Living Assets</b>, not financial instruments. This signature is stored off-chain for regulatory compliance.`,
-          action: "click"
-      },
         {
-            target: '#active-listings',
-            title: "2. The Living Asset",
-            content: "Each card represents a physical olive grove. You can see real-time CO2 offset and harvest metrics here.",
-            action: "view"
+            target: '#btn-connect',
+            title: "1. Identity & Consent",
+            content: "Connect your wallet to begin. You will sign a 'Proof of Intent'—confirming you understand these are <b>Living Assets</b>, not digital abstractions.",
+            action: "view",
+            position: "bottom"
         },
         {
-            target: '.modal-btn-primary',
-            title: "3. Fractional Ownership",
-            content: "Buy SFT fractions. 10,000 shares = 1 Tree. You are buying the rights to future harvests and carbon credits.",
-            action: "click"
+            target: '#nav-tabs',
+            title: "2. The Navigation Hub",
+            content: "Once connected, use these tabs to move between the <b>Field</b> (Marketplace), your <b>Dashboard</b>, and <b>Rewards</b>.",
+            action: "view",
+            position: "bottom"
         },
         {
-            target: 'a[href="gov.html"]',
-            title: "4. Governance & Staking",
-            content: "Once you own shares, move to the Gov portal to stake them. Staking unlocks your share of the SOL revenue pool.",
-            action: "click"
+            target: '#trees-grid',
+            title: "3. The Living Grove",
+            content: "This is the heart of the DAO. Each card is a real tree in Tuscany. Look for the <b>Health Pulse</b> to see real-time soil data.",
+            action: () => (window as any).switchTab('home'),
+            position: "top"
+        },
+        {
+            target: '#stats',
+            title: "4. Impact Tracking",
+            content: "Track your collective impact here: Carbon offset, annual oil yield, and the estimated ecosystem value of your grove.",
+            action: "view",
+            position: "bottom"
+        },
+        {
+            target: '#tab-rewards',
+            title: "5. Staking & Yield",
+            content: "Finally, navigate to Rewards to stake your shares. Staking unlocks your portion of the SOL revenue pool and harvest invites.",
+            action: () => (window as any).switchTab('rewards'),
+            position: "left"
         }
     ];
 
     constructor() {
-        // Keyboard Navigation - Only active if modal is visible
-        window.addEventListener('keydown', (e) => {
-            if (this.modal?.style.display === 'block') {
-                if (e.key === 'ArrowRight') this.next();
-                if (e.key === 'ArrowLeft') this.prev();
-                if (e.key === 'Escape') this.end();
-            }
+        this.initElements();
+    }
+
+    private initElements() {
+        // Create the backdrop overlay
+        this.overlay = document.createElement('div');
+        Object.assign(this.overlay.style, {
+            position: 'fixed', inset: '0', background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(4px)', zIndex: '9998', display: 'none', transition: 'all 0.3s'
         });
-    }
 
-    private setupElements() {
-        this.overlay = document.getElementById('tour-overlay');
-        this.modal = document.getElementById('tour-modal');
+        // Create the focus/highlight box
+        this.highlightBox = document.createElement('div');
+        Object.assign(this.highlightBox.style, {
+            position: 'absolute', borderRadius: '12px', boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.7)',
+            zIndex: '9999', pointerEvents: 'none', transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            border: '2px solid #22c55e'
+        });
 
-        if (this.overlay) {
-            // CRITICAL: Allows clicking the highlighted element below the overlay
-            this.overlay.style.pointerEvents = 'none';
-        }
-        if (this.modal) {
-            // Re-enable clicks for the modal itself
-            this.modal.style.pointerEvents = 'auto';
-        }
-    }
+        // Create the tour modal
+        this.modal = document.createElement('div');
+        Object.assign(this.modal.style, {
+            position: 'fixed', width: '320px', background: 'white', borderRadius: '16px',
+            padding: '24px', zIndex: '10000', display: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+            fontFamily: 'Inter, sans-serif'
+        });
 
-    private renderProgressDots() {
-        return `
-            <div style="display:flex; gap:6px; justify-content:center; margin-top:12px;">
-                ${this.steps.map((_, i) => `
-                    <div style="width:6px; height:6px; border-radius:50%; background:${i === this.currentStep ? '#22c55e' : '#334155'}; transition:0.3s;"></div>
-                `).join('')}
-            </div>
-        `;
-    }
-
-    private createClickIndicator(x: number, y: number) {
-        const clicker = document.createElement('div');
-        clicker.className = 'tour-click-indicator';
-        clicker.style.left = `${x}px`;
-        clicker.style.top = `${y}px`;
-        document.body.appendChild(clicker);
-        setTimeout(() => clicker.remove(), 800);
+        document.body.appendChild(this.overlay);
+        document.body.appendChild(this.highlightBox);
+        document.body.appendChild(this.modal);
     }
 
     public start() {
-        this.setupElements();
-        if (!this.overlay || !this.modal) return;
-
         this.currentStep = 0;
-        this.overlay.style.display = 'block';
-        this.modal.style.display = 'block';
+        this.overlay!.style.display = 'block';
+        this.modal!.style.display = 'block';
         this.showStep();
     }
 
-    public prev() {
-        if (this.currentStep > 0) {
-            this.currentStep--;
-            this.showStep();
+    private showStep() {
+        const step = this.steps[this.currentStep];
+        const target = document.querySelector(step.target) as HTMLElement;
+
+        if (typeof step.action === 'function') {
+            step.action();
         }
+
+        setTimeout(() => {
+            if (target) {
+                const rect = target.getBoundingClientRect();
+                this.updateHighlight(rect);
+                this.updateModal(rect, step);
+            }
+        }, 300); // Allow for tab switching animations
+    }
+
+    private updateHighlight(rect: DOMRect) {
+        Object.assign(this.highlightBox!.style, {
+            top: `${rect.top + window.scrollY - 8}px`,
+            left: `${rect.left + window.scrollX - 8}px`,
+            width: `${rect.width + 16}px`,
+            height: `${rect.height + 16}px`
+        });
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    private updateModal(rect: DOMRect, step: any) {
+        this.modal!.innerHTML = `
+            <h3 class="serif text-lg font-bold text-stone-900 mb-2">${step.title}</h3>
+            <p class="text-sm text-stone-600 mb-6 leading-relaxed">${step.content}</p>
+            <div class="flex justify-between items-center">
+                <button onclick="window.exitTour()" class="text-xs font-bold text-stone-400 hover:text-stone-600">SKIP</button>
+                <button onclick="window.nextTourStep()" class="px-4 py-2 bg-green-600 text-white text-xs font-bold rounded-lg shadow-md hover:bg-green-700 transition">
+                    ${this.currentStep === this.steps.length - 1 ? 'FINISH' : 'NEXT'}
+                </button>
+            </div>
+        `;
+
+        // Simple positioning logic
+        const modalY = rect.bottom + 20;
+        const modalX = Math.min(window.innerWidth - 340, Math.max(20, rect.left));
+        
+        Object.assign(this.modal!.style, {
+            top: `${modalY}px`,
+            left: `${modalX}px`
+        });
     }
 
     public next() {
-        this.currentStep++;
-
-        // Page transition logic (Market -> Gov)
-        if (this.currentStep === 3 && window.location.pathname.includes('market')) {
-            this.end();
-            window.location.href = 'gov.html?tour=true';
-            return;
-        }
-
-        if (this.currentStep < this.steps.length) {
+        if (this.currentStep < this.steps.length - 1) {
+            this.currentStep++;
             this.showStep();
         } else {
             this.end();
         }
     }
 
-    private showStep() {
-        const step = this.steps[this.currentStep];
-        const el = document.querySelector(step.target) as HTMLElement;
-
-        if (el && this.modal) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            setTimeout(() => {
-                const rect = el.getBoundingClientRect();
-                const padding = 15;
-                const viewportHeight = window.innerHeight;
-                const modalHeight = 220;
-
-                if (step.action === "click") {
-                    this.createClickIndicator(rect.left + rect.width / 2, rect.top + rect.height / 2);
-                }
-
-                // Update Spotlight CSS Variables
-                document.documentElement.style.setProperty('--x', `${rect.left - padding}px`);
-                document.documentElement.style.setProperty('--y', `${rect.top - padding}px`);
-                document.documentElement.style.setProperty('--x2', `${rect.right + padding}px`);
-                document.documentElement.style.setProperty('--y2', `${rect.bottom + padding}px`);
-
-                // Smart Positioning
-                let topPosition = rect.bottom + 20;
-                if (rect.bottom + modalHeight > viewportHeight) {
-                    topPosition = rect.top - modalHeight - 20;
-                }
-
-                this.modal!.style.top = `${topPosition}px`;
-                this.modal!.style.left = `${Math.max(20, Math.min(window.innerWidth - 340, rect.left))}px`;
-
-                // Render Content
-                this.modal!.innerHTML = `
-                    <div class="tour-progress-bg" style="height:4px; width:100%; background:rgba(255,255,255,0.1); position:absolute; top:0; left:0; border-radius:16px 16px 0 0;">
-                        <div style="height:100%; width:${((this.currentStep + 1) / this.steps.length) * 100}%; background:#22c55e; transition: width 0.3s;"></div>
-                    </div>
-                    <div class="tour-step-count" style="font-size:9px; color:#22c55e; letter-spacing:2px; margin: 10px 0 5px;">STEP ${this.currentStep + 1} OF ${this.steps.length}</div>
-                    <h3 style="color:white; font-family: 'Syne', sans-serif; font-weight:800; margin-bottom:10px;">${step.title}</h3>
-                    <p style="color:#94a3b8; font-family: 'Space Mono', monospace; font-size:12px; line-height:1.5; margin-bottom:10px;">${step.content}</p>
-
-                    ${this.renderProgressDots()}
-
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                        <button onclick="window.exitTour()" style="background:none; border:none; color:#64748b; font-size:10px; cursor:pointer; font-weight:700;">SKIP</button>
-                        <div>
-                            ${this.currentStep > 0 ? `<button onclick="window.prevTourStep()" style="background:none; border:1px solid #334155; color:white; padding:8px 14px; border-radius:8px; font-size:11px; cursor:pointer; margin-right:8px;">BACK</button>` : ''}
-                            <button onclick="window.nextTourStep()" style="background:#22c55e; color:#060a07; padding:8px 18px; border:none; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
-                                ${this.currentStep === this.steps.length - 1 ? 'FINISH' : 'NEXT'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }, 300);
-        }
-    }
-
     public end() {
-        if (this.overlay) this.overlay.style.display = 'none';
-        if (this.modal) this.modal.style.display = 'none';
+        this.overlay!.style.display = 'none';
+        this.modal!.style.display = 'none';
+        this.highlightBox!.style.display = 'none';
     }
 }
 
-// Initialize instance
-const tourInstance = new OliviumTour();
-(window as any).startProtocolTour = () => tourInstance.start();
-(window as any).nextTourStep = () => tourInstance.next();
-(window as any).prevTourStep = () => tourInstance.prev();
-(window as any).exitTour = () => tourInstance.end();
+// Global hooks for HTML buttons
+const instance = new OliviumTour();
+(window as any).startTour = () => instance.start();
+(window as any).nextTourStep = () => instance.next();
+(window as any).exitTour = () => instance.end();

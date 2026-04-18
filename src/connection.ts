@@ -1,266 +1,231 @@
-import { Buffer } from "buffer";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { AnchorProvider, Program, setProvider } from "@coral-xyz/anchor";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import idl from "./SIMPLE/idl/idl.json";
 import { createClient } from "@supabase/supabase-js";
 
-// ── Polyfills ──────────────────────────────────────────────────────────────
-if (typeof (window as any).Buffer === "undefined") {
-  (window as any).Buffer = Buffer;
-}
-
-// ── Supabase ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE CLIENT
+// ═══════════════════════════════════════════════════════════════════════════
 export const sb = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-async function hasSignedTOS(wallet: string): Promise<boolean> {
-  const { data, error } = await sb
-    .from("legal_sign")
-    .select("id")
-    .eq("wallet_pubkey", wallet)
-    .limit(1);
+// ═══════════════════════════════════════════════════════════════════════════
+// BLOCKCHAIN CONNECTION
+// ═══════════════════════════════════════════════════════════════════════════
+const RPC_URL = import.meta.env.VITE_RPC_URL || "http://localhost:8899";
+console.log(`[CONNECTION] Using RPC: ${RPC_URL}`);
 
-  if (error) {
-    console.error("SB TOS check failed:", error.message);
-    return false;
-  }
-  return data.length > 0;
-}
-
-async function saveTOS(wallet: string): Promise<void> {
-  const { error } = await sb.from("legal_sign").insert([{ wallet_pubkey: wallet }]);
-  if (error) {
-    console.error("SB TOS insert failed:", error.message);
-  } else {
-    console.log("✅ TOS stored in Supabase");
-  }
-}
-
-// ── Core exports ───────────────────────────────────────────────────────────
-export const connection = new Connection("http://127.0.0.1:8899", "confirmed");
+export const connection = new Connection(RPC_URL, "confirmed");
 export const PROGRAM_ID = new PublicKey(idl.address);
 
-const OLV_MINT = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa");
+// ═══════════════════════════════════════════════════════════════════════════
+// INTERNAL STATE TRACKING
+// ═══════════════════════════════════════════════════════════════════════════
+let _program: Program | null = null;
+let _provider: AnchorProvider | null = null;
+let _isInitialized = false;
 
-export let provider: AnchorProvider;
+// ═══════════════════════════════════════════════════════════════════════════
+// SAFE GETTERS (Throw if not initialized)
+// ═══════════════════════════════════════════════════════════════════════════
+export function getProgram(): Program {
+  if (!_program) {
+    throw new Error("❌ Program not initialized. Connect wallet first.");
+  }
+  return _program;
+}
+
+export function getProvider(): AnchorProvider {
+  if (!_provider) {
+    throw new Error("❌ Provider not initialized. Connect wallet first.");
+  }
+  return _provider;
+}
+
+// Legacy exports for backwards compatibility
 export let program: Program;
+export let provider: AnchorProvider;
 
-// ── connectWallet ──────────────────────────────────────────────────────────
-// Pure connect: sets up Anchor provider/program and updates shared UI slots
-// (wallet-display, wallet-container, connectBtn hide). Does NOT rewire modal
-// event listeners — each page handles its own TOS flow.
-export async function connectWallet() {
-  const wallet = (window as any).solana;
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN WALLET CONNECTION FUNCTION
+// ═══════════════════════════════════════════════════════════════════════════
+export async function connectWallet(auto = false) {
+  console.log(`[CONNECT] Starting wallet connection (auto=${auto})...`);
+
+  // 1. Get wallet reference
+  const wallet = (window as any).phantom?.solana || (window as any).solana;
+
   if (!wallet) {
-    alert("Phantom wallet not found!");
-    throw new Error("Wallet not found");
+    const errorMsg = "Please install Phantom wallet";
+    console.error(`❌ ${errorMsg}`);
+    throw new Error(errorMsg);
   }
-
-  await wallet.connect();
-
-  provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
-  setProvider(provider);
-  program = new Program(idl as any, provider);
-
-  // Expose globals for debugging
-  (window as any).provider  = provider;
-  (window as any).program   = program;
-  (window as any).connection = connection;
-
-  console.log("Wallet Connected:", wallet.publicKey.toBase58());
-
-  // Optional UI slots that may or may not exist on the current page
-  const pubkey = wallet.publicKey.toBase58();
-  const short  = pubkey.slice(0, 4) + "..." + pubkey.slice(-4);
-
-  const walletDisplayEl    = document.getElementById("wallet-display");
-  const walletContainerEl  = document.getElementById("wallet-container");
-  const connectBtnEl       = document.getElementById("connectBtn");   // market.html
-  const btnConnectEl       = document.getElementById("btn-connect");  // gov.html
-
-  if (walletDisplayEl)   walletDisplayEl.innerText = pubkey;
-  if (walletContainerEl) walletContainerEl.classList.remove("hidden");
-  if (connectBtnEl)      connectBtnEl.classList.add("hidden");
-  if (btnConnectEl)      { btnConnectEl.innerText = short; btnConnectEl.classList.add("connected"); }
-
-  // Notify any page that has registered a post-connect hook
-  if (typeof (window as any).showMainContent === "function") {
-    (window as any).showMainContent();
-  }
-
-  // Fire a DOM event so pages can react without polling
-  window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey } }));
-
-  return { provider, program };
-}
-
-// ── TOS sign helper (single canonical version) ────────────────────────────
-export async function signTermsOfService(walletPubKey: string): Promise<boolean> {
-  const wallet = (window as any).solana;
-  if (!wallet) return false;
-
-  const message = `
-Welcome to Olivium Protocol.
-By signing this message, you agree to the Terms of Service:
-
-NOTICE: ASSET CLASSIFICATION & RISK DISCLOSURE
-
-1. NOT A FINANCIAL INSTRUMENT: Olivium SFTs represent fractional rights to agricultural
-   yields (Olive Oil) and ecological data (Carbon Sequestration) from physical olive groves.
-   These are not shares, investment contracts, or securities.
-
-2. REGENERATIVE UTILITY: Participation is intended for users supporting sustainability,
-   eco-tourism, and regenerative agriculture. Olivium makes no guarantee of profit or
-   secondary market liquidity.
-
-3. PHYSICAL RISKS: Yields are subject to environmental factors including weather,
-   biological health, and climate change.
-
-Timestamp: ${new Date().toISOString()}
-Wallet: ${walletPubKey}
-  `.trim();
 
   try {
-    const signed = await wallet.signMessage(new TextEncoder().encode(message), "utf8");
-    console.log("✅ TOS Signed:", signed);
-    return true;
-  } catch (err) {
-    console.error("❌ User rejected TOS signature.");
-    return false;
-  }
-}
-
-// ── DOMContentLoaded — wire up TOS modal for pages that use #connectBtn ───
-// This handles market.html (id="connectBtn") and index.html.
-// gov.html uses id="btn-connect" with window.connect() and handles its own flow.
-window.addEventListener("DOMContentLoaded", () => {
-  const connectBtn = document.getElementById("connectBtn") as HTMLButtonElement | null;
-  const modal      = document.getElementById("tos-modal")   as HTMLElement | null;
-  const confirmBtn = document.getElementById("confirm-tos-btn") as HTMLButtonElement | null;
-  const cancelBtn  = document.getElementById("cancel-tos-btn")  as HTMLButtonElement | null;
-
-  if (!connectBtn || !modal || !confirmBtn) {
-    // Page does not use this TOS modal pattern (e.g. gov.html) — skip silently.
-    return;
-  }
-
-  // Step 1: clicking connect shows the TOS modal
-  connectBtn.addEventListener("click", () => {
-    modal.style.display = "flex";
-  });
-
-  // Step 2: cancel closes the modal
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-      modal.style.display = "none";
-    });
-  }
-
-  // Step 3: confirm — check Supabase, sign if first time, then connect
-  confirmBtn.addEventListener("click", async () => {
-    modal.style.display = "none";
-
-    const wallet = (window as any).solana;
-    if (!wallet) {
-      alert("Phantom not found. Please install the Phantom browser extension.");
-      return;
-    }
-
-    try {
-      connectBtn.innerText = "Connecting...";
-      connectBtn.setAttribute("disabled", "true");
-
-      // Connect wallet first so we have publicKey
+    // 2. Connect wallet
+    if (auto) {
+      // Silent auto-connect (only if previously authorized)
+      await wallet.connect({ onlyIfTrusted: true });
+    } else if (!wallet.publicKey) {
+      // User-initiated connection
       await wallet.connect();
-      const pubkey = wallet.publicKey.toBase58();
-
-      const alreadySigned = await hasSignedTOS(pubkey);
-
-      if (!alreadySigned) {
-        // First visit — get the user's cryptographic signature
-        const accepted = await signTermsOfService(pubkey);
-        if (!accepted) {
-          // User rejected the signature
-          connectBtn.innerText = "Connect Wallet";
-          connectBtn.removeAttribute("disabled");
-          return;
-        }
-        // Persist acceptance to Supabase so we don't ask again
-        await saveTOS(pubkey);
-      }
-
-      // Now set up the full Anchor provider + program
-      await connectWallet();
-
-      connectBtn.innerText = pubkey.slice(0, 4) + "..." + pubkey.slice(-4);
-      connectBtn.removeAttribute("disabled");
-
-      // Let market.ts refresh the UI if available
-      if (typeof (window as any).refreshMarket === "function") {
-        await (window as any).refreshMarket();
-      }
-
-    } catch (err) {
-      console.error("Connection flow failed:", err);
-      connectBtn.innerText = "Connect Wallet";
-      connectBtn.removeAttribute("disabled");
     }
-  });
-});
 
-// ── fetchBalances (used by index.html oracle page) ─────────────────────────
-export async function fetchBalances() {
-  if (!program || !provider?.publicKey) return;
+    // 3. Verify connection succeeded
+    if (!wallet.publicKey) {
+      throw new Error("Wallet connection failed - no public key");
+    }
 
-  const walletPubKey = provider.publicKey;
+    const pubkey = wallet.publicKey.toBase58();
+    console.log(`✅ Wallet connected: ${pubkey.slice(0, 8)}...`);
 
-  let totalStakedOlv   = 0;
-  let totalStakedShares = 0;
-  let liquidTreeShares  = 0;
-  let olvTokenBalance   = "0";
-  let solBalance        = 0;
+    // 4. Store connection state
+    localStorage.setItem("walletConnected", "true");
 
-  try {
-    solBalance = (await provider.connection.getBalance(walletPubKey)) / 1e9;
+    // 5. Create Anchor provider
+    _provider = new AnchorProvider(connection, wallet, {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+    });
+    setProvider(_provider);
 
-    try {
-      const userAta = getAssociatedTokenAddressSync(OLV_MINT, walletPubKey);
-      const bal = await program.provider.connection.getTokenAccountBalance(userAta);
-      olvTokenBalance = bal.value.uiAmountString || "0";
-    } catch { olvTokenBalance = "0"; }
+    // 6. Initialize program
+    _program = new Program(idl as any, _provider);
 
-    try {
-      const [stakePda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("stake"), walletPubKey.toBuffer()],
-        program.programId
-      );
-      const stakeAccount = await program.account.stakeAccount.fetchNullable(stakePda);
-      totalStakedOlv = (stakeAccount?.amount?.toNumber() || 0) / 1_000_000_000;
-    } catch { totalStakedOlv = 0; }
+    // 7. Set legacy exports (backwards compatibility)
+    provider = _provider;
+    program = _program;
 
-    try {
-      const positions = await program.account.treePosition.all([
-        { memcmp: { offset: 8, bytes: walletPubKey.toBase58() } }
-      ]);
-      positions.forEach((p: any) => {
-        liquidTreeShares  += p.account.shares?.toNumber()       ?? 0;
-        totalStakedShares += p.account.lockedShares?.toNumber() ?? 0;
-      });
-    } catch { liquidTreeShares = 0; totalStakedShares = 0; }
+    // 8. ✅ FIX: Set ALL global variables for cross-file access
+    (window as any)._program = _program;
+    (window as any).program = _program; // Legacy
+    (window as any)._provider = _provider;
+    (window as any).provider = _provider; // Legacy
+    (window as any)._sb = sb;
+    (window as any).sb = sb; // Legacy
+    (window as any)._connection = connection;
+    (window as any).connection = connection; // Legacy
+    (window as any).walletPubKey = wallet.publicKey;
+    (window as any).wallet = wallet;
 
-    const set = (id: string, v: string) => {
-      const el = document.getElementById(id);
-      if (el) el.innerText = v;
-    };
-    set("balance-sol",    solBalance.toFixed(2));
-    set("balance-liquid", `${liquidTreeShares} Shares`);
-    set("balance-staked", `${totalStakedShares} Locked`);
-    set("global-weight",  `${totalStakedOlv.toFixed(2)} OLV`);
+    console.log("✅ All globals set:", {
+      _program: !!_program,
+      _provider: !!_provider,
+      _sb: !!sb,
+      walletPubKey: !!wallet.publicKey,
+    });
 
-  } catch (err) {
-    console.error("fetchBalances failed:", err);
+    // 9. ✅ FIX: Initialize protocol data IMMEDIATELY
+    console.log("[CONNECT] Initializing protocol...");
+    await ensureProtocolInitialized();
+
+    // 10. ✅ FIX: Update wallet UI if function exists
+    if (typeof (window as any).updateWalletUI === "function") {
+      (window as any).updateWalletUI(pubkey);
+    }
+
+    // 11. ✅ FIX: Dispatch connection event for listeners
+    const isAdmin = pubkey === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
+    window.dispatchEvent(
+      new CustomEvent("olivium:connected", {
+        detail: { pubkey, isAdmin },
+      })
+    );
+
+    console.log("✅ Connection complete. Event dispatched.");
+
+    _isInitialized = true;
+
+    return { provider: _provider, program: _program, pubkey, isAdmin };
+
+  } catch (err: any) {
+    console.error("❌ Connection failed:", err);
+
+    // Clear failed state
+    _program = null;
+    _provider = null;
+    _isInitialized = false;
+
+    throw err;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ✅ FIX: PROTOCOL INITIALIZATION WITH ERROR HANDLING
+// ═══════════════════════════════════════════════════════════════════════════
+export async function ensureProtocolInitialized(): Promise<any> {
+  console.log("[PROTOCOL] Checking initialization...");
+
+  const prog = getProgram();
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("protocol")],
+    prog.programId
+  );
+
+  try {
+    const protocol = await prog.account.protocolConfig.fetch(protocolPda);
+
+    // ✅ FIX: Set protocol globals IMMEDIATELY
+    (window as any)._protocol = protocol;
+    (window as any).protocol = protocol; // Legacy
+    (window as any).protocolPda = protocolPda;
+
+    console.log("✅ Protocol initialized:", {
+      authority: protocol.authority.toBase58().slice(0, 8),
+      totalTrees: protocol.totalTrees,
+      sharePriceLamports: protocol.sharePriceLamports.toString(),
+    });
+
+    return protocol;
+
+  } catch (err) {
+    console.warn("⚠️ Protocol not found on-chain. Run initialization first.");
+    console.error(err);
+
+    // Set to null so other code can detect uninitialized state
+    (window as any)._protocol = null;
+    (window as any).protocol = null;
+    (window as any).protocolPda = protocolPda; // PDA still valid for init
+
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ✅ NEW: CHECK IF CONNECTED
+// ═══════════════════════════════════════════════════════════════════════════
+export function isConnected(): boolean {
+  return _isInitialized && _program !== null && _provider !== null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ✅ NEW: DISCONNECT WALLET
+// ═══════════════════════════════════════════════════════════════════════════
+export async function disconnectWallet() {
+  const wallet = (window as any).wallet;
+
+  if (wallet?.disconnect) {
+    await wallet.disconnect();
+  }
+
+  // Clear all state
+  _program = null;
+  _provider = null;
+  _isInitialized = false;
+
+  localStorage.removeItem("walletConnected");
+
+  // Clear globals
+  (window as any)._program = null;
+  (window as any)._provider = null;
+  (window as any)._protocol = null;
+  (window as any).walletPubKey = null;
+
+  console.log("✅ Disconnected successfully");
+
+  window.dispatchEvent(new CustomEvent("olivium:disconnected"));
+}
+
+console.log("[connection.ts] ✅ Module loaded");
