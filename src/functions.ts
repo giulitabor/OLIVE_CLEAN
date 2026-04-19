@@ -1291,10 +1291,15 @@ console.log("syncing----BUY--");
 
 // Alias for compatibility
 (window as any).confirmBuy = (window as any).confirmAdopt;
-
 (window as any).confirmSell = async function() {
     console.log("🚀 CONFIRM SELL TRIGGERED");
 
+    // 1. Prevent double-execution via a global lock
+    if ((window as any)._isSelling) return;
+    (window as any)._isSelling = true;
+
+    const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
+    
     try {
         const modal = document.getElementById('sell-modal');
         if (!modal) throw new Error("Sell modal not found");
@@ -1312,55 +1317,52 @@ console.log("syncing----BUY--");
 
         if (!program || !protocol || !walletPubKey) throw new Error("Initialization error");
 
-        const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
-        if (btn) { btn.disabled = true; btn.textContent = "Processing..."; }
+        if (btn) { 
+            btn.disabled = true; 
+            btn.textContent = "Processing..."; 
+        }
 
-        // 1. Calculate newTotal BEFORE the transaction for sync preparation
-        // We look into the global _allUserPositions cache created during dashboard load
+        // Logic for metadata/guardian status
         const allPositions = (window as any)._allUserPositions || [];
         const currentPos = allPositions.find((p: any) => p.treeId === treeId);
         const oldBalance = currentPos ? parseInt(currentPos.sharesOwned) : 0;
-
         const newTotal = Math.max(0, oldBalance - sharesToSell);
-        const isGuardian = newTotal >= 1000; // Matches GUARDIAN_THRESHOLD in lib.rs
+        const isGuardian = newTotal >= 1000;
 
-        // 2. Re-derive PDAs
-        const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync(
-            [Buffer.from("protocol")],
-            program.programId
-        );
-
-        const [treePda] = anchor.web3.PublicKey.findProgramAddressSync(
-            [Buffer.from("tree"), Buffer.from(treeId)],
-            program.programId
-        );
-
-        const [positionPda] = anchor.web3.PublicKey.findProgramAddressSync(
-            [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeId)],
-            program.programId
-        );
-
+        const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
+        const [treePda] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("tree"), Buffer.from(treeId)], program.programId);
+        const [positionPda] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeId)], program.programId);
         const treasuryPda = protocol.treasury;
 
         console.log("⚡ Sending Sell Transaction...", { treeId, sharesToSell, newTotal });
 
-        // 3. Execute On-Chain
-        const tx = await program.methods
-            .sellShares(treeId, new BN(sharesToSell))
-            .accounts({
-                tree: treePda,
-                position: positionPda,
-                protocol: protocolPda,
-                treasury: treasuryPda,
-                seller: walletPubKey,
-                systemProgram: anchor.web3.SystemProgram.programId,
-            })
-            .rpc();
-
-        console.log(`✅ On-chain success: ${tx}`);
+        let tx;
+        try {
+            tx = await program.methods
+                .sellShares(treeId, new BN(sharesToSell))
+                .accounts({
+                    tree: treePda,
+                    position: positionPda,
+                    protocol: protocolPda,
+                    treasury: treasuryPda,
+                    seller: walletPubKey,
+                    systemProgram: anchor.web3.SystemProgram.programId,
+                })
+                .rpc();
+            
+            console.log(`✅ On-chain success: ${tx}`);
+        } catch (rpcErr: any) {
+            // Check if the error is actually because it already succeeded
+            const errMsg = rpcErr.toString();
+            if (errMsg.includes("already been processed")) {
+                console.warn("⚠️ Transaction already processed by network. Treating as success.");
+                tx = "PROCESSED_ON_CHAIN"; // Placeholder for the sync function
+            } else {
+                throw rpcErr; // Real error, pass to outer catch
+            }
+        }
 
         // 4. Comprehensive Supabase sync
-        // Pass wallet as string, and ensure numbers are clean
         await (window as any).syncTransactionToSupabase(
             walletPubKey.toBase58(),
             treeId,
@@ -1372,21 +1374,24 @@ console.log("syncing----BUY--");
         );
 
         alert(`Successfully sold ${sharesToSell} shares!`);
-
         (window as any).closeSellModal();
 
-        // Refresh the UI to show updated numbers
         if (typeof (window as any).loadDashboard === 'function') {
             await (window as any).loadDashboard();
         }
 
     } catch (err: any) {
         console.error("❌ Sell failed:", err);
-        const msg = err.logs ? "Check console for program logs" : (err.message || err);
+        const msg = err.message || err;
         alert(`Sell failed: ${msg}`);
-
-        const btn = document.getElementById('sell-modal-btn') as HTMLButtonElement;
-        if (btn) { btn.disabled = false; btn.textContent = "Sell Shares"; }
+        
+        if (btn) { 
+            btn.disabled = false; 
+            btn.textContent = "Sell Shares"; 
+        }
+    } finally {
+        // Clear the lock
+        (window as any)._isSelling = false;
     }
 };
 /**
