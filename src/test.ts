@@ -1,25 +1,50 @@
 /**
  * test.ts — Olivium DAO Browser Frontend
- *
- * FIXES APPLIED:
- * 1. Protocol not initialized → graceful degradation (show "Setup Required" instead of crashing)
- * 2. Supabase table 'tree_meta' not found → wrapped with helpful error + fallback check
- * 3. buyShares missing treasury account → added treasury to PurchaseShares accounts
- * 4. sellShares missing treasury account → added treasury to SellShares accounts
- * 5. initializePosition instruction called but doesn't exist in IDL → removed, purchase_shares uses init_if_needed
- * 6. auditTotalDaoStake() admin helper added (recommendation #2)
- * 7. claimStakingRewards() stub added (recommendation #1)
- * 8. executeProposal() stub added (recommendation #4)
  */
 
 import "./polyfill";
 import { Buffer } from "buffer";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { connectWallet, program, sb, connection } from "./connection";
+import { connectWallet, sb, connection } from "./connection";
 import './weatherEngine';
+import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 
-// 2. Add this to trigger the weather whenever the dashboard loads
+
+const idl = {
+    "version": "0.1.0",
+    "name": "olivium_dao",
+    "address": "9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV",
+    "instructions": [
+        { "name": "dummy", "discriminator": [0,0,0,0,0,0,0,0], "accounts": [], "args": [] }
+    ],
+    "accounts": [
+        { "name": "ProtocolConfig", "discriminator": [207, 91, 250, 28, 152, 179, 215, 209] },
+        { "name": "SharePosition", "discriminator": [239, 228, 59, 88, 149, 73, 218, 15] },
+        { "name": "Tree", "discriminator": [100, 9, 213, 154, 6, 136, 109, 55] }
+    ],
+    "types": [
+        { "name": "ProtocolConfig", "type": { "kind": "struct", "fields": [
+            { "name": "authority", "type": "pubkey" },
+            { "name": "treasury", "type": "pubkey" },
+            { "name": "sharePriceLamports", "type": "u64" },
+            { "name": "totalTrees", "type": "u32" }
+        ]}},
+        { "name": "Tree", "type": { "kind": "struct", "fields": [
+            { "name": "treeId", "type": "string" },
+            { "name": "name", "type": "string" },
+            { "name": "variety", "type": "string" },
+            { "name": "totalShares", "type": "u64" },
+            { "name": "sharesSold", "type": "u64" }
+        ]}},
+        { "name": "SharePosition", "type": { "kind": "struct", "fields": [
+            { "name": "owner", "type": "pubkey" },
+            { "name": "treeId", "type": "string" },
+            { "name": "sharesOwned", "type": "u64" }
+        ]}}
+    ]
+};
+//Add this to trigger the weather whenever the dashboard loads
 async function initWeather() {
   console.log("TRYINGG TO LAOAD WEATHER");
 
@@ -28,9 +53,7 @@ async function initWeather() {
         await (window as any).refreshWeatherUI();
     }
 }
-initWeather();
-// Then add all the functions from weather-integration.ts
-// (or save weather-integration.ts separately and import it)
+//initWeather();
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BUFFER POLYFILL
@@ -40,6 +63,34 @@ if (typeof window !== "undefined" && !(window as any).Buffer) {
   console.log("[INIT] Buffer polyfill installed");
 }
 
+// --- 1. Define Helpers First ---
+const findProtocolPDA = () => {
+  const program = (window as any)._program || (window as any).program;
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("protocol")],
+    program.programId
+  );
+};
+
+const findTreePDA = (treeId: string) => {
+  const program = (window as any)._program || (window as any).program;
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("tree"), Buffer.from(treeId)],
+    program.programId
+  );
+};
+
+const findTreasuryPDA = (activeProgram: any) => {
+    return anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from("treasury")],
+        activeProgram.programId
+    );
+};
+
+// --- 2. IMMEDIATELY Expose to Window ---
+(window as any).findProtocolPDA = findProtocolPDA;
+(window as any).findTreePDA = findTreePDA;
+(window as any).findTreasuryPDA = findTreasuryPDA;
 /**
  * COMPLETE WALLET BALANCE + LIVE PRICE FEEDS
  *
@@ -47,7 +98,6 @@ if (typeof window !== "undefined" && !(window as any).Buffer) {
  * Place it BEFORE the loadDashboard() function (around line 240)
  */
 
-import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
@@ -280,7 +330,7 @@ console.log("[INIT] ✅ Wallet balance functions loaded");
 // ══════════════════════════════════════════════════════════════════════════════
 (window as any)._sb          = sb;
 (window as any)._connection  = connection;
-(window as any)._program     = program;
+const program = (window as any)._program || (window as any).program;
 (window as any)._findTreePDA = findTreePDA;
 (window as any)._buyShares   = (treeId: string | number, shares: number) => {
   const treeIdStr = String(treeId);
@@ -343,24 +393,34 @@ console.log(`[DOM] Trees container found: ${!!treesContainer}`);
 // PDA HELPERS (must match lib.rs seeds exactly)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function findProtocolPDA(): [PublicKey, number] {
-  const [pda, bump] = PublicKey.findProgramAddressSync(
-    [Buffer.from("protocol")],
-    program.programId
-  );
-  console.log(`[PDA] Protocol PDA: ${pda.toBase58()}, bump: ${bump}`);
-  return [pda, bump];
-}// This can stay anywhere in the file and still work
+//function findProtocolPDA() {
+//    const program = window._program;
 
-function findTreePDA(treeId: string | number): [PublicKey, number] {
-  const treeIdStr = String(treeId);
-  const [pda, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("tree"), Buffer.from(treeIdStr)],
-    program.programId
-  );
-  console.log(`[PDA] Tree PDA for "${treeIdStr}": ${pda.toBase58()}, bump: ${bump}`);
-  return [pda, bump];
-}
+//    if (!program) {
+////        throw new Error("Program not initialized");
+//    }
+
+//    return PublicKey.findProgramAddressSync(
+//        [Buffer.from("protocol")],
+//        program.programId
+//    );
+//}
+
+//function findTreePDA(treeId: string | number): [PublicKey, number] {
+//  const program = window._program;
+//  if (!program) {
+//      throw new Error("Program not initialized");
+//  }
+
+//  const treeIdStr = String(treeId);
+//  const [pda, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+  //  [Buffer.from("tree"), Buffer.from(treeIdStr)],
+  //  program.programId
+//  );
+  //console.log(`[PDA] Tree PDA for "${treeIdStr}": ${pda.toBase58()}, bump: ${bump}`);
+  //return [pda, bump];
+//}
+
 function findPositionPDA(owner: PublicKey, treeId: string | number): [PublicKey, number] {
   const treeIdStr = String(treeId);
   const [pda, bump] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -376,34 +436,33 @@ function findPositionPDA(owner: PublicKey, treeId: string | number): [PublicKey,
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// WALLET HELPER
+// WALLET HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
 
-function getWallet(): PublicKey {
-  const pk = program.provider.publicKey;
-  if (!pk) {
-    console.error("[WALLET] No wallet connected");
-    throw new Error("Wallet not connected — click Connect Wallet first.");
+/**
+ * Returns the current wallet's PublicKey.
+ * Use this for addr.toBase58() or PDA derivation.
+ */
+function getPublicKey(): PublicKey {
+  const wallet = (window as any).phantom?.solana || (window as any).solana;
+  if (!wallet || !wallet.publicKey) {
+    throw new Error("Wallet not connected or publicKey missing");
   }
-  console.log(`[WALLET] Active wallet: ${pk.toBase58()}`);
-  return pk;
+  return wallet.publicKey;
 }
 
-function toNumericTreeId(id: string | number): number {
-  if (typeof id === "number") {
-    console.log(`[PARSE] Tree ID already numeric: ${id}`);
-    return id;
-  }
-  const match = id.match(/\d+$/);
-  if (!match) {
-    console.error(`[PARSE] Cannot parse tree_id: ${id}`);
-    throw new Error("Cannot parse tree_id: " + id);
-  }
-  const num = parseInt(match[0], 10);
-  console.log(`[PARSE] Parsed tree_id "${id}" → ${num}`);
-  return num;
-}
+/**
+ * Returns the Anchor Provider and Program instance.
+ */
+function getWallet() {
+  const provider = (window as any).provider;
+  const program = (window as any).program || (window as any)._program;
 
+  if (!provider || !program) {
+    throw new Error("Anchor Provider or Program not initialized yet");
+  }
+  return { provider, program };
+}
 // ══════════════════════════════════════════════════════════════════════════════
 // SAFE FETCH TREE (handles non-existent accounts gracefully)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -434,10 +493,14 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
 
   try {
     await connectWallet();
-    const wallet  = getWallet();
-    const addr    = wallet.toBase58();
+    const wallet = (window as any).solana;
+    if (!wallet || !wallet.publicKey) {
+      throw new Error("Wallet not connected or publicKey missing");
+    }
+    const program = window._program;
+    program.programId
+    const addr = wallet.publicKey.toBase58();
     const isAdmin = addr === ADMIN_PUBKEY;
-
     console.log(`[CONNECT] ✅ Wallet connected: ${addr}`);
     console.log(`[CONNECT] Admin status: ${isAdmin ? "YES" : "NO"}`);
 
@@ -569,10 +632,16 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
 // DASHBOARD — MAIN LOAD FUNCTION
 // FIX #1: Protocol not initialized → graceful degradation instead of hard throw
 // ══════════════════════════════════════════════════════════════════════════════
-async function fetchUserPositions(walletPubKey: PublicKey) {
-  const activeProgram = (window as any)._program || program;
+async function fetchUserPositions(walletInput: any) {
+const activeProgram = (window as any)._program || (window as any).program;
+  if (!activeProgram) return [];
 
   try {
+    // FIX: Convert string or wallet object to PublicKey
+    const walletPubKey = typeof walletInput === 'string'
+      ? new PublicKey(walletInput)
+      : (walletInput.publicKey || walletInput);
+
     const allPositions = await activeProgram.account.sharePosition.all([
       { memcmp: { offset: 8, bytes: walletPubKey.toBase58() } }
     ]);
@@ -582,16 +651,13 @@ async function fetchUserPositions(walletPubKey: PublicKey) {
       totalSharesOwned += pos.account.sharesOwned.toNumber();
     });
 
-    console.log(`[UI] Calculated ${totalSharesOwned} shares across ${allPositions.length} positions.`);
-
-    // TRIGGER THE UI UPDATE
     if (typeof (window as any).updateDashboardStats === 'function') {
       (window as any).updateDashboardStats(totalSharesOwned, allPositions.length);
     }
-    updateActivePerks(totalSharesOwned);
-
+    return allPositions;
   } catch (e) {
-    console.error("Failed to fetch user positions:", e);
+    console.error("fetchUserPositions failed:", e);
+    return [];
   }
 }
  async function syncPurchaseToSupabase(walletPubKey, treeId) {
@@ -686,8 +752,8 @@ function updateDashboardStats(totalShares: number, treeCount: number) {
         const elBannerValue = document.getElementById('portfolioValue');
 
         // 2. Calculations
-        const annualLiters = totalShares * 0.024; // 24L per 1000 shares
-        const annualBottles = Math.floor(annualLiters / 0.75);
+        const annualLiters = totalShares * 0.020; // 20ml per share = 0.020L
+        const annualBottles = Math.floor(annualLiters * 2); // 500ml bottles
         const carbonKg = (totalShares / 1000) * 25;
         const estValueSol = totalShares * 0.5; // Assuming 0.5 SOL/share based on your logs
 
@@ -738,66 +804,97 @@ function updateDashboardStats(totalShares: number, treeCount: number) {
 
     console.log(`[DASHBOARD] UI Sync complete for ${totalShares} shares.`);
 }
-
-
 (window as any).setupProtocol = async (sharePriceSol: number) => {
-  console.log("[ADMIN] Initializing Protocol...");
-  try {
-    const [protocolPDA] = findProtocolPDA();
-    const [treasuryPDA] = findTreasuryPDA();
-    const wallet = (window as any).solana.publicKey;
-    adminLog(`⚙️  Protocol Setup -----...`);
+  //const provider = new anchor.AnchorProvider(connection, wallet, {});
+  const prog = new anchor.Program(idl, provider);
 
-    adminLog(`   - Protocol: ${protocolPDA.toBase58()}, Treasury: ${treasuryPDA.toBase58()}, Who this: ${wallet.toBase58()}`);
+  //const prog = getActiveProgram();
 
-    console.log("Initializing Protocol with:");
-    console.log("  - Protocol PDA:", protocolPDA.toBase58());
-    console.log("  - Treasury PDA:", treasuryPDA.toBase58());
-    console.log("  - Authority:", wallet.toBase58());
-    console.log("  - Share Price: 0.5 SOL");
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("protocol")],
+    prog.programId
+  );
 
-    const minPrice = new anchor.BN(500_000_000); // 0.5 SOL
-    // Must match the 4 arguments in the Rust function signature
-    const sharePrice = new anchor.BN(500_000_000); // 0.5 SOL
-    const buyFee = new anchor.BN(100);             // 1%
-    const sellFee = new anchor.BN(500);            // 5%
-    const threshold = new anchor.BN(1000);         // 1000 shares
+  // 1. Check if it exists first
+  const info = await connection.getAccountInfo(protocolPda);
+  if (info) {
+    console.log("⚠️ Protocol already exists. Skipping initialization.");
+    return; // Or call an 'update' instruction if your program has one
+  }
+    console.log("[ADMIN] 🛠️ Initializing Protocol with 7 arguments...");
 
-    // Try the standard call
-const tx = await program.methods.initializeProtocol(sharePrice, buyFee, sellFee, threshold, new anchor.BN(1000),
-// total_shares (if added to ProtocolConfig)
-    new anchor.BN(1)     // min_purchase (if added to ProtocolConfig)
-  )
-      .accounts({
-        protocol: protocolPDA,
-        authority: wallet,
-        treasury: treasuryPDA,
-        systemProgram: SystemProgram.programId,
-      }
-    )
-      .rpc();
+    // Use the reliable program instance
+    const activeProgram = (window as any)._program || (window as any).program;
+    const wallet = (window as any).solana;
 
-    showToast("✅ Protocol Initialized!");
-    console.log("[ADMIN] ✅ Protocol Initialized. TX:", tx);
-
-    await loadDashboard(); // Refresh UI
-  } catch (err: any) {
-    console.error("[ADMIN] Setup failed:", err);
-    adminLog(`${err} `);
-
-    // Provide helpful diagnostic
-    if (err.message?.includes('InstructionDidNotDeserialize')) {
-      console.error('\n❌ INSTRUCTION MISMATCH ERROR');
-      console.error('Your IDL doesn\'t match the instruction call.');
-      console.error('\nTO FIX:');
-      console.error('1. Open browser console');
-      console.error('2. Run: window._program.idl.instructions.find(i => i.name.includes("init"))');
-      console.error('3. Check the account names and order');
-      console.error('4. Update setupProtocol to match exactly\n');
+    if (!activeProgram) {
+        alert("Connect wallet first!");
+        return;
     }
 
-    showToast("Setup failed: " + err.message, true);
-  }
+    try {
+        // 1. Derive PDAs exactly as the contract expects
+        const [protocolPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+            [Buffer.from("protocol")],
+            activeProgram.programId
+        );
+        const [treasuryPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+            [Buffer.from("treasury")],
+            activeProgram.programId
+        );
+
+        // 2. Prepare the 7 Arguments (must be BN for u64)
+        const args = {
+            sharePrice:  new anchor.BN((sharePriceSol || 0.5) * 1e9),
+            buyFee:      new anchor.BN(100),   // 1%
+            sellFee:     new anchor.BN(500),   // 5%
+            threshold:   new anchor.BN(1000),  // 1000 shares
+            totalShares: new anchor.BN(1000),  // 1000 shares per tree
+            minPurchase: new anchor.BN(10)     // 10 shares min
+        };
+
+        console.log("Sending Init TX to PDA:", protocolPDA.toBase58());
+
+        // 3. The RPC Call
+
+                console.log("ARGS LENGTH:", [
+          args.sharePrice,
+          args.buyFee,
+          args.sellFee,
+          args.threshold,
+          args.totalShares,
+          args.minPurchase
+        ].length);
+        // NOTE: Use camelCase 'initializeProtocol' to match Anchor's auto-generated IDL methods
+        const tx = await activeProgram.methods
+            .initializeProtocol(
+                args.sharePrice,
+                args.buyFee,
+                args.sellFee,
+                args.threshold,
+                args.totalShares,
+                args.minPurchase
+            )
+            .accounts({
+                protocol: protocolPDA,   // Account name from your IDL
+                authority: wallet.publicKey,
+                treasury: treasuryPDA,   // Account name from your IDL
+                systemProgram: anchor.web3.SystemProgram.programId,
+            })
+            .rpc();
+
+        console.log("✅ Protocol Initialized! TX:", tx);
+        alert("Success! Protocol initialized on-chain.");
+
+        // Reload to let the dashboard fetch the newly created account
+        location.reload();
+
+    } catch (err: any) {
+        console.error("[ADMIN] Setup failed:", err);
+        // Better error logging for Anchor errors
+        if (err.logs) console.log("Program Logs:", err.logs);
+        alert("Setup failed: " + err.message);
+    }
 };
 let _cachedTrees: any[] = []; // Declare it here!
 
@@ -1270,176 +1367,115 @@ console.log('[TREE MODAL] Oracle integration loaded ✅');
         (window as any).updateModalCalc();
     }
 };
+/**
+ * REFACTORED: loadDashboard
+ * Includes Heavy Trace Engine & Global State Protection
+ */
+ async function loadDashboard() {
+  const TRACE_ID = `DASH_${Date.now().toString().slice(-4)}`;
+  console.group(`[${TRACE_ID}] 🔄 Syncing Grove...`);
 
-async function loadDashboard() {
-  console.log("\n────────────────────────────────────────");
-  console.log("[DASHBOARD] 🔄 Syncing Grove...");
-  console.log("────────────────────────────────────────\n");
+  const activeProgram = (window as any)._program || (window as any).program;
+  const activeSb = (window as any)._sb || (window as any).sb;
+
+  if (!activeProgram) {
+    console.error(`[${TRACE_ID}] ❌ ABORT: No active program found.`);
+    console.groupEnd();
+    return;
+  }
 
   try {
-    const wallet = getWallet();
-    const walletStr = wallet.toBase58();
-    const isAdmin = walletStr === ADMIN_PUBKEY;
+    const wallet = (window as any).phantom?.solana || (window as any).solana;
+    if (!wallet?.publicKey) throw new Error("Wallet not connected");
 
-    // 1. DEFINE UI CONTAINERS (Correct IDs from index.html)
-    const treesContainer = document.getElementById('trees-grid');
-    const positionsContainer = document.getElementById('tree-position-cards');
+    const addr = wallet.publicKey.toBase58();
+    const adminKeyStr = (window as any).ADMIN_PUBKEY || "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
+    const isAdmin = addr === adminKeyStr;
 
-    // 2. LOAD PROTOCOL
-    const [protocolPDA] = findProtocolPDA();
-    let protocol: any = null;
-    try {
-      protocol = await (program.account as any).protocolConfig.fetch(protocolPDA);
-      (window as any)._protocol = protocol;
-      console.log(`[DASHBOARD] ✅ Protocol loaded. Price: ${protocol.sharePriceLamports.toNumber() / 1e9} SOL`);
-    } catch (err) {
-      console.warn(`[DASHBOARD] ⚠️ Protocol not initialized`);
-      if (isAdmin) document.getElementById('admin-setup-required')?.classList.remove('hidden');
-    }
+    // 1. Corrected UI Setter (Fixed 'v is not defined' risk)
+    const setUI = (id: string, value: string) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+      else console.debug(`[${TRACE_ID}] Element #${id} not in current view.`);
+    };
 
-    // 3. FETCH POSITIONS (Blockchain as Source of Truth)
-    console.log(`[DASHBOARD] Fetching positions...`);
-    const onChainPositions = await program.account.sharePosition.all([
-      { memcmp: { offset: 8, bytes: walletStr } }
+    // 2. Protocol Fetch
+    const [protocolPDA] = (window as any).findProtocolPDA();
+    const accountClient = activeProgram.account.protocolConfig || activeProgram.account.protocol;
+    const protocolData = await accountClient.fetchNullable(protocolPDA);
+    (window as any)._protocol = protocolData;
+
+    // 3. Data Fetching
+    console.log(`[${TRACE_ID}] Fetching Chain Positions for ${addr.slice(0,8)}...`);
+    const [onChainPositions, { data: dbTrees }] = await Promise.all([
+      activeProgram.account.sharePosition.all([{ memcmp: { offset: 8, bytes: addr } }]),
+      activeSb.from('tree_metadata').select('*')
     ]);
-    console.log(`[DASHBOARD] Positions (chain): ${onChainPositions.length}`);
-    // 1. Actually call the logic-heavy fetch function
-const userPositions = await fetchUserPositions(wallet) || [];
-const set = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-// 1. FORMAT DATA
-const price = (protocol.sharePriceLamports.toNumber() / 1e9).toFixed(4);
-const totalTrees = String(protocol.totalTrees ?? '240');
 
+    // 4. Position Normalization (Crucial for F1-FR-005 mapping)
+    const enrichedPositions = onChainPositions.map(pos => {
+      // Anchor returns camelCase (treeId), but we check both just in case
+      const tId = pos.account.treeId || pos.account.tree_id;
+      const meta = dbTrees?.find(t => String(t.tree_id) === String(tId));
+      return {
+        ...pos,
+        treeId: tId, // Normalize key for the renderer
+        metadata: meta || { name: `Tree ${tId}`, variety: 'Unknown', image_url: '' }
+      };
+    });
 
+    console.log(`[${TRACE_ID}] Normalized ${enrichedPositions.length} user positions.`);
 
-// 3. UPDATE GROVE HEADER (The Fix for the "Blank" Header)
-    set('totalTrees', totalTrees);        // Matches id="totalTrees" in Grove Header
-    set('sharePrice', price + ' SOL');    // Matches id="sharePrice" in Grove Header
-
-console.log("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",);
-
-
-// 2. Log it to be sure
-console.log(`[DASHBOARD] ✅ Rewards Sync Complete for ${userPositions.length} positions.`);
-
-    // 4. FETCH TREES (DB Metadata + On-Chain State)
-    const { data: dbTrees, error: treeError } = await sb
-      .from('tree_metadata')
-      .select('*')
-      .eq('on_chain', true);
-
-    const trees: any[] = [];
-    if (dbTrees) {
-      for (const meta of dbTrees) {
-        try {
-          const [treePda] = findTreePDA(meta.tree_id);
-          const onChainData = await program.account.tree.fetch(treePda);
-          trees.push({
-            account: onChainData,
-            publicKey: treePda,
-            tree_id: meta.tree_id,
-            image_url: meta.image_url
-          });
-        } catch (e) {
-          console.warn(`[DASHBOARD] Tree ${meta.tree_id} missing on-chain`);
-        }
-      }
-    }
-
-    // 5. CACHE DATA FOR GLOBALS
-    (window as any)._cachedTrees = trees;
-    (window as any)._cachedPositions = onChainPositions;
-
-    // 6. HANDLE "NOT INITIALIZED" UI STATE
-    if (!protocol) {
-      if (treesContainer) {
-        treesContainer.innerHTML = `
-          <div class="col-span-full py-20 text-center text-stone-400">
-            <div class="text-6xl mb-4">🌱</div>
-            <p class="font-semibold text-stone-500 text-lg">Protocol not initialized.</p>
-            ${isAdmin ? `<p class="text-sm mt-1">Run <strong>Admin → Setup Protocol</strong></p>` : `<p class="text-sm mt-1">Check back soon.</p>`}
-          </div>`;
-      }
-      if (typeof (window as any).clearShimmers === 'function') (window as any).clearShimmers();
-      return;
-    }
-
-    // 7. TRIGGER RENDERING
-    // Render the grid of trees
-    if (treesContainer && typeof renderTrees === 'function') {
-      renderTrees(trees, protocol, onChainPositions);
-    }
-
-    // Render the "My Grove" wallet list
-    if (positionsContainer && typeof renderPositions === 'function') {
-      renderPositions(onChainPositions);
-    }
-
-    // Update Top Analytics Bar
-    function updateAnalytics(positions: any[], trees: any[]) {
+    // 5. Global Stats Logic
     let totalShares = 0;
-    positions.forEach(p => totalShares += p.account.sharesOwned.toNumber());
+    enrichedPositions.forEach(p => {
+      const s = p.account.sharesOwned || p.account.shares_owned || 0;
+      totalShares += (typeof s === 'object' ? s.toNumber() : Number(s));
+    });
 
-    // Update the Summary Text
-    const treeCountEl = document.getElementById('grove-tree-count');
-    const shareCountEl = document.getElementById('grove-share-count');
-    if (treeCountEl) treeCountEl.textContent = positions.length.toString();
-    if (shareCountEl) shareCountEl.textContent = totalShares.toString();
+    // 6. Update Dashboard Stats (Redesigned IDs)
+    setUI('grove-tree-count', enrichedPositions.length.toString());
+    setUI('grove-share-count', totalShares.toLocaleString());
+    setUI('stat-oil', (totalShares * 0.02).toFixed(1) + "L");
+    setUI('stat-carbon', (totalShares * 0.08).toFixed(1) + "kg");
 
-    // Update the Stat Cards
-    const oilEl = document.getElementById('stat-oil');
-    const carbonEl = document.getElementById('stat-carbon');
-    const valueEl = document.getElementById('stat-value-sol');
+    // Legacy IDs (Compatibility)
+    setUI('yourTrees', enrichedPositions.length.toString());
+    setUI('portfolioShares', totalShares.toLocaleString());
 
-    if (oilEl) oilEl.textContent = (totalShares * 0.01).toFixed(1) + "L";
-    if (carbonEl) carbonEl.textContent = (totalShares * 0.08).toFixed(1) + "kg";
-    if (valueEl) valueEl.textContent = (totalShares * 0.001).toFixed(2) + " SOL";
-
-    // Update Progress to next tier
-    const progressEl = document.getElementById('tier-status-progress');
-    if (progressEl) {
-        const nextTier = 500 - (totalShares % 500);
-        progressEl.textContent = `${nextTier} shares to next tier`;
-    }
-    if (onChainPositions && protocol) {
-    updateFarmOwnership(onChainPositions, protocol);
-    updateFarmStats(positions);
-    updateRewardsUI(onChainPositions);
-    updateActivePerks(totalShares);
-    refreshActivityFeed(walletStr);
-    refreshWalletBalances(wallet);
-}
-}
-updateAnalytics(onChainPositions, trees);
-
-    // 8. ADMIN TREASURY UPDATES
-    if (isAdmin) {
-      try {
-        const [treasuryPda] = findTreasuryPDA();
-        const treasuryBalance = await connection.getBalance(treasuryPda);
-        const vaultSol = treasuryBalance / 1_000_000_000;
-
-        if (typeof (window as any).fillAdminProtocol === 'function') {
-          (window as any).fillAdminProtocol(protocol, vaultSol);
-        }
-
-        const treasuryEl = document.getElementById('admin-treasury');
-        if (treasuryEl) treasuryEl.textContent = treasuryPda.toBase58();
-      } catch (balErr) {
-        console.error("[DASHBOARD] Admin balance error:", balErr);
-      }
+    // 7. Render Dispatch
+    if (typeof (window as any).renderTrees === 'function' && protocolData) {
+      // Build tree list for the marketplace grid
+      const treesForGrid = (dbTrees || []).map(meta => ({
+          account: { treeId: meta.tree_id, name: meta.name, variety: meta.variety },
+          publicKey: null
+      }));
+      (window as any).renderTrees(treesForGrid, protocolData, enrichedPositions);
     }
 
-    if (typeof (window as any).clearShimmers === 'function') (window as any).clearShimmers();
-    console.log(`[DASHBOARD] ✅ Load complete.`);
+    // Render the specific cards in "Your Grove"
+    const positionsContainer = document.getElementById('tree-position-cards');
+    if (positionsContainer && typeof (window as any).renderPositions === 'function') {
+      (window as any).renderPositions(enrichedPositions);
+    }
+
+    // 8. Wallet & Admin Sync
+    if (typeof (window as any).refreshWalletBalances === 'function') {
+      await (window as any).refreshWalletBalances(wallet.publicKey);
+    }
+
+    if (isAdmin && typeof (window as any).fillAdminProtocol === 'function') {
+        (window as any).fillAdminProtocol(protocolData);
+    }
+
+    console.log(`[${TRACE_ID}] ✅ Sync Complete.`);
 
   } catch (err: any) {
-    console.error("[DASHBOARD] ❌ Fatal Error:", err);
+    console.error(`[${TRACE_ID}] ❌ Fatal Dashboard Error:`, err.message);
+  } finally {
+    console.groupEnd();
   }
-}
-
-
-//------------
+}//------------
 // refreshglobalpulse
 //-----------------
 async function refreshGlobalPulse() {
@@ -1495,177 +1531,158 @@ async function refreshGlobalPulse() {
 }
 
 function updateFarmOwnership(positions: any[], protocol: any) {
-    const ownershipEl = document.getElementById('farm-ownership-percent');
+    const ownershipEl   = document.getElementById('farm-ownership-percent');
     const totalSharesEl = document.getElementById('total-grove-shares');
+console.log("START FARRMM UPDATEs");
 
-    if (!ownershipEl) return;
+  //  if (!ownershipEl) return;
 
-    // 1. Calculate User's Total Shares
+    // 1. User's total shares across all positions
     const userTotal = positions.reduce((sum, p) => {
         const amt = p.shares ?? p.account?.sharesOwned ?? 0;
         return sum + (typeof amt === 'object' ? amt.toNumber() : Number(amt));
     }, 0);
+console.log("FOUND USERTOTAL");
 
-    // 2. Get Global Total Shares from Protocol (with a safe fallback)
-    // Adjust 'totalShares' to match your Rust struct (e.g., total_shares or supply)
-    const groveTotal = protocol?.totalShares?.toNumber?.() || protocol?.totalShares || 1000000;
+    // 2. Grove capacity = sum of totalShares from ALL cached trees (not from protocol)
+    //    protocol.totalShares does NOT exist in the IDL — it only has total_trees (u32)
+    const cachedTrees: any[] = (window as any)._cachedTrees || [];
+    const groveCapacity = cachedTrees.reduce((sum: number, t: any) => {
+        const cap = t.account?.totalShares?.toNumber?.() ?? t.account?.totalShares ?? 1000;
+        return sum + Number(cap);
+    }, 0) || 240_000; // safe fallback: 240 trees × 1 000 shares each
 
-    // 3. Calculate Percentage
-    const percentage = (userTotal / groveTotal) * 100;
+    // 3. Ownership %
+    const percentage = groveCapacity > 0 ? (userTotal / groveCapacity) * 100 : 0;
 
-    // 4. Update UI
-    // Using 4 decimal places since ownership in a large grove is often small (e.g. 0.0152%)
+    // 4. Update both canonical IDs used across the HTML
     ownershipEl.textContent = `${percentage.toFixed(4)}%`;
+    document.getElementById('farm-ownership-pct')?.textContent !== undefined &&
+        (document.getElementById('farm-ownership-pct')!.textContent = `${percentage.toFixed(4)}%`);
+    document.getElementById('farmSharePct')?.textContent !== undefined &&
+        (document.getElementById('farmSharePct')!.textContent = `${percentage.toFixed(4)}%`);
 
-    if (totalSharesEl) {
-        totalSharesEl.textContent = userTotal.toLocaleString();
-    }
+    if (totalSharesEl) totalSharesEl.textContent = userTotal.toLocaleString();
 
-    console.log(`[OWNERSHIP] User: ${userTotal} / Grove: ${groveTotal} (${percentage.toFixed(4)}%)`);
+    console.log(`[OWNERSHIP] ✅ User: ${userTotal} / Grove capacity: ${groveCapacity} = ${percentage.toFixed(4)}%`);
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// RENDER TREE GRID
-// ══════════════════════════════════════════════════════════════════════════════
 function renderTrees(trees: any[], protocol: any, positions: any[]) {
+  const TRACE_ID = `RENDER_${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  console.group(`[${TRACE_ID}] 🎨 Rendering Grove Grid`);
+
+  // CRITICAL: Cache the data so openAdoptModal(idx) can find it
   (window as any)._cachedTrees = trees;
-  console.log(`[RENDER_TREES] Rendering ${trees.length} trees...`, (window as any)._cachedTrees);
+  const treesContainer = document.getElementById("trees-grid");
 
   if (!treesContainer) {
-    console.error("[RENDER_TREES] ❌ Trees container not found in DOM");
+    console.error(`[${TRACE_ID}] ❌ Trees container #trees-grid not found`);
+    console.groupEnd();
     return;
   }
 
   treesContainer.innerHTML = "";
 
   if (trees.length === 0) {
-    treesContainer.innerHTML = `
-      <div class="col-span-full py-20 text-center text-stone-400">
-        <div class="text-6xl mb-4">🌱</div>
-        <p class="font-semibold text-stone-500 text-lg">No trees registered yet.</p>
-        <p class="text-sm mt-1">Run Admin → Genesis Sync to bootstrap the grove.</p>
-      </div>`;
+    treesContainer.innerHTML = `<div class="col-span-full py-20 text-center text-stone-400">No trees found in the grove.</div>`;
+    console.groupEnd();
     return;
   }
 
-
-  const wallet = program.provider.publicKey;
-
-  // 1. Create Sets for lookup using STRINGS (tree_id)
   const myTreeIds = new Set(
-    positions.map((p: any) => String(p.tree_id ?? p.account?.treeId))
+    positions.map((p: any) => String(p.treeId ?? p.tree_id ?? p.account?.treeId ?? p.account?.tree_id))
   );
-
-  const guardianIds = new Set(
-    positions
-      .filter((p: any) => (p.is_guardian ?? p.account?.isGuardian))
-      .map((p: any) => String(p.tree_id ?? p.account?.treeId))
-  );
-
-  console.log(`[RENDER_TREES] User owns ${myTreeIds.size} trees, ${guardianIds.size} guardian`);
 
   trees.forEach(({ account, publicKey }, idx) => {
-    const treeIdStr = String(account.treeId); // Support "F1-FR-001"
-      //  const pct = (Number(account.sharesSold) / Number(account.totalShares)) * 100;
+    try {
+      // 1. Defensive Property Access (Camel vs Snake)
+      const currentTreeId = String(account.treeId ?? account.tree_id);
+      const totalShares = Number(account.totalShares ?? account.total_shares ?? 0);
+      const sharesSold = Number(account.sharesSold ?? account.shares_sold ?? 0);
+      const healthStatus = Number(account.healthStatus ?? account.health_status ?? 0);
+      const name = account.name || `Tree ${currentTreeId}`;
+      const variety = account.variety || "Standard Tuscan";
+      const age = account.age || "??";
 
-        // Match against user positions
-      //  const myPos = positions.find(p => String(p.tree_id || p.account?.treeId) === treeIdStr);
-      //  const isMine = !!myPos;
+      const pct = totalShares > 0 ? (sharesSold / totalShares) * 100 : 0;
+      const isFull = sharesSold >= totalShares;
+      const isMine = myTreeIds.has(currentTreeId);
 
-    // 2. KEEP ID AS A STRING (e.g. "F1-FR-001")
-    const currentTreeId = String(account.treeId);
+      // 2. Price resolution
+      const priceLamports = protocol?.sharePriceLamports ?? protocol?.share_price_lamports ?? 0;
+      const price = (Number(priceLamports) / 1e9) || 0.5;
 
-    const pct = account.totalShares > 0 ? (Number(account.sharesSold) / Number(account.totalShares)) * 100 : 0;
-    const available = Number(account.totalShares) - Number(account.sharesSold);
-    const isFull = Number(account.sharesSold) >= Number(account.totalShares);
+      const healthCls = healthStatus >= 80 ? "bg-emerald-500" : healthStatus >= 50 ? "bg-amber-500" : "bg-red-500";
 
-    const isMine = myTreeIds.has(currentTreeId);
-    const isGuard = guardianIds.has(currentTreeId);
-    const preview = previewTrade(protocol, account, 10);
+      // 3. Ownership & Tier Logic
+      const myPos = positions.find((p: any) =>
+        String(p.treeId ?? p.tree_id ?? p.account?.treeId ?? p.account?.tree_id) === currentTreeId
+      );
+      const owned = Number(myPos?.sharesOwned ?? myPos?.shares_owned ?? myPos?.account?.sharesOwned ?? myPos?.account?.shares_owned ?? 0);
 
-    const healthCls = account.healthStatus >= 80 ? "health-high"
-                    : account.healthStatus >= 50 ? "health-medium"
-                    : "health-low";
+      const [tierLabel, tierCls] =
+          owned >= 1000 ? ["👑 Guardian", "bg-amber-100 text-amber-700"]
+        : owned >= 500  ? ["🌿 Eco Guardian", "bg-emerald-100 text-emerald-700"]
+        : owned >= 1    ? ["🫒 Olive Lover", "bg-green-100 text-green-700"]
+        : isFull        ? ["Adopted", "bg-stone-100 text-stone-500"]
+        : ["Available", "bg-stone-50 text-stone-400"];
 
-    // Find user's position for this specific tree string
-    const myPos = positions.find((p: any) => String(p.tree_id ?? p.account?.treeId) === currentTreeId);
-    const owned = Number(myPos?.shares_owned ?? myPos?.account?.sharesOwned ?? 0);
-
-    const [tierLabel, tierCls] = owned >= 1000 ? ["👑 Guardian", "tier-guardian"]
-                               : owned >= 500  ? ["🌿 Eco Guardian", "tier-eco"]
-                               : owned >= 100  ? ["🫒 Olive Lover", "tier-lover"]
-                               : isFull        ? ["Fully Adopted", "tier-none"]
-                               : ["Available", "tier-none"];
-
-    if (idx < 3 || isMine) {
-      console.log(`[RENDER_TREES] Tree ${currentTreeId}: ${account.name}, ${account.sharesSold}/${account.totalShares} sold (${pct.toFixed(1)}%)`);
+      // 4. Create UI Element
+      const wrap = document.createElement("div");
+      wrap.className = "tree-card-wrap";
+      // IMPORTANT: Passing 'idx' to the modal function to match your modal logic
+      wrap.innerHTML = `
+        <div class="tree-card bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+             onclick="window.openAdoptModal('${idx}')">
+          <div class="relative h-32 flex items-center justify-center text-5xl"
+               style="background:linear-gradient(135deg,#e8f0d5,#c8dca0)">
+            🫒
+            ${isMine ? `<div class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-xs font-bold shadow-sm" style="color:var(--olive)">✓ Mine</div>` : ""}
+          </div>
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-2 mb-1">
+              <h3 class="font-bold text-stone-900 text-sm leading-tight">${name}</h3>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${tierCls}">${tierLabel}</span>
+            </div>
+            <p class="text-xs text-stone-400 mb-3">${variety} · ${currentTreeId}</p>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${healthCls}"></span>
+                <span class="text-xs text-stone-600">${healthStatus}/100</span>
+              </div>
+              <div class="text-right text-xs text-stone-500">🌾 Age: ${age}</div>
+            </div>
+            <div class="mb-3">
+              <div class="flex justify-between text-xs text-stone-500 mb-1">
+                <span>Adoption</span>
+                <span>${pct.toFixed(1)}%</span>
+              </div>
+              <div class="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                <div class="h-full" style="width:${pct}%; background:var(--olive)"></div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-stone-100">
+              <div>
+                <p class="text-xs text-stone-400">Price</p>
+                <p class="font-bold text-stone-900">${price.toFixed(3)} SOL</p>
+              </div>
+              <button class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-opacity ${isFull ? 'opacity-50' : 'hover:opacity-90'}"
+                      style="background:var(--olive)" ${isFull ? 'disabled' : ''}>
+                ${isFull ? 'Full' : 'Adopt'}
+              </button>
+            </div>
+          </div>
+        </div>`;
+      treesContainer.appendChild(wrap);
+    } catch (err) {
+      console.error(`[${TRACE_ID}] Error rendering tree index ${idx}:`, err);
     }
-
-    const wrap = document.createElement("div");
-    wrap.className = "tree-card-wrap";
-    wrap.dataset.available = String(!isFull);
-    wrap.dataset.mine = String(isMine);
-    wrap.dataset.guardian = String(isGuard);
-
-    // 3. UI RENDERING - Use the String ID
-    wrap.innerHTML = `
-      <div class="tree-card bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm cursor-pointer select-none"
-           onclick="window.openAdoptModal(${idx})">
-        <div class="relative h-32 flex items-center justify-center text-5xl overflow-hidden"
-             style="background:linear-gradient(135deg,#e8f0d5,#c8dca0)">
-          🫒
-          ${isMine ? `<div class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-xs font-semibold" style="color:var(--olive)">✓ Mine</div>` : ""}
-          ${account.hasGuardian && !isMine ? `<div class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Adopted</div>` : ""}
-        </div>
-
-        <div class="p-4">
-          <div class="flex items-start justify-between gap-2 mb-1">
-            <h3 class="font-bold text-stone-900 text-sm leading-tight">${account.name}</h3>
-            <span class="px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${tierCls}">${tierLabel}</span>
-          </div>
-          <p class="text-xs text-stone-400 mb-3">${account.variety} · ${account.age} yrs · ${account.location}</p>
-
-          <div class="grid grid-cols-2 gap-2 mb-3">
-            <div class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full ${healthCls}"></span>
-              <span class="text-xs text-stone-600">${account.healthStatus}/100</span>
-            </div>
-            <div class="text-right text-xs text-stone-500">
-              🌾 ${account.totalHarvests} harvests
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <div class="flex justify-between text-xs text-stone-500 mb-1">
-              <span>Adoption</span>
-              <span>${pct.toFixed(1)}%</span>
-            </div>
-            <div class="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-              <div class="bar-fill h-full rounded-full" style="width:${pct}%; background:var(--olive)"></div>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between pt-3 border-t border-stone-100">
-            <div>
-              <p class="text-xs text-stone-400">From</p>
-              <p class="font-bold text-stone-900">${preview.pricePerShare.toFixed(4)} SOL</p>
-            </div>
-            <button class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all active:scale-95"
-                    style="background:var(--olive)"
-                    ${isFull ? 'disabled' : ''}>
-              ${isFull ? 'Fully Adopted' : 'Adopt Shares'}
-            </button>
-          </div>
-        </div>
-      </div>`;
-
-    treesContainer.appendChild(wrap);
   });
 
-  console.log(`[RENDER_TREES] ✅ ${trees.length} tree cards rendered`);
+  console.groupEnd();
 }
 function renderPositions(positions: any[]) {
-    const container = document.getElementById('tree-position-cards');
+    const container  = document.getElementById('tree-position-cards');
     const emptyState = document.getElementById('tree-positions-empty');
     if (!container) return;
 
@@ -1676,10 +1693,31 @@ function renderPositions(positions: any[]) {
     }
 
     emptyState?.classList.add('hidden');
+
+    // Build a quick treeId → account lookup from the cache
+    const cachedTrees: any[] = (window as any)._cachedTrees || [];
+    const treeMap = new Map<string, any>();
+    cachedTrees.forEach((t: any) => treeMap.set(String(t.account.tree_id), t.account));
+
+    const protocol    = (window as any)._protocol;
+    const sharePriceSol = (protocol?.sharePriceLamports?.toNumber?.() ?? 0) / 1e9 || 0.01;
+    const SOL_PRICE   = priceCache.solPrice || 140;
+
     container.innerHTML = positions.map(pos => {
-        const treeId = pos.account.treeId.toString();
-        const shares = pos.account.sharesOwned.toNumber();
-        const percentOwned = (shares / 1000) * 100;
+        const treeId  = pos.account.tree_id.toString();
+        const shares  = pos.account.sharesOwned.toNumber();
+        const isGuard = pos.account.isGuardian || shares >= 1000;
+
+        // ✅ FIX: use actual totalShares from tree, not hardcoded 1000
+        const treeAcc   = treeMap.get(treeId);
+        const totalShrs = treeAcc?.totalShares?.toNumber?.() ?? treeAcc?.totalShares ?? 1000;
+        const pctOwned  = totalShrs > 0 ? (shares / totalShrs) * 100 : 0;
+
+        const oilL      = (shares * 0.020).toFixed(2);
+        const carbonKg  = (shares * 0.25).toFixed(1);
+        const valueSol  = (shares * sharePriceSol).toFixed(3);
+        const valueUsd  = (shares * sharePriceSol * SOL_PRICE).toFixed(2);
+        const epochRew  = (shares * 0.0008).toFixed(4); // SOL per epoch
 
         return `
         <div class="bg-white border border-stone-200 rounded-2xl p-5 hover:shadow-md transition">
@@ -1689,7 +1727,10 @@ function renderPositions(positions: any[]) {
                         🫒
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg text-stone-900">Tree ${treeId}</h3>
+                        <h3 class="font-bold text-lg text-stone-900">
+                            Tree ${treeId}
+                            ${isGuard ? '<span class="ml-1 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-bold">🛡️ Guardian</span>' : ''}
+                        </h3>
                         <p class="text-xs text-stone-500">San Vincenzo · Tuscany</p>
                     </div>
                 </div>
@@ -1699,22 +1740,33 @@ function renderPositions(positions: any[]) {
                 </button>
             </div>
 
-            <div class="w-full bg-stone-100 h-2 rounded-full mb-3">
-                <div class="bg-green-700 h-2 rounded-full transition-all" style="width:${percentOwned}%"></div>
+            <!-- Farm ownership progress bar -->
+            <div class="flex justify-between text-xs text-stone-400 mb-1">
+                <span>Farm ownership</span>
+                <span class="font-bold text-emerald-600">${pctOwned.toFixed(2)}%</span>
+            </div>
+            <div class="w-full bg-stone-100 h-2 rounded-full mb-4">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all"
+                     style="width:${Math.min(pctOwned, 100)}%"></div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 mb-4">
+            <!-- Stats grid -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
                 <div class="bg-stone-50 rounded-xl p-3 text-center">
-                    <p class="font-bold text-lg" style="color:var(--olive)">${(shares * 0.01).toFixed(1)}L</p>
+                    <p class="font-bold text-lg" style="color:var(--olive)">${oilL}L</p>
                     <p class="text-xs text-stone-400">oil/year</p>
                 </div>
                 <div class="bg-stone-50 rounded-xl p-3 text-center">
-                    <p class="font-bold text-lg text-emerald-600">${(shares * 0.08).toFixed(1)}kg</p>
+                    <p class="font-bold text-lg text-emerald-600">${carbonKg}kg</p>
                     <p class="text-xs text-stone-400">CO₂/year</p>
                 </div>
-                <div class="bg-stone-50 rounded-xl p-3 text-center">
-                    <p class="font-bold text-lg text-amber-600">${(shares * 0.001).toFixed(2)} SOL</p>
-                    <p class="text-xs text-stone-400">est. value</p>
+                <div class="bg-amber-50 rounded-xl p-3 text-center">
+                    <p class="font-bold text-base text-amber-700">${valueSol} SOL</p>
+                    <p class="text-xs text-stone-400">≈ $${valueUsd}</p>
+                </div>
+                <div class="bg-emerald-50 rounded-xl p-3 text-center">
+                    <p class="font-bold text-base text-emerald-700">${epochRew}</p>
+                    <p class="text-xs text-stone-400">SOL/epoch</p>
                 </div>
             </div>
 
@@ -1797,6 +1849,9 @@ async function updateFarmStats(positions: any[]) {
     const TOTAL_GROVE_TREES = 240;
     const TOTAL_GROVE_SHARES = TOTAL_GROVE_TREES * 1000;
     const ownershipPercentage = (totalSharesOwned / TOTAL_GROVE_SHARES) * 100;
+    console.log("OWNERSNIP_CALC  ",ownershipPercentage);
+
+    console.log("From  ",totalSharesOwned);
 
     // 3. Update the UI Elements (Handling both sets of IDs found in your HTML)
     const updateEl = (id: string, val: string) => {
@@ -1933,7 +1988,7 @@ async function buyShares(treeId: string | number, amount: number) {
     const wallet = getWallet();
     const [treePDA] = findTreePDA(treeIdStr);
     const [protocolPDA] = findProtocolPDA();
-    const [treasuryPDA] = findTreasuryPDA();
+    const [treasuryPda] = findTreasuryPDA(activeProgram);
     const [positionPDA] = findPositionPDA(wallet, treeIdStr);
 
     // Fetch current position to calculate new total
@@ -1975,9 +2030,10 @@ async function buyShares(treeId: string | number, amount: number) {
       newTotal,
       isGuardian
     );
+console.log("syncing----BUY--");
 
     // Reload dashboard to show updated data
-    await loadDashboard();
+//    await loadDashboard();
 
   } catch (err: any) {
     console.error(`[BUY] ❌ Purchase failed:`, err);
@@ -1998,7 +2054,7 @@ async function sellShares(treeId: string | number, amount: number) {
     const [treePDA] = findTreePDA(treeIdStr);
     const [positionPDA] = findPositionPDA(wallet, treeIdStr);
     const [protocolPDA] = findProtocolPDA();
-    const [treasuryPDA] = findTreasuryPDA();
+    const [treasuryPda] = findTreasuryPDA(activeProgram);
 
     // Fetch current position to calculate new total
     const currentPosition = await program.account.sharePosition.fetch(positionPDA);
@@ -2132,53 +2188,68 @@ function updateActivePerks(totalShares: number) {
     </div>
   `).join('');
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SUPABASE POSITION SYNC HELPER
-// ══════════════════════════════════════════════════════════════════════════════
-/**
- * Olivium Health Check: Blockchain vs Database
- */
 (window as any).runAudit = async () => {
-  console.log("🔍 STARTING DATA AUDIT...");
+  console.log("🔍 [AUDIT] STARTING DATA INTEGRITY CHECK...");
 
   try {
-    // 1. Fetch from Solana
-    const treesOnChain = await program.account.tree.all();
-    const positionsOnChain = await program.account.sharePosition.all();
+    const activeProgram = (window as any)._program || (window as any).program;
+    const activeSb = (window as any)._sb || (window as any).sb;
 
-    // 2. Fetch from Supabase
-    const { data: dbTrees } = await sb.from("tree_metadata").select("*");
-    const { data: dbPositions } = await sb.from("positions").select("*");
+    // 1. Fetch Fresh Data
+    const [treesOnChain, positionsOnChain] = await Promise.all([
+      activeProgram.account.tree.all(),
+      activeProgram.account.sharePosition.all()
+    ]);
 
-    console.log("\n--- 🌳 TREES AUDIT ---");
-    const solanaTreesMap = new Map(_cachedTrees.map(t => [t.account.treeId, t.account]));
+    const { data: dbTrees } = await activeSb.from("tree_metadata").select("*");
+    const { data: dbPositions } = await activeSb.from("positions").select("*");
 
-const auditRows = dbTrees.map(sTree => {
-    // Match by ID, not by Name string
-    const onChain = solanaTreesMap.get(sTree.id);
+    console.log(`[AUDIT] Found ${treesOnChain.length} trees on-chain and ${dbTrees?.length || 0} in DB.`);
 
-    return {
-        "Tree ID": sTree.id,
-        "Supabase Name": sTree.name,
+    // 2. 🌳 TREES AUDIT: Use string mapping
+    const solanaTreesMap = new Map(
+      treesOnChain.map(t => [String(t.account.treeId || t.account.tree_id), t.account])
+    );
+
+    const treeAuditRows = dbTrees.map(sTree => {
+      const stringId = String(sTree.tree_id || sTree.id);
+      const onChain = solanaTreesMap.get(stringId);
+
+      return {
+        "Tree ID": stringId,
+        "SB Name": sTree.common_name || sTree.name,
         "On Solana?": onChain ? "✅ YES" : "❌ NO",
-        "Solana Name": onChain ? onChain.name : "N/A",
-        "Shares Sold": onChain ? onChain.sharesSold.toString() : "0"
-    };
-});
-console.table(auditRows);
-    console.log("\n--- 💳 POSITIONS AUDIT ---");
-    console.log(`On-chain Accounts: ${onChain.length}`);
-    console.log(`Supabase Records: ${dbPositions?.length || 0}`);
+        "On-Chain Sold": onChain ? onChain.sharesSold.toString() : "0"
+      };
+    });
 
-    if (positionsOnChain.length > 0) {
-        positionsOnChain.forEach((p, i) => {
-            console.log(`[${i}] Owner: ${p.account.owner.toBase58()} | Tree: ${p.account.treeId} | Shares: ${p.account.sharesOwned.toString()}`);
-        });
-    }
+    console.log("\n--- 🌳 TREE SYNC STATUS ---");
+    console.table(treeAuditRows);
+
+    // 3. 💳 POSITIONS AUDIT
+    console.log("\n--- 💳 POSITIONS SYNC STATUS ---");
+    const positionAuditRows = positionsOnChain.map(p => {
+      const acc = p.account;
+      const owner = acc.owner.toBase58();
+      const tid = String(acc.treeId || acc.tree_id);
+
+      const dbMatch = dbPositions?.find(dbP =>
+        dbP.wallet === owner && String(dbP.tree_id) === tid
+      );
+
+      return {
+        "Owner": `${owner.slice(0, 4)}...${owner.slice(-4)}`,
+        "Tree ID": tid,
+        "Shares (Chain)": acc.sharesOwned.toString(),
+        "Shares (SB)": dbMatch ? dbMatch.shares_owned : "❌ MISSING",
+        "In Sync?": dbMatch && String(dbMatch.shares_owned) === acc.sharesOwned.toString() ? "✅" : "⚠️ MISMATCH"
+      };
+    });
+
+    console.table(positionAuditRows);
 
   } catch (err) {
-    console.error("Audit failed:", err);
+    console.error("❌ Audit failed:", err);
   }
 };
 
@@ -2230,10 +2301,9 @@ async function upsertPositionInSupabase(wallet: string, treeId: number, delta: n
 //           tree_id (int4, primary key), name (text), variety (text),
 //           age_years (int2), field_id (text), on_chain (bool default false)
 // ══════════════════════════════════════════════════════════════════════════════
-
 async function initializeFromSupabase() {
   console.log(`\n╔════════════════════════════════════════════════════════╗`);
-  console.log(`║          GENESIS SYNC — BOOTSTRAP FROM SUPABASE        ║`);
+  console.log(`║           GENESIS SYNC — BOOTSTRAP FROM SUPABASE       ║`);
   console.log(`╚════════════════════════════════════════════════════════╝\n`);
 
   const log = document.getElementById("admin-log");
@@ -2247,12 +2317,16 @@ async function initializeFromSupabase() {
 
   try {
     adminLog("🔍 Starting Genesis Sync…");
-    const wallet = getWallet();
-    adminLog(`   Admin wallet: ${wallet.toBase58()}`);
 
-    // ──────────────────────────────────────────────────────────────
-    // 0. VERIFY PROTOCOL IS INITIALIZED FIRST
-    // ──────────────────────────────────────────────────────────────
+    // 1. GET TOOLS & AUTH
+    // FIX: Get the actual PublicKey object and program tools from your helpers
+    const walletPubKey = getPublicKey();
+    const { program } = getWallet();
+    const addr = walletPubKey.toBase58();
+
+    adminLog(`    Admin wallet: ${addr}`);
+
+    // 2. VERIFY PROTOCOL
     const [configPda] = findProtocolPDA();
     adminLog(`\n🔗 Protocol PDA: ${configPda.toBase58()}`);
 
@@ -2260,226 +2334,132 @@ async function initializeFromSupabase() {
       await (program.account as any).protocolConfig.fetch(configPda);
       adminLog(`✅ Protocol config confirmed on-chain`);
     } catch {
-      adminLog(`❌ Protocol not initialized. Run setupProtocol() from the admin panel first.`);
+      adminLog(`❌ Protocol not initialized. Run setupProtocol() first.`);
       throw new Error("Protocol not initialized. Call setupProtocol() first.");
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // 1. FETCH TREES FROM SUPABASE
-    // ──────────────────────────────────────────────────────────────
+    // 3. FETCH TREES FROM SUPABASE
     adminLog("\n📊 Querying Supabase trees table...");
 
-    const { data: trees, error } = await sb
+    // Uses the global 'sb' client from your connection.ts
+    const activeSb = (window as any)._sb || sb;
+    const { data: trees, error } = await activeSb
       .from("tree_metadata")
       .select("*")
       .order("tree_id", { ascending: true })
-      .limit(6);  // FIRST 5 TREES FOR GENESIS
+      .limit(6);
 
     if (error) {
-      // ── HELPFUL TABLE-NOT-FOUND GUIDANCE ─────────────────────
-      if (error.message.includes("tree_metadata") || error.code === "42P01") {
-        adminLog(`❌ Table 'tree_metadata' not found in Supabase.`);
-        adminLog(`   Create it with this SQL in the Supabase SQL Editor:`);
-        adminLog(``);
-        adminLog(`   CREATE TABLE public.tree_metadata (`);
-        adminLog(`     tree_id    TEXT PRIMARY KEY,`);
-        adminLog(`     name       text NOT NULL,`);
-        adminLog(`     variety    text NOT NULL DEFAULT 'Unknown',`);
-        adminLog(`     age_years  smallint NOT NULL DEFAULT 0,`);
-        adminLog(`     field_id   text NOT NULL DEFAULT 'Unknown',`);
-        adminLog(`     on_chain   boolean NOT NULL DEFAULT false,`);
-        adminLog(`     mint       text`);
-        adminLog(`   );`);
-        adminLog(``);
-        adminLog(`   Then insert your tree data and run Genesis Sync again.`);
-      } else {
-        adminLog(`❌ Supabase error: ${error.message}`);
-      }
+      adminLog(`❌ Supabase error: ${error.message}`);
       throw new Error("Supabase: " + error.message);
     }
 
     if (!trees || trees.length === 0) {
-      adminLog("ℹ️  No trees found in Supabase tree_metadata table.");
-      adminLog("   Insert tree rows into tree_metadata and try again.");
+      adminLog("ℹ️ No trees found in Supabase tree_metadata table.");
       return;
     }
 
     adminLog(`✅ ${trees.length} trees fetched from Supabase`);
-    trees.forEach((t: any, i: number) => {
-      adminLog(`   [${i + 1}] ${t.tree_id}: ${t.name ?? t.tree_id}`);
-    });
 
-    // ──────────────────────────────────────────────────────────────
-      // 2. REGISTER EACH TREE ON-CHAIN
-      // ──────────────────────────────────────────────────────────────
-      adminLog(`\n🌱 Registering trees on-chain...\n`);
+    // 4. REGISTER EACH TREE ON-CHAIN
+    adminLog(`\n🌱 Registering trees on-chain...\n`);
 
-      let registered = 0;
-      let skipped = 0;
+    let registered = 0;
+    let skipped = 0;
 
-      for (const tree of trees) {
-        // FIX: Use the string ID directly from Supabase
-        const treeIdStr = String(tree.tree_id);
-        const [treePda] = findTreePDA(treeIdStr);
+    for (const tree of trees) {
+      const treeIdStr = String(tree.tree_id);
+      const [treePda] = findTreePDA(treeIdStr);
 
-        const onChain = await connection.getAccountInfo(treePda);
-        if (onChain) {
-          adminLog(`✅ Tree ${treeIdStr} (${tree.name ?? treeIdStr}) already on-chain, skipping`);
-          skipped++;
-          continue;
-        }
-
-        adminLog(`⚙️  Registering Tree ${treeIdStr} (${tree.name ?? treeIdStr})...`);
-
-        const name     = String(tree.name ?? treeIdStr).slice(0, 32);
-        const variety  = String(tree.variety ?? tree.cultivar ?? "Unknown").slice(0, 32);
-        const age      = Number(tree.age_years ?? tree.age ?? 0);
-        const location = String(tree.field_id ?? tree.location ?? "Unknown").slice(0, 64);
-        const last_inspection_url = "https://arweave.net/photo_of_tree_123";
-        const carbon_credit_id = " ";
-        const total_shares = new anchor.BN(1000);
-
-        adminLog(`   - Name: ${name}, Variety: ${variety}, Age: ${age} yrs, Location: ${location}`);
-
-        try {
-          const tx = await program.methods
-            .registerTree(
-              treeIdStr, // FIX: Pass the String directly
-              name,
-              variety,
-              age,
-              location,
-              total_shares,
-              carbon_credit_id,
-              last_inspection_url
-            )
-            .accounts({
-              tree:          treePda,
-              protocol:      configPda,
-              authority:     wallet.publicKey, // Ensure .publicKey is used if wallet is a Keypair
-              systemProgram: SystemProgram.programId,
-            })
-            .rpc();
-
-          adminLog(`   ✅ TX: ${tx.slice(0, 16)}...`);
-          registered++;
-
-          const { error: updateErr } = await sb
-            .from("tree_metadata")
-            .update({
-              on_chain: true,
-              on_chain_address: treePda.toBase58()
-            })
-            .eq("tree_id", treeIdStr);
-
-          if (updateErr) {
-            adminLog(`   ⚠️  Failed to update Supabase: ${updateErr.message}`);
-          } else {
-            adminLog(`   ✅ Supabase updated`);
-          }
-        } catch (err) {
-            adminLog(`   ❌ Failed to register ${treeIdStr}: ${err}`);
-        }
+      // Check if already on-chain
+      const onChain = await connection.getAccountInfo(treePda);
+      if (onChain) {
+        adminLog(`✅ Tree ${treeIdStr} (${tree.name ?? treeIdStr}) already on-chain, skipping`);
+        skipped++;
+        continue;
       }
-    // ──────────────────────────────────────────────────────────────
-    // 3. SUMMARY
-    // ──────────────────────────────────────────────────────────────
+
+      adminLog(`⚙️ Registering Tree ${treeIdStr}...`);
+
+      const name = String(tree.name ?? treeIdStr).slice(0, 32);
+      const variety = String(tree.variety ?? "Unknown").slice(0, 32);
+      const age = Number(tree.age_years ?? 0);
+      const location = String(tree.field_id ?? "Unknown").slice(0, 64);
+      const last_inspection_url = "https://olivium.io/verify/" + treeIdStr;
+      const carbon_credit_id = " ";
+      const total_shares = new anchor.BN(1000);
+
+      try {
+        const tx = await program.methods
+          .registerTree(
+            treeIdStr,
+            name,
+            variety,
+            age,
+            location,
+            total_shares,
+            carbon_credit_id,
+            last_inspection_url
+          )
+          .accounts({
+            tree: treePda,
+            protocol: configPda,
+            authority: walletPubKey, // Use the PublicKey object directly
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .rpc();
+
+        adminLog(`   ✅ TX: ${tx.slice(0, 16)}...`);
+        registered++;
+
+        // Update Supabase to mark as on-chain
+        await activeSb
+          .from("tree_metadata")
+          .update({
+            on_chain: true,
+            on_chain_address: treePda.toBase58()
+          })
+          .eq("tree_id", treeIdStr);
+
+      } catch (err: any) {
+        adminLog(`   ❌ Failed to register ${treeIdStr}: ${err.message}`);
+      }
+    }
+
+    // 5. SUMMARY
     adminLog(`\n╔════════════════════════════════════════════════════════╗`);
     adminLog(`║                  SYNC COMPLETE                         ║`);
     adminLog(`╚════════════════════════════════════════════════════════╝`);
     adminLog(`   🌱 Registered: ${registered}`);
-    adminLog(`   ✅ Skipped (already on-chain): ${skipped}`);
+    adminLog(`   ✅ Skipped: ${skipped}`);
     adminLog(`   📊 Total: ${trees.length}\n`);
 
+    // UI Updates
     const badge = document.getElementById("sync-status-badge");
-    if (badge) {
-      badge.classList.remove("hidden");
-      badge.classList.add("flex");
-    }
+    if (badge) badge.classList.remove("hidden");
 
     adminLog("🔄 Refreshing dashboard...");
     await loadDashboard();
 
-    showToast("Genesis Sync complete!");
-
     if ((window as any).refreshAdminStatus) {
-      (window as any).refreshAdminStatus();
+      await (window as any).refreshAdminStatus();
+    }
+
+    if (typeof (window as any).showToast === 'function') {
+      (window as any).showToast("Genesis Sync complete!");
     }
 
   } catch (err: any) {
     console.error("[GENESIS] ❌ CRITICAL ERROR:", err);
     adminLog(`\n❌ SYNC FAILED: ${err.message}`);
-    showToast("Sync failed: " + err.message, true);
+    if (typeof (window as any).showToast === 'function') {
+      (window as any).showToast("Sync failed: " + err.message, true);
+    }
   }
 }
 
+// Attach to window
 (window as any).initializeFromSupabase = initializeFromSupabase;
-
-// ══════════════════════════════════════════════════════════════════════════════
-// RECOMMENDATION #1 — CLAIM STAKING REWARDS
-// Wire this to a "Claim Rewards" button once claimStakingRewards is in lib.rs
-// ══════════════════════════════════════════════════════════════════════════════
-
-export async function claimStakingRewards() {
-  console.log(`\n[CLAIM_REWARDS] Starting staking reward claim...`);
-  try {
-    const wallet = getWallet();
-
-    // TODO: derive stakeAccountPDA and rewardVaultPDA once you add staking to lib.rs
-    // const [stakeAccountPDA] = PublicKey.findProgramAddressSync(
-    //   [Buffer.from("stake"), wallet.toBuffer()],
-    //   program.programId
-    // );
-    // const [rewardVaultPDA] = PublicKey.findProgramAddressSync(
-    //   [Buffer.from("reward_vault")],
-    //   program.programId
-    // );
-    // const userOlvAta = await getAssociatedTokenAddress(OLV_MINT, wallet);
-    //
-    // const tx = await program.methods
-    //   .claimStakingRewards()
-    //   .accounts({ stakeAccount: stakeAccountPDA, rewardVault: rewardVaultPDA, userOlvAta, owner: wallet, tokenProgram: TOKEN_PROGRAM_ID })
-    //   .rpc();
-    // console.log("[CLAIM_REWARDS] ✅ Claimed:", tx);
-    // showToast(`Staking rewards claimed!`);
-
-    console.warn("[CLAIM_REWARDS] ⚠️  claimStakingRewards not yet deployed on-chain. Add it to lib.rs first.");
-    showToast("Staking rewards coming soon — contract update pending.", true);
-  } catch (err: any) {
-    console.error("[CLAIM_REWARDS] ❌", err);
-    showToast("Claim failed: " + err.message, true);
-  }
-}
-(window as any).claimStakingRewards = claimStakingRewards;
-
-// ══════════════════════════════════════════════════════════════════════════════
-// RECOMMENDATION #2 — AUDIT total_dao_stake DRIFT
-// ══════════════════════════════════════════════════════════════════════════════
-
-export async function auditTotalDaoStake() {
-  console.log(`\n[AUDIT] Checking total_dao_stake drift...`);
-  try {
-    // Fetch GlobalConfig (if you add staking to lib.rs)
-    // const [configPDA] = findProtocolPDA();
-    // const config = await (program.account as any).globalConfig.fetch(configPDA);
-    // const allStakeAccounts = await (program.account as any).stakeAccount.all();
-    // const sumOfStakes = allStakeAccounts.reduce((sum: number, acc: any) =>
-    //   sum + acc.account.amountStaked.toNumber(), 0
-    // );
-    // const reported = config.totalDaoStake.toNumber();
-    // const drift = reported - sumOfStakes;
-    // console.log(`Protocol total_dao_stake: ${reported}`);
-    // console.log(`Sum of all individual stakes: ${sumOfStakes}`);
-    // console.log(`Drift: ${drift}`);
-    // if (drift !== 0) console.error("❌ DRIFT DETECTED:", drift);
-    // else console.log("✅ No drift");
-
-    console.warn("[AUDIT] auditTotalDaoStake requires staking accounts in lib.rs — coming soon.");
-  } catch (err: any) {
-    console.error("[AUDIT] ❌", err);
-  }
-}
-(window as any).auditTotalDaoStake = auditTotalDaoStake;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // RECOMMENDATION #4 — EXECUTE GOVERNANCE PROPOSAL
@@ -2534,6 +2514,44 @@ function previewTrade(protocol: any, tree: any, amount: number) {
   };
 }
 
+
+/**
+ * Updates the price and fee calculations in the adoption modal
+ * based on the slider input.
+ */
+ /**
+  * Updates the price and fee calculations in the adoption modal
+  */
+ (window as any).updateModalCalc = function() {
+     const slider = document.getElementById('modal-slider') as HTMLInputElement;
+     const amountDisplay = document.getElementById('modal-amount-display');
+     const costDisplay = document.getElementById('modal-cost-sol');
+     const feeDisplay = document.getElementById('modal-fee-sol');
+
+     if (!slider || !(window as any)._modalTree) return;
+
+     const shares = parseInt(slider.value);
+     // Retrieve protocol config stored during modal opening
+     const protocol = (window as any)._protocol || (window as any)._modalProtocol;
+
+     const pricePerShare = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
+     const feeBps = protocol.buyFeeBps || 0;
+
+     const subtotal = shares * pricePerShare;
+     const fee = (subtotal * feeBps) / 10000;
+
+     if (amountDisplay) amountDisplay.textContent = shares.toString();
+     if (costDisplay) costDisplay.textContent = subtotal.toFixed(4);
+     if (feeDisplay) feeDisplay.textContent = fee.toFixed(4);
+ };
+/**
+ * Closes the adoption modal.
+ */
+(window as any).closeAdoptModal = function() {
+    const modal = document.getElementById('adopt-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
 (window as any).confirmAdopt = async () => {
   const modal = document.getElementById('adopt-modal');
     // Check if modal and the dataset exist before trying to read them
@@ -2578,8 +2596,8 @@ function computeAnalytics(positions: any[], trees: any[], protocol: any) {
 
   for (const pos of positions) {
     const treeId = pos.tree_id != null ? Number(pos.tree_id)
-      : pos.account?.treeId != null
-        ? (typeof pos.account.treeId === 'object' ? pos.account.treeId.toNumber() : Number(pos.account.treeId))
+      : pos.account?.tree_id != null
+        ? (typeof pos.account.tree_id === 'object' ? pos.account.tree_id.toNumber() : Number(pos.account.tree_id))
         : undefined;
     const owned  = pos.shares_owned != null ? Number(pos.shares_owned)
       : pos.account?.sharesOwned != null
@@ -2587,7 +2605,7 @@ function computeAnalytics(positions: any[], trees: any[], protocol: any) {
         : 0;
 
     const entry = trees.find((t: any) => {
-      const tid = typeof t.account.treeId === 'object' ? t.account.treeId.toNumber() : Number(t.account.treeId);
+      const tid = typeof t.account.tree_id === 'object' ? t.account.treeId.toNumber() : Number(t.account.treeId);
       return tid === treeId;
     });
     if (!entry) { console.warn(`[ANALYTICS] ⚠️  Tree #${treeId} not found`); continue; }
@@ -2674,7 +2692,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const log = document.getElementById("admin-log");
       if (log) { log.classList.remove("hidden"); log.innerHTML = ""; }
       try {
-        await (window as any).setupProtocol(100);
+        await (window as any).setupProtocol(0.25);
       } catch (e: any) {
         console.error("[DOM] buttonerror error:", e);
         if (log) log.innerHTML += "❌ " + e.message + "\n";
@@ -2751,6 +2769,7 @@ const program = (window as any)._program;
 
             let mintedCount = 0;
                 let tableHtml = '';
+                let sbTrees =[];
 
         // Update UI
         if (typeof (window as any).fillAdminProtocol === 'function') {
@@ -2817,12 +2836,13 @@ async function watchTreasury() {
     });
 }
 // In test.ts — Add this helper function
-export function findTreasuryPDA(): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from("treasury")],
-    program.programId
-  );
-}async function resetGroveDatabase() {
+//function findTreasuryPDA(program: Program) {
+//  return PublicKey.findProgramAddressSync(
+//    [Buffer.from("treasury")],
+//    program.programId
+///  );
+//}
+async function resetGroveDatabase() {
     console.log("[ADMIN] 🚨 Starting Hard Reset...");
     try {
         // 1. Reset Metadata: Mark every single tree as NOT on-chain.
@@ -2842,11 +2862,16 @@ export function findTreasuryPDA(): [PublicKey, number] {
 
         // 3. NEW: Clear positions: This removes the fractional share data
         // If this isn't cleared, the UI will still think people own parts of trees
-        const { error: posError } = await sb.from('positions')
+        const { error: posError } =await sb.from('positions')
             .delete()
             .not('tree_id', 'is', null);
 
         if (posError) throw posError;
+
+
+        await sb.from('transactions')
+            .delete()
+            .not('tree_id', 'is', null);
 
         console.log("✅ Database reset complete (Metadata, Ownership, and Positions).");
 
@@ -2861,104 +2886,187 @@ export function findTreasuryPDA(): [PublicKey, number] {
     }
 }
 /**
- * Updates the Rewards & Perks tab based on total shares owned.
+ * Updates the Rewards & Perks tab based on positions and cached tree data.
+ * ✅ FIXED: proper reward SOL math, farm ownership %, oil/carbon/value stats,
+ *           and a single consolidated perks render (no duplicate functions).
  */
+ /**
+  * REFACTORED: updateRewardsUI
+  * Includes heavy debugging trace steps for production auditing.
+  */
  function updateRewardsUI(positions: any[]) {
-     // 1. Calculate Total Shares across all trees
-     const totalShares = positions.reduce((sum, p) => {
-         // Support both Supabase format and Anchor account format
-         const amt = p.shares_owned ?? p.account?.sharesOwned ?? 0;
-         return sum + (typeof amt === 'object' ? amt.toNumber() : Number(amt));
-     }, 0);
+     const TRACE_ID = `REWARDS_${Date.now().toString().slice(-4)}`;
+     console.group(`[${TRACE_ID}] Rewards UI Refresh`);
 
-     console.log(`[REWARDS] Calculating perks for ${totalShares} total shares...`);
-
-     // 2. Define Tiers (Aligned with your HTML milestones)
-     const tiers = [
-         { min: 0, name: "Olive Enthusiast", icon: "🫒", next: 100 },
-         { min: 100, name: "Olive Lover", icon: "🫒", next: 500 },
-         { min: 500, name: "Eco Guardian", icon: "🌿", next: 1000 },
-         { min: 1000, name: "Grove Patron", icon: "👑", next: 5000 },
-         { min: 5000, name: "Legacy Holder", icon: "🏛️", next: Infinity }
-     ];
-
-     // 3. Determine Current Tier
-     // findLastIndex finds the highest tier the user qualifies for
-     const currentTierIndex = tiers.findLastIndex(t => totalShares >= t.min);
-     const currentTier = tiers[currentTierIndex];
-     const nextTier = tiers[currentTierIndex + 1];
-
-     // 4. Update the Header Badge (Current Tier Display)
-     const tierIconEl = document.getElementById('tier-icon');
-     const tierNameEl = document.getElementById('tier-name');
-     const progressTextEl = document.getElementById('tier-progress-text');
-     const progressBarEl = document.getElementById('tier-progress-bar');
-
-     if (tierIconEl) tierIconEl.textContent = currentTier.icon;
-     if (tierNameEl) tierNameEl.textContent = currentTier.name;
-
-     if (nextTier) {
-         const progressNeeded = nextTier.min - currentTier.min;
-         const progressCurrent = totalShares - currentTier.min;
-         const pct = Math.min(100, (progressCurrent / progressNeeded) * 100);
-
-         if (progressBarEl) progressBarEl.style.width = `${pct}%`;
-         if (progressTextEl) {
-             progressTextEl.textContent = `${totalShares.toLocaleString()} / ${nextTier.min.toLocaleString()} shares to unlock ${nextTier.name}`;
+     try {
+         // ─── 1. DATA VALIDATION & AGGREGATION ────────────────────────────────
+         if (!Array.isArray(positions)) {
+             console.error(`[${TRACE_ID}] Error: Positions is not an array`, positions);
+             return;
          }
-     } else {
-         if (progressBarEl) progressBarEl.style.width = `100%`;
-         if (progressTextEl) progressTextEl.textContent = `Maximum Tier Reached! You are a Legacy Holder.`;
-     }
 
-     // 5. Visually "Unlock" the Tier Cards
-     // This looks for the .tier-card-item elements in your HTML
-     document.querySelectorAll('.tier-card-item').forEach((card: any) => {
-         const tierLv = parseInt(card.dataset.tier); // data-tier="1", "2", etc.
+         const totalShares = positions.reduce((sum, p, idx) => {
+             const rawAmt = p.shares_owned ?? p.account?.sharesOwned ?? 0;
+             const numericAmt = (typeof rawAmt === 'object' && rawAmt !== null && 'toNumber' in rawAmt)
+                 ? rawAmt.toNumber()
+                 : Number(rawAmt);
 
-         // We subtract 1 if your HTML starts data-tier at 1 (Olive Lover)
-         // while your array starts at 0 (Enthusiast).
-         // Based on your HTML, Tier 1 = Olive Lover (100 shares).
-         if (totalShares >= tiers[tierLv]?.min) {
-             card.classList.remove('opacity-50', 'grayscale');
-             card.classList.add('border-green-500', 'shadow-md', 'bg-white');
-             card.classList.remove('border-stone-200');
+             console.debug(`[${TRACE_ID}] Position[${idx}] -> Raw:`, rawAmt, "Parsed:", numericAmt);
+             return sum + numericAmt;
+         }, 0);
 
-             // Add a "Unlocked" badge if not present
-             if (!card.querySelector('.unlock-badge')) {
-                 const badge = document.createElement('div');
-                 badge.className = "unlock-badge absolute top-2 right-2 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full";
-                 badge.textContent = "UNLOCKED";
-                 card.style.position = 'relative';
-                 card.appendChild(badge);
+         console.log(`[${TRACE_ID}] Aggregated Total Shares: ${totalShares}`);
+
+         // ─── 2. CONFIGURATION & CONSTANTS ────────────────────────────────────
+         const REWARDS_RATE_SOL  = 0.0008;
+         const EPOCHS_ELAPSED    = 3;
+         const CLAIMED_FRACTION  = 0.60;
+         const OIL_PER_SHARE_L   = 0.020;
+         const CO2_PER_SHARE_KG  = 0.25;
+         const BOTTLES_PER_LITRE = 2;
+         const SOL_PRICE         = (window as any).priceCache?.solPrice || 140;
+
+         console.debug(`[${TRACE_ID}] Math Inputs: Rate=${REWARDS_RATE_SOL}, Epochs=${EPOCHS_ELAPSED}, SOL=$${SOL_PRICE}`);
+
+         // ─── 3. CORE MATH ───────────────────────────────────────────────────
+         const totalRewardsSol   = totalShares * REWARDS_RATE_SOL * EPOCHS_ELAPSED;
+         const claimedRewardsSol = totalRewardsSol * CLAIMED_FRACTION;
+         const pendingRewardsSol = totalRewardsSol - claimedRewardsSol;
+         const totalRewardsUsd   = totalRewardsSol * SOL_PRICE;
+
+         const annualLitres      = totalShares * OIL_PER_SHARE_L;
+         const annualBottles     = Math.floor(annualLitres * BOTTLES_PER_LITRE);
+         const carbonKg          = totalShares * CO2_PER_SHARE_KG;
+
+         console.log(`[${TRACE_ID}] Rewards Calculated: Total=${totalRewardsSol.toFixed(4)} SOL ($${totalRewardsUsd.toFixed(2)})`);
+
+         // ─── 4. CAPACITY & OWNERSHIP ─────────────────────────────────────────
+         const cachedTrees = (window as any)._cachedTrees || [];
+         const groveCapacity = cachedTrees.reduce((sum: number, t: any) => {
+             const cap = t.account?.totalShares?.toNumber?.() ?? t.account?.totalShares ?? 1000;
+             return sum + Number(cap);
+         }, 0) || 240000;
+
+         const ownershipPct = groveCapacity > 0 ? (totalShares / groveCapacity) * 100 : 0;
+         console.log(`[${TRACE_ID}] Ownership: ${ownershipPct.toFixed(6)}% of ${groveCapacity.toLocaleString()} total capacity`);
+
+         // ─── 5. PORTFOLIO VALUE ─────────────────────────────────────────────
+         const protocol = (window as any)._protocol;
+         const sharePriceSol = protocol?.sharePriceLamports
+             ? (Number(protocol.sharePriceLamports.toString()) / 1e9)
+             : 0.01;
+
+         const portfolioValueSol = totalShares * sharePriceSol;
+         const portfolioValueUsd = portfolioValueSol * SOL_PRICE;
+
+         // ─── 6. UI UPDATE ENGINE (WITH SELECTOR LOGGING) ──────────────────────
+         const set = (id: string, val: string) => {
+             const el = document.getElementById(id);
+             if (el) {
+                 el.textContent = val;
+             } else {
+                 console.warn(`[${TRACE_ID}] DOM Target Missing: #${id}`);
              }
-         } else {
-             card.classList.add('opacity-50', 'grayscale');
-             card.classList.remove('border-green-500', 'shadow-md');
-             card.classList.add('border-stone-200');
-         }
-     });
+         };
 
-     // 6. Populate "Active Perks" Grid
-     const perksGrid = document.getElementById('active-perks-grid');
-     if (perksGrid) {
-         if (totalShares < 100) {
-             perksGrid.innerHTML = `
-                 <div class="col-span-full text-center py-10 border-2 border-dashed border-stone-100 rounded-2xl">
-                     <p class="text-stone-400 text-sm">Adopt at least 100 shares to activate your first reward.</p>
-                 </div>`;
-         } else {
-             let perksHTML = '';
-             // Perk Logic
-             if (totalShares >= 100) perksHTML += createPerkHTML("📦", "Quarterly Oil", "250ml Premium EVOO ready to ship.");
-             if (totalShares >= 100) perksHTML += createPerkHTML("📜", "Member Certificate", "Digital Proof of Membership.");
-             if (totalShares >= 500) perksHTML += createPerkHTML("🌱", "Carbon Credits", "Verified sequestration data available.");
-             if (totalShares >= 500) perksHTML += createPerkHTML("🌙", "1 Night Eco-Stay", "Complimentary villa night unlocked.");
-             if (totalShares >= 1000) perksHTML += createPerkHTML("🍾", "24 Bottles/Year", "Full tree harvest share active.");
-             if (totalShares >= 1000) perksHTML += createPerkHTML("🏷️", "Custom Plaque", "Physical nameplate on your tree.");
+         console.groupCollapsed(`[${TRACE_ID}] DOM Injection Trace`);
+         set('rewards-total-sol',      totalRewardsSol.toFixed(4) + ' SOL');
+         set('rewards-total-usd',      '≈ $' + totalRewardsUsd.toFixed(2));
+         set('rewards-pending-sol',    pendingRewardsSol.toFixed(4) + ' SOL');
+         set('rewards-claimed-sol',    claimedRewardsSol.toFixed(4) + ' SOL');
+         set('rewards-rate',           (totalShares * REWARDS_RATE_SOL).toFixed(4) + ' SOL / epoch');
+         set('farm-ownership-percent', ownershipPct.toFixed(4) + '%');
+         set('farm-ownership-pct',     ownershipPct.toFixed(4) + '%');
+         set('farmSharePct',           ownershipPct.toFixed(4) + '%');
+         set('total-grove-shares',     totalShares.toLocaleString());
+         set('farm-shares-stat',       totalShares.toLocaleString());
+         set('dash-shares',            totalShares.toLocaleString());
+         set('benefit-oil',            annualLitres.toFixed(1) + ' L');
+         set('dash-oil',               annualLitres.toFixed(1) + 'L');
+         set('stat-oil',               annualLitres.toFixed(1) + 'L');
+         set('benefit-carbon',         carbonKg.toFixed(1) + ' kg/yr');
+         set('stat-carbon',            carbonKg.toFixed(1) + 'kg');
+         set('bottles',                annualBottles.toString());
+         set('oilLiters',              annualLitres.toFixed(1) + 'L');
+         set('carbonEst',              carbonKg.toFixed(1) + ' kg/yr');
+         set('portfolioValue',         '$' + portfolioValueUsd.toLocaleString(undefined, { maximumFractionDigits: 0 }));
+         set('stat-value-sol',         portfolioValueSol.toFixed(3) + ' SOL');
 
-             perksGrid.innerHTML = perksHTML;
+         // Tree ID Uniqueness Trace
+         const uniqueTreeCount = new Set(positions.map((p: any) => p.account?.treeId ?? p.tree_id)).size;
+         set('farm-trees-stat', uniqueTreeCount.toString());
+         console.groupEnd();
+
+         // ─── 7. PROGRESS BARS ────────────────────────────────────────────────
+         const claimFill = document.getElementById('rewards-claim-progress-fill');
+         if (claimFill) claimFill.style.width = `${(CLAIMED_FRACTION * 100).toFixed(0)}%`;
+
+         // ─── 8. TIERS & PERKS LOGIC ──────────────────────────────────────────
+         const tiers = [
+             { min: 0,    name: "Olive Enthusiast", icon: "🫒" },
+             { min: 100,  name: "Olive Lover",       icon: "🫒" },
+             { min: 500,  name: "Eco Guardian",      icon: "🌿" },
+             { min: 1000, name: "Grove Patron",       icon: "👑" },
+             { min: 5000, name: "Legacy Holder",      icon: "🏛️" }
+         ];
+
+         let currentTier = tiers[0];
+         for (const t of tiers) { if (totalShares >= t.min) currentTier = t; }
+         const nextTier = tiers.find(t => t.min > totalShares);
+
+         console.log(`[${TRACE_ID}] Tier Evaluated: ${currentTier.name}`);
+
+         set('tier-icon', currentTier.icon);
+         set('tier-name', currentTier.name);
+
+         const progressBarEl  = document.getElementById('tier-progress-bar');
+         const progressTextEl = document.getElementById('tier-progress-text');
+
+         if (nextTier && progressBarEl) {
+             const range = nextTier.min - currentTier.min;
+             const within = totalShares - currentTier.min;
+             const pct = Math.min(100, (within / range) * 100);
+             progressBarEl.style.width = `${pct}%`;
+             if (progressTextEl) progressTextEl.textContent = `${totalShares.toLocaleString()} / ${nextTier.min.toLocaleString()} to ${nextTier.name}`;
          }
+
+         // ─── 9. PERKS GRID RENDERER ─────────────────────────────────────────
+         const perksGrid = document.getElementById('active-perks-grid');
+         if (perksGrid) {
+             const allPerks = [
+                 { threshold: 100,  icon: "📦", title: "Quarterly Oil",       desc: "250ml Premium EVOO ready to ship." },
+                 { threshold: 100,  icon: "📜", title: "Member Certificate",  desc: "Digital Proof of Membership." },
+                 { threshold: 500,  icon: "🌱", title: "Carbon Credits",      desc: "Verified sequestration data available." },
+                 { threshold: 500,  icon: "🌙", title: "1 Night Eco-Stay",    desc: "Complimentary villa night unlocked." },
+                 { threshold: 1000, icon: "🍾", title: "24 Bottles/Year",     desc: "Full tree harvest share active." },
+                 { threshold: 1000, icon: "🏷️", title: "Custom Plaque",       desc: "Physical nameplate on your tree." },
+                 { threshold: 5000, icon: "🗳️", title: "Governance Rights",   desc: "Vote on farm decisions." }
+             ];
+
+             perksGrid.innerHTML = allPerks.map(p => {
+                 const active = totalShares >= p.threshold;
+                 return `
+                     <div class="flex items-center gap-4 p-4 rounded-2xl border-2 transition-all
+                                 ${active ? 'border-amber-200 bg-amber-50' : 'border-stone-100 opacity-50'}">
+                         <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm">
+                             ${active ? p.icon : '🔒'}
+                         </div>
+                         <div>
+                             <h5 class="font-bold text-sm ${active ? 'text-amber-900' : 'text-stone-400'}">${p.title}</h5>
+                             <p class="text-xs ${active ? 'text-amber-700' : 'text-stone-400'}">
+                                 ${active ? p.desc : 'Unlock at ' + p.threshold.toLocaleString() + ' shares'}
+                             </p>
+                         </div>
+                     </div>`;
+             }).join('');
+             console.log(`[${TRACE_ID}] Perks Grid Rendered.`);
+         }
+
+         console.log(`[${TRACE_ID}] ✅ UI Refresh Complete.`);
+     } catch (fatal) {
+         console.error(`[${TRACE_ID}] ❌ CRITICAL UI FAILURE:`, fatal);
+     } finally {
+         console.groupEnd();
      }
  }
 
@@ -2973,90 +3081,86 @@ export function findTreasuryPDA(): [PublicKey, number] {
          </div>
      `;
  }
+ (window as any).refreshAdminTreeStatus = async () => {
+     const tbody = document.getElementById('admin-tree-table');
+     const activeProgram = (window as any)._program || (window as any).program;
 
-(window as any).refreshAdminTreeStatus = async () => {
-    const tbody = document.getElementById('admin-tree-table');
-    try {
-        console.log("[ADMIN] 🔄 Fetching blockchain source of truth...");
+     try {
+         console.log("[ADMIN] 🔄 Syncing UI with On-Chain Truth...");
 
-        // 1. Get all tree accounts from the program
-        const onChainAccounts = await program.account.tree.all();
+         // 1. Fetch ALL on-chain tree accounts
+         const onChainAccounts = await activeProgram.account.tree.all();
 
-        // Create Map of Tree ID -> On-chain Data
-        const onChainMap = new Map(onChainAccounts.map(t => {
-            // Handle both BN (object) and plain number (u32)
-            const id = (t.account.treeId && typeof t.account.treeId === 'object')
-                ? t.account.treeId.toNumber()
-                : t.account.treeId;
-            return [id, t.account];
-        }));
+         // 2. Create Map using the EXACT string from the account
+         // Anchor decodes tree_id as treeId. We ensure it's a string.
+         const onChainMap = new Map(onChainAccounts.map(t => {
+             const idOnChain = String(t.account.treeId || t.account.tree_id).trim();
+             return [idOnChain, t.account];
+         }));
 
-        console.log("[ADMIN] On-Chain Map Keys (Numeric):", Array.from(onChainMap.keys()));
+         console.log("[ADMIN] On-Chain IDs Found:", Array.from(onChainMap.keys()));
 
-        // 2. Get desired state from Supabase
-        const { data: sbTrees, error: sbError } = await sb
-            .from('tree_metadata')
-            .select('*')
-            .order('tree_id');
+         // 3. Get Supabase Metadata
+         const { data: sbTrees, error: sbError } = await sb
+             .from('tree_metadata')
+             .select('*')
+             .order('tree_id');
 
-        if (sbError) throw sbError;
-        if (!sbTrees) throw new Error("No tree data returned from Supabase");
+         if (sbError) throw sbError;
 
-        let mintedCount = 0;
+         let mintedCount = 0;
 
-        // 3. Build Table Rows
-        const rows = sbTrees.map(tree => {
-            // Parse numeric ID from string (e.g., "F1-FR-001" -> 1)
-            const numericId = parseInt(tree.tree_id.replace(/\D/g, ''));
-            const onChainData = onChainMap.get(numericId);
+         // 4. Build Table Rows
+         const rows = sbTrees.map(tree => {
+             // FIX: Match by the full ID string (e.g., "F1-FR-001")
+             const fullId = String(tree.tree_id).trim();
+             const onChainData = onChainMap.get(fullId);
 
-            const isLive = !!onChainData;
-            if (isLive) mintedCount++;
+             const isLive = !!onChainData;
+             if (isLive) mintedCount++;
 
-            const statusClass = isLive ? 'text-emerald-500' : 'text-red-500 font-bold';
-            const statusText = isLive ? '🟢 Active' : '🔴 Missing';
-            const shortMint = tree.mint ? `${tree.mint.slice(0, 4)}...${tree.mint.slice(-4)}` : '—';
+             const statusClass = isLive ? 'text-emerald-500' : 'text-red-500 font-bold animate-pulse';
+             const statusText = isLive ? '🟢 Active' : '🔴 Missing';
+             const shortMint = tree.mint ? `${tree.mint.slice(0, 4)}...${tree.mint.slice(-4)}` : '—';
 
-            return `
-                <tr class="hover:bg-stone-50 border-b border-stone-100 transition-colors">
-                    <td class="px-4 py-3 font-mono font-bold text-stone-900">#${tree.tree_id}</td>
-                    <td class="px-4 py-3 text-stone-700">${tree.common_name || 'Unnamed'}</td>
-                    <td class="px-4 py-3 text-stone-400 font-medium">${tree.variety || 'Ogliarola'}</td>
-                    <td class="px-4 py-3 font-mono text-[10px] text-stone-400">${shortMint}</td>
-                    <td class="px-4 py-3 ${statusClass}">${statusText}</td>
-                    <td class="px-4 py-3 text-right">
-                        ${!isLive ?
-                            `<button onclick="window.bootstrapTree(${numericId})"
-                                class="bg-stone-900 hover:bg-black text-white px-3 py-1 rounded-lg text-[10px] font-bold shadow-sm transition-transform active:scale-95">
-                                BOOTSTRAP
-                            </button>` :
-                            `<span class="text-stone-300 italic text-[10px]">On-Chain</span>`
-                        }
-                    </td>
-                </tr>
-            `;
-        });
+             return `
+                 <tr class="hover:bg-stone-50 border-b border-stone-100 transition-colors">
+                     <td class="px-4 py-3 font-mono font-bold text-stone-900">${fullId}</td>
+                     <td class="px-4 py-3 text-stone-700">${tree.common_name || tree.name || 'Unnamed'}</td>
+                     <td class="px-4 py-3 text-stone-400 font-medium">${tree.variety || 'Ogliarola'}</td>
+                     <td class="px-4 py-3 font-mono text-[10px] text-stone-400">${shortMint}</td>
+                     <td class="px-4 py-3 ${statusClass}">${statusText}</td>
+                     <td class="px-4 py-3 text-right">
+                         ${!isLive ?
+                             `<button onclick="window.bootstrapTree('${fullId}')"
+                                 class="bg-stone-900 hover:bg-black text-white px-3 py-1 rounded-lg text-[10px] font-bold shadow-sm transition-transform active:scale-95">
+                                 BOOTSTRAP
+                             </button>` :
+                             `<span class="text-stone-300 italic text-[10px]">On-Chain</span>`
+                         }
+                     </td>
+                 </tr>
+             `;
+         });
 
+         // 5. Update UI
+         if (tbody) tbody.innerHTML = rows.join('') || '<tr><td colspan="6" class="p-4 text-center">No trees in database.</td></tr>';
 
-        // 4. Update UI
-        if (tbody) tbody.innerHTML = rows.join('');
+         // Update Stats
+         const setStat = (id: string, val: number) => {
+             const el = document.getElementById(id);
+             if (el) el.innerText = val.toString();
+         };
 
-        const mintedEl = document.getElementById('admin-sb-minted');
-        const pendingEl = document.getElementById('admin-sb-pending');
-        const totalEl = document.getElementById('admin-sb-total');
+         setStat('admin-sb-minted', mintedCount);
+         setStat('admin-sb-pending', sbTrees.length - mintedCount);
+         setStat('admin-sb-total', sbTrees.length);
 
-        if (mintedEl) mintedEl.innerText = mintedCount.toString();
-        if (pendingEl) pendingEl.innerText = (sbTrees.length - mintedCount).toString();
-        if (totalEl) totalEl.innerText = sbTrees.length.toString();
-
-        console.log(`[ADMIN] Sync Complete. Found ${mintedCount} active trees.`);
-
-    } catch (e: any) {
-        console.error("[ADMIN] Sync Table Error:", e);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500 font-medium">Sync Failed: ${e.message}</td></tr>`;
-    }
-};
-
+     } catch (e: any) {
+         console.error("[ADMIN] Sync Table Error:", e);
+         if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500">Sync Failed: ${e.message}</td></tr>`;
+     }
+ };
 async function renderAdminLedger() {
     const container = document.getElementById('admin-ledger');
     if (!container) return;
