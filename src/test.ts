@@ -103,7 +103,7 @@ const findTreasuryPDA = (activeProgram: any) => {
 // CONFIGURATION
 // ══════════════════════════════════════════════════════════════════════════════
 
-const OLV_MINT = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa");
+const OLV_MINT = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 const CACHE_DURATION_MS = 60_000; // 1 minute
 
 interface PriceCache {
