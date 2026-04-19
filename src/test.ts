@@ -53,7 +53,7 @@ async function initWeather() {
         await (window as any).refreshWeatherUI();
     }
 }
-//initWeather();
+initWeather();
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BUFFER POLYFILL
