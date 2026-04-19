@@ -257,36 +257,43 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
     console.log(`[BALANCES] ✅ SOL: ${solBalance.toFixed(4)} @ $${solPrice.toFixed(2)} = $${solUsd.toFixed(2)}`);
 
     // ═══════════════════════════════════════════════════════════════════
-    // 2. OLV TOKEN BALANCE
+    // 2. OLV TOKEN BALANCE (Hardened Parsed Version)
     // ═══════════════════════════════════════════════════════════════════
     let olvBalance = 0;
     let olvUsd = 0;
 
     try {
-      const olvAta = await getAssociatedTokenAddress(OLV_MINT, walletPubkey);
-      const olvAccount = await getAccount(conn, olvAta);
-      olvBalance = Number(olvAccount.amount) / 1_000_000_000; // 9 decimals
-      olvUsd = olvBalance * olvPrice;
+      // Use the connection to get all accounts for this mint owned by the user
+      const response = await conn.getParsedTokenAccountsByOwner(walletPubkey, {
+        mint: OLV_MINT
+      });
 
-      console.log(`[BALANCES] ✅ OLV: ${olvBalance.toLocaleString()} @ $${olvPrice.toFixed(6)} = $${olvUsd.toFixed(2)}`);
-    } catch (err: any) {
-      if (err.message?.includes("could not find account")) {
-        console.log("[BALANCES] No OLV token account yet (balance: 0)");
+      if (response.value.length > 0) {
+        // Solana returns an array; we take the first one (the primary ATA)
+        const accountInfo = response.value[0].account.data.parsed.info;
+        olvBalance = accountInfo.tokenAmount.uiAmount || 0;
+        olvUsd = olvBalance * olvPrice;
+
+        console.log(`[BALANCES] ✅ OLV Found: ${olvBalance.toLocaleString()} tokens`);
       } else {
-        console.warn(`[BALANCES] ⚠️  OLV fetch error: ${err.message}`);
+        console.log("[BALANCES] No OLV Associated Token Account found on-chain.");
       }
+    } catch (err: any) {
+      console.warn(`[BALANCES] ⚠️ OLV fetch error: ${err.message}`);
     }
 
+    // UI UPDATES
     const olvBalEl = document.getElementById("wallet-olv-balance");
     const olvUsdEl = document.getElementById("wallet-olv-usd");
 
     if (olvBalEl) {
-      olvBalEl.textContent = olvBalance > 0
-        ? olvBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })
-        : "0";
+      // Use more decimal places if the balance is small
+      olvBalEl.textContent = olvBalance.toLocaleString(undefined, { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2 
+      });
     }
     if (olvUsdEl) olvUsdEl.textContent = `$${olvUsd.toFixed(2)}`;
-
     // ═══════════════════════════════════════════════════════════════════
     // 3. TOTAL PORTFOLIO VALUE
     // ═══════════════════════════════════════════════════════════════════
