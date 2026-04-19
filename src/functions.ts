@@ -1255,6 +1255,7 @@ if (typeof window !== 'undefined') {
     const currentShares = (window as any).userPositions?.[treeId] || 0;
     const newTotal = currentShares + shares;
     const isGuardian = newTotal >= 1000; // Match your lib.rs constant
+    const latestBlockhash = await _connection.getLatestBlockhash('confirmed');
 
     await (window as any).syncTransactionToSupabase(
         walletPubKey.toBase58(),
