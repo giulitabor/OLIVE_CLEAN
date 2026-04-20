@@ -1247,7 +1247,7 @@ if (typeof window !== 'undefined') {
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
-
+    btn.disabled = true; btn.textContent = "Adopt Tree"; 
     console.log("✅ Transaction successful:", tx);
     alert(`🎉 Successfully adopted ${shares} shares of ${treeId}!\n\nTransaction: ${tx.slice(0, 8)}...`);
     console.log(`[BUY] ✅ On-chain success: ${tx}`);
