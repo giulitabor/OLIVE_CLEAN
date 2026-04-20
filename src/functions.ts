@@ -1171,47 +1171,52 @@ if (typeof window !== 'undefined') {
 // ─────────────────────────────────────────────────────────────
 // CONFIRM ADOPT / BUY
 // ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// FIX #3: TRANSACTION CONFIRMATION OPTIMIZATION
+// ═══════════════════════════════════════════════════════════════════════════
+ 
+/**
+ * FIXED VERSION - Add this to confirmAdopt()
+ * Replaces the transaction submission section
+ */
 (window as any).confirmAdopt = async function() {
   console.log("🚀 CONFIRM ADOPT TRIGGERED");
-
+ 
   try {
     const modal = document.getElementById('adopt-modal');
     if (!modal) throw new Error("Modal not found");
-
+ 
     const treeId = modal.dataset.treeId;
     if (!treeId) throw new Error("Missing tree data in modal");
-
+ 
     const slider = document.getElementById('modal-slider') as HTMLInputElement;
     if (!slider) throw new Error("Slider not found");
-
+ 
     const shares = parseInt(slider.value);
     if (shares <= 0) throw new Error("Invalid share amount");
-
+ 
     const program  = (window as any)._program;
     const provider = (window as any)._provider;
     const protocol = (window as any)._protocol;
-
-    // FIX: use window.walletPubKey (set directly from wallet.publicKey in connectWallet).
-    // provider.wallet.publicKey is the Anchor adapter wrapper and its .toBuffer() can
-    // produce a different byte representation, causing ConstraintSeeds on the position PDA.
-    const walletPubKey = (window as any).walletPubKey
-      ?? (window as any).wallet?.publicKey;
-
-    if (!program || !provider || !protocol || !walletPubKey) {
+    const walletPubKey = (window as any).walletPubKey ?? (window as any).wallet?.publicKey;
+    const connection = (window as any)._connection;
+ 
+    if (!program || !provider || !protocol || !walletPubKey || !connection) {
       throw new Error("Program/Provider/Protocol not initialized");
     }
-
+ 
     console.log("📋 Transaction Details:", {
       treeId, shares,
       wallet: walletPubKey.toBase58(),
-      walletSource: (window as any).walletPubKey ? 'window.walletPubKey' : 'window.wallet.publicKey'
     });
-
+ 
     const btn = document.getElementById('modal-buy-btn') as HTMLButtonElement;
-    const reset_btn      = document.getElementById('btn-confirm-adopt') as HTMLButtonElement;
-
-    if (btn) { btn.disabled = true; btn.textContent = "Processing..."; }
-
+    if (btn) { 
+      btn.disabled = true; 
+      btn.textContent = "Confirming transaction..."; 
+    }
+ 
+    // Derive PDAs
     const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("protocol")],
       program.programId
@@ -1224,18 +1229,11 @@ if (typeof window !== 'undefined') {
       [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeId)],
       program.programId
     );
-
-    // treasury comes from the on-chain protocol config (matches IDL purchase_shares)
     const treasuryPda = protocol.treasury;
-
-    console.log("📍 PDAs derived:", {
-      protocol: protocolPda.toBase58(),
-      tree:     treePda.toBase58(),
-      position: positionPda.toBase58(),
-      treasury: treasuryPda.toBase58(),
-    });
-
+ 
     console.log("⚡ Sending transaction...");
+    
+    // ✅ FIX #3A: Send transaction
     const tx = await program.methods
       .purchaseShares(treeId, new BN(shares))
       .accounts({
@@ -1247,17 +1245,42 @@ if (typeof window !== 'undefined') {
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
-    btn.disabled = true; btn.textContent = "Adopt Tree"; 
-    console.log("✅ Transaction successful:", tx);
-    alert(`🎉 Successfully adopted ${shares} shares of ${treeId}!\n\nTransaction: ${tx.slice(0, 8)}...`);
-    console.log(`[BUY] ✅ On-chain success: ${tx}`);
-
+ 
+    console.log("📤 Transaction sent:", tx);
+    
+    if (btn) { 
+      btn.textContent = "Waiting for confirmation..."; 
+    }
+ 
+    // ✅ FIX #3B: Explicit confirmation with timeout (60 seconds)
+    const latestBlockhash = await connection.getLatestBlockhash('finalized');
+    
+    console.log("⏳ Confirming transaction on-chain...");
+    const startTime = Date.now();
+    
+    const confirmation = await connection.confirmTransaction({
+      signature: tx,
+      blockhash: latestBlockhash.blockhash,
+      lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+    }, 'confirmed');
+    
+    const confirmTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✅ Transaction confirmed in ${confirmTime}s`);
+    
+    if (confirmation.value.err) {
+      throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+    }
+ 
+    // Success UI
+    alert(`🎉 Successfully adopted ${shares} shares!\n\nTransaction: ${tx.slice(0, 8)}...\nConfirmed in ${confirmTime}s`);
+ 
+    // Sync to Supabase
     const currentShares = (window as any).userPositions?.[treeId] || 0;
     const newTotal = currentShares + shares;
-    const isGuardian = newTotal >= 1000; // Match your lib.rs constant
-    const latestBlockhash = await _connection.getLatestBlockhash('confirmed');
-
-    await (window as any).syncTransactionToSupabase(
+    const isGuardian = newTotal >= (protocol.threshold || 1000);
+ 
+    try {
+      await (window as any).syncTransactionToSupabase(
         walletPubKey.toBase58(),
         treeId,
         shares,
@@ -1265,31 +1288,40 @@ if (typeof window !== 'undefined') {
         tx,
         newTotal,
         isGuardian
-    );
-console.log("syncing----BUY--");
-
-
-
-        const btn2 = document.getElementById('modal-buy-btn') as HTMLButtonElement;
-        if (btn2) {
-          btn2.disabled = false;
-          const total = (window as any)._lastCalculatedTotal || '0.000';
-          btn2.innerHTML = `Adopt — pay <span id="modal-btn-cost">${total}</span> SOL`;
-        }
-
-
+      );
+    } catch (syncErr) {
+      console.error('⚠️  Supabase sync failed (non-fatal):', syncErr);
+      // Don't block user - transaction succeeded on-chain
+    }
+ 
+    // Close modal and refresh
     (window as any).closeAdoptModal();
-
-    (window as any).loadUserTreePositions?.();
-    (window as any).renderTreesGrid?.();
-
+    await (window as any).loadUserTreePositions?.();
+    await (window as any).renderTreesGrid?.();
+ 
   } catch (err: any) {
     console.error("❌ Transaction failed:", err);
-    alert(`Transaction failed: ${err.message || err}`);
+    
+    // Parse error for user-friendly message
+    let errorMsg = err.message || err;
+    if (errorMsg.includes('0x1')) {
+      errorMsg = 'Insufficient SOL balance';
+    } else if (errorMsg.includes('0x0')) {
+      errorMsg = 'Transaction rejected by user';
+    }
+    
+    alert(`Transaction failed: ${errorMsg}`);
+    
+    // Reset button
+    const btn = document.getElementById('modal-buy-btn') as HTMLButtonElement;
+    if (btn) {
+      btn.disabled = false;
+      const total = (window as any)._lastCalculatedTotal || '0.000';
+      btn.innerHTML = `Adopt — pay <span id="modal-btn-cost">${total}</span> SOL`;
+    }
   }
 };
-
-// Alias for compatibility
+ // Alias for compatibility
 (window as any).confirmBuy = (window as any).confirmAdopt;
 (window as any).confirmSell = async function() {
     console.log("🚀 CONFIRM SELL TRIGGERED");
