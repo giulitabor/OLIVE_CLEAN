@@ -991,78 +991,125 @@ let _cachedTrees: any[] = []; // Declare it here!
  * Functions to populate the enhanced tree detail modal with live Oracle data
  * Add this to your test.ts file or import it as a module
  */
-
 // ══════════════════════════════════════════════════════════════════════════════
-// TREE DETAIL MODAL WITH ORACLE INTEGRATION
+// TREE DETAIL MODAL WITH ORACLE & METADATA INTEGRATION
 // ══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Opens the tree detail modal and populates it with Oracle data
+ * Opens the tree detail modal and populates it with Oracle & Database data
  */
 (window as any).openTreeDetailModal = (treeId: string) => {
-  console.log(`[TREE MODAL] Opening detail for tree: ${treeId}`);
+  const TRACE_ID = `DETAIL_${treeId}`;
+  console.log(`[${TRACE_ID}] Opening detail view...`);
 
-  const treeData = Object.values((window as any)._cachedTrees || {}).find(
-    (t: any) => t.account.treeId === treeId
+  // 1. Find tree in cache (Handle Array or Object cache structures)
+  const cache = (window as any)._cachedTrees || [];
+  const treeData = Object.values(cache).find(
+    (t: any) => String(t.account?.treeId || t.account?.tree_id) === String(treeId)
   ) as any;
 
   if (!treeData) {
-    console.warn(`[TREE MODAL] Tree ${treeId} not found in cache`);
+    console.warn(`[${TRACE_ID}] Tree not found in cache.`);
     return;
   }
 
   const modal = document.getElementById('tree-detail-modal');
-  const acc = treeData.account;
-
-  // ═══════════════════════════════════════════════════════════════════
-  // 1. FILL BASIC TREE INFO (Header & Overview Tab)
-  // ═══════════════════════════════════════════════════════════════════
+  const acc = treeData.account || {};
+  const meta = treeData.metadata || {}; // Metadata from Supabase (enriched in loadDashboard)
 
   const setEl = (id: string, value: string) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
 
+  // ═══════════════════════════════════════════════════════════════════
+  // 1. FILL BASIC TREE INFO (Header & Overview Tab)
+  // ═══════════════════════════════════════════════════════════════════
+
   // Header
-  setEl('tree-detail-name', `Tree #${acc.treeId} — ${acc.variety || 'Frantoio'}`);
+  const varietyName = acc.variety || meta.variety || 'Frantoio';
+  setEl('tree-detail-name', `Tree #${treeId} — ${varietyName}`);
   setEl('tree-detail-location', `Grove A • Row ${Math.floor(Math.random() * 10) + 1} • San Vincenzo, Tuscany`);
 
   // Overview Tab
   setEl('tree-detail-age', `${acc.age || 15} yrs`);
-  setEl('tree-detail-height', `${(acc.age || 15) * 0.35}m`); // Rough estimate
-  setEl('tree-detail-variety', acc.variety || 'Frantoio');
-  setEl('tree-yield', `${(acc.sharesSold / 40).toFixed(1)} L`);
-  setEl('tree-carbon', `${(acc.sharesSold * 0.05).toFixed(0)} kg/yr`);
+  setEl('tree-detail-height', `${((acc.age || 15) * 0.35).toFixed(1)}m`);
+  setEl('tree-detail-variety', varietyName);
+  
+  const sharesSold = Number(acc.sharesSold || 0);
+  setEl('tree-yield', `${(sharesSold / 40).toFixed(1)} L`);
+  setEl('tree-carbon', `${(sharesSold * 0.05).toFixed(0)} kg/yr`);
 
-  // Metadata Tab
-  setEl('tree-detail-meta-id', acc.treeId);
-  setEl('tree-detail-meta-sold', acc.sharesSold.toLocaleString());
-  setEl('tree-detail-meta-mint', acc.mint_address);
+  // ═══════════════════════════════════════════════════════════════════
+  // 2. METADATA TAB (Mint, IDs, Dates)
+  // ═══════════════════════════════════════════════════════════════════
 
+  // Primary source for mint is DB metadata, fallback to account
+  const mintAddress = meta.mint_address || acc.mintAddress || acc.mint_address || "Not Minted";
 
-  // Get mint address from Supabase if available
-  if (treeData.mint_address) {
-      alert("SOMETHING ISTHERE");
-      alert(treeData.mint_address);
-    //setEl('tree-detail-meta-mint', treeData.mint_address);
+  setEl('tree-detail-meta-id', treeId);
+  setEl('tree-detail-meta-sold', sharesSold.toLocaleString());
+  setEl('tree-detail-meta-total', (acc.totalShares || 1000).toLocaleString());
+  setEl('tree-detail-meta-mint', mintAddress);
+  
+  // Date: Use DB created_at or default to current month
+  const regDate = meta.created_at ? new Date(meta.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "March 2026";
+  setEl('tree-detail-meta-date', regDate);
+
+  // GPS Coordinates (from Supabase)
+  if (meta.latitude && meta.longitude) {
+    setEl('tree-detail-meta-gps', `${meta.latitude}°N, ${meta.longitude}°E`);
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 2. POPULATE ORACLE DATA
+  // 3. ACTION BUTTONS (Solscan & Export)
   // ═══════════════════════════════════════════════════════════════════
 
-  populateOracleData();
+  const metadataTab = document.getElementById('tree-detail-tab-metadata');
+  if (metadataTab) {
+    const [solscanBtn, exportBtn] = metadataTab.querySelectorAll('button');
 
-  // Start real-time updates
-  startOracleUpdates();
+    if (solscanBtn) {
+      solscanBtn.onclick = () => {
+        const url = mintAddress !== "Not Minted" 
+          ? `https://solscan.io/token/${mintAddress}` 
+          : `https://solscan.io/account/${treeId}`;
+        window.open(url, '_blank');
+      };
+    }
 
-  // Show modal
+    if (exportBtn) {
+      exportBtn.onclick = () => {
+        const dataToExport = { ...acc, database: meta };
+        const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tree_${treeId}_metadata.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 4. ORACLE & TAB MANAGEMENT
+  // ═══════════════════════════════════════════════════════════════════
+
+  if (typeof (window as any).populateOracleData === 'function') {
+    (window as any).populateOracleData();
+  }
+  
+  if (typeof (window as any).startOracleUpdates === 'function') {
+    (window as any).startOracleUpdates();
+  }
+
+  // Show modal and reset to first tab
   modal?.classList.remove('hidden');
-
-  // Default to overview tab
-  switchTreeDetailTab('overview');
+  if (typeof (window as any).switchTreeDetailTab === 'function') {
+    (window as any).switchTreeDetailTab('overview');
+  }
 };
-
 /**
  * Populates the Environment tab with live Oracle sensor data
  */
