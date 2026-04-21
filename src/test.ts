@@ -1373,25 +1373,33 @@ console.log('[TREE MODAL] Oracle integration loaded ✅');
     if (typeof (window as any).updateModalCalc === 'function') {
         (window as any).updateModalCalc();
     }
-};
-/**
- * REFACTORED: loadDashboard
- * Includes Heavy Trace Engine & Global State Protection
+};/**
+ * PRODUCTION-READY: loadDashboard
+ * Optimized caching + Admin Sync + Enhanced Error Handling
  */
- async function loadDashboard() {
+async function loadDashboard() {
   const TRACE_ID = `DASH_${Date.now().toString().slice(-4)}`;
   console.group(`[${TRACE_ID}] 🔄 Syncing Grove...`);
 
+  // 1. Dependency Check
   const activeProgram = (window as any)._program || (window as any).program;
   const activeSb = (window as any)._sb || (window as any).sb;
 
-  if (!activeProgram) {
-    console.error(`[${TRACE_ID}] ❌ ABORT: No active program found.`);
+  if (!activeProgram || !activeSb) {
+    console.error(`[${TRACE_ID}] ❌ ABORT: Required providers (Program/Supabase) missing.`);
     console.groupEnd();
     return;
   }
 
+  // UI Helper with fallback
+  const setUI = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+    else console.debug(`[${TRACE_ID}] Element #${id} not found.`);
+  };
+
   try {
+    // 2. Wallet & Identity Context
     const wallet = (window as any).phantom?.solana || (window as any).solana;
     if (!wallet?.publicKey) throw new Error("Wallet not connected");
 
@@ -1399,89 +1407,108 @@ console.log('[TREE MODAL] Oracle integration loaded ✅');
     const adminKeyStr = (window as any).ADMIN_PUBKEY || "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
     const isAdmin = addr === adminKeyStr;
 
-    // 1. Corrected UI Setter (Fixed 'v is not defined' risk)
-    const setUI = (id: string, value: string) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value;
-      else console.debug(`[${TRACE_ID}] Element #${id} not in current view.`);
+    // 3. Protocol Logic (Cached with Revalidation)
+    let protocolData = (window as any)._protocol;
+    const fetchProtocol = async () => {
+      try {
+        const [protocolPDA] = (window as any).findProtocolPDA();
+        const accountClient = activeProgram.account.protocolConfig || activeProgram.account.protocol;
+        const data = await accountClient.fetchNullable(protocolPDA);
+        if (data) (window as any)._protocol = data;
+        return data;
+      } catch (e) {
+        console.warn(`[${TRACE_ID}] Protocol fetch failed:`, e);
+        return null;
+      }
     };
 
-    // 2. Protocol Fetch
-    const [protocolPDA] = (window as any).findProtocolPDA();
-    const accountClient = activeProgram.account.protocolConfig || activeProgram.account.protocol;
-    const protocolData = await accountClient.fetchNullable(protocolPDA);
-    (window as any)._protocol = protocolData;
+    if (!protocolData) {
+      console.log(`[${TRACE_ID}] Cache miss. Fetching protocol...`);
+      protocolData = await fetchProtocol();
+    } else {
+      console.log(`[${TRACE_ID}] Cache hit. Background revalidating...`);
+      fetchProtocol(); // Async background update, don't await
+    }
 
-    // 3. Data Fetching
-    console.log(`[${TRACE_ID}] Fetching Chain Positions for ${addr.slice(0,8)}...`);
-    const [onChainPositions, { data: dbTrees }] = await Promise.all([
+    if (!protocolData) {
+      throw new Error("Unable to load protocol configuration.");
+    }
+
+    // 4. Parallel Data Fetching (Positions & DB Metadata)
+    console.log(`[${TRACE_ID}] Fetching Chain Positions for ${addr.slice(0, 8)}...`);
+    
+    const [onChainPositions, { data: dbTrees, error: sbError }] = await Promise.all([
       activeProgram.account.sharePosition.all([{ memcmp: { offset: 8, bytes: addr } }]),
       activeSb.from('tree_metadata').select('*')
     ]);
 
-    // 4. Position Normalization (Crucial for F1-FR-005 mapping)
+    if (sbError) console.error(`[${TRACE_ID}] Supabase Error:`, sbError.message);
+
+    // 5. Position Normalization & Enrichment
     const enrichedPositions = onChainPositions.map(pos => {
-      // Anchor returns camelCase (treeId), but we check both just in case
       const tId = pos.account.treeId || pos.account.tree_id;
       const meta = dbTrees?.find(t => String(t.tree_id) === String(tId));
       return {
         ...pos,
-        treeId: tId, // Normalize key for the renderer
-        metadata: meta || { name: `Tree ${tId}`, variety: 'Unknown', image_url: '' }
+        treeId: tId,
+        metadata: meta || { name: `Tree ${tId}`, variety: 'Grown', image_url: '' }
       };
     });
 
-    console.log(`[${TRACE_ID}] Normalized ${enrichedPositions.length} user positions.`);
-
-    // 5. Global Stats Logic
+    // 6. Global Stats Calculation
     let totalShares = 0;
     enrichedPositions.forEach(p => {
       const s = p.account.sharesOwned || p.account.shares_owned || 0;
       totalShares += (typeof s === 'object' ? s.toNumber() : Number(s));
     });
 
-    // 6. Update Dashboard Stats (Redesigned IDs)
+    // 7. UI Updates (Dashboard Stats)
     setUI('grove-tree-count', enrichedPositions.length.toString());
     setUI('grove-share-count', totalShares.toLocaleString());
     setUI('stat-oil', (totalShares * 0.02).toFixed(1) + "L");
     setUI('stat-carbon', (totalShares * 0.08).toFixed(1) + "kg");
-
-    // Legacy IDs (Compatibility)
+    
+    // Legacy support
     setUI('yourTrees', enrichedPositions.length.toString());
     setUI('portfolioShares', totalShares.toLocaleString());
 
-    // 7. Render Dispatch
-    if (typeof (window as any).renderTrees === 'function' && protocolData) {
-      // Build tree list for the marketplace grid
+    // 8. Render Orchestration
+    // Main Tree Grid
+    if (typeof (window as any).renderTrees === 'function') {
       const treesForGrid = (dbTrees || []).map(meta => ({
-          account: { treeId: meta.tree_id, name: meta.name, variety: meta.variety },
-          publicKey: null
+        account: { treeId: meta.tree_id, name: meta.name, variety: meta.variety },
+        publicKey: null
       }));
       (window as any).renderTrees(treesForGrid, protocolData, enrichedPositions);
     }
 
-    // Render the specific cards in "Your Grove"
-    const positionsContainer = document.getElementById('tree-position-cards');
-    if (positionsContainer && typeof (window as any).renderPositions === 'function') {
+    // User's specific position cards
+    const posContainer = document.getElementById('tree-position-cards');
+    if (posContainer && typeof (window as any).renderPositions === 'function') {
       (window as any).renderPositions(enrichedPositions);
     }
 
-    // 8. Wallet & Admin Sync
+    // 9. Post-Sync Tasks (Wallet & Admin)
     if (typeof (window as any).refreshWalletBalances === 'function') {
       await (window as any).refreshWalletBalances(wallet.publicKey);
     }
 
     if (isAdmin && typeof (window as any).fillAdminProtocol === 'function') {
-        (window as any).fillAdminProtocol(protocolData);
+      console.log(`[${TRACE_ID}] 👑 Admin session detected.`);
+      (window as any).fillAdminProtocol(protocolData);
     }
 
-    console.log(`[${TRACE_ID}] ✅ Sync Complete.`);
+    console.log(`[${TRACE_ID}] ✅ Dashboard Sync Complete.`);
 
   } catch (err: any) {
-    console.error(`[${TRACE_ID}] ❌ Fatal Dashboard Error:`, err.message);
+    console.error(`[${TRACE_ID}] ❌ Dashboard Error:`, err.message);
+    // UI Feedback for User
+    setUI('grove-tree-count', "!");
+    setUI('grove-share-count', "Error");
   } finally {
     console.groupEnd();
   }
+}
 }//------------
 // refreshglobalpulse
 //-----------------
