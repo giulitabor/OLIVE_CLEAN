@@ -1045,7 +1045,7 @@ let _cachedTrees: any[] = []; // Declare it here!
   // ═══════════════════════════════════════════════════════════════════
 
   // Primary source for mint is DB metadata, fallback to account
-  const mintAddress = meta.mint_address || acc.mintAddress || acc.mint_address || "Not Minted";
+  const mintAddress = meta.mint || "Not Minted";
 
   setEl('tree-detail-meta-id', treeId);
   setEl('tree-detail-meta-sold', sharesSold.toLocaleString());
