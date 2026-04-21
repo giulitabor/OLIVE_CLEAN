@@ -3013,10 +3013,10 @@ async function resetGroveDatabase() {
          set('total-grove-shares',     totalShares.toLocaleString());
          set('farm-shares-stat',       totalShares.toLocaleString());
          set('dash-shares',            totalShares.toLocaleString());
-         set('benefit-oil',            annualLitres.toFixed(1) + ' L');
+         setEl('benefit-oil',            annualLitres.toFixed(1) + ' L');
          set('dash-oil',               annualLitres.toFixed(1) + 'L');
          set('stat-oil',               annualLitres.toFixed(1) + 'L');
-         set('benefit-carbon',         carbonKg.toFixed(1) + ' kg/yr');
+         setEl('benefit-carbon',         carbonKg.toFixed(1) + ' kg/yr');
          set('stat-carbon',            carbonKg.toFixed(1) + 'kg');
          set('bottles',                annualBottles.toString());
          set('oilLiters',              annualLitres.toFixed(1) + 'L');
