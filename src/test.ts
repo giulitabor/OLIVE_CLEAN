@@ -2277,7 +2277,7 @@ function updateActivePerks(totalShares: number) {
 }
 (window as any).runAudit = async () => {
   console.log("🔍 [AUDIT] STARTING DATA INTEGRITY CHECK...");
-
+//This for vercel
   try {
     const activeProgram = (window as any)._program || (window as any).program;
     const activeSb = (window as any)._sb || (window as any).sb;
