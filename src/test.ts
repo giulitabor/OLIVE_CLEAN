@@ -1040,14 +1040,13 @@ let _cachedTrees: any[] = []; // Declare it here!
   setEl('tree-yield', `${(sharesSold / 40).toFixed(1)} L`);
   setEl('tree-carbon', `${(sharesSold * 0.05).toFixed(0)} kg/yr`);
 
-  // ═══════════════════════════════════════════════════════════════════
-  // 2. METADATA TAB (Mint, IDs, Dates)
-  // ═══════════════════════════════════════════════════════════════════
+  const mintAddress = meta.mint || meta.on_chain_address || acc.mint || "Missing Minted";
 
-  // Primary source for mint is DB metadata, fallback to account
-    alert(meta.mint);
-  const mintAddress = meta.mint ||acc.mint || "Missing Minted";
-
+  // Debug alert as requested
+  if (meta.mint) {
+    console.log(`[${TRACE_ID}] Found Mint in DB: ${meta.mint}`);
+  }
+    
   setEl('tree-detail-meta-id', treeId);
   setEl('tree-detail-meta-sold', sharesSold.toLocaleString());
   setEl('tree-detail-meta-total', (acc.totalShares || 1000).toLocaleString());
@@ -1062,8 +1061,8 @@ let _cachedTrees: any[] = []; // Declare it here!
     setEl('tree-detail-meta-gps', `${meta.latitude}°N, ${meta.longitude}°E`);
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // 3. ACTION BUTTONS (Solscan & Export)
+ // ═══════════════════════════════════════════════════════════════════
+  // 3. ACTION BUTTONS (Solscan Devnet Logic)
   // ═══════════════════════════════════════════════════════════════════
 
   const metadataTab = document.getElementById('tree-detail-tab-metadata');
@@ -1072,27 +1071,31 @@ let _cachedTrees: any[] = []; // Declare it here!
 
     if (solscanBtn) {
       solscanBtn.onclick = () => {
-        const url = mintAddress !== "Not Minted" 
-          ? `https://solscan.io/token/${mintAddress}` 
-          : `https://solscan.io/account/${treeId}`;
+        // Use Devnet cluster parameter
+        let url;
+        if (mintAddress !== "Missing Minted") {
+            // Use /token/ for specific mints, /account/ for general addresses
+            url = `https://solscan.io/account/${mintAddress}?cluster=devnet`;
+        } else {
+            // Fallback to searching the Tree ID account
+            url = `https://solscan.io/account/${treeId}?cluster=devnet`;
+        }
+        
         window.open(url, '_blank');
       };
     }
 
     if (exportBtn) {
       exportBtn.onclick = () => {
-        const dataToExport = { ...acc, database: meta };
-        const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const exportData = { ...acc, ...meta, exported_at: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `tree_${treeId}_metadata.json`;
+        a.href = URL.createObjectURL(blob);
+        a.download = `tree_${treeId}_devnet_meta.json`;
         a.click();
-        URL.revokeObjectURL(url);
       };
     }
   }
-
   // ═══════════════════════════════════════════════════════════════════
   // 4. ORACLE & TAB MANAGEMENT
   // ═══════════════════════════════════════════════════════════════════
