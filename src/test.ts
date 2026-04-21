@@ -10,6 +10,8 @@ import { connectWallet, sb, connection } from "./connection";
 import './weatherEngine';
 import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 
 const idl = {
     "version": "0.1.0",
@@ -1373,7 +1375,8 @@ console.log('[TREE MODAL] Oracle integration loaded ✅');
     if (typeof (window as any).updateModalCalc === 'function') {
         (window as any).updateModalCalc();
     }
-};/**
+};
+/**
  * PRODUCTION-READY: loadDashboard
  * Optimized caching + Admin Sync + Enhanced Error Handling
  */
