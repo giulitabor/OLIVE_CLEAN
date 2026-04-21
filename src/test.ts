@@ -1512,7 +1512,7 @@ async function loadDashboard() {
     console.groupEnd();
   }
 }
-}//------------
+//------------
 // refreshglobalpulse
 //-----------------
 async function refreshGlobalPulse() {
