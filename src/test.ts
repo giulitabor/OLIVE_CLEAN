@@ -1037,10 +1037,14 @@ let _cachedTrees: any[] = []; // Declare it here!
   // Metadata Tab
   setEl('tree-detail-meta-id', acc.treeId);
   setEl('tree-detail-meta-sold', acc.sharesSold.toLocaleString());
+  setEl('tree-detail-meta-mint', acc.mint_address);
+
 
   // Get mint address from Supabase if available
   if (treeData.mint_address) {
-    setEl('tree-detail-meta-mint', treeData.mint_address);
+      alert("SOMETHING ISTHERE");
+      alert(treeData.mint_address);
+    //setEl('tree-detail-meta-mint', treeData.mint_address);
   }
 
   // ═══════════════════════════════════════════════════════════════════
