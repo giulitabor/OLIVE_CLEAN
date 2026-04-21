@@ -1046,7 +1046,7 @@ let _cachedTrees: any[] = []; // Declare it here!
 
   // Primary source for mint is DB metadata, fallback to account
     alert(meta.mint);
-  const mintAddress = meta.mint || "Not Minted";
+  const mintAddress = meta.mint ||acc.mint || "Missing Minted";
 
   setEl('tree-detail-meta-id', treeId);
   setEl('tree-detail-meta-sold', sharesSold.toLocaleString());
