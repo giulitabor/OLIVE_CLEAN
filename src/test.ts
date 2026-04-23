@@ -1525,6 +1525,16 @@ async function loadDashboard() {
     setUI('grove-share-count', totalShares.toLocaleString());
     setUI('stat-oil', (totalShares * 0.02).toFixed(1) + "L");
     setUI('stat-carbon', (totalShares * 0.08).toFixed(1) + "kg");
+    setUI('benefit-oil', (totalShares * 0.02).toFixed(1) + "L");
+    setUI('benefit-carbon', (totalShares * 0.08).toFixed(1) + "kg");
+    // Special logic for Farm Access text
+    if (totalShares) {
+        let accessStatus = "No access yet";
+        if (totalShares >= 1000) accessStatus = "Full Access Unlocked";
+        else if (totalShares >= 500) accessStatus = "Day Visit Ready";
+        setUI('benefit-visit', accessStatus);
+    }
+
     
     // Legacy support
     setUI('yourTrees', enrichedPositions.length.toString());
