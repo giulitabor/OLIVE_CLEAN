@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olivium — Own an Olive Tree in Italy</title>
+    <meta name="description" content="Own shares in a private olive estate in Tuscany. Receive your oil. Stay in your villa. Return every year.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+
+    /* ═══════════════════════════════════════
+       VISUAL TRUST SECTION (LIGHT & CLEAN)
+       ═══════════════════════════════════════ */
+       .modal-body h4 {
+         color: rgba(255, 255, 255, 0.85);
+       }
+       .visual-trust {
+       display: grid;
+       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+       gap: 1.5rem;
+       margin: 2rem 0 3rem 0;
+   }
+
+   .visual-card {
+       background: #FAF8F3;
+       border-radius: 12px;
+       padding: 1rem;
+       border: 1px solid rgba(0,0,0,0.05);
+       text-align: center;
+   }
+
+   .visual-card img {
+       width: 100%;
+       height: 140px;
+       object-fit: cover;
+       border-radius: 8px;
+       margin-bottom: 0.75rem;
+   }
+
+   .visual-card p {
+       font-size: 0.85rem;
+       color: #555;
+   }
+
+
+/* Sections */
+.story-section {
+    margin-bottom: 4rem;
+    max-width: 700px;
+}
+
+.story-section h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+}
+
+.story-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+    color: var(--olive-dark);
+}
+
+.story-section p {
+    font-size: 1.05rem;
+    color: #333;
+}
+
+/* Split layout */
+.story-section.split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+    max-width: 900px;
+}
+
+.story-section.split.reverse {
+    grid-template-columns: 1fr 1fr;
+}
+
+.story-section.split img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* Highlight */
+.story-section.highlight {
+    text-align: center;
+    padding: 3rem;
+    background: var(--olive-pale);
+    border-radius: 16px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .story-section.split {
+        grid-template-columns: 1fr;
+    }
+}
+    /* ═══════════════════════════════════════
+   LIGHT / PREMIUM MODAL REFINEMENT
+   ═══════════════════════════════════════ */
+
+   .reality-box {
+       background: var(--olive-pale);
+       padding: 1.5rem;
+       border-radius: 12px;
+       margin: 2rem 0;
+       font-size: 0.95rem;
+   }
+   .modal-overlay {
+       position: fixed;
+       inset: 0;
+       background: rgba(250, 248, 243, 0.75); /* warm light instead of dark */
+       backdrop-filter: blur(4px);
+       display: none;
+       justify-content: center;
+       align-items: center;
+       z-index: 10000;
+       padding: 2rem;
+   }
+
+   .modal-content {
+       background: #FFFFFF;
+       color: #2C2C2C;
+       width: 100%;
+       max-width: 900px;
+       max-height: 85vh;
+       border-radius: 8px;
+       border: 1px solid rgba(0,0,0,0.06);
+       box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+       display: flex;
+       flex-direction: column;
+       animation: modalSlide 0.4s ease-out;
+   }
+
+   .modal-header {
+       padding: 2rem;
+       border-bottom: 1px solid rgba(0,0,0,0.05);
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       background: #FAF8F3; /* your cream */
+   }
+
+   .modal-body {
+       padding: 2rem;
+       overflow-y: auto;
+       font-size: 1rem;
+       line-height: 1.85;
+   }
+
+   .modal-body p {
+       color: #333;
+   }
+
+
+/* Lists */
+.modal-body ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 1rem 0 1.5rem 0;
+}
+
+.modal-body li {
+    padding: 0.4rem 0;
+    color: #2C2C2C;
+}
+
+.modal-body li::before {
+    content: "•";
+    color: var(--olive-dark);
+    margin-right: 0.6rem;
+}
+/* Close button */
+.close-modal {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    transition: 0.3s;
+}
+
+.close-modal:hover {
+    opacity: 1;
+    color: var(--gold);
+}
+
+/* Animation */
+@keyframes modalSlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+    .trust-strip {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.9);
+        opacity: 0.9;
+    }
+
+    /* Legal Modal Styling */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(8px);
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    padding: 2rem;
+}
+
+.modal-content {
+    background: var(--sand);
+    color: var(--charcoal);
+    width: 100%;
+    max-width: 900px;
+    max-height: 85vh;
+    border-radius: 4px;
+    border: 1px solid var(--gold);
+    display: flex;
+    flex-direction: column;
+    animation: modalSlide 0.4s ease-out;
+}
+
+.modal-header {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    line-height: 1.7;
+}
+
+.modal-body h4 {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    margin: 1.5rem 0 0.5rem 0;
+    color: var(--white);
+}
+
+.modal-body p { margin-bottom: 1rem; color: #555; }
+
+@keyframes modalSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close-modal {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    transition: 0.3s;
+}
+
+.close-modal:hover { opacity: 1; color: var(--gold); }
+        /* ═══════════════════════════════════════════════════════════════
+           OLIVIUM - LANDING PAGE STYLES
+           ═══════════════════════════════════════════════════════════════ */
+
+        :root {
+            --olive-dark: #4A5D3E;
+            --olive-medium: #6B7F5A;
+            --olive-light: #8FA87D;
+            --olive-pale: #E8EFE3;
+            --cream: #FAF8F3;
+            --terracotta: #C86B4A;
+            --gold: #D4AF37;
+            --charcoal: #2C2C2C;
+            --white: #FFFFFF;
+
+            --serif: 'Cormorant Garamond', serif;
+            --sans: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--sans);
+            color: var(--charcoal);
+            background: var(--cream);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--serif);
+            font-weight: 400;
+            line-height: 1.2;
+        }
+
+        h1 { font-size: clamp(3rem, 8vw, 6rem); }
+        h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); }
+        h3 { font-size: clamp(1.8rem, 4vw, 3rem); }
+        h4 { font-size: clamp(1.4rem, 3vw, 2rem); }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(250, 248, 243, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(74, 93, 62, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(250, 248, 243, 0.98);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--serif);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--olive-dark);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--olive-dark);
+        }
+
+        .nav-cta {
+            background: var(--olive-dark);
+            color: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--olive-medium);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(74, 93, 62, 0.2);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(74, 93, 62, 0.3) 0%, rgba(140, 168, 125, 0.2) 100%),
+                        url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg') center/cover;
+            z-index: -1;
+        }
+
+        .hero-content {
+            text-align: center;
+            color: var(--white);
+            max-width: 900px;
+            padding: 2rem;
+            animation: fadeInUp 1.2s ease-out;
+        }
+
+        .hero h1 {
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+            font-weight: 300;
+            line-height: 1.8;
+            margin-bottom: 3rem;
+            opacity: 0.95;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--white);
+            color: var(--olive-dark);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 2px solid var(--white);
+        }
+
+        .btn-secondary:hover {
+            background: var(--white);
+            color: var(--olive-dark);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 8rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        section.dark {
+            background: var(--olive-dark);
+            color: var(--white);
+            max-width: 100%;
+            margin: 0;
+        }
+
+        section.accent {
+            background: var(--olive-pale);
+            max-width: 100%;
+            margin: 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--olive-medium);
+            margin-bottom: 1rem;
+        }
+
+        .section.dark .section-label {
+            color: var(--gold);
+        }
+
+        /* Story Section */
+        .story {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .story p {
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            line-height: 2;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .story .highlight {
+            font-family: var(--serif);
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-style: italic;
+            color: var(--olive-dark);
+            display: block;
+            margin: 3rem 0;
+        }
+
+        /* Benefits Grid */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .benefit-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 20px;
+            background: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        }
+
+        .benefit-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .benefit-card h3 {
+            margin-bottom: 1rem;
+            color: var(--olive-dark);
+        }
+
+        .benefit-card p {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #666;
+        }
+
+        /* How It Works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .step {
+            position: relative;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            background: var(--olive-dark);
+            color: var(--white);
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .step h4 {
+            margin-bottom: 1rem;
+            color: var(--olive-dark);
+        }
+
+        /* Pricing Tiers */
+        .tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .tier-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+            border: 2px solid var(--olive-pale);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tier-card:hover {
+            border-color: var(--olive-dark);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(74, 93, 62, 0.15);
+        }
+
+        .tier-card.featured {
+            border-color: var(--gold);
+            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.2);
+        }
+
+        .tier-card.featured::before {
+            content: "POPULAR";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gold);
+            color: var(--white);
+            padding: 0.4rem 1.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .tier-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .tier-name {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--olive-dark);
+        }
+
+        .tier-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+        }
+
+        .tier-price-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .tier-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .tier-features li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--olive-pale);
+            font-size: 0.95rem;
+        }
+
+        .tier-features li:before {
+            content: "✓";
+            color: var(--olive-dark);
+            font-weight: 700;
+            margin-right: 0.75rem;
+        }
+
+        /* Villa Experience */
+        .villa-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 4rem 0;
+        }
+
+        .villa-image {
+            height: 350px;
+            border-radius: 15px;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .villa-image:hover {
+            transform: scale(1.05);
+        }
+
+        .villa-image-1 {
+            background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)),
+                        url('https://static.wixstatic.com/media/f9d555_5bcc64ad9eae4714af74a022ca176539~mv2.png/v1/fill/w_943,h_690,al_c,q_90,usm_0.66_1.00_0.01,enc_avif,quality_auto/sunrise.png');
+        }
+
+        .villa-image-2 {
+            background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)),
+            url('https://dynamic-media-cdn.tripadvisor.com/media/photo-o/06/83/fe/c3/b-b-toscagialla.jpg?w=1000&h=-1&s=1');
+        }
+
+        .villa-image-3 {
+            background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)),
+            url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/Tree%20F1-FR-001.jpeg');
+            background-size: cover;        /* makes image fill container */
+
+        }
+
+        /* Credit System */
+        .credit-explainer {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 3rem 0;
+        }
+
+        .credit-table {
+            width: 100%;
+            margin: 2rem 0;
+            border-collapse: collapse;
+        }
+
+        .credit-table th,
+        .credit-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--olive-pale);
+        }
+
+        .credit-table th {
+            background: var(--olive-pale);
+            font-weight: 600;
+            color: var(--olive-dark);
+        }
+
+        /* Scarcity Banner */
+        .scarcity {
+            background: linear-gradient(135deg, var(--terracotta) 0%, #A85739 100%);
+            color: var(--white);
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+
+        .scarcity h2 {
+            margin-bottom: 2rem;
+        }
+
+        .scarcity .highlight-number {
+            font-size: 5rem;
+            font-weight: 700;
+            display: block;
+            margin: 2rem 0;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--charcoal);
+            color: var(--white);
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1.5rem;
+            color: var(--gold);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--gold);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .tier-card li {
+            color: #333; /* charcoal */
+        }
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--olive-dark);
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            section {
+                padding: 4rem 1.5rem;
+            }
+
+            .hero-cta-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .tiers {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">OLIVIUM</div>
+            <ul class="nav-links">
+                <li><a href="#story">Story</a></li>
+                <li><a href="#benefits">Benefits</a></li>
+                <li><a href="#tiers">Ownership</a></li>
+                <li><a href="#villa">Villa</a></li>
+                <li><a href="#how">How It Works</a></li>
+            </ul>
+            <button class="mobile-menu-toggle">☰</button>
+            <a href="index.html" class="nav-cta">Reserve Your Tree</a>
+        </div>
+        <div class="flex items-center gap-4">
+
+</div>
+
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <h1>Own an Olive Tree in Italy.</h1>
+            <p class="hero-subtitle">
+                A private estate of 240 olive trees.<br>
+                Receive your oil. Stay in your villa. Belong to something real.
+            </p>
+            <div class="hero-cta-group">
+                <a href="index.html" class="btn btn-primary">👉 Reserve Your Tree</a>
+                <a href="#how" class="btn btn-secondary">Explore How It Works</a>
+            </div>
+            <div class="trust-strip">
+    <div>🇮🇹 Tuscany-based estate</div>
+    <div>🌳 Limited to 240 trees</div>
+    <div>🫒 Real agricultural production</div>
+    <div>🔒 Private member access only</div>
+</div>
+        </div>
+    </section>
+    <div class="trust-strip">
+    <div>🇮🇹 Tuscany-based estate</div>
+    <div>🌳 Limited to 240 trees</div>
+    <div>🫒 Real agricultural production</div>
+    <div>🔒 Private member access only</div>
+</div>
+
+    <!-- Story Section -->
+    <section id="story" class="story fade-in">
+        <div class="section-header">
+            <div class="section-label">🟡 The Story</div>
+        </div>
+
+        <p>In the hills of Italy, 240 olive trees grow under the same sun that has nourished generations.</p>
+
+        <span class="highlight">Olivium is not a product.<br>It is a place you return to.</span>
+
+        <p>A limited number of members will:</p>
+        <ul style="list-style: none; font-size: 1.2rem; line-height: 2.5; margin: 2rem 0;">
+            <li>🌳 Own part of this land</li>
+            <li>🫒 Receive its harvest</li>
+            <li>🏡 Live inside it, year after year</li>
+        </ul>
+    </section>
+
+    <!-- Benefits Section -->
+    <section id="benefits" class="accent fade-in">
+        <div class="section-header">
+            <div class="section-label">🟠 What You Get</div>
+            <h2>The Olivium Experience</h2>
+        </div>
+
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">🌳</div>
+                <h3>Ownership Experience</h3>
+                <p>Shares in a real olive estate. Optional dedicated tree allocation. Your name on the grove map.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🫒</div>
+                <h3>Annual Olive Oil</h3>
+                <p>Cold-pressed extra virgin olive oil delivered to your home. From your estate, every year.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🏡</div>
+                <h3>Private Villa Access</h3>
+                <p>Stay in a members-only villa. 12-person capacity. Pool, nature, silence.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🌙</div>
+                <h3>Olive Credits System</h3>
+                <p>Earn credits yearly. Use them to book your stays. Flexible, fair, and transparent.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🌿</div>
+                <h3>Experiences</h3>
+                <p>Harvest participation. Oil tastings. Farm visits. Local food & wine events.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🌍</div>
+                <h3>CO₂ Offset</h3>
+                <p>Each tree contributes to carbon absorption, soil regeneration, and sustainable agriculture.</p>
+            </div>
+        </div>
+        <div class="reality-box">
+    <p><strong>Location:</strong> San Vincenzo, Tuscany, Italy</p>
+    <p><strong>Estate Size:</strong> 240 olive trees</p>
+    <p><strong>Harvest Season:</strong> October–December</p>
+    <p><strong>Oil Production:</strong> Cold-pressed locally</p>
+</div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how" class="fade-in">
+        <div class="section-header">
+            <div class="section-label">🟣 How It Works</div>
+            <h2>Your Journey to Ownership</h2>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Choose Your Ownership Level</h4>
+                <p>Start small or own a full tree.</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Earn Annual Benefits</h4>
+                <p>Oil, credits, and access.</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Book Your Stay</h4>
+                <p>Use your credits to reserve nights.</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <h4>Live the Experience</h4>
+                <p>Return every year to your place in Italy.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Tiers -->
+    <section id="tiers" class="dark fade-in">
+        <div class="section-header">
+            <div class="section-label">🔵 Ownership Tiers</div>
+            <h2 style="color: var(--white);">Choose Your Level</h2>
+        </div>
+
+        <div class="tiers">
+            <div class="tier-card">
+                <div class="tier-icon">🌱</div>
+                <h3 class="tier-name">Starter</h3>
+                <div class="tier-price">€500</div>
+                <div class="tier-price-label">Entry ownership</div>
+                <ul class="tier-features">
+                    <li>Access to community</li>
+                    <li>Oil purchases available</li>
+                    <li>Farm visit access</li>
+                </ul>
+                <a href="crypto41.html" class="btn btn-primary">Get Started</a>
+            </div>
+
+            <div class="tier-card">
+                <div class="tier-icon">🌿</div>
+                <h3 class="tier-name">Tree Keeper</h3>
+                <div class="tier-price">€2,000</div>
+                <div class="tier-price-label">Annual benefits</div>
+                <ul class="tier-features">
+                    <li>Annual oil allocation</li>
+                    <li>Credits accumulation</li>
+                    <li>Priority booking access</li>
+                    <li>Harvest participation</li>
+                </ul>
+                <a href="index.html" class="btn btn-primary">Reserve Now</a>
+            </div>
+
+            <div class="tier-card featured">
+                <div class="tier-icon">🌳</div>
+                <h3 class="tier-name">Tree Owner</h3>
+                <div class="tier-price">€10,000</div>
+                <div class="tier-price-label">Full experience</div>
+                <ul class="tier-features">
+                    <li>Significant credits</li>
+                    <li>Dedicated tree</li>
+                    <li>Villa stay access</li>
+                    <li>Premium oil shipments</li>
+                    <li>All previous benefits</li>
+                </ul>
+                <a href="index.html" class="btn btn-primary">Claim Your Tree</a>
+            </div>
+
+            <div class="tier-card">
+                <div class="tier-icon">🌲</div>
+                <h3 class="tier-name">Full Tree</h3>
+                <div class="tier-price">€20,000</div>
+                <div class="tier-price-label">Maximum ownership</div>
+                <ul class="tier-features">
+                    <li>Full ownership experience</li>
+                    <li>Maximum credits</li>
+                    <li>Premium access & stays</li>
+                    <li>Exclusive events</li>
+                    <li>Name on estate plaque</li>
+                </ul>
+                <a href="index5.html" class="btn btn-primary">Secure Full Tree</a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 4rem;">
+          <a href="javascript:void(0)" onclick="openDetails()" class="btn btn-secondary">
+          👉 View Full Details
+          </a>        </div>
+    </section>
+
+    <!-- Villa Experience -->
+    <section id="villa" class="fade-in">
+        <div class="section-header">
+            <div class="section-label">🟤 The Villa Experience</div>
+            <h2>This is not a hotel.</h2>
+            <p style="font-size: 1.2rem; max-width: 600px; margin: 1rem auto; color: #666;">
+                It is a shared private space for a small group of members.
+            </p>
+        </div>
+
+        <div class="villa-gallery">
+            <div class="villa-image villa-image-1"></div>
+            <div class="villa-image villa-image-2"></div>
+            <div class="villa-image villa-image-3"></div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
+            <p style="font-size: 1.3rem; font-weight: 300; line-height: 2;">
+                Each stay is:<br>
+                <strong>Intimate. Curated. Limited.</strong>
+            </p>
+        </div>
+    </section>
+
+    <!-- Credit System Explainer -->
+    <section class="accent fade-in">
+        <div class="section-header">
+            <div class="section-label">🌙 Credit System</div>
+            <h2>How Olive Credits Work</h2>
+        </div>
+
+        <div class="credit-explainer">
+            <h3 style="margin-bottom: 2rem; color: var(--olive-dark);">What are Olive Credits?</h3>
+            <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">
+                Olive Credits are your access key to the villa.
+            </p>
+
+            <ul style="list-style: none; font-size: 1.1rem; line-height: 2.5;">
+                <li>✓ 1 credit = 1 person / 1 night (baseline)</li>
+                <li>✓ Credits are earned yearly based on your shares</li>
+                <li>✓ 1 full tree = 4 credits/year</li>
+            </ul>
+
+            <h4 style="margin: 3rem 0 1.5rem; color: var(--olive-dark);">Seasonal Pricing</h4>
+            <table class="credit-table">
+                <thead>
+                    <tr>
+                        <th>Season</th>
+                        <th>Cost per Person/Night</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Low Season</td>
+                        <td>1 credit</td>
+                    </tr>
+                    <tr>
+                        <td>Mid Season</td>
+                        <td>1.5 credits</td>
+                    </tr>
+                    <tr>
+                        <td>High Season</td>
+                        <td>2–3 credits</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top: 3rem; padding: 2rem; background: var(--olive-pale); border-radius: 15px;">
+                <h4 style="margin-bottom: 1rem; color: var(--olive-dark);">Example:</h4>
+                <p style="font-size: 1.1rem;">
+                    2 people, mid-season:<br>
+                    → 2 × 1.5 = <strong>3 credits/night</strong>
+                </p>
+            </div>
+
+            <div style="margin-top: 2rem; padding: 1.5rem; border-left: 4px solid var(--terracotta); background: #FFF5F0;">
+                <h4 style="margin-bottom: 1rem; color: var(--terracotta);">Important Notes</h4>
+                <ul style="list-style: none; font-size: 0.95rem; line-height: 2;">
+                    <li>• Credits expire after 24–36 months</li>
+                    <li>• Peak dates are limited and competitive</li>
+                    <li>• Booking is subject to availability</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scarcity Banner -->
+    <section class="scarcity fade-in">
+        <h2>Only 240 Trees Exist.</h2>
+        <p style="font-size: 1.3rem; margin: 2rem 0;">Ownership is limited.</p>
+
+        <span class="highlight-number">240</span>
+
+        <p style="font-size: 1.5rem; font-weight: 300; margin: 2rem 0;">
+            When all trees are allocated:
+        </p>
+        <p style="font-size: 2rem; font-weight: 600;">
+            👉 Membership closes permanently.
+        </p>
+
+        <div style="margin-top: 4rem;">
+            <a href="#reserve" class="btn btn-primary">Secure Your Place Now</a>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section id="reserve" style="text-align: center; padding: 8rem 2rem;">
+        <h2 style="margin-bottom: 2rem;">This is not a booking.</h2>
+        <p style="font-size: 1.5rem; font-weight: 300; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            It is a place that becomes yours.
+        </p>
+
+        <a href="#contact" class="btn btn-primary" style="font-size: 1.3rem; padding: 1.5rem 4rem;">
+            👉 Reserve Your Tree (Limited Availability)
+        </a>
+
+        <p style="margin-top: 2rem; font-size: 0.9rem; color: #666;">
+            Questions? <a href="#contact" style="color: var(--olive-dark); text-decoration: underline;">Contact us</a>
+        </p>
+    </section>
+
+    <footer class="main-footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4 class="serif">OLIVIUM</h4>
+            <p>
+                A private olive estate experience<br>
+                for a small group of members.
+            </p>
+        </div>
+
+        <div class="footer-section">
+            <h4 class="mono-label">Quick Links</h4>
+            <ul class="footer-links">
+                <li><a href="#story">Our Story</a></li>
+                <li><a href="#benefits">Benefits</a></li>
+                <li><a href="#tiers">Ownership Tiers</a></li>
+                <li><a href="#villa">The Villa</a></li>
+                <li><a href="#how">How It Works</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h4 class="mono-label">Legal</h4>
+            <ul class="footer-links">
+                <li><a href="javascript:void(0)" onclick="openLegal()">Full Disclosure</a></li>
+                <li><a href="javascript:void(0)" onclick="openLegal()">Terms & Conditions</a></li>
+                <li><a href="javascript:void(0)" onclick="openLegal()">Privacy Policy</a></li>
+                <li><a href="javascript:void(0)" onclick="openLegal()">Disclaimers</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h4 class="mono-label">Contact</h4>
+            <ul class="footer-links">
+                <li><a href="mailto:hello@olivium.estate">hello@olivium.estate</a></li>
+                <li><a href="tel:+39000000000">+39 000 000 000</a></li>
+                <li>Tuscany, Italy</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2026 Olivium Estate. All rights reserved.</p>
+        <p class="disclaimer-text">
+            Olivium is NOT a financial investment or guaranteed return product.<br>
+            It IS a lifestyle membership and participation in an agricultural estate.
+        </p>
+    </div>
+</footer>
+    <!-- JavaScript -->
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // OLIVIUM - LANDING PAGE INTERACTIONS
+        // ═══════════════════════════════════════════════════════════════
+
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Mobile menu toggle (basic implementation)
+        const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        mobileMenuToggle?.addEventListener('click', () => {
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        console.log('🌳 Olivium Landing Page Loaded');
+
+        function openDetails() {
+    const modal = document.getElementById('detailsModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDetails() {
+    const modal = document.getElementById('detailsModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+        // Open Modal
+function openLegal() {
+    const modal = document.getElementById('legalModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling background
+}
+
+// Close Modal
+function closeLegal() {
+    const modal = document.getElementById('legalModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close on Escape Key
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLegal();
+});
+
+// Close on clicking outside the content
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('legalModal');
+    if (e.target === modal) closeLegal();
+});
+    </script>
+
+    <div id="legalModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <p class="mono text-[10px] uppercase tracking-[0.3em] text-stone-400">Institutional Grade</p>
+                <h2 class="serif text-3xl">Full Disclosure & Privacy</h2>
+            </div>
+            <div class="close-modal" onclick="closeLegal()">[ CLOSE_ESC ]</div>
+        </div>
+
+        <div class="modal-body">
+            <h4>1. RWA Protocol Disclaimer</h4>
+            <p>Olivium is a decentralized protocol facilitating the fractionalization of agricultural assets located in San Vincenzo, Tuscany. Ownership of OVL tokens represents a contractual interest in the yield and utility of physical assets (Olea europaea). This is not an investment in a regulated security. Participation involves risks including crop failure, regional weather anomalies, and smart contract vulnerabilities.</p>
+
+            <h4>2. On-Chain vs. Cadastral Reality</h4>
+            <p>While token balances are maintained on the Solana blockchain, the ultimate legal title is anchored in the Italian Land Registry (Catasto). The DAO operates via a Special Purpose Vehicle (SPV) that bridges digital ownership to physical land rights. In the event of a total network failure, the SPV maintains a physical ledger of all holders as of the last finalized block.</p>
+
+            <h4>3. Privacy & Data Protection (GDPR 2026)</h4>
+            <p>We adhere to "Privacy by Design." Your wallet address is considered personal data under GDPR. We do not link wallet addresses to real-world identities (KYC) unless required for Villa stay bookings or legal distributions exceeding €10,000. We use Helius RPC nodes which may log IP addresses for anti-DDoS purposes; these logs are purged every 24 hours.</p>
+
+            <h4>4. Operational Disclosures</h4>
+            <p>Villa Credits are non-transferable and must be used within the calendar year. The "Guardian" status requires a minimum stake of 1,000 OVL. Harvesting cycles occur between October and December annually; yield distributions are finalized on-chain within 14 business days of pressing.</p>
+        </div>
+
+        <div class="p-6 bg-stone-100 flex justify-end">
+            <button class="bg-stone-900 text-white px-8 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-olive transition" onclick="closeLegal()">
+                I Acknowledge
+            </button>
+        </div>
+    </div>
+</div>
+<div id="detailsModal" class="modal-overlay">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <div>
+                <p class="mono text-[10px] uppercase tracking-[0.3em] text-stone-400">
+                    Private Ownership Guide
+                </p>
+                <h2 class="serif text-3xl">Understand Olivium</h2>
+            </div>
+            <div class="close-modal" onclick="closeDetails()">[ CLOSE_ESC ]</div>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- INTRO FEELING -->
+            <p style="font-size:1.05rem;">
+                Olivium is a private olive estate in Tuscany, shared by a small group of members.
+                You are not booking a stay — you are securing a place that you return to, year after year.
+            </p>
+
+            <!-- TRUST STRIP -->
+            <div style="display:flex; flex-wrap:wrap; gap:1.5rem; margin:2rem 0; font-size:0.9rem; color:#555;">
+                <div>🇮🇹 Tuscany-based estate</div>
+                <div>🌳 Limited to 240 trees</div>
+                <div>🫒 Real agricultural production</div>
+                <div>🔒 Private member access only</div>
+            </div>
+
+            <!-- REALITY ANCHOR -->
+            <div style="background:var(--olive-pale); padding:1.5rem; border-radius:12px; margin-bottom:2rem;">
+                <p><strong>Location:</strong> San Vincenzo, Tuscany, Italy</p>
+                <p><strong>Estate Size:</strong> 240 olive trees</p>
+                <p><strong>Harvest Season:</strong> October–December</p>
+                <p><strong>Production:</strong> Cold-pressed locally each year</p>
+            </div>
+            <!-- VISUAL TRUST -->
+<h4 style="margin-top:2.5rem;">A Real Place You Can See</h4>
+
+<div class="visual-trust">
+
+    <!-- MAP -->
+    <div class="visual-card">
+        <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/map.png" alt="Map of Tuscany">
+        <p>Tuscany, Italy — estate located near San Vincenzo</p>
+    </div>
+
+    <!-- ESTATE LAYOUT -->
+    <div class="visual-card">
+        <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/estate.png" alt="Estate layout">
+        <p>Simple layout of the olive grove and shared villa</p>
+    </div>
+
+    <!-- TREE TAG -->
+    <div class="visual-card">
+<img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/imageTag.png" alt="Olivium Tree Tag">
+        <p>Your tree can be identified and returned to</p>
+    </div>
+
+</div>
+
+            <!-- SECTION 1 -->
+            <h4>1. Ownership Structure</h4>
+            <p>
+                The estate is divided into a limited number of ownership tiers.
+                Each level grants a different degree of access, benefits, and participation.
+            </p>
+            <ul>
+                <li>Starter → Entry access to the ecosystem</li>
+                <li>Tree Keeper → Annual oil + credits</li>
+                <li>Tree Owner → Dedicated tree + villa access</li>
+                <li>Full Tree → Maximum ownership and presence</li>
+            </ul>
+
+            <!-- SECTION 2 -->
+            <h4>2. What You Receive Each Year</h4>
+            <ul>
+                <li>Extra virgin olive oil from the estate</li>
+                <li>Olive Credits for villa stays</li>
+                <li>Access to harvest and local experiences</li>
+                <li>Priority booking depending on your tier</li>
+            </ul>
+
+            <!-- SECTION 3 -->
+            <h4>3. Olive Credits (Villa Access)</h4>
+            <p>
+                Olive Credits are used to book your time at the villa.
+            </p>
+            <ul>
+                <li>1 credit ≈ 1 person / 1 night</li>
+                <li>Credits are issued annually</li>
+                <li>Season affects pricing (1–3 credits per night)</li>
+            </ul>
+
+            <p>
+                Example:<br>
+                2 people, mid-season → <strong>3 credits per night</strong>
+            </p>
+
+            <!-- SECTION 4 -->
+            <h4>4. The Villa</h4>
+            <p>
+                The villa is a private residence shared only by members.
+            </p>
+            <ul>
+                <li>Maximum 12 guests at a time</li>
+                <li>No public bookings or hotel use</li>
+                <li>Quiet, nature-focused environment</li>
+            </ul>
+
+            <!-- SECTION 5 -->
+            <h4>5. Olive Oil Production</h4>
+            <p>
+                The estate operates as a real agricultural property.
+            </p>
+            <ul>
+                <li>Harvest takes place annually (Oct–Dec)</li>
+                <li>Olives are cold-pressed locally</li>
+                <li>Oil is shipped to members each year</li>
+            </ul>
+
+            <!-- SOFT PROOF -->
+            <div style="margin:2rem 0;">
+                <p>Members return yearly for harvest and stays.</p>
+                <p>The estate is maintained year-round by local operators.</p>
+                <p>Production and distribution occur every season.</p>
+            </div>
+
+            <!-- SECTION 6 -->
+            <h4>6. Booking & Availability</h4>
+            <ul>
+                <li>Stays are booked using your credits</li>
+                <li>Availability is limited</li>
+                <li>Higher tiers receive priority access</li>
+            </ul>
+
+            <!-- SCARCITY -->
+            <h4>7. Scarcity</h4>
+            <p>
+                Only <strong>240 trees exist</strong>.
+            </p>
+            <p>
+                Once fully allocated, access closes permanently.
+            </p>
+
+            <!-- FOUNDER FEEL -->
+            <div style="text-align:center; margin:3rem 0; font-style:italic;">
+                <p style="font-size:1.2rem; font-family:var(--serif);">
+                    “We built Olivium to create something permanent —
+                    not something you visit once, but something you return to.”
+                </p>
+                <p style="margin-top:1rem; font-size:0.9rem; opacity:0.7;">
+                    — Founder, Olivium
+                </p>
+            </div>
+
+            <!-- CLARIFICATION -->
+            <h4>8. Important Clarification</h4>
+            <p>
+                Olivium is a lifestyle membership tied to a real agricultural estate.
+            </p>
+            <ul>
+                <li>No guaranteed financial returns</li>
+                <li>No speculative investment mechanics</li>
+                <li>Value comes from access, experience, and participation</li>
+            </ul>
+
+            <!-- MICRO TRUST -->
+            <p style="margin-top:2rem; font-size:0.85rem; color:#666;">
+                No subscription. No obligation. One-time ownership.
+            </p>
+
+        </div>
+
+        <div style="padding:1.5rem; display:flex; justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="closeDetails()">
+                I Understand
+            </button>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

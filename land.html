@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choose Your Path</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Cormorant+Garamond:wght@300;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --gold: #C5A059;
+    --charcoal: #0A0A0A;
+    --card-bg: #141414;
+    --olive-dark: #4A5D3E;
+    --olive-pale: #E8EFE3;
+    --cream: #FAF8F3;
+
+    --serif: 'Cormorant Garamond', serif;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: var(--sans);
+    background: var(--charcoal);
+    color: #ddd;
+    min-height: 100vh;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 2rem 1rem;
+
+}
+
+/* BACKGROUND */
+.bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.95)),
+                url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80') center/cover;
+    z-index: -1;
+}
+
+/* CONTAINER */
+.container {
+    text-align: center;
+    max-width: 1000px;
+    padding: 2rem;
+    animation: fadeIn 1.5s ease;
+}
+
+h1 {
+    font-family: var(--serif);
+    font-size: clamp(3rem, 8vw, 5rem);
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    margin-bottom: 3rem;
+}
+
+/* OPTIONS */
+.options {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 100%;
+    max-width: 320px;
+    padding: 2.5rem 2rem;
+    border: 1px solid rgba(197,160,89,0.2);
+    background: rgba(20,20,20,0.7);
+    backdrop-filter: blur(10px);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.4s ease;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    border-color: var(--gold);
+    box-shadow: 0 20px 60px rgba(197,160,89,0.2);
+}
+
+/* CARD STYLES */
+.card h2 {
+    font-family: var(--serif);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.card p {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    line-height: 1.6;
+}
+
+.tag {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: block;
+    color: var(--gold);
+}
+
+/* VARIANTS */
+.crypto {
+    background: rgba(10,10,10,0.85);
+}
+
+.fiat {
+    background: rgba(232,239,227,0.1);
+    border: 1px solid rgba(74,93,62,0.2);
+}
+
+.fiat:hover {
+    border-color: var(--olive-dark);
+}
+
+/* FOOTNOTE */
+.footnote {
+    margin-top: 3rem;
+    font-size: 0.75rem;
+    opacity: 0.5;
+    font-family: var(--mono);
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from { opacity:0; transform: translateY(20px); }
+    to { opacity:1; transform: translateY(0); }
+}
+@media (max-width: 768px) {
+
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .options {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .container {
+        padding: 1.5rem 1rem;
+    }
+
+    .card {
+        padding: 2rem 1.5rem;
+    }
+
+    .footnote {
+        font-size: 0.7rem;
+        margin-top: 2rem;
+    }
+}
+.bg {
+    background-attachment: scroll;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="container">
+  <div class="tier-icon">🫒 OLIVIUM</div>
+
+    <h1>Two Paths.<br>One Philosophy.</h1>
+
+    <p class="subtitle">
+        Choose how you enter the system.<br>
+        Ownership is the destination — your path is the decision.
+    </p>
+
+    <div class="options">
+
+        <!-- CRYPTO PATH -->
+        <a href="crypto41.html" class="card crypto">
+            <span class="tag">On-Ramp</span>
+            <h2>Crypto Road</h2>
+            <p>
+                Permissionless. Borderless. Sovereign.<br><br>
+                Enter through digital assets and align with the future of decentralized ownership.
+            </p>
+        </a>
+
+        <!-- FIAT PATH -->
+        <a href="index2.html" class="card fiat">
+            <span class="tag">Traditional</span>
+            <h2>Fiat Road</h2>
+            <p>
+                Familiar. Structured. Accessible.<br><br>
+                Begin through conventional systems and transition into a new model at your pace.
+            </p>
+        </a>
+
+    </div>
+
+    <div class="footnote">
+        This is not a fork in the road. It’s a convergence.
+        <p>&copy; 2026 Olivium Estate. All rights reserved.</p>
+        <p class="disclaimer-text">
+            Olivium is NOT a financial investment or guaranteed return product.<br>
+            It IS a lifestyle membership and participation in an agricultural estate.
+        </p>
+
+    </div>
+
+</body>
+</html>
