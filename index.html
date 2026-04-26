@@ -426,21 +426,43 @@ function enterPath(e, type) {
     const overlay = document.getElementById('system-overlay');
     const text = document.getElementById('system-text');
 
-    // get URL BEFORE animation
     const targetUrl = e.currentTarget.getAttribute("href");
 
     overlay.classList.add('active');
 
-    text.innerText = type === 'crypto'
-        ? 'Entering Crypto Path...'
-        : 'Entering Fiat Path...';
+    const steps = type === 'crypto'
+        ? [
+            "Initializing decentralized route...",
+            "Verifying wallet environment...",
+            "Establishing cryptographic tunnel...",
+            "Routing to Crypto Layer..."
+        ]
+        : [
+            "Loading fiat infrastructure...",
+            "Checking traditional rails...",
+            "Validating compliance layer...",
+            "Routing to Fiat System..."
+        ];
 
-    // force redirect after animation
-    setTimeout(() => {
-        window.location.assign(targetUrl);
-    }, 1200);
+    let i = 0;
+
+    function nextStep() {
+        text.innerText = steps[i];
+
+        i++;
+
+        if (i < steps.length) {
+            setTimeout(nextStep, 200); // 👈 key: fast rhythm = “system thinking”
+        } else {
+            setTimeout(() => {
+                window.location.assign(targetUrl);
+            }, 250);
+        }
+    }
+
+    nextStep();
 }
-</script>
+    </script>
     <!-- SYSTEM TRANSITION LAYER -->
 <div id="systemOverlay" class="system-overlay hidden">
   <div class="scanline"></div>
