@@ -17,6 +17,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         landing: resolve(__dirname, "index.html"),
+        Main: resolve(__dirname, "App_index.html"),
         crypto: resolve(__dirname, "crypto41.html"),
         fiat: resolve(__dirname, "index2.html"),
         more: resolve(__dirname, "understand.html"),
