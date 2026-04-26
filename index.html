@@ -292,7 +292,7 @@ h1 {
     </p>
 
     <div class="options">
-
+<a href="/crypto41.html">Test Crypto</a>
         <!-- CRYPTO PATH -->
 <a href="/crypto41.html" class="card crypto" onclick="enterPath(event, 'crypto')">
     <span class="tag">On-Ramp</span>
@@ -337,18 +337,19 @@ function enterPath(e, type) {
     const overlay = document.getElementById('system-overlay');
     const text = document.getElementById('system-text');
 
+    // get URL BEFORE animation
+    const targetUrl = e.currentTarget.getAttribute("href");
+
     overlay.classList.add('active');
 
-    if (type === 'crypto') {
-        text.innerText = 'Entering Crypto Path...';
-    } else {
-        text.innerText = 'Entering Fiat Path...';
-    }
+    text.innerText = type === 'crypto'
+        ? 'Entering Crypto Path...'
+        : 'Entering Fiat Path...';
 
-    // subtle delay for animation
+    // force redirect after animation
     setTimeout(() => {
-        window.location.href = e.currentTarget.href;
-    }, 1400);
+        window.location.assign(targetUrl);
+    }, 1200);
 }
 </script>
 </body>
