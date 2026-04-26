@@ -9,6 +9,11 @@ export default defineConfig({
     sourcemap: false,
     minify: "terser",
     rollupOptions: {
+      input: {
+        landing: resolve(__dirname, "index.html"),
+        crypto: resolve(__dirname, "crypto41.html"),
+        fiat: resolve(__dirname, "index2.html"),
+      },
       output: {
         manualChunks: {
           solana: [
