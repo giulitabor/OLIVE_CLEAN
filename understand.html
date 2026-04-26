@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olivium — A Private Agricultural Retreat</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #FAF8F3;
+  --text: #2C2C2C;
+  --muted: #6B6B6B;
+  --olive: #4A5D3E;
+  --serif: 'Cormorant Garamond', serif;
+  --sans: 'Inter', sans-serif;
+  --max-width: 850px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+h1, h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-top: 4rem;
+  margin-bottom: 1rem;
+}
+
+p {
+  font-size: 1.05rem;
+  margin-bottom: 1.4rem;
+  color: rgba(0,0,0,0.8);
+}
+
+/* HERO */
+.hero {
+  height: 70vh;
+  background:
+    linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)),
+    url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+.hero-content { max-width: 700px; padding: 2rem; }
+
+/* STRIP */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+  gap: 1rem;
+  padding: 2rem 0;
+  margin: 3rem 0;
+  border-top: 1px solid #e5e0d5;
+  border-bottom: 1px solid #e5e0d5;
+  text-align: center;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  color: var(--olive);
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+  margin: 3rem 0;
+}
+
+.card {
+  background: white;
+  border: 1px solid #eee;
+  padding: 10px;
+}
+
+.card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.card p {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* HIGHLIGHT */
+.highlight {
+  background: #f1ede4;
+  padding: 2.5rem;
+  margin: 3rem 0;
+  border-left: 3px solid var(--olive);
+}
+
+/* FAQ */
+.faq-item {
+  margin-bottom: 2rem;
+}
+
+.faq-item h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.2rem;
+  margin-bottom: 0.4rem;
+}
+
+/* BUTTON */
+.btn {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  background: var(--olive);
+  color: white;
+  text-decoration: none;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  transition: 0.2s ease;
+}
+
+.btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* FOOTER */
+footer {
+  margin: 5rem 0 3rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* MOBILE */
+@media (max-width:768px){
+  h1 { font-size: 2.2rem; }
+  .hero-content { padding: 1.5rem; }
+}
+</style>
+</head>
+<p style="letter-spacing:2px; font-size:0.8rem;">OLIVIUM — TUSCANY</p>
+
+<body>
+
+<section class="hero">
+  <div class="hero-content">
+    <h2 class="serif text-3xl">Understand Olivium</h2>
+
+    <h1>Not a product. A place you return to.</h1>
+    <p>Become part of a private agricultural retreat in San Vincenzo.</p>
+  </div>
+</section>
+
+<div class="container">
+
+<div class="strip">
+  <div>San Vincenzo</div>
+  <div>240 Heritage Trees</div>
+  <div>Private Membership</div>
+  <div>Seasonal Living</div>
+</div>
+
+<section>
+  <h2>The Idea</h2>
+  <p>
+    Olivium was created to preserve a slower rhythm of life—shaped by harvests, light, and return.
+    A shared place, not a product.
+  </p>
+</section>
+
+<section>
+  <div class="grid">
+    <div class="card">
+      <img loading="lazy" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/map.png">
+      <p>Coastal hills of San Vincenzo, Tuscany.</p>
+    </div>
+    <div class="card">
+      <img loading="lazy" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/estate.png">
+      <p>The estate and shared villa space.</p>
+    </div>
+    <div class="card">
+      <img loading="lazy" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/imageTag.png">
+      <p>Each tree is individually cared for and documented.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>How Membership Works</h2>
+  <p>
+    Olivium operates as a limited private membership. The number of participants is intentionally capped to preserve
+    the character of the land and the quality of experience.
+  </p>
+  <p>
+    Membership connects you to the estate through seasonal access, shared harvests, and time spent within the villa.
+    Members receive annual stay allowances used to reserve time at the villa throughout the year.
+  </p>
+</section>
+
+<section class="highlight">
+  <h2>Stays & Access</h2>
+  <p>
+    Stay allowances are renewed each season and can be used to book time at the villa.
+    Availability is carefully managed to maintain a quiet, uncrowded environment.
+  </p>
+  <p>
+    The focus is not volume, but presence—time that feels unstructured, private, and grounded in nature.
+  </p>
+</section>
+
+<!-- FAQ MOVED ABOVE CTA -->
+<section>
+  <h2>Questions</h2>
+
+  <div class="faq-item">
+    <h3>Is this ownership of land?</h3>
+    <p>No. Membership provides access and participation, not real estate ownership.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>How are stays booked?</h3>
+    <p>Members use their annual stay allowances to reserve time at the villa via a simple scheduling system.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Can I visit during harvest?</h3>
+    <p>Yes. Members are invited to participate in seasonal moments, including the olive harvest.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Is membership transferable?</h3>
+    <p>In some cases, memberships may be reassigned, subject to approval to preserve the character of the community.</p>
+  </div>
+</section>
+
+<section style="text-align:center; padding:3rem 0;">
+  <a href="back" class="btn">Go Back</a>
+  <p style="margin-top:1.5rem; font-size:0.85rem; color:var(--muted);">
+    Membership is limited.
+  </p>
+</section>
+
+<footer>
+  <p>
+    Olivium membership provides access to experiences, seasonal stays, and participation in the life of the estate.
+    It does not represent a financial investment or real estate ownership.
+  </p>
+  <p style="margin-top:1.5rem;">© 2026 Olivium — Tuscany</p>
+</footer>
+
+</div>
+
+</body>
+</html>
