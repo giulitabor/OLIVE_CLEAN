@@ -19,6 +19,8 @@ export default defineConfig({
         landing: resolve(__dirname, "index.html"),
         crypto: resolve(__dirname, "crypto41.html"),
         fiat: resolve(__dirname, "index2.html"),
+        more: resolve(__dirname, "understand.html"),
+
       },
 
       output: {
