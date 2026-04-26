@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Cormorant+Garamond:wght@300;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
+    
 :root {
     --gold: #C5A059;
     --charcoal: #0A0A0A;
@@ -36,7 +37,93 @@ body {
     padding: 2rem 1rem;
 
 }
+/* ===== SYSTEM OVERLAY ===== */
+.system-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(18px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
 
+.system-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.system-overlay.hidden {
+  display: none;
+}
+
+.system-content {
+  text-align: center;
+  color: #C5A059;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 2px;
+}
+
+.system-status {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-bottom: 1rem;
+  animation: flicker 1.2s infinite;
+}
+
+.system-path {
+  font-size: 1.4rem;
+  margin-bottom: 2rem;
+}
+
+/* LOADING BAR */
+.loader {
+  width: 260px;
+  height: 2px;
+  background: rgba(197,160,89,0.2);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.loader .bar {
+  width: 40%;
+  height: 100%;
+  background: #C5A059;
+  animation: load 1.2s ease forwards;
+}
+
+/* SCANLINE EFFECT */
+.scanline {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(197,160,89,0.05),
+    transparent
+  );
+  animation: scan 2s linear infinite;
+}
+
+/* ANIMATIONS */
+@keyframes load {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes flicker {
+  0%,100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
 /* BACKGROUND */
 .bg {
     position: absolute;
