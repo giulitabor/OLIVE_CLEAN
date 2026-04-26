@@ -425,38 +425,57 @@ function enterPath(e, type) {
 
     const overlay = document.getElementById('system-overlay');
     const text = document.getElementById('system-text');
+    const bar = document.querySelector(".bar");
 
     const targetUrl = e.currentTarget.getAttribute("href");
 
     overlay.classList.add('active');
 
-    const steps = type === 'crypto'
-        ? [
-            "Initializing decentralized route...",
-            "Verifying wallet environment...",
-            "Establishing cryptographic tunnel...",
-            "Routing to Crypto Layer..."
-        ]
-        : [
-            "Loading fiat infrastructure...",
-            "Checking traditional rails...",
-            "Validating compliance layer...",
-            "Routing to Fiat System..."
-        ];
+    // OPTIONAL: subtle system tick
+    const tick = new Audio("/tick.mp3");
+    tick.volume = 0.08;
+
+    const steps = [
+        "System scanning pathway...",
+        "Validating entry credentials...",
+        "Routing through secure layer...",
+        "Committing navigation state..."
+    ];
 
     let i = 0;
+    let progress = 0;
+
+    // progress animation (non-linear = feels “alive”)
+    function animateBar() {
+        progress += Math.random() * 28;
+        if (progress > 100) progress = 100;
+
+        if (bar) bar.style.width = progress + "%";
+
+        if (progress < 100) {
+            setTimeout(animateBar, 180);
+        }
+    }
+
+    animateBar();
 
     function nextStep() {
         text.innerText = steps[i];
 
+        // optional sound per step
+        try {
+            tick.currentTime = 0;
+            tick.play();
+        } catch (e) {}
+
         i++;
 
         if (i < steps.length) {
-            setTimeout(nextStep, 200); // 👈 key: fast rhythm = “system thinking”
+            setTimeout(nextStep, 200); // 👈 “machine thinking speed”
         } else {
             setTimeout(() => {
                 window.location.assign(targetUrl);
-            }, 250);
+            }, 300);
         }
     }
 
