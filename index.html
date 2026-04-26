@@ -177,6 +177,103 @@ h1 {
 .bg {
     background-attachment: scroll;
 }
+
+    /* SYSTEM OVERLAY */
+#system-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0A0A0A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+
+#system-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* CONTENT */
+.system-content {
+    text-align: center;
+    color: var(--gold);
+    font-family: var(--mono);
+    letter-spacing: 2px;
+    animation: fadeIn 1s ease;
+}
+
+/* LOADING LINE */
+.loader-line {
+    width: 0;
+    height: 2px;
+    background: var(--gold);
+    margin-bottom: 20px;
+    animation: loadLine 1.2s ease forwards;
+}
+
+/* TEXT */
+#system-text {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* ANIMATIONS */
+@keyframes loadLine {
+    from { width: 0; }
+    to { width: 200px; }
+}
+    /* SYSTEM OVERLAY */
+#system-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0A0A0A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+
+#system-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* CONTENT */
+.system-content {
+    text-align: center;
+    color: var(--gold);
+    font-family: var(--mono);
+    letter-spacing: 2px;
+    animation: fadeIn 1s ease;
+}
+
+/* LOADING LINE */
+.loader-line {
+    width: 0;
+    height: 2px;
+    background: var(--gold);
+    margin-bottom: 20px;
+    animation: loadLine 1.2s ease forwards;
+}
+
+/* TEXT */
+#system-text {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* ANIMATIONS */
+@keyframes loadLine {
+    from { width: 0; }
+    to { width: 200px; }
+}
 </style>
 </head>
 
@@ -197,8 +294,8 @@ h1 {
     <div class="options">
 
         <!-- CRYPTO PATH -->
-        <a href="crypto41.html" class="card crypto">
-            <span class="tag">On-Ramp</span>
+<a href="crypto41.html" class="card crypto" onclick="enterPath(event, 'crypto')">
+    <span class="tag">On-Ramp</span>
             <h2>Crypto Road</h2>
             <p>
                 Permissionless. Borderless. Sovereign.<br><br>
@@ -207,8 +304,8 @@ h1 {
         </a>
 
         <!-- FIAT PATH -->
-        <a href="index2.html" class="card fiat">
-            <span class="tag">Traditional</span>
+<a href="index2.html" class="card fiat" onclick="enterPath(event, 'fiat')">
+    <span class="tag">Traditional</span>
             <h2>Fiat Road</h2>
             <p>
                 Familiar. Structured. Accessible.<br><br>
@@ -227,6 +324,32 @@ h1 {
         </p>
 
     </div>
+<div id="system-overlay">
+    <div class="system-content">
+        <div class="loader-line"></div>
+        <p id="system-text">Initializing...</p>
+    </div>
+</div>
+    <script>
+function enterPath(e, type) {
+    e.preventDefault();
 
+    const overlay = document.getElementById('system-overlay');
+    const text = document.getElementById('system-text');
+
+    overlay.classList.add('active');
+
+    if (type === 'crypto') {
+        text.innerText = 'Entering Crypto Path...';
+    } else {
+        text.innerText = 'Entering Fiat Path...';
+    }
+
+    // subtle delay for animation
+    setTimeout(() => {
+        window.location.href = e.currentTarget.href;
+    }, 1400);
+}
+</script>
 </body>
 </html>
