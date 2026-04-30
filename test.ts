@@ -421,6 +421,40 @@ console.log(`[DOM] Trees container found: ${!!treesContainer}`);
   //return [pda, bump];
 //}
 
+
+let treesCache: any[] | null = null;
+let treesPromise: Promise<any[]> | null = null;
+
+export async function getTrees() {
+    if (treesCache) return treesCache;
+
+    if (treesPromise) return treesPromise;
+
+    treesPromise = (async () => {
+        console.log("🌳 Fetching trees ONCE");
+
+        const result = await _program.account.tree.all();
+        treesCache = result;
+
+        return result;
+    })();
+
+    return treesPromise;
+}
+
+let positionsCache: any[] | null = null;
+let positionsPromise: Promise<any[]> | null = null;
+
+export async function getPositions() {
+    if (positionsCache) return positionsCache;
+    if (positionsPromise) return positionsPromise;
+
+    positionsPromise = _program.account.sharePosition.all();
+
+    positionsCache = await positionsPromise;
+    return positionsCache;
+}
+
 function findPositionPDA(owner: PublicKey, treeId: string | number): [PublicKey, number] {
   const treeIdStr = String(treeId);
   const [pda, bump] = anchor.web3.PublicKey.findProgramAddressSync(
