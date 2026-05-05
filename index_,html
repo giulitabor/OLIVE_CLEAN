@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script>
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
+
+    window.onload = function () {
+      if (isMobile()) {
+        window.location.href = "mobile.html";
+      } else {
+        window.location.href = "desktop.html";
+      }
+    };
+  </script>
+</head>
+<body>
+</body>
+</html>
