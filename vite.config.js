@@ -20,6 +20,9 @@ export default defineConfig({
         Main: resolve(__dirname, "App_index.html"),
         crypto: resolve(__dirname, "crypto41.html"),
         fiat: resolve(__dirname, "index2.html"),
+        Original: resolve(__dirname, "Original-App.html"),
+        Tease: resolve(__dirname, "FD_REAL_index.html"),
+
         more: resolve(__dirname, "understand.html"),
 
       },
