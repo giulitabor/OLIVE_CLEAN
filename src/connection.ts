@@ -48,6 +48,28 @@ let _program: Program | null = null;
 let _provider: AnchorProvider | null = null;
 let _isInitialized = false;
 
+type WalletConnectionState =
+  | {
+      status: "connected";
+      provider: AnchorProvider;
+      program: Program;
+      pubkey: string;
+      isAdmin: boolean;
+    }
+  | {
+      status: "not_installed";
+      message: string;
+      installUrl: string;
+    }
+  | {
+      status: "rejected";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SAFE GETTERS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -74,100 +96,119 @@ export let provider: AnchorProvider;
 
 let _connectionInProgress = false; // Prevent double calls
 
-export async function connectWallet(auto = false) {
-  // ✅ FIX: Prevent double connection attempts
-  if (_connectionInProgress) {
-    console.log("[CONNECT] Connection already in progress, waiting...");
-    // Wait for existing connection to complete
-    while (_connectionInProgress) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    if (_isInitialized) {
-      console.log("[CONNECT] Using existing connection");
-      return {
-        provider: _provider!,
-        program: _program!,
-        pubkey: (window as any).walletPubKey.toBase58(),
-        isAdmin: (window as any).walletPubKey.toBase58() === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54"
-      };
-    }
-  }
-
-  _connectionInProgress = true;
+export async function connectWallet(
+  auto = false
+): Promise<WalletConnectionState> {
   console.log(`[CONNECT] Starting wallet connection (auto=${auto})...`);
 
+  // Prefer Phantom specifically
+  const phantom = (window as any)?.phantom?.solana;
+
+  // Fallback generic provider
+  const wallet = phantom || (window as any)?.solana;
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // WALLET NOT INSTALLED
+  // ═══════════════════════════════════════════════════════════════════════
+
+  if (!wallet) {
+    console.warn("No Solana wallet detected");
+
+    return {
+      status: "not_installed",
+      message: "No Solana wallet detected",
+      installUrl: "https://phantom.app/",
+    };
+  }
+
   try {
-    // 1. Get wallet reference
-    const wallet = (window as any).phantom?.solana || (window as any).solana;
+    // ═══════════════════════════════════════════════════════════════════
+    // CONNECT WALLET
+    // ═══════════════════════════════════════════════════════════════════
 
-    if (!wallet) {
-      throw new Error("Please install Phantom wallet");
-    }
-
-    // 2. Connect wallet
     if (auto) {
       await wallet.connect({ onlyIfTrusted: true });
     } else if (!wallet.publicKey) {
       await wallet.connect();
     }
 
-    // 3. Verify connection succeeded
+    // Verify connection
     if (!wallet.publicKey) {
-      throw new Error("Wallet connection failed - no public key");
+      return {
+        status: "error",
+        message: "Wallet connected but no public key found",
+      };
     }
 
     const pubkey = wallet.publicKey.toBase58();
+
     console.log(`✅ Wallet connected: ${pubkey.slice(0, 8)}...`);
 
-    // 4. Store connection state
+    // Save reconnect preference
     localStorage.setItem("walletConnected", "true");
 
-    // 5. Create Anchor provider with optimized settings
-    // ✅ FIX: Add maxRetries and better commitment settings
+    // ═══════════════════════════════════════════════════════════════════
+    // CREATE PROVIDER
+    // ═══════════════════════════════════════════════════════════════════
+
     _provider = new AnchorProvider(connection, wallet, {
       preflightCommitment: "confirmed",
       commitment: "confirmed",
-      skipPreflight: false, // Keep preflight for safety
-      maxRetries: 3,        // Retry failed transactions
     });
+
     setProvider(_provider);
 
-    // 6. Initialize program
+    // ═══════════════════════════════════════════════════════════════════
+    // INITIALIZE PROGRAM
+    // ═══════════════════════════════════════════════════════════════════
+
     _program = new Program(idl as any, _provider);
 
-    // 7. Set legacy exports
+    // Legacy exports
     provider = _provider;
     program = _program;
 
-    // 8. Set ALL global variables (CRITICAL for cross-file access)
+    // Globals
     (window as any)._program = _program;
     (window as any).program = _program;
+
     (window as any)._provider = _provider;
     (window as any).provider = _provider;
+
     (window as any)._sb = sb;
     (window as any).sb = sb;
+
     (window as any)._connection = connection;
     (window as any).connection = connection;
-    (window as any).walletPubKey = wallet.publicKey; // Direct PublicKey object
+
+    (window as any).walletPubKey = wallet.publicKey;
     (window as any).wallet = wallet;
 
-    console.log("✅ All globals set");
+    console.log("✅ Globals initialized");
 
-    // 9. ✅ OPTIMIZED: Initialize protocol ONCE (not on every page load)
-    if (!(window as any)._protocol) {
-      console.log("[CONNECT] Initializing protocol (first time)...");
-      await ensureProtocolInitialized();
-    } else {
-      console.log("[CONNECT] Protocol already cached, skipping fetch");
-    }
+    // ═══════════════════════════════════════════════════════════════════
+    // PROTOCOL INIT
+    // ═══════════════════════════════════════════════════════════════════
 
-    // 10. Update wallet UI
+    console.log("[CONNECT] Initializing protocol...");
+
+    await ensureProtocolInitialized();
+
+    // ═══════════════════════════════════════════════════════════════════
+    // UI UPDATE
+    // ═══════════════════════════════════════════════════════════════════
+
     if (typeof (window as any).updateWalletUI === "function") {
       (window as any).updateWalletUI(pubkey);
     }
 
-    // 11. Dispatch connection event
-    const isAdmin = pubkey === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
+    // ═══════════════════════════════════════════════════════════════════
+    // CONNECTION EVENT
+    // ═══════════════════════════════════════════════════════════════════
+
+    const isAdmin =
+      pubkey === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
+
     window.dispatchEvent(
       new CustomEvent("olivium:connected", {
         detail: { pubkey, isAdmin },
@@ -175,24 +216,43 @@ export async function connectWallet(auto = false) {
     );
 
     console.log("✅ Connection complete");
+
     _isInitialized = true;
 
-    return { provider: _provider, program: _program, pubkey, isAdmin };
-
+    return {
+      status: "connected",
+      provider: _provider,
+      program: _program,
+      pubkey,
+      isAdmin,
+    };
   } catch (err: any) {
     console.error("❌ Connection failed:", err);
 
-    // Clear failed state
+    // Reset state
     _program = null;
     _provider = null;
     _isInitialized = false;
 
-    throw err;
-  } finally {
-    _connectionInProgress = false;
+    // User rejected popup
+    const rejected =
+      err?.code === 4001 ||
+      err?.message?.toLowerCase()?.includes("reject") ||
+      err?.message?.toLowerCase()?.includes("declined");
+
+    if (rejected) {
+      return {
+        status: "rejected",
+        message: "Wallet connection cancelled",
+      };
+    }
+
+    return {
+      status: "error",
+      message: err?.message || "Wallet connection failed",
+    };
   }
 }
-
 // ═══════════════════════════════════════════════════════════════════════════
 // ✅ OPTIMIZED PROTOCOL INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
