@@ -313,17 +313,22 @@ export function isConnected(): boolean {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function disconnectWallet() {
-  const wallet = (window as any).wallet;
+  const wallet =
+    (window as any)?.phantom?.solana ||
+    (window as any)?.solana;
 
-  if (wallet?.disconnect) {
-    await wallet.disconnect();
+  try {
+    if (wallet?.disconnect) {
+      await wallet.disconnect();
+    }
+  } catch (err) {
+    console.error("Disconnect failed:", err);
   }
 
   // Clear all state
   _program = null;
   _provider = null;
   _isInitialized = false;
-  _connectionInProgress = false;
 
   localStorage.removeItem("walletConnected");
 
@@ -332,12 +337,14 @@ export async function disconnectWallet() {
   (window as any)._provider = null;
   (window as any)._protocol = null;
   (window as any).walletPubKey = null;
+  (window as any).wallet = null;
 
   console.log("✅ Disconnected successfully");
 
-  window.dispatchEvent(new CustomEvent("olivium:disconnected"));
+  window.dispatchEvent(
+    new CustomEvent("olivium:disconnected")
+  );
 }
-
 // ═══════════════════════════════════════════════════════════════════════════
 // ✅ CONNECTION HEALTH CHECK (New utility)
 // ═══════════════════════════════════════════════════════════════════════════
