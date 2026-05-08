@@ -48,10 +48,11 @@ export async function getTrees() {
 
     return treesPromise;
 }
-let positionsCache: any[] | null = null;
-let positionsPromise: Promise<any[]> | null = null;
+//let positionsCache: any[] | null = null;
+//let positionsPromise: Promise<any[]> | null = null;
 
-export async function getPositions() {
+
+export async function getAllPositions() {
     if (positionsCache) return positionsCache;
     if (positionsPromise) return positionsPromise;
 
@@ -686,6 +687,29 @@ console.log('shares---',shares);
     : 'Maximum tier achieved';
   setEl('tier-status-progress', progressText);
 }
+
+const positionsCache: Record<string, any[]> = {};
+const positionsPromise: Record<string, Promise<any[]>> = {};
+
+export async function getPositions(wallet: string) {
+  if (positionsCache[wallet]) return positionsCache[wallet];
+  if (positionsPromise[wallet]) return positionsPromise[wallet];
+
+  positionsPromise[wallet] = _program.account.sharePosition.all([
+    {
+      memcmp: {
+        offset: 8,
+        bytes: wallet,
+      },
+    },
+  ]);
+
+  const res = await positionsPromise[wallet];
+
+  positionsCache[wallet] = res;
+
+  return res;
+}
 // ─────────────────────────────────────────────────────────────
 // LOAD USER TREE POSITIONS
 // ─────────────────────────────────────────────────────────────
@@ -702,15 +726,8 @@ console.log('shares---',shares);
     console.log('[POSITIONS] 🔄 Loading user positions...');
 
     // 1. Fetch all positions for this wallet
-    const allPositions = await getPositions();//program.account.sharePosition.all([
-      {
-        memcmp: {
-          offset: 8,
-          bytes: wallet.publicKey.toBase58(),
-        },
-      },
-    ]);
-
+    const allPositions = await getPositions(wallet);//program.account.sharePosition.all([
+     
     console.log(`[POSITIONS] Found ${allPositions.length} raw position accounts.`);
     if (allPositions.length === 0) return [];
 
