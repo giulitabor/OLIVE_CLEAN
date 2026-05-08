@@ -1059,9 +1059,9 @@ function updateGrovePulse() {
 
   const variety = account.variety || 'Tuscan';
   const healthStatus =
-    account.healthStatus === 1 ? 'Excellent' :
-    account.healthStatus === 2 ? 'Good' :
-    account.healthStatus === 3 ? 'Fair' : 'Poor';
+    account.healthStatus > .8 ? 'Excellent' :
+    account.healthStatus < .5 ? 'Good' :
+    account.healthStatus <  .35 ? 'Fair' : 'Poor';
 
   setText('modal-tree-meta',    `Variety: ${variety} · Health: ${healthStatus}`);
   setText('modal-shares-left',  available.toLocaleString());
