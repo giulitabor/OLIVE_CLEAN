@@ -744,22 +744,8 @@ console.log('shares---',shares);
 
 // 4. Filter ONLY active positions
 const visiblePositions = positions.filter((p:any) => {
-
-  const rawShares =
-    p.sharesOwned ??
-    p.account?.sharesOwned ??
-    p.account?.shares_owned ??
-    0;
-
-  const shares =
-    typeof rawShares === 'object' &&
-    typeof rawShares.toNumber === 'function'
-      ? rawShares.toNumber()
-      : Number(rawShares);
-
-  return shares > 0;
-});
-          
+  return Number(p.sharesOwned || 0) > 0;
+});          
     // This provides a beautiful, sortable table in your browser console
     console.table(visiblePositions, ["treeName", "treeId", "sharesOwned"]);
 
