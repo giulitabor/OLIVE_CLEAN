@@ -1505,16 +1505,25 @@ async function loadDashboard() {
     // 5. Filter Active Positions FIRST
 const activePositions = onChainPositions.filter(pos => {
 
+  const raw =
+    pos.account?.sharesOwned ??
+    pos.account?.shares_owned ??
+    0;
+
   const shares =
-    Number(
-      pos.sharesOwned ??
-      pos.account?.sharesOwned ??
-      0
-    );
+    typeof raw === 'object' &&
+    typeof raw.toNumber === 'function'
+      ? raw.toNumber()
+      : Number(raw);
+
+  console.log(
+    "[FILTER]",
+    pos.account?.treeId,
+    shares
+  );
 
   return shares > 0;
 });
-
 // 6. Position Normalization & Enrichment
 const enrichedPositions = activePositions.map(pos => {
 
