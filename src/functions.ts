@@ -742,9 +742,6 @@ console.log('shares---',shares);
     console.log("║           USER TREE POSITIONS FOUND          ║");
     console.log("╚══════════════════════════════════════════════╝");
 
-    // This provides a beautiful, sortable table in your browser console
-    console.table(positions, ["treeName", "treeId", "sharesOwned"]);
-
 // 4. Filter ONLY active positions
 const visiblePositions = positions.filter((p:any) => {
 
@@ -762,7 +759,11 @@ const visiblePositions = positions.filter((p:any) => {
 
   return shares > 0;
 });
+          
+    // This provides a beautiful, sortable table in your browser console
+    console.table(visiblePositions, ["treeName", "treeId", "sharesOwned"]);
 
+console.log("VISIBLE --",visiblePositions)
 // 5. Calculate totals from FILTERED positions
 const uniqueTreeCount = visiblePositions.length;
 
