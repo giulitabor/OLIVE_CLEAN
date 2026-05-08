@@ -2048,7 +2048,11 @@ async function refreshActivityFeed(walletAddress: string) {
         }
 
         emptyState?.classList.add('hidden');
-
+        const shares = Number(
+          tx.shares ??
+          tx.amount ??
+          0
+        );
         container.innerHTML = txs.map(tx => {
             const isBuy = tx.tx_type === 'BUY';
             const icon = isBuy ? '🌿' : '💰';
