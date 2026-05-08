@@ -29,6 +29,39 @@ function setEl(id: string, value: string) {
   if (el) el.textContent = value;
 }
 
+let treesCache: any[] | null = null;
+let treesPromise: Promise<any[]> | null = null;
+
+export async function getTrees() {
+    if (treesCache) return treesCache;
+
+    if (treesPromise) return treesPromise;
+
+    treesPromise = (async () => {
+        console.log("🌳 Fetching trees ONCE");
+
+        const result = await _program.account.tree.all();
+        treesCache = result;
+
+        return result;
+    })();
+
+    return treesPromise;
+}
+let positionsCache: any[] | null = null;
+let positionsPromise: Promise<any[]> | null = null;
+
+export async function getPositions() {
+    if (positionsCache) return positionsCache;
+    if (positionsPromise) return positionsPromise;
+
+    positionsPromise = _program.account.sharePosition.all();
+
+    positionsCache = await positionsPromise;
+    return positionsCache;
+}
+
+
 // ─────────────────────────────────────────────────────────────
 // TAB ROUTING
 // ─────────────────────────────────────────────────────────────
@@ -806,55 +839,115 @@ function updateGrovePulse() {
 // LOAD ALL TREES
 // ─────────────────────────────────────────────────────────────
 (window as any).loadAllTrees = async () => {
-  console.log("[TREES] 🔄 Loading all trees from chain...");
+  console.log("[TREES] 🔄 Loading all trees...");
 
   try {
     const program = (window as any)._program;
+    const sb      = (window as any)._sb;
+
     if (!program) {
       console.error("[TREES] ❌ Program not initialized");
       return [];
     }
 
-    const trees = await program.account.tree.all();
-    console.log("[TREES] Found", trees.length, "trees");
+    // ---------------------------------------------------------
+    // 1. LOAD ONCHAIN TREES
+    // ---------------------------------------------------------
+    const trees = await getTrees(); //program.account.tree.all();
 
-    const normalizedTrees = trees.map((t: any, index: number) => ({
-      publicKey: t.publicKey,
-      account: {
-        ...t.account,
-        treeId:       t.account.treeId,
-        variety:      t.account.variety || "Tuscan",
-        healthStatus: t.account.healthStatus ?? 1,
-      },
-      index,
-    }));
+    console.log("[TREES] Chain trees:", trees.length);
 
-    // Build cache as a Record keyed by treeId (string)
+    // ---------------------------------------------------------
+    // 2. LOAD SUPABASE METADATA
+    // ---------------------------------------------------------
+    const { data: meta, error } = await sb
+      .from('tree_metadata')
+      .select('*');
+
+    if (error) {
+      console.error("[SUPABASE] ❌ Metadata load failed:", error);
+    }
+
+    console.log("[SUPABASE] Metadata rows:", meta?.length || 0);
+
+    // ---------------------------------------------------------
+    // 3. BUILD LOOKUP MAP
+    // ---------------------------------------------------------
+    const metaMap: Record<string, any> = {};
+
+    (meta || []).forEach((m: any) => {
+      metaMap[String(m.tree_id)] = m;
+    });
+
+    // ---------------------------------------------------------
+    // 4. MERGE CHAIN + SUPABASE
+    // ---------------------------------------------------------
+    const normalizedTrees = trees.map((t: any, index: number) => {
+
+      const treeId = String(t.account.treeId);
+
+      const metadata = metaMap[treeId] || {};
+
+      return {
+        publicKey: t.publicKey,
+        account: {
+          ...t.account,
+
+          // chain values
+          treeId: t.account.treeId,
+
+          // metadata overrides
+          variety:
+            metadata.variety ||
+            t.account.variety ||
+            "Tuscan",
+
+          healthScore:
+            metadata.health_score ??
+            100,
+
+          imageUrl:
+            metadata.image_url || null,
+
+          description:
+            metadata.description || "",
+
+          location:
+            metadata.location || "",
+
+          lastInspection:
+            metadata.last_inspection || null,
+        },
+        index,
+      };
+    });
+
+    // ---------------------------------------------------------
+    // 5. CACHE
+    // ---------------------------------------------------------
     const map: Record<string, any> = {};
+
     normalizedTrees.forEach((t: any) => {
-      map[t.account.treeId] = t;
+      map[String(t.account.treeId)] = t;
     });
 
     (window as any)._cachedTrees = map;
-    console.log("[CACHE] ✅ Trees FIRST cached:", Object.keys(map));
-//ensureTreesCached
- await ensureTreesCached();
- console.log("ENSURED CASHED");
- // Inside your existing trees loading function
-(window as any)._cachedTrees = trees;
 
-// NEW CALL
-if (typeof updateGrovePulse === 'function') {
-    updateGrovePulse();
-}
+    console.log("[CACHE] ✅ Trees cached");
+
+    await ensureTreesCached();
+
+    if (typeof updateGrovePulse === 'function') {
+      updateGrovePulse();
+    }
 
     return normalizedTrees;
+
   } catch (err) {
     console.error("[TREES] ❌ Failed:", err);
     return [];
   }
 };
-
 // ─────────────────────────────────────────────────────────────
 // RENDER TREES GRID
 // ─────────────────────────────────────────────────────────────
