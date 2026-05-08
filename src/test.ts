@@ -1882,58 +1882,84 @@ function renderPositions(positions: any[]) {
 async function syncTransactionToSupabase(
   wallet: string,
   treeId: string,
-  amount: number,
+  shares: number,
   type: 'BUY' | 'SELL',
   signature: string,
   newTotal: number,
-  isGuardian: boolean
+  isGuardian: boolean,
+  solPaid: number,
+  sharePrice: number
 ) {
+
   const sb = (window as any)._sb;
+
   if (!sb) return;
 
   try {
-    // 1. Primary Sync (Transactions)
-    const { error: txError } = await sb.from('transactions').insert([{
+
+    const txPayload = {
       wallet_address: wallet,
+
       tree_id: treeId,
-      shares: Number(amount), // Explicit casting
-      amount: Number(amount), // Compatibility fallback
+
+      // transaction
       tx_type: type,
-      signature: signature,
+      signature,
+
+      // economics
+      shares: Number(shares),
+      amount: Number(shares),
+
+      sol_paid: Number(solPaid),
+      share_price: Number(sharePrice),
+
+      total_value: Number(solPaid),
+
+      // ownership
       new_total_shares: Number(newTotal),
-      is_guardian: isGuardian,
+      is_guardian: Boolean(isGuardian),
+
+      // metadata
       timestamp: new Date().toISOString()
-    }]);
+    };
 
-    if (txError) throw txError;
+    console.log("[SUPABASE] INSERT TX:", txPayload);
 
-    // 2. Secondary Sync (Log) - Non-blocking
-    sb.from('transaction_log').insert([{
-      wallet: wallet,
-      tree_id: treeId,
-      amount: Number(amount),
-      action: type,
-      signature: signature,
-      created_at: new Date().toISOString()
-    }]).then(({ error }: any) => {
-       if (error) console.warn("[SUPABASE] Log table sync failed:", error.message);
-    });
+    const { data, error } = await sb
+      .from('transactions')
+      .insert([txPayload])
+      .select('*');
 
-    console.log("✅ Supabase sync complete.");
+    if (error) throw error;
 
-  } catch (err: any) {
+    console.log("✅ Transaction synced:", data);
+
+    // optional mirror log
+    sb
+      .from('transaction_log')
+      .insert([{
+        wallet,
+        tree_id: treeId,
+        amount: Number(shares),
+        action: type,
+        signature,
+        created_at: new Date().toISOString()
+      }]);
+
+  } catch (err:any) {
+
     console.error("❌ Supabase sync failed:", err.message);
-    
-    // UX: Inform the user the TX is safe even if the UI is slow
+
     if (typeof (window as any).showToast === 'function') {
+
       (window as any).showToast(
-        "On-chain success! Activity feed may take a moment to update.", 
+        "On-chain success! Activity feed may take a moment to update.",
         false
       );
     }
   }
 }
- // Inside your loadDashboard function or where you process positions
+// Inside your loadDashboard function or where you process positions
 async function updateFarmStats(positions: any[]) {
     // 1. Calculate totals from chain data
     const totalTreesOwned = positions.length;
