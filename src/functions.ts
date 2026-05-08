@@ -1058,11 +1058,18 @@ function updateGrovePulse() {
   setText('modal-tree-name', `Tree ${treeIdString}`);
 
   const variety = account.variety || 'Tuscan';
-  const healthStatus =
-    account.healthStatus > .8 ? 'Excellent' :
-    account.healthStatus < .5 ? 'Good' :
-    account.healthStatus <  .35 ? 'Fair' : 'Poor';
+  const health = Number(
+  account.healthScore ??
+  account.healthStatus ??
+  0
+);
 
+const healthStatus =
+  health >= 0.85 ? 'Excellent' :
+  health >= 0.65 ? 'Good' :
+  health >= 0.35 ? 'Fair' :
+  'Poor';
+  
   setText('modal-tree-meta',    `Variety: ${variety} · Health: ${healthStatus}`);
   setText('modal-shares-left',  available.toLocaleString());
   setText('modal-health',       healthStatus);
