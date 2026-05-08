@@ -814,8 +814,8 @@ await renderUserPositions(visiblePositions);
 console.log("I DID MY BEST");
 
 // 4. THIS IS THE KEY: Return the variable to the caller
-    console.log('[POSITIONS] ✅ Returning positions to caller:', positions);
-    return positions;
+    console.log('[POSITIONS] ✅ Returning positions to caller:', visiblePositions);
+    return visiblePositions;
   } catch (err) {
     console.error('[POSITIONS] ❌ Failed to load positions:', err);
     return [];
