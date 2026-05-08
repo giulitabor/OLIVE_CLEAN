@@ -726,7 +726,7 @@ export async function getPositions(wallet: string) {
     console.log('[POSITIONS] 🔄 Loading user positions...');
 
     // 1. Fetch all positions for this wallet
-    const allPositions = await getPositions(wallet);//program.account.sharePosition.all([
+    const allPositions = await getPositions(wallet);
      
     console.log(`[POSITIONS] Found ${allPositions.length} raw position accounts.`);
     if (allPositions.length === 0) return [];
