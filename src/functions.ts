@@ -702,7 +702,7 @@ console.log('shares---',shares);
     console.log('[POSITIONS] 🔄 Loading user positions...');
 
     // 1. Fetch all positions for this wallet
-    const allPositions = await program.account.sharePosition.all([
+    const allPositions = await getPositions();//program.account.sharePosition.all([
       {
         memcmp: {
           offset: 8,
@@ -715,7 +715,7 @@ console.log('shares---',shares);
     if (allPositions.length === 0) return [];
 
     // 2. Fetch all trees to cross-reference the IDs with Names
-    const allTrees = await program.account.tree.all();
+    const allTrees = await getTrees();//program.account.tree.all();
 
     // 3. Normalize the data into a readable array
     const positions = allPositions.map((pos: any) => {
@@ -748,21 +748,68 @@ console.log('shares---',shares);
     // Store globally for other UI components
     (window as any)._userPositions = positions;
 
+// 4. Filter ONLY active positions
+const visiblePositions = positions.filter((p:any) => {
 
-    // 4. Update UI Banner if function exists
-    const uniqueTreeCount = positions.length;
-    const totalSharesOwned = positions.reduce((sum: number, p: any) => sum + p.sharesOwned, 0);
+  const rawShares =
+    p.sharesOwned ??
+    p.account?.sharesOwned ??
+    p.account?.shares_owned ??
+    0;
 
-    if (typeof (window as any).updateGlobalBanner === 'function') {
-      (window as any).updateGlobalBanner(uniqueTreeCount, totalSharesOwned, 0.05);
-    }
+  const shares =
+    typeof rawShares === 'object' &&
+    typeof rawShares.toNumber === 'function'
+      ? rawShares.toNumber()
+      : Number(rawShares);
 
-// Update the Badge
+  return shares > 0;
+});
+
+// 5. Calculate totals from FILTERED positions
+const uniqueTreeCount = visiblePositions.length;
+
+const totalSharesOwned = visiblePositions.reduce(
+  (sum:number, p:any) => {
+
+    const rawShares =
+      p.sharesOwned ??
+      p.account?.sharesOwned ??
+      p.account?.shares_owned ??
+      0;
+
+    const shares =
+      typeof rawShares === 'object' &&
+      typeof rawShares.toNumber === 'function'
+        ? rawShares.toNumber()
+        : Number(rawShares);
+
+    return sum + shares;
+
+  },
+  0
+);
+
+// 6. Update Banner
+if (typeof (window as any).updateGlobalBanner === 'function') {
+
+  (window as any).updateGlobalBanner(
+    uniqueTreeCount,
+    totalSharesOwned,
+    0.05
+  );
+}
+
+// 7. Update Badge
 updateTierBadge(totalSharesOwned);
-console.log("TIME TO RENDER POSITION ",positions);
 
-    // 5. Trigger standard UI render
-        await renderUserPositions(positions);
+console.log(
+  "TIME TO RENDER POSITION",
+  visiblePositions
+);
+
+// 8. Render ONLY visible positions
+await renderUserPositions(visiblePositions);
 
 console.log("I DID MY BEST");
 
