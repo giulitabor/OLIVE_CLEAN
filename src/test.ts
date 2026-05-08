@@ -1502,17 +1502,44 @@ async function loadDashboard() {
 
     if (sbError) console.error(`[${TRACE_ID}] Supabase Error:`, sbError.message);
 
-    // 5. Position Normalization & Enrichment
-    const enrichedPositions = onChainPositions.map(pos => {
-      const tId = pos.account.treeId || pos.account.tree_id;
-      const meta = dbTrees?.find(t => String(t.tree_id) === String(tId));
-      return {
-        ...pos,
-        treeId: tId,
-        metadata: meta || { name: `Tree ${tId}`, variety: 'Grown', image_url: '' }
-      };
-    });
+    // 5. Filter Active Positions FIRST
+const activePositions = onChainPositions.filter(pos => {
 
+  const shares =
+    Number(
+      pos.sharesOwned ??
+      pos.account?.sharesOwned ??
+      0
+    );
+
+  return shares > 0;
+});
+
+// 6. Position Normalization & Enrichment
+const enrichedPositions = activePositions.map(pos => {
+
+  const tId =
+    pos.account?.treeId ||
+    pos.account?.tree_id ||
+    pos.treeId;
+
+  const meta = dbTrees?.find(
+    t => String(t.tree_id) === String(tId)
+  );
+
+  return {
+
+    ...pos,
+
+    treeId: tId,
+
+    metadata: meta || {
+      name: `Tree ${tId}`,
+      variety: 'Grown',
+      image_url: ''
+    }
+  };
+});
     // 6. Global Stats Calculation
     let totalShares = 0;
     enrichedPositions.forEach(p => {
