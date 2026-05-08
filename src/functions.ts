@@ -745,9 +745,6 @@ console.log('shares---',shares);
     // This provides a beautiful, sortable table in your browser console
     console.table(positions, ["treeName", "treeId", "sharesOwned"]);
 
-    // Store globally for other UI components
-    (window as any)._userPositions = positions;
-
 // 4. Filter ONLY active positions
 const visiblePositions = positions.filter((p:any) => {
 
@@ -811,7 +808,9 @@ console.log(
 // 8. Render ONLY visible positions
 await renderUserPositions(visiblePositions);
 
-console.log("I DID MY BEST");
+console.log("I DID MY BEST ----visiblePositions",visiblePositions);
+    // Store globally for other UI components
+    (window as any)._userPositions = visiblePositions;
 
 // 4. THIS IS THE KEY: Return the variable to the caller
     console.log('[POSITIONS] ✅ Returning positions to caller:', visiblePositions);
