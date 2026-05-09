@@ -713,117 +713,79 @@ export async function getPositions(wallet: string) {
 }
 // ─────────────────────────────────────────────────────────────
 // LOAD USER TREE POSITIONS
-// ─────────────────────────────────────────────────────────────
 (window as any).loadUserTreePositions = async function() {
-  const program = (window as any)._program;
-  const wallet  = (window as any).solana;
+    const program = (window as any)._program;
+    const wallet = (window as any).solana;
 
-  if (!program || !wallet?.publicKey) {
-    console.warn('[POSITIONS] Missing program or wallet');
-    return [];
-  }
+    if (!program || !wallet?.publicKey) {
+        console.warn('[POSITIONS] Missing program or wallet');
+        return [];
+    }
 
-  try {
-    console.log('[POSITIONS] 🔄 Loading user positions..FUCK.');
-// 1. Fetch all positions for this wallet
-const rawPositions = await getPositions(wallet);
+    try {
+        console.log('[POSITIONS] 🔄 Loading user positions...');
 
-// 2. Filter out accounts with 0 shares immediately
-const allPositions = rawPositions.filter(pos => {
-    // Solana BN (Big Number) objects need .toNumber() or .isZero()
-    const shares = pos.account?.sharesOwned;
-    return shares && !shares.isZero(); 
-});
-    
-     
-    console.log(`[POSITIONS] Found ${allPositions.length} raw position accounts.`);
-    if (allPositions.length === 0) return [];
+        // 1. Fetch all positions
+        const rawPositions = await getPositions(wallet);
+        console.log(`[POSITIONS] Raw accounts found: ${rawPositions.length}`);
 
-    
-    // 2. Fetch all trees to cross-reference the IDs with Names
-    const allTrees = await getTrees();//program.account.tree.all();
-    console.log("loadUserTreePositionsloadUserTreePositions,back from getTrees");
+        // 2. Fetch trees for cross-referencing
+        const allTrees = await getTrees();
+        
+        // 3. Normalize AND Filter in one clean pass
+        // We do it once here so 'positions' is always correct below
+        const positions = rawPositions
+            .map((pos: any) => {
+                const acc = pos.account;
+                const tree = allTrees.find(
+                    (t: any) => t.account.treeId.toString() === acc.treeId.toString()
+                );
 
-    // 3. Normalize the data into a readable array
-const positions = allPositions.map((pos: any) => {
-  const acc = pos.account;
-  const tree = allTrees.find(
-    (t: any) => t.account.treeId.toString() === acc.treeId.toString()
-  );
-     console.log("╔═════FILTERED POSITIONS════════════════════════════╗",positions);
+                return {
+                    treeName: tree?.account.name || "Unknown",
+                    treeId: acc.treeId.toString(),
+                    sharesOwned: acc.sharesOwned.toNumber(),
+                    positionPDA: pos.publicKey.toBase58(),
+                    totalTreeShares: tree?.account.totalShares.toNumber() || 0,
+                };
+            })
+            .filter(p => p.sharesOwned > 0); // Keep only active ones
 
-  return {
-    treeName: tree?.account.name || "Unknown",
-    treeId: acc.treeId.toString(),
-    sharesOwned: acc.sharesOwned.toNumber(),
-    positionPDA: pos.publicKey.toBase58(),
-    totalTreeShares: tree?.account.totalShares.toNumber() || 0,
-  };
-})
-// ADD THIS LINE TO REMOVE 0-SHARE TREES:
-.filter(p => p.sharesOwned > 0);
-     console.log("╔═════FILTERED POSITIONS════════════════════════════╗",positions);
-   
-    // ─────────────────────────────────────────────────────────────
-    // CONSOLE DISPLAY: Which trees are they?
-    // ─────────────────────────────────────────────────────────────
-    console.log("╔══════════════════════════════════════════════╗");
-    console.log("║           USER TREE POSITIONS FOUND          ║");
-    console.log("╚══════════════════════════════════════════════╝");
+        // NOW it is safe to log positions
+        console.log("╔═════ FILTERED POSITIONS ════════════════╗");
+        console.table(positions, ["treeName", "treeId", "sharesOwned"]);
 
-// 4. Filter ONLY active positions
-const visiblePositions = positions.filter((p:any) => {
-  return Number(p.sharesOwned || 0) > 0;
-});          
-    // This provides a beautiful, sortable table in your browser console
-    console.table(visiblePositions, ["treeName", "treeId", "sharesOwned"]);
+        // 4. Calculate totals
+        const uniqueTreeCount = positions.length;
+        const totalSharesOwned = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
 
-console.log("VISIBLE --",visiblePositions)
-// 5. Calculate totals from FILTERED positions
-const uniqueTreeCount = visiblePositions.length;
+        console.log(`[BANNER] Stats: ${totalSharesOwned} shares / ${uniqueTreeCount} trees.`);
 
-const totalSharesOwned = visiblePositions.reduce((sum, p) => {
-    // p.sharesOwned is already a number from your previous .map()
-    return sum + (p.sharesOwned || 0);
-}, 0);
+        // 5. Update Global Components
+        if (typeof (window as any).updateGlobalBanner === 'function') {
+            (window as any).updateGlobalBanner(uniqueTreeCount, totalSharesOwned, 0.05);
+        }
 
-console.log(`[BANNER] Updated: ${totalSharesOwned} shares across ${uniqueTreeCount} trees.`);
+        // Update Tier Badge
+        if (typeof updateTierBadge === 'function') {
+            updateTierBadge(totalSharesOwned);
+        }
 
-// 6. Update Banner
-if (typeof (window as any).updateGlobalBanner === 'function') {
+        // 6. Set Global Reference
+        (window as any)._userPositions = positions;
 
-  (window as any).updateGlobalBanner(
-    uniqueTreeCount,
-    totalSharesOwned,
-    0.05
-  );
-}
+        // 7. Render UI Cards
+        console.log("TIME TO RENDER POSITION", positions);
+        await renderUserPositions(positions);
 
-// 7. Update Badge
-updateTierBadge(totalSharesOwned);
+        console.log('[POSITIONS] ✅ Success. Returning:', positions);
+        return positions;
 
-console.log(
-  "TIME TO RENDER POSITION",
-  visiblePositions
-);
-
-// 8. Render ONLY visible positions
-await renderUserPositions(visiblePositions);
-
-console.log("I DID MY BEST ----visiblePositions",visiblePositions);
-    // Store globally for other UI components
-    (window as any)._userPositions = visiblePositions;
-
-// 4. THIS IS THE KEY: Return the variable to the caller
-    console.log('[POSITIONS] ✅ Returning positions to caller:', visiblePositions);
-    return visiblePositions;
-  } catch (err) {
-    console.error('[POSITIONS] ❌ Failed to load positions:', err);
-    return [];
-  }
+    } catch (err) {
+        console.error('[POSITIONS] ❌ Failed to load positions:', err);
+        return [];
+    }
 };
-
-
 function updateGrovePulse() {
     const activeCountEl = document.getElementById('global-active-count');
     const container = activeCountEl?.closest('.bg-gradient-to-br'); // The Pulse Card
