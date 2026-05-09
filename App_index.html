@@ -786,89 +786,66 @@ setInterval(updateEuroRate, 60000); // Update every minute
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════════════
-     SELL MODAL
-     Opened when user clicks "Sell" on My Trees
-══════════════════════════════════════════════════════════════ -->
 <div id="sell-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
      style="background:rgba(20,15,5,.7); backdrop-filter:blur(6px)">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden"
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden"
        onclick="event.stopPropagation()">
 
-    <!-- Header image strip -->
-    <div class="h-20 flex items-center justify-center text-5xl"
+    <div class="h-12 flex items-center px-6 justify-between"
          style="background:linear-gradient(135deg,#8b4513,#cd853f)">
-      💰
+       <span class="text-xl">💰</span>
+       <h2 id="sell-modal-tree-name" class="serif text-lg font-bold text-white">Tree #1</h2>
+       <button onclick="closeSellModal()" class="text-white/80 hover:text-white transition text-xl">✕</button>
     </div>
 
-    <!-- Close -->
-    <button onclick="closeSellModal()"
-      class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition">
-      ✕
-    </button>
+    <div class="p-5">
+      <div class="flex justify-between items-end mb-4">
+         <p id="sell-modal-tree-meta" class="text-xs text-stone-400">Exit Position</p>
+         <div class="text-right">
+            <p class="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Ownership</p>
+            <p id="sell-modal-owned" class="text-sm font-bold text-stone-900">— shares</p>
+         </div>
+      </div>
 
-    <div class="p-6">
-      <h2 id="sell-modal-tree-name" class="serif text-2xl font-bold text-stone-900 mb-0.5">Tree #1</h2>
-      <p id="sell-modal-tree-meta" class="text-sm text-stone-400 mb-5">Selling your shares</p>
+      <div class="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-4 flex justify-between items-center">
+          <span class="text-xs font-medium text-stone-500">Current Value</span>
+          <span id="sell-modal-value" class="text-lg font-bold text-stone-900">— SOL</span>
+      </div>
 
-      <!-- Current position stats -->
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-        <div class="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p class="text-amber-600 font-medium">You Own</p>
-            <p id="sell-modal-owned" class="text-xl font-bold text-stone-900">—</p>
+      <div class="mb-4">
+          <div class="flex justify-between mb-1">
+            <label class="text-xs font-bold text-stone-700 uppercase tracking-wide">Amount to Sell</label>
+            <span class="text-xs font-bold text-amber-700"><span id="sell-modal-shares-val">10</span> shares</span>
           </div>
-          <div>
-            <p class="text-amber-600 font-medium">Current Value</p>
-            <p id="sell-modal-value" class="text-xl font-bold text-stone-900">— SOL</p>
-          </div>
-        </div>
+          <input id="sell-modal-slider" type="range" min="1" max="100" value="10" step="1"
+            class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-700"
+            oninput="updateSellModalCalc()" />
       </div>
 
-      <!-- Shares slider -->
-      <label class="block text-sm font-medium text-stone-700 mb-2">How many shares to sell?</label>
-      <input id="sell-modal-slider" type="range" min="1" max="100" value="10" step="1"
-        class="w-full mb-3 accent-amber-700"
-        oninput="updateSellModalCalc()" />
-
-      <div class="flex justify-between items-baseline mb-5">
-        <div>
-          <span id="sell-modal-shares-val" class="text-2xl font-bold serif text-stone-900">10</span>
-          <span class="text-sm text-stone-400 ml-1">shares</span>
-        </div>
-        <div>
-          <span class="text-sm text-stone-400">You'll receive:</span>
-          <span id="sell-modal-proceeds" class="text-xl font-bold ml-1 text-amber-600">0.100 SOL</span>
-        </div>
+      <div class="flex justify-between items-center py-3 border-t border-stone-100 mb-4">
+          <span class="text-sm text-stone-500">You Receive</span>
+          <span id="sell-modal-proceeds" class="text-xl font-bold text-amber-600">0.000 SOL</span>
       </div>
 
-      <!-- Warning -->
-      <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 text-sm text-red-700">
-        <p class="font-medium mb-1">⚠️ Selling shares means:</p>
-        <ul class="text-xs space-y-1 ml-4 list-disc">
-          <li>You lose annual oil/carbon yield from these shares</li>
-          <li>Tier benefits may be reduced if you drop below threshold</li>
-          <li>Transaction is irreversible once confirmed</li>
-        </ul>
+      <div class="bg-red-50/50 border border-red-100 rounded-lg p-2.5 mb-4">
+        <p class="text-[10px] text-red-700 leading-tight">
+          <strong>Note:</strong> Selling reduces your yield and may lower your Guardian Tier status. This action is final.
+        </p>
       </div>
 
-      <!-- Confirm checkbox -->
-      <label class="flex items-start gap-2 mb-5 cursor-pointer">
-        <input id="sell-modal-agree" type="checkbox" class="mt-1" onchange="checkSellModalBtn()" />
-        <span class="text-xs text-stone-600">I understand I'm selling shares and losing associated benefits</span>
+      <label class="flex items-center gap-2 mb-4 cursor-pointer">
+        <input id="sell-modal-agree" type="checkbox" class="w-3 h-3 rounded" onchange="checkSellModalBtn()" />
+        <span class="text-[11px] text-stone-500">Confirm share liquidation</span>
       </label>
 
-      <!-- CTA -->
       <button id="sell-modal-btn" onclick="confirmSell()" disabled
-        class="w-full py-3 text-base font-bold rounded-xl text-white transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+        class="w-full py-3 text-sm font-bold rounded-xl text-white shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
         style="background:#cd853f">
-        Sell — receive <span id="sell-modal-btn-proceeds">0.100</span> SOL
+        Sell for <span id="sell-modal-btn-proceeds">0.000</span> SOL
       </button>
     </div>
   </div>
 </div>
-
-
 <!-- ═══════════════════════════════════════════════════════════
      TREE DETAIL MODAL
      Deep dive into tree data, environment, metadata, live feed
