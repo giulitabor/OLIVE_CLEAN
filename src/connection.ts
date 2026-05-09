@@ -388,6 +388,7 @@ export async function checkConnectionHealth(): Promise<{
 }
 
 (window as any).checkConnectionHealth = checkConnectionHealth;
+(window as any).connectWallet = connectWallet;
 
 console.log("[connection.ts] ✅ Optimized module loaded");
 
