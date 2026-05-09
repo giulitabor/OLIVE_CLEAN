@@ -79,8 +79,8 @@ async function switchTab(tab: string) {
     if (!btn) return;
     btn.classList.toggle('active', t === tab);
   });
-  console.log("TREEES");
-loadUserTreePositions();
+  console.log("TREEES, fuck a load");
+//loadUserTreePositions();
 if (tab === 'rewards') {
 console.log('REWARDS TAB');
 
