@@ -2169,7 +2169,23 @@ async function buyShares(treeId: string | number, amount: number) {
     } catch (supabaseErr) {
         console.warn("[BUY] On-chain win, but Supabase sync failed:", supabaseErr);
     }
+// Inside buyShares success block
+console.log(`[BUY] ✅ Success! TX: ${tx}`);
 
+if ((window as any).showToast) {
+    // Check if we are on devnet (standard for your current setup)
+    const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+    
+    (window as any).showToast(
+        `🌿 <b>Success!</b><br>
+         You just adopted ${amount} shares.<br>
+         <a href="${explorerUrl}" target="_blank" 
+            style="color: #10b981; text-decoration: underline; font-size: 11px; font-weight: bold; margin-top: 5px; display: inline-block;">
+            View on Solscan (Devnet) ↗
+         </a>`, 
+        false // Green success toast
+    );
+}
     // 7. Refresh UI
     if ((window as any).loadDashboard) await (window as any).loadDashboard();
 
