@@ -215,6 +215,16 @@ async function update_FarmOwnership(positions: any[], protocol: any) {
   document.getElementById('app')?.classList.remove('hidden');
   document.getElementById('stats')?.classList.remove('hidden');
 
+  if (protocolConfig) {
+    const lamports = protocolConfig.sharePriceLamports.toNumber();
+    const solPrice = lamports / 1_000_000_000;
+    
+    // Update the UI element
+    const priceEl = document.getElementById('protocol-share-price');
+    if (priceEl) {
+        priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+    }
+}
   const navTabs = document.getElementById('nav-tabs');
   if (navTabs) {
     navTabs.classList.remove('hidden');
