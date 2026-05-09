@@ -210,13 +210,15 @@ async function update_FarmOwnership(positions: any[], protocol: any) {
 // ─────────────────────────────────────────────────────────────
 // WALLET CONNECTED
 // ─────────────────────────────────────────────────────────────
-(window as any).onWalletConnected = function(addr: string, isAdmin: boolean) {
+(window as any).onWalletConnected = function(addr: string, isAdmin: boolean) {   
+  const protocol = (window as any).protocol;
+
   document.getElementById('panel-hero')?.classList.add('hidden');
   document.getElementById('app')?.classList.remove('hidden');
   document.getElementById('stats')?.classList.remove('hidden');
 
-  if (protocolConfig) {
-    const lamports = protocolConfig.sharePriceLamports.toNumber();
+  if (protocol) {
+    const lamports = protocol.sharePriceLamports.toNumber();
     const solPrice = lamports / 1_000_000_000;
     
     // Update the UI element
