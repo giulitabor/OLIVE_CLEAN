@@ -80,6 +80,7 @@ async function switchTab(tab: string) {
     btn.classList.toggle('active', t === tab);
   });
   console.log("TREEES, fuck a load");
+  await (window as any).refreshWalletBalances(wallet.publicKey);
 //loadUserTreePositions();
 if (tab === 'rewards') {
 console.log('REWARDS TAB');
