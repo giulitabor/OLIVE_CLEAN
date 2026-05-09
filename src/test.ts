@@ -2929,7 +2929,7 @@ if (connectBtn) {
       const log = document.getElementById("admin-log");
       if (log) { log.classList.remove("hidden"); log.innerHTML = ""; }
       try {
-        await (window as any).setupProtocol(0.25);
+//update ui with total trees on chain on shareprice
       } catch (e: any) {
         console.error("[DOM] buttonerror error:", e);
         if (log) log.innerHTML += "❌ " + e.message + "\n";
@@ -3694,7 +3694,43 @@ function updateWeatherUI(data: any) {
         `).join('');
     }
 }
+/**
+ * REFRESH HERO STATS
+ * This function waits for the protocol data to exist, then snaps the UI into place.
+ */
+async function autoSyncHero() {
+  const priceEl = document.getElementById('protocol-share-price');
+  const treesEl = document.getElementById('protocol-total-trees');
 
+  if (!priceEl || !treesEl) {
+    console.warn("[UI] Hero elements missing. Check your HTML IDs.");
+    return;
+  }
+
+  // Try up to 10 times to catch the data as it arrives from Solana
+  for (let i = 0; i < 10; i++) {
+    const protocol = (window as any)._protocol;
+    
+    if (protocol && protocol.sharePriceLamports) {
+      const solPrice = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
+      const totalTrees = protocol.totalTrees || 0;
+
+      priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+      treesEl.textContent = `${totalTrees} Trees`;
+      
+      console.log(`[UI] ✅ Hero Stats Locked: ${solPrice} SOL`);
+      return; // Success!
+    }
+
+    // Data not ready? Wait 500ms and try again
+    await new Promise(r => setTimeout(r, 500));
+  }
+  
+  console.error("[UI] Hero Sync timed out - Protocol data never arrived.");
+}
+
+// Kick it off immediately
+autoSyncHero();
 // EXPOSE TO GLOBAL so weatherEngine can call it
 (window as any).updateWeatherUI = updateWeatherUI;
 
