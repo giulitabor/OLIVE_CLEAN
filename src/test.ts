@@ -2089,20 +2089,26 @@ async function refreshActivityFeed(walletAddress: string) {
     return date.toLocaleDateString();
 };
 
-
 // ══════════════════════════════════════════════════════════════
-// BUY SHARES - With full Supabase sync
+// BUY SHARES - FIXED VERSION
 // ══════════════════════════════════════════════════════════════
 async function buyShares(treeId: string | number, amount: number) {
   const treeIdStr = String(treeId);
   console.log(`\n[BUY] Starting purchase: Tree ${treeIdStr}, ${amount} shares`);
 
   try {
-    const wallet = getWallet();
-    const [treePDA] = findTreePDA(treeIdStr);
-    const [protocolPDA] = findProtocolPDA();
-    const [treasuryPda] = findTreasuryPDA(activeProgram);
-    const [positionPDA] = findPositionPDA(wallet, treeIdStr);
+    // FIX 1: Ensure we have the wallet and program (using your standard 'program' var)
+    const wallet = (window as any).getWallet ? (window as any).getWallet() : (window as any).walletPubKey;
+    
+    // FIX 2: Check for 'program' instead of 'activeProgram'
+    if (!program) throw new Error("Program not initialized");
+
+    const [treePDA] = (window as any).findTreePDA(treeIdStr);
+    const [protocolPDA] = (window as any).findProtocolPDA();
+    
+    // FIX 3: Passed 'program' instead of 'activeProgram'
+    const [treasuryPda] = (window as any).findTreasuryPDA(program); 
+    const [positionPDA] = (window as any).findPositionPDA(wallet, treeIdStr);
 
     // Fetch current position to calculate new total
     let currentShares = 0;
@@ -2124,18 +2130,18 @@ async function buyShares(treeId: string | number, amount: number) {
         tree: treePDA,
         position: positionPDA,
         protocol: protocolPDA,
-        treasury: treasuryPDA,
+        treasury: treasuryPda, // Use the Pda we derived above
         buyer: wallet,
-        systemProgram: SystemProgram.programId,
+        systemProgram: anchor.web3.SystemProgram.programId, // Use standard web3 ref
       })
       .rpc();
 
     console.log(`[BUY] ✅ On-chain success: ${tx}`);
-    showToast(`Bought ${amount} shares!`);
+    if ((window as any).showToast) (window as any).showToast(`Bought ${amount} shares!`);
 
     // Comprehensive Supabase sync
-    await syncTransactionToSupabase(
-      wallet,
+    await (window as any).syncTransactionToSupabase(
+      wallet.toString(), // Convert to string for Supabase
       treeIdStr,
       amount,
       'BUY',
@@ -2143,18 +2149,18 @@ async function buyShares(treeId: string | number, amount: number) {
       newTotal,
       isGuardian
     );
-console.log("syncing----BUY--");
 
-    // Reload dashboard to show updated data
-//    await loadDashboard();
+    console.log("syncing----BUY--");
+
+    // Optional: Reload
+    if ((window as any).loadDashboard) await (window as any).loadDashboard();
 
   } catch (err: any) {
     console.error(`[BUY] ❌ Purchase failed:`, err);
-    showToast("Buy failed: " + err.message, true);
+    if ((window as any).showToast) (window as any).showToast("Buy failed: " + err.message, true);
+    throw err; // Important: throw so the modal button knows to reset
   }
 }
-
-
 // ══════════════════════════════════════════════════════════════
 // SELL SHARES - With full Supabase sync
 // ══════════════════════════════════════════════════════════════
