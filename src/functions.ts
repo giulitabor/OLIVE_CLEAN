@@ -1106,7 +1106,7 @@ const healthStatus =
   document.body.style.overflow = 'hidden'; // Prevent scrolling away from modal
   
   console.log("✅ Modal display forced with styles");
-};  console.log("✅ Modal opened for tree:", treeIdString);
+ console.log("✅ Modal opened for tree:", treeIdString);
 };
 // ─────────────────────────────────────────────────────────────
 // CLOSE ADOPT MODAL
