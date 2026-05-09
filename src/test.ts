@@ -2833,7 +2833,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("╚════════════════════════════════════════════════════════╝\n");
 
   // Locate your connect button wire-up
-const connectBtn = document.getElementById('connect-btn');
+const connectBtn = document.getElementById('btn-connect');
 
 if (connectBtn) {
   connectBtn.addEventListener('click', async () => {
