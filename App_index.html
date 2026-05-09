@@ -586,22 +586,119 @@
          </div>
          <!-- /panel-rewards -->
 
+
+</main>
+
+<!-- Bottom Mobile Navigation -->
+<nav class="mobile-nav">
+  <button onclick="switchTab('home')" class="nav-item active" id="tab-home">
+    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>FIELD</span>
+  </button>
+  <button onclick="switchTab('dash')" class="nav-item" id="tab-dash">
+    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+    <span>GROVE</span>
+  </button>
+  <button onclick="switchTab('rewards')" class="nav-item" id="tab-rewards">
+    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.65-.5-.65C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/></svg>
+    <span>PERKS</span>
+  </button>
+</nav>
+
+<script>
+  // Core Navigation Logic
+  function switchTab(tabId) {
+    document.querySelectorAll('main > div').forEach(p => p.classList.add('hidden'));
+    document.getElementById('panel-' + tabId).classList.remove('hidden');
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+
+    window.scrollTo(0,0);
+  }
+
+  // Staked OVL Logic
+  async function fetchStakedOVL(walletPubKey, program) {
+    try {
+      const [stakePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("stake"), walletPubKey.toBuffer()],
+        program.programId
+      );
+      const stakeAccount = await program.account.stakeAccount.fetch(stakePda);
+      const totalStakedOlv = (stakeAccount.amount?.toNumber() || 0) / 1_000_000_000;
+      document.getElementById('totalStakedOlv').innerText = totalStakedOlv.toLocaleString();
+    } catch (e) {
+      console.log("No StakeAccount found for this user.");
+      document.getElementById('totalStakedOlv').innerText = "0.00";
+    }
+  }
+
+  // Initialization[cite: 3]
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log("Helius integration active..."); // Placeholder for helius logic[cite: 3]
+  });
 <!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════════════════════ -->
+<script type="module" src="/src/connection.ts"></script>
+<script type="module" src="/src/test.ts"></script>
+<script type="module" src="/src/functions.ts"></script>
+<script type="module" src="/src/weatherEngine.ts"></script>
+
+<script>
+
+// Add this script to show Euro prices
+let euroRate = 150; // 1 SOL = €150 (update this based on real rates)
+
+// Fetch live rates
+async function updateEuroRate() {
+  try {
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur');
+    const data = await response.json();
+    euroRate = data.solana.eur;
+  } catch (error) {
+    console.log('Using default rate');
+  }
+}
+
+updateEuroRate();
+setInterval(updateEuroRate, 60000); // Update every minute
+
+// Update your existing updateModalCalc function to also show EUR
+// Find where you show "0.100 SOL" and add:
+// "≈ €" + (totalSOL * euroRate).toFixed(2)
+</script>
+
+<div id="wallet-missing-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="bg-[#141414] border border-white/10 w-full max-w-sm rounded-[32px] p-8 shadow-2xl">
+        <div class="text-center">
+            <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="text-4xl">👻</span>
+            </div>
+            <h3 class="text-2xl font-black text-white mb-2">No Wallet Detected</h3>
+            <p class="text-stone-400 text-sm leading-relaxed mb-8">
+                We couldn't find a Solana wallet. Please install the Phantom extension to interact with the Grove.
+            </p>
+            
+            <div class="space-y-3">
+                <a href="https://phantom.app/" target="_blank" 
+                   class="flex items-center justify-center w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-2xl transition-all">
+                    Download Phantom
+                </a>
+                <button onclick="document.getElementById('wallet-missing-modal').classList.add('hidden')" 
+                        class="w-full py-3 text-stone-500 text-xs font-bold uppercase tracking-widest hover:text-white transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+       <!-- ═══════════════════════════════════════════════════════════
      ADOPT MODAL
      Opened when user clicks a tree card.
-     test.ts can call window.openAdoptModal(treeAccount, protocol)
 ══════════════════════════════════════════════════════════════ -->
 <div id="adopt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
      style="background:rgba(20,15,5,.7); backdrop-filter:blur(6px)">
-  // DEBUG: Check if any parent is hiding us
-   let parent = modal.parentElement;
-   while (parent) {
-       const style = window.getComputedStyle(parent);
-       if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-           console.warn("⚠️ Modal is inside a hidden parent:", parent);
-       }
-       parent = parent.parentElement;
-   }
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden"
        onclick="event.stopPropagation()">
 
@@ -1065,112 +1162,5 @@
   </div>
 </div>
 
-
-</main>
-
-<!-- Bottom Mobile Navigation -->
-<nav class="mobile-nav">
-  <button onclick="switchTab('home')" class="nav-item active" id="tab-home">
-    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-    <span>FIELD</span>
-  </button>
-  <button onclick="switchTab('dash')" class="nav-item" id="tab-dash">
-    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-    <span>GROVE</span>
-  </button>
-  <button onclick="switchTab('rewards')" class="nav-item" id="tab-rewards">
-    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.65-.5-.65C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/></svg>
-    <span>PERKS</span>
-  </button>
-</nav>
-
-<script>
-  // Core Navigation Logic
-  function switchTab(tabId) {
-    document.querySelectorAll('main > div').forEach(p => p.classList.add('hidden'));
-    document.getElementById('panel-' + tabId).classList.remove('hidden');
-
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
-
-    window.scrollTo(0,0);
-  }
-
-  // Staked OVL Logic
-  async function fetchStakedOVL(walletPubKey, program) {
-    try {
-      const [stakePda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("stake"), walletPubKey.toBuffer()],
-        program.programId
-      );
-      const stakeAccount = await program.account.stakeAccount.fetch(stakePda);
-      const totalStakedOlv = (stakeAccount.amount?.toNumber() || 0) / 1_000_000_000;
-      document.getElementById('totalStakedOlv').innerText = totalStakedOlv.toLocaleString();
-    } catch (e) {
-      console.log("No StakeAccount found for this user.");
-      document.getElementById('totalStakedOlv').innerText = "0.00";
-    }
-  }
-
-  // Initialization[cite: 3]
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log("Helius integration active..."); // Placeholder for helius logic[cite: 3]
-  });
-<!-- ═══════════════════════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════════════════════ -->
-<script type="module" src="/src/connection.ts"></script>
-<script type="module" src="/src/test.ts"></script>
-<script type="module" src="/src/functions.ts"></script>
-<script type="module" src="/src/weatherEngine.ts"></script>
-
-<script>
-
-// Add this script to show Euro prices
-let euroRate = 150; // 1 SOL = €150 (update this based on real rates)
-
-// Fetch live rates
-async function updateEuroRate() {
-  try {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur');
-    const data = await response.json();
-    euroRate = data.solana.eur;
-  } catch (error) {
-    console.log('Using default rate');
-  }
-}
-
-updateEuroRate();
-setInterval(updateEuroRate, 60000); // Update every minute
-
-// Update your existing updateModalCalc function to also show EUR
-// Find where you show "0.100 SOL" and add:
-// "≈ €" + (totalSOL * euroRate).toFixed(2)
-</script>
-
-<div id="wallet-missing-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-    <div class="bg-[#141414] border border-white/10 w-full max-w-sm rounded-[32px] p-8 shadow-2xl">
-        <div class="text-center">
-            <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span class="text-4xl">👻</span>
-            </div>
-            <h3 class="text-2xl font-black text-white mb-2">No Wallet Detected</h3>
-            <p class="text-stone-400 text-sm leading-relaxed mb-8">
-                We couldn't find a Solana wallet. Please install the Phantom extension to interact with the Grove.
-            </p>
-            
-            <div class="space-y-3">
-                <a href="https://phantom.app/" target="_blank" 
-                   class="flex items-center justify-center w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-2xl transition-all">
-                    Download Phantom
-                </a>
-                <button onclick="document.getElementById('wallet-missing-modal').classList.add('hidden')" 
-                        class="w-full py-3 text-stone-500 text-xs font-bold uppercase tracking-widest hover:text-white transition">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 </body>
 </html>
