@@ -1543,7 +1543,7 @@ const enrichedPositions = activePositions.map(pos => {
 
     // 9. Post-Sync Tasks (Wallet & Admin)
     if (typeof (window as any).refreshWalletBalances === 'function') {
-      await (window as any).refreshWalletBalances(wallet.publicKey);
+      await (window as any).loadd(wallet.publicKey);
     }
 
     if (isAdmin && typeof (window as any).fillAdminProtocol === 'function') {
@@ -1552,6 +1552,8 @@ const enrichedPositions = activePositions.map(pos => {
     }
 
     console.log(`[${TRACE_ID}] ✅ Dashboard Sync Complete.`);
+    await (window as any).refreshWalletBalances(wallet.publicKey);
+
 
   } catch (err: any) {
     console.error(`[${TRACE_ID}] ❌ Dashboard Error:`, err.message);
