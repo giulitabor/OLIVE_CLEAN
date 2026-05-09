@@ -112,16 +112,18 @@ export async function connectWallet(auto = false): Promise<WalletConnectionState
     }
 
     // B. Desktop: Show a custom Modal instead of just a console warning
-    if (!auto) {
+    else {
+      // DESKTOP BROWSER: Show the Modal
+      console.log("[CONNECT] Desktop browser - showing modal");
       const modal = document.getElementById('wallet-missing-modal');
-      if (modal) modal.classList.remove('hidden');
+      if (modal) {
+          modal.classList.remove('hidden');
+      } else {
+          // Fallback if modal is missing from HTML
+          alert("Please install Phantom wallet to continue.");
+      }
+      return { status: "not_installed", message: "Modal shown" };
     }
-
-    return {
-      status: "not_installed",
-      message: "No Solana wallet detected",
-      installUrl: "https://phantom.app/",
-    };
   }
 
   try {
