@@ -2885,10 +2885,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("[refreshAdminStatus] Connection not ready, skipping update...");
         return;
     }
-      // Fetch Protocol Config to see Treasury SOL
-        const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
-        const protocol = await program.account.protocolConfig.fetch(protocolPda);
-
+    
   // Locate your connect button wire-up
 const connectBtn = document.getElementById('btn-connect');
 
