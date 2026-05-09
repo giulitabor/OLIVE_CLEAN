@@ -2832,17 +2832,32 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("║              OLIVIUM DAO — DOM READY                   ║");
   console.log("╚════════════════════════════════════════════════════════╝\n");
 
-  const btnConnect = document.getElementById("btn-connect");
-  if (btnConnect) {
-    btnConnect.addEventListener("click", () => {
-      console.log("[DOM] Connect button clicked");
-      (window as any).connect();
-    });
-    console.log("[DOM] ✅ Connect button wired");
-  } else {
-    console.warn("[DOM] ⚠️  Connect button (#btn-connect) not found");
-  }
+  // Locate your connect button wire-up
+const connectBtn = document.getElementById('connect-btn');
 
+if (connectBtn) {
+  connectBtn.addEventListener('click', async () => {
+    console.log("[DOM] Connect button clicked - Triggering Optimized Flow");
+    
+    try {
+      // 1. Call the OPTIMIZED function from connection.ts
+      const result = await (window as any).connectWallet(false);
+
+      if (result.status === "connected") {
+        console.log("Success! Wallet:", result.pubkey);
+        // Trigger your UI updates
+        if (typeof (window as any).onWalletConnected === 'function') {
+           (window as any).onWalletConnected(result.pubkey, result.isAdmin);
+        }
+      } else if (result.status === "not_installed") {
+        // The modal is already handled in connection.ts, but you can toast here
+        console.warn("Wallet not found");
+      }
+    } catch (err) {
+      console.error("Critical connection error:", err);
+    }
+  });
+}
   const btnBootstrap = document.getElementById("btn-bootstrap");
   const btn = document.getElementById("btn-setupProtocol");
 
