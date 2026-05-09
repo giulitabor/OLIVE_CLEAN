@@ -1112,10 +1112,19 @@ const healthStatus =
 // CLOSE ADOPT MODAL
 // ─────────────────────────────────────────────────────────────
 (window as any).closeAdoptModal = () => {
+  console.log("[MODAL] Closing...");
   const modal = document.getElementById('adopt-modal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hidden');
+    // Force reset styles in case they were set via JS
+    modal.style.display = 'none';
+    modal.style.opacity = '0';
+    
+    // Re-enable background scrolling
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
 };
-
 // ─────────────────────────────────────────────────────────────
 // UPDATE MODAL CALCULATIONS
 // ─────────────────────────────────────────────────────────────
@@ -1645,6 +1654,14 @@ export async function getProtocolData() {
   }
   document.getElementById('tree-detail-modal')?.classList.add('hidden');
 };
+
+// Close on Escape Key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    (window as any).closeAdoptModal();
+  }
+});
+
 // ─────────────────────────────────────────────────────────────
 // GLOBAL BANNER UPDATE
 // ─────────────────────────────────────────────────────────────
