@@ -776,26 +776,12 @@ console.log("VISIBLE --",visiblePositions)
 // 5. Calculate totals from FILTERED positions
 const uniqueTreeCount = visiblePositions.length;
 
-const totalSharesOwned = visiblePositions.reduce(
-  (sum:number, p:any) => {
+const totalSharesOwned = visiblePositions.reduce((sum, p) => {
+    // p.sharesOwned is already a number from your previous .map()
+    return sum + (p.sharesOwned || 0);
+}, 0);
 
-    const rawShares =
-      p.sharesOwned ??
-      p.account?.sharesOwned ??
-      p.account?.shares_owned ??
-      0;
-
-    const shares =
-      typeof rawShares === 'object' &&
-      typeof rawShares.toNumber === 'function'
-        ? rawShares.toNumber()
-        : Number(rawShares);
-
-    return sum + shares;
-
-  },
-  0
-);
+console.log(`[BANNER] Updated: ${totalSharesOwned} shares across ${uniqueTreeCount} trees.`);
 
 // 6. Update Banner
 if (typeof (window as any).updateGlobalBanner === 'function') {
