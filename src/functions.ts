@@ -1300,7 +1300,7 @@ if (typeof window !== 'undefined') {
  * FIXED VERSION - Add this to confirmAdopt()
  * Replaces the transaction submission section
  */
-(window as any).confirmAdopt = async function() {
+(window as any).OOLD_confirmAdopt = async function() {
   console.log("🚀 CONFIRM ADOPT TRIGGERED");
  
   try {
