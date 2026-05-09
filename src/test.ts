@@ -2827,7 +2827,40 @@ function setText(id: string, value: string) {
     console.warn(`[setText] Element #${id} not found`);
   }
 }
+/**
+ * Synchronizes the Hero Card with real Blockchain data
+ * Can be called on Page Load or after Admin Updates
+ */
+(window as any).syncHeroStats = () => {
+    const protocol = (window as any)._protocol;
+    if (!protocol) {
+        console.log("[UI] Hero Sync: No protocol data yet.");
+        return;
+    }
 
+    try {
+        // 1. Extract values from the blockchain object
+        const rawPrice = protocol.sharePriceLamports ? protocol.sharePriceLamports.toNumber() : 0;
+        const solPrice = rawPrice / 1_000_000_000;
+        const totalTrees = protocol.totalTrees || 0;
+
+        // 2. Locate the target elements
+        const priceEl = document.getElementById('protocol-share-price');
+        const treesEl = document.getElementById('protocol-total-trees');
+
+        // 3. Apply updates
+        if (priceEl) {
+            priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+        }
+        if (treesEl) {
+            treesEl.textContent = `${totalTrees} Trees`;
+        }
+
+        console.log(`[UI] ✅ Hero Stats Synced: ${solPrice} SOL | ${totalTrees} Trees`);
+    } catch (err) {
+        console.error("[UI] Hero Sync Error:", err);
+    }
+};
 function showToast(msg: string, isError = false) {
   if ((window as any).showGlobalToast) {
     (window as any).showGlobalToast(msg, isError);
@@ -2917,7 +2950,7 @@ if (connectBtn) {
   cacheProtocol().catch(() => {
     console.log("[DOM] Protocol not yet initialized (normal for fresh deployment)");
   });
-
+(window as any).syncHeroStats();
   console.log("\n[DOM] ✅ All event listeners wired. Ready for user interaction.\n");
 
     
