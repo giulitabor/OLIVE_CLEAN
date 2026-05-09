@@ -1380,57 +1380,6 @@ function getWeatherIcon(temp: number): string {
 };
 
 console.log('[TREE MODAL] Oracle integration loaded ✅');
-// openAdoptModal
-(window as any).openAdoptModal = (idx: string) => {
-    console.log("[MODAL] Opening tree index:", idx);
-
-    // 1. Get the data from the cache
-    const treeData = (window as any)._cachedTrees[idx];
-    if (!treeData) {
-        console.error("No tree data found at index", idx);
-        return;
-    }
-
-    // 2. Identify the Modal
-    const modal = document.getElementById('adopt-modal'); // Match your HTML ID
-    if (!modal) {
-        console.error("Could not find adopt-modal element");
-        return;
-    }
-
-    // 3. THE FIX: Set the dataset so confirmAdopt can see it
-    const account = treeData.account;
-    modal.dataset.treeId = account.treeId;       // e.g., "F1-FR-001"
-    modal.dataset.treeIndex = idx.toString();    // e.g., "0"
-
-    // 4. Set Global References for the calculation functions
-    (window as any)._modalTree = account;
-    (window as any)._modalProtocol = (window as any)._protocol;
-
-    // 5. Update UI Text
-    const setText = (id: string, val: any) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = String(val);
-    };
-
-    const available = account.totalShares.toNumber() - account.sharesSold.toNumber();
-    setText('modal-tree-name', `Tree ${account.treeId}`); // or account.name
-    setText('modal-tree-meta', `Variety: ${account.variety || 'Tuscan'} · Health: ${account.healthStatus === 1 ? 'Excellent' : 'Good'}`);
-    setText('modal-shares-left', available.toLocaleString());
-
-    // 6. Reset Slider and Show
-    const slider = document.getElementById('modal-slider') as HTMLInputElement;
-    if (slider) {
-        slider.max = available.toString();
-        slider.value = Math.min(100, available).toString();
-    }
-
-    modal.classList.remove('hidden');
-
-    if (typeof (window as any).updateModalCalc === 'function') {
-        (window as any).updateModalCalc();
-    }
-};
 /**
  * PRODUCTION-READY: loadDashboard
  * Optimized caching + Admin Sync + Enhanced Error Handling
