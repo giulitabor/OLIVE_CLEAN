@@ -2155,14 +2155,20 @@ async function buyShares(treeId: string | number, amount: number) {
     // 6. Sync to Supabase
     try {
         if ((window as any).syncTransactionToSupabase) {
+        const sharePrice = 0.05; // Your fixed price
+            const solPaid = amount * sharePrice;
+            
+            // Comprehensive Supabase sync - Ensure all 9 arguments are passed
             await (window as any).syncTransactionToSupabase(
-                walletPubKey.toBase58(),
-                treeIdStr,
-                amount,
-                'BUY',
-                tx,
-                newTotal,
-                isGuardian
+              walletPubKey.toBase58(),
+              treeIdStr,
+              amount,      // 'shares' in the function
+              'BUY',       // 'type'
+              tx,          // 'signature'
+              newTotal,    // 'newTotal'
+              isGuardian,  // 'isGuardian'
+              solPaid,     // 'solPaid' <--- WAS MISSING
+              sharePrice   // 'sharePrice' <--- WAS MISSING
             );
             console.log("[BUY] Supabase sync complete.");
         }
