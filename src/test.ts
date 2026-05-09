@@ -2090,23 +2090,21 @@ async function refreshActivityFeed(walletAddress: string) {
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString();
 };
-
 // ══════════════════════════════════════════════════════════════
-// BUY SHARES - FINAL BULLETPROOF VERSION
+// BUY SHARES - FINAL BULLETPROOF VERSION (FIXED)
 // ══════════════════════════════════════════════════════════════
 async function buyShares(treeId: string | number, amount: number) {
   const treeIdStr = String(treeId);
   console.log(`\n[BUY] Starting purchase: Tree ${treeIdStr}, ${amount} shares`);
 
   try {
-    // 1. Get Program and Wallet from the global scope
     const activeProgram = (window as any)._program || (window as any).program;
     const walletPubKey = (window as any).walletPubKey || (window as any).wallet?.publicKey;
 
     if (!activeProgram) throw new Error("Blockchain program not loaded");
     if (!walletPubKey) throw new Error("Wallet not connected");
 
-    // 2. Derive PDAs manually to avoid "function not found" errors
+    // 1. Derive PDAs
     const [treePDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("tree"), Buffer.from(treeIdStr)],
       activeProgram.programId
@@ -2120,11 +2118,10 @@ async function buyShares(treeId: string | number, amount: number) {
       activeProgram.programId
     );
 
-    // 3. Get Treasury from Protocol Config (Reliable source)
+    // 2. Get Treasury and current state
     const protocolConfig = await activeProgram.account.protocolConfig.fetch(protocolPDA);
     const treasuryPda = protocolConfig.treasury;
 
-    // 4. Check existing position for Supabase totals
     let currentShares = 0;
     try {
       const currentPosition = await activeProgram.account.sharePosition.fetch(positionPDA);
@@ -2136,8 +2133,7 @@ async function buyShares(treeId: string | number, amount: number) {
     const newTotal = currentShares + amount;
     const isGuardian = newTotal >= 1000;
 
-    // 5. Execute On-Chain Transaction
-    // Price is 0.05 SOL per share + fees (handled by program)
+    // 3. Execute Transaction
     console.log("[BUY] Sending transaction...");
     const tx = await activeProgram.methods
       .purchaseShares(treeIdStr, new anchor.BN(amount))
@@ -2151,52 +2147,54 @@ async function buyShares(treeId: string | number, amount: number) {
       })
       .rpc();
 
+    // 4. TRIGGER SUCCESS TOAST IMMEDIATELY
     console.log(`[BUY] ✅ Success! TX: ${tx}`);
-    if ((window as any).showToast) (window as any).showToast(`Successfully adopted ${amount} shares!`);
+    if ((window as any).showToast) {
+        const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+        (window as any).showToast(
+            `🌿 <b>Success!</b><br>
+             You just adopted ${amount} shares.<br>
+             <a href="${explorerUrl}" target="_blank" 
+                style="color: #10b981; text-decoration: underline; font-size: 11px; font-weight: bold; margin-top: 5px; display: inline-block;">
+                View on Solscan (Devnet) ↗
+             </a>`, 
+            false
+        );
+    }
 
-    // 6. Sync to Supabase
+    // 5. Sync to Supabase
     try {
         if ((window as any).syncTransactionToSupabase) {
-        const sharePrice = 0.05; // Your fixed price
+            const sharePrice = 0.05;
             const solPaid = amount * sharePrice;
-            console.log("Sol Paid",solPaid);
-            // Comprehensive Supabase sync - Ensure all 9 arguments are passed
             await (window as any).syncTransactionToSupabase(
-              walletPubKey.toBase58(),
-              treeIdStr,
-              amount,      // 'shares' in the function
-              'BUY',       // 'type'
-              tx,          // 'signature'
-              newTotal,    // 'newTotal'
-              isGuardian,  // 'isGuardian'
-              solPaid,     // 'solPaid' <--- WAS MISSING
-              sharePrice   // 'sharePrice' <--- WAS MISSING
+                walletPubKey.toBase58(),
+                treeIdStr,
+                amount,
+                'BUY',
+                tx,
+                newTotal,
+                isGuardian,
+                solPaid,
+                sharePrice
             );
             console.log("[BUY] Supabase sync complete.");
         }
-    } catch (supabaseErr) {
-        console.warn("[BUY] On-chain win, but Supabase sync failed:", supabaseErr);
+    } catch (sbErr) {
+        console.warn("[BUY] Supabase sync failed (non-fatal):", sbErr);
     }
-// Inside buyShares success block
-console.log(`[BUY] ✅ Success! TX: ${tx}`);
 
-if ((window as any).showToast) {
-    // Check if we are on devnet (standard for your current setup)
-    const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
-    
-    (window as any).showToast(
-        `🌿 <b>Success!</b><br>
-         You just adopted ${amount} shares.<br>
-         <a href="${explorerUrl}" target="_blank" 
-            style="color: #10b981; text-decoration: underline; font-size: 11px; font-weight: bold; margin-top: 5px; display: inline-block;">
-            View on Solscan (Devnet) ↗
-         </a>`, 
-        false // Green success toast
-    );
-}
-    // 7. Refresh UI
-    if ((window as any).loadDashboard) await (window as any).loadDashboard();
- await (window as any).refreshUserGrove();
+    // 6. Refresh UI (with safety checks for that 'loadd' typo)
+    try {
+        if ((window as any).refreshUserGrove) {
+            await (window as any).refreshUserGrove();
+        } else if ((window as any).loadDashboard) {
+            await (window as any).loadDashboard();
+        }
+    } catch (refreshErr) {
+        console.warn("[BUY] Refresh failed, but transaction was successful.", refreshErr);
+    }
+
   } catch (err: any) {
     console.error(`[BUY] ❌ Critical Failure:`, err);
     const msg = err.message || "Unknown error";
