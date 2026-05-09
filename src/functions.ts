@@ -1116,12 +1116,9 @@ const healthStatus =
   const modal = document.getElementById('adopt-modal');
   if (modal) {
     modal.classList.add('hidden');
-    // Force reset styles in case they were set via JS
-    modal.style.display = 'none';
-    modal.style.opacity = '0';
-    
+    modal.style.display = 'none';      // <--- Completely hides it
+    document.body.style.overflow = ''; // Re-enables background scrolling
     // Re-enable background scrolling
-    document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }
 };
