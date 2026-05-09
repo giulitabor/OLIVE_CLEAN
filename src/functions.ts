@@ -89,13 +89,6 @@ console.log('REWARDS TAB');
 }
 
 
-  if (tab === 'weather') {
-    if ((window as any).refreshWeatherUI) {
-      (window as any).refreshWeatherUI();
-    }
-    return;
-  }
-
   if (tab === 'home') {
     console.log('[TAB] home');
     document.querySelectorAll('.shimmer').forEach(el => el.classList.remove('shimmer'));
