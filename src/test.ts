@@ -540,6 +540,13 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
             (window as any).fillAdminProtocol(protocol);
 
         }
+         // Update the UI element
+    const priceEl = document.getElementById('protocol-share-price');
+    if (priceEl) {
+        priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+    }
+    console.log(" PRICES UPDATE ");
+
         // 3. Load the Supabase status table using the function you provided
             if (typeof (window as any).refreshAdminStatus === 'function') {
                 await (window as any).refreshAdminStatus();
@@ -2836,13 +2843,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("\n╔════════════════════════════════════════════════════════╗");
   console.log("║              OLIVIUM DAO — DOM READY                   ║");
   console.log("╚════════════════════════════════════════════════════════╝\n");
-      // Update the UI element
-    const priceEl = document.getElementById('protocol-share-price');
-    if (priceEl) {
-        priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
-    }
-    console.log(" PRICES UPDATE ");
-
+     
   // Locate your connect button wire-up
 const connectBtn = document.getElementById('btn-connect');
 
@@ -2917,8 +2918,9 @@ if (connectBtn) {
   });
 
   console.log("\n[DOM] ✅ All event listeners wired. Ready for user interaction.\n");
-  // Inside your DOMContentLoaded or Init logic
-setInterval(() => {
+
+    
+    setInterval(() => {
     refreshGlobalPulse();
 }, 30000); // 30 seconds
 
