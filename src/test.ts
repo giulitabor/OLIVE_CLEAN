@@ -2811,6 +2811,18 @@ async function cacheProtocol() {
         const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
         const config = await program.account.protocolConfig.fetch(protocolPda);
         (window as any)._protocol = config;
+        // UPDATE UI IMMEDIATELY
+  const solPrice = (config.sharePriceLamports.toNumber() / 1_000_000_000).toFixed(2);
+  const priceEl = document.getElementById('protocol-share-price');
+  const treesEl = document.getElementById('protocol-total-trees');
+
+  if (priceEl) priceEl.textContent = `${solPrice} SOL`;
+  if (treesEl) treesEl.textContent = `${config.totalTrees} Trees`;
+
+  console.log(`[INIT] UI Synced with: ${solPrice} SOL`);
+} catch (e) {
+  console.log("No Protocol Config found on chain.");
+}
     } catch (e) {
         console.log("[CACHE_PROTOCOL] Protocol not initialized on-chain yet.");
     }
