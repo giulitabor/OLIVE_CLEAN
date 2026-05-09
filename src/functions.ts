@@ -725,15 +725,17 @@ export async function getPositions(wallet: string) {
     try {
         console.log('[POSITIONS] 🔄 Loading user positions...');
 
-        // 1. Fetch all positions
-        const rawPositions = await getPositions(wallet);
-        console.log(`[POSITIONS] Raw accounts found: ${rawPositions.length}`);
-
-        // 2. Fetch trees for cross-referencing
-        const allTrees = await getTrees();
+        // 1. Fetch raw accounts (returns 5)
+        const rawPositions = await getPositions(wallet.publicKey.toBase58());
+        console.log(`[POSITIONS] Found ${rawPositions.length} raw position accounts.`);
         
-        // 3. Normalize AND Filter in one clean pass
-        // We do it once here so 'positions' is always correct below
+        if (rawPositions.length === 0) return [];
+
+        // 2. Fetch tree metadata
+        const allTrees = await getTrees();
+
+        // 3. Normalize AND Filter out 0-share trees
+        // This ensures the 'positions' variable ONLY contains active holdings
         const positions = rawPositions
             .map((pos: any) => {
                 const acc = pos.account;
@@ -749,38 +751,35 @@ export async function getPositions(wallet: string) {
                     totalTreeShares: tree?.account.totalShares.toNumber() || 0,
                 };
             })
-            .filter(p => p.sharesOwned > 0); // Keep only active ones
+            .filter(p => p.sharesOwned > 0); // <--- THE CRITICAL FIX
 
-        // NOW it is safe to log positions
-        console.log("╔═════ FILTERED POSITIONS ════════════════╗");
-        console.table(positions, ["treeName", "treeId", "sharesOwned"]);
-
-        // 4. Calculate totals
-        const uniqueTreeCount = positions.length;
+        // 4. Update UI Components with the FILTERED list
+        const uniqueTreeCount = positions.length; // Now correctly shows 2
         const totalSharesOwned = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
 
-        console.log(`[BANNER] Stats: ${totalSharesOwned} shares / ${uniqueTreeCount} trees.`);
+        console.log("╔══════════════════════════════════════════════╗");
+        console.log("║           ACTIVE USER TREE POSITIONS         ║");
+        console.log("╚══════════════════════════════════════════════╝");
+        console.table(positions, ["treeName", "treeId", "sharesOwned"]);
 
-        // 5. Update Global Components
+        console.log(`[BANNER] Updated: ${totalSharesOwned} shares across ${uniqueTreeCount} trees.`);
+
+        // 5. Update Banner and Badge
         if (typeof (window as any).updateGlobalBanner === 'function') {
             (window as any).updateGlobalBanner(uniqueTreeCount, totalSharesOwned, 0.05);
         }
+        updateTierBadge(totalSharesOwned);
 
-        // Update Tier Badge
-        if (typeof updateTierBadge === 'function') {
-            updateTierBadge(totalSharesOwned);
-        }
-
-        // 6. Set Global Reference
-        (window as any)._userPositions = positions;
-
-        // 7. Render UI Cards
+        // 6. Final Render
         console.log("TIME TO RENDER POSITION", positions);
         await renderUserPositions(positions);
 
-        console.log('[POSITIONS] ✅ Success. Returning:', positions);
-        return positions;
+        console.log("I DID MY BEST");
+        
+        // Save to global for other UI components
+        (window as any)._userPositions = positions;
 
+        return positions;
     } catch (err) {
         console.error('[POSITIONS] ❌ Failed to load positions:', err);
         return [];
