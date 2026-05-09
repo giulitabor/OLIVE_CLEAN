@@ -500,68 +500,69 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
   console.log("[CONNECT] Starting wallet connection flow...");
   console.log("═══════════════════════════════════════════════════════════\n");
 
-  try {
+try {
     await connectWallet();
     const wallet = (window as any).solana;
-    if (!wallet || !wallet.publicKey) {
-      throw new Error("Wallet not connected or publicKey missing");
-    }
-    const program = window._program;
-    program.programId
+    const program = (window as any)._program; // Ensure we use the global reference
+    
+    if (!wallet || !wallet.publicKey) throw new Error("Wallet missing");
+
     const addr = wallet.publicKey.toBase58();
     const isAdmin = addr === ADMIN_PUBKEY;
-    console.log(`[CONNECT] ✅ Wallet connected: ${addr}`);
-    console.log(`[CONNECT] Admin status: ${isAdmin ? "YES" : "NO"}`);
 
-    // Tell HTML shell — shows app, hides hero, wires nav tabs
-    if ((window as any).onWalletConnected) {
-      console.log("[CONNECT] Calling onWalletConnected(addr, isAdmin)");
+    // 1. DATA FETCH: Get the protocol data first so we have the price
+    const protocol = (window as any)._protocol; 
+    
+    // 2. UI UPDATE: This must be OUTSIDE the isAdmin block so everyone sees it
+    if (protocol && protocol.sharePriceLamports) {
+        const solPrice = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
+        const totalTrees = protocol.totalTrees || 0;
 
-      (window as any).onWalletConnected(addr, isAdmin);
-    } else {
-      console.warn("[CONNECT] ⚠️  onWalletConnected not defined in HTML");
+        const priceEl = document.getElementById('protocol-share-price');
+        const treesEl = document.getElementById('protocol-total-trees');
+
+        if (priceEl) priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+        if (treesEl) treesEl.textContent = `${totalTrees} Trees`;
+        
+        console.log(`[CONNECT] UI Updated: ${solPrice} SOL | ${totalTrees} Trees`);
     }
 
+    // 3. TAB LOGIC
+    if ((window as any).onWalletConnected) {
+      (window as any).onWalletConnected(addr, isAdmin);
+    }
 
+    // 4. ADMIN ONLY LOGIC
     if (isAdmin) {
-            console.log("[ADMIN] User is admin, populating admin panel...");
+        console.log("[ADMIN] Populating admin panel...");
+        const set = (id: string, v: string) => {
+            const el = document.getElementById(id);
+            if(el) el.textContent = v;
+        };
+        set('admin-authority', addr.slice(0, 6) + '...' + addr.slice(-4));
+        set('admin-program-id', program.programId.toBase58().slice(0, 8) + '...');
 
-            // 1. Set Authority and Program ID display
-            const set = (id: string, v: string) => {
-                const el = document.getElementById(id);
-                if(el) el.textContent = v;
-            };
-            set('admin-authority', addr.slice(0, 6) + '...' + addr.slice(-4));
-            set('admin-program-id', program.programId.toBase58().slice(0, 8) + '...');
-
-            // 2. Fill the Protocol Card using the function you provided
-        const protocol = (window as any)._protocol;
         if (protocol && typeof (window as any).fillAdminProtocol === 'function') {
             (window as any).fillAdminProtocol(protocol);
-
         }
-         // Update the UI element
-    const priceEl = document.getElementById('protocol-share-price');
-    if (priceEl) {
-        priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+        if (typeof (window as any).refreshAdminStatus === 'function') {
+            await (window as any).refreshAdminStatus();
+        }
     }
-    console.log(" PRICES UPDATE ");
 
-        // 3. Load the Supabase status table using the function you provided
-            if (typeof (window as any).refreshAdminStatus === 'function') {
-                await (window as any).refreshAdminStatus();
-            }
-      }
-    console.log("[CONNECT] Loading dashboard.and wallets balance..");
-
+    // 5. FINAL LOAD
+    console.log("[CONNECT] Loading dashboard and balances...");
     await loadDashboard();
-  //  await renderAdminLedger();
+    
+    // Refresh wallet balance display
+    if ((window as any).refreshWalletBalances) {
+        await (window as any).refreshWalletBalances();
+    }
 
     console.log("[CONNECT] ✅ Connection flow complete\n");
 
   } catch (err: any) {
     console.error("[CONNECT] ❌ Connection failed:", err);
-    console.error("[CONNECT] Stack:", err.stack);
     showToast("Connect failed: " + err.message, true);
   }
 };
