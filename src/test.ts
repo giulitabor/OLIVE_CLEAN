@@ -2194,7 +2194,7 @@ if ((window as any).showToast) {
 }
     // 7. Refresh UI
     if ((window as any).loadDashboard) await (window as any).loadDashboard();
-
+ await (window as any).refreshUserGrove();
   } catch (err: any) {
     console.error(`[BUY] ❌ Critical Failure:`, err);
     const msg = err.message || "Unknown error";
