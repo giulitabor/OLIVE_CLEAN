@@ -712,11 +712,12 @@ setInterval(updateEuroRate, 60000); // Update every minute
     </div>
 
     <!-- Close -->
-    <button onclick="closeAdoptModal()"
-      class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition">
-      ✕
-    </button>
-
+   <button 
+  onclick="event.stopPropagation(); closeAdoptModal();"
+  class="absolute top-4 right-4 w-10 h-10 z-50 flex items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/40 transition-all active:scale-90"
+  style="cursor: pointer !important;">
+  ✕
+</button>
     <div class="p-6">
       <h2 id="modal-tree-name" class="serif text-2xl font-bold text-stone-900 mb-0.5">Tree #1</h2>
       <p id="modal-tree-meta" class="text-sm text-stone-400 mb-5">Frantoio · 15 yrs · Grove A</p>
