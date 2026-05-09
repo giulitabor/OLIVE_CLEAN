@@ -2836,6 +2836,12 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("\n╔════════════════════════════════════════════════════════╗");
   console.log("║              OLIVIUM DAO — DOM READY                   ║");
   console.log("╚════════════════════════════════════════════════════════╝\n");
+      // Update the UI element
+    const priceEl = document.getElementById('protocol-share-price');
+    if (priceEl) {
+        priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+    }
+    console.log(" PRICES UPDATE ");
 
   // Locate your connect button wire-up
 const connectBtn = document.getElementById('btn-connect');
