@@ -148,6 +148,11 @@ export async function connectWallet(auto = false): Promise<WalletConnectionState
     const pubkey = wallet.publicKey.toBase58();
 
     console.log(`✅ Wallet connected: ${pubkey.slice(0, 8)}...`);
+      // Update the UI element
+    const priceEl = document.getElementById('protocol-share-price');
+    if (priceEl) {
+        priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
+    }
 
     // Save reconnect preference
     localStorage.setItem("walletConnected", "true");
