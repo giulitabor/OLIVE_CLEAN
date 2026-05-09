@@ -2658,31 +2658,44 @@ function previewTrade(protocol: any, tree: any, amount: number) {
      if (feeDisplay) feeDisplay.textContent = fee.toFixed(4);
  };
 
-(window as any).confirmAdopt = async () => {
+(window as any).confirmAdopt = async function() {
+  const btn = document.getElementById('modal-buy-btn') as HTMLButtonElement;
   const modal = document.getElementById('adopt-modal');
-    // Check if modal and the dataset exist before trying to read them
-    if (!modal || !modal.dataset || !modal.dataset.treeIndex) {
-      console.error("[MODAL] Could not find tree data in modal dataset");
-      return;
-    }
-    const treeIndex = parseInt(modal.dataset.treeIndex);
-    const treeId = modal.dataset.treeId; // This will now be "F1-FR-001"
-    const tree = (window as any)._modalTree;
+  
+  try {
+    if (!modal) return;
+    const treeId = modal.dataset.treeId;
     const amount = parseInt((document.getElementById('modal-slider') as HTMLInputElement).value);
 
-    if (!tree || !amount) return;
-
-    try {
-        // Pass the treeId from the on-chain account
-        await (window as any).buyShares(treeId, amount);
-        // Close modal and refresh
-        document.getElementById('adopt-modal')?.classList.add('hidden');
-        await (window as any).loadDashboard();
-    } catch (e) {
-        console.error("Purchase failed", e);
+    if (!treeId || !amount) {
+      showToast("Please select shares", true);
+      return;
     }
-};
 
+    // 1. UI Feedback
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+    }
+
+    // 2. Call the clean buyShares function
+    await (window as any).buyShares(treeId, amount);
+
+    // 3. Close Modal on success
+    (window as any).closeAdoptModal();
+    
+    // 4. Refresh data
+    await (window as any).loadDashboard();
+
+  } catch (err) {
+    console.error("Adopt failed", err);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Confirm Adoption";
+    }
+  }
+};
 function treeOilYield(tree: any): number {
   return 20 * Math.min(tree.age / 10, 1);
 }
