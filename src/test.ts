@@ -2877,7 +2877,19 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("\n╔════════════════════════════════════════════════════════╗");
   console.log("║              OLIVIUM DAO — DOM READY                   ║");
   console.log("╚════════════════════════════════════════════════════════╝\n");
-     
+
+    const program = (window as any)._program;
+    const sb = window._sb;
+
+    if (!sb || !program) {
+        console.log("[refreshAdminStatus] Connection not ready, skipping update...");
+        return;
+    }
+      // Fetch Protocol Config to see Treasury SOL
+        try {
+        const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
+        const protocol = await program.account.protocolConfig.fetch(protocolPda);
+
   // Locate your connect button wire-up
 const connectBtn = document.getElementById('btn-connect');
 
