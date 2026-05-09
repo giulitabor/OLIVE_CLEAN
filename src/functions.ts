@@ -739,8 +739,10 @@ const allPositions = rawPositions.filter(pos => {
     console.log(`[POSITIONS] Found ${allPositions.length} raw position accounts.`);
     if (allPositions.length === 0) return [];
 
+    
     // 2. Fetch all trees to cross-reference the IDs with Names
     const allTrees = await getTrees();//program.account.tree.all();
+    console.log("loadUserTreePositionsloadUserTreePositions,back from getTrees");
 
     // 3. Normalize the data into a readable array
 const positions = allPositions.map((pos: any) => {
