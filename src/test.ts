@@ -2657,13 +2657,6 @@ function previewTrade(protocol: any, tree: any, amount: number) {
      if (costDisplay) costDisplay.textContent = subtotal.toFixed(4);
      if (feeDisplay) feeDisplay.textContent = fee.toFixed(4);
  };
-/**
- * Closes the adoption modal.
- */
-(window as any).closeAdoptModal = function() {
-    const modal = document.getElementById('adopt-modal');
-    if (modal) modal.classList.add('hidden');
-};
 
 (window as any).confirmAdopt = async () => {
   const modal = document.getElementById('adopt-modal');
