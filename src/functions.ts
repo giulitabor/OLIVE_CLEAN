@@ -735,23 +735,22 @@ export async function getPositions(wallet: string) {
     const allTrees = await getTrees();//program.account.tree.all();
 
     // 3. Normalize the data into a readable array
-    const positions = allPositions.map((pos: any) => {
-      const acc  = pos.account;
+const positions = allPositions.map((pos: any) => {
+  const acc = pos.account;
+  const tree = allTrees.find(
+    (t: any) => t.account.treeId.toString() === acc.treeId.toString()
+  );
 
-      // Find the matching tree in the list
-      const tree = allTrees.find(
-        (t: any) => t.account.treeId.toString() === acc.treeId.toString()
-      );
-
-      return {
-        treeName:    tree?.account.name || "Unknown",
-        treeId:      acc.treeId.toString(),
-        sharesOwned: acc.sharesOwned.toNumber(),
-        positionPDA: pos.publicKey.toBase58(),
-        totalTreeShares: tree?.account.totalShares.toNumber() || 0,
-      };
-    });
-
+  return {
+    treeName: tree?.account.name || "Unknown",
+    treeId: acc.treeId.toString(),
+    sharesOwned: acc.sharesOwned.toNumber(),
+    positionPDA: pos.publicKey.toBase58(),
+    totalTreeShares: tree?.account.totalShares.toNumber() || 0,
+  };
+})
+// ADD THIS LINE TO REMOVE 0-SHARE TREES:
+.filter(p => p.sharesOwned > 0);
     // ─────────────────────────────────────────────────────────────
     // CONSOLE DISPLAY: Which trees are they?
     // ─────────────────────────────────────────────────────────────
