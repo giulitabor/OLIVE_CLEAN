@@ -76,6 +76,14 @@
       .desktop-only { display: none !important; }
       .mobile-padding { padding: 1.25rem; }
     }
+    /* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
   </style>
 </head>
 <body>
