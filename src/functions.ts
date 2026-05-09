@@ -1099,8 +1099,14 @@ const healthStatus =
   // Trigger UI updates
   if ((window as any).updateModalCalc) (window as any).updateModalCalc();
 
-  modal.classList.remove('hidden');
-  console.log("✅ Modal opened for tree:", treeIdString);
+// --- ADD THESE LINES AT THE VERY END OF THE FUNCTION ---
+  modal.classList.remove('hidden'); 
+  modal.style.setProperty('display', 'flex', 'important'); // Force layout
+  modal.style.zIndex = '10000'; // Bring to absolute front
+  document.body.style.overflow = 'hidden'; // Prevent scrolling away from modal
+  
+  console.log("✅ Modal display forced with styles");
+};  console.log("✅ Modal opened for tree:", treeIdString);
 };
 // ─────────────────────────────────────────────────────────────
 // CLOSE ADOPT MODAL
