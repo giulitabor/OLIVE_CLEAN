@@ -589,6 +589,15 @@
 ══════════════════════════════════════════════════════════════ -->
 <div id="adopt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
      style="background:rgba(20,15,5,.7); backdrop-filter:blur(6px)">
+  // DEBUG: Check if any parent is hiding us
+   let parent = modal.parentElement;
+   while (parent) {
+       const style = window.getComputedStyle(parent);
+       if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+           console.warn("⚠️ Modal is inside a hidden parent:", parent);
+       }
+       parent = parent.parentElement;
+   }
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden"
        onclick="event.stopPropagation()">
 
