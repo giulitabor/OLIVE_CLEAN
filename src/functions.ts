@@ -724,7 +724,7 @@ export async function getPositions(wallet: string) {
   }
 
   try {
-    console.log('[POSITIONS] 🔄 Loading user positions...');
+    console.log('[POSITIONS] 🔄 Loading user positions..FUCK.');
 // 1. Fetch all positions for this wallet
 const rawPositions = await getPositions(wallet);
 
