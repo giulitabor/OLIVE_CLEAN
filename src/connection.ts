@@ -89,30 +89,33 @@ export function getProvider(): AnchorProvider {
 
 export let program: Program;
 export let provider: AnchorProvider;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ✅ OPTIMIZED WALLET CONNECTION
-// ═══════════════════════════════════════════════════════════════════════════
-
-let _connectionInProgress = false; // Prevent double calls
-
-export async function connectWallet(
-  auto = false
-): Promise<WalletConnectionState> {
+export async function connectWallet(auto = false): Promise<WalletConnectionState> {
   console.log(`[CONNECT] Starting wallet connection (auto=${auto})...`);
 
-  // Prefer Phantom specifically
   const phantom = (window as any)?.phantom?.solana;
-
-  // Fallback generic provider
   const wallet = phantom || (window as any)?.solana;
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // WALLET NOT INSTALLED
-  // ═══════════════════════════════════════════════════════════════════════
-
+  // —————————————————————————————————————————————————————————————
+  // 1. HANDLE MISSING WALLET (UX/UI IMPROVEMENTS)
+  // —————————————————————————————————————————————————————————————
   if (!wallet) {
-    console.warn("No Solana wallet detected");
+    // A. Check if user is on Mobile
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      console.log("[CONNECT] Mobile detected, redirecting to Phantom Deep Link...");
+      // This strips 'https://' and opens your site inside the Phantom app browser
+      const cleanUrl = window.location.href.replace(/^https?:\/\//, '');
+      window.location.href = `https://phantom.app/ul/browse/https://${cleanUrl}`;
+      
+      return { status: "error", message: "Redirecting to Phantom..." };
+    }
+
+    // B. Desktop: Show a custom Modal instead of just a console warning
+    if (!auto) {
+      const modal = document.getElementById('wallet-missing-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
 
     return {
       status: "not_installed",
