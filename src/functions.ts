@@ -724,9 +724,16 @@ export async function getPositions(wallet: string) {
 
   try {
     console.log('[POSITIONS] 🔄 Loading user positions...');
+// 1. Fetch all positions for this wallet
+const rawPositions = await getPositions(wallet);
 
-    // 1. Fetch all positions for this wallet
-    const allPositions = await getPositions(wallet);
+// 2. Filter out accounts with 0 shares immediately
+const allPositions = rawPositions.filter(pos => {
+    // Solana BN (Big Number) objects need .toNumber() or .isZero()
+    const shares = pos.account?.sharesOwned;
+    return shares && !shares.isZero(); 
+});
+    
      
     console.log(`[POSITIONS] Found ${allPositions.length} raw position accounts.`);
     if (allPositions.length === 0) return [];
