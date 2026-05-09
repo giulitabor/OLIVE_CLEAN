@@ -2090,77 +2090,99 @@ async function refreshActivityFeed(walletAddress: string) {
 };
 
 // ══════════════════════════════════════════════════════════════
-// BUY SHARES - FIXED VERSION
+// BUY SHARES - FINAL BULLETPROOF VERSION
 // ══════════════════════════════════════════════════════════════
 async function buyShares(treeId: string | number, amount: number) {
   const treeIdStr = String(treeId);
   console.log(`\n[BUY] Starting purchase: Tree ${treeIdStr}, ${amount} shares`);
 
   try {
-    // FIX 1: Ensure we have the wallet and program (using your standard 'program' var)
-    const wallet = (window as any).getWallet ? (window as any).getWallet() : (window as any).walletPubKey;
-    
-    // FIX 2: Check for 'program' instead of 'activeProgram'
-    if (!program) throw new Error("Program not initialized");
+    // 1. Get Program and Wallet from the global scope
+    const activeProgram = (window as any)._program || (window as any).program;
+    const walletPubKey = (window as any).walletPubKey || (window as any).wallet?.publicKey;
 
-    const [treePDA] = (window as any).findTreePDA(treeIdStr);
-    const [protocolPDA] = (window as any).findProtocolPDA();
-    
-    // FIX 3: Passed 'program' instead of 'activeProgram'
-    const [treasuryPda] = (window as any).findTreasuryPDA(program); 
-    const [positionPDA] = (window as any).findPositionPDA(wallet, treeIdStr);
+    if (!activeProgram) throw new Error("Blockchain program not loaded");
+    if (!walletPubKey) throw new Error("Wallet not connected");
 
-    // Fetch current position to calculate new total
+    // 2. Derive PDAs manually to avoid "function not found" errors
+    const [treePDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("tree"), Buffer.from(treeIdStr)],
+      activeProgram.programId
+    );
+    const [protocolPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("protocol")],
+      activeProgram.programId
+    );
+    const [positionPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeIdStr)],
+      activeProgram.programId
+    );
+
+    // 3. Get Treasury from Protocol Config (Reliable source)
+    const protocolConfig = await activeProgram.account.protocolConfig.fetch(protocolPDA);
+    const treasuryPda = protocolConfig.treasury;
+
+    // 4. Check existing position for Supabase totals
     let currentShares = 0;
     try {
-      const currentPosition = await program.account.sharePosition.fetch(positionPDA);
+      const currentPosition = await activeProgram.account.sharePosition.fetch(positionPDA);
       currentShares = Number(currentPosition.sharesOwned);
-    } catch {
-      console.log("[BUY] No existing position, starting from 0");
+    } catch (e) {
+      console.log("[BUY] New position for this tree.");
     }
 
     const newTotal = currentShares + amount;
     const isGuardian = newTotal >= 1000;
 
-    // Execute on-chain transaction
+    // 5. Execute On-Chain Transaction
+    // Price is 0.05 SOL per share + fees (handled by program)
     console.log("[BUY] Sending transaction...");
-    const tx = await program.methods
+    const tx = await activeProgram.methods
       .purchaseShares(treeIdStr, new anchor.BN(amount))
       .accounts({
         tree: treePDA,
         position: positionPDA,
         protocol: protocolPDA,
-        treasury: treasuryPda, // Use the Pda we derived above
-        buyer: wallet,
-        systemProgram: anchor.web3.SystemProgram.programId, // Use standard web3 ref
+        treasury: treasuryPda,
+        buyer: walletPubKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log(`[BUY] ✅ On-chain success: ${tx}`);
-    if ((window as any).showToast) (window as any).showToast(`Bought ${amount} shares!`);
+    console.log(`[BUY] ✅ Success! TX: ${tx}`);
+    if ((window as any).showToast) (window as any).showToast(`Successfully adopted ${amount} shares!`);
 
-    // Comprehensive Supabase sync
-    await (window as any).syncTransactionToSupabase(
-      wallet.toString(), // Convert to string for Supabase
-      treeIdStr,
-      amount,
-      'BUY',
-      tx,
-      newTotal,
-      isGuardian
-    );
+    // 6. Sync to Supabase
+    try {
+        if ((window as any).syncTransactionToSupabase) {
+            await (window as any).syncTransactionToSupabase(
+                walletPubKey.toBase58(),
+                treeIdStr,
+                amount,
+                'BUY',
+                tx,
+                newTotal,
+                isGuardian
+            );
+            console.log("[BUY] Supabase sync complete.");
+        }
+    } catch (supabaseErr) {
+        console.warn("[BUY] On-chain win, but Supabase sync failed:", supabaseErr);
+    }
 
-    console.log("syncing----BUY--");
-
-    // Optional: Reload
+    // 7. Refresh UI
     if ((window as any).loadDashboard) await (window as any).loadDashboard();
 
   } catch (err: any) {
-    console.error(`[BUY] ❌ Purchase failed:`, err);
-    if ((window as any).showToast) (window as any).showToast("Buy failed: " + err.message, true);
-    throw err; // Important: throw so the modal button knows to reset
+    console.error(`[BUY] ❌ Critical Failure:`, err);
+    const msg = err.message || "Unknown error";
+    if ((window as any).showToast) (window as any).showToast("Purchase Failed: " + msg, true);
+    throw err; 
   }
 }
+
+// Expose to window so the modal can call it
+(window as any).buyShares = buyShares;
 // ══════════════════════════════════════════════════════════════
 // SELL SHARES - With full Supabase sync
 // ══════════════════════════════════════════════════════════════
