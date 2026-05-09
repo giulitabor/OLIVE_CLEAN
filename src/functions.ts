@@ -446,6 +446,7 @@ async function ensureTreesCached() {
   const treeCount = positions.length;
   const shareCount = positions.reduce((sum, p) => sum + p.shares, 0);
   console.log(shareCount);
+     console.log("╔═════FILTERED POSITIONS════════════════════════════╗",positions);
 
 
   // 2. Ecological Math (Standard Coefficients)
