@@ -747,6 +747,7 @@ const positions = allPositions.map((pos: any) => {
   const tree = allTrees.find(
     (t: any) => t.account.treeId.toString() === acc.treeId.toString()
   );
+     console.log("╔═════FILTERED POSITIONS════════════════════════════╗",positions);
 
   return {
     treeName: tree?.account.name || "Unknown",
