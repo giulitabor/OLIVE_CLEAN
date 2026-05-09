@@ -2886,7 +2886,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
       // Fetch Protocol Config to see Treasury SOL
-        try {
         const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
         const protocol = await program.account.protocolConfig.fetch(protocolPda);
 
