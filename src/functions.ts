@@ -369,6 +369,23 @@ async function update_FarmOwnership(positions: any[], protocol: any) {
 };
 
 // ─────────────────────────────────────────────────────────────
+// REFRESH USER GROVE
+// ─────────────────────────────────────────────────────────────
+
+(window as any).refreshUserGrove = async () => {
+    console.log("🔄 Forcing Grove Refresh...");
+    
+    // Clear local caches if they exist
+    (window as any)._cachedTrees = null;
+    (window as any)._userPositions = null;
+    
+    // Re-run the main dashboard loader
+    if ((window as any).loadDashboard) {
+        await (window as any).loadDashboard();
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
 // REFRESH ADMIN STATUS
 // ─────────────────────────────────────────────────────────────
 (window as any).refreshAdminStatus = async function() {
@@ -1527,6 +1544,7 @@ if (typeof window !== 'undefined') {
         );
 
         alert(`Successfully sold ${sharesToSell} shares!`);
+      await (window as any).refreshUserGrove();
         (window as any).closeSellModal();
 
         if (typeof (window as any).loadDashboard === 'function') {
