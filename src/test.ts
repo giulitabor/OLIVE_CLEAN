@@ -1544,11 +1544,6 @@ const enrichedPositions = activePositions.map(pos => {
       (window as any).renderPositions(enrichedPositions);
     }
 
-    // 9. Post-Sync Tasks (Wallet & Admin)
-    if (typeof (window as any).refreshWalletBalances === 'function') {
-      await (window as any).loadDashboard(wallet.publicKey);
-    }
-
     if (isAdmin && typeof (window as any).fillAdminProtocol === 'function') {
       console.log(`[${TRACE_ID}] 👑 Admin session detected.`);
       (window as any).fillAdminProtocol(protocolData);
