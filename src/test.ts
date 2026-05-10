@@ -223,14 +223,11 @@ async function getPrices(): Promise<{ solPrice: number; olvPrice: number }> {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// WALLET BALANCE REFRESH
+// WALLET BALANCE REFRESH - FIXED & HARDENED
 // ══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Fetch and display SOL + OLV balances with live USD conversion
- */
-async function refreshWalletBalances(walletPubkey: PublicKey) {
-  const conn = connection || (window as any)._connection;
+async function refreshWalletBalances(rawWalletPubkey: any) {
+  const conn = (window as any)._connection || (window as any).connection;
 
   if (!conn) {
     console.error("[BALANCES] Connection not available");
@@ -238,20 +235,35 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
   }
 
   try {
-    const walletShort = PublicKey.toBase58().slice(0, 8);
-    console.log(`[BALANCES] Fetching for wallet ${walletShort}...`);
-      const balance = await connection.getBalance(publicKey);
-        const solAmount = balance / 1e9;
-        window.userSolBalance = solAmount; // Update this global!
+    // 1. Ensure we have a valid PublicKey object
+    let walletPubkey: PublicKey;
+    if (typeof rawWalletPubkey === 'string') {
+        walletPubkey = new anchor.web3.PublicKey(rawWalletPubkey);
+    } else if (rawWalletPubkey?.toBase58) {
+        walletPubkey = rawWalletPubkey;
+    } else {
+        // Fallback to global if parameter is missing
+        const globalKey = (window as any).walletPubKey || (window as any).wallet?.publicKey;
+        if (!globalKey) throw new Error("No wallet public key provided");
+        walletPubkey = typeof globalKey === 'string' ? new anchor.web3.PublicKey(globalKey) : globalKey;
+    }
 
-    // Get live prices
-    const { solPrice, olvPrice } = await getPrices();
+    // 2. Fix the Base58 logging error (call it on the instance, not the class)
+    const walletShort = walletPubkey.toBase58().slice(0, 8);
+    console.log(`[BALANCES] Fetching for wallet ${walletShort}...`);
+
+    // 3. Get live prices
+    const { solPrice, olvPrice } = await (window as any).getPrices();
 
     // ═══════════════════════════════════════════════════════════════════
     // 1. SOL BALANCE
     // ═══════════════════════════════════════════════════════════════════
     const solLamports = await conn.getBalance(walletPubkey);
     const solBalance = solLamports / 1_000_000_000;
+    
+    // UPDATE GLOBAL FOR PRE-FLIGHT CHECK
+    (window as any).userSolBalance = solBalance; 
+
     const solUsd = solBalance * solPrice;
 
     const solBalEl = document.getElementById("wallet-sol-balance");
@@ -262,26 +274,22 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
     console.log(`[BALANCES] ✅ SOL: ${solBalance.toFixed(4)} @ $${solPrice.toFixed(2)} = $${solUsd.toFixed(2)}`);
 
     // ═══════════════════════════════════════════════════════════════════
-    // 2. OLV TOKEN BALANCE (Hardened Parsed Version)
+    // 2. OLV TOKEN BALANCE
     // ═══════════════════════════════════════════════════════════════════
     let olvBalance = 0;
     let olvUsd = 0;
 
     try {
-      // Use the connection to get all accounts for this mint owned by the user
+      // Use the local conn and passed walletPubkey
       const response = await conn.getParsedTokenAccountsByOwner(walletPubkey, {
-        mint: OLV_MINT
+        mint: (window as any).OLV_MINT || new anchor.web3.PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9")
       });
 
       if (response.value.length > 0) {
-        // Solana returns an array; we take the first one (the primary ATA)
         const accountInfo = response.value[0].account.data.parsed.info;
         olvBalance = accountInfo.tokenAmount.uiAmount || 0;
         olvUsd = olvBalance * olvPrice;
-
         console.log(`[BALANCES] ✅ OLV Found: ${olvBalance.toLocaleString()} tokens`);
-      } else {
-        console.log("[BALANCES] No OLV Associated Token Account found on-chain.");
       }
     } catch (err: any) {
       console.warn(`[BALANCES] ⚠️ OLV fetch error: ${err.message}`);
@@ -290,15 +298,9 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
     // UI UPDATES
     const olvBalEl = document.getElementById("wallet-olv-balance");
     const olvUsdEl = document.getElementById("wallet-olv-usd");
-
-    if (olvBalEl) {
-      // Use more decimal places if the balance is small
-      olvBalEl.textContent = olvBalance.toLocaleString(undefined, { 
-        minimumFractionDigits: 0, 
-        maximumFractionDigits: 2 
-      });
-    }
+    if (olvBalEl) olvBalEl.textContent = olvBalance.toLocaleString(undefined, { maximumFractionDigits: 2 });
     if (olvUsdEl) olvUsdEl.textContent = `$${olvUsd.toFixed(2)}`;
+
     // ═══════════════════════════════════════════════════════════════════
     // 3. TOTAL PORTFOLIO VALUE
     // ═══════════════════════════════════════════════════════════════════
@@ -306,35 +308,21 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
     const totalEl = document.getElementById("wallet-total-usd");
     if (totalEl) totalEl.textContent = `$${totalUsd.toFixed(2)}`;
 
-    console.log(`[BALANCES] ✅ Total Portfolio: $${totalUsd.toFixed(2)}`);
-    console.log(`[BALANCES] ═══════════════════════════════════════════════════`);
+    // Sync any other UI elements that depend on balance
+    if ((window as any).updateModalCalc) (window as any).updateModalCalc();
 
   } catch (err: any) {
     console.error("[BALANCES] ❌ Fatal error:", err);
-    console.error(err.stack);
-
+    
     // Reset UI to placeholders on error
-    const elementIds = [
-      "wallet-sol-balance",
-      "wallet-sol-usd",
-      "wallet-olv-balance",
-      "wallet-olv-usd",
-      "wallet-total-usd"
-    ];
-
-    elementIds.forEach(id => {
+    ["wallet-sol-balance", "wallet-sol-usd", "wallet-olv-balance", "wallet-olv-usd", "wallet-total-usd"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = "—";
     });
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// EXPOSE GLOBALLY
-// ══════════════════════════════════════════════════════════════════════════════
-
-(window as any).refreshWalletBalances = refreshWalletBalances;
-(window as any).getPrices = getPrices;
+(window as any).refreshWalletBalances = refreshWalletBalances;(window as any).getPrices = getPrices;
 
 console.log("[INIT] ✅ Wallet balance functions loaded");
 // ══════════════════════════════════════════════════════════════════════════════
