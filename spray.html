@@ -181,13 +181,29 @@
         }
 
         window.mark = (id) => {
-            treeData[id].s = !treeData[id].s;
-            document.getElementById(`b-${id}`).innerText = treeData[id].s ? "Done" : "Spray";
-            document.getElementById(`c-${id}`).classList.toggle('sprayed');
-            saveToStorage();
-            updateCounter();
-        };
+    const isDone = !treeData[id].s;
+    treeData[id].s = isDone;
 
+    // Log GPS and Time only when marking as Done
+    if (isDone && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            treeData[id].gps = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                acc: pos.coords.accuracy
+            };
+            treeData[id].ts = new Date().toISOString();
+            console.log(`Tree #${id} logged at ${treeData[id].ts}`);
+            localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+        }, null, { enableHighAccuracy: true });
+    }
+
+    // UI Updates
+    document.getElementById(`b-${id}`).innerText = isDone ? "Done" : "Spray";
+    document.getElementById(`c-${id}`).classList.toggle('sprayed');
+    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+    updateCounter();
+};
         window.cyc = (id, k) => {
             treeData[id][k] = (treeData[id][k] + 1) % 4;
             const val = treeData[id][k];
