@@ -2080,8 +2080,6 @@ async function refreshActivityFeed(walletAddress: string) {
     return date.toLocaleDateString();
 };
 // ══════════════════════════════════════════════════════════════
-// BUY SHARES - FINAL BULLETPROOF VERSION (FIXED)
-// ══════════════════════════════════════════════════════════════
 async function buyShares(treeId: string | number, amount: number) {
   const treeIdStr = String(treeId);
   console.log(`\n[BUY] Starting purchase: Tree ${treeIdStr}, ${amount} shares`);
@@ -2094,18 +2092,9 @@ async function buyShares(treeId: string | number, amount: number) {
     if (!walletPubKey) throw new Error("Wallet not connected");
 
     // 1. Derive PDAs
-    const [treePDA] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("tree"), Buffer.from(treeIdStr)],
-      activeProgram.programId
-    );
-    const [protocolPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("protocol")],
-      activeProgram.programId
-    );
-    const [positionPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeIdStr)],
-      activeProgram.programId
-    );
+    const [treePDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("tree"), Buffer.from(treeIdStr)], activeProgram.programId);
+    const [protocolPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("protocol")], activeProgram.programId);
+    const [positionPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeIdStr)], activeProgram.programId);
 
     // 2. Get Treasury and current state
     const protocolConfig = await activeProgram.account.protocolConfig.fetch(protocolPDA);
@@ -2141,10 +2130,8 @@ async function buyShares(treeId: string | number, amount: number) {
     if ((window as any).showToast) {
         const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
         (window as any).showToast(
-            `🌿 <b>Success!</b><br>
-             You just adopted ${amount} shares.<br>
-             <a href="${explorerUrl}" target="_blank" 
-                style="color: #10b981; text-decoration: underline; font-size: 11px; font-weight: bold; margin-top: 5px; display: inline-block;">
+            `🌿 <b>Success!</b><br>You just adopted ${amount} shares.<br>
+             <a href="${explorerUrl}" target="_blank" style="color: #10b981; text-decoration: underline; font-size: 11px; font-weight: bold; margin-top: 5px; display: inline-block;">
                 View on Solscan (Devnet) ↗
              </a>`, 
             false
@@ -2154,7 +2141,8 @@ async function buyShares(treeId: string | number, amount: number) {
     // 5. Sync to Supabase
     try {
         if ((window as any).syncTransactionToSupabase) {
-            const sharePrice = 0.05;
+            // DYNAMIC PRICE: Use the protocol price instead of hardcoded 0.05
+            const sharePrice = Number(protocolConfig.sharePriceLamports) / 1e9;
             const solPaid = amount * sharePrice;
             await (window as any).syncTransactionToSupabase(
                 walletPubKey.toBase58(),
@@ -2173,52 +2161,13 @@ async function buyShares(treeId: string | number, amount: number) {
         console.warn("[BUY] Supabase sync failed (non-fatal):", sbErr);
     }
 
-    // 6. Refresh UI (with safety checks for that 'loadd' typo)
-    try {
-        if ((window as any).refreshUserGrove) {
-            await (window as any).refreshUserGrove();
-        } else if ((window as any).loadDashboard) {
-            await (window as any).loadDashboard();
-        }
-    } catch (refreshErr) {
-        console.warn("[BUY] Refresh failed, but transaction was successful.", refreshErr);
-    }
+    return tx; // Return tx so confirmAdopt knows it's done
 
   } catch (err: any) {
     console.error("Adopt failed", err);
-    
-    let errorMsg = "<b>Transaction Failed</b><br>Something went wrong. Please try again.";
-    const errString = JSON.stringify(err);
-
-    // Detect Insufficient Funds (Custom Error 0x1 or Simulation failure)
-    if (errString.includes('0x1') || errString.toLowerCase().includes('insufficient funds')) {
-      errorMsg = `
-        <div class="flex flex-col gap-1">
-          <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
-          <span class="text-[11px] text-stone-400 leading-tight">You don't have enough SOL to cover the shares and gas fees.</span>
-          <a href="https://phantom.app/buy" target="_blank" 
-             class="mt-2 text-center text-[10px] font-black bg-white/10 hover:bg-white/20 py-2 rounded-lg transition uppercase tracking-wider border border-white/5">
-             Top up Wallet
-          </a>
-        </div>
-      `;
-    }
-
-    if ((window as any).showToast) {
-      (window as any).showToast(errorMsg, true);
-    }
-
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      // Reset button text to original state
-      const totalCost = (parseInt((document.getElementById('modal-slider') as HTMLInputElement)?.value || "0") * 0.05).toFixed(3);
-      btn.textContent = `Adopt — pay ${totalCost} SOL`;
-    }
+    throw err; // Pass error up to confirmAdopt
   }
 }
-
-// Expose to window so the modal can call it
 (window as any).buyShares = buyShares;
 // ══════════════════════════════════════════════════════════════
 // SELL SHARES - With full Supabase sync
