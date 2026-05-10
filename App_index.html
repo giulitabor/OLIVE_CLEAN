@@ -129,14 +129,15 @@
 <!-- Main App Content -->
 <main class="mobile-padding max-w-lg mx-auto">
 
-  <!-- Dynamic Panels -->
   <div id="panel-home" class="space-y-6">
-    <!-- Hero Section -->
     <div class="glass-card p-6 relative overflow-hidden">
       <div class="absolute top-0 right-0 p-4 opacity-20 text-6xl">🌿</div>
       <h2 class="serif text-3xl mb-2">Tuscan Heritage</h2>
       <p class="text-sm text-stone-400 mb-6">240 Organic trees in San Vincenzo. Adopt a piece of the land.</p>
       
+      <div id="stats" class="hidden sticky top-16 z-40 bg-white border-b border-stone-200 shadow-sm">
+        </div>
+
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-white/5 p-3 rounded-xl border border-white/10">
           <p class="text-[10px] text-stone-500 uppercase">Share Price</p>
@@ -148,35 +149,94 @@
         </div>
       </div>
     </div>
-    <!-- /Hero Section -->
-    
-    <!-- Tree Grid -->
+
     <div class="grid grid-cols-1 gap-4" id="trees-grid">
-      <!-- Placeholder Tree -->
-    </div>
-    
+      </div>
   </div>
-  <!-- /panel-home -->
 
-  <!-- Dashboard Panel -->
-  <div id="panel-dash" class="hidden bg-stone-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Dashboard content here -->
-      <h1 class="serif text-3xl font-bold text-stone-900">Your Grove Dashboard</h1>
-    </div>
-  </div>
-  <!-- /panel-dash -->
+  <div id="panel-dash" class="hidden space-y-6">
+    <div class="py-4">
+      <div class="flex flex-col gap-4 mb-6">
+        <div>
+          <h1 class="serif text-3xl font-bold text-stone-100">Your Grove 🌿</h1>
+          <p class="text-sm text-stone-500 mt-1">
+            You own <span id="grove-tree-count" class="font-semibold text-stone-300">—</span> trees ·
+            <span id="grove-share-count" class="font-semibold text-stone-300">—</span> shares
+          </p>
+        </div>
 
-  <!-- Rewards Panel -->
-  <div id="panel-rewards" class="hidden bg-stone-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 class="serif text-3xl font-bold text-stone-900">Rewards & Perks</h1>
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <p class="text-xs text-stone-500 uppercase tracking-wider mb-3">Wallet Balances</p>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="text-center">
+              <p class="text-xs font-medium text-stone-500">SOL</p>
+              <p id="wallet-sol-balance" class="font-bold text-lg text-purple-400">—</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-medium text-stone-500">OLV</p>
+              <p id="wallet-olv-balance" class="font-bold text-lg text-[#5a7a2b]">—</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-medium text-stone-500">Total</p>
+              <p id="wallet-total-usd" class="font-bold text-lg text-emerald-400">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-xl text-white">Your Trees</h2>
+        <button onclick="switchTab('home')" class="px-4 py-2 bg-green-700 text-white text-sm font-semibold rounded-xl">+ Adopt</button>
+      </div>
+
+      <div id="tree-position-cards" class="space-y-3">
+        </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 mt-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">🌾</span>
+          <h3 class="font-semibold text-white">Harvest 2026</h3>
+        </div>
+        <div class="w-full bg-white/10 h-2 rounded-full">
+          <div class="bg-amber-500 h-2 rounded-full" style="width:40%"></div>
+        </div>
+      </div>
     </div>
   </div>
-  <!-- /panel-rewards -->
+
+  <div id="panel-rewards" class="hidden space-y-6">
+    <div class="py-4">
+      <div class="mb-6">
+        <h2 class="serif text-3xl font-bold text-white">Your Rewards</h2>
+        <p class="text-sm text-stone-500">Unlock exclusive perks</p>
+      </div>
+
+      <div id="current-tier-badge" class="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-500/30 rounded-2xl p-6 mb-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 text-2xl">🫒</div>
+          <div class="flex-1">
+            <h3 class="font-bold text-white" id="tier-name">Olive Enthusiast</h3>
+            <div class="w-full bg-white/10 h-1.5 rounded-full mt-2">
+              <div class="bg-[#C5A059] h-1.5 rounded-full" style="width:20%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4">
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+           <h4 class="font-bold text-lg text-[#C5A059]">Grove Patron</h4>
+           <p class="text-xs text-stone-500 mb-2">1,000+ shares</p>
+           <ul class="text-xs text-stone-400 space-y-1">
+             <li>• 24 bottles/year</li>
+             <li>• 3-night villa stay</li>
+           </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </main>
-<!-- /main -->
 
 <!-- Bottom Mobile Navigation -->
 <nav class="mobile-nav">
