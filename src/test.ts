@@ -500,39 +500,41 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
   console.log("[CONNECT] Starting wallet connection flow...");
   console.log("═══════════════════════════════════════════════════════════\n");
 
-try {
-    await connectWallet();
+  try {
+    // 1. Connect Wallet
+    await (window as any).connectWallet();
     const wallet = (window as any).solana;
-    const program = (window as any)._program; // Ensure we use the global reference
-    
-    if (!wallet || !wallet.publicKey) throw new Error("Wallet missing");
+    const activeProgram = (window as any)._program || (window as any).program;
+
+    if (!wallet || !wallet.publicKey) throw new Error("Wallet connection failed");
+    if (!activeProgram) throw new Error("Blockchain program not initialized");
 
     const addr = wallet.publicKey.toBase58();
-    const isAdmin = addr === ADMIN_PUBKEY;
+    const isAdmin = addr === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
 
-    // 1. DATA FETCH: Get the protocol data first so we have the price
-    const protocol = (window as any)._protocol; 
-    
-    // 2. UI UPDATE: This must be OUTSIDE the isAdmin block so everyone sees it
+    console.log(`[CONNECT] ✅ Connected: ${addr}`);
+
+    // 2. FETCH PROTOCOL DATA FIRST (To define solPrice)
+    const protocol = (window as any)._protocol;
     if (protocol && protocol.sharePriceLamports) {
+        // DEFINE solPrice HERE so it's not "undefined"
         const solPrice = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
-        const totalTrees = protocol.totalTrees || 0;
+        const totalTrees = protocol.totalTrees || 10;
 
         const priceEl = document.getElementById('protocol-share-price');
         const treesEl = document.getElementById('protocol-total-trees');
 
         if (priceEl) priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
         if (treesEl) treesEl.textContent = `${totalTrees} Trees`;
-        
-        console.log(`[CONNECT] UI Updated: ${solPrice} SOL | ${totalTrees} Trees`);
+        console.log("[CONNECT] UI Price Sync Complete");
     }
 
     // 3. TAB LOGIC
-    if ((window as any).onWalletConnected) {
-      (window as any).onWalletConnected(addr, isAdmin);
+    if (typeof (window as any).onWalletConnected === 'function') {
+      await (window as any).onWalletConnected(addr, isAdmin);
     }
 
-    // 4. ADMIN ONLY LOGIC
+    // 4. ADMIN PANEL (Safety check on activeProgram)
     if (isAdmin) {
         console.log("[ADMIN] Populating admin panel...");
         const set = (id: string, v: string) => {
@@ -540,34 +542,26 @@ try {
             if(el) el.textContent = v;
         };
         set('admin-authority', addr.slice(0, 6) + '...' + addr.slice(-4));
-        set('admin-program-id', program.programId.toBase58().slice(0, 8) + '...');
+        // Use activeProgram instead of 'program' to avoid the undefined error
+        set('admin-program-id', activeProgram.programId.toBase58().slice(0, 8) + '...');
 
         if (protocol && typeof (window as any).fillAdminProtocol === 'function') {
             (window as any).fillAdminProtocol(protocol);
         }
-        if (typeof (window as any).refreshAdminStatus === 'function') {
-            await (window as any).refreshAdminStatus();
-        }
     }
 
-    // 5. FINAL LOAD
-    console.log("[CONNECT] Loading dashboard and balances...");
-    await loadDashboard();
-    
-    // Refresh wallet balance display
-    if ((window as any).refreshWalletBalances) {
-        await (window as any).refreshWalletBalances();
+    // 5. LOAD DASHBOARD
+    if (typeof (window as any).loadDashboard === 'function') {
+        await (window as any).loadDashboard();
     }
 
     console.log("[CONNECT] ✅ Connection flow complete\n");
 
   } catch (err: any) {
     console.error("[CONNECT] ❌ Connection failed:", err);
-    showToast("Connect failed: " + err.message, true);
+    if ((window as any).showToast) (window as any).showToast("Connect failed: " + err.message, true);
   }
 };
-
-
 /**
  * Synchronizes On-Chain state to Supabase after a transaction.
  * Updates ownership (active/inactive), global metadata, and logs the event.
