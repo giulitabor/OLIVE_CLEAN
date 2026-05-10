@@ -3718,6 +3718,7 @@ async function autoSyncHero() {
   // Try up to 10 times to catch the data as it arrives from Solana
   for (let i = 0; i < 10; i++) {
     const protocol = (window as any)._protocol;
+      console.log("Protocol",protocol);
     
     if (protocol && protocol.sharePriceLamports) {
       const solPrice = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
@@ -3738,7 +3739,7 @@ async function autoSyncHero() {
 }
 
 // Kick it off immediately
-autoSyncHero();
+//autoSyncHero();
 // EXPOSE TO GLOBAL so weatherEngine can call it
 (window as any).updateWeatherUI = updateWeatherUI;
 
