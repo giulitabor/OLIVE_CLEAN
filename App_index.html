@@ -204,38 +204,166 @@
     </div>
   </div>
 
-  <div id="panel-rewards" class="hidden space-y-6">
-    <div class="py-4">
-      <div class="mb-6">
-        <h2 class="serif text-3xl font-bold text-white">Your Rewards</h2>
-        <p class="text-sm text-stone-500">Unlock exclusive perks</p>
-      </div>
+ 
+       <!-- Panel: Rewards -->
+       <div id="panel-rewards" class="space-y-6 hidden">
+         <!-- Current Tier Status -->
+         <div class="glass-card p-6">
+           <div class="flex items-center gap-4 mb-4">
+             <div class="text-4xl" id="tier-icon">🫒</div>
+             <div class="flex-1">
+               <p class="text-sm text-stone-400 uppercase mb-1">Your Current Tier</p>
+               <h3 class="text-2xl font-bold" id="tier-name">Olive Enthusiast</h3>
+             </div>
+           </div>
 
-      <div id="current-tier-badge" class="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-500/30 rounded-2xl p-6 mb-6">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 text-2xl">🫒</div>
-          <div class="flex-1">
-            <h3 class="font-bold text-white" id="tier-name">Olive Enthusiast</h3>
-            <div class="w-full bg-white/10 h-1.5 rounded-full mt-2">
-              <div class="bg-[#C5A059] h-1.5 rounded-full" style="width:20%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+           <!-- Progress Bar -->
+           <div class="mb-2">
+             <div class="w-full bg-stone-700/30 rounded-full h-3 overflow-hidden">
+               <div id="tier-progress-bar" class="bg-gradient-to-r from-amber-500 to-orange-500 h-full transition-all duration-500" style="width: 0%"></div>
+             </div>
+           </div>
+           <p id="tier-progress-text" class="text-xs text-stone-400">Adopt shares to progress</p>
+         </div>
 
-      <div class="grid grid-cols-1 gap-4">
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
-           <h4 class="font-bold text-lg text-[#C5A059]">Grove Patron</h4>
-           <p class="text-xs text-stone-500 mb-2">1,000+ shares</p>
-           <ul class="text-xs text-stone-400 space-y-1">
-             <li>• 24 bottles/year</li>
-             <li>• 3-night villa stay</li>
-           </ul>
-        </div>
-      </div>
-    </div>
-  </div>
+         <div class="glass-card p-6">
+           <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+             <span class="emoji-icon text-3xl">🎁</span>
+             <span>Membership Tiers</span>
+           </h2>
 
+           <div class="space-y-4">
+             <!-- Tier 1 -->
+             <div class="tier-card tier-card-item opacity-50 bg-gradient-to-br from-emerald-950/40 to-emerald-900/20 border-emerald-600/40" data-tier="1">
+               <div class="flex items-start gap-4">
+                 <div class="emoji-icon-lg">🌱</div>
+                 <div class="flex-1">
+                   <h4 class="font-bold text-xl mb-2">Seed Supporter</h4>
+                   <p class="text-xs text-stone-400 mb-3">100-499 shares</p>
+                   <ul class="space-y-2 text-sm">
+                     <li class="flex items-center gap-2">
+                       <span class="text-emerald-400 text-xl">✓</span>
+                       <span>Annual olive oil delivery</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-emerald-400 text-xl">✓</span>
+                       <span>Harvest updates & photos</span>
+                     </li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
+
+             <!-- Tier 2 -->
+             <div class="tier-card tier-card-item opacity-50 bg-gradient-to-br from-lime-950/40 to-lime-900/20 border-lime-500/40" data-tier="2">
+               <div class="flex items-start gap-4">
+                 <div class="emoji-icon-lg">🌳</div>
+                 <div class="flex-1">
+                   <h4 class="font-bold text-xl mb-2">Tree Guardian</h4>
+                   <p class="text-xs text-stone-400 mb-3">500-999 shares</p>
+                   <ul class="space-y-2 text-sm">
+                     <li class="flex items-center gap-2">
+                       <span class="text-lime-400 text-xl">✓</span>
+                       <span>All Seed perks</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-lime-400 text-xl">✓</span>
+                       <span>Personalized tree certificate</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-lime-400 text-xl">✓</span>
+                       <span>Villa booking discount</span>
+                     </li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
+
+             <!-- Tier 3 -->
+             <div class="tier-card tier-card-item opacity-50 bg-gradient-to-br from-amber-950/40 to-amber-900/20 border-amber-500/40" data-tier="3">
+               <div class="flex items-start gap-4">
+                 <div class="emoji-icon-lg">👑</div>
+                 <div class="flex-1">
+                   <h4 class="font-bold text-xl mb-2">Grove Patron</h4>
+                   <p class="text-xs text-stone-400 mb-3">1,000-4,999 shares</p>
+                   <ul class="space-y-2 text-sm">
+                     <li class="flex items-center gap-2">
+                       <span class="text-amber-400 text-xl">✓</span>
+                       <span>All Guardian perks</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-amber-400 text-xl">✓</span>
+                       <span>3-night villa stay</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-amber-400 text-xl">✓</span>
+                       <span>Harvest visit invitation</span>
+                     </li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
+
+             <!-- Tier 4 -->
+             <div class="tier-card tier-card-item opacity-50 bg-gradient-to-br from-orange-950/40 to-red-900/20 border-orange-500/40" data-tier="4">
+               <div class="flex items-start gap-4">
+                 <div class="emoji-icon-lg">🏛️</div>
+                 <div class="flex-1">
+                   <h4 class="font-bold text-xl mb-2">Legacy Holder</h4>
+                   <p class="text-xs text-stone-400 mb-3">5,000+ shares</p>
+                   <ul class="space-y-2 text-sm">
+                     <li class="flex items-center gap-2">
+                       <span class="text-orange-400 text-xl">✓</span>
+                       <span>All Patron perks</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-orange-400 text-xl">✓</span>
+                       <span>7-night villa stay</span>
+                     </li>
+                     <li class="flex items-center gap-2">
+                       <span class="text-orange-400 text-xl">✓</span>
+                       <span>Governance voting rights</span>
+                     </li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+
+         <!-- Active Perks -->
+         <div class="glass-card p-6">
+           <h3 class="text-xl font-bold mb-4 flex items-center gap-3">
+             <span class="emoji-icon text-3xl">🎯</span>
+             <span>Your Active Perks</span>
+           </h3>
+           <div id="active-perks-list" class="text-center py-12 text-stone-400">
+             <div class="emoji-icon-lg mb-4">🔓</div>
+             <p class="text-sm">Adopt shares to unlock perks</p>
+           </div>
+         </div>
+
+         <!-- Villa CTA -->
+         <div class="glass-card p-6 relative overflow-hidden">
+           <div class="absolute -bottom-10 -right-10 opacity-10">
+             <span style="font-size: 10rem;">🏡</span>
+           </div>
+           <div class="relative z-10">
+             <div class="emoji-icon-lg mb-4">🏡</div>
+             <h3 class="serif text-2xl font-bold mb-3">Toscagialla Villa</h3>
+             <p class="text-stone-300 text-sm leading-relaxed mb-4">
+               Experience authentic Tuscan living in the Villa with panoramic views of the sea and the pool.
+             </p>
+             <a href="https://toscagialla.com/" target="_blank"
+               class="btn-primary inline-flex items-center gap-2 text-center justify-center w-full">
+               <span>View Villa</span>
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+               </svg>
+             </a>
+           </div>
+         </div>
+       </div>
 </main>
 
 <!-- Bottom Mobile Navigation -->
