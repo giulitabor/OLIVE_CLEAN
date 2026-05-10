@@ -238,7 +238,7 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
   }
 
   try {
-    const walletShort = walletPubkey.toBase58().slice(0, 8);
+    const walletShort = PublicKey.toBase58().slice(0, 8);
     console.log(`[BALANCES] Fetching for wallet ${walletShort}...`);
       const balance = await connection.getBalance(publicKey);
         const solAmount = balance / 1e9;
