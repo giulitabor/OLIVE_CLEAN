@@ -618,19 +618,29 @@
   }
 
   // Initialization
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log("Olivium DAO App Loaded");
-    
+document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById('btn-connect');
+    console.log("[DOM] Connect button found:", !!btn);
+
     if (btn) {
-      btn.addEventListener('click', () => {
-        console.log("Connect button clicked!");
-        // Wallet connection logic to be implemented
-        const modal = document.getElementById('wallet-missing-modal');
-        if (modal) modal.classList.remove('hidden');
-      });
+        btn.addEventListener('click', () => {
+            console.log("[DOM] Connect button clicked!");
+            
+            // Use standard JS (no 'as any')
+            const connectFn = window.connect;
+            
+            if (typeof connectFn === 'function') {
+                console.log("[DOM] Executing window.connect()...");
+                connectFn();
+            } else {
+                console.error("[DOM] CRITICAL: window.connect is not a function. Check if functions.ts loaded correctly.");
+                // Fallback: show the modal if the script isn't ready
+                const modal = document.getElementById('wallet-missing-modal');
+                if (modal) modal.classList.remove('hidden');
+            }
+        });
     }
-  });
+});
 </script>
 
 <!-- External scripts (to be implemented) -->
