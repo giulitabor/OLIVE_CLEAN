@@ -18,7 +18,6 @@ export default defineConfig({
       input: {
         landing: resolve(__dirname, "index.html"),
         spray: resolve(__dirname, "spray.html"),
-        field_logic: resolve(__dirname, "field_man.ts"), // ADD THIS LINE
         Main: resolve(__dirname, "App_index.html"),
         crypto: resolve(__dirname, "crypto41.html"),
         fiat: resolve(__dirname, "index2.html"),
