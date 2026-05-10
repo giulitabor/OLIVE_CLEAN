@@ -123,6 +123,7 @@ console.log("DONE WITH TREES NOW FARM", userPositionTtrees);
   }
  if (tab === 'dash') {
     const protocol = (window as any).protocol;
+   document.getElementById("panel-dash").classList.remove("hidden")
    console.log("DASH CLICK");
  }
   
