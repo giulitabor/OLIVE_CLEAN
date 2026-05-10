@@ -2675,108 +2675,41 @@ function previewTrade(protocol: any, tree: any, amount: number) {
 (window as any).confirmAdopt = async function() {
   const btn = document.getElementById('modal-buy-btn') as HTMLButtonElement;
   const modal = document.getElementById('adopt-modal');
-  
+  if (!modal || !btn) return;
+
+  const treeId = modal.dataset.treeId;
+  const amountInput = document.getElementById('modal-slider') as HTMLInputElement;
+  const amount = parseInt(amountInput.value);
+
   try {
-    if (!modal) return;
-    const treeId = modal.dataset.treeId;
-    const amountInput = document.getElementById('modal-slider') as HTMLInputElement;
-    const amount = parseInt(amountInput.value);
+    // 1. Loading State
+    btn.disabled = true;
+    btn.innerHTML = `Processing...`;
 
-// --- DYNAMIC PRICE DETECTION ---
-    // Instead of hardcoding 0.05, we pull from the UI or protocol
-    // Your log shows "Cost: 2.5250 SOL" for 10 shares, meaning price is 0.2525
-    const priceText = document.getElementById('modal-price-per-share')?.textContent || "0.05";
-    const sharePrice = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0.05;
-    const totalCost = amount * sharePrice;
-    
-    // DEBUG LOGS
-    const userBalance = (window as any).userSolBalance || 0;
-    console.log(`[DEBUG] Pre-flight check:`, {
-        treeId,
-        amount,
-        sharePrice,
-        calculatedTotal: totalCost,
-        userBalance
-    });
+    // 2. Call the buyShares logic
+    await (window as any).buyShares(treeId, amount);
 
-    // --- PRE-FLIGHT BALANCE CHECK ---
-    if (userBalance < (totalCost + 0.005)) {
-      console.warn("[DEBUG] Pre-flight failed: Insufficient Balance");
-      const errorMsg = `
-        <div class="flex flex-col gap-1">
-          <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
-          <span class="text-[11px] text-stone-400 leading-tight">
-            Total cost: ${totalCost.toFixed(4)} SOL<br>
-            Your balance: ${userBalance.toFixed(4)} SOL
-          </span>
-          <a href="https://phantom.app/buy" target="_blank" class="mt-2 text-center text-[10px] font-black bg-white/10 py-2 rounded-lg uppercase border border-white/5">Top up Wallet</a>
-        </div>
-      `;
-      if ((window as any).showToast) (window as any).showToast(errorMsg, true);
-      return; 
-    }
-
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `Processing...`;
-    }
-
-    // 2. Call the buyShares function
-    const tx = await (window as any).buyShares(treeId, amount);
-    // 3. Success Flow
-(window as any).closeAdoptModal();
-    if ((window as any).showToast) (window as any).showToast(`🌿 <b>Success!</b>`, false);
-    await (window as any).loadDashboard();
-      
-    if ((window as any).showToast) {
-      const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
-      (window as any).showToast(
-        `🌿 <b>Success!</b><br>
-         You adopted ${amount} shares.<br>
-         <a href="${explorerUrl}" target="_blank" style="color:#C5A059; text-decoration:underline; font-size:10px; margin-top:4px; display:inline-block;">View on Solscan ↗</a>`,
-        false
-      );
-    }
-    
-    // 4. Refresh UI
-    await (window as any).loadDashboard();
+    // 3. Success UI
+    if ((window as any).closeAdoptModal) (window as any).closeAdoptModal();
+    if ((window as any).refreshUserGrove) await (window as any).refreshUserGrove();
 
   } catch (err: any) {
-    console.error("Adopt failed", err);
-    
-    let errorMsg = "<b>Transaction Failed</b><br>Something went wrong. Please try again.";
+    // Handle Toasting errors here if buyShares fails
     const errString = JSON.stringify(err);
-
-    // Detect Insufficient Funds (Custom Error 0x1 or Simulation failure)
-    if (errString.includes('0x1') || errString.toLowerCase().includes('insufficient funds')) {
-      errorMsg = `
-        <div class="flex flex-col gap-1">
-          <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
-          <span class="text-[11px] text-stone-400 leading-tight">You don't have enough SOL to cover the shares and gas fees.</span>
-          <a href="https://phantom.app/buy" target="_blank" 
-             class="mt-2 text-center text-[10px] font-black bg-white/10 hover:bg-white/20 py-2 rounded-lg transition uppercase tracking-wider border border-white/5">
-             Top up Wallet
-          </a>
-        </div>
-      `;
+    if (errString.includes('0x1')) {
+       if ((window as any).showToast) (window as any).showToast("<b>Insufficient SOL</b>", true);
     }
-
-    if ((window as any).showToast) {
-      (window as any).showToast(errorMsg, true);
-    }
-
-  }finally {
+  } finally {
+    // Reset button regardless of success/fail
     if (btn) {
       btn.disabled = false;
-      const amount = parseInt((document.getElementById('modal-slider') as HTMLInputElement)?.value || "0");
-      // Use the detected sharePrice here too!
-      const priceText = document.getElementById('modal-price-per-share')?.textContent || "0.05";
-      const sharePrice = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0.05;
+      const priceText = document.getElementById('modal-price-per-share')?.textContent || "0.25";
+      const sharePrice = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0.25;
       btn.textContent = `Adopt — pay ${(amount * sharePrice).toFixed(3)} SOL`;
     }
   }
-};
-function treeOilYield(tree: any): number {
+}
+    function treeOilYield(tree: any): number {
   return 20 * Math.min(tree.age / 10, 1);
 }
 
