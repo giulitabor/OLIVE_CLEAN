@@ -2194,10 +2194,36 @@ async function buyShares(treeId: string | number, amount: number) {
     }
 
   } catch (err: any) {
-    console.error(`[BUY] ❌ Critical Failure:`, err);
-    const msg = err.message || "Unknown error";
-    if ((window as any).showToast) (window as any).showToast("Purchase Failed: " + msg, true);
-    throw err; 
+    console.error("Adopt failed", err);
+    
+    let errorMsg = "<b>Transaction Failed</b><br>Something went wrong. Please try again.";
+    const errString = JSON.stringify(err);
+
+    // Detect Insufficient Funds (Custom Error 0x1 or Simulation failure)
+    if (errString.includes('0x1') || errString.toLowerCase().includes('insufficient funds')) {
+      errorMsg = `
+        <div class="flex flex-col gap-1">
+          <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
+          <span class="text-[11px] text-stone-400 leading-tight">You don't have enough SOL to cover the shares and gas fees.</span>
+          <a href="https://phantom.app/buy" target="_blank" 
+             class="mt-2 text-center text-[10px] font-black bg-white/10 hover:bg-white/20 py-2 rounded-lg transition uppercase tracking-wider border border-white/5">
+             Top up Wallet
+          </a>
+        </div>
+      `;
+    }
+
+    if ((window as any).showToast) {
+      (window as any).showToast(errorMsg, true);
+    }
+
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      // Reset button text to original state
+      const totalCost = (parseInt((document.getElementById('modal-slider') as HTMLInputElement)?.value || "0") * 0.05).toFixed(3);
+      btn.textContent = `Adopt — pay ${totalCost} SOL`;
+    }
   }
 }
 
