@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Villa Toscagialla Ops</title>
+    <style>
+        :root { --gold: #C5A059; --dusk: #050505; --blue: #3b82f6; --olive: #5a7a2b; --brown: #8a6d3b; }
+
+        /* Base Reset */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--dusk); color: #f5eed8; font-family: ui-monospace, 'JetBrains Mono', monospace; margin: 0; padding-bottom: 180px; }
+
+        /* Header & UI */
+        header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.95); border-bottom: 1px solid #222; padding: 15px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .header-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #111; }
+
+        .title { color: var(--gold); font-weight: bold; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+        .counter { font-size: 10px; opacity: 0.5; margin-top: 2px; }
+
+        /* Buttons */
+        .btn-export { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .btn-export:active { background: var(--gold); color: black; }
+
+        /* Grid Layout */
+        #grove { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .row-container { margin-bottom: 30px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 4px; }
+        .row-label { font-size: 9px; opacity: 0.3; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+        .tree-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+        /* Tree Cards */
+        .tree-card { background: #111; border: 1px solid #222; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .tree-card.sprayed { border-color: var(--blue); background: rgba(59, 130, 246, 0.1); }
+        .card-id { font-size: 10px; font-weight: bold; color: var(--gold); opacity: 0.8; }
+
+        .spray-toggle { background: transparent; border: 1px solid #333; color: #555; font-size: 9px; padding: 4px; border-radius: 3px; text-transform: uppercase; }
+        .sprayed .spray-toggle { background: var(--blue); border-color: var(--blue); color: white; opacity: 1; }
+
+        /* Cycle Buttons */
+        .cycle-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .btn-cycle { background: #222; border: none; color: #444; font-size: 9px; padding: 12px 0; border-radius: 3px; text-align: center; }
+
+        .active-S { background: var(--brown) !important; color: white !important; }
+        .active-M { background: var(--olive) !important; color: white !important; }
+        .active-A { background: var(--gold) !important; color: black !important; font-weight: bold; }
+
+        /* GPS Switch */
+        .gps-wrap { display: flex; align-items: center; gap: 8px; font-size: 10px; }
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; border-radius: 20px; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s; }
+        input:checked + .slider { background-color: var(--gold); }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        /* Footer Legend */
+        footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; border-top: 1px solid #222; padding: 15px; z-index: 100; }
+        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; }
+        .box { width: 10px; height: 10px; border-radius: 2px; }
+        .sub-text { font-size: 8px; opacity: 0.3; text-align: center; border-top: 1px solid #111; padding-top: 8px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <div>
+                <h1 class="title">Villa Toscagialla</h1>
+                <div id="counter" class="counter">0/240 Done</div>
+            </div>
+            <div class="gps-wrap">
+                <span>GPS</span>
+                <label class="switch">
+                    <input type="checkbox" id="gps-toggle" onchange="toggleGPS(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div style="font-size: 9px; opacity: 0.5;">
+                <span id="w-temp">--°C</span> | <span id="w-hum">--%</span> | <span id="gps-display" style="color: #ff4444;">OFF</span>
+            </div>
+            <button id="export-btn" class="btn-export">EXPORT JSON</button>
+        </div>
+    </header>
+
+    <main id="grove"></main>
+
+    <footer>
+        <div class="legend-grid">
+            <div class="legend-item"><div class="box" style="border: 1px solid var(--blue); background: rgba(59,130,246,0.3);"></div> Sprayed</div>
+            <div class="legend-item"><div class="box" style="background: var(--brown);"></div> S: Sparse</div>
+            <div class="legend-item"><div class="box" style="background: var(--olive);"></div> M: Medium</div>
+            <div class="legend-item"><div class="box" style="background: var(--gold);"></div> A: Abundant</div>
+        </div>
+        <div class="sub-text">M: Mignola | P: Preflower | O: Olives</div>
+    </footer>
+
+    <script>
+        let treeData = {};
+        let gpsWatchId = null;
+        const levels = ["-", "S", "M", "A"];
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('field_data_v1');
+            return saved ? JSON.parse(saved) : null;
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+        }
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
+                const data = await res.json();
+                document.getElementById('w-temp').innerText = data.current_weather.temperature + "°C";
+                document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
+            } catch (e) { console.log("Offline: No Weather"); }
+        }
+
+        window.toggleGPS = (cb) => {
+            const display = document.getElementById('gps-display');
+            if (cb.checked) {
+                if ("geolocation" in navigator) {
+                    gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+                        display.innerText = `±${Math.round(pos.coords.accuracy)}m`;
+                        display.style.color = "#10b981";
+                    }, (err) => {
+                        display.innerText = "DENIED";
+                        cb.checked = false;
+                    }, { enableHighAccuracy: true });
+                }
+            } else {
+                if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+                display.innerText = "OFF";
+                display.style.color = "#ff4444";
+            }
+        };
+
+        function init() {
+            const grove = document.getElementById('grove');
+            const savedData = loadFromStorage();
+            let treeID = 1;
+
+            for (let r = 1; r <= 20; r++) {
+                const count = r <= 7 ? 8 : 13;
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "row-container";
+                rowDiv.innerHTML = `<div class="row-label">Row ${r}</div><div class="tree-grid" id="g-${r}"></div>`;
+                grove.appendChild(rowDiv);
+
+                for (let t = 1; t <= count; t++) {
+                    if (treeID > 240) break;
+                    const id = treeID;
+
+                    // Use saved data or default
+                    treeData[id] = (savedData && savedData[id]) ? savedData[id] : { s: false, m: 0, p: 0, o: 0 };
+
+                    const card = document.createElement('div');
+                    card.id = `c-${id}`;
+                    card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="card-id">#${id}</span>
+                            <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">${treeData[id].s ? "Done" : "Spray"}</button>
+                        </div>
+                        <div class="cycle-box">
+                            <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
+                            <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
+                            <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
+                        </div>`;
+                    document.getElementById(`g-${r}`).appendChild(card);
+                    treeID++;
+                }
+            }
+            updateCounter();
+            fetchWeather();
+        }
+
+        window.mark = (id) => {
+            treeData[id].s = !treeData[id].s;
+            document.getElementById(`b-${id}`).innerText = treeData[id].s ? "Done" : "Spray";
+            document.getElementById(`c-${id}`).classList.toggle('sprayed');
+            saveToStorage();
+            updateCounter();
+        };
+
+        window.cyc = (id, k) => {
+            treeData[id][k] = (treeData[id][k] + 1) % 4;
+            const val = treeData[id][k];
+            const btn = document.getElementById(`${k}-${id}`);
+            btn.innerText = val === 0 ? k.toUpperCase() : levels[val];
+            btn.className = `btn-cycle ${val > 0 ? 'active-'+levels[val] : ''}`;
+            saveToStorage();
+        };
+
+        function updateCounter() {
+            const done = Object.values(treeData).filter(t => t.s).length;
+            document.getElementById('counter').innerText = `${done}/240 Trees Done`;
+        }
+
+        document.getElementById('export-btn').onclick = () => {
+            const blob = new Blob([JSON.stringify(treeData, null, 2)], {type : 'application/json'});
+            const a = document.createElement('a');
+            a.href = window.URL.createObjectURL(blob);
+            a.download = `villa_field_report_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        };
+
+        window.onload = init;
+    </script>
+</body>
+</html>
