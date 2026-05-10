@@ -2823,7 +2823,9 @@ async function cacheProtocol() {
 } catch (e) {
   console.log("No Protocol Config found on chain.");
 }
-    } catch (e) {
+    
+catch (e) 
+    {
         console.log("[CACHE_PROTOCOL] Protocol not initialized on-chain yet.");
     }
 }
