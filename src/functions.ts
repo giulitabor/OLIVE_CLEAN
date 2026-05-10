@@ -81,7 +81,7 @@ async function switchTab(tab: string) {
   });
   console.log("TREEES, fuck a load");
   await (window as any).refreshWalletBalances(wallet.publicKey);
-//loadUserTreePositions();
+loadUserTreePositions();
 if (tab === 'rewards') {
 console.log('REWARDS TAB');
 
@@ -121,7 +121,11 @@ console.log("DONE WITH TREES NOW FARM", userPositionTtrees);
       }
     }
   }
-
+ if (tab === 'dash') {
+    const protocol = (window as any).protocol;
+   console.log("DASH CLICK");
+ }
+  
   if (tab === 'admin') {
     const protocol = (window as any).protocol;
     const program  = (window as any)._program;
