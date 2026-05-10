@@ -395,19 +395,21 @@ export async function checkConnectionHealth(): Promise<{
 console.log("[connection.ts] ✅ Optimized module loaded");
 
 /**
- * ═══════════════════════════════════════════════════════════════════════════
- * PERFORMANCE METRICS
- * ═══════════════════════════════════════════════════════════════════════════
- * 
- * Before optimization:
- * - Wallet connect: ~8-12 seconds
- * - Protocol fetches: 2x (wasted RPC call)
- * - Transaction confirm: 30-60 seconds on mobile
- * 
- * After optimization:
- * - Wallet connect: ~3-5 seconds (uses cache)
- * - Protocol fetches: 1x (cached after first load)
- * - Transaction confirm: 15-30 seconds (explicit confirmation)
- * 
- * ═══════════════════════════════════════════════════════════════════════════
+ * Synchronizes the Hero Card UI with blockchain data.
+ * Safe to call from anywhere.
  */
+(window as any).syncHeroUI = () => {
+  const protocol = (window as any)._protocol;
+  if (!protocol || !protocol.sharePriceLamports) return;
+
+  const price = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
+  const trees = protocol.totalTrees || 0;
+
+  const priceEl = document.getElementById('protocol-share-price');
+  const treesEl = document.getElementById('protocol-total-trees');
+
+  if (priceEl) priceEl.textContent = `${price.toFixed(2)} SOL`;
+  if (treesEl) treesEl.textContent = `${trees} Trees`;
+  
+  console.log(`[UI] Hero Card Synced: ${price} SOL`);
+};
