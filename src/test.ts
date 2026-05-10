@@ -240,6 +240,9 @@ async function refreshWalletBalances(walletPubkey: PublicKey) {
   try {
     const walletShort = walletPubkey.toBase58().slice(0, 8);
     console.log(`[BALANCES] Fetching for wallet ${walletShort}...`);
+      const balance = await connection.getBalance(publicKey);
+        const solAmount = balance / 1e9;
+        window.userSolBalance = solAmount; // Update this global!
 
     // Get live prices
     const { solPrice, olvPrice } = await getPrices();
@@ -2742,6 +2745,26 @@ function previewTrade(protocol: any, tree: any, amount: number) {
     const amountInput = document.getElementById('modal-slider') as HTMLInputElement;
     const amount = parseInt(amountInput.value);
 
+      // --- PRE-FLIGHT BALANCE CHECK ---
+    const sharePrice = 0.05; // Matches your protocol
+    const totalCost = amount * sharePrice;
+    const userSolBalance = (window as any).userSolBalance || 0;
+
+    // We add a tiny buffer (0.005) for gas fees
+    if (userSolBalance < (totalCost + 0.005)) {
+      const errorMsg = `
+        <div class="flex flex-col gap-1">
+          <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
+          <span class="text-[11px] text-stone-400 leading-tight">You need ~${(totalCost + 0.005).toFixed(3)} SOL (inc. gas).<br>Your balance: ${userSolBalance.toFixed(3)} SOL</span>
+          <a href="https://phantom.app/buy" target="_blank" 
+             class="mt-2 text-center text-[10px] font-black bg-white/10 hover:bg-white/20 py-2 rounded-lg transition uppercase tracking-wider border border-white/5">
+             Top up Wallet
+          </a>
+        </div>
+      `;
+      if ((window as any).showToast) (window as any).showToast(errorMsg, true);
+      return; // STOP HERE - No RPC call wasted
+    }
     if (!treeId || !amount || amount <= 0) {
       if ((window as any).showToast) (window as any).showToast("Please select at least 1 share", true);
       return;
