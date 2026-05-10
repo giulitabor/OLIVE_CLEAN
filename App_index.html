@@ -604,16 +604,25 @@
 
 <script>
   // Core Navigation Logic
-  function switchTab(tabId) {
-    document.querySelectorAll('main > div').forEach(p => p.classList.add('hidden'));
-    document.getElementById('panel-' + tabId).classList.remove('hidden');
+ function switchTab(tabId) {
+  document
+    .querySelectorAll('[id^="panel-"]')
+    .forEach(p => p.classList.add('hidden'));
 
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
+  document
+    .getElementById('panel-' + tabId)
+    ?.classList.remove('hidden');
 
-    window.scrollTo(0,0);
-  }
+  document
+    .querySelectorAll('.nav-item')
+    .forEach(n => n.classList.remove('active'));
 
+  document
+    .getElementById('tab-' + tabId)
+    ?.classList.add('active');
+
+  window.scrollTo(0, 0);
+}
   // Staked OVL Logic
   async function fetchStakedOVL(walletPubKey, program) {
     try {
