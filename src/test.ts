@@ -496,9 +496,7 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
 // ══════════════════════════════════════════════════════════════════════════════
 
 (window as any).connect = async () => {
-  console.log("\n═══════════════════════════════════════════════════════════");
-  console.log("[CONNECT] Starting wallet connection flow...");
-  console.log("═══════════════════════════════════════════════════════════\n");
+  console.log("\n[CONNECT] 🚀 Initializing...");
 
   try {
     // 1. Connect Wallet
@@ -512,12 +510,17 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
     const addr = wallet.publicKey.toBase58();
     const isAdmin = addr === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
 
-    console.log(`[CONNECT] ✅ Connected: ${addr}`);
+    // 2. Fetch Protocol Data immediately if not already cached
+    let protocol = (window as any)._protocol;
+    if (!protocol) {
+      console.log("[CONNECT] Protocol cache empty, fetching from chain...");
+      const [protocolPda] = (window as any).findProtocolPDA(); // Ensure this helper exists
+      protocol = await activeProgram.account.protocolConfig.fetch(protocolPda);
+      (window as any)._protocol = protocol;
+    }
 
-    // 2. FETCH PROTOCOL DATA FIRST (To define solPrice)
-    const protocol = (window as any)._protocol;
+    // 3. UI Sync (solPrice is now safely scoped inside this block)
     if (protocol && protocol.sharePriceLamports) {
-        // DEFINE solPrice HERE so it's not "undefined"
         const solPrice = protocol.sharePriceLamports.toNumber() / 1_000_000_000;
         const totalTrees = protocol.totalTrees || 10;
 
@@ -526,36 +529,34 @@ async function safeFetchTree(treePDA: PublicKey): Promise<any | null> {
 
         if (priceEl) priceEl.textContent = `${solPrice.toFixed(2)} SOL`;
         if (treesEl) treesEl.textContent = `${totalTrees} Trees`;
-        console.log("[CONNECT] UI Price Sync Complete");
+        console.log(`[CONNECT] Hero Stats Synced: ${solPrice} SOL`);
     }
 
-    // 3. TAB LOGIC
+    // 4. Trigger Tab Logic (IMPORTANT: Pass wallet through)
     if (typeof (window as any).onWalletConnected === 'function') {
-      await (window as any).onWalletConnected(addr, isAdmin);
+      // Pass 'wallet' as the third argument to fix the ReferenceError
+      await (window as any).onWalletConnected(addr, isAdmin, wallet);
     }
 
-    // 4. ADMIN PANEL (Safety check on activeProgram)
+    // 5. Admin Panel
     if (isAdmin) {
-        console.log("[ADMIN] Populating admin panel...");
         const set = (id: string, v: string) => {
             const el = document.getElementById(id);
             if(el) el.textContent = v;
         };
         set('admin-authority', addr.slice(0, 6) + '...' + addr.slice(-4));
-        // Use activeProgram instead of 'program' to avoid the undefined error
         set('admin-program-id', activeProgram.programId.toBase58().slice(0, 8) + '...');
 
-        if (protocol && typeof (window as any).fillAdminProtocol === 'function') {
+        if (typeof (window as any).fillAdminProtocol === 'function') {
             (window as any).fillAdminProtocol(protocol);
         }
     }
 
-    // 5. LOAD DASHBOARD
     if (typeof (window as any).loadDashboard === 'function') {
         await (window as any).loadDashboard();
     }
 
-    console.log("[CONNECT] ✅ Connection flow complete\n");
+    console.log("[CONNECT] ✅ Connection flow complete");
 
   } catch (err: any) {
     console.error("[CONNECT] ❌ Connection failed:", err);
