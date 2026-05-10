@@ -2733,49 +2733,52 @@ function previewTrade(protocol: any, tree: any, amount: number) {
     const amountInput = document.getElementById('modal-slider') as HTMLInputElement;
     const amount = parseInt(amountInput.value);
 
-      // --- PRE-FLIGHT BALANCE CHECK ---
-    const sharePrice = 0.05; // Matches your protocol
+// --- DYNAMIC PRICE DETECTION ---
+    // Instead of hardcoding 0.05, we pull from the UI or protocol
+    // Your log shows "Cost: 2.5250 SOL" for 10 shares, meaning price is 0.2525
+    const priceText = document.getElementById('modal-price-per-share')?.textContent || "0.05";
+    const sharePrice = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0.05;
     const totalCost = amount * sharePrice;
-    const userSolBalance = (window as any).userSolBalance || 0;
+    
+    // DEBUG LOGS
+    const userBalance = (window as any).userSolBalance || 0;
+    console.log(`[DEBUG] Pre-flight check:`, {
+        treeId,
+        amount,
+        sharePrice,
+        calculatedTotal: totalCost,
+        userBalance
+    });
 
-    // We add a tiny buffer (0.005) for gas fees
-    if (userSolBalance < (totalCost + 0.005)) {
+    // --- PRE-FLIGHT BALANCE CHECK ---
+    if (userBalance < (totalCost + 0.005)) {
+      console.warn("[DEBUG] Pre-flight failed: Insufficient Balance");
       const errorMsg = `
         <div class="flex flex-col gap-1">
           <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
-          <span class="text-[11px] text-stone-400 leading-tight">You need ~${(totalCost + 0.005).toFixed(3)} SOL (inc. gas).<br>Your balance: ${userSolBalance.toFixed(3)} SOL</span>
-          <a href="https://phantom.app/buy" target="_blank" 
-             class="mt-2 text-center text-[10px] font-black bg-white/10 hover:bg-white/20 py-2 rounded-lg transition uppercase tracking-wider border border-white/5">
-             Top up Wallet
-          </a>
+          <span class="text-[11px] text-stone-400 leading-tight">
+            Total cost: ${totalCost.toFixed(4)} SOL<br>
+            Your balance: ${userBalance.toFixed(4)} SOL
+          </span>
+          <a href="https://phantom.app/buy" target="_blank" class="mt-2 text-center text-[10px] font-black bg-white/10 py-2 rounded-lg uppercase border border-white/5">Top up Wallet</a>
         </div>
       `;
       if ((window as any).showToast) (window as any).showToast(errorMsg, true);
-      return; // STOP HERE - No RPC call wasted
-    }
-    if (!treeId || !amount || amount <= 0) {
-      if ((window as any).showToast) (window as any).showToast("Please select at least 1 share", true);
-      return;
+      return; 
     }
 
-    // 1. UI Feedback: Loading State
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = `<span class="flex items-center justify-center gap-2">
-                        <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </span>`;
+      btn.innerHTML = `Processing...`;
     }
 
     // 2. Call the buyShares function
     const tx = await (window as any).buyShares(treeId, amount);
-
     // 3. Success Flow
-    (window as any).closeAdoptModal();
-    
+(window as any).closeAdoptModal();
+    if ((window as any).showToast) (window as any).showToast(`🌿 <b>Success!</b>`, false);
+    await (window as any).loadDashboard();
+      
     if ((window as any).showToast) {
       const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
       (window as any).showToast(
@@ -2813,12 +2816,14 @@ function previewTrade(protocol: any, tree: any, amount: number) {
       (window as any).showToast(errorMsg, true);
     }
 
-  } finally {
+  }finally {
     if (btn) {
       btn.disabled = false;
-      // Reset button text to original state
-      const totalCost = (parseInt((document.getElementById('modal-slider') as HTMLInputElement)?.value || "0") * 0.05).toFixed(3);
-      btn.textContent = `Adopt — pay ${totalCost} SOL`;
+      const amount = parseInt((document.getElementById('modal-slider') as HTMLInputElement)?.value || "0");
+      // Use the detected sharePrice here too!
+      const priceText = document.getElementById('modal-price-per-share')?.textContent || "0.05";
+      const sharePrice = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0.05;
+      btn.textContent = `Adopt — pay ${(amount * sharePrice).toFixed(3)} SOL`;
     }
   }
 };
