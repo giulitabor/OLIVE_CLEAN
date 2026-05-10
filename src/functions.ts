@@ -203,7 +203,7 @@ async function update_FarmOwnership(positions: any[], protocol: any) {
 // ─────────────────────────────────────────────────────────────
 // WALLET CONNECTED
 // ─────────────────────────────────────────────────────────────
-(window as any).onWalletConnected = function(addr: string, isAdmin: boolean) {   
+(window as any).onWalletConnected = async (addr: string, isAdmin: boolean, wallet: any) => {
   const protocol = (window as any).protocol;
 
   document.getElementById('panel-hero')?.classList.add('hidden');
