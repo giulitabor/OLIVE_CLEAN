@@ -97,6 +97,120 @@
         </div>
         <div class="sub-text">M: Mignola | P: Preflower | O: Olives</div>
     </footer>
-<script type="module" src="/src/field_man.ts"></script>
+
+    <script>
+        let treeData = {};
+        let gpsWatchId = null;
+        const levels = ["-", "S", "M", "A"];
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('field_data_v1');
+            return saved ? JSON.parse(saved) : null;
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+        }
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
+                const data = await res.json();
+                document.getElementById('w-temp').innerText = data.current_weather.temperature + "°C";
+                document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
+            } catch (e) { console.log("Offline: No Weather"); }
+        }
+
+        window.toggleGPS = (cb) => {
+            const display = document.getElementById('gps-display');
+            if (cb.checked) {
+                if ("geolocation" in navigator) {
+                    gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+                        display.innerText = `±${Math.round(pos.coords.accuracy)}m`;
+                        display.style.color = "#10b981";
+                    }, (err) => {
+                        display.innerText = "DENIED";
+                        cb.checked = false;
+                    }, { enableHighAccuracy: true });
+                }
+            } else {
+                if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+                display.innerText = "OFF";
+                display.style.color = "#ff4444";
+            }
+        };
+
+        function init() {
+            const grove = document.getElementById('grove');
+            const savedData = loadFromStorage();
+            let treeID = 1;
+
+            for (let r = 1; r <= 20; r++) {
+                const count = r <= 7 ? 8 : 13;
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "row-container";
+                rowDiv.innerHTML = `<div class="row-label">Row ${r}</div><div class="tree-grid" id="g-${r}"></div>`;
+                grove.appendChild(rowDiv);
+
+                for (let t = 1; t <= count; t++) {
+                    if (treeID > 240) break;
+                    const id = treeID;
+
+                    // Use saved data or default
+                    treeData[id] = (savedData && savedData[id]) ? savedData[id] : { s: false, m: 0, p: 0, o: 0 };
+
+                    const card = document.createElement('div');
+                    card.id = `c-${id}`;
+                    card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="card-id">#${id}</span>
+                            <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">${treeData[id].s ? "Done" : "Spray"}</button>
+                        </div>
+                        <div class="cycle-box">
+                            <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
+                            <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
+                            <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
+                        </div>`;
+                    document.getElementById(`g-${r}`).appendChild(card);
+                    treeID++;
+                }
+            }
+            updateCounter();
+            fetchWeather();
+        }
+
+        window.mark = (id) => {
+            treeData[id].s = !treeData[id].s;
+            document.getElementById(`b-${id}`).innerText = treeData[id].s ? "Done" : "Spray";
+            document.getElementById(`c-${id}`).classList.toggle('sprayed');
+            saveToStorage();
+            updateCounter();
+        };
+
+        window.cyc = (id, k) => {
+            treeData[id][k] = (treeData[id][k] + 1) % 4;
+            const val = treeData[id][k];
+            const btn = document.getElementById(`${k}-${id}`);
+            btn.innerText = val === 0 ? k.toUpperCase() : levels[val];
+            btn.className = `btn-cycle ${val > 0 ? 'active-'+levels[val] : ''}`;
+            saveToStorage();
+        };
+
+        function updateCounter() {
+            const done = Object.values(treeData).filter(t => t.s).length;
+            document.getElementById('counter').innerText = `${done}/240 Trees Done`;
+        }
+
+        document.getElementById('export-btn').onclick = () => {
+            const blob = new Blob([JSON.stringify(treeData, null, 2)], {type : 'application/json'});
+            const a = document.createElement('a');
+            a.href = window.URL.createObjectURL(blob);
+            a.download = `villa_field_report_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        };
+
+        window.onload = init;
+    </script>
 </body>
 </html>
