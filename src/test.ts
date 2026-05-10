@@ -2806,27 +2806,53 @@ function computeAnalytics(positions: any[], trees: any[], protocol: any) {
 // CACHE PROTOCOL (for modal use)
 // ══════════════════════════════════════════════════════════════════════════════
 async function cacheProtocol() {
+
     try {
-        if (!program) return; // Silent exit if program isn't ready
-        const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
-        const config = await program.account.protocolConfig.fetch(protocolPda);
+
+        if (!program) return;
+
+        const [protocolPda] =
+            PublicKey.findProgramAddressSync(
+                [Buffer.from("protocol")],
+                program.programId
+            );
+
+        const config =
+            await program.account.protocolConfig.fetch(protocolPda);
+
         (window as any)._protocol = config;
+
         // UPDATE UI IMMEDIATELY
-  const solPrice = (config.sharePriceLamports.toNumber() / 1_000_000_000).toFixed(2);
-  const priceEl = document.getElementById('protocol-share-price');
-  const treesEl = document.getElementById('protocol-total-trees');
+        const solPrice =
+            (
+                config.sharePriceLamports.toNumber() /
+                1_000_000_000
+            ).toFixed(2);
 
-  if (priceEl) priceEl.textContent = `${solPrice} SOL`;
-  if (treesEl) treesEl.textContent = `${config.totalTrees} Trees`;
+        const priceEl =
+            document.getElementById('protocol-share-price');
 
-  console.log(`[INIT] UI Synced with: ${solPrice} SOL`);
-} catch (e) {
-  console.log("No Protocol Config found on chain.");
-}
-    
-catch (e) 
-    {
-        console.log("[CACHE_PROTOCOL] Protocol not initialized on-chain yet.");
+        const treesEl =
+            document.getElementById('protocol-total-trees');
+
+        if (priceEl) {
+            priceEl.textContent = `${solPrice} SOL`;
+        }
+
+        if (treesEl) {
+            treesEl.textContent = `${config.totalTrees} Trees`;
+        }
+
+        console.log(
+            `[INIT] UI Synced with: ${solPrice} SOL`
+        );
+
+    } catch (e) {
+
+        console.log(
+            "[CACHE_PROTOCOL] Protocol not initialized on-chain yet.",
+            e
+        );
     }
 }
 // ══════════════════════════════════════════════════════════════════════════════
