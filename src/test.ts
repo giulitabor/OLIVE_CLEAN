@@ -2713,34 +2713,75 @@ function previewTrade(protocol: any, tree: any, amount: number) {
   try {
     if (!modal) return;
     const treeId = modal.dataset.treeId;
-    const amount = parseInt((document.getElementById('modal-slider') as HTMLInputElement).value);
+    const amountInput = document.getElementById('modal-slider') as HTMLInputElement;
+    const amount = parseInt(amountInput.value);
 
-    if (!treeId || !amount) {
-      showToast("Please select shares", true);
+    if (!treeId || !amount || amount <= 0) {
+      if ((window as any).showToast) (window as any).showToast("Please select at least 1 share", true);
       return;
     }
 
-    // 1. UI Feedback
+    // 1. UI Feedback: Loading State
     if (btn) {
       btn.disabled = true;
-      btn.textContent = "Processing...";
+      btn.innerHTML = `<span class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>`;
     }
 
-    // 2. Call the clean buyShares function
-    await (window as any).buyShares(treeId, amount);
+    // 2. Call the buyShares function
+    const tx = await (window as any).buyShares(treeId, amount);
 
-    // 3. Close Modal on success
+    // 3. Success Flow
     (window as any).closeAdoptModal();
     
-    // 4. Refresh data
+    if ((window as any).showToast) {
+      const explorerUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+      (window as any).showToast(
+        `🌿 <b>Success!</b><br>
+         You adopted ${amount} shares.<br>
+         <a href="${explorerUrl}" target="_blank" style="color:#C5A059; text-decoration:underline; font-size:10px; margin-top:4px; display:inline-block;">View on Solscan ↗</a>`,
+        false
+      );
+    }
+    
+    // 4. Refresh UI
     await (window as any).loadDashboard();
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Adopt failed", err);
+    
+    let errorMsg = "<b>Transaction Failed</b><br>Something went wrong. Please try again.";
+    const errString = JSON.stringify(err);
+
+    // Detect Insufficient Funds (Custom Error 0x1 or Simulation failure)
+    if (errString.includes('0x1') || errString.toLowerCase().includes('insufficient funds')) {
+      errorMsg = `
+        <div class="flex flex-col gap-1">
+          <span class="text-red-400 font-bold">⚠️ Insufficient SOL</span>
+          <span class="text-[11px] text-stone-400 leading-tight">You don't have enough SOL to cover the shares and gas fees.</span>
+          <a href="https://phantom.app/buy" target="_blank" 
+             class="mt-2 text-center text-[10px] font-black bg-white/10 hover:bg-white/20 py-2 rounded-lg transition uppercase tracking-wider border border-white/5">
+             Top up Wallet
+          </a>
+        </div>
+      `;
+    }
+
+    if ((window as any).showToast) {
+      (window as any).showToast(errorMsg, true);
+    }
+
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "Confirm Adoption";
+      // Reset button text to original state
+      const totalCost = (parseInt((document.getElementById('modal-slider') as HTMLInputElement)?.value || "0") * 0.05).toFixed(3);
+      btn.textContent = `Adopt — pay ${totalCost} SOL`;
     }
   }
 };
