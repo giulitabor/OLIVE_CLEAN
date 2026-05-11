@@ -140,47 +140,70 @@
             }
         };
 
-        function init() {
-            const grove = document.getElementById('grove');
-            const savedData = loadFromStorage();
-            let treeID = 1;
+function init() {
+    const grove = document.getElementById('grove');
+    const savedData = loadFromStorage();
+    let treeID = 1;
 
-            for (let r = 1; r <= 20; r++) {
-                const count = r <= 7 ? 8 : 13;
-                const rowDiv = document.createElement('div');
-                rowDiv.className = "row-container";
-                rowDiv.innerHTML = `<div class="row-label">Row ${r}</div><div class="tree-grid" id="g-${r}"></div>`;
-                grove.appendChild(rowDiv);
+    // The exact configuration from your aerial map
+    const layout = [
+        { rowStart: 1,  rowEnd: 6,  count: 12 }, // Rows 1-6: 12 trees
+        { rowStart: 7,  rowEnd: 12, count: 21 }, // Rows 7-12: 21 trees
+        { rowStart: 13, rowEnd: 14, count: 17 }, // Rows 13-14: 17 trees
+        { rowStart: 15, rowEnd: 15, count: 9 }   // Row 15 (labeled as 18): 9 trees
+    ];
 
-                for (let t = 1; t <= count; t++) {
-                    if (treeID > 240) break;
-                    const id = treeID;
+    layout.forEach(config => {
+        for (let r = config.rowStart; r <= config.rowEnd; r++) {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = "row-container";
+            
+            // Adjusting label for that last row if you want it to show "Row 18"
+            const label = (r === 15) ? 18 : r; 
+            rowDiv.innerHTML = `<div class="row-label">Row ${label}</div><div class="tree-grid" id="g-${r}"></div>`;
+            grove.appendChild(rowDiv);
 
-                    // Use saved data or default
-                    treeData[id] = (savedData && savedData[id]) ? savedData[id] : { s: false, m: 0, p: 0, o: 0 };
+            for (let t = 1; t <= config.count; t++) {
+                const id = treeID;
+                
+                // Use saved data or default
+                treeData[id] = (savedData && savedData[id]) ? savedData[id] : { s: false, m: 0, p: 0, o: 0 };
 
-                    const card = document.createElement('div');
-                    card.id = `c-${id}`;
-                    card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
-                    card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="card-id">#${id}</span>
-                            <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">${treeData[id].s ? "Done" : "Spray"}</button>
-                        </div>
-                        <div class="cycle-box">
-                            <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
-                            <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
-                            <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
-                        </div>`;
-                    document.getElementById(`g-${r}`).appendChild(card);
-                    treeID++;
-                }
+                const card = document.createElement('div');
+                card.id = `c-${id}`;
+                card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-id">#${id}</span>
+                        <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">${treeData[id].s ? "Done" : "Spray"}</button>
+                    </div>
+                    <div class="cycle-box">
+                        <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
+                        <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
+                        <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
+                    </div>`;
+                document.getElementById(`g-${r}`).appendChild(card);
+                treeID++;
             }
-            updateCounter();
-            fetchWeather();
         }
+    });
 
-        window.mark = (id) => {
+    // Store total count for the counter
+    window.maxTrees = treeID - 1;
+    updateCounter();
+    fetchWeather();
+}
+
+// Update your updateCounter function to use the new total
+function updateCounter() {
+    const done = Object.values(treeData).filter(t => t.s).length;
+    const counterEl = document.getElementById('counter');
+    if (counterEl) {
+        counterEl.innerText = `${done}/${window.maxTrees || 250} Done`;
+    }
+}
+        
+    window.mark = (id) => {
     const isDone = !treeData[id].s;
     treeData[id].s = isDone;
 
@@ -198,6 +221,12 @@
         }, null, { enableHighAccuracy: true });
     }
 
+    window.toggleFly = (id) => {
+    treeData[id].f = !treeData[id].f;
+    const btn = document.getElementById(`f-${id}`);
+    btn.className = `btn-cycle ${treeData[id].f ? 'active-A' : ''}`;
+    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+};
     // UI Updates
     document.getElementById(`b-${id}`).innerText = isDone ? "Done" : "Spray";
     document.getElementById(`c-${id}`).classList.toggle('sprayed');
@@ -212,11 +241,6 @@
             btn.className = `btn-cycle ${val > 0 ? 'active-'+levels[val] : ''}`;
             saveToStorage();
         };
-
-        function updateCounter() {
-            const done = Object.values(treeData).filter(t => t.s).length;
-            document.getElementById('counter').innerText = `${done}/240 Trees Done`;
-        }
 
         document.getElementById('export-btn').onclick = () => {
             const blob = new Blob([JSON.stringify(treeData, null, 2)], {type : 'application/json'});
