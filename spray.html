@@ -98,206 +98,173 @@
         <div class="sub-text">M: Mignola | P: Preflower | O: Olives</div>
     </footer>
 
-    <script>
-        let treeData = {};
-        let gpsWatchId = null;
-        const levels = ["-", "S", "M", "A"];
+  <script>
+    let treeData = {};
+    let gpsWatchId = null;
+    const levels = ["-", "S", "M", "A"];
 
-        function loadFromStorage() {
-            const saved = localStorage.getItem('field_data_v1');
-            return saved ? JSON.parse(saved) : null;
-        }
-
-        function saveToStorage() {
-            localStorage.setItem('field_data_v1', JSON.stringify(treeData));
-        }
-async function fetchWeather() {
-    try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
-        if (!res.ok) throw new Error('Network error');
-        const data = await res.json();
-        document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°C";
-        document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
-    } catch (e) {
-        console.log("Weather offline: using cached or null values");
-        document.getElementById('w-temp').innerText = "Offline";
-        document.getElementById('w-hum').innerText = "--%";
+    // 1. UTILITY FUNCTIONS
+    function loadFromStorage() {
+        const saved = localStorage.getItem('field_data_v1');
+        return saved ? JSON.parse(saved) : null;
     }
-}
 
-        window.toggleGPS = (cb) => {
-            const display = document.getElementById('gps-display');
-            if (cb.checked) {
-                if ("geolocation" in navigator) {
-                    gpsWatchId = navigator.geolocation.watchPosition((pos) => {
-                        display.innerText = `±${Math.round(pos.coords.accuracy)}m`;
-                        display.style.color = "#10b981";
-                    }, (err) => {
-                        display.innerText = "DENIED";
-                        cb.checked = false;
-                    }, { enableHighAccuracy: true });
-                }
-            } else {
-                if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
-                display.innerText = "OFF";
-                display.style.color = "#ff4444";
+    function saveToStorage() {
+        localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+    }
+
+    function updateCounter() {
+        const done = Object.values(treeData).filter(t => t.s).length;
+        const counterEl = document.getElementById('counter');
+        if (counterEl) {
+            counterEl.innerText = `${done}/${window.maxTrees || 250} Done`;
+        }
+    }
+
+    async function fetchWeather() {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
+            if (!res.ok) throw new Error('Network error');
+            const data = await res.json();
+            document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°C";
+            document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
+        } catch (e) {
+            document.getElementById('w-temp').innerText = "Offline";
+            document.getElementById('w-hum').innerText = "--%";
+        }
+    }
+
+    // 2. GLOBAL ACTION FUNCTIONS (Attached to window for HTML access)
+    window.toggleGPS = (cb) => {
+        const display = document.getElementById('gps-display');
+        if (cb.checked) {
+            if ("geolocation" in navigator) {
+                gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+                    display.innerText = `±${Math.round(pos.coords.accuracy)}m`;
+                    display.style.color = "#10b981";
+                }, (err) => {
+                    display.innerText = "DENIED";
+                    cb.checked = false;
+                }, { enableHighAccuracy: true });
             }
-        };
-
-window.toggleFly = (id) => {
-    // 1. Initialize 'f' if it doesn't exist for this tree yet
-    if (treeData[id].f === undefined) {
-        treeData[id].f = false;
-    }
-
-    // 2. Toggle the boolean value
-    treeData[id].f = !treeData[id].f;
-
-    // 3. Update the UI immediately
-    const btn = document.getElementById(`f-${id}`);
-    if (btn) {
-        // 'active-A' uses the gold variable defined in your root CSS
-        if (treeData[id].f) {
-            btn.classList.add('active-A');
         } else {
-            btn.classList.remove('active-A');
+            if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+            display.innerText = "OFF";
+            display.style.color = "#ff4444";
         }
-    }
+    };
 
-    // 4. Persist to local storage so it survives a refresh
-    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
-};
-    // UI Updates
-    document.getElementById(`b-${id}`).innerText = isDone ? "Done" : "Spray";
-    document.getElementById(`c-${id}`).classList.toggle('sprayed');
-    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
-    updateCounter();
-};
+    window.toggleFly = (id) => {
+        if (!treeData[id]) return;
+        if (treeData[id].f === undefined) treeData[id].f = false;
         
-function init() {
-    const grove = document.getElementById('grove');
-    const savedData = loadFromStorage();
-    let treeID = 1;
+        treeData[id].f = !treeData[id].f;
 
-    // The exact configuration from your aerial map
-    const layout = [
-        { rowStart: 1,  rowEnd: 6,  count: 12 }, // Rows 1-6: 12 trees
-        { rowStart: 7,  rowEnd: 12, count: 21 }, // Rows 7-12: 21 trees
-        { rowStart: 13, rowEnd: 14, count: 17 }, // Rows 13-14: 17 trees
-        { rowStart: 15, rowEnd: 15, count: 9 }   // Row 15 (labeled as 18): 9 trees
-    ];
-
-    layout.forEach(config => {
-        for (let r = config.rowStart; r <= config.rowEnd; r++) {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = "row-container";
-            
-            // Adjusting label for that last row if you want it to show "Row 18"
-            const label = (r === 15) ? 18 : r; 
-            rowDiv.innerHTML = `<div class="row-label">Row ${label}</div><div class="tree-grid" id="g-${r}"></div>`;
-            grove.appendChild(rowDiv);
-
-            for (let t = 1; t <= config.count; t++) {
-                const id = treeID;
-                
-                // Use saved data or default
-                // Initialize data using your keys
-                    treeData[id] = (savedData && savedData[id]) ? savedData[id] : { 
-                        s: false, // Sprayed
-                        f: false, // Fly Spotted
-                        m: 0,     // Mignola
-                        p: 0,     // Pre-flowers
-                        o: 0      // Olives
-                    };
-                const card = document.createElement('div');
-                card.id = `c-${id}`;
-                card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
-                // Inside the init() function of spray2.html, replace the card.innerHTML section:
-
-card.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="card-id">#${id}</span>
-        <div style="display:flex; gap:4px; align-items:center;">
-            <button onclick="toggleFly(${id})" id="f-${id}" 
-                class="btn-cycle ${treeData[id].f ? 'active-A' : ''}" 
-                style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; padding:0; font-size:16px; border:1px solid #333;">
-                🦟
-            </button>
-            
-            <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">
-                ${treeData[id].s ? "Done" : "Spray"}
-            </button>
-        </div>
-    </div>
-    <div class="cycle-box" style="margin-top:8px;">
-        <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">
-            ${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}
-        </button>
-        <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">
-            ${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}
-        </button>
-        <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">
-            ${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}
-        </button>
-    </div>`;
-                document.getElementById(`g-${r}`).appendChild(card);
-                treeID++;
-            }
+        const btn = document.getElementById(`f-${id}`);
+        if (btn) {
+            if (treeData[id].f) btn.classList.add('active-A');
+            else btn.classList.remove('active-A');
         }
-    });
+        saveToStorage();
+    };
 
-    // Store total count for the counter
-    window.maxTrees = treeID - 1;
-    updateCounter();
-    fetchWeather();
-}
-
-// Update your updateCounter function to use the new total
-function updateCounter() {
-    const done = Object.values(treeData).filter(t => t.s).length;
-    const counterEl = document.getElementById('counter');
-    if (counterEl) {
-        counterEl.innerText = `${done}/${window.maxTrees || 250} Done`;
-    }
-}
-        
     window.mark = (id) => {
-    const isDone = !treeData[id].s;
-    treeData[id].s = isDone;
+        const isDone = !treeData[id].s;
+        treeData[id].s = isDone;
 
-    // Log GPS and Time only when marking as Done
-    if (isDone && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            treeData[id].gps = {
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude,
-                acc: pos.coords.accuracy
-            };
-            treeData[id].ts = new Date().toISOString();
-            console.log(`Tree #${id} logged at ${treeData[id].ts}`);
-            localStorage.setItem('field_data_v1', JSON.stringify(treeData));
-        }, null, { enableHighAccuracy: true });
-    }
+        const btn = document.getElementById(`b-${id}`);
+        const card = document.getElementById(`c-${id}`);
+        if (btn) btn.innerText = isDone ? "Done" : "Spray";
+        if (card) card.classList.toggle('sprayed', isDone);
 
-  
-        window.cyc = (id, k) => {
-            treeData[id][k] = (treeData[id][k] + 1) % 4;
-            const val = treeData[id][k];
-            const btn = document.getElementById(`${k}-${id}`);
+        if (isDone && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                treeData[id].gps = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                treeData[id].ts = new Date().toISOString();
+                saveToStorage();
+            }, null, { enableHighAccuracy: true });
+        }
+        saveToStorage();
+        updateCounter();
+    };
+
+    window.cyc = (id, k) => {
+        treeData[id][k] = (treeData[id][k] + 1) % 4;
+        const val = treeData[id][k];
+        const btn = document.getElementById(`${k}-${id}`);
+        if (btn) {
             btn.innerText = val === 0 ? k.toUpperCase() : levels[val];
             btn.className = `btn-cycle ${val > 0 ? 'active-'+levels[val] : ''}`;
-            saveToStorage();
-        };
+        }
+        saveToStorage();
+    };
 
-        document.getElementById('export-btn').onclick = () => {
-            const blob = new Blob([JSON.stringify(treeData, null, 2)], {type : 'application/json'});
-            const a = document.createElement('a');
-            a.href = window.URL.createObjectURL(blob);
-            a.download = `villa_field_report_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-        };
+    // 3. INITIALIZATION
+    function init() {
+        const grove = document.getElementById('grove');
+        const savedData = loadFromStorage();
+        let treeID = 1;
 
-        window.onload = init;
-    </script>
-</body>
+        const layout = [
+            { rowStart: 1,  rowEnd: 6,  count: 12 }, 
+            { rowStart: 7,  rowEnd: 12, count: 21 }, 
+            { rowStart: 13, rowEnd: 14, count: 17 }, 
+            { rowStart: 15, rowEnd: 15, count: 9 }
+        ];
+
+        layout.forEach(config => {
+            for (let r = config.rowStart; r <= config.rowEnd; r++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "row-container";
+                const label = (r === 15) ? 18 : r; 
+                rowDiv.innerHTML = `<div class="row-label">Row ${label}</div><div class="tree-grid" id="g-${r}"></div>`;
+                grove.appendChild(rowDiv);
+
+                for (let t = 1; t <= config.count; t++) {
+                    const id = treeID;
+                    treeData[id] = (savedData && savedData[id]) ? savedData[id] : { s: false, f: false, m: 0, p: 0, o: 0 };
+
+                    const card = document.createElement('div');
+                    card.id = `c-${id}`;
+                    card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="card-id">#${id}</span>
+                            <div style="display:flex; gap:4px; align-items:center;">
+                                <button onclick="window.toggleFly(${id})" id="f-${id}" 
+                                    class="btn-cycle ${treeData[id].f ? 'active-A' : ''}" 
+                                    style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; padding:0; font-size:16px; border:1px solid #333;">
+                                    🦟
+                                </button>
+                                <button onclick="window.mark(${id})" id="b-${id}" class="spray-toggle">
+                                    ${treeData[id].s ? "Done" : "Spray"}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="cycle-box" style="margin-top:8px;">
+                            <button onclick="window.cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
+                            <button onclick="window.cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
+                            <button onclick="window.cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
+                        </div>`;
+                    document.getElementById(`g-${r}`).appendChild(card);
+                    treeID++;
+                }
+            }
+        });
+
+        window.maxTrees = treeID - 1;
+        updateCounter();
+        fetchWeather();
+    }
+
+    document.getElementById('export-btn').onclick = () => {
+        const blob = new Blob([JSON.stringify(treeData, null, 2)], {type : 'application/json'});
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = `villa_field_report_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    };
+
+    window.onload = init;
+</script></body>
 </html>
