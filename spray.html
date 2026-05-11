@@ -167,8 +167,14 @@ function init() {
                 const id = treeID;
                 
                 // Use saved data or default
-                treeData[id] = (savedData && savedData[id]) ? savedData[id] : { s: false, m: 0, p: 0, o: 0 };
-
+                // Initialize data using your keys
+                    treeData[id] = (savedData && savedData[id]) ? savedData[id] : { 
+                        s: false, // Sprayed
+                        f: false, // Fly Spotted
+                        m: 0,     // Mignola
+                        p: 0,     // Pre-flowers
+                        o: 0      // Olives
+                    };
                 const card = document.createElement('div');
                 card.id = `c-${id}`;
                 card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
