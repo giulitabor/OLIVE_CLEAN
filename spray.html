@@ -144,6 +144,36 @@ async function fetchWeather() {
             }
         };
 
+window.toggleFly = (id) => {
+    // 1. Initialize 'f' if it doesn't exist for this tree yet
+    if (treeData[id].f === undefined) {
+        treeData[id].f = false;
+    }
+
+    // 2. Toggle the boolean value
+    treeData[id].f = !treeData[id].f;
+
+    // 3. Update the UI immediately
+    const btn = document.getElementById(`f-${id}`);
+    if (btn) {
+        // 'active-A' uses the gold variable defined in your root CSS
+        if (treeData[id].f) {
+            btn.classList.add('active-A');
+        } else {
+            btn.classList.remove('active-A');
+        }
+    }
+
+    // 4. Persist to local storage so it survives a refresh
+    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+};
+    // UI Updates
+    document.getElementById(`b-${id}`).innerText = isDone ? "Done" : "Spray";
+    document.getElementById(`c-${id}`).classList.toggle('sprayed');
+    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
+    updateCounter();
+};
+        
 function init() {
     const grove = document.getElementById('grove');
     const savedData = loadFromStorage();
@@ -249,35 +279,7 @@ function updateCounter() {
         }, null, { enableHighAccuracy: true });
     }
 
-  window.toggleFly = (id) => {
-    // 1. Initialize 'f' if it doesn't exist for this tree yet
-    if (treeData[id].f === undefined) {
-        treeData[id].f = false;
-    }
-
-    // 2. Toggle the boolean value
-    treeData[id].f = !treeData[id].f;
-
-    // 3. Update the UI immediately
-    const btn = document.getElementById(`f-${id}`);
-    if (btn) {
-        // 'active-A' uses the gold variable defined in your root CSS
-        if (treeData[id].f) {
-            btn.classList.add('active-A');
-        } else {
-            btn.classList.remove('active-A');
-        }
-    }
-
-    // 4. Persist to local storage so it survives a refresh
-    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
-};
-    // UI Updates
-    document.getElementById(`b-${id}`).innerText = isDone ? "Done" : "Spray";
-    document.getElementById(`c-${id}`).classList.toggle('sprayed');
-    localStorage.setItem('field_data_v1', JSON.stringify(treeData));
-    updateCounter();
-};
+  
         window.cyc = (id, k) => {
             treeData[id][k] = (treeData[id][k] + 1) % 4;
             const val = treeData[id][k];
