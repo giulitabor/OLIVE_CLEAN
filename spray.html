@@ -111,15 +111,19 @@
         function saveToStorage() {
             localStorage.setItem('field_data_v1', JSON.stringify(treeData));
         }
-
-        async function fetchWeather() {
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
-                const data = await res.json();
-                document.getElementById('w-temp').innerText = data.current_weather.temperature + "°C";
-                document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
-            } catch (e) { console.log("Offline: No Weather"); }
-        }
+async function fetchWeather() {
+    try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°C";
+        document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
+    } catch (e) {
+        console.log("Weather offline: using cached or null values");
+        document.getElementById('w-temp').innerText = "Offline";
+        document.getElementById('w-hum').innerText = "--%";
+    }
+}
 
         window.toggleGPS = (cb) => {
             const display = document.getElementById('gps-display');
