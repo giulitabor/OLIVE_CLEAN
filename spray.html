@@ -178,16 +178,34 @@ function init() {
                 const card = document.createElement('div');
                 card.id = `c-${id}`;
                 card.className = "tree-card" + (treeData[id].s ? " sprayed" : "");
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="card-id">#${id}</span>
-                        <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">${treeData[id].s ? "Done" : "Spray"}</button>
-                    </div>
-                    <div class="cycle-box">
-                        <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
-                        <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
-                        <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
-                    </div>`;
+                // Inside the init() function of spray2.html, replace the card.innerHTML section:
+
+card.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="card-id">#${id}</span>
+        <div style="display:flex; gap:4px; align-items:center;">
+            <button onclick="toggleFly(${id})" id="f-${id}" 
+                class="btn-cycle ${treeData[id].f ? 'active-A' : ''}" 
+                style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; padding:0; font-size:16px; border:1px solid #333;">
+                🦟
+            </button>
+            
+            <button onclick="mark(${id})" id="b-${id}" class="spray-toggle">
+                ${treeData[id].s ? "Done" : "Spray"}
+            </button>
+        </div>
+    </div>
+    <div class="cycle-box" style="margin-top:8px;">
+        <button onclick="cyc(${id},'m')" id="m-${id}" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">
+            ${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}
+        </button>
+        <button onclick="cyc(${id},'p')" id="p-${id}" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">
+            ${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}
+        </button>
+        <button onclick="cyc(${id},'o')" id="o-${id}" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">
+            ${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}
+        </button>
+    </div>`;
                 document.getElementById(`g-${r}`).appendChild(card);
                 treeID++;
             }
