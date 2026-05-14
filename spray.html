@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Field Ops — Villa Toscagialla</title>
+    <style>
+        :root {
+            --gold: #C5A059;
+            --dusk: #050505;
+            --blue: #3b82f6;
+            --olive: #5a7a2b;
+            --brown: #8a6d3b;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #000;
+            color: #f5eed8;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-bottom: 180px;
+        }
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0.96);
+            border-bottom: 1px solid #222;
+            padding: 14px;
+        }
+        .header-top, .header-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-bottom {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #111;
+        }
+        .title {
+            margin: 0;
+            color: var(--gold);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 7px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn.blue {
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        /* GPS ACCURACY SWITCH */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #333;
+            border-radius: 20px;
+            transition: .3s;
+            cursor: pointer;
+        }
+        .slider:before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .3s;
+        }
+        input:checked + .slider {
+            background: var(--gold);
+        }
+        input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+
+        /* CANVAS CONTAINER */
+        .wrapper {
+            overflow: auto;
+            padding: 20px;
+        }
+        .canvas {
+            width: max-content;
+            padding: 10px;
+        }
+        .row-container {
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.01);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #111;
+        }
+        .row-label {
+            font-size: 11px;
+            color: var(--gold);
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            border-left: 3px solid var(--gold);
+            padding-left: 8px;
+        }
+
+        /* Strict 14-Column Layout Sourced directly from look2.html Matrix Dimensions */
+        .tree-grid {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 6px;
+        }
+
+        /* ACTION OPERATIONAL CARDS */
+        .tree-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 76px;
+        }
+        .tree-card.empty {
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .tree-card.sprayed {
+            border-color: var(--blue);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        /* Genesis Initial 3-Tree Variant Layouts */
+        .tree-card.genesis {
+            border-color: var(--gold);
+            background: linear-gradient(145deg, #16120a, #111);
+        }
+        .tree-card.genesis .card-id {
+            color: #fff;
+            text-shadow: 0 0 4px var(--gold);
+        }
+
+        .card-id {
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--gold);
+        }
+        .spray-toggle {
+            background: transparent;
+            border: 1px solid #333;
+            color: #777;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .sprayed .spray-toggle {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: white;
+        }
+
+        .cycle-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+        }
+        .btn-cycle {
+            background: #222;
+            border: none;
+            color: #555;
+            font-size: 9px;
+            padding: 8px 0;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+        }
+        .active-S { background: var(--brown) !important; color: white !important; }
+        .active-M { background: var(--olive) !important; color: white !important; }
+        .active-A { background: var(--gold) !important; color: black !important; font-weight: bold; }
+
+        /* FIXED SYSTEM FOOTER */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #000;
+            border-top: 1px solid #222;
+            padding: 15px;
+            z-index: 1000;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+        }
+        .box {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        .small {
+            font-size: 10px;
+            opacity: .6;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-top">
+        <div>
+            <h1 class="title">Villa Toscagialla Matrix</h1>
+            <div id="counter" class="small">0 / 0 Sprayed</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+            <span>GPS</span>
+            <label class="switch">
+                <input type="checkbox" id="gps-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="header-bottom">
+        <div class="small">
+            <span id="w-temp">--°C</span> | <span id="w-hum">--%</span> | <span id="gps-display" style="color:#ff4444;">GPS OFF</span>
+        </div>
+        <div>
+            <button class="btn" id="export-btn">EXPORT</button>
+            <button class="btn blue" id="import-btn">IMPORT</button>
+            <input type="file" id="file-input" hidden />
+        </div>
+    </div>
+</header>
+
+<div class="wrapper">
+    <div class="canvas" id="canvas"></div>
+</div>
+
+<footer>
+    <div class="legend">
+        <div class="legend-item"><div class="box" style="border: 1px solid var(--blue); background: rgba(59,130,246,0.2);"></div> Sprayed</div>
+        <div class="legend-item"><div class="box" style="background: var(--brown);"></div> S: Sparse</div>
+        <div class="legend-item"><div class="box" style="background: var(--olive);"></div> M: Medium</div>
+        <div class="legend-item"><div class="box" style="background: var(--gold);"></div> A: Abundant</div>
+    </div>
+    <div style="font-size: 9px; opacity: 0.4; text-align: center; margin-top: 4px;">M: Mignola | P: Preflower | O: Olives</div>
+</footer>
+
+<script>
+    const G='g', Y='y', R='r', B='b', E='e';
+    const levels = ["-", "S", "M", "A"];
+    let gpsWatch = null;
+
+    // Direct structural layout matching look2.html with corrections included
+    const grid = [
+        [Y,Y,G,R,Y,R,G,Y,Y,Y,Y,R,R,Y], // Row 1
+        [B,B,Y,Y,B,E,E,G,B,B,Y,Y,R,Y], // Row 2
+        [B,Y,B,Y,G,E,E,Y,G,G,Y,Y,Y,Y], // Row 3
+        [B,Y,Y,Y,B,G,G,G,G,Y,R,Y,Y,B], // Row 4
+        [Y,Y,B,B,G,G,G,G,R,B,Y,Y,B,B], // Row 5
+        [G,G,G,G,G,G,R,R,G,G,G,G,G,G], // Row 6
+        [Y,Y,R,G,G,G,G,G,G,G,G,G,G,Y], // Row 7
+        [G,G,G,G,G,G,G,Y,Y,G,G,G,G,G], // Row 8
+        [G,G,G,G,G,G,R,G,G,G,G,G,G,G], // Row 9
+        [Y,Y,G,G,G,G,G,G,G,G,G,G,G,E], // Row 10
+        [Y,G,G,G,G,G,G,G,G,G,G,G,E,G], // Row 11 (Modified: column 13 changed from E to G)
+        [G,G,G,G,G,G,G,Y,G,G,G,G,G,G], // Row 12
+        [G,G,G,G,G,G,G,G,E,E,E,E,E,E], // Row 13
+        [G,G,G,G,G,G,G,G,E,E,E,E,E,E], // Row 14
+        [G,G,G,G,G,G,Y,G,E,E,E,E,E,E], // Row 15
+        [G,G,G,G,G,G,G,G,E,E,E,E,E,E], // Row 16
+        [G,G,G,G,G,G,G,G,E,E,E,E,E,E], // Row 17
+        [G,G,G,Y,G,G,G,G,E,E,E,E,E,E], // Row 18
+        [E,G,G,E,E,E,G,G,E,E,E,E,E,E], // Row 19
+        [E,E,E,E,B,E,G,E,E,E,E,E,E,E], // Row 20
+        [G,G,E,G,E,G,G,G,E,E,E,E,E,E]  // Row 21
+    ];
+
+    let treeData = {};
+    const canvas = document.getElementById('canvas');
+
+    function render() {
+        canvas.innerHTML = '';
+        let globalTreeId = 1;
+
+        grid.forEach((rowData, rowIndex) => {
+            const rowContainer = document.createElement('div');
+            rowContainer.className = 'row-container';
+            rowContainer.innerHTML = `<div class="row-label">Row ${rowIndex + 1}</div>`;
+
+            const treeGrid = document.createElement('div');
+            treeGrid.className = 'tree-grid';
+
+            rowData.forEach((cell) => {
+                const card = document.createElement('div');
+                card.className = 'tree-card';
+
+                if (cell === E) {
+                    card.classList.add('empty');
+                } else {
+                    const id = globalTreeId;
+                    globalTreeId++;
+
+                    if (!treeData[id]) {
+                        treeData[id] = { sprayed: false, m: 0, p: 0, o: 0 };
+                    }
+
+                    if (treeData[id].sprayed) card.classList.add('sprayed');
+                    if (id <= 3) card.classList.add('genesis');
+
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="card-id">#${id}</span>
+                            <button onclick="toggleSpray(event, ${id}, this)" class="spray-toggle">
+                                ${treeData[id].sprayed ? "Done" : "Spray"}
+                            </button>
+                        </div>
+                        <div class="cycle-box">
+                            <button onclick="cycleValue(event, ${id}, 'm', this)" class="btn-cycle ${treeData[id].m > 0 ? 'active-'+levels[treeData[id].m] : ''}">${treeData[id].m > 0 ? levels[treeData[id].m] : 'M'}</button>
+                            <button onclick="cycleValue(event, ${id}, 'p', this)" class="btn-cycle ${treeData[id].p > 0 ? 'active-'+levels[treeData[id].p] : ''}">${treeData[id].p > 0 ? levels[treeData[id].p] : 'P'}</button>
+                            <button onclick="cycleValue(event, ${id}, 'o', this)" class="btn-cycle ${treeData[id].o > 0 ? 'active-'+levels[treeData[id].o] : ''}">${treeData[id].o > 0 ? levels[treeData[id].o] : 'O'}</button>
+                        </div>
+                    `;
+                }
+                treeGrid.appendChild(card);
+            });
+
+            rowContainer.appendChild(treeGrid);
+            canvas.appendChild(rowContainer);
+        });
+
+        updateCounter();
+    }
+
+    window.toggleSpray = (e, id, btn) => {
+        e.stopPropagation();
+        const isSprayed = !treeData[id].sprayed;
+        treeData[id].sprayed = isSprayed;
+
+        const card = btn.closest('.tree-card');
+        if (isSprayed) {
+            card.classList.add('sprayed');
+            btn.innerText = "Done";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    treeData[id].gps = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                        acc: pos.coords.accuracy
+                    };
+                    treeData[id].timestamp = new Date().toISOString();
+                    save();
+                }, null, { enableHighAccuracy: true });
+            }
+        } else {
+            card.classList.remove('sprayed');
+            btn.innerText = "Spray";
+            if (treeData[id].gps) delete treeData[id].gps;
+            if (treeData[id].timestamp) delete treeData[id].timestamp;
+        }
+
+        save();
+        updateCounter();
+    };
+
+    window.cycleValue = (e, id, key, btn) => {
+        e.stopPropagation();
+        treeData[id][key] = ((treeData[id][key] || 0) + 1) % 4;
+        const val = treeData[id][key];
+
+        btn.innerText = val === 0 ? key.toUpperCase() : levels[val];
+        btn.className = `btn-cycle ${val > 0 ? 'active-' + levels[val] : ''}`;
+
+        save();
+    };
+
+    function save() {
+        localStorage.setItem('olive_tracker_walk_data', JSON.stringify({ treeData }));
+    }
+
+    function load() {
+        const saved = localStorage.getItem('olive_tracker_walk_data');
+        if (saved) {
+            const data = JSON.parse(saved);
+            treeData = data.treeData || {};
+        }
+    }
+
+    function updateCounter() {
+        let total = 0;
+        grid.forEach(r => r.forEach(c => { if (c !== E) total++; }));
+        const sprayed = Object.values(treeData).filter(t => t.sprayed).length;
+        document.getElementById('counter').innerText = `${sprayed} / ${total} Sprayed`;
+    }
+
+    document.getElementById('gps-toggle').addEventListener('change', (e) => {
+        const display = document.getElementById('gps-display');
+        if (e.target.checked) {
+            gpsWatch = navigator.geolocation.watchPosition((pos) => {
+                display.innerText = `±${Math.round(pos.coords.accuracy)}m`;
+                display.style.color = '#10b981';
+            }, null, { enableHighAccuracy: true });
+        } else {
+            navigator.geolocation.clearWatch(gpsWatch);
+            display.innerText = 'GPS OFF';
+            display.style.color = '#ff4444';
+        }
+    });
+
+    document.getElementById('export-btn').onclick = () => {
+        const blob = new Blob([JSON.stringify({ treeData }, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `olive_field_walk_${Date.now()}.json`;
+        a.click();
+    };
+
+    document.getElementById('import-btn').onclick = () => document.getElementById('file-input').click();
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const imported = JSON.parse(ev.target.result);
+                treeData = imported.treeData || {};
+                save();
+                render();
+                alert('Import successful');
+            } catch (err) {
+                alert('Invalid JSON File');
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    async function fetchWeather() {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=43.05&longitude=10.54&current_weather=true&relative_humidity_2m=true`);
+            const data = await res.json();
+            document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°C";
+            document.getElementById('w-hum').innerText = data.hourly.relative_humidity_2m[0] + "%";
+        } catch (e) {}
+    }
+
+    load();
+    render();
+    fetchWeather();
+</script>
+
+</body>
+</html>
