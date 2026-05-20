@@ -19,63 +19,41 @@ interface Tree {
 /* =========================================================
    UPDATE SHARES
 ========================================================= */
-
 (window as any).updateShares = async () => {
 
+  const hiddenInput = document.getElementById("shareInput") as HTMLInputElement | null;
+  if (!hiddenInput) return;
+
   const shares = Number(hiddenInput.value) || 1;
-console.log("WEE HERE");
+
   const euroPerShare = 12.40;
 
-// Calculate EUR first
-const totalEuro = shares * euroPerShare;
+  const totalEuro = shares * euroPerShare;
 
-// Fetch live SOL price
-const solPrice = await getSolPriceEUR();
+  const solPrice = await getSolPriceEUR();
 
-// Convert EUR → SOL
-const totalSol = totalEuro / solPrice;
-// TIER SOL PRICE UPDATES
-const starterSolEl =
-  document.getElementById("starter-sol-price");
+  const totalSol = totalEuro / solPrice;
 
-const keeperSolEl =
-  document.getElementById("keeper-sol-price");
+  const isCryptoMode = paymentMode === "crypto";
 
-const fullTreeSolEl =
-  document.getElementById("fulltree-sol-price");
+  const starterSolEl = document.getElementById("starter-sol-price");
+  const keeperSolEl = document.getElementById("keeper-sol-price");
+  const fullTreeSolEl = document.getElementById("fulltree-sol-price");
 
-// SHARE COUNTS
-const starterShares = 10;
-const keeperShares = 100;
-const fullTreeShares = 1000;
+  const starterShares = 10;
+  const keeperShares = 100;
+  const fullTreeShares = 1000;
 
-// CALCULATIONS
-const starterSol =
-  (starterShares * euroPerShare) / solPrice;
+  const starterSol = (starterShares * euroPerShare) / solPrice;
+  const keeperSol = (keeperShares * euroPerShare) / solPrice;
+  const fullTreeSol = (fullTreeShares * euroPerShare) / solPrice;
 
-const keeperSol =
-  (keeperShares * euroPerShare) / solPrice;
+  if (starterSolEl) starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
+  if (keeperSolEl) keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
+  if (fullTreeSolEl) fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
 
-const fullTreeSol =
-  (fullTreeShares * euroPerShare) / solPrice;
+};
 
-// UPDATE UI
-if (starterSolEl) {
-  starterSolEl.innerText =
-    `~${starterSol.toFixed(2)} SOL`;
-}
-
-if (keeperSolEl) {
-  keeperSolEl.innerText =
-    `~${keeperSol.toFixed(2)} SOL`;
-}
-
-if (fullTreeSolEl) {
-  fullTreeSolEl.innerText =
-    `~${fullTreeSol.toFixed(2)} SOL`;
-}
-
- 
 /* =========================================================
    PAYMENT SELECTOR
 ========================================================= */
