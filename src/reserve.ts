@@ -485,3 +485,4 @@ window.addEventListener("DOMContentLoaded", async () => {
 
  // initPaymentSelector();
  await updateShares();
+  }
