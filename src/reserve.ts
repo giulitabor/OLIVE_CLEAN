@@ -939,11 +939,6 @@ async function syncVillaUI() {
             if (navIdentityDisplay) navIdentityDisplay.innerText = "PARSE_ERROR";
         }
     }
-
-    // Fetch tier info and update nav-tier-label with actual tier
-    if (window.updateVillaStayUI) {
-        await window.updateVillaStayUI();
-
         // After updateVillaStayUI runs, update nav-tier-label with tier name
         const tierNameEl = document.getElementById("tier-name");
         if (tierNameEl && nav-tier-label && activeSessionData) {
@@ -2062,10 +2057,6 @@ if (creditsCountDisplay) {
 window.addEventListener("solana:connection-complete", async () => {
   console.log("[SYNC EVENT] Blockchain initialized. Regenerating all UI components...");
 
-  // Update all UI components in sequence
-  await updateWalletUI();
-  await updateStatsUI();
-  await updateVillaStayUI();
 
   // Reload tree grid if "My Grove" filter is active
   const activeFilter = document.querySelector(".filter-btn.active") as HTMLElement | null;
