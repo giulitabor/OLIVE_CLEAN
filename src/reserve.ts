@@ -945,7 +945,6 @@ async function syncVillaUI() {
             navtierlabel.innerText = tierNameEl.innerText || "Standard Account";
         }
     }
-}
 function renderMyTreesFromPositions(positions: any[]) {
   const container = document.getElementById("treeGrid");
   if (!container) return;
