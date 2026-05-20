@@ -16,15 +16,6 @@ interface Tree {
   variety?: string;
 }
 
-let selectedTree: Tree | null = null;
-let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
-/* =========================================================
-   WAIT FOR PROGRAM
-========================================================= */
-
-  (window as any).updateShares();
-};
-
 /* =========================================================
    UPDATE SHARES
 ========================================================= */
