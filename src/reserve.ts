@@ -1081,36 +1081,6 @@ window.setFilter = function(type) {
 ========================================================= */
 
 (window as any).updateShares = async () => {
-    const hiddenInput = document.getElementById(
-    "shareInput"
-  ) as HTMLInputElement | null;
-
-  const shareValueDisplay =
-    document.getElementById("shareValue");
-
-  const priceDisplay =
-    document.getElementById("priceDisplay");
-
-  const priceSub =
-    document.getElementById("priceSub");
-
-  const adoptBtn = document.getElementById(
-    "adoptBtn"
-  ) as HTMLButtonElement | null;
-
-  const connectBtn = document.getElementById(
-    "connectWalletBtn"
-  ) as HTMLButtonElement | null;
-
-  if (!hiddenInput) return;
-
-  const provider =
-    (window as any)._provider ||
-    (window as any).provider;
-
-  const pubKey =
-    provider?.wallet?.publicKey ||
-    (window as any).walletPubKey;
 
   const shares = Number(hiddenInput.value) || 1;
 
@@ -1165,117 +1135,7 @@ if (fullTreeSolEl) {
     `~${fullTreeSol.toFixed(2)} SOL`;
 }
 
-  const isCryptoMode = paymentMode === "crypto";
-
-  const isSoldOut =
-    adoptBtn?.innerText === "Sold Out";
-
-  // SHARE DISPLAY
-  if (shareValueDisplay) {
-    shareValueDisplay.innerText =
-      shares.toLocaleString();
-  }
-
-  // PRICE DISPLAY
-  if (priceDisplay) {
-    if (isCryptoMode) {
-      priceDisplay.innerHTML = `
-        ◎ ${totalSol.toFixed(2)}
-        <span style="font-size:0.6em;font-weight:normal;">
-          SOL
-        </span>
-      `;
-    } else {
-      priceDisplay.innerText =
-        `€${totalEuro.toLocaleString()}`;
-    }
-  }
-
-  // PRICE SUB
-  if (priceSub) {
-    if (isCryptoMode) {
-      priceSub.innerText =
-      `${shares} share${shares > 1 ? "s" : ""} × ◎ ${(euroPerShare / solPrice).toFixed(4)} SOL`;
-    } else {
-      priceSub.innerText =
-        `${shares} share${shares > 1 ? "s" : ""} × €${euroPerShare}`;
-    }
-  }
-
-  // CRYPTO MODE
-  if (isCryptoMode) {
-    if (!isSoldOut) {
-      if (pubKey) {
-        if (connectBtn) {
-          const addr = pubKey.toString();
-
-          connectBtn.style.display = "block";
-          connectBtn.style.background = "#eef0eb";
-          connectBtn.style.color = "#1f402a";
-
-          connectBtn.innerText =
-            `Connected: ${addr.slice(0, 4)}...${addr.slice(-4)} (✖)`;
-
-          connectBtn.onclick = async () => {
-            try {
-              await (window as any).disconnectWallet();
-            } catch (err) {
-              console.error(err);
-            }
-
-            (window as any).updateShares();
-          };
-        }
-
-        if (adoptBtn) {
-          adoptBtn.style.display = "block";
-        }
-      } else {
-        if (connectBtn) {
-          connectBtn.style.display = "block";
-          connectBtn.style.background = "var(--green)";
-          connectBtn.style.color = "white";
-
-          connectBtn.innerText = "Connect Wallet";
-
-          connectBtn.onclick = async () => {
-            try {
-              await (window as any).connectWallet();
-              const positions = await (window as any).loadUserTreePositions?.();
-
-              await renderMyTreesFromPositions(positions);
-              console.log(positions);
-
-              connectBtn.style.background = "var(--red)";
-
-              connectBtn.innerText = "Disconnect Wallet";
-
-
-            } catch (err) {
-              console.error(err);
-            }
-
-            (window as any).updateShares();
-          };
-        }
-
-        if (adoptBtn) {
-          adoptBtn.style.display = "none";
-        }
-      }
-    }
-  } else {
-    // FIAT MODE
-    if (connectBtn) {
-      connectBtn.style.display = "none";
-    }
-
-    if (!isSoldOut && adoptBtn) {
-      adoptBtn.style.display = "block";
-    }
-  }
-};
-
+ 
 /* =========================================================
    PAYMENT SELECTOR
 ========================================================= */
@@ -2072,7 +1932,8 @@ window.addEventListener("solana:connection-complete", async () => {
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("[INIT] Initializing application...");
 
-  initPaymentSelector();
+ // initPaymentSelector();
+ await updateShares();
 
   document.querySelectorAll(".payment-option").forEach((option) => {
 
