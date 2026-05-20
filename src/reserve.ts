@@ -1752,6 +1752,11 @@ const emailBtn =
 
 
 (window as any).loadUserTreePositions = async function () {
+  
+  if (!_program) {
+    console.warn("Program unavailable");
+    return;
+  }
   const program = (window as any)._program;
   const wallet = (window as any).solana;
 
