@@ -1083,7 +1083,7 @@ window.setFilter = function(type) {
 (window as any).updateShares = async () => {
 
   const shares = Number(hiddenInput.value) || 1;
-
+console.log("WEE HERE");
   const euroPerShare = 12.40;
 
 // Calculate EUR first
@@ -1930,7 +1930,7 @@ window.addEventListener("solana:connection-complete", async () => {
 
 // Single DOM initialization handler
 window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[INIT] Initializing application...");
+  console.log("[INIT] Initializing application..JUST SHOW CORREST SOL PRICE.");
 
  // initPaymentSelector();
  await updateShares();
