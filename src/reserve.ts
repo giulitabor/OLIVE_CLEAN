@@ -2081,19 +2081,8 @@ window.addEventListener("solana:connection-complete", async () => {
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("[INIT] Initializing application...");
 
-  // Initialize UI components
-  initFilters();
   initPaymentSelector();
 
-  // Load wallet and data from cache/providers
-  initWalletOnLoad();
-  loadTrees();
-
-
-    // Load all UI components on initial page load
-    await updateWalletUI();
-    await updateStatsUI();
-    await updateVillaStayUI();
   document.querySelectorAll(".payment-option").forEach((option) => {
 
   option.addEventListener("click", () => {
