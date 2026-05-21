@@ -468,3 +468,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
 })();
+
+// Add this line at the bottom of reserve.ts to link the UI framework seamlessly
+(window as any).getSolPriceEUR = getSolPriceEUR;
