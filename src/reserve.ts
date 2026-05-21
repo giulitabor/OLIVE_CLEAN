@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 
 /* =========================================================
-   TYPES & INTERFACES
+   TYPES
 ========================================================= */
 
 interface Tree {
@@ -77,8 +77,9 @@ async function getSolPriceEUR(): Promise<number> {
 ========================================================= */
 
 async function updateShares(): Promise<void> {
-  console.log("[PRICING] updateShares firing");
+  console.log("updateShares firing");
   const solPrice = await getSolPriceEUR();
+  console.log("SOL PRICE:", solPrice);
 
   const starterSolEl = document.getElementById("starter-sol-price");
   const keeperSolEl = document.getElementById("keeper-sol-price");
@@ -93,129 +94,227 @@ async function updateShares(): Promise<void> {
   if (starterSolEl) starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
   if (keeperSolEl) keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
   if (fullTreeSolEl) fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
-  if (guardTreeSolEl) guardTreeSolEl.innerText = `~${guardTreeSol.toFixed(2)} SOL`;
+  if (guardTreeSolEl) guardTreeSolEl.innerText = `~${guardTreeSol.toFixed(2)} SOL`; 
 }
 
 /* =========================================================
-   DYNAMIC CONNECT TIER COUPLING
+   DYNAMIC TIER PURCHASE MODAL (CONNECT MODAL)
 ========================================================= */
 
 async function openTierPurchase(tierName: string, shares: number): Promise<void> {
+  console.log(`[MODAL] Initializing checkout layout for Tier: ${tierName}`);
   selectedPurchaseShares = shares;
-  const euroTotal = shares * EURO_PER_SHARE;
-  const solPrice = await getSolPriceEUR();
-  const solTotal = euroTotal / solPrice;
 
-  const tierNameEl = document.getElementById("selectedTierName");
-  const tierSharesEl = document.getElementById("selectedTierShares");
-  const tierSolEl = document.getElementById("selectedTierSol");
-  const tierEuroEl = document.getElementById("selectedTierEuro");
+  try {
+    const euroTotal = shares * EURO_PER_SHARE;
+    const solPrice = await getSolPriceEUR();
+    const solTotal = euroTotal / solPrice;
 
-  if (tierNameEl) tierNameEl.innerText = tierName;
-  if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
-  if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
-  if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
+    // Dom updates inside the connectModal layout
+    const tierNameEl = document.getElementById("selectedTierName");
+    const tierSharesEl = document.getElementById("selectedTierShares");
+    const tierSolEl = document.getElementById("selectedTierSol");
+    const tierEuroEl = document.getElementById("selectedTierEuro");
 
-  const shareInputEl = document.getElementById("shareInput") as HTMLInputElement | null;
-  if (shareInputEl) {
-    shareInputEl.value = shares.toString();
-  }
+    if (tierNameEl) tierNameEl.innerText = tierName;
+    if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
+    if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
+    if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
 
-  const connectModal = document.getElementById("connectModal");
-  if (connectModal) {
-    connectModal.style.display = "flex";
-    document.body.style.overflow = "hidden";
+    // Reveal container natively
+    const connectModal = document.getElementById("connectModal");
+    if (connectModal) {
+      connectModal.style.display = "flex";
+    }
+  } catch (err) {
+    console.error("[MODAL ERROR] Failed to compute purchase conversion:", err);
   }
 }
 
 function closeConnectModal(): void {
   const connectModal = document.getElementById("connectModal");
-  if (connectModal) {
-    connectModal.style.display = "none";
-    document.body.style.overflow = "auto";
-  }
+  if (connectModal) connectModal.style.display = "none";
 }
 
+// Attach event bindings to landing page tier selection layouts
+function initTierButtons(): void {
+  const tierButtons = document.querySelectorAll(".tier-select");
+  tierButtons.forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const target = e.currentTarget as HTMLElement;
+      const tier = target.dataset.tier || "Starter";
+      const shares = Number(target.dataset.shares || 10);
+      await openTierPurchase(tier, shares);
+    });
+  });
+
+  // Global overlay listener to close elements when backdrop clicked
+  window.addEventListener("click", (e) => {
+    const connectModal = document.getElementById("connectModal");
+    if (e.target === connectModal) {
+      closeConnectModal();
+    }
+  });
+}
+
+// Expose handlers to window if needed by HTML attributes
+(window as any).openTierPurchase = openTierPurchase;
+(window as any).closeConnectModal = closeConnectModal;
+
 /* =========================================================
-   MODAL INTERFACE INTERACTIVE HANDLERS
+   PAYMENT SELECTOR
 ========================================================= */
 
-function openLegal(): void {
-  const modal = document.getElementById("legalModal");
-  if (modal) {
-    modal.style.display = "flex";
-    document.body.style.overflow = "hidden";
-  }
-}
+function initPaymentSelector(): void {
+  const fiatOption = document.getElementById("fiatOption");
+  const cryptoOption = document.getElementById("cryptoOption");
 
-function closeLegal(): void {
-  const modal = document.getElementById("legalModal");
-  if (modal) {
-    modal.style.display = "none";
-    document.body.style.overflow = "auto";
-  }
-}
+  if (!fiatOption || !cryptoOption) return;
 
-function openRoadmap(): void {
-  const modal = document.getElementById("roadmapModal");
-  if (modal) {
-    modal.style.display = "flex";
-    document.body.style.overflow = "hidden";
-  }
-}
+  fiatOption.addEventListener("click", () => {
+    paymentMode = "fiat";
+    fiatOption.classList.add("active");
+    cryptoOption.classList.remove("active");
+    updateShares();
+  });
 
-function closeRoadmap(): void {
-  const modal = document.getElementById("roadmapModal");
-  if (modal) {
-    modal.style.display = "none";
-    document.body.style.overflow = "auto";
-  }
-}
-
-function toggleThemeMode(): void {
-  document.body.classList.toggle("light-mode");
-  const btn = document.getElementById("modeToggleBtn");
-  if (btn) {
-    btn.textContent = document.body.classList.contains("light-mode") ? "🌙 Dark Mode" : "☀️ Light Mode";
-  }
+  cryptoOption.addEventListener("click", () => {
+    paymentMode = "crypto";
+    cryptoOption.classList.add("active");
+    fiatOption.classList.remove("active");
+    updateShares();
+  });
 }
 
 /* =========================================================
-   FIAT PAYMENT & CHECKOUT
+   MODAL UTILITIES
+========================================================= */
+
+function randomFallback(): string {
+  return "https://via.placeholder.com/400x300?text=Olive+Tree";
+}
+
+/* =========================================================
+   AGREEMENT MODAL
+========================================================= */
+
+function openAgreement(): void {
+  if (!selectedTree) return;
+
+  document.body.style.overflow = "hidden";
+
+  const agreeImg = document.getElementById("agreeImage") as HTMLImageElement | null;
+  const fallback = randomFallback();
+
+  if (agreeImg) {
+    agreeImg.src = selectedTree.image_url || fallback;
+    agreeImg.onerror = () => {
+      agreeImg.src = fallback;
+    };
+  }
+
+  const agreeTitle = document.getElementById("agreeTitle");
+  if (agreeTitle) {
+    agreeTitle.innerText = `Adopting ${selectedTree.name || selectedTree.tree_id}`;
+  }
+
+  const details = {
+    agreeLocation: selectedTree.location || "Field F1",
+    agreeAge: selectedTree.age || "5",
+    agreeHeight: selectedTree.height || "1.5m",
+    agreeVariety: selectedTree.variety || "Frantoio",
+  };
+
+  Object.entries(details).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.innerText = value;
+  });
+
+  const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
+  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
+
+  if (checkbox && finalBtn) {
+    checkbox.checked = false;
+    finalBtn.disabled = true;
+    finalBtn.innerText = "Confirm & Pay";
+
+    checkbox.onchange = () => {
+      finalBtn.disabled = !checkbox.checked;
+    };
+  }
+
+  const selectionModal = document.getElementById("modalOverlay");
+  const agreementModal = document.getElementById("agreementModal");
+
+  if (selectionModal) selectionModal.style.display = "none";
+  if (agreementModal) agreementModal.style.display = "flex";
+}
+
+function closeAgreement(): void {
+  const agreementModal = document.getElementById("agreementModal");
+  const selectionModal = document.getElementById("modalOverlay");
+
+  if (agreementModal) agreementModal.style.display = "none";
+  if (selectionModal) selectionModal.style.display = "flex";
+}
+
+(window as any).openAgreement = openAgreement;
+(window as any).closeAgreement = closeAgreement;
+
+/* =========================================================
+   SUCCESS MODAL
+========================================================= */
+
+function closeSuccess(): void {
+  const successModal = document.getElementById("successModal");
+  if (successModal) successModal.style.display = "none";
+  document.body.style.overflow = "";
+}
+
+(window as any).closeSuccess = closeSuccess;
+
+/* =========================================================
+   FIAT PAYMENT
 ========================================================= */
 
 async function startMollieCheckout(): Promise<void> {
   console.log("[PAYMENT] Starting Mollie checkout");
+
   try {
-    const shareInput = document.getElementById("shareInput") as HTMLInputElement | null;
-    if (!shareInput) throw new Error("Share input parameter element not located.");
+    const shareInput = document.getElementById("shareInput") as HTMLInputElement;
+    if (!shareInput) throw new Error("Share input not found");
 
     const shares = Number(shareInput.value);
+
     const response = await fetch("http://localhost:3000/create-mollie-payment", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         shares,
-        treeId: selectedTree?.tree_id || null,
-        treeName: selectedTree?.name || null,
+        treeId: selectedTree?.tree_id,
+        treeName: selectedTree?.name,
         userEmail: (window as any).OliviumAuth?.user?.email || null,
       }),
     });
 
     const data = await response.json();
+
     if (data.checkoutUrl) {
       window.location.href = data.checkoutUrl;
     } else {
-      alert("Failed to build settlement processing redirect.");
+      alert("Failed to create payment");
     }
   } catch (err) {
-    console.error("[PAYMENT] Checkout fault:", err);
-    alert("Payment runtime target exception.");
+    console.error("[PAYMENT] Error:", err);
+    alert("Payment server error");
   }
 }
 
 /* =========================================================
-   BLOCKCHAIN TRANSACTION EXECUTION
+   BLOCKCHAIN TRANSACTION
 ========================================================= */
 
 async function processBlockchainTx(): Promise<void> {
@@ -255,12 +354,21 @@ async function processBlockchainTx(): Promise<void> {
       [Buffer.from("tree"), Buffer.from(selectedTree.tree_id)],
       program.programId
     );
+
     const [positionPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("position"), buyerPublicKey.toBuffer(), Buffer.from(selectedTree.tree_id)],
       program.programId
     );
-    const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
-    const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("treasury")], program.programId);
+
+    const [protocolPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("protocol")],
+      program.programId
+    );
+
+    const [treasuryPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("treasury")],
+      program.programId
+    );
 
     const ix = await program.methods
       .purchaseShares(selectedTree.tree_id, amount)
@@ -315,154 +423,20 @@ async function processBlockchainTx(): Promise<void> {
   }
 }
 
-/* =========================================================
-   ANIMATION INTERSECTION OBSERVERS & COUNTERS
-========================================================= */
-
-function animateCounter(id: string, target: number): void {
-  const element = document.getElementById(id);
-  if (!element) return;
-  let current = 0;
-  const increment = target / 100;
-  const timer = setInterval(() => {
-    current += increment;
-    if (current >= target) {
-      element.textContent = target.toLocaleString();
-      clearInterval(timer);
-    } else {
-      element.textContent = Math.floor(current).toLocaleString();
-    }
-  }, 20);
-}
+(window as any).processBlockchainTx = processBlockchainTx;
 
 /* =========================================================
-   DOM EVENT HOOKS RUNTIME BINDING
+   KEYBOARD SHORTCUTS
 ========================================================= */
 
-window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[INIT] Initializing Olivium execution space...");
-
-  // Update real-time pricing indicators immediately
-  await updateShares();
-
-  // Mode Toggler Action
-  const themeToggle = document.getElementById("modeToggleBtn");
-  if (themeToggle) themeToggle.addEventListener("click", toggleThemeMode);
-
-  // Dynamic Tabs Controller Action
-  const tabLinks = document.querySelectorAll(".tab-link");
-  tabLinks.forEach(link => {
-    link.addEventListener("click", (e) => {
-      const target = e.currentTarget as HTMLElement;
-      const targetTabName = target.dataset.tab;
-      if (!targetTabName) return;
-
-      const tabContents = document.getElementsByClassName("tab-content");
-      for (let i = 0; i < tabContents.length; i++) {
-        (tabContents[i] as HTMLElement).style.display = "none";
-        tabContents[i].classList.remove("active");
-      }
-
-      tabLinks.forEach(tL => tL.classList.remove("active"));
-
-      const targetTab = document.getElementById(targetTabName);
-      if (targetTab) {
-        targetTab.style.display = "block";
-        targetTab.classList.add("active");
-      }
-      target.classList.add("active");
-    });
-  });
-
-  // Sticky Scrolled Navbar Transition
-  const navbar = document.getElementById("navbar");
-  window.addEventListener("scroll", () => {
-    if (navbar) {
-      if (window.scrollY > 100) navbar.classList.add("scrolled");
-      else navbar.classList.remove("scrolled");
-    }
-  });
-
-  // Dynamic Tier Card Interceptor Click Selection Bindings
-  const tierButtons = document.querySelectorAll(".tier-select");
-  tierButtons.forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const target = e.currentTarget as HTMLElement;
-      const tier = target.dataset.tier || "Starter";
-      const shares = Number(target.dataset.shares || 10);
-      await openTierPurchase(tier, shares);
-    });
-  });
-
-  // Smooth Navigation Layout Scrolling Interceptor
-  document.querySelectorAll('a[href^="#"]:not(.tier-select)').forEach(anchor => {
-    anchor.addEventListener("click", function (this: HTMLAnchorElement, e) {
-      e.preventDefault();
-      const hash = this.getAttribute("href");
-      if (hash) {
-        const target = document.querySelector(hash);
-        if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
-
-  // Legal Modal Triggers
-  document.getElementById("openLegalDisclosure")?.addEventListener("click", openLegal);
-  document.getElementById("openLegalTerms")?.addEventListener("click", openLegal);
-  document.getElementById("closeLegalBtn")?.addEventListener("click", closeLegal);
-
-  // Roadmap Modal Triggers
-  document.getElementById("openRoadmapFooter")?.addEventListener("click", openRoadmap);
-  document.getElementById("closeRoadmapHeaderBtn")?.addEventListener("click", closeRoadmap);
-  document.getElementById("closeRoadmapFooterBtn")?.addEventListener("click", closeRoadmap);
-  document.getElementById("closeConnectModalBtn")?.addEventListener("click", closeConnectModal);
-
-  // Global Overlay Click Closures
-  window.addEventListener("click", (e: MouseEvent) => {
-    const legalModal = document.getElementById("legalModal");
-    const roadmapModal = document.getElementById("roadmapModal");
-    const connectModal = document.getElementById("connectModal");
-
-    if (e.target === legalModal) closeLegal();
-    if (e.target === roadmapModal) closeRoadmap();
-    if (e.target === connectModal) closeConnectModal();
-  });
-
-  // Register Entry View Animation Observers
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) entry.target.classList.add("visible");
-    });
-  }, { threshold: 0.1, rootMargin: "0px 0px -100px 0px" });
-
-  document.querySelectorAll(".fade-in").forEach(el => observer.observe(el));
-
-  // Run Simulated Staking Counter Countdown 
-  setTimeout(() => animateCounter("staked-olv", 125000), 1000);
-
-  console.log("[INIT] Application context fully mapped and active.");
-});
-
-/* =========================================================
-   KEYBOARD CONTROLLER INTERCEPTIONS
-========================================================= */
-
-window.addEventListener("keydown", (e: KeyboardEvent) => {
+window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
 
   const agreementModal = document.getElementById("agreementModal");
   const selectionModal = document.getElementById("modalOverlay");
-  const connectModal = document.getElementById("connectModal");
 
   if (agreementModal && agreementModal.style.display === "flex") {
-    const agreementModalEl = document.getElementById("agreementModal");
-    if (agreementModalEl) agreementModalEl.style.display = "none";
-    const modalOverlayEl = document.getElementById("modalOverlay");
-    if (modalOverlayEl) modalOverlayEl.style.display = "flex";
-  } else if (connectModal && connectModal.style.display === "flex") {
-    closeConnectModal();
+    closeAgreement();
   } else if (selectionModal && selectionModal.style.display === "flex") {
     if (typeof (window as any).closeModal === "function") {
       (window as any).closeModal();
@@ -471,10 +445,24 @@ window.addEventListener("keydown", (e: KeyboardEvent) => {
 });
 
 /* =========================================================
-   GLOBAL CONTEXT WORKSPACE BRIDGE EXPORTS
+   INITIALIZATION
 ========================================================= */
 
-(window as any).processBlockchainTx = processBlockchainTx;
-(window as any).startMollieCheckout = startMollieCheckout;
-(window as any).openTierPurchase = openTierPurchase;
-(window as any).closeConnectModal = closeConnectModal;
+window.addEventListener("DOMContentLoaded", async () => {
+  console.log("[INIT] Initializing Olivium application...");
+  
+  // Bind events to UI elements on load
+  initTierButtons();
+
+  await updateShares();
+  console.log("[INIT] Application ready");
+});
+
+(async () => {
+  console.log("[BOOT] Running immediate pricing init");
+  try {
+    await updateShares();
+  } catch (err) {
+    console.error("[BOOT ERROR]", err);
+  }
+})();
