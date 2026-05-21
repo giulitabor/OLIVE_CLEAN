@@ -1,5 +1,5 @@
 :root {
-    /* Crypto Version - Dark Mode */
+    /* Crypto Version - Dark Mode (Default) */
     --gold: #C5A059;
     --charcoal: #0A0A0A;
     --card-bg: #141414;
@@ -7,7 +7,7 @@
     --text: #ddd;
     --text-muted: #888;
     
-    /* Lifestyle Version - Light Mode Default References */
+    /* Lifestyle Version - Light Mode */
     --olive-dark: #4A5D3E;
     --olive-medium: #6B7F5A;
     --olive-pale: #E8EFE3;
@@ -15,7 +15,7 @@
     --terracotta: #C86B4A;
     --soft: #f4f4f4;
 
-    /* Fonts */
+    /* Typography Global References */
     --serif: 'Cormorant Garamond', serif;
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Inter', sans-serif;
@@ -28,7 +28,7 @@
 }
 
 /* =========================================================
-   CORE THEME LAYOUTS & DUAL MODE SYSTEM
+   CORE BODY & THEME LAYER OVERRIDES
 ========================================================= */
 
 body {
@@ -52,7 +52,7 @@ body.light-mode {
 }
 
 /* =========================================================
-   HEADER, STATUS BAR & NAVBAR POSITIONING
+   NAVIGATION HEADERS & FIXED ALIGNMENTS
 ========================================================= */
 
 .status-bar {
@@ -90,7 +90,7 @@ body.light-mode .status-bar {
     justify-content: space-between;
     align-items: center;
     padding: 0 2rem;
-    background: rgba(10, 10, 10, 0.8);
+    background: rgba(10, 10, 10, 0.80);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
@@ -115,7 +115,7 @@ body.light-mode #navbar {
 }
 
 body.light-mode .tier-logo {
-    filter: invert(1) sepia(20%) saturate(1000%) hue-rotate(50deg);
+    filter: invert(34%) sepia(13%) saturate(992%) hue-rotate(51deg) brightness(96%) contrast(87%);
 }
 
 .nav-links {
@@ -168,7 +168,7 @@ body.light-mode .mode-toggle:hover {
 }
 
 /* =========================================================
-   GRID ENGINE FIXES
+   GRID ENGINEERING ENGINE
 ========================================================= */
 
 .grid-3 {
@@ -191,7 +191,7 @@ body.light-mode .mode-toggle:hover {
 }
 
 /* =========================================================
-   SECTION AND COMPONENT STRUCTURAL LAYOUTS
+   GLOBAL SECTION AND CONTAINER STYLING
 ========================================================= */
 
 section {
@@ -259,7 +259,7 @@ body.light-mode section h2 {
 body.light-mode .gold-text { color: var(--olive-dark) !important; }
 
 /* =========================================================
-   HERO SECTOR POSITIONING
+   HERO CONTAINER LAYOUT
 ========================================================= */
 
 .hero {
@@ -272,7 +272,7 @@ body.light-mode .gold-text { color: var(--olive-dark) !important; }
     text-align: center;
     position: relative;
     overflow: hidden;
-    padding-top: 112px;
+    padding-top: 112px; /* Standard 32px bar + 80px navbar height offset */
 }
 
 .hero-bg {
@@ -324,7 +324,7 @@ body.light-mode .hero h1 {
 }
 
 /* =========================================================
-   BUTTON SYSTEMS
+   BUTTON DESIGN SYSTEM
 ========================================================= */
 
 .btn {
@@ -386,19 +386,8 @@ body.light-mode .btn-secondary:hover {
     border-color: var(--olive-dark);
 }
 
-/* Generic Fallback Button Button styling */
-.btn:not(.btn-primary):not(.btn-secondary) {
-    background: transparent;
-    border: 1px solid var(--gold);
-    color: var(--gold);
-}
-.btn:not(.btn-primary):not(.btn-secondary):hover {
-    background: var(--gold);
-    color: #0A0A0A;
-}
-
 /* =========================================================
-   CARDS & TABS DEFINITIONS
+   CARDS & SYSTEM TAB LAYOUTS
 ========================================================= */
 
 .tech-card, .tier-card {
@@ -444,7 +433,6 @@ body.light-mode .tech-card h3, body.light-mode .tier-card h3 {
     line-height: 1.6;
 }
 
-/* Dynamic Ownership Tiers Adjustments */
 .tier-price {
     font-family: var(--mono);
     font-size: 1.5rem;
@@ -498,7 +486,7 @@ body.light-mode .tier-card.featured {
     width: 100%;
 }
 
-/* Tab Engine UI Components */
+/* Tabs Component UI Elements */
 .tabs-container {
     margin-top: 4rem;
 }
@@ -522,6 +510,7 @@ body.light-mode .tier-card.featured {
     opacity: 0.6;
     transition: all 0.3s ease;
     border-radius: 4px;
+    color: var(--text);
 }
 
 .tab-link.active, .tab-link:hover {
@@ -536,7 +525,7 @@ body.light-mode .tab-link.active, body.light-mode .tab-link:hover {
 }
 
 /* =========================================================
-   STATS ENGINE LAYOUT
+   STATISTICS TRACKER SUMMARY GRID
 ========================================================= */
 
 .stats-grid {
@@ -575,7 +564,7 @@ body.light-mode .stat-number {
 }
 
 /* =========================================================
-   MODALS AND THEME RECONCILIATION CODES
+   MODALS AND PROTOCOL WINDOWS
 ========================================================= */
 
 .modal-overlay {
@@ -651,7 +640,7 @@ body.light-mode .modal-description {
     opacity: 1;
 }
 
-/* Custom Dynamic Tier Container inside Authentication selection */
+/* High Contrast Payment Review Box Utilities */
 .selected-tier-box-fix {
     background: rgba(255, 255, 255, 0.03) !important;
     border: 1px solid var(--border) !important;
@@ -669,7 +658,7 @@ body.light-mode .selected-tier-box-fix {
     color: var(--olive-dark) !important;
 }
 
-/* Authentication Flex Alignment fixes */
+/* Auth Modal Element Options Flexboxes */
 .auth-options {
     display: flex;
     gap: 1.5rem;
@@ -745,7 +734,7 @@ body.light-mode .primary-btn {
 }
 
 /* =========================================================
-   ROADMAP MODAL COMPONENTS
+   ROADMAP MODAL ELEMENTS
 ========================================================= */
 
 .roadmap-container {
@@ -843,7 +832,7 @@ body.light-mode .roadmap-list li::before {
 }
 
 /* =========================================================
-   FOOTER SECTION
+   FOOTER STRUCTURES
 ========================================================= */
 
 footer {
@@ -940,4 +929,19 @@ body.light-mode .acknowledge-btn:hover {
 
 body.light-mode .mono-label {
     color: var(--olive-medium);
+}
+
+.live-feed {
+    position: fixed; 
+    bottom: 20px; 
+    left: 20px; 
+    font-family: var(--mono); 
+    font-size: 0.6rem; 
+    color: var(--gold); 
+    opacity: 0.6;
+    z-index: 100;
+}
+
+body.light-mode .live-feed {
+    color: var(--olive-dark);
 }
