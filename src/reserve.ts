@@ -102,57 +102,36 @@ async function updateShares(): Promise<void> {
 ========================================================= */
 
 async function openTierPurchase(tierName: string, shares: number): Promise<void> {
-  console.log(`[MODAL] Initializing checkout layout for Tier: ${tierName} with ${shares} shares`);
-  
-  // Track global state for the selected tier size
+  console.log(`[MODAL] Initializing checkout layout for Tier: ${tierName}`);
   selectedPurchaseShares = shares;
 
   try {
-    // 1. Compute Exact Fiat & Crypto Values
     const euroTotal = shares * EURO_PER_SHARE;
     const solPrice = await getSolPriceEUR();
     const solTotal = euroTotal / solPrice;
 
-    // 2. Locate DOM elements inside the Connect Modal
+    // Dom updates inside the connectModal layout
     const tierNameEl = document.getElementById("selectedTierName");
     const tierSharesEl = document.getElementById("selectedTierShares");
     const tierSolEl = document.getElementById("selectedTierSol");
     const tierEuroEl = document.getElementById("selectedTierEuro");
-    
-    // 3. Find and update inputs that feed processBlockchainTx / startMollieCheckout
-    const shareInputEl = document.getElementById("shareInput") as HTMLInputElement | null;
 
-    // 4. Update the Text node descriptors dynamically
     if (tierNameEl) tierNameEl.innerText = tierName;
     if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
     if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
     if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
 
-    // 5. Populate backend share input with the exact configuration
-    if (shareInputEl) {
-      shareInputEl.value = shares.toString();
-      // Dispatch change event to trigger any reactive calculations mapped in the DOM
-      shareInputEl.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-
-    // 6. Reveal the container modal cleanly via style modifications
+    // Reveal container natively
     const connectModal = document.getElementById("connectModal");
     if (connectModal) {
       connectModal.style.display = "flex";
-      document.body.style.overflow = "hidden"; // Prevent background page scrolling while modal is active
-      console.log(`[MODAL] Successfully opened Connect Modal for ${tierName}.`);
-    } else {
-      console.warn("[MODAL WARNING] Element '#connectModal' was not found in the document object model.");
     }
-
   } catch (err) {
-    console.error("[MODAL ERROR] Failed to compute purchase conversion values:", err);
+    console.error("[MODAL ERROR] Failed to compute purchase conversion:", err);
   }
 }
 
-// Ensure elements can be accessed globally if bound to fallback button onclick attributes
-(window as any).openTierPurchase = openTierPurchase;
-(window as any).closeConnectModal = closeConnectModal;function closeConnectModal(): void {
+function closeConnectModal(): void {
   const connectModal = document.getElementById("connectModal");
   if (connectModal) connectModal.style.display = "none";
 }
@@ -173,15 +152,103 @@ function initTierButtons(): void {
   // Global overlay listener to close elements when backdrop clicked
   window.addEventListener("click", (e) => {
     const connectModal = document.getElementById("connectModal");
-    if (e.target === connectModal) {
-      closeConnectModal();
-    }
+    const legalModal = document.getElementById("legalModal");
+    const roadmapModal = document.getElementById("roadmapModal");
+    const authModalOverlay = document.getElementById("authModalOverlay");
+
+    if (e.target === connectModal) closeConnectModal();
+    if (e.target === legalModal) closeLegalModal();
+    if (e.target === roadmapModal) closeRoadmapModal();
+    if (e.target === authModalOverlay) closeAuthModal();
   });
 }
 
 // Expose handlers to window if needed by HTML attributes
 (window as any).openTierPurchase = openTierPurchase;
 (window as any).closeConnectModal = closeConnectModal;
+
+/* =========================================================
+   THEME MODE TOGGLE CONTROLLER
+========================================================= */
+
+function initThemeToggle(): void {
+  const modeToggleBtn = document.getElementById("modeToggleBtn");
+  if (!modeToggleBtn) return;
+
+  // Sync state if body already contains light-mode on boot
+  if (document.body.classList.contains("light-mode")) {
+    modeToggleBtn.innerText = "🌙 Dark Mode";
+  }
+
+  modeToggleBtn.addEventListener("click", () => {
+    const isLight = document.body.classList.toggle("light-mode");
+    modeToggleBtn.innerText = isLight ? "🌙 Dark Mode" : "☀️ Light Mode";
+    console.log("[THEME] Layout swapped. Light Mode active:", isLight);
+  });
+}
+
+/* =========================================================
+   ADDITIONAL MARKETING AND SYSTEM MODALS HANDLERS
+========================================================= */
+
+function openLegalModal(): void {
+  const modal = document.getElementById("legalModal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeLegalModal(): void {
+  const modal = document.getElementById("legalModal");
+  if (modal) modal.style.display = "none";
+}
+
+function openRoadmapModal(): void {
+  const modal = document.getElementById("roadmapModal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeRoadmapModal(): void {
+  const modal = document.getElementById("roadmapModal");
+  if (modal) modal.style.display = "none";
+}
+
+function closeAuthModal(): void {
+  const modal = document.getElementById("authModalOverlay");
+  if (modal) modal.style.display = "none";
+}
+
+function initExtraModals(): void {
+  // Connect Modal "X" close icon trigger bind
+  const closeConnectModalBtn = document.getElementById("closeConnectModalBtn");
+  if (closeConnectModalBtn) {
+    closeConnectModalBtn.addEventListener("click", closeConnectModal);
+  }
+
+  // Legal Modal bindings
+  const openLegalDisclosure = document.getElementById("openLegalDisclosure");
+  const openLegalTerms = document.getElementById("openLegalTerms");
+  const closeLegalTopBtn = document.getElementById("closeLegalTopBtn");
+  const closeLegalBtn = document.getElementById("closeLegalBtn");
+
+  if (openLegalDisclosure) openLegalDisclosure.addEventListener("click", openLegalModal);
+  if (openLegalTerms) openLegalTerms.addEventListener("click", openLegalModal);
+  if (closeLegalTopBtn) closeLegalTopBtn.addEventListener("click", closeLegalModal);
+  if (closeLegalBtn) closeLegalBtn.addEventListener("click", closeLegalModal);
+
+  // Roadmap Modal bindings
+  const openRoadmapFooter = document.getElementById("openRoadmapFooter");
+  const closeRoadmapHeaderBtn = document.getElementById("closeRoadmapHeaderBtn");
+  const closeRoadmapFooterBtn = document.getElementById("closeRoadmapFooterBtn");
+
+  if (openRoadmapFooter) openRoadmapFooter.addEventListener("click", openRoadmapModal);
+  if (closeRoadmapHeaderBtn) closeRoadmapHeaderBtn.addEventListener("click", closeRoadmapModal);
+  if (closeRoadmapFooterBtn) closeRoadmapFooterBtn.addEventListener("click", closeRoadmapModal);
+
+  // MFA Auth Close button binding
+  const closeAuthModalBtn = document.getElementById("closeAuthModal");
+  if (closeAuthModalBtn) {
+    closeAuthModalBtn.addEventListener("click", closeAuthModal);
+  }
+}
 
 /* =========================================================
    PAYMENT SELECTOR
@@ -453,11 +520,24 @@ async function processBlockchainTx(): Promise<void> {
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
 
+  const connectModal = document.getElementById("connectModal");
   const agreementModal = document.getElementById("agreementModal");
   const selectionModal = document.getElementById("modalOverlay");
+  const legalModal = document.getElementById("legalModal");
+  const roadmapModal = document.getElementById("roadmapModal");
+  const authModalOverlay = document.getElementById("authModalOverlay");
 
-  if (agreementModal && agreementModal.style.display === "flex") {
+  // Dismiss whichever overlay interface layer is currently visible
+  if (connectModal && connectModal.style.display === "flex") {
+    closeConnectModal();
+  } else if (agreementModal && agreementModal.style.display === "flex") {
     closeAgreement();
+  } else if (legalModal && legalModal.style.display === "flex") {
+    closeLegalModal();
+  } else if (roadmapModal && roadmapModal.style.display === "flex") {
+    closeRoadmapModal();
+  } else if (authModalOverlay && authModalOverlay.style.display === "flex") {
+    closeAuthModal();
   } else if (selectionModal && selectionModal.style.display === "flex") {
     if (typeof (window as any).closeModal === "function") {
       (window as any).closeModal();
@@ -474,6 +554,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   
   // Bind events to UI elements on load
   initTierButtons();
+  initThemeToggle();
+  initExtraModals();
+  initPaymentSelector();
 
   await updateShares();
   console.log("[INIT] Application ready");
