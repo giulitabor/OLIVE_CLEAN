@@ -552,4 +552,164 @@
             // UPDATE UI
             const tierNameEl = document.getElementById("selectedTierName");
             const tierSharesEl = document.getElementById("selectedTierShares");
-            const tierSolEl =
+            const tierSolEl = document.getElementById("selectedTierSol");
+            const tierEuroEl = document.getElementById("selectedTierEuro");
+
+            if (tierNameEl) tierNameEl.innerText = tierName;
+            if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
+            if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
+            if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
+
+            // OPEN MODAL
+            const connectModal = document.getElementById("connectModal");
+            if (connectModal) {
+                connectModal.style.display = "flex";
+            }
+        }
+
+        function closeConnectModal() {
+            const connectModal = document.getElementById("connectModal");
+            if (connectModal) connectModal.style.display = "none";
+        }
+
+        function openLegal() {
+            const modal = document.getElementById('legalModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeLegal() {
+            const modal = document.getElementById('legalModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; 
+        }
+
+        function openRoadmap() {
+            const modal = document.getElementById('roadmapModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRoadmap() {
+            const modal = document.getElementById('roadmapModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Global Event Listeners for Overlay clicks
+        window.addEventListener('click', (e) => {
+            const legalModal = document.getElementById('legalModal');
+            const roadmapModal = document.getElementById('roadmapModal');
+            const connectModal = document.getElementById('connectModal');
+            if (e.target === legalModal) closeLegal();
+            if (e.target === roadmapModal) closeRoadmap();
+            if (e.target === connectModal) closeConnectModal();
+        });
+
+        // MODE TOGGLE
+        function toggleMode() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.querySelector('.mode-toggle');
+            if (document.body.classList.contains('light-mode')) {
+                btn.textContent = '🌙 Dark Mode';
+            } else {
+                btn.textContent = '☀️ Light Mode';
+            }
+        }
+
+        // NAVBAR SCROLL
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // TIER ACTION BINDINGS
+        const tierButtons = document.querySelectorAll(".tier-select");
+        tierButtons.forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const target = e.currentTarget;
+                const tier = target.dataset.tier || "Starter";
+                const shares = Number(target.dataset.shares || 10);
+                await openTierPurchase(tier, shares);
+            });
+        });
+
+        // SMOOTH SCROLL
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // TABS INTERACTION
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-link");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.className += " active";
+        }
+
+        // INTERSECTION OBSERVER FOR FADE-INS
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // ANIMATED COUNTER
+        function animateCounter(id, target) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            let current = 0;
+            const increment = target / 100;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 20);
+        }
+
+        setTimeout(() => {
+            animateCounter('staked-olv', 125000);
+        }, 1000);
+
+        console.log('🌳 Olivium - Combined Landing Page Loaded');
+    </script>
+</body>
+</html>
