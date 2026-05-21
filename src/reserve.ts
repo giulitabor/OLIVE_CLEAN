@@ -102,36 +102,65 @@ async function updateShares(): Promise<void> {
 ========================================================= */
 
 async function openTierPurchase(tierName: string, shares: number): Promise<void> {
-  console.log(`[MODAL] Initializing checkout layout for Tier: ${tierName}`);
+  console.log(`[MODAL] Initializing checkout layout for Tier: ${tierName} with ${shares} shares`);
+  
+  // Track global state for the selected tier size
   selectedPurchaseShares = shares;
 
   try {
+    // 1. Compute Exact Fiat & Crypto Values
     const euroTotal = shares * EURO_PER_SHARE;
     const solPrice = await getSolPriceEUR();
     const solTotal = euroTotal / solPrice;
 
-    // Dom updates inside the connectModal layout
+    // 2. Locate DOM elements inside the Connect Modal
     const tierNameEl = document.getElementById("selectedTierName");
     const tierSharesEl = document.getElementById("selectedTierShares");
     const tierSolEl = document.getElementById("selectedTierSol");
     const tierEuroEl = document.getElementById("selectedTierEuro");
+    
+    // 3. Find and update inputs that feed processBlockchainTx / startMollieCheckout
+    const shareInputEl = document.getElementById("shareInput") as HTMLInputElement | null;
 
+    // 4. Update the Text node descriptors dynamically
     if (tierNameEl) tierNameEl.innerText = tierName;
     if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
     if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
     if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
 
-    // Reveal container natively
+    // 5. Populate backend share input with the exact configuration
+    if (shareInputEl) {
+      shareInputEl.value = shares.toString();
+      // Dispatch change event to trigger any reactive calculations mapped in the DOM
+      shareInputEl.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    // 6. Reveal the container modal cleanly via style modifications
     const connectModal = document.getElementById("connectModal");
     if (connectModal) {
       connectModal.style.display = "flex";
+      document.body.style.overflow = "hidden"; // Prevent background page scrolling while modal is active
+      console.log(`[MODAL] Successfully opened Connect Modal for ${tierName}.`);
+    } else {
+      console.warn("[MODAL WARNING] Element '#connectModal' was not found in the document object model.");
     }
+
   } catch (err) {
-    console.error("[MODAL ERROR] Failed to compute purchase conversion:", err);
+    console.error("[MODAL ERROR] Failed to compute purchase conversion values:", err);
   }
 }
 
 function closeConnectModal(): void {
+  const connectModal = document.getElementById("connectModal");
+  if (connectModal) {
+    connectModal.style.display = "none";
+    document.body.style.overflow = ""; // Restore background window scrolling
+  }
+}
+
+// Ensure elements can be accessed globally if bound to fallback button onclick attributes
+(window as any).openTierPurchase = openTierPurchase;
+(window as any).closeConnectModal = closeConnectModal;function closeConnectModal(): void {
   const connectModal = document.getElementById("connectModal");
   if (connectModal) connectModal.style.display = "none";
 }
