@@ -9,23 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@200;400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="crypto.css">
-
-    
+    <link rel="stylesheet" href="crypto.css">
 </head>
 <body>
-    <!-- Status Bar -->
     <div class="status-bar">
         <span>ESTATE: TUSCANY // ACTIVE</span>
         <span>PROTOCOL: DEVNET LIVE</span>
         <span id="trees-minted">ONCHAIN: 12/240 TREES</span>
     </div>
 
-    <!-- Navigation -->
     <nav id="navbar">
-        <a href="#" class="logo">  <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/refs/heads/main/olivium_logo2.png"    class="tier-logo"
- alt="Olivium Logo" class="tier-logo">
-</a>
+        <a href="#" class="logo">
+            <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/refs/heads/main/olivium_logo2.png" class="tier-logo" alt="Olivium Logo">
+        </a>
         <ul class="nav-links">
             <li><a href="#story">Story</a></li>
             <li><a href="#web3">Web3</a></li>
@@ -36,10 +32,8 @@
 
         <button class="mode-toggle" onclick="toggleMode()">☀️ Light Mode</button>
         <div style="font-size: 0.7rem; opacity: 0.6; letter-spacing: 2px;">[ PROOF OF HARVEST ]</div>
-
     </nav>
 
-    <!-- Hero -->
     <section class="hero">
         <div class="hero-bg"></div>
         <div class="hero-content">
@@ -56,7 +50,6 @@
         </div>
     </section>
 
-    <!-- Story -->
     <section id="story" class="fade-in">
         <div class="section-header">
             <span class="section-label">The Estate</span>
@@ -93,7 +86,6 @@
         </div>
     </section>
 
-    <!-- Web3 Features (Tabs) -->
     <section id="web3" class="dark fade-in">
         <div class="section-header">
             <span class="section-label">Protocol</span>
@@ -108,7 +100,6 @@
                 <div class="tab-link" onclick="openTab(event, 'gov')">Governance</div>
             </div>
 
-            <!-- Tab: Rewards -->
             <div id="rewards" class="tab-content active">
                 <div class="grid-3">
                     <div class="tech-card">
@@ -138,7 +129,6 @@
                 </div>
             </div>
 
-            <!-- Tab: Tokenomics -->
             <div id="tokenomics" class="tab-content">
                 <div class="grid-3">
                     <div class="tech-card">
@@ -148,9 +138,9 @@
                     <div class="tech-card">
                         <h3 class="gold-text" style="margin-bottom: 1.5rem;">Rewards Utility</h3>
                         <ul style="list-style: none; font-size: 0.9rem; line-height: 2.5;">
-                            <li>> Unlock  Harvest Multipliers</li>
-                            <li>> Reduce Credit costs for stays</li>
-                            <li>> Access Founder-only Pool</li>
+                            <li>&gt; Unlock Harvest Multipliers</li>
+                            <li>&gt; Reduce Credit costs for stays</li>
+                            <li>&gt; Access Founder-only Pool</li>
                         </ul>
                     </div>
                     <div class="tech-card">
@@ -160,7 +150,6 @@
                 </div>
             </div>
 
-            <!-- Tab: Game -->
             <div id="game" class="tab-content">
                 <div class="tech-card" style="max-width: 100%; padding: 4rem;">
                     <h3 class="gold-text" style="margin-bottom: 2rem; font-size: 2.5rem;">The Web3 Grove Game</h3>
@@ -188,7 +177,6 @@
                 </div>
             </div>
 
-            <!-- Tab: Governance -->
             <div id="gov" class="tab-content">
                 <div class="tech-card" style="max-width: 100%; padding: 4rem;">
                     <h3 class="gold-text" style="margin-bottom: 2rem; font-size: 2.5rem;">Estate Governance</h3>
@@ -207,7 +195,6 @@
         </div>
     </section>
 
-    <!-- Benefits -->
     <section id="benefits" class="accent fade-in">
         <div class="section-header">
             <span class="section-label">Benefits</span>
@@ -248,7 +235,6 @@
         </div>
     </section>
 
-    <!-- Pricing Tiers -->
     <section id="tiers" class="fade-in">
         <div class="section-header">
             <span class="section-label">Ownership</span>
@@ -260,47 +246,35 @@
                 <div class="tier-icon">🌱</div>
                 <h3 class="tier-name">Starter</h3>
                 <div class="tier-price">10 Shares</div>
-<p id="starter-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">
-  Loading...
-</p>
+                <p id="starter-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">Loading...</p>
                 <ul class="tier-features">
                     <li>Entry ownership</li>
                     <li>Access to game</li>
                     <li>Community perks</li>
                 </ul>
-<a href="#mint"
-   class="btn btn-primary tier-select"
-   data-tier="Starter"
-   data-shares="10">
-   Get Started
-</a>            </div>
+                <a href="#mint" class="btn btn-primary tier-select" data-tier="Starter" data-shares="10">Get Started</a>
+            </div>
 
             <div class="tier-card">
                 <div class="tier-icon">🌿</div>
                 <h3 class="tier-name">Tree Keeper</h3>
                 <div class="tier-price">100 Shares</div>
-<p id="keeper-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">
-  Loading...
-</p>                <ul class="tier-features">
+                <p id="keeper-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">Loading...</p>
+                <ul class="tier-features">
                     <li>Annual oil allocation</li>
                     <li>Olive Credits earned</li>
                     <li>Priority booking</li>
                     <li>Harvest participation</li>
                 </ul>
-<a href="#mint"
-   class="btn btn-primary tier-select"
-   data-tier="Tree Keeper"
-   data-shares="100">
-   Adopt Now
-</a>            </div>
+                <a href="#mint" class="btn btn-primary tier-select" data-tier="Tree Keeper" data-shares="100">Adopt Now</a>
+            </div>
 
             <div class="tier-card featured">
                 <div class="tier-icon">🌳</div>
                 <h3 class="tier-name">Full Tree</h3>
                 <div class="tier-price">1,000 Shares</div>
-<p id="fulltree-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">
-  Loading...
-</p>                <ul class="tier-features">
+                <p id="fulltree-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">Loading...</p>
+                <ul class="tier-features">
                     <li>Complete tree ownership</li>
                     <li>Significant credits</li>
                     <li>Dedicated tree plaque</li>
@@ -308,39 +282,26 @@
                     <li>Premium oil shipments</li>
                     <li>Governance voting rights</li>
                 </ul>
-<a href="#mint"
-   class="btn btn-primary tier-select"
-   data-tier="Full Tree"
-   data-shares="1000">
-   Claim Full Tree
-</a>            </div>
+                <a href="#mint" class="btn btn-primary tier-select" data-tier="Full Tree" data-shares="1000">Claim Full Tree</a>
+            </div>
 
-               <div class="tier-card featured">
+            <div class="tier-card featured">
                 <div class="tier-icon">🌳</div>
                 <h3 class="tier-name">Grove Guardian</h3>
                 <div class="tier-price">5,000 Shares</div>
-<p id="guardian-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">
-  Loading...
-</p>                <ul class="tier-features">
+                <p id="guardian-sol-price" style="opacity: 0.7; margin-bottom: 2rem;">Loading...</p>
+                <ul class="tier-features">
                     <li>Guardian ownership experience</li>
                     <li>Maximum credits</li>
                     <li>Dedicated tree plaque</li>
                     <li>Premium access & stays</li>
                     <li>Governance voting rights</li>
                 </ul>
-                   <a href="#mint"
-   class="btn btn-primary tier-select"
-   data-tier="Grove Guardian"
-   data-shares="5000">
-Become A Guardian</a>
-                <a href="#mint" class="btn btn-primary"></a>
+                <a href="#mint" class="btn btn-primary tier-select" data-tier="Grove Guardian" data-shares="5000">Become A Guardian</a>
             </div>
-
-            
         </div>
     </section>
 
-    <!-- Final CTA -->
     <section id="mint" class="dark" style="text-align: center;">
         <span class="section-label">Genesis Mint</span>
         <h2 style="color: white; margin-bottom: 2rem;">Secure Your <span class="italic gold-text">Position.</span></h2>
@@ -355,7 +316,6 @@ Become A Guardian</a>
         </p>
     </section>
 
-    <!-- Footer -->
     <footer>
         <div class="footer-grid">
             <div class="footer-section">
@@ -377,9 +337,8 @@ Become A Guardian</a>
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul class="footer-links">
-                  <li><a href="javascript:void(0)" onclick="openLegal()" class="footer-link-item">Full Disclosure</a></li>
-                  <li><a href="javascript:void(0)" onclick="openLegal()" class="footer-link-item">Terms & Conditions</a></li>
-
+                    <li><a href="javascript:void(0)" onclick="openLegal()" class="footer-link-item">Full Disclosure</a></li>
+                    <li><a href="javascript:void(0)" onclick="openLegal()" class="footer-link-item">Terms & Conditions</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -398,472 +357,199 @@ Become A Guardian</a>
             </p>
         </div>
     </footer>
-    <div class="modal-overlay" id="connectModal">
-    <div class="modal" style="max-width: 480px;">
-      <button class="close-btn" onclick="closeConnectModal()">&times;</button>
-      <div class="modal-body">
-        <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
-        <p class="modal-description">Choose your preferred access method. Wallet users interact directly with Solana. Email users receive a custodial grove wallet.</p>
-<div id="selectedTierBox"
-     style="
-      background: #f7f6f2;
-      border: 1px solid #ece7da;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 22px;
-      text-align: left;
-     ">
 
-  <div style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:10px;
-  ">
-    <h3 id="selectedTierName"
-        style="
-          margin:0;
-          font-size:1.1rem;
-          font-weight:800;
-          color:var(--green-dark);
-        ">
-      Starter
-    </h3>
-
-    <span id="selectedTierShares"
-          style="
-            font-size:0.8rem;
-            opacity:0.7;
-            font-weight:700;
-          ">
-      10 Shares
-    </span>
-  </div>
-
-  <div style="
-      display:flex;
-      justify-content:space-between;
-      align-items:end;
-  ">
-    <div>
-      <div style="
-          font-size:0.75rem;
-          opacity:0.65;
-          margin-bottom:2px;
-      ">
-        Estimated Payment
-      </div>
-
-      <div id="selectedTierSol"
-           style="
-             font-size:1.4rem;
-             font-weight:800;
-             color:var(--green-dark);
-           ">
-        ~0.82 SOL
-      </div>
-    </div>
-
-    <div id="selectedTierEuro"
-         style="
-           font-size:1rem;
-           font-weight:700;
-           opacity:0.75;
-         ">
-      €124
-    </div>
-  </div>
-</div>
-        <div class="auth-options">
-          <div class="auth-card" id="walletConnectCard">
-            <div class="auth-card-title">◎ Wallet Login</div>
-            <div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div>
-            <button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button>
-          </div>
-
-          <div class="auth-card" id="emailConnectCard">
-            <div class="auth-card-title">✉ Email Login</div>
-            <div class="auth-card-sub">Fiat purchases with automatic custodial wallet creation.</div>
-            <button id="emailLoginBtn" class="primary-btn">Continue with Email</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="authModalOverlay" class="modal-overlay" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(15,20,15,0.72); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center;">
-    <div class="modal" style="max-width: 400px; background: white; border-radius: 32px; overflow: hidden; position: relative; width: 100%;">
-      <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.95); font-size: 1.4rem; cursor: pointer; z-index: 10; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">&times;</button>
-      <div class="modal-body" style="padding: 28px;">
-        <h2 style="text-align: center; color: var(--green-dark); margin-top: 0; font-size: 1.5rem; font-weight: 800;">MFA Authentication</h2>
-
-        <div class="tabs" style="display: flex; margin: 18px 0; background: var(--soft); padding: 4px; border-radius: 12px;">
-          <button id="loginTab" class="tab active" type="button" style="flex: 1; padding: 10px; cursor: pointer; background: var(--green); color: white; border: none; border-radius: 8px; font-weight: 700; transition: all 0.2s;">Login</button>
-          <button id="signupTab" class="tab" type="button" style="flex: 1; padding: 10px; cursor: pointer; background: transparent; color: var(--text); border: none; border-radius: 8px; font-weight: 700; transition: all 0.2s;">Signup</button>
-        </div>
-
-        <form id="loginForm" class="form active" style="display: block;" onsubmit="return false;">
-          <input id="loginEmail" type="email" placeholder="Email" autocomplete="username" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
-          <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
-          <button id="loginBtn" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green); color: white;">Login</button>
-
-          <div class="otpBox" id="loginOtpBox" style="display: none; margin-top: 15px;">
-            <input id="loginOtp" placeholder="MFA Verification Code" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid var(--green); border-radius: 12px; box-sizing: border-box;">
-            <button id="verifyLoginOtp" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green-dark); color: white;">Verify MFA</button>
-          </div>
-        </form>
-
-        <form id="signupForm" class="form" style="display: none;" onsubmit="return false;">
-          <input id="signupEmail" type="email" placeholder="Email" autocomplete="username" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
-          <input id="signupPassword" type="password" placeholder="Password" autocomplete="new-password" style="width: 100%; padding: 12px; margin-bottom: 4px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
-
-          <div id="passwordMetricsBox" style="background: #fdfdfd; border: 1px solid #eaeaea; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.5;">
-            <p style="margin: 0 0 6px 0; font-weight: bold; color: #666;">Password Requirements:</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;">
-              <div id="metric-len" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Min 6 characters</div>
-              <div id="metric-cap" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Capital Letter</div>
-              <div id="metric-low" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Lowercase Letter</div>
-              <div id="metric-num" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Number</div>
-              <div id="metric-spe" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Special Char</div>
+    <div class="modal-overlay" id="connectModal" style="display: none;">
+        <div class="modal" style="max-width: 480px;">
+            <button class="close-btn" onclick="closeConnectModal()">&times;</button>
+            <div class="modal-body">
+                <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
+                <p class="modal-description">Choose your preferred access method. Wallet users interact directly with Solana. Email users receive a custodial grove wallet.</p>
+                <div id="selectedTierBox" style="background: #f7f6f2; border: 1px solid #ece7da; border-radius: 18px; padding: 18px; margin-bottom: 22px; text-align: left;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 id="selectedTierName" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--green-dark);">Starter</h3>
+                        <span id="selectedTierShares" style="font-size:0.8rem; opacity:0.7; font-weight:700;">10 Shares</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:end;">
+                        <div>
+                            <div style="font-size:0.75rem; opacity:0.65; margin-bottom:2px;">Estimated Payment</div>
+                            <div id="selectedTierSol" style="font-size:1.4rem; font-weight:800; color:var(--green-dark);">~0.82 SOL</div>
+                        </div>
+                        <div id="selectedTierEuro" style="font-size:1rem; font-weight:700; opacity:0.75;">€124</div>
+                    </div>
+                </div>
+                <div class="auth-options">
+                    <div class="auth-card" id="walletConnectCard">
+                        <div class="auth-card-title">◎ Wallet Login</div>
+                        <div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div>
+                        <button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button>
+                    </div>
+                    <div class="auth-card" id="emailConnectCard">
+                        <div class="auth-card-title">✉ Email Login</div>
+                        <div class="auth-card-sub">Fiat purchases with automatic custodial wallet creation.</div>
+                        <button id="emailLoginBtn" class="primary-btn">Continue with Email</button>
+                    </div>
+                </div>
             </div>
-          </div>
-
-          <input id="signupConfirmPassword" type="password" placeholder="Confirm Password" autocomplete="new-password" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
-          <button id="signupBtn" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: #cccccc; color: white;" disabled>Signup</button>
-
-          <div id="qr" style="margin-top: 15px; display: flex; justify-content: center;"></div>
-
-          <div class="otpBox" id="signupOtpBox" style="display: none; margin-top: 15px;">
-            <input id="signupOtp" placeholder="Enter Authenticator Code" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid var(--green); border-radius: 12px; box-sizing: border-box;">
-            <button id="verifySignupOtp" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green-dark); color: white;">Enable MFA</button>
-          </div>
-        </form>
-        <div id="msg" style="margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px;"></div>
-      </div>
+        </div>
     </div>
-  
-  <script type="module" src="./src/reserve.ts"></script>
 
+    <div id="authModalOverlay" class="modal-overlay" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(15,20,15,0.72); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center;">
+        <div class="modal" style="max-width: 400px; background: white; border-radius: 32px; overflow: hidden; position: relative; width: 100%;">
+            <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.95); font-size: 1.4rem; cursor: pointer; z-index: 10; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">&times;</button>
+            <div class="modal-body" style="padding: 28px;">
+                <h2 style="text-align: center; color: var(--green-dark); margin-top: 0; font-size: 1.5rem; font-weight: 800;">MFA Authentication</h2>
+                <div class="tabs" style="display: flex; margin: 18px 0; background: var(--soft); padding: 4px; border-radius: 12px;">
+                    <button id="loginTab" class="tab active" type="button" style="flex: 1; padding: 10px; cursor: pointer; background: var(--green); color: white; border: none; border-radius: 8px; font-weight: 700; transition: all 0.2s;">Login</button>
+                    <button id="signupTab" class="tab" type="button" style="flex: 1; padding: 10px; cursor: pointer; background: transparent; color: var(--text); border: none; border-radius: 8px; font-weight: 700; transition: all 0.2s;">Signup</button>
+                </div>
+                <form id="loginForm" class="form active" style="display: block;" onsubmit="return false;">
+                    <input id="loginEmail" type="email" placeholder="Email" autocomplete="username" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+                    <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+                    <button id="loginBtn" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green); color: white;">Login</button>
+                    <div class="otpBox" id="loginOtpBox" style="display: none; margin-top: 15px;">
+                        <input id="loginOtp" placeholder="MFA Verification Code" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid var(--green); border-radius: 12px; box-sizing: border-box;">
+                        <button id="verifyLoginOtp" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green-dark); color: white;">Verify MFA</button>
+                    </div>
+                </form>
+                <form id="signupForm" class="form" style="display: none;" onsubmit="return false;">
+                    <input id="signupEmail" type="email" placeholder="Email" autocomplete="username" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+                    <input id="signupPassword" type="password" placeholder="Password" autocomplete="new-password" style="width: 100%; padding: 12px; margin-bottom: 4px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+                    <div id="passwordMetricsBox" style="background: #fdfdfd; border: 1px solid #eaeaea; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.5;">
+                        <p style="margin: 0 0 6px 0; font-weight: bold; color: #666;">Password Requirements:</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;">
+                            <div id="metric-len" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Min 6 characters</div>
+                            <div id="metric-cap" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Capital Letter</div>
+                            <div id="metric-low" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Lowercase Letter</div>
+                            <div id="metric-num" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Number</div>
+                            <div id="metric-spe" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Special Char</div>
+                        </div>
+                    </div>
+                    <input id="signupConfirmPassword" type="password" placeholder="Confirm Password" autocomplete="new-password" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+                    <button id="signupBtn" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: #cccccc; color: white;" disabled>Signup</button>
+                    <div id="qr" style="margin-top: 15px; display: flex; justify-content: center;"></div>
+                    <div class="otpBox" id="signupOtpBox" style="display: none; margin-top: 15px;">
+                        <input id="signupOtp" placeholder="Enter Authenticator Code" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid var(--green); border-radius: 12px; box-sizing: border-box;">
+                        <button id="verifySignupOtp" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green-dark); color: white;">Enable MFA</button>
+                    </div>
+                </form>
+                <div id="msg" style="margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="legalModal" class="modal-overlay" style="display:none; position:fixed; inset:0; z-index:99999; justify-content:center; align-items:center; padding:20px; background: rgba(0,0,0,0.8);">
+        <div class="modal-content" style="width:100%; max-width:800px; max-height:85vh; display:flex; flex-direction:column; background: #111; border: 1px solid var(--border);">
+            <div class="modal-header" style="padding:40px;">
+                <p class="mono-label">Institutional Transparency</p>
+                <h2 class="serif-display text-4xl mt-2 text-white">Full Disclosure</h2>
+            </div>
+            <div class="modal-body" style="padding:40px; overflow-y:auto;">
+                <section class="mb-10">
+                    <h5 class="mono-label mb-4" style="font-size: 0.75rem;">1. RWA Operational Reality</h5>
+                    <p class="text-sm opacity-70 leading-relaxed">
+                        Olivium tokenizes Real World Assets (RWA). Ownership of OVL or Tree NFTs corresponds to a membership interest in the harvest and utility of a physical estate in San Vincenzo, Tuscany. Unlike pure digital assets, these are tied to seasonal cycles and Italian agricultural laws.
+                    </p>
+                </section>
+                <section class="mb-10">
+                    <h5 class="mono-label mb-4" style="font-size: 0.75rem;">2. Legal Structure (Cadastral)</h5>
+                    <p class="text-sm opacity-70 leading-relaxed">
+                        Digital shares are legally recognized through a Special Purpose Vehicle (SPV) registered in Italy. While the Solana blockchain serves as the source of truth for membership, the physical asset is protected by the Italian Land Registry (Catasto).
+                    </p>
+                </section>
+                <section class="mb-10">
+                    <h5 class="mono-label mb-4" style="font-size: 0.75rem;">3. Data & Privacy (GDPR)</h5>
+                    <p class="text-sm opacity-70 leading-relaxed">
+                        We maintain a "Pseudonymous-First" protocol. Wallet addresses are logged only to verify access rights via Helius RPC nodes. Personal identity data is only required during physical residency check-ins at the villa, in compliance with Italian tourism regulations.
+                    </p>
+                </section>
+            </div>
+            <div class="modal-footer" style="padding:30px 40px; border-top:1px solid rgba(197,160,89,0.1); display:flex; justify-content:flex-end;">
+                <button class="acknowledge-btn px-10 py-4 hover:opacity-80 transition-opacity" onclick="closeLegal()">
+                    ACKNOWLEDGE PROTOCOL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="roadmapModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,10,10,0.9); backdrop-filter:blur(15px); z-index:10000; justify-content:center; align-items:center; padding:2rem;">
+        <div class="modal-content" style="background:var(--card-bg); border:1px solid var(--border); width:100%; max-width:800px; max-height:85vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="padding:3rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:start;">
+                <div>
+                    <p class="mono-label">Project Trajectory</p>
+                    <h2 class="serif-display text-4xl mt-2 text-white">The 2026 Masterplan</h2>
+                </div>
+                <button onclick="closeRoadmap()" class="mono" style="background:none; border:none; color:var(--gold); cursor:pointer; font-size:0.7rem;">[ CLOSE ]</button>
+            </div>
+            <div class="modal-body" style="padding:3rem; overflow-y:auto;">
+                <div class="roadmap-container">
+                    <div class="roadmap-item completed">
+                        <div class="roadmap-dot"></div>
+                        <span class="roadmap-phase">Phase I: Foundation</span>
+                        <h3 class="roadmap-title">Genesis Planting & On-Chain Peg</h3>
+                        <ul class="roadmap-list">
+                            <li>Cadastral mapping of 240 organic olive trees</li>
+                            <li>Deployment of OVL Staking v1.0</li>
+                            <li>Founder NFT Tier minting (Guardian Status)</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-dot"></div>
+                        <span class="roadmap-phase">Phase II: Liquidity</span>
+                        <h3 class="roadmap-title">The Secondary Grove Market <span class="tag-new">DEVELOPING</span></h3>
+                        <ul class="roadmap-list">
+                            <li>Fiat-to-Share Onramp (Buy tree shares with Credit Card)</li>
+                            <li>P2P Marketplace for TreeShare trading</li>
+                            <li>Global Shipping Logistics for physical Olive Oil deliverables</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-dot"></div>
+                        <span class="roadmap-phase">Phase III: Ecology</span>
+                        <h3 class="roadmap-title">Carbon Sequestration & CO2 Rewards</h3>
+                        <ul class="roadmap-list">
+                            <li>Visual CO2 absorption tracker per staked Tree NFT</li>
+                            <li>Reward Multipliers for "Green Guardians" (Carbon-neutral offsets)</li>
+                            <li>IoT Soil & Hydration sensors live-feed to dashboard</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-dot"></div>
+                        <span class="roadmap-phase">Phase IV: Expansion</span>
+                        <h3 class="roadmap-title">The "Digital Grove" Game</h3>
+                        <ul class="roadmap-list">
+                            <li>Web3 Management Game: Cultivate, prune, and optimize virtual yields</li>
+                            <li>Yields in-game translate to physical Oil bonus allocations</li>
+                            <li>Villa Expansion: New suites unlocked via Community Governance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:1.5rem 3rem; background:rgba(0,0,0,0.2); text-align:right;">
+                <button class="acknowledge-btn" onclick="closeRoadmap()" style="padding:12px 30px;">CLOSE ARCHIVE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="live-feed" style="position: fixed; bottom: 20px; left: 20px; font-family: var(--mono); font-size: 0.6rem; color: var(--gold); opacity: 0.6;">
+        <span class="pulse" style="display: inline-block; width: 6px; height: 6px; background: var(--gold); border-radius: 50%; margin-right: 8px;"></span>
+        HELIUS MAINNET-BETA: NODE_LATENCY 24ms // BLOCK_HEIGHT: 254,110,211
+    </div>
+
+    <script type="module" src="./src/reserve.ts"></script>
     <script>
+        // Mocking global configurations assumed from TypeScript variables
+        const EURO_PER_SHARE = 12.4; 
+        async function getSolPriceEUR() { return 150.0; } // Fallback implementation
+        
         let selectedPurchaseShares = 0;
 
-async function openTierPurchase(
-  tierName: string,
-  shares: number
-) {
+        async function openTierPurchase(tierName, shares) {
+            selectedPurchaseShares = shares;
+            const euroTotal = shares * EURO_PER_SHARE;
+            const solPrice = await getSolPriceEUR();
+            const solTotal = euroTotal / solPrice;
 
-  selectedPurchaseShares = shares;
-
-  const euroTotal =
-    shares * EURO_PER_SHARE;
-
-  const solPrice =
-    await getSolPriceEUR();
-
-  const solTotal =
-    euroTotal / solPrice;
-
-  // UPDATE UI
-
-  const tierNameEl =
-    document.getElementById("selectedTierName");
-
-  const tierSharesEl =
-    document.getElementById("selectedTierShares");
-
-  const tierSolEl =
-    document.getElementById("selectedTierSol");
-
-  const tierEuroEl =
-    document.getElementById("selectedTierEuro");
-
-  if (tierNameEl) {
-    tierNameEl.innerText = tierName;
-  }
-
-  if (tierSharesEl) {
-    tierSharesEl.innerText =
-      `${shares.toLocaleString()} Shares`;
-  }
-
-  if (tierSolEl) {
-    tierSolEl.innerText =
-      `~${solTotal.toFixed(2)} SOL`;
-  }
-
-  if (tierEuroEl) {
-    tierEuroEl.innerText =
-      `€${euroTotal.toLocaleString()}`;
-  }
-
-  // OPEN MODAL
-
-  const connectModal =
-    document.getElementById("connectModal");
-
-  if (connectModal) {
-    connectModal.style.display = "flex";
-  }
-}
-    function openLegal() {
-    const modal = document.getElementById('legalModal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // Stop background scroll
-}
-
-function closeLegal() {
-    const modal = document.getElementById('legalModal');
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto'; // Resume scroll
-}
-
-// Close if they click the background overlay
-window.addEventListener('click', (e) => {
-    const modal = document.getElementById('legalModal');
-    if (e.target === modal) closeLegal();
-});
-        // MODE TOGGLE
-        function toggleMode() {
-            document.body.classList.toggle('light-mode');
-            const btn = document.querySelector('.mode-toggle');
-            if (document.body.classList.contains('light-mode')) {
-                btn.textContent = '🌙 Dark Mode';
-            } else {
-                btn.textContent = '☀️ Light Mode';
-            }
-        }
-
-        // NAVBAR SCROLL
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 100) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-
-        const tierButtons =
-  document.querySelectorAll(".tier-select");
-
-tierButtons.forEach((btn) => {
-
-  btn.addEventListener("click", async (e) => {
-
-    e.preventDefault();
-
-    const target =
-      e.currentTarget as HTMLElement;
-
-    const tier =
-      target.dataset.tier || "Starter";
-
-    const shares =
-      Number(target.dataset.shares || 10);
-
-    await openTierPurchase(
-      tier,
-      shares
-    );
-
-  });
-
-});
-        // SMOOTH SCROLL
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // TABS
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-                tabcontent[i].classList.remove("active");
-            }
-            tablinks = document.getElementsByClassName("tab-link");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.className += " active";
-        }
-
-        // INTERSECTION OBSERVER
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
-
-        // ANIMATED COUNTER
-        function animateCounter(id, target) {
-            const element = document.getElementById(id);
-            let current = 0;
-            const increment = target / 100;
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    element.textContent = target.toLocaleString();
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString();
-                }
-            }, 20);
-        }
-
-        // Start counters when visible
-        setTimeout(() => {
-            animateCounter('staked-olv', 125000);
-        }, 1000);
-
-        console.log('🌳 Olivium - Combined Landing Page Loaded');
-        function openRoadmap() {
-    const modal = document.getElementById('roadmapModal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-function closeRoadmap() {
-    const modal = document.getElementById('roadmapModal');
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-// Ensure clicking background closes roadmap
-window.addEventListener('click', (e) => {
-    const modal = document.getElementById('roadmapModal');
-    if (e.target === modal) closeRoadmap();
-});
-    </script>
-    <div id="legalModal" class="modal-overlay" style="display:none; position:fixed; inset:0; z-index:99999; display:none; justify-content:center; align-items:center; padding:20px;">
-    <div class="modal-content" style="width:100%; max-width:800px; max-height:85vh; display:flex; flex-direction:column; animation: fadeInUp 0.5s ease;">
-        <div class="modal-header" style="padding:40px;">
-            <p class="mono-label">Institutional Transparency</p>
-            <h2 class="serif-display text-4xl mt-2 text-white">Full Disclosure</h2>
-        </div>
-
-        <div class="modal-body" style="padding:40px; overflow-y:auto;">
-            <section class="mb-10">
-                <h5 class="mono-label mb-4" style="font-size: 0.75rem;">1. RWA Operational Reality</h5>
-                <p class="text-sm opacity-70 leading-relaxed">
-                    Olivium tokenizes Real World Assets (RWA). Ownership of OVL or Tree NFTs corresponds to a membership interest in the harvest and utility of a physical estate in San Vincenzo, Tuscany. Unlike pure digital assets, these are tied to seasonal cycles and Italian agricultural laws.
-                </p>
-            </section>
-
-            <section class="mb-10">
-                <h5 class="mono-label mb-4" style="font-size: 0.75rem;">2. Legal Structure (Cadastral)</h5>
-                <p class="text-sm opacity-70 leading-relaxed">
-                    Digital shares are legally recognized through a Special Purpose Vehicle (SPV) registered in Italy. While the Solana blockchain serves as the source of truth for membership, the physical asset is protected by the Italian Land Registry (Catasto).
-                </p>
-            </section>
-
-            <section class="mb-10">
-                <h5 class="mono-label mb-4" style="font-size: 0.75rem;">3. Data & Privacy (GDPR)</h5>
-                <p class="text-sm opacity-70 leading-relaxed">
-                    We maintain a "Pseudonymous-First" protocol. Wallet addresses are logged only to verify access rights via Helius RPC nodes. Personal identity data is only required during physical residency check-ins at the villa, in compliance with Italian tourism regulations.
-                </p>
-            </section>
-        </div>
-
-        <div class="modal-footer" style="padding:30px 40px; border-top:1px solid rgba(197,160,89,0.1); display:flex; justify-content:flex-end;">
-            <button class="acknowledge-btn px-10 py-4 hover:opacity-80 transition-opacity" onclick="closeLegal()">
-                ACKNOWLEDGE PROTOCOL
-            </button>
-        </div>
-    </div>
-</div>
-<div id="roadmapModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,10,10,0.9); backdrop-filter:blur(15px); z-index:10000; display:none; justify-content:center; align-items:center; padding:2rem;">
-    <div class="modal-content" style="background:var(--card-bg); border:1px solid var(--border); width:100%; max-width:800px; max-height:85vh; display:flex; flex-direction:column; animation: fadeInUp 0.4s ease;">
-
-        <div class="modal-header" style="padding:3rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:start;">
-            <div>
-                <p class="mono-label">Project Trajectory</p>
-                <h2 class="serif-display text-4xl mt-2 text-white">The 2026 Masterplan</h2>
-            </div>
-            <button onclick="closeRoadmap()" class="mono" style="background:none; border:none; color:var(--gold); cursor:pointer; font-size:0.7rem;">[ CLOSE ]</button>
-        </div>
-
-        <div class="modal-body" style="padding:3rem; overflow-y:auto;">
-            <div class="roadmap-container">
-
-                <div class="roadmap-item completed">
-                    <div class="roadmap-dot"></div>
-                    <span class="roadmap-phase">Phase I: Foundation</span>
-                    <h3 class="roadmap-title">Genesis Planting & On-Chain Peg</h3>
-                    <ul class="roadmap-list">
-                        <li>Cadastral mapping of 240 organic olive trees</li>
-                        <li>Deployment of OVL Staking v1.0</li>
-                        <li>Founder NFT Tier minting (Guardian Status)</li>
-                    </ul>
-                </div>
-
-                <div class="roadmap-item">
-                    <div class="roadmap-dot"></div>
-                    <span class="roadmap-phase">Phase II: Liquidity</span>
-                    <h3 class="roadmap-title">The Secondary Grove Market <span class="tag-new">DEVELOPING</span></h3>
-                    <ul class="roadmap-list">
-                        <li>Fiat-to-Share Onramp (Buy tree shares with Credit Card)</li>
-                        <li>P2P Marketplace for TreeShare trading</li>
-                        <li>Global Shipping Logistics for physical Olive Oil deliverables</li>
-                    </ul>
-                </div>
-
-                <div class="roadmap-item">
-                    <div class="roadmap-dot"></div>
-                    <span class="roadmap-phase">Phase III: Ecology</span>
-                    <h3 class="roadmap-title">Carbon Sequestration & CO2 Rewards</h3>
-                    <ul class="roadmap-list">
-                        <li>Visual CO2 absorption tracker per staked Tree NFT</li>
-                        <li>Reward Multipliers for "Green Guardians" (Carbon-neutral offsets)</li>
-                        <li>IoT Soil & Hydration sensors live-feed to dashboard</li>
-                    </ul>
-                </div>
-
-                <div class="roadmap-item">
-                    <div class="roadmap-dot"></div>
-                    <span class="roadmap-phase">Phase IV: Expansion</span>
-                    <h3 class="roadmap-title">The "Digital Grove" Game</h3>
-                    <ul class="roadmap-list">
-                        <li>Web3 Management Game: Cultivate, prune, and optimize virtual yields</li>
-                        <li>Yields in-game translate to physical Oil bonus allocations</li>
-                        <li>Villa Expansion: New suites unlocked via Community Governance</li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-
-        <div style="padding:1.5rem 3rem; background:rgba(0,0,0,0.2); text-align:right;">
-            <button class="acknowledge-btn" onclick="closeRoadmap()" style="padding:12px 30px;">CLOSE ARCHIVE</button>
-        </div>
-    </div>
-</div>
-</body>
-<div class="live-feed" style="position: fixed; bottom: 20px; left: 20px; font-family: var(--mono); font-size: 0.6rem; color: var(--gold); opacity: 0.6;">
-    <span class="pulse" style="display: inline-block; width: 6px; height: 6px; background: var(--gold); border-radius: 50%; margin-right: 8px;"></span>
-    HELIUS MAINNET-BETA: NODE_LATENCY 24ms // BLOCK_HEIGHT: 254,110,211
-</div>
-</html>
+            // UPDATE UI
+            const tierNameEl = document.getElementById("selectedTierName");
+            const tierSharesEl = document.getElementById("selectedTierShares");
+            const tierSolEl =
