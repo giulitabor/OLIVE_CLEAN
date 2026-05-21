@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 
 /* =========================================================
-   TYPES
+   TYPES & INTERFACES
 ========================================================= */
 
 interface Tree {
@@ -30,7 +30,6 @@ const TIER_SHARES = {
   keeper: 100,
   fullTree: 1000,
   guardTree: 5000,
-
 } as const;
 
 /* =========================================================
@@ -41,6 +40,7 @@ let selectedTree: Tree | null = null;
 let paymentMode: "fiat" | "crypto" = "fiat";
 let cachedSolPrice = 100;
 let lastPriceFetch = 0;
+let selectedPurchaseShares = 0;
 
 /* =========================================================
    PRICE FETCHING
@@ -49,7 +49,6 @@ let lastPriceFetch = 0;
 async function getSolPriceEUR(): Promise<number> {
   const now = Date.now();
 
-  // Return cached price if still valid
   if (now - lastPriceFetch < PRICE_CACHE_DURATION) {
     return cachedSolPrice;
   }
@@ -58,7 +57,6 @@ async function getSolPriceEUR(): Promise<number> {
     const res = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur"
     );
-
     const data = await res.json();
 
     if (data?.solana?.eur) {
@@ -71,7 +69,6 @@ async function getSolPriceEUR(): Promise<number> {
     console.error("CoinGecko price fetch failed:", err);
   }
 
-  // Return cached fallback
   return cachedSolPrice;
 }
 
@@ -80,224 +77,145 @@ async function getSolPriceEUR(): Promise<number> {
 ========================================================= */
 
 async function updateShares(): Promise<void> {
-
-  console.log("updateShares firing");
-
+  console.log("[PRICING] updateShares firing");
   const solPrice = await getSolPriceEUR();
 
-  console.log("SOL PRICE:", solPrice);
+  const starterSolEl = document.getElementById("starter-sol-price");
+  const keeperSolEl = document.getElementById("keeper-sol-price");
+  const fullTreeSolEl = document.getElementById("fulltree-sol-price");
+  const guardTreeSolEl = document.getElementById("guardian-sol-price");
 
-  // Elements
-  const starterSolEl =
-    document.getElementById("starter-sol-price");
+  const starterSol = (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
+  const keeperSol = (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
+  const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
+  const guardTreeSol = (TIER_SHARES.guardTree * EURO_PER_SHARE) / solPrice;
 
-  const keeperSolEl =
-    document.getElementById("keeper-sol-price");
-
-  const fullTreeSolEl =
-    document.getElementById("fulltree-sol-price");
-   
-  const guardTreeSolEl =
-    document.getElementById("guardian-sol-price");
-
-
-  console.log({
-    starterSolEl,
-    keeperSolEl,
-    fullTreeSolEl,
-    guardTreeSolEl
-  });
-
-  // Calculations
-  const starterSol =
-    (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
-  const keeperSol =
-    (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
-  const fullTreeSol =
-    (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
-  const guardTreeSol =
-    (TIER_SHARES.guardTree * EURO_PER_SHARE) / solPrice;
-
-  // UI updates
-  if (starterSolEl) {
-    starterSolEl.innerText =
-      `~${starterSol.toFixed(2)} SOL`;
-  }
-
-  if (keeperSolEl) {
-    keeperSolEl.innerText =
-      `~${keeperSol.toFixed(2)} SOL`;
-  }
-
-  if (fullTreeSolEl) {
-    fullTreeSolEl.innerText =
-      `~${fullTreeSol.toFixed(2)} SOL`;
-  }
-  if (guardTreeSolEl) {
-    guardTreeSolEl.innerText =
-      `~${guardTreeSol.toFixed(2)} SOL`;
-  } 
+  if (starterSolEl) starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
+  if (keeperSolEl) keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
+  if (fullTreeSolEl) fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
+  if (guardTreeSolEl) guardTreeSolEl.innerText = `~${guardTreeSol.toFixed(2)} SOL`;
 }
+
 /* =========================================================
-   PAYMENT SELECTOR
+   DYNAMIC CONNECT TIER COUPLING
 ========================================================= */
 
-function initPaymentSelector(): void {
-  const fiatOption = document.getElementById("fiatOption");
-  const cryptoOption = document.getElementById("cryptoOption");
+async function openTierPurchase(tierName: string, shares: number): Promise<void> {
+  selectedPurchaseShares = shares;
+  const euroTotal = shares * EURO_PER_SHARE;
+  const solPrice = await getSolPriceEUR();
+  const solTotal = euroTotal / solPrice;
 
-  if (!fiatOption || !cryptoOption) return;
+  const tierNameEl = document.getElementById("selectedTierName");
+  const tierSharesEl = document.getElementById("selectedTierShares");
+  const tierSolEl = document.getElementById("selectedTierSol");
+  const tierEuroEl = document.getElementById("selectedTierEuro");
 
-  fiatOption.addEventListener("click", () => {
-    paymentMode = "fiat";
-    fiatOption.classList.add("active");
-    cryptoOption.classList.remove("active");
-    updateShares();
-  });
+  if (tierNameEl) tierNameEl.innerText = tierName;
+  if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
+  if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
+  if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
 
-  cryptoOption.addEventListener("click", () => {
-    paymentMode = "crypto";
-    cryptoOption.classList.add("active");
-    fiatOption.classList.remove("active");
-    updateShares();
-  });
-}
-
-/* =========================================================
-   MODAL UTILITIES
-========================================================= */
-
-function randomFallback(): string {
-  // Add your fallback image logic here
-  return "https://via.placeholder.com/400x300?text=Olive+Tree";
-}
-
-/* =========================================================
-   AGREEMENT MODAL
-========================================================= */
-
-function openAgreement(): void {
-  if (!selectedTree) return;
-
-  document.body.style.overflow = "hidden";
-
-  // Update image
-  const agreeImg = document.getElementById("agreeImage") as HTMLImageElement | null;
-  const fallback = randomFallback();
-
-  if (agreeImg) {
-    agreeImg.src = selectedTree.image_url || fallback;
-    agreeImg.onerror = () => {
-      agreeImg.src = fallback;
-    };
+  const shareInputEl = document.getElementById("shareInput") as HTMLInputElement | null;
+  if (shareInputEl) {
+    shareInputEl.value = shares.toString();
   }
 
-  // Update title
-  const agreeTitle = document.getElementById("agreeTitle");
-  if (agreeTitle) {
-    agreeTitle.innerText = `Adopting ${selectedTree.name || selectedTree.tree_id}`;
+  const connectModal = document.getElementById("connectModal");
+  if (connectModal) {
+    connectModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
   }
-
-  // Update tree details
-  const details = {
-    agreeLocation: selectedTree.location || "Field F1",
-    agreeAge: selectedTree.age || "5",
-    agreeHeight: selectedTree.height || "1.5m",
-    agreeVariety: selectedTree.variety || "Frantoio",
-  };
-
-  Object.entries(details).forEach(([id, value]) => {
-    const element = document.getElementById(id);
-    if (element) element.innerText = value;
-  });
-
-  // Setup checkbox and button
-  const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
-  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
-
-  if (checkbox && finalBtn) {
-    checkbox.checked = false;
-    finalBtn.disabled = true;
-    finalBtn.innerText = "Confirm & Pay";
-
-    checkbox.onchange = () => {
-      finalBtn.disabled = !checkbox.checked;
-    };
-  }
-
-  // Show agreement modal
-  const selectionModal = document.getElementById("modalOverlay");
-  const agreementModal = document.getElementById("agreementModal");
-
-  if (selectionModal) selectionModal.style.display = "none";
-  if (agreementModal) agreementModal.style.display = "flex";
 }
 
-function closeAgreement(): void {
-  const agreementModal = document.getElementById("agreementModal");
-  const selectionModal = document.getElementById("modalOverlay");
-
-  if (agreementModal) agreementModal.style.display = "none";
-  if (selectionModal) selectionModal.style.display = "flex";
+function closeConnectModal(): void {
+  const connectModal = document.getElementById("connectModal");
+  if (connectModal) {
+    connectModal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
 }
-
-// Expose to window
-(window as any).openAgreement = openAgreement;
-(window as any).closeAgreement = closeAgreement;
 
 /* =========================================================
-   SUCCESS MODAL
+   MODAL INTERFACE INTERACTIVE HANDLERS
 ========================================================= */
 
-function closeSuccess(): void {
-  const successModal = document.getElementById("successModal");
-  if (successModal) successModal.style.display = "none";
-  document.body.style.overflow = "";
+function openLegal(): void {
+  const modal = document.getElementById("legalModal");
+  if (modal) {
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
 }
 
-(window as any).closeSuccess = closeSuccess;
+function closeLegal(): void {
+  const modal = document.getElementById("legalModal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+}
+
+function openRoadmap(): void {
+  const modal = document.getElementById("roadmapModal");
+  if (modal) {
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeRoadmap(): void {
+  const modal = document.getElementById("roadmapModal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+}
+
+function toggleThemeMode(): void {
+  document.body.classList.toggle("light-mode");
+  const btn = document.getElementById("modeToggleBtn");
+  if (btn) {
+    btn.textContent = document.body.classList.contains("light-mode") ? "🌙 Dark Mode" : "☀️ Light Mode";
+  }
+}
 
 /* =========================================================
-   FIAT PAYMENT
+   FIAT PAYMENT & CHECKOUT
 ========================================================= */
 
 async function startMollieCheckout(): Promise<void> {
   console.log("[PAYMENT] Starting Mollie checkout");
-
   try {
-    const shareInput = document.getElementById("shareInput") as HTMLInputElement;
-    if (!shareInput) throw new Error("Share input not found");
+    const shareInput = document.getElementById("shareInput") as HTMLInputElement | null;
+    if (!shareInput) throw new Error("Share input parameter element not located.");
 
     const shares = Number(shareInput.value);
-
     const response = await fetch("http://localhost:3000/create-mollie-payment", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         shares,
-        treeId: selectedTree?.tree_id,
-        treeName: selectedTree?.name,
+        treeId: selectedTree?.tree_id || null,
+        treeName: selectedTree?.name || null,
         userEmail: (window as any).OliviumAuth?.user?.email || null,
       }),
     });
 
     const data = await response.json();
-
     if (data.checkoutUrl) {
       window.location.href = data.checkoutUrl;
     } else {
-      alert("Failed to create payment");
+      alert("Failed to build settlement processing redirect.");
     }
   } catch (err) {
-    console.error("[PAYMENT] Error:", err);
-    alert("Payment server error");
+    console.error("[PAYMENT] Checkout fault:", err);
+    alert("Payment runtime target exception.");
   }
 }
 
 /* =========================================================
-   BLOCKCHAIN TRANSACTION
+   BLOCKCHAIN TRANSACTION EXECUTION
 ========================================================= */
 
 async function processBlockchainTx(): Promise<void> {
@@ -305,7 +223,6 @@ async function processBlockchainTx(): Promise<void> {
   const provider = (window as any)._provider || (window as any).provider;
   const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
 
-  // Guard: Prevent concurrent transactions
   if (finalBtn && (finalBtn.disabled || finalBtn.dataset.processing === "true")) {
     return;
   }
@@ -321,8 +238,6 @@ async function processBlockchainTx(): Promise<void> {
   if (!amountInput) return;
 
   const amount = new anchor.BN(amountInput.value);
-
-  // Extract public key from wallet
   const buyerPublicKey = provider.wallet?.publicKey || provider.publicKey;
   if (!buyerPublicKey) {
     alert("Could not resolve signing authority public key.");
@@ -330,35 +245,23 @@ async function processBlockchainTx(): Promise<void> {
   }
 
   try {
-    // Lock UI
     if (finalBtn) {
       finalBtn.disabled = true;
       finalBtn.dataset.processing = "true";
       finalBtn.innerText = "Processing...";
     }
 
-    // Derive PDAs
     const [treePda] = PublicKey.findProgramAddressSync(
       [Buffer.from("tree"), Buffer.from(selectedTree.tree_id)],
       program.programId
     );
-
     const [positionPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("position"), buyerPublicKey.toBuffer(), Buffer.from(selectedTree.tree_id)],
       program.programId
     );
+    const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
+    const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("treasury")], program.programId);
 
-    const [protocolPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("protocol")],
-      program.programId
-    );
-
-    const [treasuryPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("treasury")],
-      program.programId
-    );
-
-    // Build transaction
     const ix = await program.methods
       .purchaseShares(selectedTree.tree_id, amount)
       .accounts({
@@ -376,7 +279,6 @@ async function processBlockchainTx(): Promise<void> {
     transaction.feePayer = buyerPublicKey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-    // Sign and send transaction
     let signature = "";
     if (provider.wallet && typeof provider.wallet.signTransaction === "function") {
       const signedTx = await provider.wallet.signTransaction(transaction);
@@ -388,10 +290,8 @@ async function processBlockchainTx(): Promise<void> {
       signature = await program.provider.sendAndConfirm(transaction, []);
     }
 
-    // Confirm transaction
     await connection.confirmTransaction(signature, "confirmed");
 
-    // Show success
     const agreementModal = document.getElementById("agreementModal");
     const successModal = document.getElementById("successModal");
 
@@ -400,7 +300,6 @@ async function processBlockchainTx(): Promise<void> {
 
     if (finalBtn) delete finalBtn.dataset.processing;
 
-    // Reload trees (assuming this function exists)
     if (typeof (window as any).loadTrees === "function") {
       (window as any).loadTrees();
     }
@@ -408,7 +307,6 @@ async function processBlockchainTx(): Promise<void> {
     console.error("[BLOCKCHAIN] Transaction error:", err);
     alert("Transaction failed. Check wallet balance or approval.");
 
-    // Re-enable button on error
     if (finalBtn) {
       finalBtn.disabled = false;
       delete finalBtn.dataset.processing;
@@ -417,20 +315,154 @@ async function processBlockchainTx(): Promise<void> {
   }
 }
 
-(window as any).processBlockchainTx = processBlockchainTx;
-
 /* =========================================================
-   KEYBOARD SHORTCUTS
+   ANIMATION INTERSECTION OBSERVERS & COUNTERS
 ========================================================= */
 
-window.addEventListener("keydown", (e) => {
+function animateCounter(id: string, target: number): void {
+  const element = document.getElementById(id);
+  if (!element) return;
+  let current = 0;
+  const increment = target / 100;
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) {
+      element.textContent = target.toLocaleString();
+      clearInterval(timer);
+    } else {
+      element.textContent = Math.floor(current).toLocaleString();
+    }
+  }, 20);
+}
+
+/* =========================================================
+   DOM EVENT HOOKS RUNTIME BINDING
+========================================================= */
+
+window.addEventListener("DOMContentLoaded", async () => {
+  console.log("[INIT] Initializing Olivium execution space...");
+
+  // Update real-time pricing indicators immediately
+  await updateShares();
+
+  // Mode Toggler Action
+  const themeToggle = document.getElementById("modeToggleBtn");
+  if (themeToggle) themeToggle.addEventListener("click", toggleThemeMode);
+
+  // Dynamic Tabs Controller Action
+  const tabLinks = document.querySelectorAll(".tab-link");
+  tabLinks.forEach(link => {
+    link.addEventListener("click", (e) => {
+      const target = e.currentTarget as HTMLElement;
+      const targetTabName = target.dataset.tab;
+      if (!targetTabName) return;
+
+      const tabContents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabContents.length; i++) {
+        (tabContents[i] as HTMLElement).style.display = "none";
+        tabContents[i].classList.remove("active");
+      }
+
+      tabLinks.forEach(tL => tL.classList.remove("active"));
+
+      const targetTab = document.getElementById(targetTabName);
+      if (targetTab) {
+        targetTab.style.display = "block";
+        targetTab.classList.add("active");
+      }
+      target.classList.add("active");
+    });
+  });
+
+  // Sticky Scrolled Navbar Transition
+  const navbar = document.getElementById("navbar");
+  window.addEventListener("scroll", () => {
+    if (navbar) {
+      if (window.scrollY > 100) navbar.classList.add("scrolled");
+      else navbar.classList.remove("scrolled");
+    }
+  });
+
+  // Dynamic Tier Card Interceptor Click Selection Bindings
+  const tierButtons = document.querySelectorAll(".tier-select");
+  tierButtons.forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const tier = target.dataset.tier || "Starter";
+      const shares = Number(target.dataset.shares || 10);
+      await openTierPurchase(tier, shares);
+    });
+  });
+
+  // Smooth Navigation Layout Scrolling Interceptor
+  document.querySelectorAll('a[href^="#"]:not(.tier-select)').forEach(anchor => {
+    anchor.addEventListener("click", function (this: HTMLAnchorElement, e) {
+      e.preventDefault();
+      const hash = this.getAttribute("href");
+      if (hash) {
+        const target = document.querySelector(hash);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+
+  // Legal Modal Triggers
+  document.getElementById("openLegalDisclosure")?.addEventListener("click", openLegal);
+  document.getElementById("openLegalTerms")?.addEventListener("click", openLegal);
+  document.getElementById("closeLegalBtn")?.addEventListener("click", closeLegal);
+
+  // Roadmap Modal Triggers
+  document.getElementById("openRoadmapFooter")?.addEventListener("click", openRoadmap);
+  document.getElementById("closeRoadmapHeaderBtn")?.addEventListener("click", closeRoadmap);
+  document.getElementById("closeRoadmapFooterBtn")?.addEventListener("click", closeRoadmap);
+  document.getElementById("closeConnectModalBtn")?.addEventListener("click", closeConnectModal);
+
+  // Global Overlay Click Closures
+  window.addEventListener("click", (e: MouseEvent) => {
+    const legalModal = document.getElementById("legalModal");
+    const roadmapModal = document.getElementById("roadmapModal");
+    const connectModal = document.getElementById("connectModal");
+
+    if (e.target === legalModal) closeLegal();
+    if (e.target === roadmapModal) closeRoadmap();
+    if (e.target === connectModal) closeConnectModal();
+  });
+
+  // Register Entry View Animation Observers
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add("visible");
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -100px 0px" });
+
+  document.querySelectorAll(".fade-in").forEach(el => observer.observe(el));
+
+  // Run Simulated Staking Counter Countdown 
+  setTimeout(() => animateCounter("staked-olv", 125000), 1000);
+
+  console.log("[INIT] Application context fully mapped and active.");
+});
+
+/* =========================================================
+   KEYBOARD CONTROLLER INTERCEPTIONS
+========================================================= */
+
+window.addEventListener("keydown", (e: KeyboardEvent) => {
   if (e.key !== "Escape") return;
 
   const agreementModal = document.getElementById("agreementModal");
   const selectionModal = document.getElementById("modalOverlay");
+  const connectModal = document.getElementById("connectModal");
 
   if (agreementModal && agreementModal.style.display === "flex") {
-    closeAgreement();
+    const agreementModalEl = document.getElementById("agreementModal");
+    if (agreementModalEl) agreementModalEl.style.display = "none";
+    const modalOverlayEl = document.getElementById("modalOverlay");
+    if (modalOverlayEl) modalOverlayEl.style.display = "flex";
+  } else if (connectModal && connectModal.style.display === "flex") {
+    closeConnectModal();
   } else if (selectionModal && selectionModal.style.display === "flex") {
     if (typeof (window as any).closeModal === "function") {
       (window as any).closeModal();
@@ -439,35 +471,10 @@ window.addEventListener("keydown", (e) => {
 });
 
 /* =========================================================
-   INITIALIZATION
+   GLOBAL CONTEXT WORKSPACE BRIDGE EXPORTS
 ========================================================= */
 
-window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[INIT] Initializing Olivium application...");
-
-  // Initialize payment selector if needed
-  // initPaymentSelector();
-
-  // Update share prices
-  await updateShares();
-
-  console.log("[INIT] Application ready");
-});
-(async () => {
-
-  console.log("[BOOT] Running immediate pricing init");
-
-  try {
-
-    await updateShares();
-
-  } catch (err) {
-
-    console.error("[BOOT ERROR]", err);
-
-  }
-
-})();
-
-// Add this line at the bottom of reserve.ts to link the UI framework seamlessly
-(window as any).getSolPriceEUR = getSolPriceEUR;
+(window as any).processBlockchainTx = processBlockchainTx;
+(window as any).startMollieCheckout = startMollieCheckout;
+(window as any).openTierPurchase = openTierPurchase;
+(window as any).closeConnectModal = closeConnectModal;
