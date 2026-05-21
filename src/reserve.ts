@@ -80,6 +80,8 @@ async function getSolPriceEUR(): Promise<number> {
 async function updateShares(): Promise<void> {
   const hiddenInput = document.getElementById("shareInput") as HTMLInputElement | null;
   if (!hiddenInput) return;
+   console.log("updateShares firing");
+   
 
   const shares = Number(hiddenInput.value) || 1;
   const totalEuro = shares * EURO_PER_SHARE;
@@ -105,6 +107,11 @@ async function updateShares(): Promise<void> {
     const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
     fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
   }
+   console.log({
+  starterSolEl,
+  keeperSolEl,
+  fullTreeSolEl
+});
 }
 
 // Expose to window for external access
