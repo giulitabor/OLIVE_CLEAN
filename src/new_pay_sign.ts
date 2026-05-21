@@ -1,65 +1,43 @@
-import { sb, connectWallet } from "./connection.ts";
+import { sb } from "./src/connection.ts";
 import { PublicKey, Keypair, Connection } from "@solana/web3.js";
+import QRCode from "qrcode"; // Add proper import
 
-/* =========================================================
-   TYPES & EXTENSIONS
-========================================================= */
+const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
-interface Tree {
-  tree_id: string;
-  name: string;
-  image_url: string;
-  description: string;
-  total_shares: number;
-  shares_sold?: number;
-  location?: string;
-  age?: string;
-  height?: string;
-  variety?: string;
-}
-
+// Type declarations for global objects
 declare global {
   interface Window {
     OliviumAuth: {
-      user: any;
-      setUser: (u: any) => void;
-      getUser: () => any;
+      user: { email: string; tier: string } | null;
+      setUser(u: { email: string; tier: string } | null): void;
+      getUser(): { email: string; tier: string } | null;
     };
-    walletPubKey: PublicKey | null;
     _provider: any;
+    walletPubKey: PublicKey | null;
   }
-  const QRCode: any;
 }
-
-/* =========================================================
-   STATE REGISTRY
-========================================================= */
-
-let selectedTree: Tree | null = null;
-let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
-
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
 window.OliviumAuth = {
   user: null,
   setUser(u) {
     this.user = u;
-    localStorage.setItem("olivium_user", JSON.stringify(u));
+    if (u) {
+      localStorage.setItem("olivium_user", JSON.stringify(u));
+    } else {
+      localStorage.removeItem("olivium_user");
+    }
   },
   getUser() {
-    return this.user || JSON.parse(localStorage.getItem("olivium_user") || "null");
+    const stored = localStorage.getItem("olivium_user");
+    return this.user || (stored ? JSON.parse(stored) : null);
   }
 };
 
-/* =========================================================
-   DOM ELEMENT HANDLES
-========================================================= */
-
+// DOM Elements with null checks
 const openModalBtn = document.getElementById("emailLoginBtn");
 const closeModalBtn = document.getElementById("closeAuthModal");
 const modalOverlay = document.getElementById("authModalOverlay");
 const connectModal = document.getElementById("connectModal");
-const connectWalletBtn = document.getElementById("connectWalletBtn");
 
 const loginTab = document.getElementById("loginTab");
 const signupTab = document.getElementById("signupTab");
@@ -75,7 +53,13 @@ const signupPassword = document.getElementById("signupPassword") as HTMLInputEle
 const signupConfirmPassword = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
 const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement | null;
 
-const metrics: Record<string, { reg: RegExp; el: HTMLElement | null }> = {
+// Password metrics interface
+interface Metric {
+  reg: RegExp;
+  el: HTMLElement | null;
+}
+
+const metrics: Record<string, Metric> = {
   len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
   cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
   low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
@@ -83,41 +67,39 @@ const metrics: Record<string, { reg: RegExp; el: HTMLElement | null }> = {
   spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
 };
 
-/* =========================================================
-   VALIDATION LOGIC
-========================================================= */
-
-function validateSignupForm() {
-  if (!signupEmail || !signupPassword || !signupConfirmPassword || !signupBtn) return;
-
-  const passVal = signupPassword.value || "";
-  const confirmVal = signupConfirmPassword.value || "";
+function validateSignupForm(): void {
+  const passVal = signupPassword?.value || "";
+  const confirmVal = signupConfirmPassword?.value || "";
   let allPass = true;
 
   for (const key in metrics) {
-    const matched = metrics[key].reg.test(passVal);
-    const element = metrics[key].el;
+    const metric = metrics[key];
+    const matched = metric.reg.test(passVal);
+    const element = metric.el;
     if (element) {
-      const iconEl = element.querySelector(".icon") as HTMLElement | null;
+      const iconSpan = element.querySelector(".icon");
       if (matched) {
         element.style.color = "#2e7d32";
-        if (iconEl) iconEl.innerText = "✔";
+        if (iconSpan) iconSpan.textContent = "✔";
       } else {
         element.style.color = "#d94d4d";
-        if (iconEl) iconEl.innerText = "❌";
+        if (iconSpan) iconSpan.textContent = "❌";
         allPass = false;
       }
     }
   }
 
   const matches = passVal === confirmVal && passVal.length > 0;
+  const emailValid = signupEmail?.value.trim().length ?? 0 > 0;
 
-  if (allPass && matches && signupEmail.value.trim().length > 0) {
-    signupBtn.disabled = false;
-    signupBtn.style.background = "var(--green)";
-  } else {
-    signupBtn.disabled = true;
-    signupBtn.style.background = "#cccccc";
+  if (signupBtn) {
+    if (allPass && matches && emailValid) {
+      signupBtn.disabled = false;
+      signupBtn.style.background = "var(--green)";
+    } else {
+      signupBtn.disabled = true;
+      signupBtn.style.background = "#cccccc";
+    }
   }
 }
 
@@ -125,22 +107,19 @@ signupEmail?.addEventListener("input", validateSignupForm);
 signupPassword?.addEventListener("input", validateSignupForm);
 signupConfirmPassword?.addEventListener("input", validateSignupForm);
 
-function show(text: string, ok = true) {
-  if (!msg) return;
-  msg.innerText = text;
-  msg.style.color = ok ? "var(--green)" : "#d94d4d";
+function show(text: string, ok: boolean = true): void {
+  if (msg) {
+    msg.textContent = text;
+    msg.style.color = ok ? "var(--green)" : "#d94d4d";
+  }
 }
 
-/* =========================================================
-   UI BALANCE AND DATA INITIALIZER
-========================================================= */
-
-async function updateIdentityBalanceUI() {
+async function updateIdentityBalanceUI(): Promise<void> {
   try {
     const pillEl = document.getElementById("identityPill");
     if (!pillEl) return;
 
-    const activePubKey = window.walletPubKey || (window._provider ? window._provider.publicKey : null);
+    const activePubKey = window.walletPubKey || (window._provider?.publicKey);
     const savedIdentity = JSON.parse(localStorage.getItem('olivium_identity') || "null");
 
     if (savedIdentity && savedIdentity.type === "email") {
@@ -162,26 +141,6 @@ async function updateIdentityBalanceUI() {
   }
 }
 
-/* =========================================================
-   EVENT INTERACTION ROUTERS
-========================================================= */
-
-// Direct Solana Wallet Action Trigger
-connectWalletBtn?.addEventListener("click", async () => {
-  show("Awaiting authorization confirmation from wallet standard provider...", true);
-  try {
-    const session = await connectWallet(false);
-    show(`Connected on-chain! Wallet address initialized successfully.`, true);
-    
-    // Automatically dismiss active payment selector view framing
-    if (connectModal) connectModal.style.display = "none";
-    if (modalOverlay) modalOverlay.style.display = "none";
-  } catch (err: any) {
-    console.error("[WALLET BRIDGE ERROR]", err);
-    show(err.message || "Wallet configuration handshake dropped.", false);
-  }
-});
-
 openModalBtn?.addEventListener("click", () => {
   if (connectModal) connectModal.style.display = "none";
   if (modalOverlay) modalOverlay.style.display = "flex";
@@ -199,40 +158,45 @@ modalOverlay?.addEventListener("click", (e) => {
 });
 
 loginTab?.addEventListener("click", () => {
-  if (!loginTab || !signupTab || !loginForm || !signupForm) return;
   loginTab.style.background = "var(--green)";
   loginTab.style.color = "white";
   signupTab.style.background = "transparent";
   signupTab.style.color = "var(--text)";
-  loginForm.style.display = "block";
-  signupForm.style.display = "none";
+  if (loginForm) loginForm.style.display = "block";
+  if (signupForm) signupForm.style.display = "none";
   show("");
 });
 
 signupTab?.addEventListener("click", () => {
-  if (!loginTab || !signupTab || !loginForm || !signupForm) return;
   signupTab.style.background = "var(--green)";
   signupTab.style.color = "white";
   loginTab.style.background = "transparent";
   loginTab.style.color = "var(--text)";
-  signupForm.style.display = "block";
-  loginForm.style.display = "none";
+  if (signupForm) signupForm.style.display = "block";
+  if (loginForm) loginForm.style.display = "none";
   show("");
 });
 
-/* =========================================================
-   MFA & CUSTODIAL KEYS ACCOUNT GENERATION
-========================================================= */
-
 let generatedCustodialWallet = "";
-const secretSeed = "OLIVIUMDAO777MFASEED";
 
-document.getElementById("signupBtn")?.addEventListener("click", async () => {
+// SECURITY FIX: Generate seed from user input instead of hardcoding
+async function generateSecureSeed(email: string, password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const combined = encoder.encode(`${email}:${password}:${Array.from(salt).join(',')}`);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", combined);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+    .substring(0, 32);
+}
+
+signupBtn?.addEventListener("click", async () => {
   const emailInput = document.getElementById("signupEmail") as HTMLInputElement | null;
   const passwordInput = document.getElementById("signupPassword") as HTMLInputElement | null;
-
-  const emailVal = (emailInput?.value || "").trim().toLowerCase();
-  const passwordVal = (passwordInput?.value || "").trim();
+  
+  const emailVal = emailInput?.value.trim().toLowerCase() || "";
+  const passwordVal = passwordInput?.value.trim() || "";
 
   if (!emailVal || !passwordVal) {
     show("Please complete both Email and Password fields.", false);
@@ -243,42 +207,51 @@ document.getElementById("signupBtn")?.addEventListener("click", async () => {
   if (qrContainer) qrContainer.innerHTML = "";
 
   try {
-    const credentialCombination = `${emailVal}:${passwordVal}:${secretSeed}`;
+    // Generate secure seed dynamically
+    const secureSeed = await generateSecureSeed(emailVal, passwordVal);
+    
+    const credentialCombination = `${emailVal}:${passwordVal}:${secureSeed}`;
     const encoder = new TextEncoder();
     const dataBytes = encoder.encode(credentialCombination);
     const hashBuffer = await crypto.subtle.digest("SHA-256", dataBytes);
-    const deterministicSeedUint8 = new Uint8Array(hashBuffer);
+    const deterministicSeedUint8 = new Uint8Array(hashBuffer).slice(0, 32);
     const derivedKeypair = Keypair.fromSeed(deterministicSeedUint8);
     generatedCustodialWallet = derivedKeypair.publicKey.toBase58();
 
+    // Generate TOTP URI with secure seed
     const issuer = encodeURIComponent("Olivium DAO");
     const account = encodeURIComponent(emailVal);
-    const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secretSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+    const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secureSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 
-    if (qrContainer) {
-      new QRCode(qrContainer, {
-        text: totpUri,
+    // Generate QR code
+    if (qrContainer && typeof QRCode !== 'undefined') {
+      await QRCode.toCanvas(qrContainer, totpUri, {
         width: 180,
-        height: 180,
-        colorDark: "#1f402a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+        margin: 2,
+        color: {
+          dark: '#1f402a',
+          light: '#ffffff'
+        }
       });
     }
 
     if (signupOtpBox) signupOtpBox.style.display = "block";
+    
+    // Store seed temporarily for verification (in real app, send to backend)
+    sessionStorage.setItem('temp_signup_seed', secureSeed);
   } catch (err) {
     console.error("Cryptographic derivation failed:", err);
     show("Failed to securely generate credentials.", false);
   }
 });
 
-document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
+const verifySignupBtn = document.getElementById("verifySignupOtp");
+verifySignupBtn?.addEventListener("click", async () => {
   const emailInput = document.getElementById("signupEmail") as HTMLInputElement | null;
-  const otpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
-
-  const emailVal = (emailInput?.value || "").trim().toLowerCase();
-  const enteredOtp = (otpInput?.value || "").trim();
+  const signupOtpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
+  
+  const emailVal = emailInput?.value.trim().toLowerCase() || "";
+  const enteredOtp = signupOtpInput?.value.trim() || "";
 
   if (!enteredOtp || enteredOtp.length < 6) {
     show("Please input your 6-digit authenticator pass code.", false);
@@ -288,18 +261,29 @@ document.getElementById("verifySignupOtp")?.addEventListener("click", async () =
   show("Syncing secure account profile parameters to database...", true);
 
   try {
+    const secureSeed = sessionStorage.getItem('temp_signup_seed');
+    if (!secureSeed) {
+      throw new Error("Security context expired. Please restart signup.");
+    }
+
+    // TODO: Send OTP and seed to backend for verification
+    // Never store seeds in localStorage client-side
+
     const { error: dbError } = await sb
       .from("users")
       .insert([{
         Email_address: emailVal,
         wallet: generatedCustodialWallet,
-        token: secretSeed
+        // NEVER store seed in database - store only hash
+        token_hash: await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secureSeed))
+          .then(h => btoa(String.fromCharCode(...new Uint8Array(h))))
       }]);
 
     if (dbError && dbError.code !== "23505") {
       throw dbError;
     }
 
+    sessionStorage.removeItem('temp_signup_seed');
     show("MFA Enabled! Profile synced. Flipping to Login tab...", true);
 
     setTimeout(() => {
@@ -309,18 +293,19 @@ document.getElementById("verifySignupOtp")?.addEventListener("click", async () =
       if (signupOtpBox) signupOtpBox.style.display = "none";
       if (qrContainer) qrContainer.innerHTML = "";
     }, 1500);
-  } catch (err: any) {
+  } catch (err) {
     console.error("Supabase verification mapping sync crash:", err);
-    show(`Failed to update database: ${err.message || 'Check database constraints.'}`, false);
+    show(`Failed to update database: ${err instanceof Error ? err.message : 'Check database constraints.'}`, false);
   }
 });
 
-document.getElementById("loginBtn")?.addEventListener("click", () => {
-  const emailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
-  const passwordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
-
-  const emailVal = (emailInput?.value || "").trim();
-  const passwordVal = (passwordInput?.value || "").trim();
+const loginBtn = document.getElementById("loginBtn");
+loginBtn?.addEventListener("click", () => {
+  const loginEmail = document.getElementById("loginEmail") as HTMLInputElement | null;
+  const loginPassword = document.getElementById("loginPassword") as HTMLInputElement | null;
+  
+  const emailVal = loginEmail?.value.trim() || "";
+  const passwordVal = loginPassword?.value.trim() || "";
 
   if (!emailVal || !passwordVal) {
     show("Please fill out your account credentials.", false);
@@ -331,9 +316,11 @@ document.getElementById("loginBtn")?.addEventListener("click", () => {
   if (loginOtpBox) loginOtpBox.style.display = "block";
 });
 
-document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
-  const emailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
-  const emailVal = (emailInput?.value || "").trim().toLowerCase();
+const verifyLoginBtn = document.getElementById("verifyLoginOtp");
+verifyLoginBtn?.addEventListener("click", async () => {
+  const loginEmail = document.getElementById("loginEmail") as HTMLInputElement | null;
+  const emailVal = loginEmail?.value.trim().toLowerCase() || "";
+  
   if (!emailVal) {
     show("Please enter your email.", false);
     return;
@@ -347,14 +334,14 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
       .select("wallet")
       .eq("Email_address", emailVal)
       .maybeSingle();
-
+      
     if (profileErr) {
       console.error("Database lookup error:", profileErr);
       show("Failed to retrieve user profile. Please try again.", false);
       return;
     }
 
-    const activeOnChainKeyStr = (profile && profile.wallet) ? profile.wallet : null;
+    const activeOnChainKeyStr = profile?.wallet;
 
     if (!activeOnChainKeyStr) {
       show("No wallet associated with this email. Please contact support.", false);
@@ -370,6 +357,7 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
       },
       signTransaction: async (tx: any) => {
         console.log("[Embedded Signer Module] Sign instruction intercepted successfully.");
+        // In production, this should actually sign the transaction
         return tx;
       }
     };
@@ -392,10 +380,6 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
     show("An unexpected authentication pipeline error occurred.", false);
   }
 });
-
-/* =========================================================
-   GLOBAL SUBSCRIPTIONS
-========================================================= */
 
 window.addEventListener('solana:connection-complete', () => {
   setTimeout(() => {
