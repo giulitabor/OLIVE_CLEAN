@@ -134,8 +134,8 @@ async function updateShares(): Promise<void> {
       `~${fullTreeSol.toFixed(2)} SOL`;
   }
   if (guardTreeSolEl) {
-    fullTreeSolEl.innerText =
-      `~${fullTreeSol.toFixed(2)} SOL`;
+    guardTreeSolEl.innerText =
+      `~${guardTreeSol.toFixed(2)} SOL`;
   } 
 }
 /* =========================================================
