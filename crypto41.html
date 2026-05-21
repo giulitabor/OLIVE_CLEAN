@@ -542,32 +542,38 @@
         const EURO_PER_SHARE = 12.4; 
         async function getSolPriceEUR() { return 150.0; } // Fallback implementation
         
+
         let selectedPurchaseShares = 0;
 
-        async function openTierPurchase(tierName, shares) {
-            selectedPurchaseShares = shares;
-            const euroTotal = shares * EURO_PER_SHARE;
-            const solPrice = await getSolPriceEUR();
-            const solTotal = euroTotal / solPrice;
+    async function openTierPurchase(tierName, shares) {
+        selectedPurchaseShares = shares;
+        const euroTotal = shares * EURO_PER_SHARE;
+        const solPrice = await getSolPriceEUR();
+        const solTotal = euroTotal / solPrice;
 
-            // UPDATE UI
-            const tierNameEl = document.getElementById("selectedTierName");
-            const tierSharesEl = document.getElementById("selectedTierShares");
-            const tierSolEl = document.getElementById("selectedTierSol");
-            const tierEuroEl = document.getElementById("selectedTierEuro");
+        // UPDATE UI VALUES DYNAMICALLY INSIDE CONNECT MODAL
+        const tierNameEl = document.getElementById("selectedTierName");
+        const tierSharesEl = document.getElementById("selectedTierShares");
+        const tierSolEl = document.getElementById("selectedTierSol");
+        const tierEuroEl = document.getElementById("selectedTierEuro");
 
-            if (tierNameEl) tierNameEl.innerText = tierName;
-            if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
-            if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
-            if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
+        if (tierNameEl) tierNameEl.innerText = tierName;
+        if (tierSharesEl) tierSharesEl.innerText = `${shares.toLocaleString()} Shares`;
+        if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
+        if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
 
-            // OPEN MODAL
-            const connectModal = document.getElementById("connectModal");
-            if (connectModal) {
-                connectModal.style.display = "flex";
-            }
+        // Update the functional share input element for payment routing steps 
+        const shareInputEl = document.getElementById("shareInput");
+        if (shareInputEl) {
+            shareInputEl.value = shares;
         }
 
+        // OPEN MODAL
+        const connectModal = document.getElementById("connectModal");
+        if (connectModal) {
+            connectModal.style.display = "flex";
+        }
+    }
         function closeConnectModal() {
             const connectModal = document.getElementById("connectModal");
             if (connectModal) connectModal.style.display = "none";
