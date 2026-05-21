@@ -111,12 +111,12 @@ async function updateShares(): Promise<void> {
   // Calculations
   const starterSol =
     (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
-
   const keeperSol =
     (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
-
   const fullTreeSol =
     (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
+  const guardTreeSol =
+    (TIER_SHARES.guardTree * EURO_PER_SHARE) / solPrice;
 
   // UI updates
   if (starterSolEl) {
@@ -133,6 +133,10 @@ async function updateShares(): Promise<void> {
     fullTreeSolEl.innerText =
       `~${fullTreeSol.toFixed(2)} SOL`;
   }
+  if (guardTreeSolEl) {
+    fullTreeSolEl.innerText =
+      `~${fullTreeSol.toFixed(2)} SOL`;
+  } 
 }
 /* =========================================================
    PAYMENT SELECTOR
