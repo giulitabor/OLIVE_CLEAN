@@ -1,6 +1,9 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { sb } from "./connection.ts";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 interface Tree {
   tree_id: string;
@@ -9,7 +12,6 @@ interface Tree {
   description: string;
   total_shares: number;
   shares_sold?: number;
-
   location?: string;
   age?: string;
   height?: string;
@@ -17,276 +19,265 @@ interface Tree {
 }
 
 /* =========================================================
-   UPDATE SHARES
+   CONSTANTS
 ========================================================= */
-(window as any).updateShares = async () => {
 
+const EURO_PER_SHARE = 12.40;
+const PRICE_CACHE_DURATION = 60000; // 60 seconds
+
+const TIER_SHARES = {
+  starter: 10,
+  keeper: 100,
+  fullTree: 1000,
+} as const;
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let selectedTree: Tree | null = null;
+let paymentMode: "fiat" | "crypto" = "fiat";
+let cachedSolPrice = 100;
+let lastPriceFetch = 0;
+
+/* =========================================================
+   PRICE FETCHING
+========================================================= */
+
+async function getSolPriceEUR(): Promise<number> {
+  const now = Date.now();
+
+  // Return cached price if still valid
+  if (now - lastPriceFetch < PRICE_CACHE_DURATION) {
+    return cachedSolPrice;
+  }
+
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur"
+    );
+
+    const data = await res.json();
+
+    if (data?.solana?.eur) {
+      cachedSolPrice = data.solana.eur;
+      lastPriceFetch = now;
+      console.log("[PRICE] Live SOL/EUR:", cachedSolPrice);
+      return cachedSolPrice;
+    }
+  } catch (err) {
+    console.error("CoinGecko price fetch failed:", err);
+  }
+
+  // Return cached fallback
+  return cachedSolPrice;
+}
+
+/* =========================================================
+   UPDATE SHARES & PRICING
+========================================================= */
+
+async function updateShares(): Promise<void> {
   const hiddenInput = document.getElementById("shareInput") as HTMLInputElement | null;
   if (!hiddenInput) return;
 
   const shares = Number(hiddenInput.value) || 1;
-
-  const euroPerShare = 12.40;
-
-  const totalEuro = shares * euroPerShare;
-
+  const totalEuro = shares * EURO_PER_SHARE;
   const solPrice = await getSolPriceEUR();
-
   const totalSol = totalEuro / solPrice;
 
-  const isCryptoMode = paymentMode === "crypto";
-
+  // Update tier pricing display
   const starterSolEl = document.getElementById("starter-sol-price");
   const keeperSolEl = document.getElementById("keeper-sol-price");
   const fullTreeSolEl = document.getElementById("fulltree-sol-price");
 
-  const starterShares = 10;
-  const keeperShares = 100;
-  const fullTreeShares = 1000;
+  if (starterSolEl) {
+    const starterSol = (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
+    starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
+  }
 
-  const starterSol = (starterShares * euroPerShare) / solPrice;
-  const keeperSol = (keeperShares * euroPerShare) / solPrice;
-  const fullTreeSol = (fullTreeShares * euroPerShare) / solPrice;
+  if (keeperSolEl) {
+    const keeperSol = (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
+    keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
+  }
 
-  if (starterSolEl) starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
-  if (keeperSolEl) keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
-  if (fullTreeSolEl) fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
+  if (fullTreeSolEl) {
+    const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
+    fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
+  }
+}
 
-};
+// Expose to window for external access
+(window as any).updateShares = updateShares;
 
 /* =========================================================
    PAYMENT SELECTOR
 ========================================================= */
 
-function initPaymentSelector() {
+function initPaymentSelector(): void {
   const fiatOption = document.getElementById("fiatOption");
-
-  const cryptoOption =
-    document.getElementById("cryptoOption");
+  const cryptoOption = document.getElementById("cryptoOption");
 
   if (!fiatOption || !cryptoOption) return;
 
   fiatOption.addEventListener("click", () => {
     paymentMode = "fiat";
-
     fiatOption.classList.add("active");
     cryptoOption.classList.remove("active");
-
-    (window as any).updateShares();
+    updateShares();
   });
 
   cryptoOption.addEventListener("click", () => {
     paymentMode = "crypto";
-
     cryptoOption.classList.add("active");
     fiatOption.classList.remove("active");
-
-    (window as any).updateShares();
+    updateShares();
   });
+}
+
+/* =========================================================
+   MODAL UTILITIES
+========================================================= */
+
+function randomFallback(): string {
+  // Add your fallback image logic here
+  return "https://via.placeholder.com/400x300?text=Olive+Tree";
 }
 
 /* =========================================================
    AGREEMENT MODAL
 ========================================================= */
 
-(window as any).openAgreement = () => {
+function openAgreement(): void {
   if (!selectedTree) return;
 
   document.body.style.overflow = "hidden";
 
-  const agreeImg = document.getElementById(
-    "agreeImage"
-  ) as HTMLImageElement | null;
-
+  // Update image
+  const agreeImg = document.getElementById("agreeImage") as HTMLImageElement | null;
   const fallback = randomFallback();
 
   if (agreeImg) {
     agreeImg.src = selectedTree.image_url || fallback;
-
     agreeImg.onerror = () => {
       agreeImg.src = fallback;
     };
   }
 
-  const agreeTitle =
-    document.getElementById("agreeTitle");
-
+  // Update title
+  const agreeTitle = document.getElementById("agreeTitle");
   if (agreeTitle) {
-    agreeTitle.innerText =
-      `Adopting ${selectedTree.name || selectedTree.tree_id}`;
+    agreeTitle.innerText = `Adopting ${selectedTree.name || selectedTree.tree_id}`;
   }
 
-  const loc = document.getElementById("agreeLocation");
-  const age = document.getElementById("agreeAge");
-  const height = document.getElementById("agreeHeight");
-  const variety = document.getElementById("agreeVariety");
+  // Update tree details
+  const details = {
+    agreeLocation: selectedTree.location || "Field F1",
+    agreeAge: selectedTree.age || "5",
+    agreeHeight: selectedTree.height || "1.5m",
+    agreeVariety: selectedTree.variety || "Frantoio",
+  };
 
-  if (loc) {
-    loc.innerText = selectedTree.location || "Field F1";
-  }
+  Object.entries(details).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.innerText = value;
+  });
 
-  if (age) {
-    age.innerText = selectedTree.age || "5";
-  }
+  // Setup checkbox and button
+  const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
+  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
 
-  if (height) {
-    height.innerText = selectedTree.height || "1.5m";
-  }
-
-  if (variety) {
-    variety.innerText = selectedTree.variety || "Frantoio";
-  }
-
-  const check = document.getElementById(
-    "agreeCheckbox"
-  ) as HTMLInputElement | null;
-
-  const finalBtn = document.getElementById(
-    "finalConfirmBtn"
-  ) as HTMLButtonElement | null;
-
-  if (check && finalBtn) {
-    check.checked = false;
-
+  if (checkbox && finalBtn) {
+    checkbox.checked = false;
     finalBtn.disabled = true;
-
     finalBtn.innerText = "Confirm & Pay";
 
-    check.onchange = () => {
-      finalBtn.disabled = !check.checked;
+    checkbox.onchange = () => {
+      finalBtn.disabled = !checkbox.checked;
     };
   }
 
-  const selectionModal =
-    document.getElementById("modalOverlay");
+  // Show agreement modal
+  const selectionModal = document.getElementById("modalOverlay");
+  const agreementModal = document.getElementById("agreementModal");
 
-  const agreementModal =
-    document.getElementById("agreementModal");
+  if (selectionModal) selectionModal.style.display = "none";
+  if (agreementModal) agreementModal.style.display = "flex";
+}
 
-  if (selectionModal) {
-    selectionModal.style.display = "none";
-  }
+function closeAgreement(): void {
+  const agreementModal = document.getElementById("agreementModal");
+  const selectionModal = document.getElementById("modalOverlay");
 
-  if (agreementModal) {
-    agreementModal.style.display = "flex";
-  }
-};
+  if (agreementModal) agreementModal.style.display = "none";
+  if (selectionModal) selectionModal.style.display = "flex";
+}
 
-(window as any).closeAgreement = () => {
-  const agreementModal =
-    document.getElementById("agreementModal");
-
-  const selectionModal =
-    document.getElementById("modalOverlay");
-
-  if (agreementModal) {
-    agreementModal.style.display = "none";
-  }
-
-  if (selectionModal) {
-    selectionModal.style.display = "flex";
-  }
-};
+// Expose to window
+(window as any).openAgreement = openAgreement;
+(window as any).closeAgreement = closeAgreement;
 
 /* =========================================================
    SUCCESS MODAL
 ========================================================= */
 
-(window as any).closeSuccess = () => {
-  const successModal =
-    document.getElementById("successModal");
-
-  if (successModal) {
-    successModal.style.display = "none";
-  }
-
+function closeSuccess(): void {
+  const successModal = document.getElementById("successModal");
+  if (successModal) successModal.style.display = "none";
   document.body.style.overflow = "";
-};
+}
 
-
+(window as any).closeSuccess = closeSuccess;
 
 /* =========================================================
-   FIAT TX
+   FIAT PAYMENT
 ========================================================= */
 
-async function startMollieCheckout() {
-  console.log("MOLLIE BUY");
+async function startMollieCheckout(): Promise<void> {
+  console.log("[PAYMENT] Starting Mollie checkout");
 
   try {
+    const shareInput = document.getElementById("shareInput") as HTMLInputElement;
+    if (!shareInput) throw new Error("Share input not found");
 
-    const shares = Number(
-      (
-        document.getElementById(
-          "shareInput"
-        ) as HTMLInputElement
-      ).value
-    );
+    const shares = Number(shareInput.value);
 
-    const response = await fetch(
-      "http://localhost:3000/create-mollie-payment",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-
-          shares,
-
-          treeId:
-            selectedTree?.tree_id,
-
-          treeName:
-            selectedTree?.name,
-
-          userEmail:
-            window.OliviumAuth?.user?.email || null
-
-        }),
-      }
-    );
+    const response = await fetch("http://localhost:3000/create-mollie-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        shares,
+        treeId: selectedTree?.tree_id,
+        treeName: selectedTree?.name,
+        userEmail: (window as any).OliviumAuth?.user?.email || null,
+      }),
+    });
 
     const data = await response.json();
 
     if (data.checkoutUrl) {
-
-      window.location.href =
-        data.checkoutUrl;
-
+      window.location.href = data.checkoutUrl;
     } else {
-
       alert("Failed to create payment");
-
     }
-
   } catch (err) {
-
-    console.error(err);
-
+    console.error("[PAYMENT] Error:", err);
     alert("Payment server error");
-
   }
-
 }
 
-
-async function startPaypalCheckout() {
-
-console.log("startPaypalCheckout");
-
-}
 /* =========================================================
-   BLOCKCHAIN TX
+   BLOCKCHAIN TRANSACTION
 ========================================================= */
 
-(window as any).processBlockchainTx = async () => {
+async function processBlockchainTx(): Promise<void> {
   const program = (window as any)._program;
   const provider = (window as any)._provider || (window as any).provider;
   const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
 
-  // 🛑 GUARD 1: If already running/processing, exit immediately to stop concurrent double clicks
+  // Guard: Prevent concurrent transactions
   if (finalBtn && (finalBtn.disabled || finalBtn.dataset.processing === "true")) {
     return;
   }
@@ -303,7 +294,7 @@ console.log("startPaypalCheckout");
 
   const amount = new anchor.BN(amountInput.value);
 
-  // DYNAMICALLY EXTRACT ACTIVE PUBLIC KEY FROM NATIVE OR EMBEDDED WALLET OBJECT
+  // Extract public key from wallet
   const buyerPublicKey = provider.wallet?.publicKey || provider.publicKey;
   if (!buyerPublicKey) {
     alert("Could not resolve signing authority public key.");
@@ -311,13 +302,14 @@ console.log("startPaypalCheckout");
   }
 
   try {
-    // 🛑 GUARD 2: Instantly freeze the UI state before calling any blockchain/wallet signatures
+    // Lock UI
     if (finalBtn) {
       finalBtn.disabled = true;
       finalBtn.dataset.processing = "true";
       finalBtn.innerText = "Processing...";
     }
 
+    // Derive PDAs
     const [treePda] = PublicKey.findProgramAddressSync(
       [Buffer.from("tree"), Buffer.from(selectedTree.tree_id)],
       program.programId
@@ -338,7 +330,7 @@ console.log("startPaypalCheckout");
       program.programId
     );
 
-    // Build the instruction explicitly
+    // Build transaction
     const ix = await program.methods
       .purchaseShares(selectedTree.tree_id, amount)
       .accounts({
@@ -356,111 +348,80 @@ console.log("startPaypalCheckout");
     transaction.feePayer = buyerPublicKey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-    // CHOOSE SIGNING PATHWAY BASED ON HOW WALLET INTEGRATES
+    // Sign and send transaction
     let signature = "";
     if (provider.wallet && typeof provider.wallet.signTransaction === "function") {
-      // Standard anchor provider extension flow
       const signedTx = await provider.wallet.signTransaction(transaction);
       signature = await connection.sendRawTransaction(signedTx.serialize());
     } else if (typeof provider.signTransaction === "function") {
-      // Direct Web3Auth/Embedded provider interaction pipeline
       const signedTx = await provider.signTransaction(transaction);
       signature = await connection.sendRawTransaction(signedTx.serialize());
     } else {
-      // Fallback custom adapter anchor execution trigger
       signature = await program.provider.sendAndConfirm(transaction, []);
     }
 
+    // Confirm transaction
     await connection.confirmTransaction(signature, "confirmed");
 
+    // Show success
     const agreementModal = document.getElementById("agreementModal");
     const successModal = document.getElementById("successModal");
 
     if (agreementModal) agreementModal.style.display = "none";
     if (successModal) successModal.style.display = "flex";
 
-    // Clean up processing state since it succeeded
-    if (finalBtn) {
-      delete finalBtn.dataset.processing;
+    if (finalBtn) delete finalBtn.dataset.processing;
+
+    // Reload trees (assuming this function exists)
+    if (typeof (window as any).loadTrees === "function") {
+      (window as any).loadTrees();
     }
-
-    loadTrees();
   } catch (err) {
-    console.error("Transaction Error:", err);
-    alert("Transaction failed. Check wallet balance or signing approval authorization window.");
+    console.error("[BLOCKCHAIN] Transaction error:", err);
+    alert("Transaction failed. Check wallet balance or approval.");
 
-    // 🔄 ROLLBACK: Only re-enable the payment button if the transaction execution strictly errored out
+    // Re-enable button on error
     if (finalBtn) {
       finalBtn.disabled = false;
       delete finalBtn.dataset.processing;
       finalBtn.innerText = "Confirm & Pay";
     }
   }
-};
+}
+
+(window as any).processBlockchainTx = processBlockchainTx;
 
 /* =========================================================
-   ESCAPE KEY
+   KEYBOARD SHORTCUTS
 ========================================================= */
 
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
 
-  const agreementModal =
-    document.getElementById("agreementModal");
+  const agreementModal = document.getElementById("agreementModal");
+  const selectionModal = document.getElementById("modalOverlay");
 
-  const selectionModal =
-    document.getElementById("modalOverlay");
-
-  if (
-    agreementModal &&
-    agreementModal.style.display === "flex"
-  ) {
-    (window as any).closeAgreement();
-  } else if (
-    selectionModal &&
-    selectionModal.style.display === "flex"
-  ) {
-    (window as any).closeModal();
+  if (agreementModal && agreementModal.style.display === "flex") {
+    closeAgreement();
+  } else if (selectionModal && selectionModal.style.display === "flex") {
+    if (typeof (window as any).closeModal === "function") {
+      (window as any).closeModal();
+    }
   }
 });
-let cachedSolPrice = 100;
-let lastPriceFetch = 0;
 
-async function getSolPriceEUR(): Promise<number> {
-    const now = Date.now();
+/* =========================================================
+   INITIALIZATION
+========================================================= */
 
-    // Cache for 60 seconds
-    if (now - lastPriceFetch < 60000) {
-        return cachedSolPrice;
-    }
-
-    try {
-        const res = await fetch(
-            "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur"
-        );
-
-        const data = await res.json();
-
-        if (data?.solana?.eur) {
-            cachedSolPrice = data.solana.eur;
-            lastPriceFetch = now;
-
-            console.log("[PRICE] Live SOL/EUR:", cachedSolPrice);
-
-            return cachedSolPrice;
-        }
-    } catch (err) {
-        console.error("CoinGecko price fetch failed:", err);
-    }
-
-    // fallback
-    return cachedSolPrice;
-}
-
-// Single DOM initialization handler
 window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[INIT] Initializing application..JUST SHOW CORREST SOL PRICE.");
+  console.log("[INIT] Initializing Olivium application...");
 
- // initPaymentSelector();
- await updateShares();
-  }
+  // Initialize payment selector if needed
+  // initPaymentSelector();
+
+  // Update share prices
+  await updateShares();
+
+  console.log("[INIT] Application ready");
+});
