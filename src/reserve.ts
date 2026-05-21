@@ -78,42 +78,55 @@ async function getSolPriceEUR(): Promise<number> {
 ========================================================= */
 
 async function updateShares(): Promise<void> {
-   console.log("updateShares firing");
-   
 
-  const totalEuro = shares * EURO_PER_SHARE;
+  console.log("updateShares firing");
+
   const solPrice = await getSolPriceEUR();
-  const totalSol = totalEuro / solPrice;
 
-  // Update tier pricing display
-  const starterSolEl = document.getElementById("starter-sol-price");
-  const keeperSolEl = document.getElementById("keeper-sol-price");
-  const fullTreeSolEl = document.getElementById("fulltree-sol-price");
+  console.log("SOL PRICE:", solPrice);
 
+  // Elements
+  const starterSolEl =
+    document.getElementById("starter-sol-price");
+
+  const keeperSolEl =
+    document.getElementById("keeper-sol-price");
+
+  const fullTreeSolEl =
+    document.getElementById("fulltree-sol-price");
+
+  console.log({
+    starterSolEl,
+    keeperSolEl,
+    fullTreeSolEl
+  });
+
+  // Calculations
+  const starterSol =
+    (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
+
+  const keeperSol =
+    (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
+
+  const fullTreeSol =
+    (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
+
+  // UI updates
   if (starterSolEl) {
-    const starterSol = (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
-    starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
+    starterSolEl.innerText =
+      `~${starterSol.toFixed(2)} SOL`;
   }
 
   if (keeperSolEl) {
-    const keeperSol = (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
-    keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
+    keeperSolEl.innerText =
+      `~${keeperSol.toFixed(2)} SOL`;
   }
 
   if (fullTreeSolEl) {
-    const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
-    fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
+    fullTreeSolEl.innerText =
+      `~${fullTreeSol.toFixed(2)} SOL`;
   }
-   console.log({
-  starterSolEl,
-  keeperSolEl,
-  fullTreeSolEl
-});
 }
-
-// Expose to window for external access
-(window as any).updateShares = updateShares;
-
 /* =========================================================
    PAYMENT SELECTOR
 ========================================================= */
