@@ -1,4 +1,4 @@
-import { sb, connectWallet } from "./src/connection.ts";
+import { sb, connectWallet } from "./connection.ts";
 import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
 /* =========================================================
