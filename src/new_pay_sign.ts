@@ -1,4 +1,4 @@
-import { sb } from "./src/connection.ts";
+import { sb } from "./connection.ts";
 import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 //import QRCode from "qrcode"; // Add proper import
 
