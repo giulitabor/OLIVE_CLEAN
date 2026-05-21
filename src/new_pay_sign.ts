@@ -1,6 +1,6 @@
 import { sb } from "./src/connection.ts";
 import { PublicKey, Keypair, Connection } from "@solana/web3.js";
-import QRCode from "qrcode"; // Add proper import
+//import QRCode from "qrcode"; // Add proper import
 
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
@@ -207,7 +207,6 @@ signupBtn?.addEventListener("click", async () => {
   if (qrContainer) qrContainer.innerHTML = "";
 
   try {
-    // Generate secure seed dynamically
     const secureSeed = await generateSecureSeed(emailVal, passwordVal);
     
     const credentialCombination = `${emailVal}:${passwordVal}:${secureSeed}`;
@@ -218,26 +217,32 @@ signupBtn?.addEventListener("click", async () => {
     const derivedKeypair = Keypair.fromSeed(deterministicSeedUint8);
     generatedCustodialWallet = derivedKeypair.publicKey.toBase58();
 
-    // Generate TOTP URI with secure seed
     const issuer = encodeURIComponent("Olivium DAO");
     const account = encodeURIComponent(emailVal);
     const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secureSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 
-    // Generate QR code
-    if (qrContainer && typeof QRCode !== 'undefined') {
-      await QRCode.toCanvas(qrContainer, totpUri, {
-        width: 180,
-        margin: 2,
-        color: {
-          dark: '#1f402a',
-          light: '#ffffff'
-        }
-      });
+    // Check for global QRCode (from CDN) or use fallback
+    if (qrContainer) {
+      if (typeof (window as any).QRCode !== 'undefined') {
+        // Use the global QRCode from CDN
+        new (window as any).QRCode(qrContainer, {
+          text: totpUri,
+          width: 180,
+          height: 180,
+          colorDark: "#1f402a",
+          colorLight: "#ffffff",
+          correctLevel: (window as any).QRCode.CorrectLevel.H
+        });
+      } else {
+        // Fallback: Create a link instead
+        qrContainer.innerHTML = `<div style="text-align:center; padding:20px;">
+          <p>Scan with your authenticator app:</p>
+          <a href="${totpUri}" style="color: var(--gold); word-break: break-all;">${totpUri.substring(0, 50)}...</a>
+        </div>`;
+      }
     }
 
     if (signupOtpBox) signupOtpBox.style.display = "block";
-    
-    // Store seed temporarily for verification (in real app, send to backend)
     sessionStorage.setItem('temp_signup_seed', secureSeed);
   } catch (err) {
     console.error("Cryptographic derivation failed:", err);
