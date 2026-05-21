@@ -29,6 +29,8 @@ const TIER_SHARES = {
   starter: 10,
   keeper: 100,
   fullTree: 1000,
+  guardTree: 5000,
+
 } as const;
 
 /* =========================================================
@@ -94,11 +96,16 @@ async function updateShares(): Promise<void> {
 
   const fullTreeSolEl =
     document.getElementById("fulltree-sol-price");
+   
+  const guardTreeSolEl =
+    document.getElementById("guardian-sol-price");
+
 
   console.log({
     starterSolEl,
     keeperSolEl,
-    fullTreeSolEl
+    fullTreeSolEl,
+    guardTreeSolEl
   });
 
   // Calculations
