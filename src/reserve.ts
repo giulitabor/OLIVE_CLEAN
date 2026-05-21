@@ -150,14 +150,6 @@ async function openTierPurchase(tierName: string, shares: number): Promise<void>
   }
 }
 
-function closeConnectModal(): void {
-  const connectModal = document.getElementById("connectModal");
-  if (connectModal) {
-    connectModal.style.display = "none";
-    document.body.style.overflow = ""; // Restore background window scrolling
-  }
-}
-
 // Ensure elements can be accessed globally if bound to fallback button onclick attributes
 (window as any).openTierPurchase = openTierPurchase;
 (window as any).closeConnectModal = closeConnectModal;function closeConnectModal(): void {
