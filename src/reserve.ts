@@ -81,7 +81,6 @@ async function updateShares(): Promise<void> {
    console.log("updateShares firing");
    
 
-  const shares = Number(hiddenInput.value) || 1;
   const totalEuro = shares * EURO_PER_SHARE;
   const solPrice = await getSolPriceEUR();
   const totalSol = totalEuro / solPrice;
