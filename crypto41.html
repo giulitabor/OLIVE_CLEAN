@@ -268,8 +268,12 @@
                     <li>Access to game</li>
                     <li>Community perks</li>
                 </ul>
-                <a href="#mint" class="btn btn-primary">Get Started</a>
-            </div>
+<a href="#mint"
+   class="btn btn-primary tier-select"
+   data-tier="Starter"
+   data-shares="10">
+   Get Started
+</a>            </div>
 
             <div class="tier-card">
                 <div class="tier-icon">🌿</div>
@@ -283,8 +287,12 @@
                     <li>Priority booking</li>
                     <li>Harvest participation</li>
                 </ul>
-                <a href="#mint" class="btn btn-primary">Adopt Now</a>
-            </div>
+<a href="#mint"
+   class="btn btn-primary tier-select"
+   data-tier="Tree Keeper"
+   data-shares="100">
+   Adopt Now
+</a>            </div>
 
             <div class="tier-card featured">
                 <div class="tier-icon">🌳</div>
@@ -300,8 +308,12 @@
                     <li>Premium oil shipments</li>
                     <li>Governance voting rights</li>
                 </ul>
-                <a href="#mint" class="btn btn-primary">Claim Full Tree</a>
-            </div>
+<a href="#mint"
+   class="btn btn-primary tier-select"
+   data-tier="Full Tree"
+   data-shares="1000">
+   Claim Full Tree
+</a>            </div>
 
                <div class="tier-card featured">
                 <div class="tier-icon">🌳</div>
@@ -316,7 +328,12 @@
                     <li>Premium access & stays</li>
                     <li>Governance voting rights</li>
                 </ul>
-                <a href="#mint" class="btn btn-primary">Become A Guardian</a>
+                   <a href="#mint"
+   class="btn btn-primary tier-select"
+   data-tier="Grove Guardian"
+   data-shares="5000">
+Become A Guardian</a>
+                <a href="#mint" class="btn btn-primary"></a>
             </div>
 
             
@@ -381,9 +398,213 @@
             </p>
         </div>
     </footer>
+    <div class="modal-overlay" id="connectModal">
+    <div class="modal" style="max-width: 480px;">
+      <button class="close-btn" onclick="closeConnectModal()">&times;</button>
+      <div class="modal-body">
+        <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
+        <p class="modal-description">Choose your preferred access method. Wallet users interact directly with Solana. Email users receive a custodial grove wallet.</p>
+<div id="selectedTierBox"
+     style="
+      background: #f7f6f2;
+      border: 1px solid #ece7da;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 22px;
+      text-align: left;
+     ">
+
+  <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+  ">
+    <h3 id="selectedTierName"
+        style="
+          margin:0;
+          font-size:1.1rem;
+          font-weight:800;
+          color:var(--green-dark);
+        ">
+      Starter
+    </h3>
+
+    <span id="selectedTierShares"
+          style="
+            font-size:0.8rem;
+            opacity:0.7;
+            font-weight:700;
+          ">
+      10 Shares
+    </span>
+  </div>
+
+  <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:end;
+  ">
+    <div>
+      <div style="
+          font-size:0.75rem;
+          opacity:0.65;
+          margin-bottom:2px;
+      ">
+        Estimated Payment
+      </div>
+
+      <div id="selectedTierSol"
+           style="
+             font-size:1.4rem;
+             font-weight:800;
+             color:var(--green-dark);
+           ">
+        ~0.82 SOL
+      </div>
+    </div>
+
+    <div id="selectedTierEuro"
+         style="
+           font-size:1rem;
+           font-weight:700;
+           opacity:0.75;
+         ">
+      €124
+    </div>
+  </div>
+</div>
+        <div class="auth-options">
+          <div class="auth-card" id="walletConnectCard">
+            <div class="auth-card-title">◎ Wallet Login</div>
+            <div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div>
+            <button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button>
+          </div>
+
+          <div class="auth-card" id="emailConnectCard">
+            <div class="auth-card-title">✉ Email Login</div>
+            <div class="auth-card-sub">Fiat purchases with automatic custodial wallet creation.</div>
+            <button id="emailLoginBtn" class="primary-btn">Continue with Email</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="authModalOverlay" class="modal-overlay" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(15,20,15,0.72); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center;">
+    <div class="modal" style="max-width: 400px; background: white; border-radius: 32px; overflow: hidden; position: relative; width: 100%;">
+      <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.95); font-size: 1.4rem; cursor: pointer; z-index: 10; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">&times;</button>
+      <div class="modal-body" style="padding: 28px;">
+        <h2 style="text-align: center; color: var(--green-dark); margin-top: 0; font-size: 1.5rem; font-weight: 800;">MFA Authentication</h2>
+
+        <div class="tabs" style="display: flex; margin: 18px 0; background: var(--soft); padding: 4px; border-radius: 12px;">
+          <button id="loginTab" class="tab active" type="button" style="flex: 1; padding: 10px; cursor: pointer; background: var(--green); color: white; border: none; border-radius: 8px; font-weight: 700; transition: all 0.2s;">Login</button>
+          <button id="signupTab" class="tab" type="button" style="flex: 1; padding: 10px; cursor: pointer; background: transparent; color: var(--text); border: none; border-radius: 8px; font-weight: 700; transition: all 0.2s;">Signup</button>
+        </div>
+
+        <form id="loginForm" class="form active" style="display: block;" onsubmit="return false;">
+          <input id="loginEmail" type="email" placeholder="Email" autocomplete="username" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+          <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+          <button id="loginBtn" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green); color: white;">Login</button>
+
+          <div class="otpBox" id="loginOtpBox" style="display: none; margin-top: 15px;">
+            <input id="loginOtp" placeholder="MFA Verification Code" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid var(--green); border-radius: 12px; box-sizing: border-box;">
+            <button id="verifyLoginOtp" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green-dark); color: white;">Verify MFA</button>
+          </div>
+        </form>
+
+        <form id="signupForm" class="form" style="display: none;" onsubmit="return false;">
+          <input id="signupEmail" type="email" placeholder="Email" autocomplete="username" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+          <input id="signupPassword" type="password" placeholder="Password" autocomplete="new-password" style="width: 100%; padding: 12px; margin-bottom: 4px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+
+          <div id="passwordMetricsBox" style="background: #fdfdfd; border: 1px solid #eaeaea; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.5;">
+            <p style="margin: 0 0 6px 0; font-weight: bold; color: #666;">Password Requirements:</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;">
+              <div id="metric-len" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Min 6 characters</div>
+              <div id="metric-cap" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Capital Letter</div>
+              <div id="metric-low" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Lowercase Letter</div>
+              <div id="metric-num" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Number</div>
+              <div id="metric-spe" style="color: #d94d4d; transition: all 0.2s;"><span class="icon">❌</span> Special Char</div>
+            </div>
+          </div>
+
+          <input id="signupConfirmPassword" type="password" placeholder="Confirm Password" autocomplete="new-password" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box;" required>
+          <button id="signupBtn" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: #cccccc; color: white;" disabled>Signup</button>
+
+          <div id="qr" style="margin-top: 15px; display: flex; justify-content: center;"></div>
+
+          <div class="otpBox" id="signupOtpBox" style="display: none; margin-top: 15px;">
+            <input id="signupOtp" placeholder="Enter Authenticator Code" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid var(--green); border-radius: 12px; box-sizing: border-box;">
+            <button id="verifySignupOtp" type="button" class="primary-btn" style="width: 100%; border: none; border-radius: 18px; padding: 18px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.25s ease; background: var(--green-dark); color: white;">Enable MFA</button>
+          </div>
+        </form>
+        <div id="msg" style="margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px;"></div>
+      </div>
+    </div>
+  
   <script type="module" src="./src/reserve.ts"></script>
 
     <script>
+        let selectedPurchaseShares = 0;
+
+async function openTierPurchase(
+  tierName: string,
+  shares: number
+) {
+
+  selectedPurchaseShares = shares;
+
+  const euroTotal =
+    shares * EURO_PER_SHARE;
+
+  const solPrice =
+    await getSolPriceEUR();
+
+  const solTotal =
+    euroTotal / solPrice;
+
+  // UPDATE UI
+
+  const tierNameEl =
+    document.getElementById("selectedTierName");
+
+  const tierSharesEl =
+    document.getElementById("selectedTierShares");
+
+  const tierSolEl =
+    document.getElementById("selectedTierSol");
+
+  const tierEuroEl =
+    document.getElementById("selectedTierEuro");
+
+  if (tierNameEl) {
+    tierNameEl.innerText = tierName;
+  }
+
+  if (tierSharesEl) {
+    tierSharesEl.innerText =
+      `${shares.toLocaleString()} Shares`;
+  }
+
+  if (tierSolEl) {
+    tierSolEl.innerText =
+      `~${solTotal.toFixed(2)} SOL`;
+  }
+
+  if (tierEuroEl) {
+    tierEuroEl.innerText =
+      `€${euroTotal.toLocaleString()}`;
+  }
+
+  // OPEN MODAL
+
+  const connectModal =
+    document.getElementById("connectModal");
+
+  if (connectModal) {
+    connectModal.style.display = "flex";
+  }
+}
     function openLegal() {
     const modal = document.getElementById('legalModal');
     modal.style.display = 'flex';
@@ -422,6 +643,32 @@ window.addEventListener('click', (e) => {
             }
         });
 
+        const tierButtons =
+  document.querySelectorAll(".tier-select");
+
+tierButtons.forEach((btn) => {
+
+  btn.addEventListener("click", async (e) => {
+
+    e.preventDefault();
+
+    const target =
+      e.currentTarget as HTMLElement;
+
+    const tier =
+      target.dataset.tier || "Starter";
+
+    const shares =
+      Number(target.dataset.shares || 10);
+
+    await openTierPurchase(
+      tier,
+      shares
+    );
+
+  });
+
+});
         // SMOOTH SCROLL
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
