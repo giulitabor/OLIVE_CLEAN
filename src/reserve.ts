@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
 /* =========================================================
    TYPES
@@ -31,6 +31,10 @@ const TIER_SHARES = {
   fullTree: 1000,
   guardTree: 5000,
 } as const;
+
+// Environment-based API URL
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 
+  (window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://api.yourdomain.com');
 
 /* =========================================================
    STATE
@@ -110,7 +114,6 @@ async function openTierPurchase(tierName: string, shares: number): Promise<void>
     const solPrice = await getSolPriceEUR();
     const solTotal = euroTotal / solPrice;
 
-    // Dom updates inside the connectModal layout
     const tierNameEl = document.getElementById("selectedTierName");
     const tierSharesEl = document.getElementById("selectedTierShares");
     const tierSolEl = document.getElementById("selectedTierSol");
@@ -121,7 +124,6 @@ async function openTierPurchase(tierName: string, shares: number): Promise<void>
     if (tierSolEl) tierSolEl.innerText = `~${solTotal.toFixed(2)} SOL`;
     if (tierEuroEl) tierEuroEl.innerText = `€${euroTotal.toLocaleString()}`;
 
-    // Reveal container natively
     const connectModal = document.getElementById("connectModal");
     if (connectModal) {
       connectModal.style.display = "flex";
@@ -136,7 +138,6 @@ function closeConnectModal(): void {
   if (connectModal) connectModal.style.display = "none";
 }
 
-// Attach event bindings to landing page tier selection layouts
 function initTierButtons(): void {
   const tierButtons = document.querySelectorAll(".tier-select");
   tierButtons.forEach((btn) => {
@@ -149,105 +150,12 @@ function initTierButtons(): void {
     });
   });
 
-  // Global overlay listener to close elements when backdrop clicked
   window.addEventListener("click", (e) => {
     const connectModal = document.getElementById("connectModal");
-    const legalModal = document.getElementById("legalModal");
-    const roadmapModal = document.getElementById("roadmapModal");
-    const authModalOverlay = document.getElementById("authModalOverlay");
-
-    if (e.target === connectModal) closeConnectModal();
-    if (e.target === legalModal) closeLegalModal();
-    if (e.target === roadmapModal) closeRoadmapModal();
-    if (e.target === authModalOverlay) closeAuthModal();
+    if (e.target === connectModal) {
+      closeConnectModal();
+    }
   });
-}
-
-// Expose handlers to window if needed by HTML attributes
-(window as any).openTierPurchase = openTierPurchase;
-(window as any).closeConnectModal = closeConnectModal;
-
-/* =========================================================
-   THEME MODE TOGGLE CONTROLLER
-========================================================= */
-
-function initThemeToggle(): void {
-  const modeToggleBtn = document.getElementById("modeToggleBtn");
-  if (!modeToggleBtn) return;
-
-  // Sync state if body already contains light-mode on boot
-  if (document.body.classList.contains("light-mode")) {
-    modeToggleBtn.innerText = "🌙 Dark Mode";
-  }
-
-  modeToggleBtn.addEventListener("click", () => {
-    const isLight = document.body.classList.toggle("light-mode");
-    modeToggleBtn.innerText = isLight ? "🌙 Dark Mode" : "☀️ Light Mode";
-    console.log("[THEME] Layout swapped. Light Mode active:", isLight);
-  });
-}
-
-/* =========================================================
-   ADDITIONAL MARKETING AND SYSTEM MODALS HANDLERS
-========================================================= */
-
-function openLegalModal(): void {
-  const modal = document.getElementById("legalModal");
-  if (modal) modal.style.display = "flex";
-}
-
-function closeLegalModal(): void {
-  const modal = document.getElementById("legalModal");
-  if (modal) modal.style.display = "none";
-}
-
-function openRoadmapModal(): void {
-  const modal = document.getElementById("roadmapModal");
-  if (modal) modal.style.display = "flex";
-}
-
-function closeRoadmapModal(): void {
-  const modal = document.getElementById("roadmapModal");
-  if (modal) modal.style.display = "none";
-}
-
-function closeAuthModal(): void {
-  const modal = document.getElementById("authModalOverlay");
-  if (modal) modal.style.display = "none";
-}
-
-function initExtraModals(): void {
-  // Connect Modal "X" close icon trigger bind
-  const closeConnectModalBtn = document.getElementById("closeConnectModalBtn");
-  if (closeConnectModalBtn) {
-    closeConnectModalBtn.addEventListener("click", closeConnectModal);
-  }
-
-  // Legal Modal bindings
-  const openLegalDisclosure = document.getElementById("openLegalDisclosure");
-  const openLegalTerms = document.getElementById("openLegalTerms");
-  const closeLegalTopBtn = document.getElementById("closeLegalTopBtn");
-  const closeLegalBtn = document.getElementById("closeLegalBtn");
-
-  if (openLegalDisclosure) openLegalDisclosure.addEventListener("click", openLegalModal);
-  if (openLegalTerms) openLegalTerms.addEventListener("click", openLegalModal);
-  if (closeLegalTopBtn) closeLegalTopBtn.addEventListener("click", closeLegalModal);
-  if (closeLegalBtn) closeLegalBtn.addEventListener("click", closeLegalModal);
-
-  // Roadmap Modal bindings
-  const openRoadmapFooter = document.getElementById("openRoadmapFooter");
-  const closeRoadmapHeaderBtn = document.getElementById("closeRoadmapHeaderBtn");
-  const closeRoadmapFooterBtn = document.getElementById("closeRoadmapFooterBtn");
-
-  if (openRoadmapFooter) openRoadmapFooter.addEventListener("click", openRoadmapModal);
-  if (closeRoadmapHeaderBtn) closeRoadmapHeaderBtn.addEventListener("click", closeRoadmapModal);
-  if (closeRoadmapFooterBtn) closeRoadmapFooterBtn.addEventListener("click", closeRoadmapModal);
-
-  // MFA Auth Close button binding
-  const closeAuthModalBtn = document.getElementById("closeAuthModal");
-  if (closeAuthModalBtn) {
-    closeAuthModalBtn.addEventListener("click", closeAuthModal);
-  }
 }
 
 /* =========================================================
@@ -345,10 +253,8 @@ function closeAgreement(): void {
 
   if (agreementModal) agreementModal.style.display = "none";
   if (selectionModal) selectionModal.style.display = "flex";
+  document.body.style.overflow = "";
 }
-
-(window as any).openAgreement = openAgreement;
-(window as any).closeAgreement = closeAgreement;
 
 /* =========================================================
    SUCCESS MODAL
@@ -359,8 +265,6 @@ function closeSuccess(): void {
   if (successModal) successModal.style.display = "none";
   document.body.style.overflow = "";
 }
-
-(window as any).closeSuccess = closeSuccess;
 
 /* =========================================================
    FIAT PAYMENT
@@ -374,8 +278,11 @@ async function startMollieCheckout(): Promise<void> {
     if (!shareInput) throw new Error("Share input not found");
 
     const shares = Number(shareInput.value);
+    if (isNaN(shares) || shares <= 0) {
+      throw new Error("Invalid share amount");
+    }
 
-    const response = await fetch("http://localhost:3000/create-mollie-payment", {
+    const response = await fetch(`${API_BASE_URL}/create-mollie-payment`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -384,20 +291,24 @@ async function startMollieCheckout(): Promise<void> {
         shares,
         treeId: selectedTree?.tree_id,
         treeName: selectedTree?.name,
-        userEmail: (window as any).OliviumAuth?.user?.email || null,
+        userEmail: window.OliviumAuth?.user?.email || null,
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
     const data = await response.json();
 
     if (data.checkoutUrl) {
       window.location.href = data.checkoutUrl;
     } else {
-      alert("Failed to create payment");
+      alert("Failed to create payment: No checkout URL returned");
     }
   } catch (err) {
     console.error("[PAYMENT] Error:", err);
-    alert("Payment server error");
+    alert(`Payment server error: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -419,13 +330,23 @@ async function processBlockchainTx(): Promise<void> {
     return;
   }
 
-  if (!selectedTree) return;
+  if (!selectedTree) {
+    alert("No tree selected for adoption.");
+    return;
+  }
 
   const amountInput = document.getElementById("shareInput") as HTMLInputElement | null;
   if (!amountInput) return;
 
-  const amount = new anchor.BN(amountInput.value);
+  const amountValue = parseInt(amountInput.value, 10);
+  if (isNaN(amountValue) || amountValue <= 0) {
+    alert("Please enter a valid number of shares.");
+    return;
+  }
+
+  const amount = new anchor.BN(amountValue);
   const buyerPublicKey = provider.wallet?.publicKey || provider.publicKey;
+  
   if (!buyerPublicKey) {
     alert("Could not resolve signing authority public key.");
     return;
@@ -471,11 +392,13 @@ async function processBlockchainTx(): Promise<void> {
       .instruction();
 
     const connection = program.provider.connection;
-    const transaction = new anchor.web3.Transaction().add(ix);
+    const transaction = new Transaction().add(ix);
     transaction.feePayer = buyerPublicKey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
     let signature = "";
+    
+    // Sign transaction based on provider type
     if (provider.wallet && typeof provider.wallet.signTransaction === "function") {
       const signedTx = await provider.wallet.signTransaction(transaction);
       signature = await connection.sendRawTransaction(signedTx.serialize());
@@ -483,10 +406,17 @@ async function processBlockchainTx(): Promise<void> {
       const signedTx = await provider.signTransaction(transaction);
       signature = await connection.sendRawTransaction(signedTx.serialize());
     } else {
+      // Fallback for Anchor provider
       signature = await program.provider.sendAndConfirm(transaction, []);
     }
 
-    await connection.confirmTransaction(signature, "confirmed");
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction(signature, "confirmed");
+    if (confirmation.value.err) {
+      throw new Error(`Transaction failed: ${confirmation.value.err}`);
+    }
+
+    console.log("[BLOCKCHAIN] Transaction confirmed:", signature);
 
     const agreementModal = document.getElementById("agreementModal");
     const successModal = document.getElementById("successModal");
@@ -501,7 +431,7 @@ async function processBlockchainTx(): Promise<void> {
     }
   } catch (err) {
     console.error("[BLOCKCHAIN] Transaction error:", err);
-    alert("Transaction failed. Check wallet balance or approval.");
+    alert(`Transaction failed: ${err instanceof Error ? err.message : 'Check wallet balance or approval.'}`);
 
     if (finalBtn) {
       finalBtn.disabled = false;
@@ -511,6 +441,13 @@ async function processBlockchainTx(): Promise<void> {
   }
 }
 
+// Expose functions to window with proper typing
+(window as any).openTierPurchase = openTierPurchase;
+(window as any).closeConnectModal = closeConnectModal;
+(window as any).openAgreement = openAgreement;
+(window as any).closeAgreement = closeAgreement;
+(window as any).closeSuccess = closeSuccess;
+(window as any).startMollieCheckout = startMollieCheckout;
 (window as any).processBlockchainTx = processBlockchainTx;
 
 /* =========================================================
@@ -520,24 +457,11 @@ async function processBlockchainTx(): Promise<void> {
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
 
-  const connectModal = document.getElementById("connectModal");
   const agreementModal = document.getElementById("agreementModal");
   const selectionModal = document.getElementById("modalOverlay");
-  const legalModal = document.getElementById("legalModal");
-  const roadmapModal = document.getElementById("roadmapModal");
-  const authModalOverlay = document.getElementById("authModalOverlay");
 
-  // Dismiss whichever overlay interface layer is currently visible
-  if (connectModal && connectModal.style.display === "flex") {
-    closeConnectModal();
-  } else if (agreementModal && agreementModal.style.display === "flex") {
+  if (agreementModal && agreementModal.style.display === "flex") {
     closeAgreement();
-  } else if (legalModal && legalModal.style.display === "flex") {
-    closeLegalModal();
-  } else if (roadmapModal && roadmapModal.style.display === "flex") {
-    closeRoadmapModal();
-  } else if (authModalOverlay && authModalOverlay.style.display === "flex") {
-    closeAuthModal();
   } else if (selectionModal && selectionModal.style.display === "flex") {
     if (typeof (window as any).closeModal === "function") {
       (window as any).closeModal();
@@ -552,16 +476,14 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("[INIT] Initializing Olivium application...");
   
-  // Bind events to UI elements on load
   initTierButtons();
-  initThemeToggle();
-  initExtraModals();
   initPaymentSelector();
-
   await updateShares();
+  
   console.log("[INIT] Application ready");
 });
 
+// Self-invoking function for immediate execution
 (async () => {
   console.log("[BOOT] Running immediate pricing init");
   try {
