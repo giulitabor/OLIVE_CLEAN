@@ -27,6 +27,25 @@
     box-sizing: border-box; 
 }
 
+/* QR Code styling */
+#qr {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+#qr img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+/* Make sure modal content is scrollable if needed */
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
 /* =========================================================
    CORE BODY & THEME LAYER OVERRIDES
 ========================================================= */
