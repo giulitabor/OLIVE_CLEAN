@@ -425,3 +425,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   console.log("[INIT] Application ready");
 });
+(async () => {
+
+  console.log("[BOOT] Running immediate pricing init");
+
+  try {
+
+    await updateShares();
+
+  } catch (err) {
+
+    console.error("[BOOT ERROR]", err);
+
+  }
+
+})();
