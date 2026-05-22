@@ -221,8 +221,8 @@ nav.scrolled {
     align-items: center;
     padding: 10rem 8%;
     color: #f4efe6;
-    background: linear-gradient(to right, rgba(10,10,10,0.78) 0%, rgba(10,10,10,0.58) 35%, rgba(10,10,10,0.15) 100%),
-                url('images/story-cinematic.webp') center/cover no-repeat;
+    background: url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_story.png")
+  center / cover no-repeat;
     background-attachment: fixed;
 }
 
