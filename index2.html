@@ -39,13 +39,13 @@
     <section class="hero">
         <div class="hero-bg"></div>
         <div class="hero-content">
-            <h1>Own an Olive Tree in Italy.</h1>
+            <h1>Adopt an Olive Tree in Italy.</h1>
             <p class="hero-subtitle">
                 A private estate of 240 olive trees.<br>
                 Receive your oil. Stay in your villa. Belong to something real.
             </p>
             <div class="hero-cta-group">
-                <a href="index.html" class="btn btn-primary">👉 Reserve Your Tree</a>
+                <a href="index.html" class="btn btn-primary">👉 Adopt Your Tree</a>
                 <a href="#how" class="btn btn-secondary">Explore How It Works</a>
             </div>
             <div class="trust-strip">
@@ -752,5 +752,41 @@ window.addEventListener('click', (e) => {
 
     </div>
 </div>
+    <script>
+
+/* Fade in on scroll */
+
+const fadeElements = document.querySelectorAll('.fade-in');
+
+const observer = new IntersectionObserver((entries) => {
+
+    entries.forEach(entry => {
+
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+
+    });
+
+}, {
+    threshold: 0.15
+});
+
+fadeElements.forEach(el => observer.observe(el));
+
+/* Slow parallax */
+
+window.addEventListener('scroll', () => {
+
+    const story = document.querySelector('.story');
+
+    let offset = window.pageYOffset;
+
+    story.style.backgroundPositionY =
+        offset * 0.4 + 'px';
+
+});
+
+</script>
 </body>
 </html>
