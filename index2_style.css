@@ -222,7 +222,7 @@ nav.scrolled {
     padding: 10rem 8%;
     color: #f4efe6;
     background: url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_story.png")
-  center / cover no-repeat;
+   cover no-repeat;
     background-attachment: fixed;
 }
 
