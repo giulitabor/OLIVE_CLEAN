@@ -277,7 +277,17 @@ nav.scrolled {
     width: 240px;
     transform: rotate(10deg);
 }
+.story-cinematic {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #0f0f0f;
+}
 
+.story-full-image {
+    width: 100%;
+    display: block;
+}
 .story-content {
     position: relative;
     z-index: 5;
