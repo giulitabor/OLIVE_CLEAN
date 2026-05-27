@@ -251,6 +251,89 @@ async function confirmSellAction() {
   }
 }
 (window as any).confirmSellAction = confirmSellAction;
+
+/* =========================================================
+   SELL SHARES — on-chain transaction
+   Called by confirmSellAction with (treeId, sharesToSell)
+========================================================= */
+(window as any).sellShares = async (treeId: string, sharesToSell: number): Promise<void> => {
+  const program      = (window as any)._program;
+  const protocol     = (window as any)._protocol;
+  const walletPubKey = (window as any).walletPubKey ?? (window as any).wallet?.publicKey;
+
+  if (!program)      throw new Error("Program not initialized. Connect wallet first.");
+  if (!walletPubKey) throw new Error("No wallet connected. Please connect your wallet.");
+  if (!protocol)     throw new Error("Protocol not initialized.");
+
+  if (sharesToSell <= 0) throw new Error("Share amount must be greater than zero.");
+
+  // Derive PDAs
+  const [protocolPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("protocol")],
+    program.programId
+  );
+  const [treePda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("tree"), Buffer.from(treeId)],
+    program.programId
+  );
+  const [positionPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("position"), walletPubKey.toBuffer(), Buffer.from(treeId)],
+    program.programId
+  );
+  const treasuryPda = protocol.treasury;
+
+  // Calculate post-sell guardian status for Supabase sync
+  const allPositions  = (window as any)._allUserPositions || [];
+  const currentPos    = allPositions.find((p: any) => p.treeId === treeId);
+  const oldBalance    = currentPos ? parseInt(currentPos.sharesOwned) : 0;
+  const newTotal      = Math.max(0, oldBalance - sharesToSell);
+  const isGuardian    = newTotal >= 1000;
+
+  console.log("⚡ [sellShares] Sending sell transaction...", { treeId, sharesToSell, newTotal });
+
+  let tx: string;
+  try {
+    tx = await program.methods
+      .sellShares(treeId, new anchor.BN(sharesToSell))
+      .accounts({
+        tree:          treePda,
+        position:      positionPda,
+        protocol:      protocolPda,
+        treasury:      treasuryPda,
+        seller:        walletPubKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+    console.log(`✅ [sellShares] On-chain confirmed: ${tx}`);
+  } catch (rpcErr: any) {
+    // If the tx already landed (race / retry) treat as success
+    if (rpcErr.toString().includes("already been processed")) {
+      console.warn("⚠️ [sellShares] Transaction already processed. Treating as success.");
+      tx = "PROCESSED_ON_CHAIN";
+    } else {
+      throw rpcErr;
+    }
+  }
+
+  // Sync to Supabase if available
+  if (typeof (window as any).syncTransactionToSupabase === "function") {
+    await (window as any).syncTransactionToSupabase(
+      walletPubKey.toBase58(),
+      treeId,
+      sharesToSell,
+      "SELL",
+      tx,
+      newTotal,
+      isGuardian
+    );
+  }
+
+  // Refresh UI
+  if (typeof (window as any).refreshUserGrove   === "function") await (window as any).refreshUserGrove();
+  if (typeof (window as any).loadTrees          === "function") await (window as any).loadTrees();
+  if (typeof (window as any).updateStatsUI      === "function") await (window as any).updateStatsUI();
+};
+
 async function updateWalletUI() {
   const wallet = Wallet();
 
@@ -1245,14 +1328,7 @@ if (villaDiscount) villaDiscount.textContent = "0%";
     "adoptBtn"
   ) as HTMLButtonElement | null;
 
-  // Always reset connect-wallet button to hidden on modal open (mode resets to fiat)
-  const adoptConnectBtnReset = document.getElementById(
-    "adoptConnectBtn"
-  ) as HTMLButtonElement | null;
-  if (adoptConnectBtnReset) adoptConnectBtnReset.style.display = "none";
-
   if (adoptBtn) {
-    adoptBtn.style.display = "";
     if (available <= 0) {
       adoptBtn.disabled = true;
       adoptBtn.innerText = "Sold Out";
@@ -2007,26 +2083,19 @@ if (fullTreeSolEl) {
         // Re-assign each call to avoid stale closure
         connectBtn.onclick = async () => {
           try {
-            // Prefer connectWallet() from connection.ts - sets _program, _provider,
-            // walletPubKey, fires olivium:connected and updates the nav button too.
-            if (typeof (window as any).connectWallet === "function") {
-              await (window as any).connectWallet(false);
-            } else {
-              // Fallback: raw solana connect
-              const walletExt = (window as any).phantom?.solana || (window as any).solana;
-              if (!walletExt) {
-                alert("Phantom or Solflare wallet extension required.");
-                return;
-              }
-              const resp = await walletExt.connect();
-              const pubKeyStr = resp.publicKey?.toBase58() ?? walletExt.publicKey?.toBase58();
-              if (pubKeyStr) {
-                localStorage.setItem("olivium_identity", JSON.stringify({
-                  type: "wallet", wallet: pubKeyStr, source: "solana"
-                }));
-                (window as any).walletPubKey = resp.publicKey || walletExt.publicKey;
-                window.dispatchEvent(new Event("solana:connection-complete"));
-              }
+            const provider = (window as any).solana || (window as any).phantom?.solana;
+            if (!provider) {
+              alert("Phantom or Solflare wallet extension required.");
+              return;
+            }
+            const resp = await provider.connect();
+            const pubKeyStr = resp.publicKey?.toBase58() ?? provider.publicKey?.toBase58();
+            if (pubKeyStr) {
+              localStorage.setItem("olivium_identity", JSON.stringify({
+                type: "wallet", wallet: pubKeyStr, source: "solana"
+              }));
+              window.walletPubKey = resp.publicKey || provider.publicKey;
+              window.dispatchEvent(new Event("solana:connection-complete"));
             }
           } catch (err) {
             console.error("[adoptModal] wallet connect failed:", err);
