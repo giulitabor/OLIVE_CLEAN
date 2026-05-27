@@ -781,19 +781,17 @@
           }
         });
 
-        // Expose on window so the second script block and external callers can reach it
+        // Expose on window so Script 2 and external callers can reach it
         window.updateIdentityBalanceUI = updateIdentityBalanceUI;
 
-        window.addEventListener('solana:connection-complete', () => {
-          setTimeout(() => {
-            updateIdentityBalanceUI();
-          }, 100);
-        });
+        // Listen for both event names — connection.ts fires olivium:connected,
+        // the modal wallet button fires solana:connection-complete
+        window.addEventListener('olivium:connected',    () => updateIdentityBalanceUI());
+        window.addEventListener('olivium:disconnected', () => updateIdentityBalanceUI());
+        window.addEventListener('solana:connection-complete', () => updateIdentityBalanceUI());
 
         document.addEventListener("DOMContentLoaded", () => {
-          setTimeout(() => {
-            updateIdentityBalanceUI();
-          }, 600);
+          setTimeout(() => updateIdentityBalanceUI(), 600);
         });
       </script>
 
@@ -809,104 +807,105 @@
         const connectBtn = document.getElementById('connectBtn');
         const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
 
+        // ── Nav button click: connect or disconnect based on real state ──────
         connectBtn?.addEventListener('click', async () => {
-        const identity = await getActiveWallet(); // Check actual state, not button text
+          const identity = await getActiveWallet();
+          if (identity) {
+            await handleDisconnectWorkflow();
+          } else {
+            connectModalEl.style.display = 'flex';
+          }
+        });
 
-        if (identity) {
-          handleDisconnectWorkflow();
-        } else {
-          connectModalEl.style.display = 'flex';
-        }
-      });
-
+        // ── "Connect Wallet" inside the connect modal ─────────────────────────
         connectWalletBtn?.addEventListener('click', async () => {
           try {
-            const provider = window.solana || window.phantom?.solana;
-            if (!provider) {
-              alert("Solana wallet extension not detected!");
-              return;
+            // Always go through connectWallet() from connection.ts so that
+            // _program, _provider, walletPubKey are all set correctly and
+            // olivium:connected is fired (which updateIdentityBalanceUI listens to)
+            if (typeof window.connectWallet === 'function') {
+              await window.connectWallet(false);
+            } else {
+              // Fallback if connection.ts hasn't loaded yet
+              const provider = window.phantom?.solana || window.solana;
+              if (!provider) { alert("Solana wallet extension not detected!"); return; }
+              const resp = await provider.connect();
+              const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
+              if (pubKeyStr) {
+                localStorage.setItem('olivium_identity', JSON.stringify({ type: "wallet", wallet: pubKeyStr, source: "solana" }));
+                window.walletPubKey = resp.publicKey || provider.publicKey;
+                window.dispatchEvent(new Event('solana:connection-complete'));
+              }
             }
-            const resp = await provider.connect();
-            const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
-
-            localStorage.setItem('olivium_identity', JSON.stringify({
-              type: "wallet",
-              wallet: pubKeyStr,
-              source: "solana"
-            }));
-
+            // Always save identity to localStorage after wallet connect so
+            // updateIdentityBalanceUI can read it on the next render
+            const liveKey = window.walletPubKey || window.solana?.publicKey || window._provider?.publicKey;
+            if (liveKey) {
+              localStorage.setItem('olivium_identity', JSON.stringify({ type: "wallet", wallet: liveKey.toBase58(), source: "solana" }));
+            }
             closeConnectModal();
-            window.dispatchEvent(new Event('solana:connection-complete'));
           } catch (err) {
             console.error("Wallet connection declined:", err);
           }
         });
 
         window.closeConnectModal = function() {
-          if(connectModalEl) connectModalEl.style.display = 'none';
+          if (connectModalEl) connectModalEl.style.display = 'none';
         }
 
-        function handleDisconnectWorkflow() {
-          // Clear all storage
+        // ── Disconnect ────────────────────────────────────────────────────────
+        async function handleDisconnectWorkflow() {
+          // Prefer the full disconnectWallet() from connection.ts — clears
+          // _program, _provider, _isInitialized, fires olivium:disconnected
+          if (typeof window.disconnectWallet === 'function') {
+            await window.disconnectWallet();
+          } else {
+            // Fallback manual clear
+            localStorage.removeItem('olivium_identity');
+            localStorage.removeItem('olivium_user');
+            localStorage.removeItem('walletConnected');
+            if (window.OliviumAuth) window.OliviumAuth.user = null;
+            try { if (window.solana?.disconnect) await window.solana.disconnect(); } catch(_) {}
+            window._provider   = null;
+            window._program    = null;
+            window._protocol   = null;
+            window.walletPubKey = null;
+            window.OliviumIdentity = { type: 'guest' };
+            window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+          }
+          // Also always clear localStorage here in case disconnectWallet skips it
           localStorage.removeItem('olivium_identity');
           localStorage.removeItem('olivium_user');
-          localStorage.removeItem('walletConnected');
-
-          // Clear auth state
           if (window.OliviumAuth) window.OliviumAuth.user = null;
-
-          // Disconnect extension wallet if present
-          if (window.solana && typeof window.solana.disconnect === 'function') {
-            try { window.solana.disconnect(); } catch(e) {}
-          }
-          if (window.phantom?.solana && typeof window.phantom.solana.disconnect === 'function') {
-            try { window.phantom.solana.disconnect(); } catch(e) {}
-          }
-
-          // Clear all global identity state
-          window._provider = null;
-          window._program = null;
-          window._protocol = null;
-          window.walletPubKey = null;
-          window.OliviumIdentity = { type: 'guest' };
-
-          // Reset UI immediately — call directly via window reference to ensure cross-script scope
-          if (typeof window.updateIdentityBalanceUI === 'function') {
-            window.updateIdentityBalanceUI();
-          }
-
-          // Also fire event for any other listeners
-          window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+          // Fire solana:connection-complete as well for any legacy listeners
           window.dispatchEvent(new Event('solana:connection-complete'));
         }
 
+        // ── Determine whether a session is active (real-time, no stale cache) ─
         async function getActiveWallet() {
-          if (window.solana?.publicKey) {
-            return { type: 'wallet', address: window.solana.publicKey.toBase58() };
-          }
+          // Check globals first — they're cleared on disconnect before this is called
+          if (window.walletPubKey)            return { type: 'wallet', address: window.walletPubKey.toBase58?.() || String(window.walletPubKey) };
+          if (window._provider?.publicKey)    return { type: 'wallet', address: window._provider.publicKey.toBase58() };
+          // Intentionally NOT checking window.solana.publicKey here — Phantom keeps
+          // it set after disconnect until page reload, causing false "connected" reads
           const cached = localStorage.getItem('olivium_identity');
           if (cached) {
             try {
               const parsed = JSON.parse(cached);
-              if (parsed.type === 'wallet' && parsed.wallet) {
-                return { type: 'wallet', address: parsed.wallet };
-              }
-              if (parsed.type === 'email' && parsed.custodialWallet) {
-                return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
-              }
-            } catch(e){}
+              if (parsed.type === 'wallet'  && parsed.wallet)          return { type: 'wallet', address: parsed.wallet };
+              if (parsed.type === 'email'   && parsed.custodialWallet) return { type: 'email',  address: parsed.custodialWallet, label: parsed.address };
+            } catch(_) {}
           }
           return null;
         }
 
-        // refreshIdentityUI is an alias so reserve.ts and any external callers still work
+        // ── Aliases for external callers ──────────────────────────────────────
         window.refreshIdentityUI = function() {
           if (typeof window.updateIdentityBalanceUI === 'function') window.updateIdentityBalanceUI();
         };
 
-        window.addEventListener('solana:connection-complete', () => {
-          if (typeof window.updateIdentityBalanceUI === 'function') window.updateIdentityBalanceUI();
-        });
+        // Single listener here — Script 1 already handles olivium:connected/disconnected
+        // and solana:connection-complete. No duplicate listener added.
 
         function closeModal() {
           document.getElementById('modalOverlay').style.display = 'none';
