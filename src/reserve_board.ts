@@ -627,9 +627,11 @@ async function loadTrees(filter = "all") {
         <button class="action-btn details-btn" style="flex:1;min-width:70px;padding:8px;background:#B8860B;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:500;">Details</button>
           ${
             available > 0
-              ? isLiveOnChain
-                ? `<button class="action-btn adopt-btn" style="flex:1;min-width:70px;padding:8px;background:#556B2F;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:500;">Adopt</button>`
-                : `<button class="action-btn adopt-btn" disabled title="Not yet on-chain" style="flex:1;min-width:70px;padding:8px;background:#ccc;color:#888;border:none;border-radius:6px;cursor:not-allowed;font-size:0.85rem;font-weight:500;">Adopt</button>`
+              ? `
+            <button class="action-btn adopt-btn" style="flex: 1; min-width: 70px; padding: 8px; background: #556B2F; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
+              Adopt
+            </button>
+          `
               : ""
           }
 
@@ -657,10 +659,11 @@ async function loadTrees(filter = "all") {
 
     // Bind event tracking directly to Adopt control selection node element
     card.querySelector(".adopt-btn")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (!isLiveOnChain) return; // extra guard — button is also disabled
+      e.stopPropagation(); // Stop parent bubble triggers
       if (typeof (window as any).openModal === "function") {
         (window as any).openModal(dbTree);
+      } else if (typeof (window as any).openTreeDetailModal === "function") {
+        (window as any).openTreeDetailModal(dbTree.tree_id);
       }
     });
 
@@ -2580,6 +2583,188 @@ const emailBtn =
     return [];
   }
 };
+/**
+ * Completely purges live user profiles, resets metric values to safe fallbacks,
+ * and refreshes tree grids back to Guest mode context.
+ */
+ /**
+  * Destroys cached records, drops dynamic management authorization fields,
+  * resets individual asset markers, and re-syncs all live tree layouts back to guest mode.
+  */
+
+  /**
+ * Complete UI and State Purge Routine for Disconnect Actions
+ * Clears caches, flattens counts, strips action buttons, and returns layout to Guest mode.
+ */
+async function clearAllUserUiAndStates() {
+  console.log("🧹 [TEARDOWN] Beginning complete profile state scrub...");
+
+  // 1. Invalidate and wipe module-level position caches completely
+  try {
+    (window as any).positionsCache = null;
+    (window as any).positionsPromise = null;
+
+    // Explicitly target local file-scoped cache variables if they are stored in window context
+    if ('positionsCache' in window) { (window as any).positionsCache = null; }
+    if ('positionsPromise' in window) { (window as any).positionsPromise = null; }
+  } catch (e) {
+    console.warn("Error purging memory cache pointers:", e);
+  }
+
+  // 2. Roll back global identity states back to default visitor configurations
+  if ((window as any).walletState) {
+    (window as any).walletState.connected = false;
+    (window as any).walletState.pubkey = null;
+  }
+
+  (window as any).walletPubKey = null;
+  window.OliviumIdentity = { type: "guest" };
+
+  // 3. Flatten out UI metric counters instantly inside the DOM
+  const treeCountStat = document.getElementById("treeCountStat");
+  const shareCountStat = document.getElementById("shareCountStat");
+  const grovePositionStat = document.getElementById("grovePositionStat");
+  const identityTypeStat = document.getElementById("identityTypeStat");
+
+  if (treeCountStat) treeCountStat.innerText = "--";
+  if (shareCountStat) shareCountStat.innerText = "--";
+  if (grovePositionStat) grovePositionStat.innerText = "0"; // Hard reset the 6 positions to 0
+  if (identityTypeStat) identityTypeStat.innerText = "Guest";
+
+  console.log("📊 [TEARDOWN] Metric counters cleared. Refreshing layout components...");
+
+  // 4. Force synchronous interface loops to clean and update the DOM
+  try {
+    // Refresh header bar tracking configurations via the safe wrapper hook
+    if (typeof window.refreshIdentityUI === 'function') {
+      window.refreshIdentityUI();
+    }
+
+    // Force an isolated layout statistics recalculation
+    if (typeof (window as any).updateStatsUI === 'function') {
+      await (window as any).updateStatsUI();
+    }
+
+    // Force a sync sequence across the villa dashboard system
+    if (typeof (window as any).updateVillaStayUI === 'function') {
+      await (window as any).updateVillaStayUI();
+    }
+
+    // CRITICAL: Reload the tree catalog without any cached user position credentials.
+    // Because caches are nullified and identity is 'guest', isMine evaluates false for everything,
+    // dropping all interactive owner components ("Release Shares" buttons) automatically.
+    if (typeof (window as any).loadTrees === 'function') {
+      await (window as any).loadTrees("all");
+    }
+
+    console.log("✨ [TEARDOWN] UI scrub complete. Application is in pristine read-only mode.");
+  } catch (err) {
+    console.error("Encountered an anomaly during component re-rendering cycles:", err);
+  }
+}
+
+// Map the teardown process directly to global context for cross-module accessibility
+(window as any).resetProfileAndUI = clearAllUserUiAndStates;
+
+// Handle decoupled disconnect events fired by wallet connection modules
+window.addEventListener("olivium:disconnected", async () => {
+  await clearAllUserUiAndStates();
+});
+// Add this at the beginning of your web app
+(function() {
+  // Detect if running in Expo
+  if (window.ReactNativeWebView || window.__EXPO_ENV__) {
+    console.log('Running in Expo WebView');
+
+    // Override wallet connection for mobile
+    window.connectWalletMobile = async function() {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'REQUEST_WALLET'
+        }));
+      }
+    };
+
+    // If wallet connection button exists, override it
+    const connectBtn = document.getElementById('connectWalletBtn');
+    if (connectBtn) {
+      const originalClick = connectBtn.onclick;
+      connectBtn.onclick = async (e) => {
+        e.preventDefault();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'REQUEST_WALLET'
+          }));
+        } else if (originalClick) {
+          originalClick(e);
+        }
+      };
+    }
+
+    // Prevent modals from closing during MFA
+    const authModal = document.getElementById('authModalOverlay');
+    if (authModal) {
+      const preventClose = function(e) {
+        const signupOtp = document.getElementById('signupOtpBox');
+        if (signupOtp && signupOtp.style.display !== 'none') {
+          e.stopPropagation();
+        }
+      };
+      authModal.addEventListener('click', preventClose);
+    }
+  }
+})();
+ async function resetProfileAndUI() {
+   console.log("[TEARDOWN] Purging active state and re-syncing tree content layout blocks...");
+
+   // 1. Completely wipe local memory cache trackers to remove stale footprint histories
+   (window as any).positionsCache = null;
+   (window as any).positionsPromise = null;
+
+   // Also clear internal module-scoped layout reference caches if initialized
+   if ('positionsCache' in window) { (window as any).positionsCache = null; }
+
+   // 2. Ensure state parameters reflect absolute default visitor settings
+   walletState.connected = false;
+   walletState.pubkey = null;
+   window.OliviumIdentity = { type: "guest" };
+
+   // 3. Flatten out text metrics natively inside DOM elements immediately
+   const treeCount = document.getElementById("treeCountStat");
+   const shareCount = document.getElementById("shareCountStat");
+   const groveCount = document.getElementById("grovePositionStat");
+   const identityEl = document.getElementById("identityTypeStat");
+
+   if (treeCount) treeCount.innerText = "--";
+   if (shareCount) shareCount.innerText = "--";
+   if (groveCount) groveCount.innerText = "0"; // Correctly zero out grove metrics explicitly
+   if (identityEl) identityEl.innerText = "Guest";
+
+   // 4. Run native layout re-render pipelines
+   try {
+     // Refresh header bar/pill interfaces via embedded alias wrapper
+     if (typeof (window as any).refreshIdentityUI === 'function') {
+       await (window as any).refreshIdentityUI();
+     }
+
+     // Force a structural execution cycle update over global tree layouts
+     await updateStatsUI();
+
+     // Force drop dynamic user markers and drop "Release Shares" button containers safely
+     await loadTrees("all");
+   } catch (err) {
+     console.error("Error occurred during UI catalog scrubbing:", err);
+   }
+ }
+
+ // Map reference layout straight to global window scope context
+ (window as any).resetProfileAndUI = resetProfileAndUI;
+
+ // Intercept decoupled custom event loops to safeguard operational integrity
+ window.addEventListener("olivium:disconnected", async () => {
+   await resetProfileAndUI();
+ });
+
 /* =========================================================
    VILLA STAY UI HYDRATION & LOYALTY UPDATER
 ========================================================= */
