@@ -141,42 +141,6 @@ function Wallet() {
   return null;
 }
 
-// FIXED: Consolidated refreshIdentityUI - single source of truth
-async function refreshIdentityUI() {
-  const pill = document.getElementById('identityPill');
-  const stat = document.getElementById('identityTypeStat');
-  const headerConnectBtn = document.getElementById('connectBtn');
-
-  const identity = await getActiveWallet();
-
-  if (!identity) {
-    if (pill) pill.innerHTML = '🌿 Guest Mode';
-    if (stat) stat.innerHTML = 'Guest';
-    if (headerConnectBtn) {
-      // Don't change button text here - updateWalletUI handles it
-      // Just ensure it's not in a conflicted state
-      if (headerConnectBtn.innerText !== 'Connect Profile') {
-        headerConnectBtn.innerText = 'Connect Profile';
-        headerConnectBtn.style.background = 'var(--green)';
-        headerConnectBtn.style.color = 'white';
-        headerConnectBtn.style.border = '';
-      }
-    }
-    return;
-  }
-
-  const short = identity.address.slice(0, 4) + '...' + identity.address.slice(-4);
-
-  if (identity.type === 'wallet') {
-    if (pill) pill.innerHTML = `◎ ${short}`;
-    if (stat) stat.innerHTML = 'Wallet Mode';
-  } else {
-    if (pill) pill.innerHTML = `✉ ${identity.label || short}`;
-    if (stat) stat.innerHTML = 'Email Secured';
-  }
-
-  // Don't modify connectBtn text here - let updateWalletUI handle it
-}
 
 
 /* ==========================================================================
@@ -290,147 +254,20 @@ async function confirmSellAction() {
 async function updateWalletUI() {
   const wallet = Wallet();
 
-  // 1. Look for the main nav button
-  const connectBtn = document.getElementById("connectBtn");
-  const identityStat = document.getElementById("identityTypeStat");
-  const walletWrapper = document.getElementById("walletWrapper");
+  // Sync internal state
+  walletState.connected = !!wallet;
+  walletState.pubkey = wallet;
 
-  if (!connectBtn) return;
+  window.OliviumIdentity = wallet
+    ? { type: "wallet", wallet }
+    : { type: "guest" };
 
-  // CRITICAL FIX: Remove any existing onclick to prevent double handlers
-  connectBtn.removeEventListener("click", connectBtn._listener as any);
-  connectBtn.onclick = null;
-
-  if (wallet) {
-    walletState.connected = true;
-    walletState.pubkey = wallet;
-
-    window.OliviumIdentity = {
-      type: "wallet",
-      wallet
-    };
-
-    // Update identity stat
-    const cachedIdentity = localStorage.getItem('olivium_identity');
-    let identityType = 'Wallet';
-
-    if (cachedIdentity) {
-      try {
-        const parsed = JSON.parse(cachedIdentity);
-        if (parsed.type === 'email') {
-          identityType = 'Email Secured';
-        } else if (parsed.type === 'wallet') {
-          identityType = 'Wallet Mode';
-        }
-      } catch (e) {
-        console.error('Failed to parse identity type:', e);
-      }
-    }
-
-    if (identityStat) {
-      identityStat.innerText = identityType;
-    }
-
-    // Update the button UI
-    connectBtn.style.display = "block";
-    connectBtn.style.background = "transparent";
-    connectBtn.style.color = "#d94d4d";
-    connectBtn.style.border = "1px solid #d94d4d";
-
-    const pubKeyStr = typeof wallet === 'object' && wallet.publicKey ? wallet.publicKey.toBase58() : String(wallet);
-    connectBtn.innerText = `${pubKeyStr.slice(0, 4)}...${pubKeyStr.slice(-4)} (Disconnect)`;
-    connectBtn.style.padding = "6px 14px";
-    connectBtn.style.fontSize = "0.85rem";
-
-    // FIXED: Single disconnect handler that properly resets everything
-    const disconnectHandler = async (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      try {
-        // Clear all storage
-        localStorage.removeItem('olivium_identity');
-        localStorage.removeItem('olivium_user');
-
-        // Clear window state
-        window.OliviumIdentity = { type: "guest" };
-        window._provider = null;
-        window.walletPubKey = null;
-
-        // Disconnect wallet if available
-        if (window.solana && typeof window.solana.disconnect === 'function') {
-          try { await window.solana.disconnect(); } catch(e) {}
-        }
-
-        walletState.connected = false;
-        walletState.pubkey = null;
-
-        // FIXED: Call refresh to properly reset UI
-        await refreshIdentityUI();
-        await updateWalletUI(); // Re-render as disconnected
-        await updateStatsUI();
-
-        // Reload trees with default filter
-        const activeFilter = document.querySelector(".filter-btn.active") as HTMLElement | null;
-        const filter = activeFilter?.dataset.filter || "all";
-        if (filter === "my") {
-          // Switch to all trees view on disconnect
-          const allFilter = document.querySelector('.filter-btn[data-filter="all"]') as HTMLElement;
-          if (allFilter) allFilter.click();
-        } else {
-          loadTrees(filter);
-        }
-
-        // Close any open modals
-        const connectModal = document.getElementById('connectModal');
-        if (connectModal) connectModal.style.display = 'none';
-
-      } catch (err) {
-        console.error("Disconnect error:", err);
-      }
-    };
-
-    // Store reference for potential removal
-    connectBtn._listener = disconnectHandler;
-    connectBtn.addEventListener("click", disconnectHandler);
-
-  } else {
-    // DISCONNECTED STATE - FIXED: Properly reset to green "Connect Profile"
-    walletState.connected = false;
-    walletState.pubkey = null;
-
-    window.OliviumIdentity = { type: "guest" };
-
-    if (identityStat) {
-      identityStat.innerText = "Guest";
-    }
-
-    // FIXED: Reset button to CONNECT state (green, not red)
-    connectBtn.style.display = "block";
-    connectBtn.style.background = "var(--green)";
-    connectBtn.style.color = "white";
-    connectBtn.style.border = "";
-    connectBtn.innerText = "Connect Profile";
-    connectBtn.style.padding = "";
-    connectBtn.style.fontSize = "";
-
-    // Remove any existing listeners
-    connectBtn.removeEventListener("click", connectBtn._listener as any);
-    connectBtn.onclick = null;
-
-    // FIXED: Single connect handler
-    const connectHandler = () => {
-      const connectModal = document.getElementById('connectModal');
-      if (connectModal) {
-        connectModal.style.display = 'flex';
-      }
-    };
-
-    connectBtn._listener = connectHandler;
-    connectBtn.addEventListener("click", connectHandler);
+  // Delegate all button / pill / stat rendering to refreshIdentityUI in board.html
+  // so there is exactly one place that owns the nav button appearance.
+  if (typeof (window as any).refreshIdentityUI === 'function') {
+    await (window as any).refreshIdentityUI();
   }
 }
-
 async function updateStatsUI() {
   const treeCount = document.getElementById("treeCountStat");
   const shareCount = document.getElementById("shareCountStat");
@@ -620,7 +457,6 @@ export async function AllPositions() {
    LOAD TREES
 ========================================================= */
 
-
 async function loadTrees(filter = "all") {
   const container = document.getElementById("treeGrid");
 
@@ -722,10 +558,13 @@ async function loadTrees(filter = "all") {
 
     const isMine = matchesFiatOwnership || ownedShares > 0;
 
-    // 1. HANDLE "MY" FILTER FIRST
+    // 1. Non-on-chain trees: only visible in "all" view
+    if (!isLiveOnChain && filter !== "all") continue;
+
+    // 2. HANDLE "MY" FILTER
     if (filter === "my" && !isMine) continue;
 
-    // 2. HANDLE STATUS FILTERS
+    // 3. HANDLE STATUS FILTERS (available / full)
     if (filter !== "all" && filter !== "my" && filter !== status) continue;
     const available = totalShares - sharesSold;
 
@@ -788,11 +627,9 @@ async function loadTrees(filter = "all") {
         <button class="action-btn details-btn" style="flex:1;min-width:70px;padding:8px;background:#B8860B;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:500;">Details</button>
           ${
             available > 0
-              ? `
-            <button class="action-btn adopt-btn" style="flex: 1; min-width: 70px; padding: 8px; background: #556B2F; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
-              Adopt
-            </button>
-          `
+              ? isLiveOnChain
+                ? `<button class="action-btn adopt-btn" style="flex:1;min-width:70px;padding:8px;background:#556B2F;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:500;">Adopt</button>`
+                : `<button class="action-btn adopt-btn" disabled title="Not yet on-chain" style="flex:1;min-width:70px;padding:8px;background:#ccc;color:#888;border:none;border-radius:6px;cursor:not-allowed;font-size:0.85rem;font-weight:500;">Adopt</button>`
               : ""
           }
 
@@ -820,11 +657,10 @@ async function loadTrees(filter = "all") {
 
     // Bind event tracking directly to Adopt control selection node element
     card.querySelector(".adopt-btn")?.addEventListener("click", (e) => {
-      e.stopPropagation(); // Stop parent bubble triggers
+      e.stopPropagation();
+      if (!isLiveOnChain) return; // extra guard — button is also disabled
       if (typeof (window as any).openModal === "function") {
         (window as any).openModal(dbTree);
-      } else if (typeof (window as any).openTreeDetailModal === "function") {
-        (window as any).openTreeDetailModal(dbTree.tree_id);
       }
     });
 
@@ -2007,129 +1843,192 @@ window.setFilter = function(type) {
   (window as any).updateShares();
 };
 
-function getAdoptModalConnectButton(): HTMLElement | null {
-  // The button inside the purchase modal (not the connect modal)
-  return document.querySelector('#modalOverlay #connectWalletBtn') as HTMLElement;
-}
-
 /* =========================================================
    UPDATE SHARES
 ========================================================= */
 
-// FIXED: Update shares with proper connect button handling
 (window as any).updateShares = async () => {
-  const hiddenInput = document.getElementById("shareInput") as HTMLInputElement | null;
-  const shareValueDisplay = document.getElementById("shareValue");
-  const priceDisplay = document.getElementById("priceDisplay");
-  const priceSub = document.getElementById("priceSub");
-  const adoptBtn = document.getElementById("adoptBtn") as HTMLButtonElement | null;
+    const hiddenInput = document.getElementById(
+    "shareInput"
+  ) as HTMLInputElement | null;
 
-  // FIXED: Target the correct button - the one inside the purchase modal
-  const connectBtn = getAdoptModalConnectButton();
+  const shareValueDisplay =
+    document.getElementById("shareValue");
+
+  const priceDisplay =
+    document.getElementById("priceDisplay");
+
+  const priceSub =
+    document.getElementById("priceSub");
+
+  const adoptBtn = document.getElementById(
+    "adoptBtn"
+  ) as HTMLButtonElement | null;
+
+  const connectBtn = document.getElementById(
+    "adoptConnectBtn"
+  ) as HTMLButtonElement | null;
 
   if (!hiddenInput) return;
 
-  const provider = (window as any)._provider || (window as any).provider;
-  const pubKey = provider?.wallet?.publicKey || (window as any).walletPubKey;
+  const provider =
+    (window as any)._provider ||
+    (window as any).provider;
+
+  const pubKey =
+    provider?.wallet?.publicKey ||
+    (window as any).walletPubKey;
 
   const shares = Number(hiddenInput.value) || 1;
+
   const euroPerShare = 12.40;
-  const totalEuro = shares * euroPerShare;
-  const solPrice = await getSolPriceEUR();
-  const totalSol = totalEuro / solPrice;
+
+// Calculate EUR first
+const totalEuro = shares * euroPerShare;
+
+// Fetch live SOL price
+const solPrice = await getSolPriceEUR();
+
+// Convert EUR → SOL
+const totalSol = totalEuro / solPrice;
+// TIER SOL PRICE UPDATES
+const starterSolEl =
+  document.getElementById("starter-sol-price");
+
+const keeperSolEl =
+  document.getElementById("keeper-sol-price");
+
+const fullTreeSolEl =
+  document.getElementById("fulltree-sol-price");
+
+// SHARE COUNTS
+const starterShares = 10;
+const keeperShares = 100;
+const fullTreeShares = 1000;
+
+// CALCULATIONS
+const starterSol =
+  (starterShares * euroPerShare) / solPrice;
+
+const keeperSol =
+  (keeperShares * euroPerShare) / solPrice;
+
+const fullTreeSol =
+  (fullTreeShares * euroPerShare) / solPrice;
+
+// UPDATE UI
+if (starterSolEl) {
+  starterSolEl.innerText =
+    `~${starterSol.toFixed(2)} SOL`;
+}
+
+if (keeperSolEl) {
+  keeperSolEl.innerText =
+    `~${keeperSol.toFixed(2)} SOL`;
+}
+
+if (fullTreeSolEl) {
+  fullTreeSolEl.innerText =
+    `~${fullTreeSol.toFixed(2)} SOL`;
+}
 
   const isCryptoMode = paymentMode === "crypto";
 
-  // FIXED: Check sold out status more reliably
-  const selectedTreeTotal = selectedTree?.total_shares || 1000;
-  const selectedTreeSold = selectedTree?.shares_sold || 0;
-  const isSoldOut = selectedTreeSold >= selectedTreeTotal;
+  const isSoldOut =
+    adoptBtn?.innerText === "Sold Out";
 
-  // Share display
+  // SHARE DISPLAY
   if (shareValueDisplay) {
-    shareValueDisplay.innerText = shares.toLocaleString();
+    shareValueDisplay.innerText =
+      shares.toLocaleString();
   }
 
-  // Price display
+  // PRICE DISPLAY
   if (priceDisplay) {
     if (isCryptoMode) {
-      priceDisplay.innerHTML = `◎ ${totalSol.toFixed(2)} <span style="font-size:0.6em;font-weight:normal;">SOL</span>`;
+      priceDisplay.innerHTML = `
+        ◎ ${totalSol.toFixed(2)}
+        <span style="font-size:0.6em;font-weight:normal;">
+          SOL
+        </span>
+      `;
     } else {
-      priceDisplay.innerText = `€${totalEuro.toLocaleString()}`;
+      priceDisplay.innerText =
+        `€${totalEuro.toLocaleString()}`;
     }
   }
 
+  // PRICE SUB
   if (priceSub) {
     if (isCryptoMode) {
-      priceSub.innerText = `${shares} share${shares > 1 ? "s" : ""} × ◎ ${(euroPerShare / solPrice).toFixed(4)} SOL`;
+      priceSub.innerText =
+      `${shares} share${shares > 1 ? "s" : ""} × ◎ ${(euroPerShare / solPrice).toFixed(4)} SOL`;
     } else {
-      priceSub.innerText = `${shares} share${shares > 1 ? "s" : ""} × €${euroPerShare}`;
+      priceSub.innerText =
+        `${shares} share${shares > 1 ? "s" : ""} × €${euroPerShare}`;
     }
   }
 
-  // CRYPTO MODE - FIXED: Use correct button and don't call renderMyTreesFromPositions
-  if (isCryptoMode) {
-    if (!isSoldOut) {
-      if (pubKey) {
-        if (connectBtn) {
-          const addr = pubKey.toString();
-          connectBtn.style.display = "block";
-          connectBtn.style.background = "#eef0eb";
-          connectBtn.style.color = "#1f402a";
-          connectBtn.innerText = `Connected: ${addr.slice(0, 4)}...${addr.slice(-4)} (✖)`;
+  // ── Button visibility: crypto vs fiat ────────────────────────────────────
+  if (isCryptoMode && !isSoldOut) {
+    if (pubKey) {
+      // Wallet connected — show Continue, hide connect prompt
+      if (connectBtn) connectBtn.style.display = "none";
+      if (adoptBtn) {
+        adoptBtn.style.display = "block";
+        adoptBtn.innerText = "Continue to Agreement";
+      }
+    } else {
+      // No wallet — replace the action button with a Connect prompt
+      if (adoptBtn) adoptBtn.style.display = "none";
+      if (connectBtn) {
+        connectBtn.style.display = "block";
+        connectBtn.style.background = "var(--green)";
+        connectBtn.style.color = "white";
+        connectBtn.style.border = "none";
+        connectBtn.style.width = "100%";
+        connectBtn.style.padding = "14px";
+        connectBtn.style.borderRadius = "10px";
+        connectBtn.style.fontSize = "1rem";
+        connectBtn.style.fontWeight = "600";
+        connectBtn.style.cursor = "pointer";
+        connectBtn.innerText = "🔗 Connect Wallet to Continue";
 
-          // FIXED: Single disconnect handler for modal button
-          connectBtn.onclick = async () => {
-            try {
-              await (window as any).disconnectWallet?.();
-              // Refresh the modal UI after disconnect
-              (window as any).updateShares?.();
-            } catch (err) {
-              console.error(err);
+        // Re-assign each call to avoid stale closure
+        connectBtn.onclick = async () => {
+          try {
+            const provider = (window as any).solana || (window as any).phantom?.solana;
+            if (!provider) {
+              alert("Phantom or Solflare wallet extension required.");
+              return;
             }
-          };
-        }
-
-        if (adoptBtn) {
-          adoptBtn.style.display = "block";
-        }
-      } else {
-        if (connectBtn) {
-          connectBtn.style.display = "block";
-          connectBtn.style.background = "var(--green)";
-          connectBtn.style.color = "white";
-          connectBtn.innerText = "Connect Wallet";
-
-          // FIXED: Single connect handler - DOES NOT call renderMyTreesFromPositions
-          connectBtn.onclick = async () => {
-            try {
-              // Open the wallet connection modal
-              const connectModal = document.getElementById('connectModal');
-              if (connectModal) {
-                connectModal.style.display = 'flex';
-              }
-            } catch (err) {
-              console.error(err);
+            const resp = await provider.connect();
+            const pubKeyStr = resp.publicKey?.toBase58() ?? provider.publicKey?.toBase58();
+            if (pubKeyStr) {
+              localStorage.setItem("olivium_identity", JSON.stringify({
+                type: "wallet", wallet: pubKeyStr, source: "solana"
+              }));
+              window.walletPubKey = resp.publicKey || provider.publicKey;
+              window.dispatchEvent(new Event("solana:connection-complete"));
             }
-          };
-        }
-
-        if (adoptBtn) {
-          adoptBtn.style.display = "none";
-        }
+          } catch (err) {
+            console.error("[adoptModal] wallet connect failed:", err);
+          }
+          // Re-run updateShares so button state reflects the new connection
+          await (window as any).updateShares();
+        };
       }
     }
   } else {
-    // FIAT MODE
-    if (connectBtn) {
-      connectBtn.style.display = "none";
-    }
-
+    // Fiat mode or sold out
+    if (connectBtn) connectBtn.style.display = "none";
     if (!isSoldOut && adoptBtn) {
       adoptBtn.style.display = "block";
+      adoptBtn.innerText = "Continue to Agreement";
     }
   }
 };
+
 /* =========================================================
    PAYMENT SELECTOR
 ========================================================= */
@@ -2513,16 +2412,6 @@ async function getSolPriceEUR(): Promise<number> {
 }
 
 
-function getIdentity(): { type: string; wallet?: string; custodialWallet?: string } {
-  const cached = localStorage.getItem("olivium_identity");
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch(e) {}
-  }
-  return { type: "guest" };
-}
-
 export function getActiveWallet(): string | null {
   const i = getIdentity();
 
@@ -2615,12 +2504,18 @@ const emailBtn =
     const targetUserAddressStr = checkingPublicKey.toBase58();
     console.log("[POSITIONS] Filtering cached positions for target:", targetUserAddressStr);
 
+    // Fetch data safely through your cache wrapper functions
     const [allPositions, allTrees] = await Promise.all([
       getAllPositions(),
       getTrees()
     ]);
 
-    // Fetch OVL Staked amount
+    // Trace deep log of one item to explicitly debug exact Anchor struct field formatting if it keeps mismatching
+    if (allPositions.length > 0) {
+      console.log("[POSITIONS DEBUG] Structure sample of position account schema:", allPositions[0].account);
+    }
+
+    // Fetch OVL Staked amount for the active checking key
     let totalStakedOlv = 0;
     try {
       const [stakePda] = PublicKey.findProgramAddressSync(
@@ -2636,9 +2531,13 @@ const emailBtn =
     const positions = allPositions
       .filter((pos: any) => {
         const acc = pos.account;
+
+        // Find whichever ownership field your layout contains
         const rawAuthority = acc.authority || acc.owner || acc.wallet || acc.user;
+
         if (!rawAuthority) return false;
 
+        // SAFE CONVERSION: Normalize whatever type rawAuthority is (String, PublicKey, or object with toBase58)
         let authorityStr = "";
         if (typeof rawAuthority === "string") {
           authorityStr = rawAuthority;
@@ -2656,6 +2555,8 @@ const emailBtn =
       })
       .map((pos: any) => {
         const acc = pos.account;
+
+        // Match the tree tracking ID
         const tree = allTrees.find(
           (t: any) => t.account.treeId.toString() === acc.treeId.toString()
         );
@@ -2664,6 +2565,7 @@ const emailBtn =
           treeId: acc.treeId.toString(),
           sharesOwned: acc.sharesOwned?.toNumber() || acc.sharesOwned || 0,
           treeName: tree?.account.name || "Unknown",
+          // Hydrate with your requested metadata configurations
           treeMetadata: tree?.account.treeMetadata || null,
           totalStakedOlv: totalStakedOlv,
         };
@@ -2886,7 +2788,7 @@ window.addEventListener("solana:connection-complete", async () => {
   }
 });
 
-// FIXED: DOMContentLoaded handler - single source of truth
+// Single DOM initialization handler
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("[INIT] Initializing application...");
 
@@ -2894,121 +2796,62 @@ window.addEventListener("DOMContentLoaded", async () => {
   initFilters();
   initPaymentSelector();
 
-  // FIXED: Don't call both - just call updateWalletUI which handles everything
-  await updateWalletUI();
-  await updateStatsUI();
-  await updateVillaStayUI();
-
-  // Load trees
+  // Load wallet and data from cache/providers
+  initWalletOnLoad();
   loadTrees();
 
-  // Payment options
+
+    // Load all UI components on initial page load
+    await updateWalletUI();
+    await updateStatsUI();
+    await updateVillaStayUI();
   document.querySelectorAll(".payment-option").forEach((option) => {
-    option.addEventListener("click", () => {
-      document.querySelectorAll(".payment-option").forEach((el) => el.classList.remove("active"));
-      option.classList.add("active");
-      paymentMode = option.getAttribute("data-payment") as "mollie" | "paypal" | "crypto";
-      console.log("PAYMENT MODE:", paymentMode);
-      (window as any).updateShares?.();
-    });
+
+  option.addEventListener("click", () => {
+
+    // remove active state
+    document
+      .querySelectorAll(".payment-option")
+      .forEach((el) => el.classList.remove("active"));
+
+    // activate clicked button
+    option.classList.add("active");
+
+    // update mode
+    paymentMode = option.getAttribute("data-payment") as
+      | "mollie"
+      | "paypal"
+      | "crypto";
+
+    console.log("PAYMENT MODE:", paymentMode);
+
+    // IMPORTANT
+    // refresh price display instantly
+    (window as any).updateShares?.();
+
   });
 
-  // Final confirm button
-  document.getElementById("finalConfirmBtn")?.addEventListener("click", async () => {
-    if (paymentMode === "mollie") {
-      await startMollieCheckout();
-      return;
-    }
-    if (paymentMode === "paypal") {
-      await startPaypalCheckout();
-      return;
-    }
-    if (paymentMode === "crypto") {
-      (window as any).processBlockchainTx();
-      return;
-    }
+
   });
-});
+  document.getElementById("finalConfirmBtn")?.addEventListener(
+    "click",
+    async () => {
 
-// FIXED: Single connection-complete handler
-window.addEventListener("solana:connection-complete", async () => {
-  console.log("[SYNC EVENT] Blockchain initialized. Regenerating all UI components...");
-
-  // FIXED: Call updateWalletUI (not refreshIdentityUI separately)
-  await updateWalletUI();
-  await updateStatsUI();
-  await updateVillaStayUI();
-
-  // Reload tree grid if "My Grove" filter is active
-  const activeFilter = document.querySelector(".filter-btn.active") as HTMLElement | null;
-  if (activeFilter && activeFilter.dataset.filter === "my") {
-    const positions = await (window as any).loadUserTreePositions?.();
-    if (positions && positions.length > 0) {
-      renderMyTreesFromPositions(positions);
-    } else if (activeFilter.dataset.filter === "my") {
-      // If no positions, show empty state
-      const container = document.getElementById("treeGrid");
-      if (container) {
-        container.innerHTML = `<div style="padding:40px;text-align:center;">No trees found in your grove. Connect wallet or purchase shares first.</div>`;
+      if (paymentMode === "mollie") {
+        await startMollieCheckout();
+        return;
       }
+
+      if (paymentMode === "paypal") {
+        await startPaypalCheckout();
+        return;
+      }
+
+      if (paymentMode === "crypto") {
+        (window as any).processBlockchainTx();
+        return;
+      }
+
     }
-  }
-});
-
-// Make functions globally accessible
-(window as any).updateVillaStayUI = updateVillaStayUI;
-(window as any).updateStatsUI = updateStatsUI;
-(window as any).updateWalletUI = updateWalletUI;
-(window as any).getAllPositions = getAllPositions;
-(window as any).refreshIdentityUI = refreshIdentityUI;
-// Expo bridge integration
-if ((window as any).ReactNativeWebView) {
-  console.log('[EXPO] Running in Expo WebView');
-
-  // Override alert for better UX
-  const originalAlert = window.alert;
-  window.alert = (message: string) => {
-    (window as any).ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'ALERT',
-      message: message
-    }));
-    originalAlert(message);
-  };
-
-  // Add biometric request function
-  (window as any).secureWalletAccess = () => {
-    if ((window as any).ReactNativeWebView) {
-      (window as any).ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'REQUEST_BIOMETRIC'
-      }));
-    }
-  };
-
-  // Override external links
-  const originalOpen = window.open;
-  window.open = (url: string) => {
-    if (url && (url.startsWith('http') || url.startsWith('https'))) {
-      (window as any).ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'OPEN_URL',
-        url: url
-      }));
-    }
-    return null;
-  };
-
-  // Touch optimization for mobile
-  document.body.style.touchAction = 'pan-y pinch-zoom';
-
-  // Add haptic feedback to buttons
-  const addHaptic = (element: HTMLElement) => {
-    element.addEventListener('click', () => {
-      (window as any).ReactNativeWebView?.postMessage(JSON.stringify({
-        type: 'HAPTIC'
-      }));
-    });
-  };
-
-  document.querySelectorAll('button, .action-btn').forEach(addHaptic);
-
-  console.log('[EXPO] Bridge fully integrated');
-}
+  );
+ });
