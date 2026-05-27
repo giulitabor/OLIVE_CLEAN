@@ -781,6 +781,9 @@
           }
         });
 
+        // Expose on window so the second script block and external callers can reach it
+        window.updateIdentityBalanceUI = updateIdentityBalanceUI;
+
         window.addEventListener('solana:connection-complete', () => {
           setTimeout(() => {
             updateIdentityBalanceUI();
@@ -844,15 +847,36 @@
         }
 
         function handleDisconnectWorkflow() {
+          // Clear all storage
           localStorage.removeItem('olivium_identity');
           localStorage.removeItem('olivium_user');
-          if(window.OliviumAuth) window.OliviumAuth.user = null;
+          localStorage.removeItem('walletConnected');
+
+          // Clear auth state
+          if (window.OliviumAuth) window.OliviumAuth.user = null;
+
+          // Disconnect extension wallet if present
           if (window.solana && typeof window.solana.disconnect === 'function') {
-            window.solana.disconnect();
+            try { window.solana.disconnect(); } catch(e) {}
           }
+          if (window.phantom?.solana && typeof window.phantom.solana.disconnect === 'function') {
+            try { window.phantom.solana.disconnect(); } catch(e) {}
+          }
+
+          // Clear all global identity state
           window._provider = null;
+          window._program = null;
+          window._protocol = null;
           window.walletPubKey = null;
-          // updateIdentityBalanceUI fires via the solana:connection-complete listener
+          window.OliviumIdentity = { type: 'guest' };
+
+          // Reset UI immediately — call directly via window reference to ensure cross-script scope
+          if (typeof window.updateIdentityBalanceUI === 'function') {
+            window.updateIdentityBalanceUI();
+          }
+
+          // Also fire event for any other listeners
+          window.dispatchEvent(new CustomEvent('olivium:disconnected'));
           window.dispatchEvent(new Event('solana:connection-complete'));
         }
 
@@ -876,10 +900,12 @@
         }
 
         // refreshIdentityUI is an alias so reserve.ts and any external callers still work
-        window.refreshIdentityUI = updateIdentityBalanceUI;
+        window.refreshIdentityUI = function() {
+          if (typeof window.updateIdentityBalanceUI === 'function') window.updateIdentityBalanceUI();
+        };
 
         window.addEventListener('solana:connection-complete', () => {
-          updateIdentityBalanceUI();
+          if (typeof window.updateIdentityBalanceUI === 'function') window.updateIdentityBalanceUI();
         });
 
         function closeModal() {
