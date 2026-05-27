@@ -107,6 +107,10 @@
           <input type="hidden" id="shareInput" value="1" />
         </div>
         <div class="price-card" style="margin-bottom: 24px;"><div class="price-title">Total Price</div><div class="price-display" id="priceDisplay">€12.40</div><div class="price-sub" id="priceSub">1 share × €12.40</div></div>
+        <!-- Shown in crypto mode when no wallet is connected; hidden otherwise -->
+        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">
+          🔗 Connect Wallet to Continue
+        </button>
         <button class="primary-btn" id="adoptBtn" onclick="if(window.openAgreement) window.openAgreement()">Continue to Agreement</button>
       </div>
     </div>
@@ -513,30 +517,74 @@
           msg.style.color = ok ? "var(--green)" : "#d94d4d";
         }
 
+        // Single source of truth for all identity UI: pill, stat, connect button.
+        // Called on DOMContentLoaded, solana:connection-complete, and after disconnect.
         async function updateIdentityBalanceUI() {
           try {
-            const pillEl = document.getElementById("identityPill");
-            if (!pillEl) return;
+            const pillEl      = document.getElementById("identityPill");
+            const stat        = document.getElementById("identityTypeStat");
+            const connectBtn  = document.getElementById("connectBtn");
 
-            const activePubKey = window.walletPubKey || (window._provider ? window._provider.publicKey : null);
-            const savedIdentity = JSON.parse(localStorage.getItem('olivium_identity') || "null");
+            // Resolve active identity — check live wallet first, then _provider, then localStorage
+            const liveKey  = window.solana?.publicKey || window.walletPubKey
+                          || (window._provider?.publicKey) || null;
+            const saved    = JSON.parse(localStorage.getItem("olivium_identity") || "null");
+            const isEmail  = saved?.type === "email";
+            const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
 
-            if (savedIdentity && savedIdentity.type === "email") {
-              pillEl.innerHTML = `✉️ ${savedIdentity.address}`;
-              return;
-            }
+            if (isEmail) {
+              // Email-custodial login
+              const label = saved.address || "";
+              if (pillEl) pillEl.innerHTML = `✉️ ${label}`;
+              if (stat)   stat.innerHTML   = "Email Secured";
+              if (connectBtn) {
+                connectBtn.innerText      = "Disconnect";
+                connectBtn.style.color    = "var(--danger, #d94d4d)";
+                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
+                connectBtn.style.background = "transparent";
+              }
 
-            if (activePubKey) {
-              const walletAddressStr = activePubKey.toBase58();
-              const lamports = await connection.getBalance(activePubKey);
-              const solBalance = lamports / 1_000_000_000;
-              const shortAddress = `${walletAddressStr.slice(0, 4)}...${walletAddressStr.slice(-3)}`;
-              pillEl.innerHTML = `◎ ${solBalance.toFixed(3)} SOL <span style="opacity: 0.5; margin: 0 6px;">|</span> 🔑 ${shortAddress}`;
+            } else if (isWallet) {
+              // Extension wallet or cached wallet address
+              const pubKey = liveKey || (() => {
+                try { return new PublicKey(saved.wallet); } catch { return null; }
+              })();
+
+              let solBalance = "—";
+              let shortAddr  = saved?.wallet
+                ? `${saved.wallet.slice(0,4)}...${saved.wallet.slice(-4)}`
+                : "—";
+
+              if (pubKey) {
+                shortAddr = `${pubKey.toBase58().slice(0,4)}...${pubKey.toBase58().slice(-4)}`;
+                try {
+                  const lamports = await connection.getBalance(pubKey);
+                  solBalance = (lamports / 1_000_000_000).toFixed(3);
+                } catch (_) {}
+              }
+
+              if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
+              if (stat)   stat.innerHTML   = "Wallet Mode";
+              if (connectBtn) {
+                connectBtn.innerText      = `${shortAddr} (Disconnect)`;
+                connectBtn.style.color    = "var(--danger, #d94d4d)";
+                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
+                connectBtn.style.background = "transparent";
+              }
+
             } else {
-              pillEl.innerHTML = `🌿 Guest Mode`;
+              // Guest
+              if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+              if (stat)   stat.innerHTML   = "Guest";
+              if (connectBtn) {
+                connectBtn.innerText      = "Connect Profile";
+                connectBtn.style.color    = "white";
+                connectBtn.style.border   = "";
+                connectBtn.style.background = "var(--green)";
+              }
             }
           } catch (err) {
-            console.error("Failed to query identity asset balance values from node:", err);
+            console.error("[identityUI] render error:", err);
           }
         }
 
@@ -733,6 +781,11 @@
           }
         });
 
+        window.addEventListener('solana:connection-complete', () => {
+          setTimeout(() => {
+            updateIdentityBalanceUI();
+          }, 100);
+        });
 
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
@@ -799,6 +852,7 @@
           }
           window._provider = null;
           window.walletPubKey = null;
+          // updateIdentityBalanceUI fires via the solana:connection-complete listener
           window.dispatchEvent(new Event('solana:connection-complete'));
         }
 
@@ -821,9 +875,11 @@
           return null;
         }
 
-        
-        document.addEventListener('DOMContentLoaded', () => {
-          refreshIdentityUI();
+        // refreshIdentityUI is an alias so reserve.ts and any external callers still work
+        window.refreshIdentityUI = updateIdentityBalanceUI;
+
+        window.addEventListener('solana:connection-complete', () => {
+          updateIdentityBalanceUI();
         });
 
         function closeModal() {
