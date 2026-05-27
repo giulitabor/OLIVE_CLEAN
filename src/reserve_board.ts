@@ -1245,7 +1245,14 @@ if (villaDiscount) villaDiscount.textContent = "0%";
     "adoptBtn"
   ) as HTMLButtonElement | null;
 
+  // Always reset connect-wallet button to hidden on modal open (mode resets to fiat)
+  const adoptConnectBtnReset = document.getElementById(
+    "adoptConnectBtn"
+  ) as HTMLButtonElement | null;
+  if (adoptConnectBtnReset) adoptConnectBtnReset.style.display = "none";
+
   if (adoptBtn) {
+    adoptBtn.style.display = "";
     if (available <= 0) {
       adoptBtn.disabled = true;
       adoptBtn.innerText = "Sold Out";
@@ -2000,19 +2007,26 @@ if (fullTreeSolEl) {
         // Re-assign each call to avoid stale closure
         connectBtn.onclick = async () => {
           try {
-            const provider = (window as any).solana || (window as any).phantom?.solana;
-            if (!provider) {
-              alert("Phantom or Solflare wallet extension required.");
-              return;
-            }
-            const resp = await provider.connect();
-            const pubKeyStr = resp.publicKey?.toBase58() ?? provider.publicKey?.toBase58();
-            if (pubKeyStr) {
-              localStorage.setItem("olivium_identity", JSON.stringify({
-                type: "wallet", wallet: pubKeyStr, source: "solana"
-              }));
-              window.walletPubKey = resp.publicKey || provider.publicKey;
-              window.dispatchEvent(new Event("solana:connection-complete"));
+            // Prefer connectWallet() from connection.ts - sets _program, _provider,
+            // walletPubKey, fires olivium:connected and updates the nav button too.
+            if (typeof (window as any).connectWallet === "function") {
+              await (window as any).connectWallet(false);
+            } else {
+              // Fallback: raw solana connect
+              const walletExt = (window as any).phantom?.solana || (window as any).solana;
+              if (!walletExt) {
+                alert("Phantom or Solflare wallet extension required.");
+                return;
+              }
+              const resp = await walletExt.connect();
+              const pubKeyStr = resp.publicKey?.toBase58() ?? walletExt.publicKey?.toBase58();
+              if (pubKeyStr) {
+                localStorage.setItem("olivium_identity", JSON.stringify({
+                  type: "wallet", wallet: pubKeyStr, source: "solana"
+                }));
+                (window as any).walletPubKey = resp.publicKey || walletExt.publicKey;
+                window.dispatchEvent(new Event("solana:connection-complete"));
+              }
             }
           } catch (err) {
             console.error("[adoptModal] wallet connect failed:", err);
