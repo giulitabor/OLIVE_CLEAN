@@ -519,7 +519,7 @@
 
         // Single source of truth for all identity UI: pill, stat, connect button.
         // Called on DOMContentLoaded, solana:connection-complete, and after disconnect.
-        window.updateIdentityBalanceUI = async function updateIdentityBalanceUI() {
+        async function updateIdentityBalanceUI() {
           try {
             const pillEl      = document.getElementById("identityPill");
             const stat        = document.getElementById("identityTypeStat");
@@ -783,13 +783,13 @@
 
         window.addEventListener('solana:connection-complete', () => {
           setTimeout(() => {
-            window.updateIdentityBalanceUI();
+            updateIdentityBalanceUI();
           }, 100);
         });
 
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
-            window.updateIdentityBalanceUI();
+            updateIdentityBalanceUI();
           }, 600);
         });
       </script>
@@ -876,10 +876,10 @@
         }
 
         // refreshIdentityUI is an alias so reserve.ts and any external callers still work
-        window.refreshIdentityUI = window.updateIdentityBalanceUI || function(){};
+        window.refreshIdentityUI = updateIdentityBalanceUI;
 
         window.addEventListener('solana:connection-complete', () => {
-          if(window.updateIdentityBalanceUI) window.updateIdentityBalanceUI();
+          updateIdentityBalanceUI();
         });
 
         function closeModal() {
