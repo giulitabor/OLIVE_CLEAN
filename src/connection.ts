@@ -204,30 +204,44 @@ export function isConnected(): boolean {
 // ✅ NEW: DISCONNECT WALLET
 // ═══════════════════════════════════════════════════════════════════════════
 export async function disconnectWallet() {
-  const wallet = (window as any).wallet;
+  console.log("🔄 Disconnecting wallet...");
 
-  if (wallet?.disconnect) {
-    await wallet.disconnect();
+  const wallet = (window as any).phantom?.solana || (window as any).solana;
+  if (wallet && typeof wallet.disconnect === "function") {
+    try {
+      await wallet.disconnect();
+    } catch (e) {
+      console.warn("Extension disconnect skipped:", e);
+    }
   }
 
-  // Clear all state
+  // 1. Clear internal module connection state tracking
   _program = null;
   _provider = null;
   _isInitialized = false;
 
+  // 2. Erase all persistence entries from storage caches
   localStorage.removeItem("walletConnected");
+  localStorage.removeItem("olivium_identity");
+  localStorage.removeItem("olivium_user");
 
-  // Clear globals
+  // 3. Clear all custom global handles explicitly
   (window as any)._program = null;
   (window as any)._provider = null;
   (window as any)._protocol = null;
   (window as any).walletPubKey = null;
+  window.OliviumIdentity = { type: "guest" };
 
-  console.log("✅ Disconnected successfully");
+  console.log("✅ Disconnected successfully. Triggering UI resetting routine...");
 
+  // 4. Fire decoupled event stream hook for other files to intercept
   window.dispatchEvent(new CustomEvent("olivium:disconnected"));
-}
 
+  // 5. Direct invocation path handle if bound to active runtime scope
+  if (typeof (window as any).resetProfileAndUI === "function") {
+    await (window as any).resetProfileAndUI();
+  }
+}
 console.log("[connection.ts] ✅ Module loaded");
 
 async function initReadOnly() {
