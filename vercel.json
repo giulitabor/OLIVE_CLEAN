@@ -8,6 +8,48 @@
       "destination": "https://indecipherably-trifurcate-rhea.ngrok-free.dev/admin/api/$1" 
     }
   ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/villa-stay",
+      "dest": "/villa-stay.html"
+    },
+    {
+      "src": "/rewards",
+      "dest": "/villa-stay.html"
+    },
+    {
+      "src": "/about",
+      "dest": "/understand.html"
+    },
+    {
+      "src": "/map",
+      "dest": "/map.html"
+    },
+    {
+      "src": "/game",
+      "dest": "/webgame3.html"
+    },
+    {
+      "src": "/privacy",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "/terms",
+      "dest": "/terms.html"
+    },
+    {
+      "src": "/refunds",
+      "dest": "/refunds.html"
+    },
+    {
+      "src": "/reserve",
+      "dest": "/reserve_board.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -53,6 +95,15 @@
     },
     {
       "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/villa-stay.html",
       "headers": [
         {
           "key": "Cache-Control",
