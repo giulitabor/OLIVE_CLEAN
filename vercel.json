@@ -14,8 +14,8 @@
       "dest": "/index.html"
     },
     {
-      "src": "/villa-stay",
-      "dest": "/villa-stay.html"
+      "src": "/villa_stay",
+      "dest": "/villa_stay.html"
     },
     {
       "src": "/rewards",
