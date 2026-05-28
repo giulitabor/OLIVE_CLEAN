@@ -4,11 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Olivium DAO | Reserve Your Tree</title>
+  
+  <!-- CSP Violation Logger -->
+  <script>
+    window.cspViolations = [];
+    document.addEventListener('securitypolicyviolation', (e) => {
+      const violation = {
+        blockedURI: e.blockedURI,
+        violatedDirective: e.violatedDirective,
+        effectiveDirective: e.effectiveDirective,
+        sourceFile: e.sourceFile,
+        lineNumber: e.lineNumber,
+        timestamp: new Date().toISOString()
+      };
+      window.cspViolations.push(violation);
+      console.warn('[CSP Violation]', violation);
+      
+      // Optionally send to your analytics
+      if (window.gtag) {
+        window.gtag('event', 'csp_violation', violation);
+      }
+    });
+  </script>
+  
+  <!-- Content Security Policy (Report-Only) -->
+  <meta http-equiv="Content-Security-Policy-Report-Only" content="
+    default-src 'self';
+    script-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com 'unsafe-inline' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+    img-src 'self' data: https://raw.githubusercontent.com https://*.githubusercontent.com blob:;
+    font-src 'self' data:;
+    connect-src 'self' https://api.devnet.solana.com https://api.mainnet-beta.solana.com https://*.supabase.co https://api.coingecko.com https://api.open-meteo.com wss://*.solana.com https://*.vercel.app;
+    frame-src 'none';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+  ">
+  
   <link rel="stylesheet" href="1style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    .tree-card .action-btn {
+    /* Your existing styles */
+  </style>
+</head>
+<body>
+  <!-- Rest of your content -->    .tree-card .action-btn {
       background: #6B7F5A !important;
       color: white !important;
       border: none !important;
