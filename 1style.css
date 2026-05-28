@@ -128,6 +128,126 @@ a {
   cursor: pointer;
 }
 
+
+/* Skeleton Loading Animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.skeleton {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton-image {
+  background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.skeleton-progress {
+  background: #2a2a2a;
+  border-radius: 999px;
+}
+
+.skeleton-button {
+  background: #2a2a2a;
+  border-radius: 6px;
+}
+
+/* Toast Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Transaction Status Modal */
+#tx-status-modal {
+  transition: all 0.3s ease;
+}
+
+#tx-status-modal:not(.hidden) {
+  display: flex;
+}
+
+/* Improved Mobile Responsiveness */
+@media (max-width: 768px) {
+  .tree-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+    padding: 12px;
+  }
+  
+  .modal {
+    width: 95% !important;
+    margin: 10px auto !important;
+    border-radius: 16px !important;
+  }
+  
+  button, .action-btn, .filter-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+}
+
+/* Accessibility Focus Styles */
+button:focus, 
+a:focus, 
+input:focus, 
+select:focus,
+[role="button"]:focus {
+  outline: 2px solid #C5A059;
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .tree-card {
+    border: 2px solid currentColor;
+  }
+  button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* =========================================================
    HERO
 ========================================================= */
