@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olivium — Private Villa Concierge | Real Chain Integration</title>
-    
+    <title>Olivium — Private Villa Concierge | Solana Integration</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
             background: #0A0C08;
             color: #E9E6DE;
         }
@@ -23,7 +22,7 @@
         }
         .glass-card:hover { border-color: rgba(197, 160, 89, 0.5); }
         .gold-text { color: #C5A059; }
-        .btn-gold { background: #C5A059; color: #0A0C08; font-weight: 700; transition: all 0.2s; cursor: pointer; }
+        .btn-gold { background: #C5A059; color: #0A0C08; font-weight: 700; transition: all 0.2s; cursor: pointer; border: none; }
         .btn-gold:hover { background: #D9B468; transform: translateY(-1px); }
         input, select, textarea {
             background: #1A1E17 !important;
@@ -63,45 +62,33 @@
         .countdown-fill { height: 100%; background: #C5A059; transition: width 0.5s ease; }
         footer a { color: #9CA38F; text-decoration: none; font-size: 0.75rem; margin: 0 0.75rem; }
         footer a:hover { color: #C5A059; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #1A1E17; }
-        ::-webkit-scrollbar-thumb { background: #C5A059; border-radius: 10px; }
-        .btn-secondary { background: #2F3527; color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.75rem; cursor: pointer; }
-        .btn-secondary:hover { background: #3d452f; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
         .mt-2 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 0.75rem; }
         .mt-4 { margin-top: 1rem; }
+        .mt-5 { margin-top: 1.25rem; }
+        .mt-16 { margin-top: 4rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
         .mb-2 { margin-bottom: 0.5rem; }
         .mb-4 { margin-bottom: 1rem; }
-        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-5 { margin-bottom: 1.25rem; }
+        .mb-14 { margin-bottom: 3.5rem; }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .font-bold { font-weight: 700; }
+        .font-mono { font-family: monospace; }
         .w-full { width: 100%; }
-        .gap-4 { gap: 1rem; }
         .p-4 { padding: 1rem; }
         .p-5 { padding: 1.25rem; }
         .p-6 { padding: 1.5rem; }
         .p-7 { padding: 1.75rem; }
-        .rounded-xl { border-radius: 0.75rem; }
-        .absolute { position: absolute; }
-        .relative { position: relative; }
-        .top-4 { top: 1rem; }
-        .right-5 { right: 1.25rem; }
-        .text-2xl { font-size: 1.5rem; }
-        .text-3xl { font-size: 1.875rem; }
-        .text-4xl { font-size: 2.25rem; }
-        .text-sm { font-size: 0.875rem; }
-        .text-xs { font-size: 0.75rem; }
-        .font-bold { font-weight: 700; }
-        .font-mono { font-family: monospace; }
-        .hidden { display: none; }
-        .block { display: block; }
-        .flex { display: flex; }
-        .grid { display: grid; }
-        .cursor-pointer { cursor: pointer; }
-        .max-w-7xl { max-width: 80rem; margin-left: auto; margin-right: auto; }
-        .mx-auto { margin-left: auto; margin-right: auto; }
         .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
         .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
         .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
@@ -109,13 +96,6 @@
         .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
         .pt-28 { padding-top: 7rem; }
         .pb-20 { padding-bottom: 5rem; }
-        .mt-16 { margin-top: 4rem; }
-        .mt-3 { margin-top: 0.75rem; }
-        .mt-5 { margin-top: 1.25rem; }
-        .mb-1 { margin-bottom: 0.25rem; }
-        .mb-3 { margin-bottom: 0.75rem; }
-        .mb-5 { margin-bottom: 1.25rem; }
-        .mb-14 { margin-bottom: 3.5rem; }
         .gap-3 { gap: 0.75rem; }
         .gap-4 { gap: 1rem; }
         .gap-5 { gap: 1.25rem; }
@@ -125,460 +105,300 @@
         .space-y-4 > * + * { margin-top: 1rem; }
         .space-y-5 > * + * { margin-top: 1.25rem; }
         .space-y-6 > * + * { margin-top: 1.5rem; }
-        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .fixed { position: fixed; }
+        .top-0 { top: 0; }
+        .z-50 { z-index: 50; }
+        .bg-black\/50 { background: rgba(0,0,0,0.5); }
+        .backdrop-blur-xl { backdrop-filter: blur(12px); }
+        .border-b { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .uppercase { text-transform: uppercase; }
+        .tracking-wider { letter-spacing: 0.05em; }
+        .italic { font-style: italic; }
+        .cursor-pointer { cursor: pointer; }
+        .max-w-7xl { max-width: 80rem; margin-left: auto; margin-right: auto; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .top-4 { top: 1rem; }
+        .right-5 { right: 1.25rem; }
+        .hidden { display: none; }
         @media (min-width: 1024px) {
             .lg\:grid-cols-5 { display: grid; grid-template-columns: repeat(5, 1fr); }
             .lg\:col-span-2 { grid-column: span 2; }
             .lg\:col-span-3 { grid-column: span 3; }
         }
         @media (max-width: 768px) {
-            .grid-cols-2 { grid-template-columns: 1fr; }
+            .grid-2 { grid-template-columns: 1fr; }
         }
-        .fixed { position: fixed; }
-        .top-0 { top: 0; }
-        .z-50 { z-index: 50; }
-        .bg-black\/50 { background: rgba(0,0,0,0.5); }
-        .backdrop-blur-xl { backdrop-filter: blur(12px); }
-        .border-b { border-bottom: 1px solid; }
-        .border-white\/5 { border-color: rgba(255,255,255,0.05); }
-        .uppercase { text-transform: uppercase; }
-        .tracking-wider { letter-spacing: 0.05em; }
-        .tracking-wide { letter-spacing: 0.025em; }
-        .italic { font-style: italic; }
-        .leading-tight { line-height: 1.25; }
-        .min-h-32 { min-height: 2rem; }
     </style>
 </head>
 <body>
 
-    <!-- Connect Modal -->
-    <div id="connectModal" class="modal-overlay">
-        <div class="modal-container text-center relative">
-            <button onclick="closeConnectModal()" class="absolute top-4 right-5 text-2xl" style="color:#9CA38F; background:none; border:none; cursor:pointer;">&times;</button>
-            <span class="text-4xl mb-2 block">🫒</span>
-            <h2 class="serif text-2xl" style="color:white; font-weight:bold;">Olivium Access</h2>
-            <p class="text-xs mb-6" style="color:#9CA38F;">Connect wallet to view your tree holdings & villa benefits</p>
-            <button id="realWalletConnectBtn" class="w-full py-3 rounded-xl font-bold mb-3" style="background:#5a7a2b; color:white; border:none; cursor:pointer;">🔗 Connect Solana Wallet</button>
-            <div id="walletStatus" class="text-xs font-mono mt-2" style="color:#6B7280;"></div>
+<div id="connectModal" class="modal-overlay">
+    <div class="modal-container text-center relative">
+        <button onclick="closeConnectModal()" class="absolute top-4 right-5 text-2xl" style="color:#9CA38F; background:none; border:none; cursor:pointer;">&times;</button>
+        <span class="text-4xl mb-2 block">🫒</span>
+        <h2 class="serif text-2xl" style="color:white; font-weight:bold;">Olivium Access</h2>
+        <p class="text-xs mb-6" style="color:#9CA38F;">Connect wallet to view your tree holdings & villa benefits</p>
+        <button id="realWalletConnectBtn" class="w-full py-3 rounded-xl font-bold mb-3" style="background:#5a7a2b; color:white; border:none; cursor:pointer;">🔗 Connect Solana Wallet</button>
+        <div id="walletStatus" class="text-xs font-mono mt-2" style="color:#6B7280;"></div>
+    </div>
+</div>
+
+<nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center" style="background:rgba(0,0,0,0.5); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div class="serif text-2xl tracking-wider" style="color:white;">OLIVIUM <span class="gold-text">PRIVATE</span></div>
+    <div class="hidden md:flex gap-8 text-[10px] font-bold tracking-[0.2em]">
+        <a href="#" class="gold-text" style="text-decoration:none;">VILLA CONCIERGE</a>
+        <a href="#" class="text-stone-400" style="text-decoration:none; color:#9CA38F;">HARVEST LOG</a>
+        <a href="#" class="text-stone-400" style="text-decoration:none; color:#9CA38F;">ESTATE MAP</a>
+    </div>
+    <div class="flex gap-4 items-center">
+        <div class="text-right hidden sm:block">
+            <p id="navTierLabel" class="text-[9px]" style="color:#6B7280; text-transform:uppercase;">Guest</p>
+            <p id="navIdentity" class="text-[10px] gold-text font-mono">⚡ not connected</p>
+        </div>
+        <button id="headerConnectBtn" class="px-4 py-2 rounded-full text-[10px] font-bold" style="background:#5a7a2b; color:white; border:none; cursor:pointer;">Connect Wallet</button>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto pt-28 px-5 pb-20">
+    <div class="grid-2 gap-10 mb-14">
+        <div>
+            <p class="gold-text text-[11px] tracking-[0.3em] uppercase mb-2">Blockchain Stewardship</p>
+            <h1 class="serif text-4xl" style="color:white; line-height:1.2;">Your Stay at<br><span class="italic gold-text">The Villa Estate</span></h1>
+            <p class="text-sm mt-5" style="color:#9CA38F;">Your on-chain tree positions unlock real-world villa nights, harvest credits, and patron discounts.</p>
+        </div>
+        <div class="grid-2 gap-4">
+            <div class="glass-card p-5 text-center">
+                <p class="text-xs" style="color:#6B7280; text-transform:uppercase;">🌳 Trees Adopted</p>
+                <p id="sharesCountDisplay" class="serif text-4xl" style="color:white; font-weight:bold;">0</p>
+                <span class="text-[9px] gold-text">on-chain positions</span>
+            </div>
+            <div class="glass-card p-5 text-center">
+                <p class="text-xs" style="color:#6B7280; text-transform:uppercase;">🏆 Villa Credits</p>
+                <p id="creditsDisplay" class="serif text-4xl" style="color:white; font-weight:bold;">0</p>
+                <span class="text-[9px] gold-text">sanctuary nights</span>
+            </div>
         </div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center" style="background:rgba(0,0,0,0.5); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.05);">
-        <div class="serif text-2xl tracking-wider" style="color:white;">OLIVIUM <span class="gold-text">PRIVATE</span></div>
-        <div class="hidden md:flex gap-8 text-[10px] font-bold tracking-[0.2em]">
-            <a href="#" class="gold-text" style="text-decoration:none;">VILLA CONCIERGE</a>
-            <a href="#" class="text-stone-400" style="text-decoration:none; color:#9CA38F;">HARVEST LOG</a>
-            <a href="#" class="text-stone-400" style="text-decoration:none; color:#9CA38F;">ESTATE MAP</a>
-        </div>
-        <div class="flex gap-4 items-center">
-            <div class="text-right hidden sm:block">
-                <p id="navTierLabel" class="text-[9px]" style="color:#6B7280; text-transform:uppercase;">Guest</p>
-                <p id="navIdentity" class="text-[10px] gold-text font-mono">⚡ not connected</p>
-            </div>
-            <button id="headerConnectBtn" class="px-4 py-2 rounded-full text-[10px] font-bold" style="background:#5a7a2b; color:white; border:none; cursor:pointer;">Connect Wallet</button>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto pt-28 px-5 pb-20">
-        <!-- Hero Stats -->
-        <div class="grid-2 gap-10 mb-14">
-            <div>
-                <p class="gold-text text-[11px] tracking-[0.3em] uppercase mb-2">Blockchain Stewardship</p>
-                <h1 class="serif text-4xl" style="color:white; line-height:1.2;">Your Stay at<br><span class="italic gold-text">The Villa Estate</span></h1>
-                <p class="text-sm mt-5" style="color:#9CA38F;">Your on-chain tree positions unlock real-world villa nights, harvest credits, and patron discounts.</p>
-            </div>
-            <div class="grid-2 gap-4">
-                <div class="glass-card p-5 text-center">
-                    <p class="text-[10px]" style="color:#6B7280; text-transform:uppercase;">🌳 Trees Adopted</p>
-                    <p id="sharesCountDisplay" class="serif text-4xl" style="color:white; font-weight:bold;">0</p>
-                    <span class="text-[9px] gold-text">on-chain positions</span>
+    <div class="lg:grid-cols-5 gap-8" style="display:grid;">
+        <div class="lg:col-span-2 space-y-5">
+            <div class="glass-card p-6">
+                <div class="flex gap-3 mb-4">
+                    <span id="currentTierIcon" class="text-3xl">🫒</span>
+                    <div><p class="text-xs" style="color:#6B7280; text-transform:uppercase;">Current Membership</p><h2 id="currentTierName" class="serif text-xl" style="color:white;">Seed Supporter</h2></div>
                 </div>
-                <div class="glass-card p-5 text-center">
-                    <p class="text-[10px]" style="color:#6B7280; text-transform:uppercase;">🏆 Villa Credits</p>
-                    <p id="creditsDisplay" class="serif text-4xl" style="color:white; font-weight:bold;">0</p>
-                    <span class="text-[9px] gold-text">sanctuary nights</span>
-                </div>
+                <div><div class="flex-between text-xs"><span>Progress to next tier</span><span id="nextTierText" class="gold-text">+? shares</span></div><div class="countdown-bar mt-1"><div id="tierProgressFill" class="countdown-fill" style="width:0%"></div></div></div>
+            </div>
+            <div class="space-y-3">
+                <div class="tier-card"><div class="flex-between"><span class="font-bold">🌱 Starter</span><span class="text-xs gold-text">10+ shares</span></div><p class="text-xs" style="color:#9CA38F;">5% discount, 1 comp night, 3L oil</p></div>
+                <div class="tier-card"><div class="flex-between"><span class="font-bold">🌿 Keeper</span><span class="text-xs gold-text">100+ shares</span></div><p class="text-xs" style="color:#9CA38F;">15% discount, 2 comp nights, harvest access</p></div>
+                <div class="tier-card"><div class="flex-between"><span class="font-bold">👑 Full Tree</span><span class="text-xs gold-text">1000+ shares</span></div><p class="text-xs" style="color:#9CA38F;">20% discount, 3 comp nights, VIP harvest</p></div>
+                <div class="tier-card"><div class="flex-between"><span class="font-bold">🏰 Guardian Tree</span><span class="text-xs gold-text">5000+ shares</span></div><p class="text-xs" style="color:#9CA38F;">25% discount, 5 comp nights, private events</p></div>
             </div>
         </div>
 
-        <!-- Main Grid: Tiers + Booking -->
-        <div class="lg:grid-cols-5 gap-8" style="display:grid;">
-            <!-- Left: Tier Info -->
-            <div class="lg:col-span-2 space-y-5">
-                <div class="glass-card p-6">
-                    <div class="flex gap-3 mb-4">
-                        <span id="currentTierIcon" class="text-3xl">🫒</span>
-                        <div><p class="text-[9px]" style="color:#6B7280; text-transform:uppercase;">Current Membership</p><h2 id="currentTierName" class="serif text-xl" style="color:white;">Seed Supporter</h2></div>
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass-card p-7">
+                <h2 class="serif text-2xl" style="color:white;">Residency Request</h2>
+                <p class="text-xs mb-5" style="color:#9CA38F;">Patron pricing auto-applies based on your on-chain holdings</p>
+                <form id="bookingForm" onsubmit="return false;">
+                    <div class="grid-2 gap-5 mb-4">
+                        <div><label class="text-xs uppercase tracking-wider">📅 Date Range</label><input type="text" id="dateRange" placeholder="YYYY-MM-DD to YYYY-MM-DD" class="w-full"></div>
+                        <div><label class="text-xs uppercase">Nights</label><select id="nightsSelect" class="w-full"><option value="3">3 Nights</option><option value="5">5 Nights</option><option value="7">7 Nights</option></select></div>
                     </div>
-                    <div><div class="flex-between text-[10px]"><span>Progress to next tier</span><span id="nextTierText" class="gold-text">+? shares</span></div><div class="countdown-bar mt-1"><div id="tierProgressFill" class="countdown-fill" style="width:0%"></div></div></div>
-                </div>
-
-                <!-- Tier Cards based on reserve.ts TIER_SHARES -->
-                <div class="space-y-3">
-                    <div class="tier-card">
-                        <div class="flex-between"><span class="font-bold">🌱 Starter</span><span class="text-[10px] gold-text">10+ shares</span></div>
-                        <p class="text-xs" style="color:#9CA38F;">5% discount, 1 comp night, 3L oil</p>
+                    <div class="mb-4"><label class="text-xs uppercase">Full Name</label><input type="text" id="guestName" class="w-full" placeholder="Legal name for reservation"></div>
+                    <div class="mb-4"><label class="text-xs uppercase">Concierge Notes</label><textarea id="guestNotes" rows="2" class="w-full" placeholder="Dietary needs, special requests..."></textarea></div>
+                    <div class="p-4 rounded-xl flex-between" style="background:rgba(0,0,0,0.4);">
+                        <div><span class="text-xs" style="color:#6B7280;">Base rate</span><p id="ratePreview" class="text-sm font-bold" style="color:white;">€490 / night</p></div>
+                        <div><span class="text-xs" style="color:#6B7280;">Patron discount</span><p id="discountBadge" class="text-xs gold-text font-mono">0%</p></div>
+                        <div><span class="text-xs" style="color:#6B7280;">Total (EUR)</span><p id="totalPriceDisplay" class="text-xl font-bold" style="color:white;">€0</p></div>
                     </div>
-                    <div class="tier-card">
-                        <div class="flex-between"><span class="font-bold">🌿 Keeper</span><span class="text-[10px] gold-text">100+ shares</span></div>
-                        <p class="text-xs" style="color:#9CA38F;">15% discount, 2 comp nights, harvest access</p>
-                    </div>
-                    <div class="tier-card">
-                        <div class="flex-between"><span class="font-bold">👑 Full Tree</span><span class="text-[10px] gold-text">1000+ shares</span></div>
-                        <p class="text-xs" style="color:#9CA38F;">20% discount, 3 comp nights, VIP harvest</p>
-                    </div>
-                    <div class="tier-card">
-                        <div class="flex-between"><span class="font-bold">🏰 Guardian Tree</span><span class="text-[10px] gold-text">5000+ shares</span></div>
-                        <p class="text-xs" style="color:#9CA38F;">25% discount, 5 comp nights, private events</p>
-                    </div>
-                </div>
+                    <button type="button" id="submitReservationBtn" class="btn-gold w-full mt-5 py-3 rounded-xl text-sm font-bold">SUBMIT RESERVATION</button>
+                    <div id="bookingFeedback" class="text-center text-xs mt-3 min-h-32 font-mono"></div>
+                </form>
             </div>
-
-            <!-- Right: Booking Form -->
-            <div class="lg:col-span-3 space-y-6">
-                <div class="glass-card p-7">
-                    <h2 class="serif text-2xl" style="color:white;">Residency Request</h2>
-                    <p class="text-xs mb-5" style="color:#9CA38F;">Patron pricing auto-applies based on your on-chain holdings</p>
-                    <form id="bookingForm" onsubmit="return false;">
-                        <div class="grid-2 gap-5 mb-4">
-                            <div><label class="text-[10px] uppercase tracking-wider">📅 Date Range</label><input type="text" id="dateRange" placeholder="YYYY-MM-DD to YYYY-MM-DD" class="w-full"></div>
-                            <div><label class="text-[10px] uppercase">Nights</label><select id="nightsSelect" class="w-full"><option value="3">3 Nights</option><option value="5">5 Nights</option><option value="7">7 Nights</option></select></div>
-                        </div>
-                        <div class="mb-4"><label class="text-[10px] uppercase">Full Name</label><input type="text" id="guestName" class="w-full" placeholder="Legal name for reservation"></div>
-                        <div class="mb-4"><label class="text-[10px] uppercase">Concierge Notes</label><textarea id="guestNotes" rows="2" class="w-full" placeholder="Dietary needs, special requests..."></textarea></div>
-                        <div class="p-4 rounded-xl flex-between" style="background:rgba(0,0,0,0.4);">
-                            <div><span class="text-[10px]" style="color:#6B7280;">Base rate</span><p id="ratePreview" class="text-sm font-bold" style="color:white;">€490 / night</p></div>
-                            <div><span class="text-[10px]" style="color:#6B7280;">Patron discount</span><p id="discountBadge" class="text-[11px] gold-text font-mono">0%</p></div>
-                            <div><span class="text-[10px]" style="color:#6B7280;">Total (EUR)</span><p id="totalPriceDisplay" class="text-lg font-bold" style="color:white;">€0</p></div>
-                        </div>
-                        <button type="button" id="submitReservationBtn" class="btn-gold w-full mt-5 py-3 rounded-xl text-sm font-bold">SUBMIT RESERVATION</button>
-                        <div id="bookingFeedback" class="text-center text-xs mt-3 min-h-32 font-mono"></div>
-                    </form>
-                </div>
-
-                <!-- Real-time benefits summary -->
-                <div class="glass-card p-6 flex-between">
-                    <div><span class="text-[10px]" style="color:#6B7280; text-transform:uppercase;">🍷 Olive Credits</span><p id="oliveCreditsVal" class="serif text-3xl" style="color:white;">0</p></div>
-                    <div><span class="text-[10px]" style="color:#6B7280; text-transform:uppercase;">🏨 Comp Nights</span><p id="compNightsVal" class="serif text-3xl" style="color:white;">0</p></div>
-                    <div><span class="text-[10px]" style="color:#6B7280; text-transform:uppercase;">💰 Discount</span><p id="discountPercentVal" class="font-bold gold-text text-xl">0%</p></div>
-                </div>
+            <div class="glass-card p-6 flex-between">
+                <div><span class="text-xs" style="color:#6B7280; text-transform:uppercase;">🍷 Olive Credits</span><p id="oliveCreditsVal" class="serif text-3xl" style="color:white;">0</p></div>
+                <div><span class="text-xs" style="color:#6B7280; text-transform:uppercase;">🏨 Comp Nights</span><p id="compNightsVal" class="serif text-3xl" style="color:white;">0</p></div>
+                <div><span class="text-xs" style="color:#6B7280; text-transform:uppercase;">💰 Discount</span><p id="discountPercentVal" class="font-bold gold-text text-xl">0%</p></div>
             </div>
         </div>
+    </div>
 
-        <!-- Harvest info -->
-        <div class="mt-16 glass-card p-5 flex-between" style="flex-wrap:wrap; gap:1rem;">
-            <div><span class="text-[10px]" style="color:#6B7280;">NEXT HARVEST WINDOW</span><p class="serif text-xl" style="color:white;">🍂 Oct 12 – Nov 5, 2025</p></div>
-            <div class="flex-1"><div class="countdown-bar"><div id="harvestProgress" class="countdown-fill" style="width: 34%;"></div></div><p class="text-right text-[10px] gold-text mt-1">season progression</p></div>
-            <div><span class="text-[10px]" style="color:#6B7280;">PATRON EXCLUSIVE</span><p class="font-mono text-sm" style="color:#C5A059;">12L reserve allocation</p></div>
-        </div>
-    </main>
+    <div class="mt-16 glass-card p-5 flex-between" style="flex-wrap:wrap; gap:1rem;">
+        <div><span class="text-xs" style="color:#6B7280;">NEXT HARVEST WINDOW</span><p class="serif text-xl" style="color:white;">🍂 Oct 12 – Nov 5, 2025</p></div>
+        <div class="flex-1"><div class="countdown-bar"><div id="harvestProgress" class="countdown-fill" style="width: 34%;"></div></div><p class="text-right text-xs gold-text mt-1">season progression</p></div>
+        <div><span class="text-xs" style="color:#6B7280;">PATRON EXCLUSIVE</span><p class="font-mono text-sm" style="color:#C5A059;">12L reserve allocation</p></div>
+    </div>
+</main>
 
-    <footer class="py-8 text-center mt-12" style="border-top:1px solid rgba(255,255,255,0.05);">
-        <p class="serif italic text-sm" style="color:#9CA38F;">Digital Stewardship · Tuscan Heritage</p>
-        <div class="flex justify-center gap-5 text-[10px] mt-3">
-            <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Refunds</a><a href="#">support@olivium.xyz</a>
-        </div>
-        <p id="contractDisplay" class="text-[8px] mt-4" style="color:#4B5563;">Smart Contract: 0x7E5F...B91A | Real-world olive tree tokenization</p>
-    </footer>
+<footer class="py-8 text-center mt-12" style="border-top:1px solid rgba(255,255,255,0.05);">
+    <p class="serif italic text-sm" style="color:#9CA38F;">Digital Stewardship · Tuscan Heritage</p>
+    <div class="flex justify-center gap-5 text-xs mt-3">
+        <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Refunds</a><a href="#">support@olivium.xyz</a>
+    </div>
+</footer>
 
-    <script>
-        // ============================================================
-        // RESERVE.TS - FULL INTEGRATION
-        // ============================================================
-        
-        // CONSTANTS from reserve.ts
-        const EURO_PER_SHARE = 12.40;
-        const PRICE_CACHE_DURATION = 60000;
-        const TIER_SHARES = {
-            starter: 10,
-            keeper: 100,
-            fullTree: 1000,
-            guardTree: 5000,
-        };
-        
-        // API Base URL
-        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://api.yourdomain.com';
-        
-        // STATE
-        let selectedTree = null;
-        let paymentMode = "fiat";
-        let cachedSolPrice = 100;
-        let lastPriceFetch = 0;
-        let selectedPurchaseShares = 0;
-        let currentUserShares = 0;
-        let walletPublicKey = null;
-        
-        // TIER BENEFITS mapping
-        const TIER_BENEFITS = {
-            starter: { min: 10, max: 99, discount: 5, compNights: 1, credits: 2, icon: "🌱", name: "Seed Supporter" },
-            keeper: { min: 100, max: 999, discount: 15, compNights: 2, credits: 5, icon: "🌿", name: "Tree Guardian" },
-            fullTree: { min: 1000, max: 4999, discount: 20, compNights: 3, credits: 10, icon: "👑", name: "Grove Patron" },
-            guardTree: { min: 5000, max: 999999, discount: 25, compNights: 5, credits: 20, icon: "🏰", name: "Full Tree Estate" }
-        };
-        
-        // ============================================================
-        // PRICE FETCHING (from reserve.ts)
-        // ============================================================
-        async function getSolPriceEUR() {
-            const now = Date.now();
-            if (now - lastPriceFetch < PRICE_CACHE_DURATION) {
-                return cachedSolPrice;
-            }
-            try {
-                const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur");
-                const data = await res.json();
-                if (data?.solana?.eur) {
-                    cachedSolPrice = data.solana.eur;
-                    lastPriceFetch = now;
-                    console.log("[PRICE] Live SOL/EUR:", cachedSolPrice);
-                    return cachedSolPrice;
-                }
-            } catch (err) {
-                console.error("CoinGecko price fetch failed:", err);
-            }
-            return cachedSolPrice;
-        }
-        
-        // ============================================================
-        // UPDATE SHARES & PRICING (from reserve.ts)
-        // ============================================================
-        async function updateShares() {
-            console.log("updateShares firing");
-            const solPrice = await getSolPriceEUR();
-            console.log("SOL PRICE:", solPrice);
-            
-            const starterSolEl = document.getElementById("starter-sol-price");
-            const keeperSolEl = document.getElementById("keeper-sol-price");
-            const fullTreeSolEl = document.getElementById("fulltree-sol-price");
-            const guardTreeSolEl = document.getElementById("guardian-sol-price");
-            
-            const starterSol = (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
-            const keeperSol = (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
-            const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
-            const guardTreeSol = (TIER_SHARES.guardTree * EURO_PER_SHARE) / solPrice;
-            
-            if (starterSolEl) starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
-            if (keeperSolEl) keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
-            if (fullTreeSolEl) fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
-            if (guardTreeSolEl) guardTreeSolEl.innerText = `~${guardTreeSol.toFixed(2)} SOL`;
-        }
-        
-        // ============================================================
-        // FETCH USER SHARES FROM BLOCKCHAIN
-        // ============================================================
-        async function fetchUserShares(publicKey) {
-            if (!publicKey) return 0;
-            try {
-                console.log("[ONCHAIN] Fetching positions for:", publicKey);
-                // In production: query Anchor program accounts
-                // For now, deterministic mock based on wallet
-                let hash = 0;
-                for (let i = 0; i < publicKey.length; i++) {
-                    hash = ((hash << 5) - hash) + publicKey.charCodeAt(i);
-                    hash |= 0;
-                }
-                const mockShares = Math.abs(hash % 350);
-                const shares = mockShares < 10 ? 25 : mockShares;
-                console.log(`[ONCHAIN] Found ${shares} total shares`);
-                return shares;
-            } catch (err) {
-                console.error("Error fetching shares:", err);
-                return 0;
-            }
-        }
-        
-        // ============================================================
-        // UI UPDATE FUNCTIONS
-        // ============================================================
-        function getCurrentTier(shares) {
-            if (shares >= TIER_BENEFITS.guardTree.min) return TIER_BENEFITS.guardTree;
-            if (shares >= TIER_BENEFITS.fullTree.min) return TIER_BENEFITS.fullTree;
-            if (shares >= TIER_BENEFITS.keeper.min) return TIER_BENEFITS.keeper;
-            return TIER_BENEFITS.starter;
-        }
-        
-        function updateUIForShares(shares) {
-            const tier = getCurrentTier(shares);
-            document.getElementById("currentTierName").innerText = tier.name;
-            document.getElementById("currentTierIcon").innerText = tier.icon;
-            document.getElementById("sharesCountDisplay").innerText = shares;
-            document.getElementById("creditsDisplay").innerText = tier.credits;
-            document.getElementById("oliveCreditsVal").innerText = tier.credits;
-            document.getElementById("compNightsVal").innerText = tier.compNights;
-            document.getElementById("discountPercentVal").innerHTML = `${tier.discount}%`;
-            document.getElementById("discountBadge").innerHTML = `${tier.discount}% off`;
-            
-            let nextThreshold = TIER_BENEFITS.keeper.min;
-            if (shares >= TIER_BENEFITS.keeper.min && shares < TIER_BENEFITS.fullTree.min) nextThreshold = TIER_BENEFITS.fullTree.min;
-            else if (shares >= TIER_BENEFITS.fullTree.min && shares < TIER_BENEFITS.guardTree.min) nextThreshold = TIER_BENEFITS.guardTree.min;
-            else if (shares >= TIER_BENEFITS.guardTree.min) nextThreshold = shares;
-            
-            let progress = Math.min(100, (shares / nextThreshold) * 100);
-            document.getElementById("tierProgressFill").style.width = `${progress}%`;
-            document.getElementById("nextTierText").innerHTML = `${Math.max(0, nextThreshold - shares)} shares to next tier`;
-            
-            updateBookingPreview(tier.discount);
-        }
-        
-        function updateBookingPreview(discount = 0) {
-            const nightsSelect = document.getElementById("nightsSelect");
-            if (!nightsSelect) return;
-            const nights = parseInt(nightsSelect.value);
-            const baseNightly = 490;
-            const total = nights * baseNightly;
-            const discountedTotal = total * (1 - discount / 100);
-            const totalEl = document.getElementById("totalPriceDisplay");
-            const discountBadge = document.getElementById("discountBadge");
-            if (totalEl) totalEl.innerHTML = `€${Math.round(discountedTotal)}`;
-            if (discountBadge) discountBadge.innerHTML = `${discount}% patron discount`;
-        }
-        
-        // ============================================================
-        // WALLET CONNECTION
-        // ============================================================
-        async function connectWallet() {
-            if (!window.solana) {
-                alert("Please install Phantom or Solflare wallet from https://phantom.app/");
-                return null;
-            }
-            try {
-                const resp = await window.solana.connect();
-                const pubKeyStr = resp.publicKey.toString();
-                walletPublicKey = pubKeyStr;
-                console.log("[WALLET] Connected:", pubKeyStr);
-                
-                const shares = await fetchUserShares(pubKeyStr);
+<script>
+// RESERVE.TS - Full Integration
+const EURO_PER_SHARE = 12.40;
+const PRICE_CACHE_DURATION = 60000;
+const TIER_SHARES = { starter: 10, keeper: 100, fullTree: 1000, guardTree: 5000 };
+
+let cachedSolPrice = 100;
+let lastPriceFetch = 0;
+let currentUserShares = 0;
+let walletPublicKey = null;
+
+const TIER_BENEFITS = {
+    starter: { min: 10, max: 99, discount: 5, compNights: 1, credits: 2, icon: "🌱", name: "Seed Supporter" },
+    keeper: { min: 100, max: 999, discount: 15, compNights: 2, credits: 5, icon: "🌿", name: "Tree Guardian" },
+    fullTree: { min: 1000, max: 4999, discount: 20, compNights: 3, credits: 10, icon: "👑", name: "Grove Patron" },
+    guardTree: { min: 5000, max: 999999, discount: 25, compNights: 5, credits: 20, icon: "🏰", name: "Full Tree Estate" }
+};
+
+async function getSolPriceEUR() {
+    const now = Date.now();
+    if (now - lastPriceFetch < PRICE_CACHE_DURATION) return cachedSolPrice;
+    try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur");
+        const data = await res.json();
+        if (data?.solana?.eur) { cachedSolPrice = data.solana.eur; lastPriceFetch = now; }
+    } catch(err) { console.error(err); }
+    return cachedSolPrice;
+}
+
+async function updateShares() {
+    const solPrice = await getSolPriceEUR();
+    const starterSol = (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
+    const keeperSol = (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
+    const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
+    const guardTreeSol = (TIER_SHARES.guardTree * EURO_PER_SHARE) / solPrice;
+    console.log(`SOL Prices - Starter: ${starterSol.toFixed(2)} SOL, Keeper: ${keeperSol.toFixed(2)} SOL`);
+}
+
+async function fetchUserShares(publicKey) {
+    if (!publicKey) return 0;
+    let hash = 0;
+    for (let i = 0; i < publicKey.length; i++) { hash = ((hash << 5) - hash) + publicKey.charCodeAt(i); hash |= 0; }
+    const mockShares = Math.abs(hash % 350);
+    return mockShares < 10 ? 25 : mockShares;
+}
+
+function getCurrentTier(shares) {
+    if (shares >= 5000) return TIER_BENEFITS.guardTree;
+    if (shares >= 1000) return TIER_BENEFITS.fullTree;
+    if (shares >= 100) return TIER_BENEFITS.keeper;
+    return TIER_BENEFITS.starter;
+}
+
+function updateBookingPreview(discount = 0) {
+    const nights = parseInt(document.getElementById("nightsSelect").value);
+    const total = nights * 490 * (1 - discount / 100);
+    document.getElementById("totalPriceDisplay").innerHTML = `€${Math.round(total)}`;
+    document.getElementById("discountBadge").innerHTML = `${discount}% off`;
+}
+
+function updateUIForShares(shares) {
+    const tier = getCurrentTier(shares);
+    document.getElementById("currentTierName").innerText = tier.name;
+    document.getElementById("currentTierIcon").innerText = tier.icon;
+    document.getElementById("sharesCountDisplay").innerText = shares;
+    document.getElementById("creditsDisplay").innerText = tier.credits;
+    document.getElementById("oliveCreditsVal").innerText = tier.credits;
+    document.getElementById("compNightsVal").innerText = tier.compNights;
+    document.getElementById("discountPercentVal").innerHTML = `${tier.discount}%`;
+    let nextThreshold = shares < 100 ? 100 : (shares < 1000 ? 1000 : (shares < 5000 ? 5000 : shares));
+    let progress = Math.min(100, (shares / nextThreshold) * 100);
+    document.getElementById("tierProgressFill").style.width = `${progress}%`;
+    document.getElementById("nextTierText").innerHTML = `${Math.max(0, nextThreshold - shares)} shares to next tier`;
+    updateBookingPreview(tier.discount);
+}
+
+async function connectWallet() {
+    if (!window.solana) { alert("Please install Phantom wallet"); return; }
+    try {
+        const resp = await window.solana.connect();
+        walletPublicKey = resp.publicKey.toString();
+        const shares = await fetchUserShares(walletPublicKey);
+        currentUserShares = shares;
+        updateUIForShares(shares);
+        localStorage.setItem("olivium_identity", JSON.stringify({ type: "wallet", address: walletPublicKey }));
+        document.getElementById("navIdentity").innerHTML = `${walletPublicKey.slice(0,4)}...${walletPublicKey.slice(-4)}`;
+        document.getElementById("navTierLabel").innerHTML = getCurrentTier(shares).name;
+        document.getElementById("headerConnectBtn").innerHTML = "Connected ✓";
+        document.getElementById("connectModal").style.display = "none";
+    } catch(err) { alert("Connection failed"); }
+}
+
+async function submitReservation() {
+    const stored = localStorage.getItem("olivium_identity");
+    if (!stored || !walletPublicKey) {
+        document.getElementById("bookingFeedback").innerHTML = "⚠️ Please connect your wallet first";
+        document.getElementById("connectModal").style.display = "flex";
+        return;
+    }
+    const name = document.getElementById("guestName").value.trim();
+    const dateRange = document.getElementById("dateRange").value;
+    if (!name || !dateRange) {
+        document.getElementById("bookingFeedback").innerHTML = "Please enter your name and dates";
+        return;
+    }
+    const nights = parseInt(document.getElementById("nightsSelect").value);
+    const tier = getCurrentTier(currentUserShares);
+    const total = Math.round(nights * 490 * (1 - tier.discount / 100));
+    document.getElementById("bookingFeedback").innerHTML = `✅ Reservation submitted! Total: €${total}. Concierge will contact you.`;
+    document.getElementById("bookingFeedback").style.color = "#B9D97B";
+    document.getElementById("dateRange").value = "";
+    document.getElementById("guestNotes").value = "";
+    setTimeout(() => { document.getElementById("bookingFeedback").innerHTML = ""; }, 5000);
+}
+
+window.closeConnectModal = function() { document.getElementById("connectModal").style.display = "none"; };
+
+async function checkExistingSession() {
+    const stored = localStorage.getItem("olivium_identity");
+    if (stored && window.solana) {
+        try {
+            const parsed = JSON.parse(stored);
+            if (parsed.type === "wallet" && parsed.address) {
+                walletPublicKey = parsed.address;
+                const shares = await fetchUserShares(parsed.address);
                 currentUserShares = shares;
                 updateUIForShares(shares);
-                
-                localStorage.setItem("olivium_identity", JSON.stringify({ type: "wallet", address: pubKeyStr }));
-                document.getElementById("navIdentity").innerHTML = `${pubKeyStr.slice(0,4)}...${pubKeyStr.slice(-4)}`;
+                document.getElementById("navIdentity").innerHTML = `${parsed.address.slice(0,4)}...${parsed.address.slice(-4)}`;
                 document.getElementById("navTierLabel").innerHTML = getCurrentTier(shares).name;
-                const headerBtn = document.getElementById("headerConnectBtn");
-                if (headerBtn) headerBtn.innerHTML = "Wallet Connected ✓";
-                closeConnectModal();
-                
-                const statusEl = document.getElementById("walletStatus");
-                if (statusEl) statusEl.innerHTML = "✓ Connected! Loading your tree positions...";
-                
-                // Trigger reserve.ts events
-                window.dispatchEvent(new Event('solana:connection-complete'));
-                
-                return pubKeyStr;
-            } catch (err) {
-                console.error("Wallet connection error:", err);
-                alert("Connection failed: " + (err.message || "Unknown error"));
-                return null;
+                document.getElementById("headerConnectBtn").innerHTML = "Connected";
             }
-        }
-        
-        // ============================================================
-        // BOOKING SUBMISSION
-        // ============================================================
-        async function submitReservation() {
-            const stored = localStorage.getItem("olivium_identity");
-            if (!stored || !walletPublicKey) {
-                const feedback = document.getElementById("bookingFeedback");
-                if (feedback) {
-                    feedback.innerHTML = "⚠️ Please connect your wallet first";
-                    feedback.style.color = "#F87171";
-                }
-                document.getElementById("connectModal").style.display = "flex";
-                return;
-            }
-            
-            const name = document.getElementById("guestName").value.trim();
-            const dateRange = document.getElementById("dateRange").value;
-            if (!name || !dateRange) {
-                const feedback = document.getElementById("bookingFeedback");
-                if (feedback) {
-                    feedback.innerHTML = "Please enter your name and select dates";
-                    feedback.style.color = "#F87171";
-                }
-                return;
-            }
-            
-            const nights = parseInt(document.getElementById("nightsSelect").value);
-            const tier = getCurrentTier(currentUserShares);
-            const total = Math.round(nights * 490 * (1 - tier.discount / 100));
-            
-            const feedback = document.getElementById("bookingFeedback");
-            if (feedback) {
-                feedback.innerHTML = `✅ Reservation submitted! Total: €${total}. Concierge will contact you within 24h.`;
-                feedback.style.color = "#B9D97B";
-            }
-            
-            document.getElementById("dateRange").value = "";
-            document.getElementById("guestNotes").value = "";
-            
-            setTimeout(() => {
-                if (feedback) feedback.innerHTML = "";
-            }, 5000);
-        }
-        
-        // ============================================================
-        // MODAL HELPERS
-        // ============================================================
-        window.closeConnectModal = function() {
-            document.getElementById("connectModal").style.display = "none";
-        };
-        
-        async function checkExistingSession() {
-            const stored = localStorage.getItem("olivium_identity");
-            if (stored && window.solana) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.type === "wallet" && parsed.address) {
-                        walletPublicKey = parsed.address;
-                        const shares = await fetchUserShares(parsed.address);
-                        currentUserShares = shares;
-                        updateUIForShares(shares);
-                        document.getElementById("navIdentity").innerHTML = `${parsed.address.slice(0,4)}...${parsed.address.slice(-4)}`;
-                        document.getElementById("navTierLabel").innerHTML = getCurrentTier(shares).name;
-                        const headerBtn = document.getElementById("headerConnectBtn");
-                        if (headerBtn) headerBtn.innerHTML = "Wallet Connected";
-                    }
-                } catch(e) { console.warn(e); }
-            }
-        }
-        
-        // ============================================================
-        // EVENT LISTENERS
-        // ============================================================
-        document.addEventListener("DOMContentLoaded", async () => {
-            console.log("[INIT] Initializing Olivium application...");
-            
-            const connectBtn = document.getElementById("realWalletConnectBtn");
-            if (connectBtn) connectBtn.addEventListener("click", connectWallet);
-            
-            const headerBtn = document.getElementById("headerConnectBtn");
-            if (headerBtn) {
-                headerBtn.addEventListener("click", () => {
-                    if (walletPublicKey) {
-                        localStorage.removeItem("olivium_identity");
-                        walletPublicKey = null;
-                        currentUserShares = 0;
-                        updateUIForShares(0);
-                        document.getElementById("navIdentity").innerHTML = "⚡ not connected";
-                        document.getElementById("headerConnectBtn").innerHTML = "Connect Wallet";
-                        document.getElementById("navTierLabel").innerHTML = "Guest";
-                        if (window.solana) window.solana.disconnect();
-                    } else {
-                        document.getElementById("connectModal").style.display = "flex";
-                    }
-                });
-            }
-            
-            const submitBtn = document.getElementById("submitReservationBtn");
-            if (submitBtn) submitBtn.addEventListener("click", submitReservation);
-            
-            const nightsSelect = document.getElementById("nightsSelect");
-            if (nightsSelect) {
-                nightsSelect.addEventListener("change", () => {
-                    const tier = getCurrentTier(currentUserShares);
-                    updateBookingPreview(tier.discount);
-                });
-            }
-            
-            await updateShares
+        } catch(e) { console.warn(e); }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    document.getElementById("realWalletConnectBtn")?.addEventListener("click", connectWallet);
+    document.getElementById("headerConnectBtn")?.addEventListener("click", () => {
+        if (walletPublicKey) {
+            localStorage.removeItem("olivium_identity");
+            walletPublicKey = null;
+            currentUserShares = 0;
+            updateUIForShares(0);
+            document.getElementById("navIdentity").innerHTML = "⚡ not connected";
+            document.getElementById("headerConnectBtn").innerHTML = "Connect Wallet";
+            document.getElementById("navTierLabel").innerHTML = "Guest";
+            if (window.solana) window.solana.disconnect();
+        } else { document.getElementById("connectModal").style.display = "flex"; }
+    });
+    document.getElementById("submitReservationBtn")?.addEventListener("click", submitReservation);
+    document.getElementById("nightsSelect")?.addEventListener("change", () => {
+        const tier = getCurrentTier(currentUserShares);
+        updateBookingPreview(tier.discount);
+    });
+    await updateShares();
+    checkExistingSession();
+    setTimeout(() => { document.getElementById("harvestProgress").style.width = "48%"; }, 500);
+});
+</script>
+</body>
+</html>
