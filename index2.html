@@ -456,7 +456,38 @@
     <a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms</a> | <a href="/refunds.html">Refund Policy</a> | <a href="mailto:support@yourdomain.com">Contact</a>
   </footer>
 
- 
+ <script type="module">
+  // Import connection module
+  import { connectWallet, disconnectWallet } from './src/connection.ts';
+  
+  // Make functions globally available
+  window.connectWallet = connectWallet;
+  window.disconnectWallet = disconnectWallet;
+  
+  // Handle connect button click
+  const connectBtn = document.getElementById('connectBtn');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', async () => {
+      // Check if currently connected
+      const identity = localStorage.getItem('olivium_identity');
+      if (identity && JSON.parse(identity).type === 'wallet') {
+        await disconnectWallet();
+      } else {
+        await connectWallet(false);
+      }
+    });
+  }
+  
+  // Listen for disconnect events
+  window.addEventListener('olivium:disconnected', () => {
+    console.log('Disconnected - UI fully reset');
+  });
+  
+  // Listen for connect events
+  window.addEventListener('olivium:connected', (event) => {
+    console.log('Connected:', event.detail);
+  });
+</script>
       <script type="module" src="./src/reserve_board.ts"></script>
         <script type="module" src="./src/reserveb.ts"></script>
 
