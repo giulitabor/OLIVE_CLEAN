@@ -108,15 +108,27 @@ let walletState = {
   pubkey: null as string | null
 };
 
-export function Wallet(): string | null {
+function Wallet() {
 
   const state = (window as any).walletState;
 
-  if (!state?.connected) {
+  if (state && state.connected === false) {
     return null;
   }
 
-  return state.pubkey || null;
+  const provider = (window as any)._provider;
+
+  const pubKey =
+    provider?.wallet?.publicKey ||
+    provider?.publicKey ||
+    (window as any).walletPubKey ||
+    null;
+
+  if (pubKey) {
+    return pubKey.toString();
+  }
+
+  return null;
 }
 
 /* ==========================================================================
