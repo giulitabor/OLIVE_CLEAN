@@ -86,11 +86,16 @@ const metrics: Record<string, MetricEntry> = {
 };
 
 
-function validateSignupForm() {
-  const passVal = (signupPassword as HTMLInputElement)?.value || "";
-  const confirmVal = (signupConfirmPassword as HTMLInputElement)?.value || "";
+function validateSignupForm_FIXED(
+  signupPassword: HTMLInputElement | null,
+  signupConfirmPassword: HTMLInputElement | null,
+  signupEmail: HTMLInputElement | null,
+  signupBtn: HTMLElement | null
+) {
+  const passVal    = signupPassword?.value    || "";
+  const confirmVal = signupConfirmPassword?.value || "";
   let allPass = true;
-
+ 
   for (const key in metrics) {
     const matched = metrics[key].reg.test(passVal);
     const element = metrics[key].el;
@@ -107,28 +112,20 @@ function validateSignupForm() {
       }
     }
   }
-
+ 
   const matches = passVal === confirmVal && passVal.length > 0;
-
-  if (allPass && matches && signupEmail && (signupEmail as HTMLInputElement).value.trim().length > 0 && signupBtn) {
-    (signupBtn as HTMLButtonElement).disabled = false;
-    signupBtn.style.background = "var(--green)";
-  } else if (signupBtn) {
-    (signupBtn as HTMLButtonElement).disabled = true;
-    signupBtn.style.background = "#cccccc";
+  const btn = signupBtn as HTMLButtonElement | null;
+ 
+  if (allPass && matches && signupEmail?.value.trim().length && btn) {
+    btn.disabled = false;
+    btn.style.background = "var(--green)";
+  } else if (btn) {
+    btn.disabled = true;
+    // FIX: cast to HTMLButtonElement so .style is accessible
+    btn.style.background = "#cccccc";
   }
 }
 
-signupEmail?.addEventListener("input", validateSignupForm);
-signupPassword?.addEventListener("input", validateSignupForm);
-signupConfirmPassword?.addEventListener("input", validateSignupForm);
-
-function show(text: string, ok = true) {
-  if (msg) {
-    msg.innerText = text;
-    msg.style.color = ok ? "var(--green)" : "#d94d4d";
-  }
-}
 
 // ============================================================
 // updateIdentityBalanceUI
