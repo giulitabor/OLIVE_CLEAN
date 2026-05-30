@@ -239,7 +239,19 @@ async function confirmSellAction() {
   }
 }
 (window as any).confirmSellAction = confirmSellAction;
-async function updateWalletUI() {
+ if (!(window as any).walletState?.connected) {
+
+    window.OliviumIdentity = {
+      type: "guest"
+    };
+
+    if (typeof (window as any).refreshIdentityUI === "function") {
+      await (window as any).refreshIdentityUI();
+    }
+
+    return;
+  }
+
   const wallet = Wallet();
 
   // Sync internal state
