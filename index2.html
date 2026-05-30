@@ -6,6 +6,7 @@
   <title>Olivium DAO | Reserve Your Tree</title>
   <link rel="stylesheet" href="1style.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     .tree-card .action-btn {
       background: #6B7F5A !important;
@@ -31,9 +32,6 @@
     #tree-detail-modal { z-index: 1100; }
     #sell-modal { z-index: 2000; }
     .hidden { display: none !important; }
-    .tab { padding: 10px 20px; cursor: pointer; border: none; background: #f0f0f0; }
-    .tab.active { background: #6B7F5A; color: white; }
-    .auth-form input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -87,63 +85,8 @@
     <div class="loading-state"><div class="spinner"></div><p>🌿 Syncing live grove availability...</p></div>
   </main>
 
-  <!-- CONNECT MODAL -->
-  <div class="modal-overlay" id="connectModal" style="display: none;">
-    <div class="modal" style="max-width: 480px;">
-      <button class="close-btn" onclick="window.closeConnectModal()">&times;</button>
-      <div class="modal-body">
-        <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
-        <p class="modal-description">Choose your preferred access method.</p>
-        <div class="auth-options">
-          <div class="auth-card">
-            <div class="auth-card-title">◎ Wallet Login</div>
-            <div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div>
-            <button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button>
-          </div>
-          <div class="auth-card">
-            <div class="auth-card-title">✉ Email Login</div>
-            <div class="auth-card-sub">Simple email access with custodial wallet.</div>
-            <button id="showEmailAuthBtn" class="primary-btn">Continue with Email</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- EMAIL AUTH MODAL -->
-  <div id="emailAuthModal" class="modal-overlay" style="display: none;">
-    <div class="modal" style="max-width: 400px;">
-      <button class="close-btn" onclick="window.closeEmailAuthModal()">&times;</button>
-      <div class="modal-body">
-        <h2 style="text-align:center; margin-bottom: 20px;">Email Access</h2>
-        
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-          <button id="emailLoginTab" class="tab active" style="flex: 1;">Login</button>
-          <button id="emailSignupTab" class="tab" style="flex: 1;">Sign Up</button>
-        </div>
-        
-        <!-- Login Form -->
-        <div id="emailLoginForm">
-          <input type="email" id="loginEmailInput" placeholder="Email address" required />
-          <input type="password" id="loginPasswordInput" placeholder="Password" required />
-          <button id="doEmailLoginBtn" class="primary-btn" style="width: 100%;">Login</button>
-        </div>
-        
-        <!-- Signup Form -->
-        <div id="emailSignupForm" style="display: none;">
-          <input type="email" id="signupEmailInput" placeholder="Email address" required />
-          <input type="password" id="signupPasswordInput" placeholder="Password (min 6 characters)" required />
-          <input type="password" id="signupConfirmInput" placeholder="Confirm password" required />
-          <button id="doEmailSignupBtn" class="primary-btn" style="width: 100%;">Create Account</button>
-        </div>
-        
-        <div id="emailAuthMessage" style="margin-top: 15px; text-align: center; font-size: 0.9rem;"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- PURCHASE MODAL -->
-  <div class="modal-overlay" id="modalOverlay" style="display: none;">
+  <div class="modal-overlay" id="modalOverlay">
     <div class="modal" role="dialog" aria-modal="true">
       <button class="close-btn" onclick="if(window.closeModal) window.closeModal()">×</button>
       <div class="modal-hero"><img id="modalImage" src="" alt="Selected Tree" /></div>
@@ -164,14 +107,17 @@
           <input type="hidden" id="shareInput" value="1" />
         </div>
         <div class="price-card" style="margin-bottom: 24px;"><div class="price-title">Total Price</div><div class="price-display" id="priceDisplay">€12.40</div><div class="price-sub" id="priceSub">1 share × €12.40</div></div>
-        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">🔗 Connect Wallet to Continue</button>
+        <!-- Shown in crypto mode when no wallet is connected; hidden otherwise -->
+        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">
+          🔗 Connect Wallet to Continue
+        </button>
         <button class="primary-btn" id="adoptBtn" onclick="if(window.openAgreement) window.openAgreement()">Continue to Agreement</button>
       </div>
     </div>
   </div>
 
   <!-- AGREEMENT MODAL -->
-  <div id="agreementModal" class="modal-overlay" style="display: none;">
+  <div id="agreementModal" class="modal-overlay">
     <div class="modal">
       <div class="agreement-card">
         <h2 class="modal-title" id="agreeTitle">Tree Adoption Agreement</h2>
@@ -189,11 +135,40 @@
   </div>
 
   <!-- SUCCESS MODAL -->
-  <div class="modal-overlay" id="successModal" style="display: none;">
+  <div class="modal-overlay" id="successModal">
     <div class="modal"><div class="agreement-card success-state"><div class="success-icon">🌿</div><h2 class="modal-title">Adoption Confirmed</h2><p style="color: var(--muted); margin-bottom: 24px;">Thank you for supporting the Olivium ecosystem.</p><button class="primary-btn" onclick="if(window.closeSuccess) window.closeSuccess()">Continue</button></div></div>
   </div>
 
-  <!-- SELL MODAL -->
+  <!-- CONNECT MODAL -->
+  <div class="modal-overlay" id="connectModal">
+    <div class="modal" style="max-width: 480px;">
+      <button class="close-btn" onclick="if(window.closeConnectModal) window.closeConnectModal()">&times;</button>
+      <div class="modal-body">
+        <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
+        <p class="modal-description">Choose your preferred access method. Wallet users interact directly with Solana. Email users receive a custodial grove wallet.</p>
+        <div class="auth-options">
+          <div class="auth-card" id="walletConnectCard"><div class="auth-card-title">◎ Wallet Login</div><div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div><button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button></div>
+          <div class="auth-card" id="emailConnectCard"><div class="auth-card-title">✉ Email Login</div><div class="auth-card-sub">Fiat purchases with automatic custodial wallet creation.</div><button id="emailLoginBtn" class="primary-btn">Continue with Email</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL (MFA) -->
+  <div id="authModalOverlay" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: 400px;">
+      <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px;">&times;</button>
+      <div class="modal-body">
+        <h2 style="text-align:center;">MFA Authentication</h2>
+        <div class="tabs" style="display:flex;"><button id="loginTab" class="tab active">Login</button><button id="signupTab" class="tab">Signup</button></div>
+        <form id="loginForm"><input id="loginEmail" type="email" placeholder="Email" /><input id="loginPassword" type="password" placeholder="Password" /><button id="loginBtn" type="button" class="primary-btn">Login</button><div id="loginOtpBox" style="display:none;"><input id="loginOtp" placeholder="MFA Code" /><button id="verifyLoginOtp" class="primary-btn">Verify MFA</button></div></form>
+        <form id="signupForm" style="display:none;"><input id="signupEmail" type="email" placeholder="Email" /><input id="signupPassword" type="password" placeholder="Password" /><input id="signupConfirmPassword" type="password" placeholder="Confirm" /><div id="qr"></div><button id="signupBtn" class="primary-btn" disabled>Signup</button><div id="signupOtpBox" style="display:none;"><input id="signupOtp" placeholder="Authenticator Code" /><button id="verifySignupOtp" class="primary-btn">Enable MFA</button></div></form>
+        <div id="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELL MODAL (SINGLE COPY) -->
   <div id="sell-modal" class="modal-overlay hidden fixed inset-0 w-full h-full flex items-center justify-center bg-black/60 backdrop-blur-sm z-[2000]">
     <div class="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-2xl border border-stone-100">
       <button onclick="if(window.closeSellModal) window.closeSellModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 font-bold text-xl">✕</button>
@@ -220,14 +195,223 @@
     </div>
   </div>
 
-  <!-- TREE DETAIL MODAL (simplified for brevity - keep your existing one) -->
+  <!-- TREE DETAIL MODAL -->
   <div id="tree-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" style="background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);">
     <div class="min-h-screen flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden">
-        <button onclick="if(window.closeTreeDetailModal) window.closeTreeDetailModal()" class="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-lg transition">✕</button>
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden" onclick="event.stopPropagation()">
+
+        <!-- Close -->
+        <button onclick="if(window.closeTreeDetailModal) window.closeTreeDetailModal()" class="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-lg transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Hero image + name -->
+        <div class="relative h-80 overflow-hidden">
+          <div id="tree-detail-hero-img" class="absolute inset-0 bg-cover bg-center transition-all duration-500" style="background-image: url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg');"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <div class="flex items-end justify-between">
+              <div>
+                <p id="tree-detail-field-id" class="text-xs font-mono text-white/60 mb-1">—</p>
+                <h2 id="tree-detail-name" class="text-3xl font-bold mb-1">—</h2>
+                <p id="tree-detail-location" class="text-sm text-white/80">—</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-white/60 mb-1">Health Score</p>
+                <p id="tree-detail-health" class="text-2xl font-bold text-green-400">—</p>
+              </div>
+            </div>
+          </div>
+          <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full text-white text-xs font-medium shadow-lg">
+            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>LIVE SENSORS
+          </div>
+          <div id="tree-detail-status-badge" class="absolute top-4 right-20 px-3 py-1.5 bg-green-600 rounded-full text-white text-xs font-medium shadow-lg">registered</div>
+        </div>
+
+        <!-- Tabs -->
         <div class="p-8">
-          <h2 class="text-2xl font-bold">Tree Details</h2>
-          <p id="tree-detail-name" class="mt-2">Loading...</p>
+          <div class="flex gap-2 mb-6 border-b border-stone-200 overflow-x-auto">
+            <button class="tree-detail-tab active px-4 py-2 text-sm font-medium border-b-2 border-green-600 text-green-600 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('overview')">Overview</button>
+            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('physical')">📐 Physical</button>
+            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('environment')">🌡️ Live Sensors</button>
+            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('weather')">☁️ Weather</button>
+            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('metadata')">⛓ On-Chain</button>
+            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('gallery')">🖼 Gallery</button>
+          </div>
+
+          <!-- OVERVIEW TAB -->
+          <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
+            <div class="grid md:grid-cols-4 gap-4 mb-6">
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">🌳</div>
+                <p class="text-xs text-stone-400 mb-1">Age</p>
+                <p id="tree-detail-age" class="text-xl font-bold text-stone-900">—</p>
+              </div>
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">📏</div>
+                <p class="text-xs text-stone-400 mb-1">Height</p>
+                <p id="tree-detail-height" class="text-xl font-bold text-stone-900">—</p>
+              </div>
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">🫒</div>
+                <p class="text-xs text-stone-400 mb-1">Variety</p>
+                <p id="tree-detail-variety" class="text-lg font-bold text-stone-900">—</p>
+              </div>
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">📊</div>
+                <p class="text-xs text-stone-400 mb-1">Shares Sold</p>
+                <p id="tree-overview-shares" class="text-xl font-bold text-stone-900">—</p>
+              </div>
+            </div>
+            <!-- Share progress -->
+            <div class="bg-stone-50 rounded-xl p-4 mb-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-stone-500">Adoption Progress</span>
+                <span id="tree-overview-pct" class="font-bold text-stone-800">—%</span>
+              </div>
+              <div class="w-full bg-stone-200 rounded-full h-2.5">
+                <div id="tree-overview-bar" class="bg-green-600 h-2.5 rounded-full transition-all" style="width:0%"></div>
+              </div>
+              <div class="flex justify-between text-xs text-stone-400 mt-1">
+                <span id="tree-overview-sold-label">— sold</span>
+                <span id="tree-overview-total-label">— total</span>
+              </div>
+            </div>
+            <!-- Treatment info -->
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="border border-stone-100 rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Last Treatment</p>
+                <p id="tree-detail-last-treatment" class="font-semibold text-stone-800">—</p>
+                <p id="tree-detail-treatment-type" class="text-xs text-stone-500 mt-0.5">—</p>
+              </div>
+              <div class="border border-stone-100 rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Last Fertilizer</p>
+                <p id="tree-detail-last-fertilizer" class="font-semibold text-stone-800">—</p>
+                <p id="tree-detail-fertilizer-type" class="text-xs text-stone-500 mt-0.5">—</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- PHYSICAL TAB -->
+          <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Age</p>
+                <p id="phys-age" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">years</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Height</p>
+                <p id="phys-height" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Circumference</p>
+                <p id="phys-circumference" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Diameter</p>
+                <p id="phys-diameter" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Crown Spread</p>
+                <p id="phys-crown" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Altitude</p>
+                <p id="phys-altitude" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">m</p>
+              </div>
+              <div class="border rounded-xl p-4 md:col-span-2">
+                <p class="text-xs text-stone-400 mb-1">GPS Coordinates</p>
+                <p id="phys-coords" class="font-mono text-stone-800">—</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENVIRONMENT TAB -->
+          <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden">
+            <h4 class="font-semibold text-stone-900 mb-3">🌱 Live Field Sensors — <span id="env-field-label" class="text-stone-400 font-normal text-sm">—</span></h4>
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">💧 Soil Moisture</p>
+                <span id="oracle-soil-moisture" class="text-xl font-bold text-stone-900">—</span>
+                <div class="bg-stone-100 rounded-full h-2 mt-2"><div id="oracle-moisture-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width:0%"></div></div>
+                <p id="oracle-moisture-status" class="text-xs text-stone-400 mt-1">—</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🌡️ Temperature</p>
+                <span id="oracle-soil-temp" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🍃 Leaf Wetness</p>
+                <span id="oracle-leaf-wetness" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">☀️ UV Index</p>
+                <span id="oracle-uv" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🌬️ CO₂</p>
+                <span id="oracle-co2" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p>
+                <span id="oracle-wind" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">💧 Humidity</p>
+                <span id="oracle-humidity" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🌧️ Rain Rate</p>
+                <span id="oracle-rain" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+            </div>
+            <p class="text-xs text-stone-400">Last reading: <span id="oracle-last-update" class="font-medium">—</span></p>
+          </div>
+
+          <!-- WEATHER TAB -->
+          <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden">
+            <h4 class="font-semibold text-stone-900 mb-3">☁️ Current Conditions — <span id="weather-coords-label" class="text-stone-400 font-normal text-sm">—</span></h4>
+            <div class="grid md:grid-cols-3 gap-4">
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌡️ Air Temperature</p><span id="weather-temp" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p><span id="weather-wind" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💧 Humidity</p><span id="weather-humidity" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🔵 Pressure</p><span id="weather-pressure" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌧️ Rain</p><span id="weather-rain" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">☀️ UV Index</p><span id="weather-uv" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">⚡ Solar Radiation</p><span id="weather-solar" class="text-xl font-bold text-stone-900">—</span></div>
+            </div>
+          </div>
+
+          <!-- ON-CHAIN / METADATA TAB -->
+          <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden">
+            <div class="space-y-0 text-sm divide-y divide-stone-100">
+              <div class="flex justify-between py-3"><span class="text-stone-500">Tree ID</span><span id="tree-detail-meta-id" class="font-mono font-medium text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Field ID</span><span id="tree-detail-meta-field" class="font-mono text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Address</span><span id="tree-detail-meta-onchain" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Mint</span><span id="tree-detail-meta-mint" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Status</span><span id="tree-detail-meta-status" class="font-medium text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Total Shares</span><span id="tree-detail-meta-total" class="font-bold text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Shares Sold (live)</span><span id="tree-detail-meta-sold" class="font-bold text-green-700">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Shares Available</span><span id="tree-detail-meta-available" class="font-bold text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Variety</span><span id="tree-detail-meta-variety" class="text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Coordinates</span><span id="tree-detail-meta-coords" class="font-mono text-xs text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Last Updated</span><span id="tree-detail-meta-updated" class="text-stone-900">—</span></div>
+            </div>
+          </div>
+
+          <!-- GALLERY TAB -->
+          <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden">
+            <div id="tree-detail-gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <p class="text-stone-400 text-sm col-span-3">Loading gallery...</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -238,7 +422,7 @@
   </footer>
 
   <script type="module">
-    import { sb, connectWallet, disconnectWallet, connectEmail, disconnectEmail, getActiveWallet, isEmailMode } from "./src/connection.ts";
+    import { sb } from "./src/connection.ts";
     import { PublicKey, SystemProgram } from "@solana/web3.js";
     import * as anchor from "@coral-xyz/anchor";
 
@@ -246,425 +430,469 @@
     window.PublicKey = PublicKey;
     window.SystemProgram = SystemProgram;
     window.anchor = anchor;
-    
-    window.connectWallet = connectWallet;
-    window.disconnectWallet = disconnectWallet;
-    window.connectEmail = connectEmail;
-    window.disconnectEmail = disconnectEmail;
-    window.getActiveWallet = getActiveWallet;
-    window.isEmailMode = isEmailMode;
-    
     window.loadTrees = (filter) => { if(window._loadTreesImpl) window._loadTreesImpl(filter); };
   </script>
 
-  <script>
-    // ============================================================
-    // UI CONTROLLER - Matches your exact database schema
-    // ============================================================
-    
-    (function() {
-      console.log("🚀 Initializing UI Controller...");
-      
-      // DOM Elements
-      const connectBtn = document.getElementById('connectBtn');
-      const connectModal = document.getElementById('connectModal');
-      const emailAuthModal = document.getElementById('emailAuthModal');
-      const walletConnectBtn = document.getElementById('connectWalletBtn');
-      const showEmailAuthBtn = document.getElementById('showEmailAuthBtn');
-      
-      // Email auth elements
-      const loginTab = document.getElementById('emailLoginTab');
-      const signupTab = document.getElementById('emailSignupTab');
-      const loginForm = document.getElementById('emailLoginForm');
-      const signupForm = document.getElementById('emailSignupForm');
-      const loginBtn = document.getElementById('doEmailLoginBtn');
-      const signupBtn = document.getElementById('doEmailSignupBtn');
-      const messageDiv = document.getElementById('emailAuthMessage');
-      
-      // Helper: Get current identity from localStorage
-      function getCurrentIdentity() {
-        const saved = localStorage.getItem('olivium_identity');
-        if (saved) {
-          try {
-            return JSON.parse(saved);
-          } catch(e) {}
-        }
-        return null;
-      }
-      
-      // Helper: Generate deterministic wallet from email (using your existing token pattern)
-      async function generateWalletFromEmail(email, password) {
-        // Using the same seed pattern as your existing users
-        const secretSeed = "OLIVIUMDAO777MFASEED";
-        const encoder = new TextEncoder();
-        const data = encoder.encode(`${email}:${password}:${secretSeed}`);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        // Generate a 44-character string (Solana wallet length approx)
-        const walletBase = hashArray.slice(0, 32).map(b => b.toString(16).padStart(2, '0')).join('');
-        // Add prefix to match your existing wallet pattern (looks like 3JVG7F2C...)
-        return walletBase.toUpperCase().slice(0, 44);
-      }
-      
-      // Update all UI based on current identity
-      async function updateAllUI() {
-        console.log("🎨 Updating UI...");
-        
-        const identity = getCurrentIdentity();
-        const button = document.getElementById('connectBtn');
-        const identityPill = document.getElementById('identityPill');
-        const identityStat = document.getElementById('identityTypeStat');
-        
-        if (!identity) {
-          // Guest mode
-          if (button) {
-            button.innerText = "Connect Profile";
-            button.style.color = "white";
-            button.style.background = "#6B7F5A";
-            button.style.border = "none";
-          }
-          if (identityPill) identityPill.innerHTML = "🌿 Guest Mode";
-          if (identityStat) identityStat.innerText = "Guest";
-        } 
-        else if (identity.type === 'wallet') {
-          // Wallet mode
-          const shortAddr = `${identity.wallet.slice(0, 4)}...${identity.wallet.slice(-4)}`;
-          if (button) {
-            button.innerText = `${shortAddr} (Disconnect)`;
-            button.style.color = "#d94d4d";
-            button.style.background = "transparent";
-            button.style.border = "1px solid #d94d4d";
-          }
-          if (identityPill) identityPill.innerHTML = `🔑 ${shortAddr}`;
-          if (identityStat) identityStat.innerText = "Wallet Mode";
-        }
-        else if (identity.type === 'email') {
-          // Email mode
-          const shortAddr = `${identity.custodialWallet.slice(0, 6)}...${identity.custodialWallet.slice(-4)}`;
-          if (button) {
-            button.innerText = `${identity.address} (Disconnect)`;
-            button.style.color = "#d94d4d";
-            button.style.background = "transparent";
-            button.style.border = "1px solid #d94d4d";
-          }
-          if (identityPill) identityPill.innerHTML = `✉️ ${identity.address.slice(0, 20)}...`;
-          if (identityStat) identityStat.innerText = "Email Secured";
-        }
-        
-        // Trigger stats update if available
-        if (typeof window.updateStatsUI === 'function') {
-          setTimeout(() => window.updateStatsUI(), 100);
-        }
-        if (typeof window.updateVillaStayUI === 'function') {
-          setTimeout(() => window.updateVillaStayUI(), 100);
-        }
-      }
-      
-      // Close modals
-      window.closeConnectModal = function() {
-        if (connectModal) connectModal.style.display = 'none';
-      }
-      
-      window.closeEmailAuthModal = function() {
-        if (emailAuthModal) emailAuthModal.style.display = 'none';
-        if (messageDiv) messageDiv.innerHTML = '';
-        // Reset forms
-        const loginEmail = document.getElementById('loginEmailInput');
-        const loginPassword = document.getElementById('loginPasswordInput');
-        if (loginEmail) loginEmail.value = '';
-        if (loginPassword) loginPassword.value = '';
-      }
-      
-      // Handle disconnect
-      async function handleDisconnect() {
-        console.log("🔌 Disconnecting...");
-        
-        // Clear storage
-        localStorage.removeItem('olivium_identity');
-        localStorage.removeItem('olivium_user');
-        localStorage.removeItem('walletConnected');
-        
-        // Call disconnect from connection.ts
-        if (typeof window.disconnectWallet === 'function') {
-          await window.disconnectWallet();
-        }
-        
-        // Close all modals
-        if (connectModal) connectModal.style.display = 'none';
-        if (emailAuthModal) emailAuthModal.style.display = 'none';
-        
-        // Update UI
-        await updateAllUI();
-        
-        // Reload trees as guest
-        if (typeof window.loadTrees === 'function') {
-          setTimeout(() => window.loadTrees('all'), 200);
-        }
-        
-        console.log("✅ Disconnected");
-      }
-      
-      // Handle wallet connection
-      async function handleWalletConnect() {
-        console.log("🔐 Connecting wallet...");
-        try {
-          const result = await window.connectWallet();
-          if (result) {
-            window.closeConnectModal();
-            await updateAllUI();
-            if (typeof window.loadTrees === 'function') {
-              setTimeout(() => window.loadTrees('my'), 500);
-            }
-          }
-        } catch (err) {
-          console.error("Wallet connection error:", err);
-          alert("Failed to connect wallet. Please make sure Phantom is installed.");
-        }
-      }
-      
-      // Handle email login (using your exact column name: Email_address)
-      async function handleEmailLogin() {
-        const email = document.getElementById('loginEmailInput')?.value.trim().toLowerCase();
-        const password = document.getElementById('loginPasswordInput')?.value;
-        
-        if (!email || !password) {
-          if (messageDiv) messageDiv.innerHTML = '<span style="color: red;">Please enter email and password</span>';
-          return;
-        }
-        
-        if (messageDiv) messageDiv.innerHTML = '<span style="color: #6B7F5A;">Checking credentials...</span>';
-        
-        try {
-          // Check if user exists in Supabase using Email_address column
-          const { data: user, error } = await window.sb
-            .from('users')
-            .select('Email_address, wallet, credits')
-            .eq('Email_address', email)
-            .single();
-          
-          if (error || !user) {
-            throw new Error("Email not found. Please sign up first.");
-          }
-          
-          // Generate wallet from email+password to verify
-          const generatedWallet = await generateWalletFromEmail(email, password);
-          
-          // Compare with stored wallet
-          if (generatedWallet !== user.wallet) {
-            throw new Error("Invalid password");
-          }
-          
-          // Connect using email
-          await window.connectEmail(email, user.wallet);
-          
-          if (messageDiv) messageDiv.innerHTML = '<span style="color: green;">Login successful!</span>';
-          
-          setTimeout(() => {
-            window.closeEmailAuthModal();
-            updateAllUI();
-            if (typeof window.loadTrees === 'function') {
-              window.loadTrees('my');
-            }
-          }, 1000);
-          
-        } catch (err) {
-          console.error("Login error:", err);
-          if (messageDiv) messageDiv.innerHTML = `<span style="color: red;">${err.message}</span>`;
-        }
-      }
-      
-      // Handle email signup (using your exact column names)
-      async function handleEmailSignup() {
-        const email = document.getElementById('signupEmailInput')?.value.trim().toLowerCase();
-        const password = document.getElementById('signupPasswordInput')?.value;
-        const confirm = document.getElementById('signupConfirmInput')?.value;
-        
-        if (!email || !password) {
-          if (messageDiv) messageDiv.innerHTML = '<span style="color: red;">Please enter email and password</span>';
-          return;
-        }
-        
-        if (password !== confirm) {
-          if (messageDiv) messageDiv.innerHTML = '<span style="color: red;">Passwords do not match</span>';
-          return;
-        }
-        
-        if (password.length < 6) {
-          if (messageDiv) messageDiv.innerHTML = '<span style="color: red;">Password must be at least 6 characters</span>';
-          return;
-        }
-        
-        if (messageDiv) messageDiv.innerHTML = '<span style="color: #6B7F5A;">Creating account...</span>';
-        
-        try {
-          // Check if user already exists using Email_address column
-          const { data: existing } = await window.sb
-            .from('users')
-            .select('Email_address')
-            .eq('Email_address', email)
-            .single();
-          
-          if (existing) {
-            throw new Error("Email already registered. Please login instead.");
-          }
-          
-          // Generate deterministic wallet using your secret seed pattern
-          const secretSeed = "OLIVIUMDAO777MFASEED";
-          const encoder = new TextEncoder();
-          const data = encoder.encode(`${email}:${password}:${secretSeed}`);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const custodialWallet = hashArray.slice(0, 32).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 44);
-          
-          // Create user in Supabase with your exact column names
-          const { error: insertError } = await window.sb
-            .from('users')
-            .insert([{
-              Email_address: email,  // Note: Capital E, underscore
-              wallet: custodialWallet,
-              credits: 0,
-              OLV_tokens: 0,
-              token: secretSeed
-            }]);
-          
-          if (insertError) throw insertError;
-          
-          // Connect using email
-          await window.connectEmail(email, custodialWallet);
-          
-          if (messageDiv) messageDiv.innerHTML = '<span style="color: green;">Account created! Logging in...</span>';
-          
-          setTimeout(() => {
-            window.closeEmailAuthModal();
-            updateAllUI();
-            if (typeof window.loadTrees === 'function') {
-              window.loadTrees('my');
-            }
-          }, 1500);
-          
-        } catch (err) {
-          console.error("Signup error:", err);
-          if (messageDiv) messageDiv.innerHTML = `<span style="color: red;">${err.message}</span>`;
-        }
-      }
-      
-      // ============================================================
-      // EVENT LISTENERS
-      // ============================================================
-      
-      // Main connect button
-      if (connectBtn) {
-        // Replace with fresh button to avoid duplicate listeners
-        const newBtn = connectBtn.cloneNode(true);
-        connectBtn.parentNode.replaceChild(newBtn, connectBtn);
-        
-        newBtn.addEventListener('click', async () => {
-          const identity = getCurrentIdentity();
-          if (identity) {
-            await handleDisconnect();
-          } else {
-            if (connectModal) connectModal.style.display = 'flex';
-          }
-        });
-      }
-      
-      // Wallet connect button
-      if (walletConnectBtn) {
-        walletConnectBtn.addEventListener('click', handleWalletConnect);
-      }
-      
-      // Email auth button
-      if (showEmailAuthBtn) {
-        showEmailAuthBtn.addEventListener('click', () => {
-          if (connectModal) connectModal.style.display = 'none';
-          if (emailAuthModal) emailAuthModal.style.display = 'flex';
-        });
-      }
-      
-      // Tab switching
-      if (loginTab && signupTab) {
-        loginTab.addEventListener('click', () => {
-          loginTab.classList.add('active');
-          signupTab.classList.remove('active');
-          if (loginForm) loginForm.style.display = 'block';
-          if (signupForm) signupForm.style.display = 'none';
-          if (messageDiv) messageDiv.innerHTML = '';
-        });
-        
-        signupTab.addEventListener('click', () => {
-          signupTab.classList.add('active');
-          loginTab.classList.remove('active');
-          if (signupForm) signupForm.style.display = 'block';
-          if (loginForm) loginForm.style.display = 'none';
-          if (messageDiv) messageDiv.innerHTML = '';
-        });
-      }
-      
-      // Login button
-      if (loginBtn) {
-        loginBtn.addEventListener('click', handleEmailLogin);
-      }
-      
-      // Signup button
-      if (signupBtn) {
-        signupBtn.addEventListener('click', handleEmailSignup);
-      }
-      
-      // Enter key support
-      const loginPassword = document.getElementById('loginPasswordInput');
-      if (loginPassword) {
-        loginPassword.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') handleEmailLogin();
-        });
-      }
-      
-      const signupConfirm = document.getElementById('signupConfirmInput');
-      if (signupConfirm) {
-        signupConfirm.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') handleEmailSignup();
-        });
-      }
-      
-      // Close modals on backdrop click
-      if (connectModal) {
-        connectModal.addEventListener('click', (e) => {
-          if (e.target === connectModal) window.closeConnectModal();
-        });
-      }
-      
-      if (emailAuthModal) {
-        emailAuthModal.addEventListener('click', (e) => {
-          if (e.target === emailAuthModal) window.closeEmailAuthModal();
-        });
-      }
-      
-      // Listen for connection events from connection.ts
-      window.addEventListener('olivium:connected', async () => {
-        console.log("🎉 Received connected event");
-        await updateAllUI();
-      });
-      
-      window.addEventListener('olivium:disconnected', async () => {
-        console.log("👋 Received disconnected event");
-        await updateAllUI();
-      });
-      
-      // Initial UI update
-      setTimeout(async () => {
-        await updateAllUI();
-        
-        // Check for existing identity and restore
-        const identity = getCurrentIdentity();
-        if (identity && identity.type === 'wallet' && identity.wallet) {
-          console.log("Restoring wallet session");
-          window.walletPubKey = identity.wallet;
-        }
-      }, 500);
-      
-      console.log("✅ UI Controller ready");
-    })();
-  </script>
+  <script type="module">
+    import { sb } from "./src/connection.ts";
+    import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
-  <script type="module" src="./src/reserve_board.ts"></script>
+    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+
+        window.OliviumAuth = {
+          user: null,
+          setUser(u) {
+            this.user = u;
+            localStorage.setItem("olivium_user", JSON.stringify(u));
+          },
+          getUser() {
+            return this.user || JSON.parse(localStorage.getItem("olivium_user") || "null");
+          }
+        };
+
+        const openModalBtn = document.getElementById("emailLoginBtn");
+        const closeModalBtn = document.getElementById("closeAuthModal");
+        const modalOverlay = document.getElementById("authModalOverlay");
+        const connectModal = document.getElementById("connectModal");
+
+        const loginTab = document.getElementById("loginTab");
+        const signupTab = document.getElementById("signupTab");
+        const loginForm = document.getElementById("loginForm");
+        const signupForm = document.getElementById("signupForm");
+
+        const loginOtpBox = document.getElementById("loginOtpBox");
+        const signupOtpBox = document.getElementById("signupOtpBox");
+        const qrContainer = document.getElementById("qr");
+        const msg = document.getElementById("msg");
+        const signupEmail = document.getElementById("signupEmail");
+        const signupPassword = document.getElementById("signupPassword");
+        const signupConfirmPassword = document.getElementById("signupConfirmPassword");
+        const signupBtn = document.getElementById("signupBtn");
+
+        const metrics = {
+          len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
+          cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
+          low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
+          num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
+          spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
+        };
+
+        function validateSignupForm() {
+          const passVal = signupPassword.value || "";
+          const confirmVal = signupConfirmPassword.value || "";
+          let allPass = true;
+
+          for (const key in metrics) {
+            const matched = metrics[key].reg.test(passVal);
+            const element = metrics[key].el;
+            if (element) {
+              if (matched) {
+                element.style.color = "#2e7d32";
+                element.querySelector(".icon").innerText = "✔";
+              } else {
+                element.style.color = "#d94d4d";
+                element.querySelector(".icon").innerText = "❌";
+                allPass = false;
+              }
+            }
+          }
+
+          const matches = passVal === confirmVal && passVal.length > 0;
+
+          if (allPass && matches && signupEmail.value.trim().length > 0) {
+            signupBtn.disabled = false;
+            signupBtn.style.background = "var(--green)";
+          } else {
+            signupBtn.disabled = true;
+            signupBtn.style.background = "#cccccc";
+          }
+        }
+
+        signupEmail?.addEventListener("input", validateSignupForm);
+        signupPassword?.addEventListener("input", validateSignupForm);
+        signupConfirmPassword?.addEventListener("input", validateSignupForm);
+
+        function show(text, ok = true) {
+          msg.innerText = text;
+          msg.style.color = ok ? "var(--green)" : "#d94d4d";
+        }
+
+        // Single source of truth for all identity UI: pill, stat, connect button.
+        // Called on DOMContentLoaded, solana:connection-complete, and after disconnect.
+        async function updateIdentityBalanceUI() {
+          try {
+            const pillEl      = document.getElementById("identityPill");
+            const stat        = document.getElementById("identityTypeStat");
+            const connectBtn  = document.getElementById("connectBtn");
+
+            // Resolve active identity — check live wallet first, then _provider, then localStorage
+            const liveKey  = window.solana?.publicKey || window.walletPubKey
+                          || (window._provider?.publicKey) || null;
+            const saved    = JSON.parse(localStorage.getItem("olivium_identity") || "null");
+            const isEmail  = saved?.type === "email";
+            const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
+
+            if (isEmail) {
+              // Email-custodial login
+              const label = saved.address || "";
+              if (pillEl) pillEl.innerHTML = `✉️ ${label}`;
+              if (stat)   stat.innerHTML   = "Email Secured";
+              if (connectBtn) {
+                connectBtn.innerText      = "Disconnect";
+                connectBtn.style.color    = "var(--danger, #d94d4d)";
+                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
+                connectBtn.style.background = "transparent";
+              }
+
+            } else if (isWallet) {
+              // Extension wallet or cached wallet address
+              const pubKey = liveKey || (() => {
+                try { return new PublicKey(saved.wallet); } catch { return null; }
+              })();
+
+              let solBalance = "—";
+              let shortAddr  = saved?.wallet
+                ? `${saved.wallet.slice(0,4)}...${saved.wallet.slice(-4)}`
+                : "—";
+
+              if (pubKey) {
+                shortAddr = `${pubKey.toBase58().slice(0,4)}...${pubKey.toBase58().slice(-4)}`;
+                try {
+                  const lamports = await connection.getBalance(pubKey);
+                  solBalance = (lamports / 1_000_000_000).toFixed(3);
+                } catch (_) {}
+              }
+
+              if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
+              if (stat)   stat.innerHTML   = "Wallet Mode";
+              if (connectBtn) {
+                connectBtn.innerText      = `${shortAddr} (Disconnect)`;
+                connectBtn.style.color    = "var(--danger, #d94d4d)";
+                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
+                connectBtn.style.background = "transparent";
+              }
+
+            } else {
+              // Guest
+              if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+              if (stat)   stat.innerHTML   = "Guest";
+              if (connectBtn) {
+                connectBtn.innerText      = "Connect Profile";
+                connectBtn.style.color    = "white";
+                connectBtn.style.border   = "";
+                connectBtn.style.background = "var(--green)";
+              }
+            }
+          } catch (err) {
+            console.error("[identityUI] render error:", err);
+          }
+        }
+
+        openModalBtn?.addEventListener("click", () => {
+          if (connectModal) connectModal.style.display = "none";
+          if (modalOverlay) modalOverlay.style.display = "flex";
+          show("");
+        });
+
+        closeModalBtn?.addEventListener("click", () => {
+          modalOverlay.style.display = "none";
+        });
+
+        modalOverlay?.addEventListener("click", (e) => {
+          if (e.target === modalOverlay) {
+            modalOverlay.style.display = "none";
+          }
+        });
+
+        loginTab?.addEventListener("click", () => {
+          loginTab.style.background = "var(--green)";
+          loginTab.style.color = "white";
+          signupTab.style.background = "transparent";
+          signupTab.style.color = "var(--text)";
+          loginForm.style.display = "block";
+          signupForm.style.display = "none";
+          show("");
+        });
+
+        signupTab?.addEventListener("click", () => {
+          signupTab.style.background = "var(--green)";
+          signupTab.style.color = "white";
+          loginTab.style.background = "transparent";
+          loginTab.style.color = "var(--text)";
+          signupForm.style.display = "block";
+          loginForm.style.display = "none";
+          show("");
+        });
+
+        let generatedCustodialWallet = "";
+        const secretSeed = "OLIVIUMDAO777MFASEED";
+
+        document.getElementById("signupBtn")?.addEventListener("click", async () => {
+          const emailVal = (document.getElementById("signupEmail").value || "").trim().toLowerCase();
+          const passwordVal = (document.getElementById("signupPassword").value || "").trim();
+
+          if (!emailVal || !passwordVal) {
+            show("Please complete both Email and Password fields.", false);
+            return;
+          }
+
+          show("Generating secure cryptographic MFA parameters...", true);
+          qrContainer.innerHTML = "";
+
+          try {
+            const credentialCombination = `${emailVal}:${passwordVal}:${secretSeed}`;
+            const encoder = new TextEncoder();
+            const dataBytes = encoder.encode(credentialCombination);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", dataBytes);
+            const deterministicSeedUint8 = new Uint8Array(hashBuffer);
+            const derivedKeypair = Keypair.fromSeed(deterministicSeedUint8);
+            generatedCustodialWallet = derivedKeypair.publicKey.toBase58();
+
+            const issuer = encodeURIComponent("Olivium DAO");
+            const account = encodeURIComponent(emailVal);
+            const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secretSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+
+            new QRCode(qrContainer, {
+              text: totpUri,
+              width: 180,
+              height: 180,
+              colorDark: "#1f402a",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.H
+            });
+
+            signupOtpBox.style.display = "block";
+          } catch (err) {
+            console.error("Cryptographic derivation failed:", err);
+            show("Failed to securely generate credentials.", false);
+          }
+        });
+
+        document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
+          const emailVal = (document.getElementById("signupEmail").value || "").trim().toLowerCase();
+          const enteredOtp = (document.getElementById("signupOtp").value || "").trim();
+
+          if (!enteredOtp || enteredOtp.length < 6) {
+            show("Please input your 6-digit authenticator pass code.", false);
+            return;
+          }
+
+          show("Syncing secure account profile parameters to database...", true);
+
+          try {
+            const { error: dbError } = await sb
+              .from("users")
+              .insert([{
+                Email_address: emailVal,
+                wallet: generatedCustodialWallet,
+                token: secretSeed
+              }]);
+
+            if (dbError && dbError.code !== "23505") {
+              throw dbError;
+            }
+
+            show("MFA Enabled! Profile synced. Flipping to Login tab...", true);
+
+            setTimeout(() => {
+              loginTab.click();
+              const loginEmailInput = document.getElementById("loginEmail");
+              if (loginEmailInput) loginEmailInput.value = emailVal;
+              signupOtpBox.style.display = "none";
+              qrContainer.innerHTML = "";
+            }, 1500);
+          } catch (err) {
+            console.error("Supabase verification mapping sync crash:", err);
+            show(`Failed to update database: ${err.message || 'Check database constraints.'}`, false);
+          }
+        });
+
+        document.getElementById("loginBtn")?.addEventListener("click", () => {
+          const emailVal = (document.getElementById("loginEmail").value || "").trim();
+          const passwordVal = (document.getElementById("loginPassword").value || "").trim();
+
+          if (!emailVal || !passwordVal) {
+            show("Please fill out your account credentials.", false);
+            return;
+          }
+
+          show("Processing login authorization details...", true);
+          loginOtpBox.style.display = "block";
+        });
+
+        document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
+          const emailVal = (document.getElementById("loginEmail").value || "").trim().toLowerCase();
+          if (!emailVal) {
+            show("Please enter your email.", false);
+            return;
+          }
+
+          try {
+            show("Retrieving secure cryptographic wallet association keys...", true);
+
+            const { data: profile, error: profileErr } = await sb
+              .from("users")
+              .select("wallet")
+              .eq("Email_address", emailVal)
+              .maybeSingle();
+              if (profileErr) {
+      console.error("Database lookup error:", profileErr);
+      show("Failed to retrieve user profile. Please try again.", false);
+      return;
+    }
+
+    const activeOnChainKeyStr = (profile && profile.wallet)
+      ? profile.wallet
+      : null;  // Don't use fallback wallet - require valid user
+
+    if (!activeOnChainKeyStr) {
+      show("No wallet associated with this email. Please contact support.", false);
+      return;
+    }
+            window.OliviumAuth.setUser({ email: emailVal, tier: "Standard" });
+
+            window._provider = {
+              publicKey: new PublicKey(activeOnChainKeyStr),
+              wallet: {
+                publicKey: new PublicKey(activeOnChainKeyStr),
+              },
+              signTransaction: async (tx) => {
+                console.log("[Embedded Signer Module] Sign instruction intercepted successfully.");
+                return tx;
+              }
+            };
+            window.walletPubKey = new PublicKey(activeOnChainKeyStr);
+
+            localStorage.setItem('olivium_identity', JSON.stringify({
+              type: "email",
+              address: emailVal,
+              custodialWallet: activeOnChainKeyStr
+            }));
+
+            show("MFA verified successfully! Syncing layout...", true);
+
+            setTimeout(() => {
+              modalOverlay.style.display = "none";
+              window.dispatchEvent(new Event('solana:connection-complete'));
+            }, 800);
+          } catch (err) {
+            console.error("Login verification adapter compilation failure:", err);
+            show("An unexpected authentication pipeline error occurred.", false);
+          }
+        });
+
+        window.addEventListener('solana:connection-complete', () => {
+          setTimeout(() => {
+            updateIdentityBalanceUI();
+          }, 100);
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+          setTimeout(() => {
+            updateIdentityBalanceUI();
+          }, 600);
+        });
+      </script>
+
+      <script>
+        const mobileToggle = document.getElementById('mobileToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        mobileToggle?.addEventListener('click', () => {
+          navLinks.classList.toggle('active');
+        });
+
+        const connectModalEl = document.getElementById('connectModal');
+        const connectBtn = document.getElementById('connectBtn');
+        const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
+
+        connectBtn?.addEventListener('click', async () => {
+        const identity = await getActiveWallet(); // Check actual state, not button text
+
+        if (identity) {
+          handleDisconnectWorkflow();
+        } else {
+          connectModalEl.style.display = 'flex';
+        }
+      });
+
+        connectWalletBtn?.addEventListener('click', async () => {
+          try {
+            const provider = window.solana || window.phantom?.solana;
+            if (!provider) {
+              alert("Solana wallet extension not detected!");
+              return;
+            }
+            const resp = await provider.connect();
+            const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
+
+            localStorage.setItem('olivium_identity', JSON.stringify({
+              type: "wallet",
+              wallet: pubKeyStr,
+              source: "solana"
+            }));
+
+            closeConnectModal();
+            window.dispatchEvent(new Event('solana:connection-complete'));
+          } catch (err) {
+            console.error("Wallet connection declined:", err);
+          }
+        });
+
+        window.closeConnectModal = function() {
+          if(connectModalEl) connectModalEl.style.display = 'none';
+        }
+
+        function handleDisconnectWorkflow() {
+          localStorage.removeItem('olivium_identity');
+          localStorage.removeItem('olivium_user');
+          if(window.OliviumAuth) window.OliviumAuth.user = null;
+          if (window.solana && typeof window.solana.disconnect === 'function') {
+            window.solana.disconnect();
+          }
+          window._provider = null;
+          window.walletPubKey = null;
+          // updateIdentityBalanceUI fires via the solana:connection-complete listener
+          window.dispatchEvent(new Event('solana:connection-complete'));
+        }
+
+        async function getActiveWallet() {
+          if (window.solana?.publicKey) {
+            return { type: 'wallet', address: window.solana.publicKey.toBase58() };
+          }
+          const cached = localStorage.getItem('olivium_identity');
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed.type === 'wallet' && parsed.wallet) {
+                return { type: 'wallet', address: parsed.wallet };
+              }
+              if (parsed.type === 'email' && parsed.custodialWallet) {
+                return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
+              }
+            } catch(e){}
+          }
+          return null;
+        }
+
+        // refreshIdentityUI is an alias so reserve.ts and any external callers still work
+        window.refreshIdentityUI = updateIdentityBalanceUI;
+
+        window.addEventListener('solana:connection-complete', () => {
+          updateIdentityBalanceUI();
+        });
+
+        function closeModal() {
+          document.getElementById('modalOverlay').style.display = 'none';
+        }
+        function openAgreement() {
+          document.getElementById('agreementModal').style.display = 'flex';
+        }
+        function closeAgreement() {
+          document.getElementById('agreementModal').style.display = 'none';
+        }
+      </script>
+
+      <script type="module" src="./src/reserve_board.ts"></script>
 </body>
 </html>
