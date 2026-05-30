@@ -844,16 +844,65 @@
         }
 
         function handleDisconnectWorkflow() {
+  console.log("Disconnecting - clearing all data...");
+  
+  // Clear all storage
   localStorage.removeItem('olivium_identity');
   localStorage.removeItem('olivium_user');
+  localStorage.removeItem('walletConnected');
+  
+  // Clear global objects
   if(window.OliviumAuth) window.OliviumAuth.user = null;
-  if (window.solana && typeof window.solana.disconnect === 'function') {
-    window.solana.disconnect();
-  }
   window._provider = null;
   window.walletPubKey = null;
-  // updateIdentityBalanceUI fires via the solana:connection-complete listener
+  window._program = null;
+  
+  // Disconnect wallet if connected
+  if (window.solana && typeof window.solana.disconnect === 'function') {
+    try { window.solana.disconnect(); } catch(e) {}
+  }
+  
+  // RESET ALL STATS DISPLAYS
+  const treeCountStat = document.getElementById("treeCountStat");
+  const shareCountStat = document.getElementById("shareCountStat");
+  const grovePositionStat = document.getElementById("grovePositionStat");
+  const identityTypeStat = document.getElementById("identityTypeStat");
+  const identityPill = document.getElementById("identityPill");
+  const connectBtn = document.getElementById("connectBtn");
+  
+  if (treeCountStat) treeCountStat.innerText = "--";
+  if (shareCountStat) shareCountStat.innerText = "--";
+  if (grovePositionStat) grovePositionStat.innerText = "0";
+  if (identityTypeStat) identityTypeStat.innerText = "Guest";
+  if (identityPill) identityPill.innerHTML = "🌿 Guest Mode";
+  
+  // Reset connect button
+  if (connectBtn) {
+    connectBtn.innerText = "Connect Profile";
+    connectBtn.style.color = "white";
+    connectBtn.style.border = "";
+    connectBtn.style.background = "var(--green)";
+  }
+  
+  // Close any open modals
+  const modals = ['modalOverlay', 'agreementModal', 'successModal', 'connectModal', 'sell-modal', 'tree-detail-modal'];
+  modals.forEach(id => {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.add('hidden');
+    }
+  });
+  
+  // Dispatch event to trigger UI update
   window.dispatchEvent(new Event('solana:connection-complete'));
+  
+  // Reload trees as guest
+  if (typeof window.loadTrees === 'function') {
+    setTimeout(() => window.loadTrees('all'), 100);
+  }
+  
+  console.log("Disconnect complete - stats reset");
 }
         async function getActiveWallet() {
           if (window.solana?.publicKey) {
