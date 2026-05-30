@@ -108,40 +108,16 @@ let walletState = {
   pubkey: null as string | null
 };
 
-function Wallet() {
-  // 1. Try checking the active live window providers
-  const provider = (window as any)._provider;
+export function Wallet(): string | null {
 
-  // SUPPORT BOTH EXTENSION AND EMBEDDED PROVIDER STRUCUTRES
-  const pubKey =
-    provider?.wallet?.publicKey ||
-    provider?.publicKey ||
-    (window as any).solana?.publicKey ||
-    (window as any).walletPubKey ||
-    null;
+  const state = (window as any).walletState;
 
-  if (pubKey) return pubKey.toString();
-
-  // 2. FALLBACK: Read from local storage identity so stats work instantly on reload!
-  try {
-    const cached = localStorage.getItem("olivium_identity");
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed.type === "wallet" && parsed.wallet) {
-        return parsed.wallet;
-      }
-      if (parsed.type === "email" && parsed.custodialWallet) {
-        return parsed.custodialWallet; // This maps to the fiat user's non-custodial on-chain key
-      }
-    }
-  } catch (e) {
-    console.error("Failed reading cached identity for stats layout:", e);
+  if (!state?.connected) {
+    return null;
   }
 
-  return null;
+  return state.pubkey || null;
 }
-
-
 
 /* ==========================================================================
    SELL & DETAIL MODAL CONTROLLER BINDINGS
