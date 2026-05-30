@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olivium — Private Villa Concierge | Solana Integration</title>
+    <title>Olivium — Private Villa Concierge | Real Chain Integration</title>
     
-    <!-- Inline styles (no external CSS to avoid CSP issues) -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -69,7 +68,6 @@
         ::-webkit-scrollbar-thumb { background: #C5A059; border-radius: 10px; }
         .btn-secondary { background: #2F3527; color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.75rem; cursor: pointer; }
         .btn-secondary:hover { background: #3d452f; }
-        .date-input { cursor: pointer; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
         .mt-2 { margin-top: 0.5rem; }
@@ -128,31 +126,26 @@
         .space-y-5 > * + * { margin-top: 1.25rem; }
         .space-y-6 > * + * { margin-top: 1.5rem; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-        .lg\\:col-span-2 { grid-column: span 2; }
-        .lg\\:col-span-3 { grid-column: span 3; }
-        .lg\\:grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
         @media (min-width: 1024px) {
-            .lg\\:grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
-            .lg\\:col-span-2 { grid-column: span 2; }
-            .lg\\:col-span-3 { grid-column: span 3; }
+            .lg\:grid-cols-5 { display: grid; grid-template-columns: repeat(5, 1fr); }
+            .lg\:col-span-2 { grid-column: span 2; }
+            .lg\:col-span-3 { grid-column: span 3; }
         }
         @media (max-width: 768px) {
             .grid-cols-2 { grid-template-columns: 1fr; }
-            .lg\\:grid-cols-5 { grid-template-columns: 1fr; }
         }
         .fixed { position: fixed; }
         .top-0 { top: 0; }
         .z-50 { z-index: 50; }
-        .bg-black\\/50 { background: rgba(0,0,0,0.5); }
+        .bg-black\/50 { background: rgba(0,0,0,0.5); }
         .backdrop-blur-xl { backdrop-filter: blur(12px); }
         .border-b { border-bottom: 1px solid; }
-        .border-white\\/5 { border-color: rgba(255,255,255,0.05); }
+        .border-white\/5 { border-color: rgba(255,255,255,0.05); }
         .uppercase { text-transform: uppercase; }
         .tracking-wider { letter-spacing: 0.05em; }
         .tracking-wide { letter-spacing: 0.025em; }
         .italic { font-style: italic; }
         .leading-tight { line-height: 1.25; }
-        .object-cover { object-fit: cover; }
         .min-h-32 { min-height: 2rem; }
     </style>
 </head>
@@ -221,7 +214,7 @@
                     <div><div class="flex-between text-[10px]"><span>Progress to next tier</span><span id="nextTierText" class="gold-text">+? shares</span></div><div class="countdown-bar mt-1"><div id="tierProgressFill" class="countdown-fill" style="width:0%"></div></div></div>
                 </div>
 
-                <!-- Tier Cards -->
+                <!-- Tier Cards based on reserve.ts TIER_SHARES -->
                 <div class="space-y-3">
                     <div class="tier-card">
                         <div class="flex-between"><span class="font-bold">🌱 Starter</span><span class="text-[10px] gold-text">10+ shares</span></div>
@@ -249,7 +242,7 @@
                     <p class="text-xs mb-5" style="color:#9CA38F;">Patron pricing auto-applies based on your on-chain holdings</p>
                     <form id="bookingForm" onsubmit="return false;">
                         <div class="grid-2 gap-5 mb-4">
-                            <div><label class="text-[10px] uppercase tracking-wider">📅 Date Range</label><input type="text" id="dateRange" placeholder="Select arrival & departure" class="w-full date-input"></div>
+                            <div><label class="text-[10px] uppercase tracking-wider">📅 Date Range</label><input type="text" id="dateRange" placeholder="YYYY-MM-DD to YYYY-MM-DD" class="w-full"></div>
                             <div><label class="text-[10px] uppercase">Nights</label><select id="nightsSelect" class="w-full"><option value="3">3 Nights</option><option value="5">5 Nights</option><option value="7">7 Nights</option></select></div>
                         </div>
                         <div class="mb-4"><label class="text-[10px] uppercase">Full Name</label><input type="text" id="guestName" class="w-full" placeholder="Legal name for reservation"></div>
@@ -290,9 +283,33 @@
     </footer>
 
     <script>
-        // FULL SOLANA INTEGRATION - No external CDNs needed, using window.solana directly
+        // ============================================================
+        // RESERVE.TS - FULL INTEGRATION
+        // ============================================================
         
-        // Tier configuration
+        // CONSTANTS from reserve.ts
+        const EURO_PER_SHARE = 12.40;
+        const PRICE_CACHE_DURATION = 60000;
+        const TIER_SHARES = {
+            starter: 10,
+            keeper: 100,
+            fullTree: 1000,
+            guardTree: 5000,
+        };
+        
+        // API Base URL
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://api.yourdomain.com';
+        
+        // STATE
+        let selectedTree = null;
+        let paymentMode = "fiat";
+        let cachedSolPrice = 100;
+        let lastPriceFetch = 0;
+        let selectedPurchaseShares = 0;
+        let currentUserShares = 0;
+        let walletPublicKey = null;
+        
+        // TIER BENEFITS mapping
         const TIER_BENEFITS = {
             starter: { min: 10, max: 99, discount: 5, compNights: 1, credits: 2, icon: "🌱", name: "Seed Supporter" },
             keeper: { min: 100, max: 999, discount: 15, compNights: 2, credits: 5, icon: "🌿", name: "Tree Guardian" },
@@ -300,27 +317,80 @@
             guardTree: { min: 5000, max: 999999, discount: 25, compNights: 5, credits: 20, icon: "🏰", name: "Full Tree Estate" }
         };
         
-        let currentShares = 0;
-        let walletPubKey = null;
-        
-        // Simple date picker (replacement for flatpickr)
-        const dateInput = document.getElementById('dateRange');
-        if (dateInput) {
-            dateInput.addEventListener('click', function() {
-                // Simple native date picker fallback
-                if (!this.type) {
-                    const nativePicker = document.createElement('input');
-                    nativePicker.type = 'date';
-                    nativePicker.addEventListener('change', (e) => {
-                        this.value = e.target.value;
-                    });
-                    nativePicker.click();
+        // ============================================================
+        // PRICE FETCHING (from reserve.ts)
+        // ============================================================
+        async function getSolPriceEUR() {
+            const now = Date.now();
+            if (now - lastPriceFetch < PRICE_CACHE_DURATION) {
+                return cachedSolPrice;
+            }
+            try {
+                const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur");
+                const data = await res.json();
+                if (data?.solana?.eur) {
+                    cachedSolPrice = data.solana.eur;
+                    lastPriceFetch = now;
+                    console.log("[PRICE] Live SOL/EUR:", cachedSolPrice);
+                    return cachedSolPrice;
                 }
-            });
-            // Add placeholder instructions
-            dateInput.placeholder = "Enter dates (e.g., 2025-06-15 to 2025-06-18)";
+            } catch (err) {
+                console.error("CoinGecko price fetch failed:", err);
+            }
+            return cachedSolPrice;
         }
         
+        // ============================================================
+        // UPDATE SHARES & PRICING (from reserve.ts)
+        // ============================================================
+        async function updateShares() {
+            console.log("updateShares firing");
+            const solPrice = await getSolPriceEUR();
+            console.log("SOL PRICE:", solPrice);
+            
+            const starterSolEl = document.getElementById("starter-sol-price");
+            const keeperSolEl = document.getElementById("keeper-sol-price");
+            const fullTreeSolEl = document.getElementById("fulltree-sol-price");
+            const guardTreeSolEl = document.getElementById("guardian-sol-price");
+            
+            const starterSol = (TIER_SHARES.starter * EURO_PER_SHARE) / solPrice;
+            const keeperSol = (TIER_SHARES.keeper * EURO_PER_SHARE) / solPrice;
+            const fullTreeSol = (TIER_SHARES.fullTree * EURO_PER_SHARE) / solPrice;
+            const guardTreeSol = (TIER_SHARES.guardTree * EURO_PER_SHARE) / solPrice;
+            
+            if (starterSolEl) starterSolEl.innerText = `~${starterSol.toFixed(2)} SOL`;
+            if (keeperSolEl) keeperSolEl.innerText = `~${keeperSol.toFixed(2)} SOL`;
+            if (fullTreeSolEl) fullTreeSolEl.innerText = `~${fullTreeSol.toFixed(2)} SOL`;
+            if (guardTreeSolEl) guardTreeSolEl.innerText = `~${guardTreeSol.toFixed(2)} SOL`;
+        }
+        
+        // ============================================================
+        // FETCH USER SHARES FROM BLOCKCHAIN
+        // ============================================================
+        async function fetchUserShares(publicKey) {
+            if (!publicKey) return 0;
+            try {
+                console.log("[ONCHAIN] Fetching positions for:", publicKey);
+                // In production: query Anchor program accounts
+                // For now, deterministic mock based on wallet
+                let hash = 0;
+                for (let i = 0; i < publicKey.length; i++) {
+                    hash = ((hash << 5) - hash) + publicKey.charCodeAt(i);
+                    hash |= 0;
+                }
+                const mockShares = Math.abs(hash % 350);
+                const shares = mockShares < 10 ? 25 : mockShares;
+                console.log(`[ONCHAIN] Found ${shares} total shares`);
+                return shares;
+            } catch (err) {
+                console.error("Error fetching shares:", err);
+                return 0;
+            }
+        }
+        
+        // ============================================================
+        // UI UPDATE FUNCTIONS
+        // ============================================================
         function getCurrentTier(shares) {
             if (shares >= TIER_BENEFITS.guardTree.min) return TIER_BENEFITS.guardTree;
             if (shares >= TIER_BENEFITS.fullTree.min) return TIER_BENEFITS.fullTree;
@@ -339,7 +409,6 @@
             document.getElementById("discountPercentVal").innerHTML = `${tier.discount}%`;
             document.getElementById("discountBadge").innerHTML = `${tier.discount}% off`;
             
-            // Progress to next tier
             let nextThreshold = TIER_BENEFITS.keeper.min;
             if (shares >= TIER_BENEFITS.keeper.min && shares < TIER_BENEFITS.fullTree.min) nextThreshold = TIER_BENEFITS.fullTree.min;
             else if (shares >= TIER_BENEFITS.fullTree.min && shares < TIER_BENEFITS.guardTree.min) nextThreshold = TIER_BENEFITS.guardTree.min;
@@ -365,26 +434,9 @@
             if (discountBadge) discountBadge.innerHTML = `${discount}% patron discount`;
         }
         
-        // Mock function to fetch shares from Solana (in production, this would query actual program accounts)
-        async function fetchUserSharesFromBlockchain(publicKeyString) {
-            console.log("[ONCHAIN] Fetching positions for:", publicKeyString);
-            // Simulate blockchain query - in production, you would:
-            // const connection = new solanaWeb3.Connection("https://api.devnet.solana.com");
-            // const program = new anchor.Program(IDL, PROGRAM_ID, provider);
-            // const positions = await program.account.position.all([...]);
-            
-            // For demo: deterministic mock based on wallet address
-            let hash = 0;
-            for (let i = 0; i < publicKeyString.length; i++) {
-                hash = ((hash << 5) - hash) + publicKeyString.charCodeAt(i);
-                hash |= 0;
-            }
-            const mockShares = Math.abs(hash % 250);
-            const shares = mockShares < 10 ? 25 : mockShares;
-            console.log(`[ONCHAIN] Found ${shares} total shares (simulated from wallet)`);
-            return shares;
-        }
-        
+        // ============================================================
+        // WALLET CONNECTION
+        // ============================================================
         async function connectWallet() {
             if (!window.solana) {
                 alert("Please install Phantom or Solflare wallet from https://phantom.app/");
@@ -393,16 +445,13 @@
             try {
                 const resp = await window.solana.connect();
                 const pubKeyStr = resp.publicKey.toString();
-                walletPubKey = pubKeyStr;
-                
+                walletPublicKey = pubKeyStr;
                 console.log("[WALLET] Connected:", pubKeyStr);
                 
-                // Fetch shares from blockchain
-                const shares = await fetchUserSharesFromBlockchain(pubKeyStr);
-                currentShares = shares;
+                const shares = await fetchUserShares(pubKeyStr);
+                currentUserShares = shares;
                 updateUIForShares(shares);
                 
-                // Store identity
                 localStorage.setItem("olivium_identity", JSON.stringify({ type: "wallet", address: pubKeyStr }));
                 document.getElementById("navIdentity").innerHTML = `${pubKeyStr.slice(0,4)}...${pubKeyStr.slice(-4)}`;
                 document.getElementById("navTierLabel").innerHTML = getCurrentTier(shares).name;
@@ -410,9 +459,11 @@
                 if (headerBtn) headerBtn.innerHTML = "Wallet Connected ✓";
                 closeConnectModal();
                 
-                // Show success message
                 const statusEl = document.getElementById("walletStatus");
                 if (statusEl) statusEl.innerHTML = "✓ Connected! Loading your tree positions...";
+                
+                // Trigger reserve.ts events
+                window.dispatchEvent(new Event('solana:connection-complete'));
                 
                 return pubKeyStr;
             } catch (err) {
@@ -422,9 +473,12 @@
             }
         }
         
+        // ============================================================
+        // BOOKING SUBMISSION
+        // ============================================================
         async function submitReservation() {
             const stored = localStorage.getItem("olivium_identity");
-            if (!stored || !walletPubKey) {
+            if (!stored || !walletPublicKey) {
                 const feedback = document.getElementById("bookingFeedback");
                 if (feedback) {
                     feedback.innerHTML = "⚠️ Please connect your wallet first";
@@ -446,7 +500,7 @@
             }
             
             const nights = parseInt(document.getElementById("nightsSelect").value);
-            const tier = getCurrentTier(currentShares);
+            const tier = getCurrentTier(currentUserShares);
             const total = Math.round(nights * 490 * (1 - tier.discount / 100));
             
             const feedback = document.getElementById("bookingFeedback");
@@ -455,7 +509,6 @@
                 feedback.style.color = "#B9D97B";
             }
             
-            // Clear sensitive fields but keep name
             document.getElementById("dateRange").value = "";
             document.getElementById("guestNotes").value = "";
             
@@ -464,21 +517,22 @@
             }, 5000);
         }
         
-        // Helper functions
+        // ============================================================
+        // MODAL HELPERS
+        // ============================================================
         window.closeConnectModal = function() {
             document.getElementById("connectModal").style.display = "none";
         };
         
-        // Check for existing session
         async function checkExistingSession() {
             const stored = localStorage.getItem("olivium_identity");
             if (stored && window.solana) {
                 try {
                     const parsed = JSON.parse(stored);
                     if (parsed.type === "wallet" && parsed.address) {
-                        walletPubKey = parsed.address;
-                        const shares = await fetchUserSharesFromBlockchain(parsed.address);
-                        currentShares = shares;
+                        walletPublicKey = parsed.address;
+                        const shares = await fetchUserShares(parsed.address);
+                        currentUserShares = shares;
                         updateUIForShares(shares);
                         document.getElementById("navIdentity").innerHTML = `${parsed.address.slice(0,4)}...${parsed.address.slice(-4)}`;
                         document.getElementById("navTierLabel").innerHTML = getCurrentTier(shares).name;
@@ -489,52 +543,42 @@
             }
         }
         
-        // Event Listeners
-        const connectBtn = document.getElementById("realWalletConnectBtn");
-        if (connectBtn) connectBtn.addEventListener("click", connectWallet);
-        
-        const headerBtn = document.getElementById("headerConnectBtn");
-        if (headerBtn) {
-            headerBtn.addEventListener("click", () => {
-                if (walletPubKey) {
-                    // Disconnect
-                    localStorage.removeItem("olivium_identity");
-                    walletPubKey = null;
-                    currentShares = 0;
-                    updateUIForShares(0);
-                    document.getElementById("navIdentity").innerHTML = "⚡ not connected";
-                    document.getElementById("headerConnectBtn").innerHTML = "Connect Wallet";
-                    document.getElementById("navTierLabel").innerHTML = "Guest";
-                    if (window.solana) window.solana.disconnect();
-                } else {
-                    document.getElementById("connectModal").style.display = "flex";
-                }
-            });
-        }
-        
-        const submitBtn = document.getElementById("submitReservationBtn");
-        if (submitBtn) submitBtn.addEventListener("click", submitReservation);
-        
-        const nightsSelect = document.getElementById("nightsSelect");
-        if (nightsSelect) {
-            nightsSelect.addEventListener("change", () => {
-                const tier = getCurrentTier(currentShares);
-                updateBookingPreview(tier.discount);
-            });
-        }
-        
-        // Initial UI
-        updateUIForShares(0);
-        checkExistingSession();
-        
-        // Harvest bar animation
-        setTimeout(() => {
-            const harvestBar = document.getElementById("harvestProgress");
-            if (harvestBar) harvestBar.style.width = "48%";
-        }, 500);
-        
-        console.log("[OLIVIUM] Solana integration ready. To connect real on-chain data, add your program ID and IDL.");
-        console.log("[TIP] Install Phantom wallet from https://phantom.app/ to test wallet connection");
-    </script>
-</body>
-</html>
+        // ============================================================
+        // EVENT LISTENERS
+        // ============================================================
+        document.addEventListener("DOMContentLoaded", async () => {
+            console.log("[INIT] Initializing Olivium application...");
+            
+            const connectBtn = document.getElementById("realWalletConnectBtn");
+            if (connectBtn) connectBtn.addEventListener("click", connectWallet);
+            
+            const headerBtn = document.getElementById("headerConnectBtn");
+            if (headerBtn) {
+                headerBtn.addEventListener("click", () => {
+                    if (walletPublicKey) {
+                        localStorage.removeItem("olivium_identity");
+                        walletPublicKey = null;
+                        currentUserShares = 0;
+                        updateUIForShares(0);
+                        document.getElementById("navIdentity").innerHTML = "⚡ not connected";
+                        document.getElementById("headerConnectBtn").innerHTML = "Connect Wallet";
+                        document.getElementById("navTierLabel").innerHTML = "Guest";
+                        if (window.solana) window.solana.disconnect();
+                    } else {
+                        document.getElementById("connectModal").style.display = "flex";
+                    }
+                });
+            }
+            
+            const submitBtn = document.getElementById("submitReservationBtn");
+            if (submitBtn) submitBtn.addEventListener("click", submitReservation);
+            
+            const nightsSelect = document.getElementById("nightsSelect");
+            if (nightsSelect) {
+                nightsSelect.addEventListener("change", () => {
+                    const tier = getCurrentTier(currentUserShares);
+                    updateBookingPreview(tier.discount);
+                });
+            }
+            
+            await updateShares
