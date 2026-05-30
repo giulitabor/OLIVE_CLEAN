@@ -2438,12 +2438,15 @@ async function getSolPriceEUR(): Promise<number> {
 
 
 export function getActiveWallet(): string | null {
-  const i = getIdentity();
-
-  if (i.type === "wallet") return i.wallet || null;
-  if (i.type === "email") return i.custodialWallet || null;
-
-  return null;
+    // FIX: getIdentity() was never defined — read identity directly from localStorage
+    try {
+        const raw = localStorage.getItem("olivium_identity");
+        if (!raw) return null;
+        const i = JSON.parse(raw);
+        if (i.type === "wallet")  return i.wallet          || null;
+        if (i.type === "email")   return i.custodialWallet || null;
+    } catch (_) {}
+    return null;
 }
 /* =========================================================
    INIT
