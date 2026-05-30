@@ -784,13 +784,13 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
 
         window.addEventListener('solana:connection-complete', () => {
           setTimeout(() => {
-            updateIdentityBalanceUI();
+window.updateIdentityBalanceUI?.();
           }, 100);
         });
 
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
-            updateIdentityBalanceUI();
+window.updateIdentityBalanceUI?.();
           }, 600);
         });
       </script>
