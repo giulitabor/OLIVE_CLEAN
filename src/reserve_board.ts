@@ -42,18 +42,18 @@ let treesPromise: Promise<any[]> | null = null;
 
 export async function getTrees() {
     if (treesCache) return treesCache;
-
     if (treesPromise) return treesPromise;
-
+ 
     treesPromise = (async () => {
         console.log("🌳 Fetching trees ONCE");
-
-        const result = await (window as any)._program.account.tree.all();
+        // FIX: was bare `_program`, now uses window global
+        const program = (window as any)._program;
+        if (!program) throw new Error("[getTrees] program not initialized");
+        const result = await program.account.tree.all();
         treesCache = result;
-
         return result;
     })();
-
+ 
     return treesPromise;
 }
 //let positionsCache: any[] | null = null;
