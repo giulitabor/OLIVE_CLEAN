@@ -2677,6 +2677,7 @@ async function clearAllUserUiAndStates() {
   console.log("📊 [TEARDOWN] DOM reset complete. Reloading tree grid...");
   try {
     if (typeof window.refreshIdentityUI === "function") window.refreshIdentityUI();
+    await updateIdentityBalanceUI();
     await loadTrees("all");
     console.log("✨ [TEARDOWN] Application returned to read-only guest mode.");
   } catch (err) {
@@ -2915,11 +2916,84 @@ if (creditsCountDisplay) {
 }
 // At the bottom of reserve.ts, BEFORE the event listeners:
 
-// Make functions globally accessible for villa_stay.html
+/* =========================================================
+   UPDATE IDENTITY BALANCE UI
+   The authoritative definition lives in the inline <script> in
+   index2.html and is registered on window before any module
+   loads. This module-level copy is a fallback only — it runs
+   when reserve_board.ts is used on a page that does NOT have
+   the inline script (e.g. villa_stay.html).
+   Never overwrite whatever is already on window.
+========================================================= */
+async function _updateIdentityBalanceUIFallback(): Promise<void> {
+  const wallet     = Wallet();
+  const connectBtn = document.getElementById("connectBtn");
+  const identityPill       = document.getElementById("identityPill");
+  const identityTypeStat   = document.getElementById("identityTypeStat");
+  const navIdentityDisplay = document.getElementById("nav-identity-display");
+  const navTierLabel       = document.getElementById("nav-tier-label");
+
+  if (!wallet) {
+    if (connectBtn) {
+      connectBtn.textContent = "Connect Profile";
+      connectBtn.style.color = "";
+      connectBtn.style.borderColor = "";
+    }
+    if (identityPill)       identityPill.textContent     = "🌿 Guest Mode";
+    if (identityTypeStat)   identityTypeStat.innerText   = "Guest";
+    if (navIdentityDisplay) navIdentityDisplay.innerText = "";
+    if (navTierLabel)       navTierLabel.innerText       = "Guest Mode";
+    return;
+  }
+
+  const truncated = `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
+
+  if (connectBtn) {
+    connectBtn.textContent       = "Disconnect";
+    connectBtn.style.color       = "#d94d4d";
+    connectBtn.style.borderColor = "#d94d4d";
+  }
+  if (identityPill)       identityPill.textContent     = `◎ ${truncated}`;
+  if (identityTypeStat)   identityTypeStat.innerText   = truncated;
+  if (navIdentityDisplay) navIdentityDisplay.innerText = truncated;
+
+  try {
+    const conn = (window as any)._connection || (window as any).connection;
+    if (conn) {
+      const { PublicKey: PK } = await import("@solana/web3.js");
+      const lamports = await conn.getBalance(new PK(wallet));
+      const sol      = (lamports / 1_000_000_000).toFixed(3);
+      if (identityTypeStat)   identityTypeStat.innerText   = `${truncated} · ${sol} SOL`;
+      if (navIdentityDisplay) navIdentityDisplay.innerText = `${truncated} · ${sol} SOL`;
+      (window as any).cachedWalletSolBalance = lamports / 1_000_000_000;
+    }
+  } catch (err) {
+    console.warn("[updateIdentityBalanceUI] Balance fetch failed:", err);
+  }
+
+  const tierNameEl = document.getElementById("tier-name");
+  if (navTierLabel && tierNameEl?.innerText && tierNameEl.innerText !== "Guest Mode") {
+    navTierLabel.innerText = tierNameEl.innerText;
+  }
+}
+
+// Thin wrapper — always calls whatever is on window so the inline
+// HTML version is used when present, fallback otherwise.
+function updateIdentityBalanceUI(): Promise<void> {
+  const fn = (window as any).updateIdentityBalanceUI;
+  if (fn && fn !== updateIdentityBalanceUI) return fn();
+  return _updateIdentityBalanceUIFallback();
+}
+
+// Make functions globally accessible — guard updateIdentityBalanceUI
+// so the inline HTML definition is never clobbered.
 (window as any).updateVillaStayUI = updateVillaStayUI;
-(window as any).updateStatsUI = updateStatsUI;
-(window as any).updateWalletUI = updateWalletUI;
-(window as any).getAllPositions = getAllPositions;
+(window as any).updateStatsUI     = updateStatsUI;
+(window as any).updateWalletUI    = updateWalletUI;
+(window as any).getAllPositions    = getAllPositions;
+if (typeof (window as any).updateIdentityBalanceUI !== "function") {
+  (window as any).updateIdentityBalanceUI = _updateIdentityBalanceUIFallback;
+}
 
 /* =========================================================
    EVENT LISTENERS - CONSOLIDATED & DEDUPLICATED
@@ -2933,6 +3007,7 @@ window.addEventListener("olivium:connected", async () => {
   await updateWalletUI();
   await updateStatsUI();
   await updateVillaStayUI();
+  await updateIdentityBalanceUI();
 
   // Reload tree grid if "My Grove" filter is active
   const activeFilter = document.querySelector(".filter-btn.active") as HTMLElement | null;
@@ -2961,6 +3036,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await updateWalletUI();
     await updateStatsUI();
     await updateVillaStayUI();
+    await updateIdentityBalanceUI();
   document.querySelectorAll(".payment-option").forEach((option) => {
 
   option.addEventListener("click", () => {
