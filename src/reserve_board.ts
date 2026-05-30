@@ -487,9 +487,16 @@ async function loadTrees(filter = "all") {
 
   let onChainTrees: any[] = [];
   let userPositions: any[] = [];
+  const identity =
+  JSON.parse(
+    localStorage.getItem("olivium_identity") || "null"
+  );
 
-  if (program) {
-    try {
+const guestMode = !identity;
+  
+
+if (program && !guestMode) {
+  try {
       console.log("[RPC] Fetching all tree accounts...");
       onChainTrees = await program.account.tree.all();
       console.log(
@@ -2488,6 +2495,18 @@ const emailBtn =
     return [];
   }
   const wallet = (window as any).solana;
+  const identity =
+    JSON.parse(
+      localStorage.getItem("olivium_identity") || "null"
+    );
+
+  if (!identity) {
+    console.log(
+      "[POSITIONS] Guest mode detected"
+    );
+
+    return [];
+  }
 
   const fallbackWalletAddress = Wallet();
   let checkingPublicKey: PublicKey | null = null;
