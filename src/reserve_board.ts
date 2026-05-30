@@ -1076,56 +1076,9 @@ function initFilters() {
  * and resets the core dashboard statistics back to zero.
  */
 export function handleDisconnectReset() {
-  console.log("🔄 Disconnecting identity: Purging memory caches and resetting dashboard...");
-
-  // 1. Evaporate memory cache hooks
-  (window as any).positionsCache = null;
-  (window as any).positionsPromise = null;
-  (window as any).treesCache = null;
-  (window as any).treesPromise = null;
-
-  // 2. Clear local tracking layers
-  localStorage.removeItem("olivium_user");
-  if ((window as any).OliviumAuth) {
-    (window as any).OliviumAuth.user = null;
-  }
-
-  // 3. Clear data grid interfaces
-  const container = document.getElementById("treeGrid");
-  if (container) {
-    container.innerHTML = `
-      <div style="padding:40px; text-align:center; color: var(--text-muted, #8a8a8a);">
-        <h3>Identity Disconnected</h3>
-        <p>Please connect your wallet or sign in via email to view your grove allocations.</p>
-      </div>
-    `;
-  }
-
-  // 4. Force reset raw text dashboard metrics across UI elements
-  // Targets standard metric tracking identifiers
-  const statSelectors = {
-    totalShares: document.querySelectorAll(".total-shares-count, [data-metric='shares']"),
-    grovePositions: document.querySelectorAll(".grove-positions-count, [data-metric='positions']"),
-    connectedIdentity: document.querySelectorAll(".identity-address-display, [data-metric='identity']")
-  };
-
-  statSelectors.totalShares.forEach(el => el.textContent = "0");
-  statSelectors.grovePositions.forEach(el => el.textContent = "0");
-  statSelectors.connectedIdentity.forEach(el => el.textContent = "Not Connected");
-
-  // 5. Hide syncing status hooks gracefully
-  const spinner = document.getElementById("grove-sync-spinner") || document.querySelector(".syncing-indicator");
-  if (spinner) {
-    spinner.style.display = "none";
-  }
-  const villaIdentity = document.getElementById("villaStayIdentity");
-const villaTier = document.getElementById("villaTierStat");
-const villaDiscount = document.getElementById("villaDiscountStat");
-if (villaIdentity) villaIdentity.textContent = "Not Connected";
-if (villaTier) villaTier.textContent = "Standard Guest";
-if (villaDiscount) villaDiscount.textContent = "0%";
-
-  console.log("✅ Dashboard values cleared successfully.");
+  // Delegate to the single authoritative teardown routine.
+  // clearAllUserUiAndStates() is defined later in this file and covers every element.
+  clearAllUserUiAndStates();
 }
 
 /* =========================================================
@@ -2585,74 +2538,149 @@ const emailBtn =
   * resets individual asset markers, and re-syncs all live tree layouts back to guest mode.
   */
 
-  /**
+/**
  * Complete UI and State Purge Routine for Disconnect Actions
- * Clears caches, flattens counts, strips action buttons, and returns layout to Guest mode.
+ * Clears caches, resets every tracked DOM element to its guest-mode default,
+ * closes any open modals, and reloads the tree grid in read-only mode.
  */
 async function clearAllUserUiAndStates() {
   console.log("🧹 [TEARDOWN] Beginning complete profile state scrub...");
 
-  // 1. Invalidate and wipe module-level position caches completely
-  try {
-    (window as any).positionsCache = null;
-    (window as any).positionsPromise = null;
+  // ── 1. Wipe module-level caches ──────────────────────────────────────────
+  positionsCache = null;
+  positionsPromise = null;
+  treesCache = null;
+  treesPromise = null;
+  (window as any).positionsCache = null;
+  (window as any).positionsPromise = null;
+  (window as any).treesCache = null;
+  (window as any).treesPromise = null;
 
-    // Explicitly target local file-scoped cache variables if they are stored in window context
-    if ('positionsCache' in window) { (window as any).positionsCache = null; }
-    if ('positionsPromise' in window) { (window as any).positionsPromise = null; }
-  } catch (e) {
-    console.warn("Error purging memory cache pointers:", e);
-  }
-
-  // 2. Roll back global identity states back to default visitor configurations
-  if ((window as any).walletState) {
-    (window as any).walletState.connected = false;
-    (window as any).walletState.pubkey = null;
-  }
-
+  // ── 2. Reset global identity / wallet state ───────────────────────────────
+  walletState.connected = false;
+  walletState.pubkey = null;
   (window as any).walletPubKey = null;
+  (window as any).wallet = null;
+  (window as any)._program = null;
+  (window as any)._provider = null;
+  (window as any)._protocol = null;
   window.OliviumIdentity = { type: "guest" };
+  localStorage.removeItem("walletConnected");
+  localStorage.removeItem("olivium_identity");
 
-  // 3. Flatten out UI metric counters instantly inside the DOM
-  const treeCountStat = document.getElementById("treeCountStat");
-  const shareCountStat = document.getElementById("shareCountStat");
-  const grovePositionStat = document.getElementById("grovePositionStat");
-  const identityTypeStat = document.getElementById("identityTypeStat");
+  // ── 3. Hero stats bar ─────────────────────────────────────────────────────
+  const el = (id: string) => document.getElementById(id);
 
-  if (treeCountStat) treeCountStat.innerText = "--";
-  if (shareCountStat) shareCountStat.innerText = "--";
-  if (grovePositionStat) grovePositionStat.innerText = "0"; // Hard reset the 6 positions to 0
-  if (identityTypeStat) identityTypeStat.innerText = "Guest";
+  const treeCountStat    = el("treeCountStat");
+  const shareCountStat   = el("shareCountStat");
+  const grovePositionStat = el("grovePositionStat");
+  const identityTypeStat = el("identityTypeStat");
 
-  console.log("📊 [TEARDOWN] Metric counters cleared. Refreshing layout components...");
+  if (treeCountStat)     treeCountStat.innerText    = "--";
+  if (shareCountStat)    shareCountStat.innerText   = "--";
+  if (grovePositionStat) grovePositionStat.innerText = "0";
+  if (identityTypeStat)  identityTypeStat.innerText  = "Guest";
 
-  // 4. Force synchronous interface loops to clean and update the DOM
+  // ── 4. Identity pill + nav ────────────────────────────────────────────────
+  const identityPill     = el("identityPill");
+  const connectBtn       = el("connectBtn");
+  const navTierLabel     = el("nav-tier-label");
+  const navIdentityDisplay = el("nav-identity-display");
+
+  if (identityPill)       identityPill.textContent       = "🌿 Guest Mode";
+  if (connectBtn)         connectBtn.textContent         = "Connect Profile";
+  if (navTierLabel)       navTierLabel.innerText         = "Guest Mode";
+  if (navIdentityDisplay) navIdentityDisplay.innerText   = "";
+
+  // ── 5. Villa stay / loyalty panel ─────────────────────────────────────────
+  const sharesCountDisplay  = el("shares-count-display");
+  const creditsCountDisplay = el("credits-count-display");
+  const tierName            = el("tier-name");
+  const tierProgressText    = el("tier-progress-text");
+  const nextTierLabel       = el("next-tier-label");
+  const tierPercentLabel    = el("tier-percent-label");
+  const tierProgressBar     = el("tier-progress-bar") as HTMLElement | null;
+  const tierIcon            = el("tier-icon");
+  const patronDiscountBadge = el("patronDiscountBadge");
+  const bookingRateDisplay  = el("bookingRateDisplay");
+  const villaStayIdentity   = el("villaStayIdentity");
+  const villaTierStat       = el("villaTierStat");
+  const villaDiscountStat   = el("villaDiscountStat");
+
+  if (sharesCountDisplay)
+    sharesCountDisplay.innerHTML = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
+  if (creditsCountDisplay)
+    creditsCountDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
+  if (tierName)           tierName.innerText          = "Guest Mode";
+  if (tierIcon)           tierIcon.innerText          = "🫒";
+  if (tierProgressText)   tierProgressText.innerText  = "Please connect to view tier status";
+  if (nextTierLabel)      nextTierLabel.innerText      = "Next: Seed Supporter";
+  if (tierPercentLabel)   tierPercentLabel.innerText   = "0%";
+  if (tierProgressBar)    tierProgressBar.style.width  = "0%";
+  if (patronDiscountBadge) patronDiscountBadge.innerText = "Standard Account";
+  if (bookingRateDisplay)  bookingRateDisplay.innerText  = "$450 USD / Nightly standard baseline";
+  if (villaStayIdentity)   villaStayIdentity.textContent = "Not Connected";
+  if (villaTierStat)       villaTierStat.textContent     = "Standard Guest";
+  if (villaDiscountStat)   villaDiscountStat.textContent  = "0%";
+
+  // Dim all tier cards and perk rows
+  ["card-tier-1", "card-tier-2", "card-tier-3",
+   "perk-gov", "perk-shipping", "perk-discount", "perk-stay"].forEach((id) => {
+    const node = el(id);
+    if (node) { node.classList.remove("opacity-100"); node.classList.add("opacity-40"); }
+  });
+
+  // ── 6. SOL price tier badges ──────────────────────────────────────────────
+  ["starter-sol-price", "keeper-sol-price", "fulltree-sol-price"].forEach((id) => {
+    const node = el(id);
+    if (node) node.innerText = "-- SOL";
+  });
+
+  // ── 7. Close any open modals ──────────────────────────────────────────────
+  ["modalOverlay", "agreementModal", "successModal",
+   "connectModal", "sell-modal", "tree-detail-modal"].forEach((id) => {
+    const modal = el(id) as HTMLElement | null;
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+  });
+  document.body.style.overflow = "";
+
+  // ── 8. Reset purchase modal to clean state ────────────────────────────────
+  const shareInput   = el("shareInput")   as HTMLInputElement | null;
+  const shareSlider  = el("shareSlider")  as HTMLInputElement | null;
+  const shareValue   = el("shareValue");
+  const priceDisplay = el("priceDisplay");
+  const priceSub     = el("priceSub");
+  const adoptBtn     = el("adoptBtn")     as HTMLButtonElement | null;
+  const adoptConnectBtn = el("adoptConnectBtn") as HTMLButtonElement | null;
+  const mollieOption = el("mollieOption");
+
+  if (shareInput)   shareInput.value       = "1";
+  if (shareSlider)  shareSlider.value      = "1";
+  if (shareValue)   shareValue.textContent = "1";
+  if (priceDisplay) priceDisplay.innerText = "€12.40";
+  if (priceSub)     priceSub.innerText     = "1 share × €12.40";
+  if (adoptBtn) {
+    adoptBtn.disabled  = false;
+    adoptBtn.innerText = "Continue to Agreement";
+    adoptBtn.style.display = "block";
+  }
+  if (adoptConnectBtn) adoptConnectBtn.style.display = "none";
+
+  // Reset payment selector back to Mollie (default)
+  paymentMode = "mollie";
+  document.querySelectorAll(".payment-option").forEach((opt) => opt.classList.remove("active"));
+  if (mollieOption) mollieOption.classList.add("active");
+
+  // ── 9. Reload tree grid as guest (drops all "Release Shares" buttons) ──────
+  console.log("📊 [TEARDOWN] DOM reset complete. Reloading tree grid...");
   try {
-    // Refresh header bar tracking configurations via the safe wrapper hook
-    if (typeof window.refreshIdentityUI === 'function') {
-      window.refreshIdentityUI();
-    }
-
-    // Force an isolated layout statistics recalculation
-    if (typeof (window as any).updateStatsUI === 'function') {
-      await (window as any).updateStatsUI();
-    }
-
-    // Force a sync sequence across the villa dashboard system
-    if (typeof (window as any).updateVillaStayUI === 'function') {
-      await (window as any).updateVillaStayUI();
-    }
-
-    // CRITICAL: Reload the tree catalog without any cached user position credentials.
-    // Because caches are nullified and identity is 'guest', isMine evaluates false for everything,
-    // dropping all interactive owner components ("Release Shares" buttons) automatically.
-    if (typeof (window as any).loadTrees === 'function') {
-      await (window as any).loadTrees("all");
-    }
-
-    console.log("✨ [TEARDOWN] UI scrub complete. Application is in pristine read-only mode.");
+    if (typeof window.refreshIdentityUI === "function") window.refreshIdentityUI();
+    await loadTrees("all");
+    console.log("✨ [TEARDOWN] Application returned to read-only guest mode.");
   } catch (err) {
-    console.error("Encountered an anomaly during component re-rendering cycles:", err);
+    console.error("[TEARDOWN] Error during tree grid reload:", err);
   }
 }
 
