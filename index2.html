@@ -928,7 +928,7 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
         window.refreshIdentityUI = updateIdentityBalanceUI;
 
         window.addEventListener('solana:connection-complete', () => {
-          updateIdentityBalanceUI();
+  window.updateIdentityBalanceUI?.();
         });
 
         function closeModal() {
