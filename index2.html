@@ -844,18 +844,17 @@
         }
 
         function handleDisconnectWorkflow() {
-          localStorage.removeItem('olivium_identity');
-          localStorage.removeItem('olivium_user');
-          if(window.OliviumAuth) window.OliviumAuth.user = null;
-          if (window.solana && typeof window.solana.disconnect === 'function') {
-            window.solana.disconnect();
-          }
-          window._provider = null;
-          window.walletPubKey = null;
-          // updateIdentityBalanceUI fires via the solana:connection-complete listener
-          window.dispatchEvent(new Event('solana:connection-complete'));
-        }
-
+  localStorage.removeItem('olivium_identity');
+  localStorage.removeItem('olivium_user');
+  if(window.OliviumAuth) window.OliviumAuth.user = null;
+  if (window.solana && typeof window.solana.disconnect === 'function') {
+    window.solana.disconnect();
+  }
+  window._provider = null;
+  window.walletPubKey = null;
+  // updateIdentityBalanceUI fires via the solana:connection-complete listener
+  window.dispatchEvent(new Event('solana:connection-complete'));
+}
         async function getActiveWallet() {
           if (window.solana?.publicKey) {
             return { type: 'wallet', address: window.solana.publicKey.toBase58() };
