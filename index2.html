@@ -526,9 +526,15 @@
             const connectBtn  = document.getElementById("connectBtn");
 
             // Resolve active identity — check live wallet first, then _provider, then localStorage
-            const liveKey  = window.solana?.publicKey || window.walletPubKey
-                          || (window._provider?.publicKey) || null;
-            const saved    = JSON.parse(localStorage.getItem("olivium_identity") || "null");
+const saved =
+  JSON.parse(
+    localStorage.getItem("olivium_identity") || "null"
+  );
+
+const liveKey =
+  saved?.type === "wallet"
+    ? window.solana?.publicKey
+    : null;
             const isEmail  = saved?.type === "email";
             const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
 
