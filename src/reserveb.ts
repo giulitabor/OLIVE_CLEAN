@@ -9,7 +9,7 @@
     window.loadTrees = (filter) => { if(window._loadTreesImpl) window._loadTreesImpl(filter); };
 
   <script type="module">
-  ///  import { sb } from "./src/connection.ts";
+   import { sb } from "./src/connection.ts";
     import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
     const connection = new Connection("https://api.devnet.solana.com", "confirmed");
