@@ -2929,17 +2929,15 @@ async function clearAllUserUiAndStates() {
   localStorage.removeItem("olivium_user");
 
   // ── 3. Hero stats bar ─────────────────────────────────────────────────────
-  const el = (id: string) => document.getElementById(id);
+  const treeCountStat = document.getElementById("treeCountStat");
+  const shareCountStat = document.getElementById("shareCountStat");
+  const grovePositionStat = document.getElementById("grovePositionStat");
+  const identityTypeStat = document.getElementById("identityTypeStat");
 
-  const treeCountStat    = el("treeCountStat");
-  const shareCountStat   = el("shareCountStat");
-  const grovePositionStat = el("grovePositionStat");
-  const identityTypeStat = el("identityTypeStat");
-
-  if (treeCountStat)     treeCountStat.innerText    = "--";
-  if (shareCountStat)    shareCountStat.innerText   = "--";
+  if (treeCountStat) treeCountStat.innerText = "--";
+  if (shareCountStat) shareCountStat.innerText = "--";
   if (grovePositionStat) grovePositionStat.innerText = "0";
-  if (identityTypeStat)  identityTypeStat.innerText  = "Guest";
+  if (identityTypeStat) identityTypeStat.innerText = "Guest";
 
   // ── 4. Identity pill + nav ────────────────────────────────────────────────
   const identityPill     = el("identityPill");
