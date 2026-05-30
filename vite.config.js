@@ -23,6 +23,13 @@ export default defineConfig({
         fiat: resolve(__dirname, "index2.html"),
         Original: resolve(__dirname, "Original-App.html"),
         Tease: resolve(__dirname, "FD_REAL_index.html"),
+        game: resolve(__dirname, "landing.html"),
+        debug: resolve(__dirname, "debug.html"),
+        rewards: resolve(__dirname, "villa_stay.html"),
+        adopt: resolve(__dirname, "ADOPT_v2.html"),
+
+
+
 
         more: resolve(__dirname, "understand.html"),
 
