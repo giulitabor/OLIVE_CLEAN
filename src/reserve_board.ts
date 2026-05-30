@@ -84,7 +84,13 @@ export async function getAllPositions(forceRefresh = false): Promise<any[]> {
 
   // 3. Store the Promise instance *before* awaiting it.
   // Any concurrent calls in the next millisecond will catch the if-statement above.
-  positionsPromise = _program.account.sharePosition.all()
+  const prog = (window as any)._program;
+  if (!prog) {
+    console.warn("[POSITIONS] _program not initialized — wallet not connected yet.");
+    return [];
+  }
+
+  positionsPromise = prog.account.sharePosition.all()
     .then((data) => {
       positionsCache = data;
       cacheTimestamp = Date.now();
@@ -428,29 +434,6 @@ function randomFallback() {
   return fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
 }
 
-function ValidSharesAmount(val: number): number {
-  const slider = document.getElementById(
-    "shareSlider"
-  ) as HTMLInputElement | null;
-
-  if (!slider) return val;
-
-  const min = Number(slider.min) || 1;
-  const max = Number(slider.max) || 1000;
-
-  return Math.max(min, Math.min(max, val));
-}
-
-
-export async function AllPositions() {
-    if (positionsCache) return positionsCache;
-    if (positionsPromise) return positionsPromise;
-
-    positionsPromise = (window as any)._program.account.sharePosition.all();
-
-    positionsCache = await positionsPromise;
-    return positionsCache;
-}
 
 
 /* =========================================================
@@ -2012,7 +1995,7 @@ if (fullTreeSolEl) {
                 type: "wallet", wallet: pubKeyStr, source: "solana"
               }));
               window.walletPubKey = resp.publicKey || provider.publicKey;
-              window.dispatchEvent(new Event("solana:connection-complete"));
+              window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey: pubKeyStr, isAdmin: false } }));
             }
           } catch (err) {
             console.error("[adoptModal] wallet connect failed:", err);
@@ -2415,6 +2398,16 @@ async function getSolPriceEUR(): Promise<number> {
 }
 
 
+function getIdentity(): { type: "wallet"; wallet?: string } | { type: "email"; custodialWallet?: string } | { type: "guest" } {
+  try {
+    const cached = localStorage.getItem("olivium_identity");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {
+    console.error("[getIdentity] Failed to parse cached identity:", e);
+  }
+  return { type: "guest" };
+}
+
 export function getActiveWallet(): string | null {
   const i = getIdentity();
 
@@ -2714,56 +2707,6 @@ window.addEventListener("olivium:disconnected", async () => {
     }
   }
 })();
- async function resetProfileAndUI() {
-   console.log("[TEARDOWN] Purging active state and re-syncing tree content layout blocks...");
-
-   // 1. Completely wipe local memory cache trackers to remove stale footprint histories
-   (window as any).positionsCache = null;
-   (window as any).positionsPromise = null;
-
-   // Also clear internal module-scoped layout reference caches if initialized
-   if ('positionsCache' in window) { (window as any).positionsCache = null; }
-
-   // 2. Ensure state parameters reflect absolute default visitor settings
-   walletState.connected = false;
-   walletState.pubkey = null;
-   window.OliviumIdentity = { type: "guest" };
-
-   // 3. Flatten out text metrics natively inside DOM elements immediately
-   const treeCount = document.getElementById("treeCountStat");
-   const shareCount = document.getElementById("shareCountStat");
-   const groveCount = document.getElementById("grovePositionStat");
-   const identityEl = document.getElementById("identityTypeStat");
-
-   if (treeCount) treeCount.innerText = "--";
-   if (shareCount) shareCount.innerText = "--";
-   if (groveCount) groveCount.innerText = "0"; // Correctly zero out grove metrics explicitly
-   if (identityEl) identityEl.innerText = "Guest";
-
-   // 4. Run native layout re-render pipelines
-   try {
-     // Refresh header bar/pill interfaces via embedded alias wrapper
-     if (typeof (window as any).refreshIdentityUI === 'function') {
-       await (window as any).refreshIdentityUI();
-     }
-
-     // Force a structural execution cycle update over global tree layouts
-     await updateStatsUI();
-
-     // Force drop dynamic user markers and drop "Release Shares" button containers safely
-     await loadTrees("all");
-   } catch (err) {
-     console.error("Error occurred during UI catalog scrubbing:", err);
-   }
- }
-
- // Map reference layout straight to global window scope context
- (window as any).resetProfileAndUI = resetProfileAndUI;
-
- // Intercept decoupled custom event loops to safeguard operational integrity
- window.addEventListener("olivium:disconnected", async () => {
-   await resetProfileAndUI();
- });
 
 /* =========================================================
    VILLA STAY UI HYDRATION & LOYALTY UPDATER
@@ -2955,7 +2898,7 @@ if (creditsCountDisplay) {
 ========================================================= */
 
 // Single handler for wallet/blockchain connection completion
-window.addEventListener("solana:connection-complete", async () => {
+window.addEventListener("olivium:connected", async () => {
   console.log("[SYNC EVENT] Blockchain initialized. Regenerating all UI components...");
 
   // Update all UI components in sequence
