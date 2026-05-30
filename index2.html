@@ -551,7 +551,7 @@
     return null;
   }
 
-  // Enhanced updateIdentityBalanceUI with more comprehensive state checking
+  // Enhanced updateIdentityBalanceUI without relying on solanaWeb3 global
   async function updateIdentityBalanceUI() {
     try {
       const pillEl = document.getElementById("identityPill");
@@ -610,12 +610,48 @@
         const shortAddr = `${activeWallet.slice(0, 4)}...${activeWallet.slice(-4)}`;
         let solBalance = "—";
         
+        // Try to get SOL balance without relying on solanaWeb3 global
         try {
-          const connection = new solanaWeb3.Connection("https://api.devnet.solana.com", "confirmed");
-          const pubKey = new solanaWeb3.PublicKey(activeWallet);
-          const lamports = await connection.getBalance(pubKey);
-          solBalance = (lamports / 1_000_000_000).toFixed(3);
-        } catch (_) {}
+          // Use the connection from window if available, or create a new one
+          const getBalance = async (walletAddress) => {
+            // Try to use existing connection from your app
+            if (window._connection) {
+              try {
+                const pubKey = new PublicKey(walletAddress);
+                const lamports = await window._connection.getBalance(pubKey);
+                return (lamports / 1_000_000_000).toFixed(3);
+              } catch (e) {
+                console.warn("Failed to get balance with existing connection:", e);
+              }
+            }
+            
+            // Fallback: fetch from public RPC
+            try {
+              const response = await fetch("https://api.devnet.solana.com", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "getBalance",
+                  params: [walletAddress]
+                })
+              });
+              const data = await response.json();
+              if (data.result) {
+                return (data.result.value / 1_000_000_000).toFixed(3);
+              }
+            } catch (e) {
+              console.warn("Failed to fetch balance from RPC:", e);
+            }
+            
+            return "—";
+          };
+          
+          solBalance = await getBalance(activeWallet);
+        } catch (_) {
+          solBalance = "—";
+        }
         
         if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
         if (stat) stat.innerHTML = "Wallet Mode";
@@ -654,11 +690,6 @@
     } catch (err) {
       console.error("[identityUI] render error:", err);
     }
-  }
-
-  // Make sure Solana Web3 is available
-  if (typeof solanaWeb3 === 'undefined') {
-    window.solanaWeb3 = solanaWeb3;
   }
 
   // Make refreshIdentityUI an alias
@@ -703,6 +734,6 @@
     }, 600);
   });
 </script>
-      <script type="module" src="./src/reserve_board.ts"></script>
+  <script type="module" src="./src/reserve_board.ts"></script>
 </body>
 </html>
