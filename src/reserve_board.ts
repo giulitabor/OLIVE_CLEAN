@@ -84,13 +84,7 @@ export async function getAllPositions(forceRefresh = false): Promise<any[]> {
 
   // 3. Store the Promise instance *before* awaiting it.
   // Any concurrent calls in the next millisecond will catch the if-statement above.
-  const prog = (window as any)._program;
-  if (!prog) {
-    console.warn("[POSITIONS] _program not initialized — wallet not connected yet.");
-    return [];
-  }
-
-  positionsPromise = prog.account.sharePosition.all()
+  positionsPromise = _program.account.sharePosition.all()
     .then((data) => {
       positionsCache = data;
       cacheTimestamp = Date.now();
@@ -434,6 +428,29 @@ function randomFallback() {
   return fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
 }
 
+function ValidSharesAmount(val: number): number {
+  const slider = document.getElementById(
+    "shareSlider"
+  ) as HTMLInputElement | null;
+
+  if (!slider) return val;
+
+  const min = Number(slider.min) || 1;
+  const max = Number(slider.max) || 1000;
+
+  return Math.max(min, Math.min(max, val));
+}
+
+
+export async function AllPositions() {
+    if (positionsCache) return positionsCache;
+    if (positionsPromise) return positionsPromise;
+
+    positionsPromise = (window as any)._program.account.sharePosition.all();
+
+    positionsCache = await positionsPromise;
+    return positionsCache;
+}
 
 
 /* =========================================================
@@ -1076,9 +1093,56 @@ function initFilters() {
  * and resets the core dashboard statistics back to zero.
  */
 export function handleDisconnectReset() {
-  // Delegate to the single authoritative teardown routine.
-  // clearAllUserUiAndStates() is defined later in this file and covers every element.
-  clearAllUserUiAndStates();
+  console.log("🔄 Disconnecting identity: Purging memory caches and resetting dashboard...");
+
+  // 1. Evaporate memory cache hooks
+  (window as any).positionsCache = null;
+  (window as any).positionsPromise = null;
+  (window as any).treesCache = null;
+  (window as any).treesPromise = null;
+
+  // 2. Clear local tracking layers
+  localStorage.removeItem("olivium_user");
+  if ((window as any).OliviumAuth) {
+    (window as any).OliviumAuth.user = null;
+  }
+
+  // 3. Clear data grid interfaces
+  const container = document.getElementById("treeGrid");
+  if (container) {
+    container.innerHTML = `
+      <div style="padding:40px; text-align:center; color: var(--text-muted, #8a8a8a);">
+        <h3>Identity Disconnected</h3>
+        <p>Please connect your wallet or sign in via email to view your grove allocations.</p>
+      </div>
+    `;
+  }
+
+  // 4. Force reset raw text dashboard metrics across UI elements
+  // Targets standard metric tracking identifiers
+  const statSelectors = {
+    totalShares: document.querySelectorAll(".total-shares-count, [data-metric='shares']"),
+    grovePositions: document.querySelectorAll(".grove-positions-count, [data-metric='positions']"),
+    connectedIdentity: document.querySelectorAll(".identity-address-display, [data-metric='identity']")
+  };
+
+  statSelectors.totalShares.forEach(el => el.textContent = "0");
+  statSelectors.grovePositions.forEach(el => el.textContent = "0");
+  statSelectors.connectedIdentity.forEach(el => el.textContent = "Not Connected");
+
+  // 5. Hide syncing status hooks gracefully
+  const spinner = document.getElementById("grove-sync-spinner") || document.querySelector(".syncing-indicator");
+  if (spinner) {
+    spinner.style.display = "none";
+  }
+  const villaIdentity = document.getElementById("villaStayIdentity");
+const villaTier = document.getElementById("villaTierStat");
+const villaDiscount = document.getElementById("villaDiscountStat");
+if (villaIdentity) villaIdentity.textContent = "Not Connected";
+if (villaTier) villaTier.textContent = "Standard Guest";
+if (villaDiscount) villaDiscount.textContent = "0%";
+
+  console.log("✅ Dashboard values cleared successfully.");
 }
 
 /* =========================================================
@@ -1948,7 +2012,7 @@ if (fullTreeSolEl) {
                 type: "wallet", wallet: pubKeyStr, source: "solana"
               }));
               window.walletPubKey = resp.publicKey || provider.publicKey;
-              window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey: pubKeyStr, isAdmin: false } }));
+              window.dispatchEvent(new Event("solana:connection-complete"));
             }
           } catch (err) {
             console.error("[adoptModal] wallet connect failed:", err);
@@ -2351,16 +2415,6 @@ async function getSolPriceEUR(): Promise<number> {
 }
 
 
-function getIdentity(): { type: "wallet"; wallet?: string } | { type: "email"; custodialWallet?: string } | { type: "guest" } {
-  try {
-    const cached = localStorage.getItem("olivium_identity");
-    if (cached) return JSON.parse(cached);
-  } catch (e) {
-    console.error("[getIdentity] Failed to parse cached identity:", e);
-  }
-  return { type: "guest" };
-}
-
 export function getActiveWallet(): string | null {
   const i = getIdentity();
 
@@ -2538,11 +2592,178 @@ const emailBtn =
   * resets individual asset markers, and re-syncs all live tree layouts back to guest mode.
   */
 
-/**
+  /**
  * Complete UI and State Purge Routine for Disconnect Actions
- * Clears caches, resets every tracked DOM element to its guest-mode default,
- * closes any open modals, and reloads the tree grid in read-only mode.
+ * Clears caches, flattens counts, strips action buttons, and returns layout to Guest mode.
  */
+async function clearAllUserUiAndStates() {
+  console.log("🧹 [TEARDOWN] Beginning complete profile state scrub...");
+
+  // 1. Invalidate and wipe module-level position caches completely
+  try {
+    (window as any).positionsCache = null;
+    (window as any).positionsPromise = null;
+
+    // Explicitly target local file-scoped cache variables if they are stored in window context
+    if ('positionsCache' in window) { (window as any).positionsCache = null; }
+    if ('positionsPromise' in window) { (window as any).positionsPromise = null; }
+  } catch (e) {
+    console.warn("Error purging memory cache pointers:", e);
+  }
+
+  // 2. Roll back global identity states back to default visitor configurations
+  if ((window as any).walletState) {
+    (window as any).walletState.connected = false;
+    (window as any).walletState.pubkey = null;
+  }
+
+  (window as any).walletPubKey = null;
+  window.OliviumIdentity = { type: "guest" };
+
+  // 3. Flatten out UI metric counters instantly inside the DOM
+  const treeCountStat = document.getElementById("treeCountStat");
+  const shareCountStat = document.getElementById("shareCountStat");
+  const grovePositionStat = document.getElementById("grovePositionStat");
+  const identityTypeStat = document.getElementById("identityTypeStat");
+
+  if (treeCountStat) treeCountStat.innerText = "--";
+  if (shareCountStat) shareCountStat.innerText = "--";
+  if (grovePositionStat) grovePositionStat.innerText = "0"; // Hard reset the 6 positions to 0
+  if (identityTypeStat) identityTypeStat.innerText = "Guest";
+
+  console.log("📊 [TEARDOWN] Metric counters cleared. Refreshing layout components...");
+
+  // 4. Force synchronous interface loops to clean and update the DOM
+  try {
+    // Refresh header bar tracking configurations via the safe wrapper hook
+    if (typeof window.refreshIdentityUI === 'function') {
+      window.refreshIdentityUI();
+    }
+
+    // Force an isolated layout statistics recalculation
+    if (typeof (window as any).updateStatsUI === 'function') {
+      await (window as any).updateStatsUI();
+    }
+
+    // Force a sync sequence across the villa dashboard system
+    if (typeof (window as any).updateVillaStayUI === 'function') {
+      await (window as any).updateVillaStayUI();
+    }
+
+    // CRITICAL: Reload the tree catalog without any cached user position credentials.
+    // Because caches are nullified and identity is 'guest', isMine evaluates false for everything,
+    // dropping all interactive owner components ("Release Shares" buttons) automatically.
+    if (typeof (window as any).loadTrees === 'function') {
+      await (window as any).loadTrees("all");
+    }
+
+    console.log("✨ [TEARDOWN] UI scrub complete. Application is in pristine read-only mode.");
+  } catch (err) {
+    console.error("Encountered an anomaly during component re-rendering cycles:", err);
+  }
+}
+
+// Map the teardown process directly to global context for cross-module accessibility
+(window as any).resetProfileAndUI = clearAllUserUiAndStates;
+
+// Handle decoupled disconnect events fired by wallet connection modules
+window.addEventListener("olivium:disconnected", async () => {
+  await clearAllUserUiAndStates();
+});
+// Add this at the beginning of your web app
+(function() {
+  // Detect if running in Expo
+  if (window.ReactNativeWebView || window.__EXPO_ENV__) {
+    console.log('Running in Expo WebView');
+
+    // Override wallet connection for mobile
+    window.connectWalletMobile = async function() {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'REQUEST_WALLET'
+        }));
+      }
+    };
+
+    // If wallet connection button exists, override it
+    const connectBtn = document.getElementById('connectWalletBtn');
+    if (connectBtn) {
+      const originalClick = connectBtn.onclick;
+      connectBtn.onclick = async (e) => {
+        e.preventDefault();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'REQUEST_WALLET'
+          }));
+        } else if (originalClick) {
+          originalClick(e);
+        }
+      };
+    }
+
+    // Prevent modals from closing during MFA
+    const authModal = document.getElementById('authModalOverlay');
+    if (authModal) {
+      const preventClose = function(e) {
+        const signupOtp = document.getElementById('signupOtpBox');
+        if (signupOtp && signupOtp.style.display !== 'none') {
+          e.stopPropagation();
+        }
+      };
+      authModal.addEventListener('click', preventClose);
+    }
+  }
+})();
+ async function resetProfileAndUI() {
+   console.log("[TEARDOWN] Purging active state and re-syncing tree content layout blocks...");
+
+   // 1. Completely wipe local memory cache trackers to remove stale footprint histories
+   (window as any).positionsCache = null;
+   (window as any).positionsPromise = null;
+
+   // Also clear internal module-scoped layout reference caches if initialized
+   if ('positionsCache' in window) { (window as any).positionsCache = null; }
+
+   // 2. Ensure state parameters reflect absolute default visitor settings
+   walletState.connected = false;
+   walletState.pubkey = null;
+   window.OliviumIdentity = { type: "guest" };
+
+   // 3. Flatten out text metrics natively inside DOM elements immediately
+   const treeCount = document.getElementById("treeCountStat");
+   const shareCount = document.getElementById("shareCountStat");
+   const groveCount = document.getElementById("grovePositionStat");
+   const identityEl = document.getElementById("identityTypeStat");
+
+   if (treeCount) treeCount.innerText = "--";
+   if (shareCount) shareCount.innerText = "--";
+   if (groveCount) groveCount.innerText = "0"; // Correctly zero out grove metrics explicitly
+   if (identityEl) identityEl.innerText = "Guest";
+
+   // 4. Run native layout re-render pipelines
+   try {
+     // Refresh header bar/pill interfaces via embedded alias wrapper
+     if (typeof (window as any).refreshIdentityUI === 'function') {
+       await (window as any).refreshIdentityUI();
+     }
+
+     // Force a structural execution cycle update over global tree layouts
+     await updateStatsUI();
+
+     // Force drop dynamic user markers and drop "Release Shares" button containers safely
+     await loadTrees("all");
+   } catch (err) {
+     console.error("Error occurred during UI catalog scrubbing:", err);
+   }
+ }
+
+ // Map reference layout straight to global window scope context
+ (window as any).resetProfileAndUI = resetProfileAndUI;
+
+ // Intercept decoupled custom event loops to safeguard operational integrity
+ window.addEventListener("olivium:disconnected", async () => {
+   await resetProfileAndUI();
+ });
 
 /* =========================================================
    VILLA STAY UI HYDRATION & LOYALTY UPDATER
@@ -2723,98 +2944,24 @@ if (creditsCountDisplay) {
 }
 // At the bottom of reserve.ts, BEFORE the event listeners:
 
-/* =========================================================
-   UPDATE IDENTITY BALANCE UI
-   The authoritative definition lives in the inline <script> in
-   index2.html and is registered on window before any module
-   loads. This module-level copy is a fallback only — it runs
-   when reserve_board.ts is used on a page that does NOT have
-   the inline script (e.g. villa_stay.html).
-   Never overwrite whatever is already on window.
-========================================================= */
-async function _updateIdentityBalanceUIFallback(): Promise<void> {
-  const wallet     = Wallet();
-  const connectBtn = document.getElementById("connectBtn");
-  const identityPill       = document.getElementById("identityPill");
-  const identityTypeStat   = document.getElementById("identityTypeStat");
-  const navIdentityDisplay = document.getElementById("nav-identity-display");
-  const navTierLabel       = document.getElementById("nav-tier-label");
-
-  if (!wallet) {
-    if (connectBtn) {
-      connectBtn.textContent = "Connect Profile";
-      connectBtn.style.color = "";
-      connectBtn.style.borderColor = "";
-    }
-    if (identityPill)       identityPill.textContent     = "🌿 Guest Mode";
-    if (identityTypeStat)   identityTypeStat.innerText   = "Guest";
-    if (navIdentityDisplay) navIdentityDisplay.innerText = "";
-    if (navTierLabel)       navTierLabel.innerText       = "Guest Mode";
-    return;
-  }
-
-  const truncated = `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
-
-  if (connectBtn) {
-    connectBtn.textContent       = "Disconnect";
-    connectBtn.style.color       = "#d94d4d";
-    connectBtn.style.borderColor = "#d94d4d";
-  }
-  if (identityPill)       identityPill.textContent     = `◎ ${truncated}`;
-  if (identityTypeStat)   identityTypeStat.innerText   = truncated;
-  if (navIdentityDisplay) navIdentityDisplay.innerText = truncated;
-
-  try {
-    const conn = (window as any)._connection || (window as any).connection;
-    if (conn) {
-      const { PublicKey: PK } = await import("@solana/web3.js");
-      const lamports = await conn.getBalance(new PK(wallet));
-      const sol      = (lamports / 1_000_000_000).toFixed(3);
-      if (identityTypeStat)   identityTypeStat.innerText   = `${truncated} · ${sol} SOL`;
-      if (navIdentityDisplay) navIdentityDisplay.innerText = `${truncated} · ${sol} SOL`;
-      (window as any).cachedWalletSolBalance = lamports / 1_000_000_000;
-    }
-  } catch (err) {
-    console.warn("[updateIdentityBalanceUI] Balance fetch failed:", err);
-  }
-
-  const tierNameEl = document.getElementById("tier-name");
-  if (navTierLabel && tierNameEl?.innerText && tierNameEl.innerText !== "Guest Mode") {
-    navTierLabel.innerText = tierNameEl.innerText;
-  }
-}
-
-// Thin wrapper — always calls whatever is on window so the inline
-// HTML version is used when present, fallback otherwise.
-function updateIdentityBalanceUI(): Promise<void> {
-  const fn = (window as any).updateIdentityBalanceUI;
-  if (fn && fn !== updateIdentityBalanceUI) return fn();
-  return _updateIdentityBalanceUIFallback();
-}
-
-// Make functions globally accessible — guard updateIdentityBalanceUI
-// so the inline HTML definition is never clobbered.
+// Make functions globally accessible for villa_stay.html
 (window as any).updateVillaStayUI = updateVillaStayUI;
-(window as any).updateStatsUI     = updateStatsUI;
-(window as any).updateWalletUI    = updateWalletUI;
-(window as any).getAllPositions    = getAllPositions;
-if (typeof (window as any).updateIdentityBalanceUI !== "function") {
-  (window as any).updateIdentityBalanceUI = _updateIdentityBalanceUIFallback;
-}
+(window as any).updateStatsUI = updateStatsUI;
+(window as any).updateWalletUI = updateWalletUI;
+(window as any).getAllPositions = getAllPositions;
 
 /* =========================================================
    EVENT LISTENERS - CONSOLIDATED & DEDUPLICATED
 ========================================================= */
 
 // Single handler for wallet/blockchain connection completion
-window.addEventListener("olivium:connected", async () => {
+window.addEventListener("solana:connection-complete", async () => {
   console.log("[SYNC EVENT] Blockchain initialized. Regenerating all UI components...");
 
   // Update all UI components in sequence
   await updateWalletUI();
   await updateStatsUI();
   await updateVillaStayUI();
-  await updateIdentityBalanceUI();
 
   // Reload tree grid if "My Grove" filter is active
   const activeFilter = document.querySelector(".filter-btn.active") as HTMLElement | null;
@@ -2843,7 +2990,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     await updateWalletUI();
     await updateStatsUI();
     await updateVillaStayUI();
-    await updateIdentityBalanceUI();
   document.querySelectorAll(".payment-option").forEach((option) => {
 
   option.addEventListener("click", () => {
@@ -2894,173 +3040,3 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   );
  });
-
-/**
- * Complete UI and State Purge Routine for Disconnect Actions
- * Clears caches, resets every tracked DOM element to its guest-mode default,
- * closes any open modals, and reloads the tree grid in read-only mode.
- */
-async function clearAllUserUiAndStates() {
-  console.log("🧹 [TEARDOWN] Beginning complete profile state scrub...");
-
-  // ── 1. Wipe module-level caches ──────────────────────────────────────────
-  positionsCache = null;
-  positionsPromise = null;
-  treesCache = null;
-  treesPromise = null;
-  (window as any).positionsCache = null;
-  (window as any).positionsPromise = null;
-  (window as any).treesCache = null;
-  (window as any).treesPromise = null;
-
-  // ── 2. Reset global identity / wallet state ───────────────────────────────
-  walletState.connected = false;
-  walletState.pubkey = null;
-  (window as any).walletPubKey = null;
-  (window as any).wallet = null;
-  (window as any)._program = null;
-  (window as any)._provider = null;
-  (window as any)._protocol = null;
-  window.OliviumIdentity = { type: "guest" };
-  
-  // Clear localStorage
-  localStorage.removeItem("walletConnected");
-  localStorage.removeItem("olivium_identity");
-  localStorage.removeItem("olivium_user");
-
-  // ── 3. Hero stats bar ─────────────────────────────────────────────────────
-  const treeCountStat = document.getElementById("treeCountStat");
-  const shareCountStat = document.getElementById("shareCountStat");
-  const grovePositionStat = document.getElementById("grovePositionStat");
-  const identityTypeStat = document.getElementById("identityTypeStat");
-
-  if (treeCountStat) treeCountStat.innerText = "--";
-  if (shareCountStat) shareCountStat.innerText = "--";
-  if (grovePositionStat) grovePositionStat.innerText = "0";
-  if (identityTypeStat) identityTypeStat.innerText = "Guest";
-
-  // ── 4. Identity pill + nav ────────────────────────────────────────────────
-  const identityPill     = el("identityPill");
-  const connectBtn       = el("connectBtn");
-  const navTierLabel     = el("nav-tier-label");
-  const navIdentityDisplay = el("nav-identity-display");
-
-  if (identityPill)       identityPill.textContent       = "🌿 Guest Mode";
-  if (navTierLabel)       navTierLabel.innerText         = "Guest Mode";
-  if (navIdentityDisplay) navIdentityDisplay.innerText   = "";
-
-  // Reset button styles
-  if (connectBtn) {
-    connectBtn.innerText = "Connect Profile";
-    connectBtn.style.color = "white";
-    connectBtn.style.border = "";
-    connectBtn.style.background = "var(--green)";
-    connectBtn.style.backgroundColor = "#6B7F5A";
-  }
-
-  // ── 5. Villa stay / loyalty panel ─────────────────────────────────────────
-  const sharesCountDisplay  = el("shares-count-display");
-  const creditsCountDisplay = el("credits-count-display");
-  const tierName            = el("tier-name");
-  const tierProgressText    = el("tier-progress-text");
-  const nextTierLabel       = el("next-tier-label");
-  const tierPercentLabel    = el("tier-percent-label");
-  const tierProgressBar     = el("tier-progress-bar") as HTMLElement | null;
-  const tierIcon            = el("tier-icon");
-  const patronDiscountBadge = el("patronDiscountBadge");
-  const bookingRateDisplay  = el("bookingRateDisplay");
-  const villaStayIdentity   = el("villaStayIdentity");
-  const villaTierStat       = el("villaTierStat");
-  const villaDiscountStat   = el("villaDiscountStat");
-
-  if (sharesCountDisplay)
-    sharesCountDisplay.innerHTML = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
-  if (creditsCountDisplay)
-    creditsCountDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
-  if (tierName)           tierName.innerText          = "Guest Mode";
-  if (tierIcon)           tierIcon.innerText          = "🫒";
-  if (tierProgressText)   tierProgressText.innerText  = "Please connect to view tier status";
-  if (nextTierLabel)      nextTierLabel.innerText      = "Next: Seed Supporter";
-  if (tierPercentLabel)   tierPercentLabel.innerText   = "0%";
-  if (tierProgressBar)    tierProgressBar.style.width  = "0%";
-  if (patronDiscountBadge) patronDiscountBadge.innerText = "Standard Account";
-  if (bookingRateDisplay)  bookingRateDisplay.innerText  = "$450 USD / Nightly standard baseline";
-  if (villaStayIdentity)   villaStayIdentity.textContent = "Not Connected";
-  if (villaTierStat)       villaTierStat.textContent     = "Standard Guest";
-  if (villaDiscountStat)   villaDiscountStat.textContent  = "0%";
-
-  // Dim all tier cards and perk rows
-  ["card-tier-1", "card-tier-2", "card-tier-3",
-   "perk-gov", "perk-shipping", "perk-discount", "perk-stay"].forEach((id) => {
-    const node = el(id);
-    if (node) { node.classList.remove("opacity-100"); node.classList.add("opacity-40"); }
-  });
-
-  // ── 6. SOL price tier badges ──────────────────────────────────────────────
-  ["starter-sol-price", "keeper-sol-price", "fulltree-sol-price"].forEach((id) => {
-    const node = el(id);
-    if (node) node.innerText = "-- SOL";
-  });
-
-  // ── 7. Close any open modals ──────────────────────────────────────────────
-  ["modalOverlay", "agreementModal", "successModal",
-   "connectModal", "sell-modal", "tree-detail-modal"].forEach((id) => {
-    const modal = el(id) as HTMLElement | null;
-    if (!modal) return;
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  });
-  document.body.style.overflow = "";
-
-  // ── 8. Reset purchase modal to clean state ────────────────────────────────
-  const shareInput   = el("shareInput")   as HTMLInputElement | null;
-  const shareSlider  = el("shareSlider")  as HTMLInputElement | null;
-  const shareValue   = el("shareValue");
-  const priceDisplay = el("priceDisplay");
-  const priceSub     = el("priceSub");
-  const adoptBtn     = el("adoptBtn")     as HTMLButtonElement | null;
-  const adoptConnectBtn = el("adoptConnectBtn") as HTMLButtonElement | null;
-  const mollieOption = el("mollieOption");
-
-  if (shareInput)   shareInput.value       = "1";
-  if (shareSlider)  shareSlider.value      = "1";
-  if (shareValue)   shareValue.textContent = "1";
-  if (priceDisplay) priceDisplay.innerText = "€12.40";
-  if (priceSub)     priceSub.innerText     = "1 share × €12.40";
-  if (adoptBtn) {
-    adoptBtn.disabled  = false;
-    adoptBtn.innerText = "Continue to Agreement";
-    adoptBtn.style.display = "block";
-  }
-  if (adoptConnectBtn) adoptConnectBtn.style.display = "none";
-
-  // Reset payment selector back to Mollie (default)
-  paymentMode = "mollie";
-  document.querySelectorAll(".payment-option").forEach((opt) => opt.classList.remove("active"));
-  if (mollieOption) mollieOption.classList.add("active");
-
-  // ── 9. Reload tree grid as guest ──────────────────────────────────────────
-  console.log("📊 [TEARDOWN] DOM reset complete. Reloading tree grid...");
-  try {
-    if (typeof window.refreshIdentityUI === "function") window.refreshIdentityUI();
-    await updateIdentityBalanceUI();
-    await loadTrees("all");
-    console.log("✨ [TEARDOWN] Application returned to read-only guest mode.");
-  } catch (err) {
-    console.error("[TEARDOWN] Error during tree grid reload:", err);
-  }
-}
-
-// Map the teardown process directly to global context for cross-module accessibility
-(window as any).resetProfileAndUI = clearAllUserUiAndStates;
-(window as any).clearAllUserUiAndStates = clearAllUserUiAndStates;
-(window as any).handleDisconnectWorkflow = clearAllUserUiAndStates;
-
-// Handle decoupled disconnect events fired by wallet connection modules
-window.addEventListener("olivium:disconnected", async () => {
-  console.log("[RESERVE] Disconnect event received");
-  await clearAllUserUiAndStates();
-  if (typeof window.updateIdentityBalanceUI === 'function') {
-    await window.updateIdentityBalanceUI();
-  }
-});
