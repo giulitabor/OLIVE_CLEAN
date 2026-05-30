@@ -2976,15 +2976,22 @@ if (creditsCountDisplay) {
 (window as any).updateWalletUI = updateWalletUI;
 (window as any).getAllPositions = getAllPositions;
 
-/* =========================================================
-   EVENT LISTENERS - CONSOLIDATED & DEDUPLICATED
-========================================================= */
-
-// Single handler for wallet/blockchain connection completion
 window.addEventListener("solana:connection-complete", async () => {
-  console.log("[SYNC EVENT] Blockchain initialized. Regenerating all UI components...");
 
-  // Update all UI components in sequence
+  const connected =
+    (window as any).walletState?.connected;
+
+  if (!connected) {
+    console.log(
+      "[SYNC EVENT] Ignored because wallet is disconnected."
+    );
+    return;
+  }
+
+  console.log(
+    "[SYNC EVENT] Blockchain initialized. Regenerating all UI components..."
+  );
+
   await updateWalletUI();
   await updateStatsUI();
   await updateVillaStayUI();
