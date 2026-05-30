@@ -2543,199 +2543,6 @@ const emailBtn =
  * Clears caches, resets every tracked DOM element to its guest-mode default,
  * closes any open modals, and reloads the tree grid in read-only mode.
  */
-async function clearAllUserUiAndStates() {
-  console.log("🧹 [TEARDOWN] Beginning complete profile state scrub...");
-
-  // ── 1. Wipe module-level caches ──────────────────────────────────────────
-  positionsCache = null;
-  positionsPromise = null;
-  treesCache = null;
-  treesPromise = null;
-  (window as any).positionsCache = null;
-  (window as any).positionsPromise = null;
-  (window as any).treesCache = null;
-  (window as any).treesPromise = null;
-
-  // ── 2. Reset global identity / wallet state ───────────────────────────────
-  walletState.connected = false;
-  walletState.pubkey = null;
-  (window as any).walletPubKey = null;
-  (window as any).wallet = null;
-  (window as any)._program = null;
-  (window as any)._provider = null;
-  (window as any)._protocol = null;
-  window.OliviumIdentity = { type: "guest" };
-  localStorage.removeItem("walletConnected");
-  localStorage.removeItem("olivium_identity");
-
-  // ── 3. Hero stats bar ─────────────────────────────────────────────────────
-  const el = (id: string) => document.getElementById(id);
-
-  const treeCountStat    = el("treeCountStat");
-  const shareCountStat   = el("shareCountStat");
-  const grovePositionStat = el("grovePositionStat");
-  const identityTypeStat = el("identityTypeStat");
-
-  if (treeCountStat)     treeCountStat.innerText    = "--";
-  if (shareCountStat)    shareCountStat.innerText   = "--";
-  if (grovePositionStat) grovePositionStat.innerText = "0";
-  if (identityTypeStat)  identityTypeStat.innerText  = "Guest";
-
-  // ── 4. Identity pill + nav ────────────────────────────────────────────────
-  const identityPill     = el("identityPill");
-  const connectBtn       = el("connectBtn");
-  const navTierLabel     = el("nav-tier-label");
-  const navIdentityDisplay = el("nav-identity-display");
-
-  if (identityPill)       identityPill.textContent       = "🌿 Guest Mode";
-  if (connectBtn)         connectBtn.textContent         = "Connect Profile";
-  if (navTierLabel)       navTierLabel.innerText         = "Guest Mode";
-  if (navIdentityDisplay) navIdentityDisplay.innerText   = "";
-
-  // ── 5. Villa stay / loyalty panel ─────────────────────────────────────────
-  const sharesCountDisplay  = el("shares-count-display");
-  const creditsCountDisplay = el("credits-count-display");
-  const tierName            = el("tier-name");
-  const tierProgressText    = el("tier-progress-text");
-  const nextTierLabel       = el("next-tier-label");
-  const tierPercentLabel    = el("tier-percent-label");
-  const tierProgressBar     = el("tier-progress-bar") as HTMLElement | null;
-  const tierIcon            = el("tier-icon");
-  const patronDiscountBadge = el("patronDiscountBadge");
-  const bookingRateDisplay  = el("bookingRateDisplay");
-  const villaStayIdentity   = el("villaStayIdentity");
-  const villaTierStat       = el("villaTierStat");
-  const villaDiscountStat   = el("villaDiscountStat");
-
-  if (sharesCountDisplay)
-    sharesCountDisplay.innerHTML = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
-  if (creditsCountDisplay)
-    creditsCountDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
-  if (tierName)           tierName.innerText          = "Guest Mode";
-  if (tierIcon)           tierIcon.innerText          = "🫒";
-  if (tierProgressText)   tierProgressText.innerText  = "Please connect to view tier status";
-  if (nextTierLabel)      nextTierLabel.innerText      = "Next: Seed Supporter";
-  if (tierPercentLabel)   tierPercentLabel.innerText   = "0%";
-  if (tierProgressBar)    tierProgressBar.style.width  = "0%";
-  if (patronDiscountBadge) patronDiscountBadge.innerText = "Standard Account";
-  if (bookingRateDisplay)  bookingRateDisplay.innerText  = "$450 USD / Nightly standard baseline";
-  if (villaStayIdentity)   villaStayIdentity.textContent = "Not Connected";
-  if (villaTierStat)       villaTierStat.textContent     = "Standard Guest";
-  if (villaDiscountStat)   villaDiscountStat.textContent  = "0%";
-
-  // Dim all tier cards and perk rows
-  ["card-tier-1", "card-tier-2", "card-tier-3",
-   "perk-gov", "perk-shipping", "perk-discount", "perk-stay"].forEach((id) => {
-    const node = el(id);
-    if (node) { node.classList.remove("opacity-100"); node.classList.add("opacity-40"); }
-  });
-
-  // ── 6. SOL price tier badges ──────────────────────────────────────────────
-  ["starter-sol-price", "keeper-sol-price", "fulltree-sol-price"].forEach((id) => {
-    const node = el(id);
-    if (node) node.innerText = "-- SOL";
-  });
-
-  // ── 7. Close any open modals ──────────────────────────────────────────────
-  ["modalOverlay", "agreementModal", "successModal",
-   "connectModal", "sell-modal", "tree-detail-modal"].forEach((id) => {
-    const modal = el(id) as HTMLElement | null;
-    if (!modal) return;
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  });
-  document.body.style.overflow = "";
-
-  // ── 8. Reset purchase modal to clean state ────────────────────────────────
-  const shareInput   = el("shareInput")   as HTMLInputElement | null;
-  const shareSlider  = el("shareSlider")  as HTMLInputElement | null;
-  const shareValue   = el("shareValue");
-  const priceDisplay = el("priceDisplay");
-  const priceSub     = el("priceSub");
-  const adoptBtn     = el("adoptBtn")     as HTMLButtonElement | null;
-  const adoptConnectBtn = el("adoptConnectBtn") as HTMLButtonElement | null;
-  const mollieOption = el("mollieOption");
-
-  if (shareInput)   shareInput.value       = "1";
-  if (shareSlider)  shareSlider.value      = "1";
-  if (shareValue)   shareValue.textContent = "1";
-  if (priceDisplay) priceDisplay.innerText = "€12.40";
-  if (priceSub)     priceSub.innerText     = "1 share × €12.40";
-  if (adoptBtn) {
-    adoptBtn.disabled  = false;
-    adoptBtn.innerText = "Continue to Agreement";
-    adoptBtn.style.display = "block";
-  }
-  if (adoptConnectBtn) adoptConnectBtn.style.display = "none";
-
-  // Reset payment selector back to Mollie (default)
-  paymentMode = "mollie";
-  document.querySelectorAll(".payment-option").forEach((opt) => opt.classList.remove("active"));
-  if (mollieOption) mollieOption.classList.add("active");
-
-  // ── 9. Reload tree grid as guest (drops all "Release Shares" buttons) ──────
-  console.log("📊 [TEARDOWN] DOM reset complete. Reloading tree grid...");
-  try {
-    if (typeof window.refreshIdentityUI === "function") window.refreshIdentityUI();
-    await updateIdentityBalanceUI();
-    await loadTrees("all");
-    console.log("✨ [TEARDOWN] Application returned to read-only guest mode.");
-  } catch (err) {
-    console.error("[TEARDOWN] Error during tree grid reload:", err);
-  }
-}
-
-// Map the teardown process directly to global context for cross-module accessibility
-(window as any).resetProfileAndUI = clearAllUserUiAndStates;
-
-// Handle decoupled disconnect events fired by wallet connection modules
-window.addEventListener("olivium:disconnected", async () => {
-  await clearAllUserUiAndStates();
-});
-// Add this at the beginning of your web app
-(function() {
-  // Detect if running in Expo
-  if (window.ReactNativeWebView || window.__EXPO_ENV__) {
-    console.log('Running in Expo WebView');
-
-    // Override wallet connection for mobile
-    window.connectWalletMobile = async function() {
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'REQUEST_WALLET'
-        }));
-      }
-    };
-
-    // If wallet connection button exists, override it
-    const connectBtn = document.getElementById('connectWalletBtn');
-    if (connectBtn) {
-      const originalClick = connectBtn.onclick;
-      connectBtn.onclick = async (e) => {
-        e.preventDefault();
-        if (window.ReactNativeWebView) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'REQUEST_WALLET'
-          }));
-        } else if (originalClick) {
-          originalClick(e);
-        }
-      };
-    }
-
-    // Prevent modals from closing during MFA
-    const authModal = document.getElementById('authModalOverlay');
-    if (authModal) {
-      const preventClose = function(e) {
-        const signupOtp = document.getElementById('signupOtpBox');
-        if (signupOtp && signupOtp.style.display !== 'none') {
-          e.stopPropagation();
-        }
-      };
-      authModal.addEventListener('click', preventClose);
-    }
-  }
-})();
 
 /* =========================================================
    VILLA STAY UI HYDRATION & LOYALTY UPDATER
@@ -3088,8 +2895,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   );
  });
 
-// Add this at the end of your reserve_board.ts file, ensuring clearAllUserUiAndStates is properly defined:
-
 /**
  * Complete UI and State Purge Routine for Disconnect Actions
  * Clears caches, resets every tracked DOM element to its guest-mode default,
@@ -3143,15 +2948,16 @@ async function clearAllUserUiAndStates() {
   const navIdentityDisplay = el("nav-identity-display");
 
   if (identityPill)       identityPill.textContent       = "🌿 Guest Mode";
-  if (connectBtn)         connectBtn.textContent         = "Connect Profile";
   if (navTierLabel)       navTierLabel.innerText         = "Guest Mode";
   if (navIdentityDisplay) navIdentityDisplay.innerText   = "";
 
   // Reset button styles
   if (connectBtn) {
+    connectBtn.innerText = "Connect Profile";
     connectBtn.style.color = "white";
     connectBtn.style.border = "";
     connectBtn.style.background = "var(--green)";
+    connectBtn.style.backgroundColor = "#6B7F5A";
   }
 
   // ── 5. Villa stay / loyalty panel ─────────────────────────────────────────
@@ -3247,11 +3053,12 @@ async function clearAllUserUiAndStates() {
   }
 }
 
-// Make sure this is exported to window
+// Map the teardown process directly to global context for cross-module accessibility
+(window as any).resetProfileAndUI = clearAllUserUiAndStates;
 (window as any).clearAllUserUiAndStates = clearAllUserUiAndStates;
 (window as any).handleDisconnectWorkflow = clearAllUserUiAndStates;
 
-// Also update the disconnect event listener
+// Handle decoupled disconnect events fired by wallet connection modules
 window.addEventListener("olivium:disconnected", async () => {
   console.log("[RESERVE] Disconnect event received");
   await clearAllUserUiAndStates();
