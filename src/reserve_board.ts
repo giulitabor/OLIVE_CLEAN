@@ -239,7 +239,9 @@ async function confirmSellAction() {
   }
 }
 (window as any).confirmSellAction = confirmSellAction;
- if (!(window as any).walletState?.connected) {
+async function updateWalletUI() {
+
+  if (!(window as any).walletState?.connected) {
 
     window.OliviumIdentity = {
       type: "guest"
@@ -262,9 +264,8 @@ async function confirmSellAction() {
     ? { type: "wallet", wallet }
     : { type: "guest" };
 
-  // Delegate all button / pill / stat rendering to refreshIdentityUI in board.html
-  // so there is exactly one place that owns the nav button appearance.
-  if (typeof (window as any).refreshIdentityUI === 'function') {
+  // Delegate all button / pill / stat rendering
+  if (typeof (window as any).refreshIdentityUI === "function") {
     await (window as any).refreshIdentityUI();
   }
 }
