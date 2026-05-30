@@ -142,8 +142,96 @@
     </div>
   </div>
 
-  <!-- Other modals (purchase, agreement, success, sell, tree-detail) go here -->
-  <!-- ... keep your existing modal HTML ... -->
+  <!-- PURCHASE MODAL -->
+  <div class="modal-overlay" id="modalOverlay" style="display: none;">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="close-btn" onclick="if(window.closeModal) window.closeModal()">×</button>
+      <div class="modal-hero"><img id="modalImage" src="" alt="Selected Tree" /></div>
+      <div class="modal-body">
+        <h2 class="modal-title" id="modalTitle">Tree Name</h2>
+        <p class="modal-description" id="modalDescription">Secure your digital olive tree adoption.</p>
+        <div class="trust-box"><div class="trust-grid"><div class="trust-item">🌿 Real Olive Tree</div><div class="trust-item">⛓ Verified On-Chain</div><div class="trust-item">🫒 Harvest Participation</div><div class="trust-item">🔒 Secure Solana Payment</div></div></div>
+        <div class="payment-methods">
+          <div class="payment-option active" id="mollieOption" data-payment="mollie">💳 Credit Card<span class="payment-sub">Visa · Mastercard · Apple Pay</span></div>
+          <div class="payment-option" id="paypalOption" data-payment="paypal">🅿️ PayPal<span class="payment-sub">Fast easy checkout</span></div>
+          <div class="payment-option" id="cryptoOption" data-payment="crypto">◎ Crypto Wallet<span class="payment-sub">Solana</span></div>
+        </div>
+        <div class="share-section">
+          <label class="share-label">Select Shares</label>
+          <div class="stepper"><button class="step-btn" onclick="if(window.changeShares) window.changeShares(-1)">−</button><div class="share-count"><div class="share-count-value" id="shareValue">1</div><div class="share-count-label">shares selected</div></div><button class="step-btn" onclick="if(window.changeShares) window.changeShares(1)">+</button></div>
+          <div class="share-slider-wrap"><input type="range" min="1" max="1000" step="1" value="1" id="shareSlider" oninput="if(window.syncFromSlider) window.syncFromSlider()" /><div class="slider-labels"><span>1</span><span id="sliderMaxLabel">1000</span></div></div>
+          <div class="quick-shares"><button onclick="if(window.setShares) window.setShares(100)">100</button><button onclick="if(window.setShares) window.setShares(200)">200</button><button onclick="if(window.setShares) window.setShares(500)">500</button><button id="maxShareBtn" onclick="if(window.setShares) window.setShares('max')">Max</button></div>
+          <input type="hidden" id="shareInput" value="1" />
+        </div>
+        <div class="price-card" style="margin-bottom: 24px;"><div class="price-title">Total Price</div><div class="price-display" id="priceDisplay">€12.40</div><div class="price-sub" id="priceSub">1 share × €12.40</div></div>
+        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">🔗 Connect Wallet to Continue</button>
+        <button class="primary-btn" id="adoptBtn" onclick="if(window.openAgreement) window.openAgreement()">Continue to Agreement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AGREEMENT MODAL -->
+  <div id="agreementModal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="agreement-card">
+        <h2 class="modal-title" id="agreeTitle">Tree Adoption Agreement</h2>
+        <img id="agreeImage" class="agreement-image" src="" alt="Tree preview" />
+        <div class="tree-specs">
+          <div class="spec"><div class="spec-label">Location</div><div class="spec-value" id="agreeLocation">—</div></div>
+          <div class="spec"><div class="spec-label">Age</div><div class="spec-value" id="agreeAge">—</div></div>
+          <div class="spec"><div class="spec-label">Height</div><div class="spec-value" id="agreeHeight">—</div></div>
+          <div class="spec"><div class="spec-label">Variety</div><div class="spec-value" id="agreeVariety">—</div></div>
+        </div>
+        <div class="agreement-box"><h3>🌱 Acknowledgement</h3><p>I understand this is a lifestyle and environmental participation experience, not a financial investment.</p><div class="checkbox-row"><input type="checkbox" id="agreeCheckbox" /><label for="agreeCheckbox">I understand and agree to continue.</label></div></div>
+        <div class="modal-footer"><div class="button-row"><button class="secondary-btn" onclick="if(window.closeAgreement) window.closeAgreement()">Back</button><button class="primary-btn" id="finalConfirmBtn" disabled>Confirm & Pay</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS MODAL -->
+  <div class="modal-overlay" id="successModal" style="display: none;">
+    <div class="modal"><div class="agreement-card success-state"><div class="success-icon">🌿</div><h2 class="modal-title">Adoption Confirmed</h2><p style="color: var(--muted); margin-bottom: 24px;">Thank you for supporting the Olivium ecosystem.</p><button class="primary-btn" onclick="if(window.closeSuccess) window.closeSuccess()">Continue</button></div></div>
+  </div>
+
+  <!-- SELL MODAL -->
+  <div id="sell-modal" class="modal-overlay hidden fixed inset-0 w-full h-full flex items-center justify-center bg-black/60 backdrop-blur-sm z-[2000]">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-2xl border border-stone-100">
+      <button onclick="if(window.closeSellModal) window.closeSellModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 font-bold text-xl">✕</button>
+      <div class="mb-4">
+        <span class="text-xs uppercase tracking-widest font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">Liquidate Asset</span>
+        <h3 id="sell-modal-title" class="text-2xl font-serif text-stone-900 mt-2">Sell Tree Shares</h3>
+        <p id="sell-modal-subtitle" class="text-sm text-stone-500">Relinquish partial stakes back into the protocol treasury buffer.</p>
+      </div>
+      <div class="bg-stone-50 border border-stone-200/60 rounded-xl p-4 mb-4">
+        <div class="flex justify-between text-sm mb-2"><span class="text-stone-500">Currently Owned:</span><span id="sell-modal-owned" class="font-bold text-stone-800">0 Shares</span></div>
+        <div class="flex justify-between text-sm"><span class="text-stone-500">Estimated Settlement:</span><span id="sell-modal-payout" class="font-bold text-green-700">0.00 SOL</span></div>
+      </div>
+      <div class="mb-6">
+        <label class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-2">Amount to Sell</label>
+        <div class="relative flex items-center">
+          <input type="number" id="sell-amount-input" min="1" step="1" value="10" class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-400 text-stone-900 font-mono" />
+          <button onclick="if(window.setSellMax) window.setSellMax()" class="absolute right-3 px-2.5 py-1 text-xs font-bold bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg transition">MAX</button>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="if(window.closeSellModal) window.closeSellModal()" class="flex-1 py-3 border border-stone-200 hover:bg-stone-50 text-stone-700 text-sm font-bold rounded-xl transition">Cancel</button>
+        <button onclick="if(window.confirmSellAction) window.confirmSellAction()" id="sell-submit-btn" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-red-600/10">Confirm Liquidation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREE DETAIL MODAL (simplified for brevity - keep your existing one) -->
+  <div id="tree-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" style="background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);">
+    <div class="min-h-screen flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden">
+        <button onclick="if(window.closeTreeDetailModal) window.closeTreeDetailModal()" class="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-lg transition">✕</button>
+        <div class="p-8">
+          <h2 class="text-2xl font-bold">Tree Details</h2>
+          <p id="tree-detail-name" class="mt-2">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <footer style="text-align:center; padding:2rem; border-top:1px solid #eaeaea;">
     <a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms</a> | <a href="/refunds.html">Refund Policy</a> | <a href="mailto:support@yourdomain.com">Contact</a>
@@ -159,7 +247,6 @@
     window.SystemProgram = SystemProgram;
     window.anchor = anchor;
     
-    // Make connection functions global
     window.connectWallet = connectWallet;
     window.disconnectWallet = disconnectWallet;
     window.connectEmail = connectEmail;
@@ -172,7 +259,7 @@
 
   <script>
     // ============================================================
-    // UI CONTROLLER - Handles all authentication UI
+    // UI CONTROLLER - Matches your exact database schema
     // ============================================================
     
     (function() {
@@ -205,15 +292,18 @@
         return null;
       }
       
-      // Helper: Generate deterministic wallet from email (for demo)
+      // Helper: Generate deterministic wallet from email (using your existing token pattern)
       async function generateWalletFromEmail(email, password) {
+        // Using the same seed pattern as your existing users
+        const secretSeed = "OLIVIUMDAO777MFASEED";
         const encoder = new TextEncoder();
-        const data = encoder.encode(`${email}:${password}:OLIVIUM_CUSTODIAL_2025`);
+        const data = encoder.encode(`${email}:${password}:${secretSeed}`);
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.slice(0, 32).map(b => b.toString(16).padStart(2, '0')).join('');
-        // Simulate a Solana-style address (first 32 chars of hash)
-        return hashHex.slice(0, 32);
+        // Generate a 44-character string (Solana wallet length approx)
+        const walletBase = hashArray.slice(0, 32).map(b => b.toString(16).padStart(2, '0')).join('');
+        // Add prefix to match your existing wallet pattern (looks like 3JVG7F2C...)
+        return walletBase.toUpperCase().slice(0, 44);
       }
       
       // Update all UI based on current identity
@@ -278,6 +368,11 @@
       window.closeEmailAuthModal = function() {
         if (emailAuthModal) emailAuthModal.style.display = 'none';
         if (messageDiv) messageDiv.innerHTML = '';
+        // Reset forms
+        const loginEmail = document.getElementById('loginEmailInput');
+        const loginPassword = document.getElementById('loginPasswordInput');
+        if (loginEmail) loginEmail.value = '';
+        if (loginPassword) loginPassword.value = '';
       }
       
       // Handle disconnect
@@ -327,9 +422,9 @@
         }
       }
       
-      // Handle email login
+      // Handle email login (using your exact column name: Email_address)
       async function handleEmailLogin() {
-        const email = document.getElementById('loginEmailInput')?.value;
+        const email = document.getElementById('loginEmailInput')?.value.trim().toLowerCase();
         const password = document.getElementById('loginPasswordInput')?.value;
         
         if (!email || !password) {
@@ -340,11 +435,11 @@
         if (messageDiv) messageDiv.innerHTML = '<span style="color: #6B7F5A;">Checking credentials...</span>';
         
         try {
-          // Check if user exists in Supabase
+          // Check if user exists in Supabase using Email_address column
           const { data: user, error } = await window.sb
             .from('users')
-            .select('email, wallet')
-            .eq('email', email)
+            .select('Email_address, wallet, credits')
+            .eq('Email_address', email)
             .single();
           
           if (error || !user) {
@@ -354,6 +449,7 @@
           // Generate wallet from email+password to verify
           const generatedWallet = await generateWalletFromEmail(email, password);
           
+          // Compare with stored wallet
           if (generatedWallet !== user.wallet) {
             throw new Error("Invalid password");
           }
@@ -377,9 +473,9 @@
         }
       }
       
-      // Handle email signup
+      // Handle email signup (using your exact column names)
       async function handleEmailSignup() {
-        const email = document.getElementById('signupEmailInput')?.value;
+        const email = document.getElementById('signupEmailInput')?.value.trim().toLowerCase();
         const password = document.getElementById('signupPasswordInput')?.value;
         const confirm = document.getElementById('signupConfirmInput')?.value;
         
@@ -401,28 +497,34 @@
         if (messageDiv) messageDiv.innerHTML = '<span style="color: #6B7F5A;">Creating account...</span>';
         
         try {
-          // Check if user already exists
+          // Check if user already exists using Email_address column
           const { data: existing } = await window.sb
             .from('users')
-            .select('email')
-            .eq('email', email)
+            .select('Email_address')
+            .eq('Email_address', email)
             .single();
           
           if (existing) {
             throw new Error("Email already registered. Please login instead.");
           }
           
-          // Generate deterministic wallet
-          const custodialWallet = await generateWalletFromEmail(email, password);
+          // Generate deterministic wallet using your secret seed pattern
+          const secretSeed = "OLIVIUMDAO777MFASEED";
+          const encoder = new TextEncoder();
+          const data = encoder.encode(`${email}:${password}:${secretSeed}`);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const custodialWallet = hashArray.slice(0, 32).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 44);
           
-          // Create user in Supabase
+          // Create user in Supabase with your exact column names
           const { error: insertError } = await window.sb
             .from('users')
             .insert([{
-              email: email,
+              Email_address: email,  // Note: Capital E, underscore
               wallet: custodialWallet,
               credits: 0,
-              created_at: new Date().toISOString()
+              OLV_tokens: 0,
+              token: secretSeed
             }]);
           
           if (insertError) throw insertError;
@@ -452,7 +554,11 @@
       
       // Main connect button
       if (connectBtn) {
-        connectBtn.addEventListener('click', async () => {
+        // Replace with fresh button to avoid duplicate listeners
+        const newBtn = connectBtn.cloneNode(true);
+        connectBtn.parentNode.replaceChild(newBtn, connectBtn);
+        
+        newBtn.addEventListener('click', async () => {
           const identity = getCurrentIdentity();
           if (identity) {
             await handleDisconnect();
