@@ -35,8 +35,8 @@ async function waitForProgram(timeout = 10000): Promise<any> {
 // AUTHENTICATION & IDENTITY UI
 // ============================================================
 
-// Make connection available for balance checks
-const solanaConnection = new Connection("https://api.devnet.solana.com", "confirmed");
+// Use the shared RPC connection from connection.ts rather than a hardcoded devnet URL
+const solanaConnection = connection;
 
 window.OliviumAuth = {
   user: null,
@@ -79,8 +79,8 @@ const metrics = {
 };
 
 function validateSignupForm() {
-  const passVal = signupPassword?.value || "";
-  const confirmVal = signupConfirmPassword?.value || "";
+  const passVal = (signupPassword as HTMLInputElement)?.value || "";
+  const confirmVal = (signupConfirmPassword as HTMLInputElement)?.value || "";
   let allPass = true;
 
   for (const key in metrics) {
@@ -90,11 +90,11 @@ function validateSignupForm() {
       if (matched) {
         element.style.color = "#2e7d32";
         const icon = element.querySelector(".icon");
-        if (icon) icon.innerText = "✔";
+        if (icon) (icon as HTMLElement).innerText = "✔";
       } else {
         element.style.color = "#d94d4d";
         const icon = element.querySelector(".icon");
-        if (icon) icon.innerText = "❌";
+        if (icon) (icon as HTMLElement).innerText = "❌";
         allPass = false;
       }
     }
@@ -102,11 +102,11 @@ function validateSignupForm() {
 
   const matches = passVal === confirmVal && passVal.length > 0;
 
-  if (allPass && matches && signupEmail && signupEmail.value.trim().length > 0 && signupBtn) {
-    signupBtn.disabled = false;
+  if (allPass && matches && signupEmail && (signupEmail as HTMLInputElement).value.trim().length > 0 && signupBtn) {
+    (signupBtn as HTMLButtonElement).disabled = false;
     signupBtn.style.background = "var(--green)";
   } else if (signupBtn) {
-    signupBtn.disabled = true;
+    (signupBtn as HTMLButtonElement).disabled = true;
     signupBtn.style.background = "#cccccc";
   }
 }
@@ -115,67 +115,71 @@ signupEmail?.addEventListener("input", validateSignupForm);
 signupPassword?.addEventListener("input", validateSignupForm);
 signupConfirmPassword?.addEventListener("input", validateSignupForm);
 
-function show(text, ok = true) {
+function show(text: string, ok = true) {
   if (msg) {
     msg.innerText = text;
     msg.style.color = ok ? "var(--green)" : "#d94d4d";
   }
 }
 
-// Single source of truth for all identity UI
+// ============================================================
+// updateIdentityBalanceUI
+// Single definition — reserve_board.ts registers the authoritative
+// version on window. This file delegates to it so both modules
+// always run the same logic regardless of script load order.
+// ============================================================
 async function updateIdentityBalanceUI() {
+  // Prefer the version from reserve_board.ts if it's already loaded
+  if (typeof (window as any).updateIdentityBalanceUI === "function" &&
+      (window as any).updateIdentityBalanceUI !== updateIdentityBalanceUI) {
+    return (window as any).updateIdentityBalanceUI();
+  }
+
+  // Fallback: bare-minimum guest/connected display so the UI
+  // is never broken even if reserve_board.ts loads after this file.
   try {
-    const pillEl = document.getElementById("identityPill");
-    const stat = document.getElementById("identityTypeStat");
+    const pillEl    = document.getElementById("identityPill");
+    const stat      = document.getElementById("identityTypeStat");
     const connectBtn = document.getElementById("connectBtn");
 
-    const liveKey = (window as any).solana?.publicKey || (window as any).walletPubKey || (window as any)._provider?.publicKey || null;
-    const saved = JSON.parse(localStorage.getItem("olivium_identity") || "null");
-    const isEmail = saved?.type === "email";
+    const liveKey = (window as any).solana?.publicKey
+      || (window as any).walletPubKey
+      || (window as any)._provider?.publicKey
+      || null;
+
+    const saved   = JSON.parse(localStorage.getItem("olivium_identity") || "null");
+    const isEmail  = saved?.type === "email";
     const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
 
     if (isEmail) {
       const label = saved.address || "";
-      if (pillEl) pillEl.innerHTML = `✉️ ${label}`;
-      if (stat) stat.innerHTML = "Email Secured";
+      if (pillEl)     pillEl.innerHTML  = `✉️ ${label}`;
+      if (stat)       stat.innerHTML    = "Email Secured";
       if (connectBtn) {
-        connectBtn.innerText = "Disconnect";
-        connectBtn.style.color = "var(--danger, #d94d4d)";
-        connectBtn.style.border = "1px solid var(--danger, #d94d4d)";
-        connectBtn.style.background = "transparent";
+        connectBtn.innerText            = "Disconnect";
+        connectBtn.style.color          = "#d94d4d";
+        connectBtn.style.border         = "1px solid #d94d4d";
+        connectBtn.style.background     = "transparent";
       }
     } else if (isWallet) {
-      const pubKey = liveKey || (() => {
-        try { return new PublicKey(saved.wallet); } catch { return null; }
-      })();
-
-      let solBalance = "—";
-      let shortAddr = saved?.wallet ? `${saved.wallet.slice(0,4)}...${saved.wallet.slice(-4)}` : "—";
-
-      if (pubKey) {
-        shortAddr = `${pubKey.toBase58().slice(0,4)}...${pubKey.toBase58().slice(-4)}`;
-        try {
-          const lamports = await solanaConnection.getBalance(pubKey);
-          solBalance = (lamports / 1_000_000_000).toFixed(3);
-        } catch (_) {}
-      }
-
-      if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
-      if (stat) stat.innerHTML = "Wallet Mode";
+      const rawAddr = liveKey?.toBase58?.() ?? liveKey ?? saved?.wallet ?? "";
+      const short   = rawAddr ? `${rawAddr.slice(0,4)}...${rawAddr.slice(-4)}` : "—";
+      if (pillEl)     pillEl.innerHTML  = `◎ ${short}`;
+      if (stat)       stat.innerHTML    = "Wallet Mode";
       if (connectBtn) {
-        connectBtn.innerText = `${shortAddr} (Disconnect)`;
-        connectBtn.style.color = "var(--danger, #d94d4d)";
-        connectBtn.style.border = "1px solid var(--danger, #d94d4d)";
-        connectBtn.style.background = "transparent";
+        connectBtn.innerText            = `${short} (Disconnect)`;
+        connectBtn.style.color          = "#d94d4d";
+        connectBtn.style.border         = "1px solid #d94d4d";
+        connectBtn.style.background     = "transparent";
       }
     } else {
-      if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
-      if (stat) stat.innerHTML = "Guest";
+      if (pillEl)     pillEl.innerHTML  = "🌿 Guest Mode";
+      if (stat)       stat.innerHTML    = "Guest";
       if (connectBtn) {
-        connectBtn.innerText = "Connect Profile";
-        connectBtn.style.color = "white";
-        connectBtn.style.border = "";
-        connectBtn.style.background = "var(--green)";
+        connectBtn.innerText            = "Connect Profile";
+        connectBtn.style.color          = "white";
+        connectBtn.style.border         = "";
+        connectBtn.style.background     = "var(--green)";
       }
     }
   } catch (err) {
@@ -185,18 +189,18 @@ async function updateIdentityBalanceUI() {
 
 // Auth Modal Event Listeners
 openModalBtn?.addEventListener("click", () => {
-  if (connectModal) connectModal.style.display = "none";
-  if (modalOverlay) modalOverlay.style.display = "flex";
+  if (connectModal) (connectModal as HTMLElement).style.display = "none";
+  if (modalOverlay) (modalOverlay as HTMLElement).style.display = "flex";
   show("");
 });
 
 closeModalBtn?.addEventListener("click", () => {
-  if (modalOverlay) modalOverlay.style.display = "none";
+  if (modalOverlay) (modalOverlay as HTMLElement).style.display = "none";
 });
 
 modalOverlay?.addEventListener("click", (e) => {
   if (e.target === modalOverlay) {
-    modalOverlay.style.display = "none";
+    (modalOverlay as HTMLElement).style.display = "none";
   }
 });
 
@@ -206,8 +210,8 @@ loginTab?.addEventListener("click", () => {
     loginTab.style.color = "white";
     signupTab.style.background = "transparent";
     signupTab.style.color = "var(--text)";
-    loginForm.style.display = "block";
-    signupForm.style.display = "none";
+    (loginForm as HTMLElement).style.display = "block";
+    (signupForm as HTMLElement).style.display = "none";
     show("");
   }
 });
@@ -218,8 +222,8 @@ signupTab?.addEventListener("click", () => {
     signupTab.style.color = "white";
     loginTab.style.background = "transparent";
     loginTab.style.color = "var(--text)";
-    signupForm.style.display = "block";
-    loginForm.style.display = "none";
+    (signupForm as HTMLElement).style.display = "block";
+    (loginForm as HTMLElement).style.display = "none";
     show("");
   }
 });
@@ -228,10 +232,10 @@ let generatedCustodialWallet = "";
 const secretSeed = "OLIVIUMDAO777MFASEED";
 
 document.getElementById("signupBtn")?.addEventListener("click", async () => {
-  const emailInput = document.getElementById("signupEmail") as HTMLInputElement;
+  const emailInput    = document.getElementById("signupEmail")    as HTMLInputElement;
   const passwordInput = document.getElementById("signupPassword") as HTMLInputElement;
   
-  const emailVal = (emailInput?.value || "").trim().toLowerCase();
+  const emailVal    = (emailInput?.value    || "").trim().toLowerCase();
   const passwordVal = (passwordInput?.value || "").trim();
 
   if (!emailVal || !passwordVal) {
@@ -243,30 +247,30 @@ document.getElementById("signupBtn")?.addEventListener("click", async () => {
   if (qrContainer) qrContainer.innerHTML = "";
 
   try {
-    const credentialCombination = `${emailVal}:${passwordVal}:${secretSeed}`;
-    const encoder = new TextEncoder();
-    const dataBytes = encoder.encode(credentialCombination);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", dataBytes);
-    const deterministicSeedUint8 = new Uint8Array(hashBuffer);
-    const derivedKeypair = Keypair.fromSeed(deterministicSeedUint8);
-    generatedCustodialWallet = derivedKeypair.publicKey.toBase58();
+    const credentialCombination  = `${emailVal}:${passwordVal}:${secretSeed}`;
+    const encoder                 = new TextEncoder();
+    const dataBytes               = encoder.encode(credentialCombination);
+    const hashBuffer              = await crypto.subtle.digest("SHA-256", dataBytes);
+    const deterministicSeedUint8  = new Uint8Array(hashBuffer);
+    const derivedKeypair          = Keypair.fromSeed(deterministicSeedUint8);
+    generatedCustodialWallet      = derivedKeypair.publicKey.toBase58();
 
-    const issuer = encodeURIComponent("Olivium DAO");
-    const account = encodeURIComponent(emailVal);
-    const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secretSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+    const issuer   = encodeURIComponent("Olivium DAO");
+    const account  = encodeURIComponent(emailVal);
+    const totpUri  = `otpauth://totp/${issuer}:${account}?secret=${secretSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 
-    if (qrContainer && typeof QRCode !== 'undefined') {
-      new QRCode(qrContainer, {
-        text: totpUri,
-        width: 180,
-        height: 180,
-        colorDark: "#1f402a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+    if (qrContainer && typeof (window as any).QRCode !== "undefined") {
+      new (window as any).QRCode(qrContainer, {
+        text:         totpUri,
+        width:        180,
+        height:       180,
+        colorDark:    "#1f402a",
+        colorLight:   "#ffffff",
+        correctLevel: (window as any).QRCode.CorrectLevel.H
       });
     }
 
-    if (signupOtpBox) signupOtpBox.style.display = "block";
+    if (signupOtpBox) (signupOtpBox as HTMLElement).style.display = "block";
   } catch (err) {
     console.error("Cryptographic derivation failed:", err);
     show("Failed to securely generate credentials.", false);
@@ -275,10 +279,10 @@ document.getElementById("signupBtn")?.addEventListener("click", async () => {
 
 document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
   const emailInput = document.getElementById("signupEmail") as HTMLInputElement;
-  const otpInput = document.getElementById("signupOtp") as HTMLInputElement;
+  const otpInput   = document.getElementById("signupOtp")   as HTMLInputElement;
   
-  const emailVal = (emailInput?.value || "").trim().toLowerCase();
-  const enteredOtp = (otpInput?.value || "").trim();
+  const emailVal   = (emailInput?.value || "").trim().toLowerCase();
+  const enteredOtp = (otpInput?.value   || "").trim();
 
   if (!enteredOtp || enteredOtp.length < 6) {
     show("Please input your 6-digit authenticator pass code.", false);
@@ -292,13 +296,11 @@ document.getElementById("verifySignupOtp")?.addEventListener("click", async () =
       .from("users")
       .insert([{
         Email_address: emailVal,
-        wallet: generatedCustodialWallet,
-        token: secretSeed
+        wallet:        generatedCustodialWallet,
+        token:         secretSeed
       }]);
 
-    if (dbError && dbError.code !== "23505") {
-      throw dbError;
-    }
+    if (dbError && dbError.code !== "23505") throw dbError;
 
     show("MFA Enabled! Profile synced. Flipping to Login tab...", true);
 
@@ -306,20 +308,20 @@ document.getElementById("verifySignupOtp")?.addEventListener("click", async () =
       loginTab?.click();
       const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement;
       if (loginEmailInput) loginEmailInput.value = emailVal;
-      if (signupOtpBox) signupOtpBox.style.display = "none";
-      if (qrContainer) qrContainer.innerHTML = "";
+      if (signupOtpBox) (signupOtpBox as HTMLElement).style.display = "none";
+      if (qrContainer)  qrContainer.innerHTML = "";
     }, 1500);
   } catch (err: any) {
     console.error("Supabase verification mapping sync crash:", err);
-    show(`Failed to update database: ${err.message || 'Check database constraints.'}`, false);
+    show(`Failed to update database: ${err.message || "Check database constraints."}`, false);
   }
 });
 
 document.getElementById("loginBtn")?.addEventListener("click", () => {
-  const emailInput = document.getElementById("loginEmail") as HTMLInputElement;
+  const emailInput    = document.getElementById("loginEmail")    as HTMLInputElement;
   const passwordInput = document.getElementById("loginPassword") as HTMLInputElement;
   
-  const emailVal = (emailInput?.value || "").trim();
+  const emailVal    = (emailInput?.value    || "").trim();
   const passwordVal = (passwordInput?.value || "").trim();
 
   if (!emailVal || !passwordVal) {
@@ -328,12 +330,12 @@ document.getElementById("loginBtn")?.addEventListener("click", () => {
   }
 
   show("Processing login authorization details...", true);
-  if (loginOtpBox) loginOtpBox.style.display = "block";
+  if (loginOtpBox) (loginOtpBox as HTMLElement).style.display = "block";
 });
 
 document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
   const emailInput = document.getElementById("loginEmail") as HTMLInputElement;
-  const emailVal = (emailInput?.value || "").trim().toLowerCase();
+  const emailVal   = (emailInput?.value || "").trim().toLowerCase();
   
   if (!emailVal) {
     show("Please enter your email.", false);
@@ -355,7 +357,7 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
       return;
     }
 
-    const activeOnChainKeyStr = (profile && profile.wallet) ? profile.wallet : null;
+    const activeOnChainKeyStr = profile?.wallet ?? null;
 
     if (!activeOnChainKeyStr) {
       show("No wallet associated with this email. Please contact support.", false);
@@ -364,29 +366,32 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
     
     (window as any).OliviumAuth.setUser({ email: emailVal, tier: "Standard" });
 
+    // Set up a read-only custodial provider (no signing key on the client)
     (window as any)._provider = {
       publicKey: new PublicKey(activeOnChainKeyStr),
-      wallet: {
-        publicKey: new PublicKey(activeOnChainKeyStr),
-      },
-      signTransaction: async (tx) => {
+      wallet: { publicKey: new PublicKey(activeOnChainKeyStr) },
+      signTransaction: async (tx: any) => {
         console.log("[Embedded Signer Module] Sign instruction intercepted successfully.");
         return tx;
       }
     };
     (window as any).walletPubKey = new PublicKey(activeOnChainKeyStr);
 
-    localStorage.setItem('olivium_identity', JSON.stringify({
-      type: "email",
-      address: emailVal,
+    localStorage.setItem("olivium_identity", JSON.stringify({
+      type:            "email",
+      address:         emailVal,
       custodialWallet: activeOnChainKeyStr
     }));
 
     show("MFA verified successfully! Syncing layout...", true);
 
     setTimeout(() => {
-      if (modalOverlay) modalOverlay.style.display = "none";
-      window.dispatchEvent(new Event('solana:connection-complete'));
+      if (modalOverlay) (modalOverlay as HTMLElement).style.display = "none";
+      // ✅ FIX: dispatch olivium:connected (not solana:connection-complete)
+      // so reserve_board.ts listeners actually fire
+      window.dispatchEvent(new CustomEvent("olivium:connected", {
+        detail: { pubkey: activeOnChainKeyStr, isAdmin: false }
+      }));
     }, 800);
   } catch (err) {
     console.error("Login verification adapter compilation failure:", err);
@@ -394,101 +399,132 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
   }
 });
 
-// Expose on window
-window.updateIdentityBalanceUI = updateIdentityBalanceUI;
+// ── Window registration ──────────────────────────────────────────────────────
+// Do NOT overwrite window.updateIdentityBalanceUI if reserve_board.ts already
+// set the authoritative version. Register as a fallback only.
+if (typeof (window as any).updateIdentityBalanceUI !== "function") {
+  (window as any).updateIdentityBalanceUI = updateIdentityBalanceUI;
+}
 
-// Listen for events
-window.addEventListener('olivium:connected', () => updateIdentityBalanceUI());
-window.addEventListener('olivium:disconnected', () => updateIdentityBalanceUI());
-window.addEventListener('solana:connection-complete', () => updateIdentityBalanceUI());
+// ── Event listeners ──────────────────────────────────────────────────────────
+// All three event names normalised — only olivium:connected / olivium:disconnected
+// are canonical. solana:connection-complete is kept for legacy callers only.
+window.addEventListener("olivium:connected",    () => updateIdentityBalanceUI());
+window.addEventListener("olivium:disconnected", () => updateIdentityBalanceUI());
+window.addEventListener("solana:connection-complete", () => {
+  // Legacy path: re-dispatch as the canonical event so reserve_board.ts fires too
+  window.dispatchEvent(new CustomEvent("olivium:connected", {
+    detail: { pubkey: (window as any).walletPubKey?.toBase58?.() ?? "", isAdmin: false }
+  }));
+  updateIdentityBalanceUI();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => updateIdentityBalanceUI(), 600);
 });
 
-// Mobile toggle
-const mobileToggle = document.getElementById('mobileToggle');
-const navLinks = document.getElementById('navLinks');
+// ── Mobile nav toggle ────────────────────────────────────────────────────────
+const mobileToggle = document.getElementById("mobileToggle");
+const navLinks     = document.getElementById("navLinks");
 
-mobileToggle?.addEventListener('click', () => {
-  navLinks?.classList.toggle('active');
+mobileToggle?.addEventListener("click", () => {
+  navLinks?.classList.toggle("active");
 });
 
-// Connect modal handling
-const connectModalEl = document.getElementById('connectModal');
-const connectBtn = document.getElementById('connectBtn');
-const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
+// ── Connect modal handling ───────────────────────────────────────────────────
+const connectModalEl    = document.getElementById("connectModal");
+const connectBtn        = document.getElementById("connectBtn");
+const connectWalletBtn  = document.querySelector("#walletConnectCard #connectWalletBtn");
 
 async function getActiveWallet() {
-  if ((window as any).walletPubKey) return { type: 'wallet', address: (window as any).walletPubKey.toBase58?.() || String((window as any).walletPubKey) };
-  if ((window as any)._provider?.publicKey) return { type: 'wallet', address: (window as any)._provider.publicKey.toBase58() };
+  if ((window as any).walletPubKey)
+    return { type: "wallet", address: (window as any).walletPubKey.toBase58?.() || String((window as any).walletPubKey) };
+  if ((window as any)._provider?.publicKey)
+    return { type: "wallet", address: (window as any)._provider.publicKey.toBase58() };
   
-  const cached = localStorage.getItem('olivium_identity');
+  const cached = localStorage.getItem("olivium_identity");
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      if (parsed.type === 'wallet' && parsed.wallet) return { type: 'wallet', address: parsed.wallet };
-      if (parsed.type === 'email' && parsed.custodialWallet) return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
+      if (parsed.type === "wallet" && parsed.wallet)
+        return { type: "wallet", address: parsed.wallet };
+      if (parsed.type === "email" && parsed.custodialWallet)
+        return { type: "email", address: parsed.custodialWallet, label: parsed.address };
     } catch(_) {}
   }
   return null;
 }
 
 async function handleDisconnectWorkflow() {
-  if (typeof (window as any).disconnectWallet === 'function') {
+  // Prefer the connection.ts disconnectWallet if available (clears _program etc.)
+  if (typeof (window as any).disconnectWallet === "function") {
     await (window as any).disconnectWallet();
   } else {
-    localStorage.removeItem('olivium_identity');
-    localStorage.removeItem('olivium_user');
-    localStorage.removeItem('walletConnected');
+    // Manual teardown fallback
+    localStorage.removeItem("olivium_identity");
+    localStorage.removeItem("olivium_user");
+    localStorage.removeItem("walletConnected");
     if ((window as any).OliviumAuth) (window as any).OliviumAuth.user = null;
     try { if ((window as any).solana?.disconnect) await (window as any).solana.disconnect(); } catch(_) {}
-    (window as any)._provider = null;
-    (window as any)._program = null;
-    (window as any)._protocol = null;
+    (window as any)._provider    = null;
+    (window as any)._program     = null;
+    (window as any)._protocol    = null;
     (window as any).walletPubKey = null;
-    (window as any).OliviumIdentity = { type: 'guest' };
-    window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+    (window as any).OliviumIdentity = { type: "guest" };
   }
-  localStorage.removeItem('olivium_identity');
-  localStorage.removeItem('olivium_user');
+
+  // Always clean up identity keys and fire the canonical disconnect event
+  localStorage.removeItem("olivium_identity");
+  localStorage.removeItem("olivium_user");
   if ((window as any).OliviumAuth) (window as any).OliviumAuth.user = null;
-  window.dispatchEvent(new Event('solana:connection-complete'));
+
+  // ✅ FIX: fire olivium:disconnected so reserve_board.ts clearAllUserUiAndStates runs
+  window.dispatchEvent(new CustomEvent("olivium:disconnected"));
 }
 
 function closeConnectModal() {
-  if (connectModalEl) connectModalEl.style.display = 'none';
+  if (connectModalEl) (connectModalEl as HTMLElement).style.display = "none";
 }
-
 (window as any).closeConnectModal = closeConnectModal;
 
-connectBtn?.addEventListener('click', async () => {
+connectBtn?.addEventListener("click", async () => {
   const identity = await getActiveWallet();
   if (identity) {
     await handleDisconnectWorkflow();
   } else {
-    if (connectModalEl) connectModalEl.style.display = 'flex';
+    if (connectModalEl) (connectModalEl as HTMLElement).style.display = "flex";
   }
 });
 
-connectWalletBtn?.addEventListener('click', async () => {
+connectWalletBtn?.addEventListener("click", async () => {
   try {
-    if (typeof (window as any).connectWallet === 'function') {
+    if (typeof (window as any).connectWallet === "function") {
       await (window as any).connectWallet(false);
     } else {
       const provider = (window as any).phantom?.solana || (window as any).solana;
       if (!provider) { alert("Solana wallet extension not detected!"); return; }
-      const resp = await provider.connect();
-      const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
+      const resp     = await provider.connect();
+      const pubKeyStr = resp.publicKey
+        ? resp.publicKey.toBase58()
+        : provider.publicKey?.toBase58();
       if (pubKeyStr) {
-        localStorage.setItem('olivium_identity', JSON.stringify({ type: "wallet", wallet: pubKeyStr, source: "solana" }));
+        localStorage.setItem("olivium_identity", JSON.stringify({
+          type: "wallet", wallet: pubKeyStr, source: "solana"
+        }));
         (window as any).walletPubKey = resp.publicKey || provider.publicKey;
-        window.dispatchEvent(new Event('solana:connection-complete'));
+        // ✅ FIX: canonical event, not solana:connection-complete
+        window.dispatchEvent(new CustomEvent("olivium:connected", {
+          detail: { pubkey: pubKeyStr, isAdmin: false }
+        }));
       }
     }
-    const liveKey = (window as any).walletPubKey || (window as any).solana?.publicKey || (window as any)._provider?.publicKey;
+    const liveKey = (window as any).walletPubKey
+      || (window as any).solana?.publicKey
+      || (window as any)._provider?.publicKey;
     if (liveKey) {
-      localStorage.setItem('olivium_identity', JSON.stringify({ type: "wallet", wallet: liveKey.toBase58(), source: "solana" }));
+      localStorage.setItem("olivium_identity", JSON.stringify({
+        type: "wallet", wallet: liveKey.toBase58(), source: "solana"
+      }));
     }
     closeConnectModal();
   } catch (err) {
@@ -497,27 +533,28 @@ connectWalletBtn?.addEventListener('click', async () => {
 });
 
 window.refreshIdentityUI = function() {
-  if (typeof window.updateIdentityBalanceUI === 'function') window.updateIdentityBalanceUI();
+  if (typeof (window as any).updateIdentityBalanceUI === "function") {
+    (window as any).updateIdentityBalanceUI();
+  }
 };
 
 function closeModal() {
-  const modal = document.getElementById('modalOverlay');
-  if (modal) modal.style.display = 'none';
+  const modal = document.getElementById("modalOverlay");
+  if (modal) (modal as HTMLElement).style.display = "none";
 }
 
 function openAgreement() {
-  const modal = document.getElementById('agreementModal');
-  if (modal) modal.style.display = 'flex';
+  const modal = document.getElementById("agreementModal");
+  if (modal) (modal as HTMLElement).style.display = "flex";
 }
 
 function closeAgreement() {
-  const modal = document.getElementById('agreementModal');
-  if (modal) modal.style.display = 'none';
+  const modal = document.getElementById("agreementModal");
+  if (modal) (modal as HTMLElement).style.display = "none";
 }
 
-(window as any).closeModal = closeModal;
-(window as any).openAgreement = openAgreement;
+(window as any).closeModal     = closeModal;
+(window as any).openAgreement  = openAgreement;
 (window as any).closeAgreement = closeAgreement;
 
-// Export everything
 export { waitForProgram, updateIdentityBalanceUI, getActiveWallet, handleDisconnectWorkflow };
