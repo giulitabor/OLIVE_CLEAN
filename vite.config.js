@@ -24,7 +24,7 @@ export default defineConfig({
         Original: resolve(__dirname, "Original-App.html"),
         Tease: resolve(__dirname, "FD_REAL_index.html"),
         game: resolve(__dirname, "landing.html"),
-        debug: resolve(__dirname, "debug.html"),
+        debug: resolve(__dirname, "debug2.html"),
         rewards: resolve(__dirname, "villa_stay.html"),
         adopt: resolve(__dirname, "ADOPT_v2.html"),
 
