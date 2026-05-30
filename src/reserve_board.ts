@@ -446,12 +446,16 @@ function ValidSharesAmount(val: number): number {
 export async function AllPositions() {
     if (positionsCache) return positionsCache;
     if (positionsPromise) return positionsPromise;
-
-    positionsPromise = (window as any)._program.account.sharePosition.all();
-
+ 
+    // FIX: was `_program.account.sharePosition.all()` — now uses window global
+    const program = (window as any)._program;
+    if (!program) return [];
+ 
+    positionsPromise = program.account.sharePosition.all();
     positionsCache = await positionsPromise;
     return positionsCache;
 }
+ 
 
 
 /* =========================================================
