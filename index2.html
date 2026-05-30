@@ -421,478 +421,288 @@
     <a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms</a> | <a href="/refunds.html">Refund Policy</a> | <a href="mailto:support@yourdomain.com">Contact</a>
   </footer>
 
-  <script type="module">
-    import { sb } from "./src/connection.ts";
-    import { PublicKey, SystemProgram } from "@solana/web3.js";
-    import * as anchor from "@coral-xyz/anchor";
+  <script>
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
 
-    window.sb = sb;
-    window.PublicKey = PublicKey;
-    window.SystemProgram = SystemProgram;
-    window.anchor = anchor;
-    window.loadTrees = (filter) => { if(window._loadTreesImpl) window._loadTreesImpl(filter); };
-  </script>
+  mobileToggle?.addEventListener('click', () => {
+    navLinks.classList.toggle('active');
+  });
 
-  <script type="module">
-    import { sb } from "./src/connection.ts";
-    import { PublicKey, Keypair, Connection } from "@solana/web3.js";
+  const connectModalEl = document.getElementById('connectModal');
+  const connectBtn = document.getElementById('connectBtn');
+  const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
 
-    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+  connectBtn?.addEventListener('click', async () => {
+    const identity = await getActiveWallet(); // Check actual state, not button text
 
-        window.OliviumAuth = {
-          user: null,
-          setUser(u) {
-            this.user = u;
-            localStorage.setItem("olivium_user", JSON.stringify(u));
-          },
-          getUser() {
-            return this.user || JSON.parse(localStorage.getItem("olivium_user") || "null");
-          }
-        };
-
-        const openModalBtn = document.getElementById("emailLoginBtn");
-        const closeModalBtn = document.getElementById("closeAuthModal");
-        const modalOverlay = document.getElementById("authModalOverlay");
-        const connectModal = document.getElementById("connectModal");
-
-        const loginTab = document.getElementById("loginTab");
-        const signupTab = document.getElementById("signupTab");
-        const loginForm = document.getElementById("loginForm");
-        const signupForm = document.getElementById("signupForm");
-
-        const loginOtpBox = document.getElementById("loginOtpBox");
-        const signupOtpBox = document.getElementById("signupOtpBox");
-        const qrContainer = document.getElementById("qr");
-        const msg = document.getElementById("msg");
-        const signupEmail = document.getElementById("signupEmail");
-        const signupPassword = document.getElementById("signupPassword");
-        const signupConfirmPassword = document.getElementById("signupConfirmPassword");
-        const signupBtn = document.getElementById("signupBtn");
-
-        const metrics = {
-          len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
-          cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
-          low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
-          num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
-          spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
-        };
-
-        function validateSignupForm() {
-          const passVal = signupPassword.value || "";
-          const confirmVal = signupConfirmPassword.value || "";
-          let allPass = true;
-
-          for (const key in metrics) {
-            const matched = metrics[key].reg.test(passVal);
-            const element = metrics[key].el;
-            if (element) {
-              if (matched) {
-                element.style.color = "#2e7d32";
-                element.querySelector(".icon").innerText = "✔";
-              } else {
-                element.style.color = "#d94d4d";
-                element.querySelector(".icon").innerText = "❌";
-                allPass = false;
-              }
-            }
-          }
-
-          const matches = passVal === confirmVal && passVal.length > 0;
-
-          if (allPass && matches && signupEmail.value.trim().length > 0) {
-            signupBtn.disabled = false;
-            signupBtn.style.background = "var(--green)";
-          } else {
-            signupBtn.disabled = true;
-            signupBtn.style.background = "#cccccc";
-          }
-        }
-
-        signupEmail?.addEventListener("input", validateSignupForm);
-        signupPassword?.addEventListener("input", validateSignupForm);
-        signupConfirmPassword?.addEventListener("input", validateSignupForm);
-
-        function show(text, ok = true) {
-          msg.innerText = text;
-          msg.style.color = ok ? "var(--green)" : "#d94d4d";
-        }
-
-        // Single source of truth for all identity UI: pill, stat, connect button.
-        // Called on DOMContentLoaded, solana:connection-complete, and after disconnect.
-        async function updateIdentityBalanceUI() {
-          try {
-            const pillEl      = document.getElementById("identityPill");
-            const stat        = document.getElementById("identityTypeStat");
-            const connectBtn  = document.getElementById("connectBtn");
-
-            // Resolve active identity — check live wallet first, then _provider, then localStorage
-            const liveKey  = window.solana?.publicKey || window.walletPubKey
-                          || (window._provider?.publicKey) || null;
-            const saved    = JSON.parse(localStorage.getItem("olivium_identity") || "null");
-            const isEmail  = saved?.type === "email";
-            const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
-
-            if (isEmail) {
-              // Email-custodial login
-              const label = saved.address || "";
-              if (pillEl) pillEl.innerHTML = `✉️ ${label}`;
-              if (stat)   stat.innerHTML   = "Email Secured";
-              if (connectBtn) {
-                connectBtn.innerText      = "Disconnect";
-                connectBtn.style.color    = "var(--danger, #d94d4d)";
-                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
-                connectBtn.style.background = "transparent";
-              }
-
-            } else if (isWallet) {
-              // Extension wallet or cached wallet address
-              const pubKey = liveKey || (() => {
-                try { return new PublicKey(saved.wallet); } catch { return null; }
-              })();
-
-              let solBalance = "—";
-              let shortAddr  = saved?.wallet
-                ? `${saved.wallet.slice(0,4)}...${saved.wallet.slice(-4)}`
-                : "—";
-
-              if (pubKey) {
-                shortAddr = `${pubKey.toBase58().slice(0,4)}...${pubKey.toBase58().slice(-4)}`;
-                try {
-                  const lamports = await connection.getBalance(pubKey);
-                  solBalance = (lamports / 1_000_000_000).toFixed(3);
-                } catch (_) {}
-              }
-
-              if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
-              if (stat)   stat.innerHTML   = "Wallet Mode";
-              if (connectBtn) {
-                connectBtn.innerText      = `${shortAddr} (Disconnect)`;
-                connectBtn.style.color    = "var(--danger, #d94d4d)";
-                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
-                connectBtn.style.background = "transparent";
-              }
-
-            } else {
-              // Guest
-              if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
-              if (stat)   stat.innerHTML   = "Guest";
-              if (connectBtn) {
-                connectBtn.innerText      = "Connect Profile";
-                connectBtn.style.color    = "white";
-                connectBtn.style.border   = "";
-                connectBtn.style.background = "var(--green)";
-              }
-            }
-          } catch (err) {
-            console.error("[identityUI] render error:", err);
-          }
-        }
-
-        openModalBtn?.addEventListener("click", () => {
-          if (connectModal) connectModal.style.display = "none";
-          if (modalOverlay) modalOverlay.style.display = "flex";
-          show("");
-        });
-
-        closeModalBtn?.addEventListener("click", () => {
-          modalOverlay.style.display = "none";
-        });
-
-        modalOverlay?.addEventListener("click", (e) => {
-          if (e.target === modalOverlay) {
-            modalOverlay.style.display = "none";
-          }
-        });
-
-        loginTab?.addEventListener("click", () => {
-          loginTab.style.background = "var(--green)";
-          loginTab.style.color = "white";
-          signupTab.style.background = "transparent";
-          signupTab.style.color = "var(--text)";
-          loginForm.style.display = "block";
-          signupForm.style.display = "none";
-          show("");
-        });
-
-        signupTab?.addEventListener("click", () => {
-          signupTab.style.background = "var(--green)";
-          signupTab.style.color = "white";
-          loginTab.style.background = "transparent";
-          loginTab.style.color = "var(--text)";
-          signupForm.style.display = "block";
-          loginForm.style.display = "none";
-          show("");
-        });
-
-        let generatedCustodialWallet = "";
-        const secretSeed = "OLIVIUMDAO777MFASEED";
-
-        document.getElementById("signupBtn")?.addEventListener("click", async () => {
-          const emailVal = (document.getElementById("signupEmail").value || "").trim().toLowerCase();
-          const passwordVal = (document.getElementById("signupPassword").value || "").trim();
-
-          if (!emailVal || !passwordVal) {
-            show("Please complete both Email and Password fields.", false);
-            return;
-          }
-
-          show("Generating secure cryptographic MFA parameters...", true);
-          qrContainer.innerHTML = "";
-
-          try {
-            const credentialCombination = `${emailVal}:${passwordVal}:${secretSeed}`;
-            const encoder = new TextEncoder();
-            const dataBytes = encoder.encode(credentialCombination);
-            const hashBuffer = await crypto.subtle.digest("SHA-256", dataBytes);
-            const deterministicSeedUint8 = new Uint8Array(hashBuffer);
-            const derivedKeypair = Keypair.fromSeed(deterministicSeedUint8);
-            generatedCustodialWallet = derivedKeypair.publicKey.toBase58();
-
-            const issuer = encodeURIComponent("Olivium DAO");
-            const account = encodeURIComponent(emailVal);
-            const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secretSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
-
-            new QRCode(qrContainer, {
-              text: totpUri,
-              width: 180,
-              height: 180,
-              colorDark: "#1f402a",
-              colorLight: "#ffffff",
-              correctLevel: QRCode.CorrectLevel.H
-            });
-
-            signupOtpBox.style.display = "block";
-          } catch (err) {
-            console.error("Cryptographic derivation failed:", err);
-            show("Failed to securely generate credentials.", false);
-          }
-        });
-
-        document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
-          const emailVal = (document.getElementById("signupEmail").value || "").trim().toLowerCase();
-          const enteredOtp = (document.getElementById("signupOtp").value || "").trim();
-
-          if (!enteredOtp || enteredOtp.length < 6) {
-            show("Please input your 6-digit authenticator pass code.", false);
-            return;
-          }
-
-          show("Syncing secure account profile parameters to database...", true);
-
-          try {
-            const { error: dbError } = await sb
-              .from("users")
-              .insert([{
-                Email_address: emailVal,
-                wallet: generatedCustodialWallet,
-                token: secretSeed
-              }]);
-
-            if (dbError && dbError.code !== "23505") {
-              throw dbError;
-            }
-
-            show("MFA Enabled! Profile synced. Flipping to Login tab...", true);
-
-            setTimeout(() => {
-              loginTab.click();
-              const loginEmailInput = document.getElementById("loginEmail");
-              if (loginEmailInput) loginEmailInput.value = emailVal;
-              signupOtpBox.style.display = "none";
-              qrContainer.innerHTML = "";
-            }, 1500);
-          } catch (err) {
-            console.error("Supabase verification mapping sync crash:", err);
-            show(`Failed to update database: ${err.message || 'Check database constraints.'}`, false);
-          }
-        });
-
-        document.getElementById("loginBtn")?.addEventListener("click", () => {
-          const emailVal = (document.getElementById("loginEmail").value || "").trim();
-          const passwordVal = (document.getElementById("loginPassword").value || "").trim();
-
-          if (!emailVal || !passwordVal) {
-            show("Please fill out your account credentials.", false);
-            return;
-          }
-
-          show("Processing login authorization details...", true);
-          loginOtpBox.style.display = "block";
-        });
-
-        document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
-          const emailVal = (document.getElementById("loginEmail").value || "").trim().toLowerCase();
-          if (!emailVal) {
-            show("Please enter your email.", false);
-            return;
-          }
-
-          try {
-            show("Retrieving secure cryptographic wallet association keys...", true);
-
-            const { data: profile, error: profileErr } = await sb
-              .from("users")
-              .select("wallet")
-              .eq("Email_address", emailVal)
-              .maybeSingle();
-              if (profileErr) {
-      console.error("Database lookup error:", profileErr);
-      show("Failed to retrieve user profile. Please try again.", false);
-      return;
+    if (identity) {
+      handleDisconnectWorkflow();
+    } else {
+      connectModalEl.style.display = 'flex';
     }
+  });
 
-    const activeOnChainKeyStr = (profile && profile.wallet)
-      ? profile.wallet
-      : null;  // Don't use fallback wallet - require valid user
+  connectWalletBtn?.addEventListener('click', async () => {
+    try {
+      const provider = window.solana || window.phantom?.solana;
+      if (!provider) {
+        alert("Solana wallet extension not detected!");
+        return;
+      }
+      const resp = await provider.connect();
+      const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
 
-    if (!activeOnChainKeyStr) {
-      show("No wallet associated with this email. Please contact support.", false);
-      return;
-    }
-            window.OliviumAuth.setUser({ email: emailVal, tier: "Standard" });
+      localStorage.setItem('olivium_identity', JSON.stringify({
+        type: "wallet",
+        wallet: pubKeyStr,
+        source: "solana"
+      }));
 
-            window._provider = {
-              publicKey: new PublicKey(activeOnChainKeyStr),
-              wallet: {
-                publicKey: new PublicKey(activeOnChainKeyStr),
-              },
-              signTransaction: async (tx) => {
-                console.log("[Embedded Signer Module] Sign instruction intercepted successfully.");
-                return tx;
-              }
-            };
-            window.walletPubKey = new PublicKey(activeOnChainKeyStr);
+      // Update the global walletPubKey immediately
+      window.walletPubKey = pubKeyStr;
+      
+      // Set up a mock provider for consistency
+      window._provider = {
+        publicKey: pubKeyStr,
+        wallet: { publicKey: pubKeyStr }
+      };
 
-            localStorage.setItem('olivium_identity', JSON.stringify({
-              type: "email",
-              address: emailVal,
-              custodialWallet: activeOnChainKeyStr
-            }));
-
-            show("MFA verified successfully! Syncing layout...", true);
-
-            setTimeout(() => {
-              modalOverlay.style.display = "none";
-              window.dispatchEvent(new Event('solana:connection-complete'));
-            }, 800);
-          } catch (err) {
-            console.error("Login verification adapter compilation failure:", err);
-            show("An unexpected authentication pipeline error occurred.", false);
-          }
-        });
-
-        window.addEventListener('solana:connection-complete', () => {
-          setTimeout(() => {
-            updateIdentityBalanceUI();
-          }, 100);
-        });
-
-        document.addEventListener("DOMContentLoaded", () => {
-          setTimeout(() => {
-            updateIdentityBalanceUI();
-          }, 600);
-        });
-      </script>
-
-      <script>
-        const mobileToggle = document.getElementById('mobileToggle');
-        const navLinks = document.getElementById('navLinks');
-
-        mobileToggle?.addEventListener('click', () => {
-          navLinks.classList.toggle('active');
-        });
-
-        const connectModalEl = document.getElementById('connectModal');
-        const connectBtn = document.getElementById('connectBtn');
-        const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
-
-        connectBtn?.addEventListener('click', async () => {
-        const identity = await getActiveWallet(); // Check actual state, not button text
-
-        if (identity) {
-          handleDisconnectWorkflow();
-        } else {
-          connectModalEl.style.display = 'flex';
-        }
-      });
-
-        connectWalletBtn?.addEventListener('click', async () => {
-          try {
-            const provider = window.solana || window.phantom?.solana;
-            if (!provider) {
-              alert("Solana wallet extension not detected!");
-              return;
-            }
-            const resp = await provider.connect();
-            const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
-
-            localStorage.setItem('olivium_identity', JSON.stringify({
-              type: "wallet",
-              wallet: pubKeyStr,
-              source: "solana"
-            }));
-
-            closeConnectModal();
-            window.dispatchEvent(new Event('solana:connection-complete'));
-          } catch (err) {
-            console.error("Wallet connection declined:", err);
-          }
-        });
-
-        window.closeConnectModal = function() {
-          if(connectModalEl) connectModalEl.style.display = 'none';
-        }
-
-        function handleDisconnectWorkflow() {
-          localStorage.removeItem('olivium_identity');
-          localStorage.removeItem('olivium_user');
-          if(window.OliviumAuth) window.OliviumAuth.user = null;
-          if (window.solana && typeof window.solana.disconnect === 'function') {
-            window.solana.disconnect();
-          }
-          window._provider = null;
-          window.walletPubKey = null;
-          // updateIdentityBalanceUI fires via the solana:connection-complete listener
-          window.dispatchEvent(new Event('solana:connection-complete'));
-        }
-
-        async function getActiveWallet() {
-          if (window.solana?.publicKey) {
-            return { type: 'wallet', address: window.solana.publicKey.toBase58() };
-          }
-          const cached = localStorage.getItem('olivium_identity');
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (parsed.type === 'wallet' && parsed.wallet) {
-                return { type: 'wallet', address: parsed.wallet };
-              }
-              if (parsed.type === 'email' && parsed.custodialWallet) {
-                return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
-              }
-            } catch(e){}
-          }
-          return null;
-        }
-
-        // refreshIdentityUI is an alias so reserve.ts and any external callers still work
-        window.refreshIdentityUI = updateIdentityBalanceUI;
-
-        window.addEventListener('solana:connection-complete', () => {
+      closeConnectModal();
+      
+      // Dispatch events to trigger UI updates
+      window.dispatchEvent(new CustomEvent('olivium:connected', { 
+        detail: { pubkey: pubKeyStr, isAdmin: false } 
+      }));
+      window.dispatchEvent(new Event('solana:connection-complete'));
+      
+      // Force immediate UI update
+      setTimeout(() => {
+        if (typeof updateIdentityBalanceUI === 'function') {
           updateIdentityBalanceUI();
-        });
+        }
+        if (typeof window.refreshIdentityUI === 'function') {
+          window.refreshIdentityUI();
+        }
+        if (typeof window.updateWalletUI === 'function') {
+          window.updateWalletUI();
+        }
+        if (typeof window.updateStatsUI === 'function') {
+          window.updateStatsUI();
+        }
+      }, 100);
+      
+    } catch (err) {
+      console.error("Wallet connection declined:", err);
+    }
+  });
 
-        function closeModal() {
-          document.getElementById('modalOverlay').style.display = 'none';
-        }
-        function openAgreement() {
-          document.getElementById('agreementModal').style.display = 'flex';
-        }
-        function closeAgreement() {
-          document.getElementById('agreementModal').style.display = 'none';
-        }
-      </script>
+  window.closeConnectModal = function() {
+    if(connectModalEl) connectModalEl.style.display = 'none';
+  }
 
+  function handleDisconnectWorkflow() {
+    localStorage.removeItem('olivium_identity');
+    localStorage.removeItem('olivium_user');
+    if(window.OliviumAuth) window.OliviumAuth.user = null;
+    if (window.solana && typeof window.solana.disconnect === 'function') {
+      window.solana.disconnect();
+    }
+    window._provider = null;
+    window.walletPubKey = null;
+    
+    // Dispatch disconnect event for reserve_board.ts to handle
+    window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+    window.dispatchEvent(new Event('solana:connection-complete'));
+    
+    // Force immediate UI reset
+    setTimeout(() => {
+      if (typeof updateIdentityBalanceUI === 'function') {
+        updateIdentityBalanceUI();
+      }
+      if (typeof window.refreshIdentityUI === 'function') {
+        window.refreshIdentityUI();
+      }
+      if (typeof window.resetProfileAndUI === 'function') {
+        window.resetProfileAndUI();
+      }
+    }, 100);
+  }
+
+  async function getActiveWallet() {
+    if (window.solana?.publicKey) {
+      return { type: 'wallet', address: window.solana.publicKey.toBase58() };
+    }
+    if (window.walletPubKey) {
+      return { type: 'wallet', address: window.walletPubKey };
+    }
+    const cached = localStorage.getItem('olivium_identity');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.type === 'wallet' && parsed.wallet) {
+          return { type: 'wallet', address: parsed.wallet };
+        }
+        if (parsed.type === 'email' && parsed.custodialWallet) {
+          return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
+        }
+      } catch(e){}
+    }
+    return null;
+  }
+
+  // Enhanced updateIdentityBalanceUI with more comprehensive state checking
+  async function updateIdentityBalanceUI() {
+    try {
+      const pillEl = document.getElementById("identityPill");
+      const stat = document.getElementById("identityTypeStat");
+      const connectBtn = document.getElementById("connectBtn");
+      const treeCountStat = document.getElementById("treeCountStat");
+      const shareCountStat = document.getElementById("shareCountStat");
+      const grovePositionStat = document.getElementById("grovePositionStat");
+
+      // Resolve active identity more thoroughly
+      let activeWallet = null;
+      let identityType = "guest";
+      
+      // Check live wallet connection
+      if (window.solana?.publicKey) {
+        activeWallet = window.solana.publicKey.toBase58();
+        identityType = "wallet";
+      } else if (window.walletPubKey && typeof window.walletPubKey === 'string') {
+        activeWallet = window.walletPubKey;
+        identityType = "wallet";
+      } else if (window.walletPubKey?.toBase58) {
+        activeWallet = window.walletPubKey.toBase58();
+        identityType = "wallet";
+      }
+      
+      // Check localStorage if no live connection
+      if (!activeWallet) {
+        const saved = JSON.parse(localStorage.getItem("olivium_identity") || "null");
+        if (saved?.type === "email" && saved?.custodialWallet) {
+          activeWallet = saved.custodialWallet;
+          identityType = "email";
+        } else if (saved?.type === "wallet" && saved?.wallet) {
+          activeWallet = saved.wallet;
+          identityType = "wallet";
+        }
+      }
+
+      if (activeWallet && identityType === "email") {
+        // Email-custodial login
+        const label = activeWallet.slice(0, 6) + "..." + activeWallet.slice(-4);
+        if (pillEl) pillEl.innerHTML = `✉️ ${label}`;
+        if (stat) stat.innerHTML = "Email Secured";
+        if (connectBtn) {
+          connectBtn.innerText = "Disconnect";
+          connectBtn.style.color = "#d94d4d";
+          connectBtn.style.border = "1px solid #d94d4d";
+          connectBtn.style.background = "transparent";
+        }
+        // Trigger stats update for email users
+        if (typeof window.updateStatsUI === 'function') {
+          await window.updateStatsUI();
+        }
+
+      } else if (activeWallet && identityType === "wallet") {
+        // Wallet connected
+        const shortAddr = `${activeWallet.slice(0, 4)}...${activeWallet.slice(-4)}`;
+        let solBalance = "—";
+        
+        try {
+          const connection = new solanaWeb3.Connection("https://api.devnet.solana.com", "confirmed");
+          const pubKey = new solanaWeb3.PublicKey(activeWallet);
+          const lamports = await connection.getBalance(pubKey);
+          solBalance = (lamports / 1_000_000_000).toFixed(3);
+        } catch (_) {}
+        
+        if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
+        if (stat) stat.innerHTML = "Wallet Mode";
+        if (connectBtn) {
+          connectBtn.innerText = `${shortAddr} (Disconnect)`;
+          connectBtn.style.color = "#d94d4d";
+          connectBtn.style.border = "1px solid #d94d4d";
+          connectBtn.style.background = "transparent";
+        }
+        // Trigger stats update for wallet users
+        if (typeof window.updateStatsUI === 'function') {
+          await window.updateStatsUI();
+        }
+
+      } else {
+        // Guest mode
+        if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+        if (stat) stat.innerHTML = "Guest";
+        if (connectBtn) {
+          connectBtn.innerText = "Connect Profile";
+          connectBtn.style.color = "white";
+          connectBtn.style.border = "";
+          connectBtn.style.background = "var(--green)";
+        }
+        // Reset stats to defaults
+        if (treeCountStat) treeCountStat.innerText = "--";
+        if (shareCountStat) shareCountStat.innerText = "--";
+        if (grovePositionStat) grovePositionStat.innerText = "0";
+      }
+      
+      // Always try to refresh villa stay UI if available
+      if (typeof window.updateVillaStayUI === 'function') {
+        await window.updateVillaStayUI();
+      }
+      
+    } catch (err) {
+      console.error("[identityUI] render error:", err);
+    }
+  }
+
+  // Make sure Solana Web3 is available
+  if (typeof solanaWeb3 === 'undefined') {
+    window.solanaWeb3 = solanaWeb3;
+  }
+
+  // Make refreshIdentityUI an alias
+  window.refreshIdentityUI = updateIdentityBalanceUI;
+  
+  // Make the function globally available
+  window.updateIdentityBalanceUI = updateIdentityBalanceUI;
+
+  window.addEventListener('solana:connection-complete', () => {
+    setTimeout(() => {
+      updateIdentityBalanceUI();
+    }, 100);
+  });
+  
+  // Also listen for olivium:connected events from reserve_board.ts
+  window.addEventListener('olivium:connected', () => {
+    setTimeout(() => {
+      updateIdentityBalanceUI();
+    }, 100);
+  });
+  
+  window.addEventListener('olivium:disconnected', () => {
+    setTimeout(() => {
+      updateIdentityBalanceUI();
+    }, 100);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      updateIdentityBalanceUI();
+      // Also try to initialize any pending wallet connections
+      const saved = localStorage.getItem("olivium_identity");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.type === "wallet" && parsed.wallet) {
+            window.walletPubKey = parsed.wallet;
+            window.dispatchEvent(new Event('solana:connection-complete'));
+          }
+        } catch(e) {}
+      }
+    }, 600);
+  });
+</script>
       <script type="module" src="./src/reserve_board.ts"></script>
 </body>
 </html>
