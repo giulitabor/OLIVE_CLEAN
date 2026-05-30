@@ -1124,7 +1124,14 @@ export function handleDisconnectReset() {
       </div>
     `;
   }
+const btn =
+  document.getElementById("connectWalletBtn");
 
+if (btn) {
+  btn.textContent = "Connect Profile";
+  btn.classList.remove("connected");
+  btn.dataset.connected = "false";
+}
   // 4. Force reset raw text dashboard metrics across UI elements
   // Targets standard metric tracking identifiers
   const statSelectors = {
