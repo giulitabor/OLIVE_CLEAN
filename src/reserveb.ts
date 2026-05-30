@@ -8,8 +8,6 @@
     window.anchor = anchor;
     window.loadTrees = (filter) => { if(window._loadTreesImpl) window._loadTreesImpl(filter); };
 
-   import { sb } from "./src/connection.ts";
-    import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
     const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
