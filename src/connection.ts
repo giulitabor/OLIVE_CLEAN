@@ -4,10 +4,14 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, Commitment } from "@solana/web3.js";
 import { AnchorProvider, Program, setProvider } from "@coral-xyz/anchor";
 import idl from "./SIMPLE/idl/idl.json";
 import { createClient } from "@supabase/supabase-js";
+import { Buffer } from 'buffer';
+
+// Make Buffer available globally for Solana transactions
+window.Buffer = Buffer;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SUPABASE CLIENT
@@ -20,8 +24,9 @@ export const sb = createClient(
 // ═══════════════════════════════════════════════════════════════════════════
 // OPTIMIZED BLOCKCHAIN CONNECTION
 // ═══════════════════════════════════════════════════════════════════════════
-const RPC_URL = import.meta.env.VITE_RPC_URL || "https://api.devnet.solana.com"
+const RPC_URL = import.meta.env.VITE_RPC_URL || "https://api.devnet.solana.com";
 console.log(`[CONNECTION] Using RPC: ${RPC_URL}`);
+
 const connectionConfig: {
   commitment: Commitment;
   confirmTransactionInitialTimeout?: number;
@@ -81,6 +86,24 @@ export function getProvider(): AnchorProvider {
 
 export let program: Program;
 export let provider: AnchorProvider;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WAIT FOR PROGRAM (for modules that need to wait)
+// ═══════════════════════════════════════════════════════════════════════════
+export async function waitForProgram(timeout = 10000): Promise<Program | null> {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    if (_program) {
+      console.log("[WAIT] Program found");
+      return _program;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  
+  console.warn("[WAIT] Program timeout");
+  return null;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ✅ COMPLETE UI RESET TO DEFAULT VALUES
@@ -297,7 +320,7 @@ export async function connectWallet(auto = false): Promise<WalletConnectionState
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ✅ REFRESH ALL UI AFTER CONNECTION (NEW FUNCTION)
+// ✅ REFRESH ALL UI AFTER CONNECTION
 // ═══════════════════════════════════════════════════════════════════════════
 async function refreshAllUIAfterConnection(pubkey: string) {
   console.log("[UI REFRESH] Updating all UI components after connection...");
@@ -362,7 +385,7 @@ async function refreshAllUIAfterConnection(pubkey: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ✅ DISCONNECT WALLET (FIXED - COMPLETE RESET)
+// ✅ DISCONNECT WALLET (COMPLETE RESET)
 // ═══════════════════════════════════════════════════════════════════════════
 export async function disconnectWallet() {
   console.log("[DISCONNECT] Starting disconnect and full UI reset...");
@@ -459,6 +482,26 @@ export function isConnected(): boolean {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// GET ACTIVE WALLET (for other modules)
+// ═══════════════════════════════════════════════════════════════════════════
+export function getActiveWallet(): string | null {
+  const pubKey = (window as any).walletPubKey || (window as any).solana?.publicKey || (window as any)._provider?.publicKey;
+  if (pubKey) return pubKey.toBase58();
+  
+  try {
+    const cached = localStorage.getItem("olivium_identity");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.type === "wallet" && parsed.wallet) return parsed.wallet;
+      if (parsed.type === "email" && parsed.custodialWallet) return parsed.custodialWallet;
+    }
+  } catch (e) {
+    console.error("Failed to get cached wallet:", e);
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // CONNECTION HEALTH CHECK
 // ═══════════════════════════════════════════════════════════════════════════
 export async function checkConnectionHealth(): Promise<{
@@ -486,11 +529,52 @@ export async function checkConnectionHealth(): Promise<{
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// AUTO-CONNECT FROM CACHED IDENTITY (on page load)
+// ═══════════════════════════════════════════════════════════════════════════
+export async function tryAutoConnect(): Promise<boolean> {
+  const cachedIdentity = localStorage.getItem('olivium_identity');
+  if (!cachedIdentity) return false;
+  
+  try {
+    const identity = JSON.parse(cachedIdentity);
+    if (identity.type === 'wallet' && identity.wallet) {
+      console.log('[AUTO-CONNECT] Found cached wallet, attempting to restore session...');
+      // Just set the pubkey for display, actual connection requires user interaction
+      try {
+        const pubkey = new PublicKey(identity.wallet);
+        (window as any).walletPubKey = pubkey;
+        (window as any).OliviumIdentity = { type: 'wallet', wallet: identity.wallet };
+        await refreshAllUIAfterConnection(identity.wallet);
+        return true;
+      } catch (e) {
+        console.error('[AUTO-CONNECT] Invalid cached wallet:', e);
+      }
+    } else if (identity.type === 'email' && identity.custodialWallet) {
+      console.log('[AUTO-CONNECT] Found cached email identity');
+      (window as any).walletPubKey = new PublicKey(identity.custodialWallet);
+      await refreshAllUIAfterConnection(identity.custodialWallet);
+      return true;
+    }
+  } catch (e) {
+    console.error('[AUTO-CONNECT] Error parsing cached identity:', e);
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // EXPOSE GLOBALS
 // ═══════════════════════════════════════════════════════════════════════════
 (window as any).checkConnectionHealth = checkConnectionHealth;
 (window as any).connectWallet = connectWallet;
 (window as any).disconnectWallet = disconnectWallet;
 (window as any).resetAllUIDefaults = resetAllUIDefaults;
+(window as any).waitForProgram = waitForProgram;
+(window as any).getActiveWallet = getActiveWallet;
+(window as any).tryAutoConnect = tryAutoConnect;
+
+// Attempt auto-connect on module load (but don't block)
+setTimeout(() => {
+  tryAutoConnect().catch(console.error);
+}, 1000);
 
 console.log("[connection.ts] ✅ Optimized module loaded with complete UI reset");
