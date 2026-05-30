@@ -400,8 +400,8 @@ document.getElementById("verifyLoginOtp")?.addEventListener("click", async () =>
 });
 
 // ── Window registration ──────────────────────────────────────────────────────
-// Do NOT overwrite window.updateIdentityBalanceUI if reserve_board.ts already
-// set the authoritative version. Register as a fallback only.
+// The inline <script> in index2.html defines the authoritative version before
+// any module loads. Only register this fallback if nothing is there yet.
 if (typeof (window as any).updateIdentityBalanceUI !== "function") {
   (window as any).updateIdentityBalanceUI = updateIdentityBalanceUI;
 }
