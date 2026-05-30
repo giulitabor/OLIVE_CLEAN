@@ -70,13 +70,21 @@ const signupConfirmPassword = document.getElementById("signupConfirmPassword");
 const signupBtn = document.getElementById("signupBtn");
 
 // Password metrics
-const metrics = {
-  len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
-  cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
-  low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
-  num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
+// ─────────────────────────────────────────────────────────────
+ 
+interface MetricEntry {
+  reg: RegExp;
+  el: HTMLElement | null;
+}
+ 
+const metrics: Record<string, MetricEntry> = {
+  len: { reg: /.{6,}/,       el: document.getElementById("metric-len") },
+  cap: { reg: /[A-Z]/,       el: document.getElementById("metric-cap") },
+  low: { reg: /[a-z]/,       el: document.getElementById("metric-low") },
+  num: { reg: /[0-9]/,       el: document.getElementById("metric-num") },
   spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
 };
+
 
 function validateSignupForm() {
   const passVal = (signupPassword as HTMLInputElement)?.value || "";
