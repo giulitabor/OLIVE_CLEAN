@@ -925,8 +925,7 @@ window.updateIdentityBalanceUI?.();
         }
 
         // refreshIdentityUI is an alias so reserve.ts and any external callers still work
-        window.refreshIdentityUI = updateIdentityBalanceUI;
-
+window.refreshIdentityUI = window.updateIdentityBalanceUI;
         window.addEventListener('solana:connection-complete', () => {
   window.updateIdentityBalanceUI?.();
         });
