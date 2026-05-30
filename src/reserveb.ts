@@ -8,7 +8,6 @@
     window.anchor = anchor;
     window.loadTrees = (filter) => { if(window._loadTreesImpl) window._loadTreesImpl(filter); };
 
-  <script type="module">
    import { sb } from "./src/connection.ts";
     import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
@@ -368,9 +367,7 @@
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => updateIdentityBalanceUI(), 600);
         });
-      </script>
 
-      <script>
         const mobileToggle = document.getElementById('mobileToggle');
         const navLinks = document.getElementById('navLinks');
 
