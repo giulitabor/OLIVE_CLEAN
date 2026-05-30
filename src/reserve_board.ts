@@ -1148,6 +1148,9 @@ const villaDiscount = document.getElementById("villaDiscountStat");
 if (villaIdentity) villaIdentity.textContent = "Not Connected";
 if (villaTier) villaTier.textContent = "Standard Guest";
 if (villaDiscount) villaDiscount.textContent = "0%";
+  window.dispatchEvent(
+  new Event("olivium:disconnected")
+);
 
   console.log("✅ Dashboard values cleared successfully.");
 }
