@@ -2482,7 +2482,11 @@ const emailBtn =
 
 
 (window as any).loadUserTreePositions = async function () {
-  const program = (window as any)._program;
+   const program = (window as any)._program;
+  if (!program) {
+    console.log("[POSITIONS] No program - returning empty array");
+    return [];
+  }
   const wallet = (window as any).solana;
 
   const fallbackWalletAddress = Wallet();
