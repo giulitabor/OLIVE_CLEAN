@@ -22,10 +22,6 @@ export const sb = createClient(
 // ═══════════════════════════════════════════════════════════════════════════
 const RPC_URL = import.meta.env.VITE_RPC_URL || "https://api.devnet.solana.com"
 console.log(`[CONNECTION] Using RPC: ${RPC_URL}`);
-
-export const connection = new Connection(RPC_URL, "confirmed");
-export const PROGRAM_ID = new PublicKey(idl.address);
-
 const connectionConfig: {
   commitment: Commitment;
   confirmTransactionInitialTimeout?: number;
