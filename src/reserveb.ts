@@ -1,4 +1,4 @@
-    import { sb } from "./src/connection.ts";
+    import { sb } from "./connection.ts";
     import { PublicKey, SystemProgram } from "@solana/web3.js";
     import * as anchor from "@coral-xyz/anchor";
 
