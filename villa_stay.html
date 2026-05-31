@@ -679,7 +679,7 @@
         /* =========================================================
            NATIVE EXTENSION WEB3 WALLET ACCESS LAYER
            ========================================================= */
-        document.getElementById("connectWalletBtn")?.addEventListener("click", async () => {
+        document.getElementById("connectBtn")?.addEventListener("click", async () => {
             try {
                 const provider = window.solana || window.phantom?.solana;
                 if (!provider) {
