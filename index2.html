@@ -526,18 +526,12 @@
             const connectBtn  = document.getElementById("connectBtn");
 
             // Resolve active identity — check live wallet first, then _provider, then localStorage
-const saved =
-  JSON.parse(
-    localStorage.getItem("olivium_identity") || "null"
-  );
-
-const liveKey =
-  saved?.type === "wallet"
-    ? window.solana?.publicKey
-    : null;
+            const liveKey  = window.solana?.publicKey || window.walletPubKey
+                          || (window._provider?.publicKey) || null;
+            const saved    = JSON.parse(localStorage.getItem("olivium_identity") || "null");
             const isEmail  = saved?.type === "email";
             const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
-console.log("EMAIL",isEmail);
+
             if (isEmail) {
               // Email-custodial login
               const label = saved.address || "";
@@ -579,28 +573,27 @@ console.log("EMAIL",isEmail);
               }
 
             } else {
-              console.log("Its a guest");
               // Guest
-              console.log("Welcome guest!", connectModal,"modal should open");
-          if (connectModal) connectModal.style.display = "none";
-          if (modalOverlay) modalOverlay.style.display = "flex";
-          show("");
-
-             // if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
-            //  if (stat)   stat.innerHTML   = "Guest";
-            //  if (connectBtn) {
-             //   connectBtn.innerText      = "Connect Profile";
-             //   connectBtn.style.color    = "white";
-             //   connectBtn.style.border   = "";
-             //   connectBtn.style.background = "var(--green)";
+              if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+              if (stat)   stat.innerHTML   = "Guest";
+              if (connectBtn) {
+                connectBtn.innerText      = "Connect Profile";
+                connectBtn.style.color    = "white";
+                connectBtn.style.border   = "";
+                connectBtn.style.background = "var(--green)";
               }
             }
           } catch (err) {
             console.error("[identityUI] render error:", err);
-          
+          }
         }
 window.updateIdentityBalanceUI = updateIdentityBalanceUI;
-        
+
+        openModalBtn?.addEventListener("click", () => {
+          if (connectModal) connectModal.style.display = "none";
+          if (modalOverlay) modalOverlay.style.display = "flex";
+          show("");
+        });
 
         closeModalBtn?.addEventListener("click", () => {
           modalOverlay.style.display = "none";
@@ -791,13 +784,13 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
 
         window.addEventListener('solana:connection-complete', () => {
           setTimeout(() => {
-window.updateIdentityBalanceUI?.();
+            updateIdentityBalanceUI();
           }, 100);
         });
 
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
-window.updateIdentityBalanceUI?.();
+            updateIdentityBalanceUI();
           }, 600);
         });
       </script>
@@ -814,12 +807,32 @@ window.updateIdentityBalanceUI?.();
         const connectBtn = document.getElementById('connectBtn');
         const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
 
+        async function getActiveWallet() {
+          if (window.solana?.publicKey) {
+            return { type: 'wallet', address: window.solana.publicKey.toBase58() };
+          }
+          const cached = localStorage.getItem('olivium_identity');
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed.type === 'wallet' && parsed.wallet) {
+                return { type: 'wallet', address: parsed.wallet };
+              }
+              if (parsed.type === 'email' && parsed.custodialWallet) {
+                return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
+              }
+            } catch(e){}
+          }
+          return null;
+        }
+
         connectBtn?.addEventListener('click', async () => {
         const identity = await getActiveWallet(); // Check actual state, not button text
-console.log(identity," ",OliviumIdentity);
-        if (OliviumIdentity) {
+
+        if (identity) {
           handleDisconnectWorkflow();
         } else {
+          connectModalEl.classList.remove('hidden');
           connectModalEl.style.display = 'flex';
         }
       });
@@ -893,7 +906,8 @@ console.log(identity," ",OliviumIdentity);
   }
   
   // Close any open modals
-  const modals = ['modalOverlay', 'agreementModal', 'successModal', 'connectModal', 'sell-modal', 'tree-detail-modal'];
+  const modals = ['modalOverlay', 'agreementModal', 'successModal', 'sell-modal', 'tree-detail-modal'];
+  // connectModal intentionally excluded — it must stay openable after disconnect
   modals.forEach(id => {
     const modal = document.getElementById(id);
     if (modal) {
@@ -912,29 +926,19 @@ console.log(identity," ",OliviumIdentity);
   
   console.log("Disconnect complete - stats reset");
 }
-        async function getActiveWallet() {
-          if (window.solana?.publicKey) {
-            return { type: 'wallet', address: window.solana.publicKey.toBase58() };
-          }
-          const cached = localStorage.getItem('olivium_identity');
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (parsed.type === 'wallet' && parsed.wallet) {
-                return { type: 'wallet', address: parsed.wallet };
-              }
-              if (parsed.type === 'email' && parsed.custodialWallet) {
-                return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
-              }
-            } catch(e){}
-          }
-          return null;
-        }
 
-        // refreshIdentityUI is an alias so reserve.ts and any external callers still work
-window.refreshIdentityUI = window.updateIdentityBalanceUI;
+
+        // refreshIdentityUI: plain <script> runs before the module script, so
+        // window.updateIdentityBalanceUI doesn't exist yet at this point.
+        // Wrap it so the reference is resolved at call time, not assignment time.
+        window.refreshIdentityUI = function() {
+          if (typeof window.updateIdentityBalanceUI === 'function') {
+            window.updateIdentityBalanceUI();
+          }
+        };
+
         window.addEventListener('solana:connection-complete', () => {
-  window.updateIdentityBalanceUI?.();
+          updateIdentityBalanceUI();
         });
 
         function closeModal() {
