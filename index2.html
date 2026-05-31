@@ -595,12 +595,11 @@ console.log("EMAIL",isEmail);
           }
         }
 window.updateIdentityBalanceUI = updateIdentityBalanceUI;
-
-        openModalBtn?.addEventListener("click", () => {
+console.log("Welcome guest!", connectModal,"modal should open");
           if (connectModal) connectModal.style.display = "none";
           if (modalOverlay) modalOverlay.style.display = "flex";
           show("");
-        });
+        
 
         closeModalBtn?.addEventListener("click", () => {
           modalOverlay.style.display = "none";
