@@ -815,8 +815,8 @@ window.updateIdentityBalanceUI?.();
 
         connectBtn?.addEventListener('click', async () => {
         const identity = await getActiveWallet(); // Check actual state, not button text
-
-        if (identity) {
+console.log(identity," ",OliviumIdentity);
+        if (OliviumIdentity) {
           handleDisconnectWorkflow();
         } else {
           connectModalEl.style.display = 'flex';
