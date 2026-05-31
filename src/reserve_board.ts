@@ -464,6 +464,7 @@ export async function AllPositions() {
 
 async function loadTrees(filter = "all") {
   const container = document.getElementById("treeGrid");
+  console.log("about to load trees");
 
   if (!container) return;
 
@@ -475,6 +476,7 @@ async function loadTrees(filter = "all") {
   `;
 
   const program = await waitForProgram();
+  console.log(program);
 
   const { data: dbTrees, error } = await sb
     .from("tree_metadata")
@@ -498,7 +500,7 @@ async function loadTrees(filter = "all") {
   );
 
 const guestMode = !identity;
-  
+  console.log(guestMode);
 
 if (program && !guestMode) {
   try {
