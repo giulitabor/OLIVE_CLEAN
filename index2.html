@@ -916,14 +916,13 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
     }
   });
   
-  // Dispatch event to trigger UI update
+  // Fire both events:
+  // 'olivium:disconnected' → reserve_board.ts handleDisconnectReset (nulls caches,
+  //    reloads tree grid as guest, clears owned-state buttons)
+  // 'solana:connection-complete' → updateIdentityBalanceUI (resets pill/stat/btn)
+  window.dispatchEvent(new CustomEvent('olivium:disconnected'));
   window.dispatchEvent(new Event('solana:connection-complete'));
-  
-  // Reload trees as guest
-  if (typeof window.loadTrees === 'function') {
-    setTimeout(() => window.loadTrees('all'), 100);
-  }
-  
+
   console.log("Disconnect complete - stats reset");
 }
 
