@@ -532,4 +532,18 @@
         const creditsEl = document.getElementById('credits-count-display');
         
         if (identity) {
-            tierNameEl.textContent = 'G
+            tierNameEl.textContent = 'Grove Patron';
+            sharesEl.textContent = '85';
+            creditsEl.textContent = '12';
+        } else {
+            tierNameEl.textContent = 'Guest Mode';
+            sharesEl.textContent = '0';
+            creditsEl.textContent = '00';
+        }
+    }
+    updateUI();
+</script>
+
+<script type="module" src="./src/reserve.ts"></script>
+</body>
+</html>
