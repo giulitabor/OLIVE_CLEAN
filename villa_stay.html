@@ -235,7 +235,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div class="tech-card" style="text-align: center;">
                 <p style="font-size: 0.7rem; color: #7A8275;">Trees Adopted</p>
-                <p id="shares-count-display" style="font-size: 2.5rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; margin: 0.5rem 0;">0</p>
+                <p id="mignole-count-display" style="font-size: 2.5rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; margin: 0.5rem 0;">0</p>
                 <p style="font-size: 0.7rem; color: #D4AF37;">Nodes Detected</p>
             </div>
             <div class="tech-card" id="creditsPulseCard" style="text-align: center;">
@@ -528,16 +528,16 @@
     function updateUI() {
         const identity = localStorage.getItem('olivium_identity');
         const tierNameEl = document.getElementById('tier-name');
-        const sharesEl = document.getElementById('shares-count-display');
+        const mignoleEl = document.getElementById('mignole-count-display');
         const creditsEl = document.getElementById('credits-count-display');
         
         if (identity) {
             tierNameEl.textContent = 'Grove Patron';
-            sharesEl.textContent = '85';
+            mignoleEl.textContent = '85';
             creditsEl.textContent = '12';
         } else {
             tierNameEl.textContent = 'Guest Mode';
-            sharesEl.textContent = '0';
+            mignoleEl.textContent = '0';
             creditsEl.textContent = '00';
         }
     }
