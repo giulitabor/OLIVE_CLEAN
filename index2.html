@@ -871,6 +871,14 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
   localStorage.removeItem('olivium_identity');
   localStorage.removeItem('olivium_user');
   localStorage.removeItem('walletConnected');
+            if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+              if (stat)   stat.innerHTML   = "Guest";
+              if (connectBtn) {
+                connectBtn.innerText      = "Connect Profile";
+                connectBtn.style.color    = "white";
+                connectBtn.style.border   = "";
+                connectBtn.style.background = "var(--green)";
+              }
   
   // Clear global objects
   if(window.OliviumAuth) window.OliviumAuth.user = null;
