@@ -858,23 +858,26 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
           return null;
         }
 
-        connectBtn?.addEventListener('click', async () => {
-connectBtn?.addEventListener("click", () => {
-  if (window.App.state.identity) {
-    window.App.setIdentity(null);
-    localStorage.removeItem("olivium_identity");
-  } else {
-    connectModalEl.style.display = "flex";
+       connectBtn?.addEventListener('click', async () => {
+  try {
+    const identity = await getActiveWallet();
+
+    // SAFE: explicitly check object first
+    if (identity && identity.address) {
+      await handleDisconnectWorkflow();
+      return;
+    }
+
+    // OPEN CONNECT MODAL
+    if (connectModalEl) {
+      connectModalEl.classList.remove('hidden');
+      connectModalEl.style.display = 'flex';
+    }
+
+  } catch (err) {
+    console.error("[CONNECT_BTN_ERROR]", err);
   }
 });
-        if (identity) {
-          handleDisconnectWorkflow();
-        } else {
-          connectModalEl.classList.remove('hidden');
-          connectModalEl.style.display = 'flex';
-        }
-      });
-
         connectWalletBtn?.addEventListener('click', async () => {
           try {
             const provider = window.solana || window.phantom?.solana;
