@@ -441,14 +441,10 @@ window.App.state = {
     import { sb } from "./src/connection.ts";
     import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
-if (!window.connection) {
-  const { Connection } = await import("@solana/web3.js");
-
-  window.connection = new Connection(
-    "https://api.devnet.solana.com",
-    "confirmed"
-  );
-}
+window.connection = new Connection(
+  "https://api.devnet.solana.com",
+  "confirmed"
+);
         window.OliviumAuth = {
           user: null,
           setUser(u) {
@@ -487,13 +483,6 @@ if (!window.connection) {
           spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
         };
 
-    async function safeUpdateUI() {
-  if (!window.connection) {
-    setTimeout(safeUpdateUI, 300);
-    return;
-  }
-  await updateIdentityBalanceUI();
-}
         function validateSignupForm() {
           const passVal = signupPassword.value || "";
           const confirmVal = signupConfirmPassword.value || "";
@@ -598,11 +587,6 @@ if (!window.connection) {
 
       try {
         const pubKey = new PublicKey(saved.wallet);
-if (!window.connection || !window.connection.getBalance) {
-  console.warn("Solana connection not ready yet");
-  return;
-}
-
 const lamports = await window.connection.getBalance(pubKey);
         solBalance = (lamports / 1_000_000_000).toFixed(3);
       } catch (err) {
