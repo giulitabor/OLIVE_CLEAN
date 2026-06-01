@@ -866,6 +866,10 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
 
         function handleDisconnectWorkflow() {
   console.log("Disconnecting - clearing all data...");
+            const pillEl      = document.getElementById("identityPill");
+            const stat        = document.getElementById("identityTypeStat");
+            const connectBtn  = document.getElementById("connectBtn");
+console.log(pillEl,stat);
   
   // Clear all storage
   localStorage.removeItem('olivium_identity');
