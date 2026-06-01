@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Olivium DAO | Reserve Your Tree</title>
+  <title>Olivium DASHBOARD| Adopt Your Tree</title>
   <link rel="stylesheet" href="1style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -40,7 +40,7 @@
     <div class="nav-inner">
       <div class="brand">
         <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png" alt="Olivium Logo">
-        <span>Olivium DAO</span>
+        <span>Olivium DASDBOARD</span>
       </div>
       <nav class="nav-links" id="navLinks">
         <a class="nav-link" href="understand.html">About Olivium</a>
@@ -55,8 +55,8 @@
 
   <section class="hero">
     <div>
-      <h1 class="hero-title">Reserve Your Tree 🌿</h1>
-      <p class="hero-subtitle">Adopt a real olive tree, track your grove ownership on-chain, and unlock ecosystem rewards through Olivium DAO.</p>
+      <h1 class="hero-title">Adopt Your Tree 🌿</h1>
+      <p class="hero-subtitle">Adopt a real olive tree, track your grove ownership on-chain, and unlock ecosystem rewards!</p>
       <div class="hero-actions">
         <button class="primary-btn" style="width:auto;padding:16px 24px;" onclick="if(window.loadTrees) window.loadTrees('available')">Explore Grove</button>
       </div>
@@ -64,7 +64,7 @@
     <div class="hero-card">
       <div class="stats-grid">
         <div class="stat-box"><div class="stat-label">Trees On-Chain</div><div class="stat-value" id="treeCountStat">--</div></div>
-        <div class="stat-box"><div class="stat-label">Total Shares</div><div class="stat-value" id="shareCountStat">--</div></div>
+        <div class="stat-box"><div class="stat-label">Total Mignole</div><div class="stat-value" id="shareCountStat">--</div></div>
         <div class="stat-box"><div class="stat-label">Connected Identity</div><div class="stat-value" id="identityTypeStat">Guest</div></div>
         <div class="stat-box"><div class="stat-label">Grove Positions</div><div class="stat-value" id="grovePositionStat">0</div></div>
       </div>
@@ -100,8 +100,8 @@
           <div class="payment-option" id="cryptoOption" data-payment="crypto">◎ Crypto Wallet<span class="payment-sub">Solana</span></div>
         </div>
         <div class="share-section">
-          <label class="share-label">Select Shares</label>
-          <div class="stepper"><button class="step-btn" onclick="if(window.changeShares) window.changeShares(-1)">−</button><div class="share-count"><div class="share-count-value" id="shareValue">1</div><div class="share-count-label">shares selected</div></div><button class="step-btn" onclick="if(window.changeShares) window.changeShares(1)">+</button></div>
+          <label class="share-label">Select Mignole</label>
+          <div class="stepper"><button class="step-btn" onclick="if(window.changeShares) window.changeShares(-1)">−</button><div class="share-count"><div class="share-count-value" id="shareValue">1</div><div class="share-count-label">Mignole selected</div></div><button class="step-btn" onclick="if(window.changeShares) window.changeShares(1)">+</button></div>
           <div class="share-slider-wrap"><input type="range" min="1" max="1000" step="1" value="1" id="shareSlider" oninput="if(window.syncFromSlider) window.syncFromSlider()" /><div class="slider-labels"><span>1</span><span id="sliderMaxLabel">1000</span></div></div>
           <div class="quick-shares"><button onclick="if(window.setShares) window.setShares(100)">100</button><button onclick="if(window.setShares) window.setShares(200)">200</button><button onclick="if(window.setShares) window.setShares(500)">500</button><button id="maxShareBtn" onclick="if(window.setShares) window.setShares('max')">Max</button></div>
           <input type="hidden" id="shareInput" value="1" />
