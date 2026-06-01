@@ -16,7 +16,7 @@
 
 
     </head>
-<body class="antialiased min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-stone-900/40 via-[#0c0e0a] to-[#040503]">
+<body class="antialiased min-h-screen" style="background: radial-gradient(ellipse at top, #1c2018 0%, #111409 50%, #0c0e08 100%);">
   <div class="luxury-video-hero">
       <video autoplay loop muted playsinline aria-hidden="true" poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
           <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
@@ -134,7 +134,7 @@
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
                     <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase tracking-widest">Guest Mode</p>
-                    <p id="nav-identity-display" class="text-[10px] text-gold font-mono uppercase tracking-wider">UNRESOLVED_USER</p>
+                    <p id="nav-identity-display" class="text-[10px] text-gold font-mono uppercase tracking-wider">NOT CONNECTED</p>
                 </div>
                 <button id="navConnectTriggerBtn" class="bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95">
                     Connect Profile
@@ -192,7 +192,7 @@
                     <div class="space-y-4">
 
                         <!-- SEED SUPPORTER -->
-                        <div id="card-tier-1" class="group p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 transition-all duration-500">
+                        <div id="card-tier-1" class="group p-5 rounded-2xl opacity-40 bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 transition-all duration-500">
                             <div class="flex items-start gap-4">
                                 <div class="w-12 h-12 rounded-2xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-2xl">
                                     🌱
@@ -226,7 +226,7 @@
                         </div>
 
                         <!-- TREE GUARDIAN -->
-                        <div id="card-tier-2" class="group p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 transition-all duration-500">
+                        <div id="card-tier-2" class="group p-5 rounded-2xl opacity-40 bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 transition-all duration-500">
                             <div class="flex items-start gap-4">
                                 <div class="w-12 h-12 rounded-2xl bg-[#8BAE45]/10 border border-[#8BAE45]/20 flex items-center justify-center text-2xl">
                                     🌿
@@ -261,7 +261,7 @@
                         </div>
 
                         <!-- GROVE PATRON -->
-                        <div id="card-tier-3" class="group p-5 rounded-2xl bg-gradient-to-br from-[#C5A059]/10 to-black border border-[#C5A059]/20 shadow-[0_0_30px_rgba(197,160,89,0.08)] transition-all duration-500">
+                        <div id="card-tier-3" class="group p-5 rounded-2xl opacity-40 bg-gradient-to-br from-[#C5A059]/10 to-black border border-[#C5A059]/20 shadow-[0_0_30px_rgba(197,160,89,0.08)] transition-all duration-500">
                             <div class="flex items-start gap-4">
                                 <div class="w-12 h-12 rounded-2xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-2xl">
                                     👑
@@ -298,7 +298,7 @@
                         </div>
 
                         <!-- FULL TREE ESTATE -->
-                        <div id="card-tier-4" class="group p-5 rounded-2xl bg-gradient-to-br from-[#5a7a2b]/15 to-black border border-[#5a7a2b]/30 transition-all duration-500">
+                        <div id="card-tier-4" class="group p-5 rounded-2xl opacity-40 bg-gradient-to-br from-[#5a7a2b]/15 to-black border border-[#5a7a2b]/30 transition-all duration-500">
                             <div class="flex items-start gap-4">
                                 <div class="w-12 h-12 rounded-2xl bg-[#5a7a2b]/20 border border-[#5a7a2b]/30 flex items-center justify-center text-2xl">
                                     🌲
@@ -573,11 +573,20 @@
            ========================================================= */
         navConnectTriggerBtn?.addEventListener("click", () => {
             const sessionActive = localStorage.getItem("olivium_identity");
-            console.log("Clciked");
             if (sessionActive) {
+                // Full disconnect: clear all state and fire the correct events
                 localStorage.removeItem("olivium_identity");
+                localStorage.removeItem("olivium_user");
                 window.walletPubKey = null;
-                window.dispatchEvent(new Event('solana:connection-complete'));
+                window._provider   = null;
+                window._program    = null;
+                if (window.solana && typeof window.solana.disconnect === "function") {
+                    try { window.solana.disconnect(); } catch(_) {}
+                }
+                // 'olivium:disconnected' triggers handleDisconnectReset in reserve.ts
+                window.dispatchEvent(new CustomEvent("olivium:disconnected"));
+                // 'solana:connection-complete' triggers syncVillaUI to reset the nav
+                window.dispatchEvent(new Event("solana:connection-complete"));
             } else {
                 connectModalEl.style.display = "flex";
             }
@@ -679,24 +688,28 @@
         /* =========================================================
            NATIVE EXTENSION WEB3 WALLET ACCESS LAYER
            ========================================================= */
-        document.getElementById("connectBtn")?.addEventListener("click", async () => {
+        // connectWalletBtn in the modal — handles phantom/solana connect
+        document.getElementById("connectWalletBtn")?.addEventListener("click", async () => {
             try {
                 const provider = window.solana || window.phantom?.solana;
                 if (!provider) {
-                    alert("Solana injection wallet pipeline is missing.");
+                    alert("Phantom or Solana wallet extension not detected.");
                     return;
                 }
                 const response = await provider.connect();
-                const primaryKeyStr = response.publicKey ? response.publicKey.toBase58() : provider.publicKey?.toBase58();
+                const primaryKeyStr = response.publicKey
+                    ? response.publicKey.toBase58()
+                    : provider.publicKey?.toBase58();
 
+                // Store with 'wallet' key to match reserve.ts Wallet() reader
                 localStorage.setItem("olivium_identity", JSON.stringify({
-                    type: "wallet", address: primaryKeyStr
+                    type: "wallet", wallet: primaryKeyStr, source: "solana"
                 }));
 
                 connectModalEl.style.display = "none";
-                window.dispatchEvent(new Event('solana:connection-complete'));
+                window.dispatchEvent(new Event("solana:connection-complete"));
             } catch (err) {
-                console.error("Wallet connection context rejected:", err);
+                console.error("Wallet connection declined:", err);
             }
         });
 
@@ -708,7 +721,7 @@
        // Simple identity check that defers to reserve.ts for all data
        async function syncVillaUI() {
      const activeSessionData = localStorage.getItem("olivium_identity");
-     const navBtn = document.getElementById("connectBtn"); // ✅ Fixed ID
+     const navBtn = document.getElementById("navConnectTriggerBtn");
      const navTierLabel = document.getElementById("nav-tier-label");
      const navIdentityDisplay = document.getElementById("nav-identity-display");
 
@@ -720,7 +733,7 @@
              navBtn.style.borderColor = '';
          }
          if (navTierLabel) navTierLabel.innerText = "Guest Mode";
-         if (navIdentityDisplay) navIdentityDisplay.innerText = "UNRESOLVED_USER";
+         if (navIdentityDisplay) navIdentityDisplay.innerText = "NOT CONNECTED";
      } else {
          try {
              const parsedIdentity = JSON.parse(activeSessionData);
@@ -793,6 +806,20 @@
            const submitBtn = document.getElementById("submitBookingBtn");
            const bookingMsg = document.getElementById("bookingMsg");
 
+           // UI 4 FIX: update rate display when nights change
+           const BASE_RATE_PER_NIGHT = 450;
+           function updateRateDisplay() {
+               const nights = parseInt(document.getElementById("nightsSelectionFrame")?.value || "3");
+               const rateEl = document.getElementById("bookingRateDisplay");
+               const badgeEl = document.getElementById("patronDiscountBadge");
+               const badgeText = badgeEl ? badgeEl.innerText : "Standard Account";
+               const discount = badgeText.includes("15%") ? 0.15 : badgeText.includes("20%") ? 0.20 : 0;
+               const total = Math.round(nights * BASE_RATE_PER_NIGHT * (1 - discount));
+               if (rateEl) rateEl.innerText = `$${BASE_RATE_PER_NIGHT} / night · ${nights} nights = $${total.toLocaleString()} total`;
+           }
+           document.getElementById("nightsSelectionFrame")?.addEventListener("change", updateRateDisplay);
+           updateRateDisplay();
+
            submitBtn?.addEventListener("click", async () => {
                const nameVal = document.getElementById("bookingName").value.trim();
                const notesVal = document.getElementById("bookingNotes").value.trim();
@@ -831,68 +858,7 @@
        });
    </script>
 
-   <script>
-           /* =========================================================
-              CALENDAR INITIALIZATION & TRANSMISSION RELAY LINKS
-              ========================================================= */
-           document.addEventListener("DOMContentLoaded", () => {
-               // REMOVED: enforceIdentityCycleChecks(); - No longer crashes the script on load
-
-               flatpickr("#dateRangePicker", {
-                   mode: "range", minDate: "today", dateFormat: "Y-m-d",
-                   onChange: (selectedDates, dateStr) => {
-                       selectedDateRangeString = dateStr;
-                   }
-               });
-
-               const submitBookingBtn = document.getElementById("submitBookingBtn");
-               const bookingMsg = document.getElementById("bookingMsg");
-
-               submitBookingBtn?.addEventListener("click", async () => {
-                   const nameVal = document.getElementById("bookingName").value.trim();
-                   const notesVal = document.getElementById("bookingNotes").value.trim();
-                   const activeSessionData = localStorage.getItem("olivium_identity");
-
-                   // Enforce identity layer verification before proceeding
-                   if (!activeSessionData) {
-                       bookingMsg.innerText = "Identity verification loop mandatory before submitting requests.";
-                       bookingMsg.style.color = "#ef4444";
-
-                       const connectModalEl = document.getElementById("connectModal");
-                       if (connectModalEl) connectModalEl.style.display = "flex";
-                       return;
-                   }
-
-                   // Verify inputs are present
-                   if (!selectedDateRangeString || !nameVal) {
-                       bookingMsg.innerText = "Please specify tracking date ranges and operational legal name coordinates.";
-                       bookingMsg.style.color = "#ef4444";
-                       return;
-                   }
-
-                   submitBookingBtn.disabled = true;
-                   submitBookingBtn.innerText = "Transmitting Packet Relay...";
-
-                   // Simulation delay hooks
-                   await new Promise(resolve => setTimeout(resolve, 1500));
-
-                   bookingMsg.innerText = "Reservation parameters transmitted! Our concierge layer is resolving calendar records.";
-                   bookingMsg.style.color = "#10b981";
-                   document.getElementById("bookingNotificationForm").reset();
-                   selectedDateRangeString = ""; // Reset the date tracking string variable
-
-                   submitBookingBtn.disabled = false;
-                   submitBookingBtn.innerText = "Submit Residency Request";
-               });
-           });
-
-           window.addEventListener('solana:connection-complete', async () => {
-               // REMOVED: enforceIdentityCycleChecks();
-               // The module-level handler inside reserve.ts already listens to this event
-               // and automatically calls updateWalletUI(), updateStatsUI(), and updateVillaStayUI().
-               console.log("[SYNC] Connection complete captured in template script.");
-           });
-      </script>
+<!-- duplicate DOMContentLoaded + booking script removed (BUG 5+6 fix) -->
     <script type="module" src="./src/reserve.ts"></script>
 
 </body>
