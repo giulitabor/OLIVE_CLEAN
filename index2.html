@@ -422,6 +422,10 @@
   </footer>
 
   <script type="module">
+    window.App = {};
+window.App.state = {
+  identity: JSON.parse(localStorage.getItem("olivium_identity") || "null")
+};
     import { sb } from "./src/connection.ts";
     import { PublicKey, SystemProgram } from "@solana/web3.js";
     import * as anchor from "@coral-xyz/anchor";
@@ -437,8 +441,10 @@
     import { sb } from "./src/connection.ts";
     import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 
-    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-
+window.connection = new Connection(
+  "https://api.devnet.solana.com",
+  "confirmed"
+);
         window.OliviumAuth = {
           user: null,
           setUser(u) {
@@ -581,7 +587,7 @@
 
       try {
         const pubKey = new PublicKey(saved.wallet);
-        const lamports = await connection.getBalance(pubKey);
+const lamports = await window.connection.getBalance(pubKey);
         solBalance = (lamports / 1_000_000_000).toFixed(3);
       } catch (err) {
         console.warn("Balance fetch failed:", err);
@@ -853,8 +859,14 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
         }
 
         connectBtn?.addEventListener('click', async () => {
-        const identity = await getActiveWallet(); // Check actual state, not button text
-
+connectBtn?.addEventListener("click", () => {
+  if (window.App.state.identity) {
+    window.App.setIdentity(null);
+    localStorage.removeItem("olivium_identity");
+  } else {
+    connectModalEl.style.display = "flex";
+  }
+});
         if (identity) {
           handleDisconnectWorkflow();
         } else {
@@ -873,11 +885,14 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
             const resp = await provider.connect();
             const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
 
-            localStorage.setItem('olivium_identity', JSON.stringify({
-              type: "wallet",
-              wallet: pubKeyStr,
-              source: "solana"
-            }));
+           window.App.state.identity = {
+  type: "wallet",
+  wallet: pubKeyStr
+};
+
+localStorage.setItem("olivium_identity", JSON.stringify(window.App.state.identity));
+
+window.dispatchEvent(new Event("solana:connection-complete"));
 
             closeConnectModal();
             window.dispatchEvent(new Event('solana:connection-complete'));
