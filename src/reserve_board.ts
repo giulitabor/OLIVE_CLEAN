@@ -653,7 +653,7 @@ if (program && !guestMode) {
             isMine
               ? `
             <button class="action-btn release-btn" style="flex: 1; min-width: 70px; padding: 8px; background: #d94d4d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; width: 100%;">
-              Release Shares
+              Release Mignoli
             </button>
           `
               : ""
