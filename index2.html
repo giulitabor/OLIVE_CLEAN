@@ -1,983 +1,535 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Olivium DAO | Reserve Your Tree</title>
-  <link rel="stylesheet" href="1style.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <style>
-    .tree-card .action-btn {
-      background: #6B7F5A !important;
-      color: white !important;
-      border: none !important;
-      border-radius: 6px !important;
-      padding: 8px 12px !important;
-      font-size: 0.85rem !important;
-      font-weight: 600 !important;
-      cursor: pointer !important;
-      transition: all 0.2s ease !important;
-      text-align: center !important;
-      flex: 1 !important;
-      min-width: 70px !important;
-    }
-    .tree-card .action-btn:hover { background: #5a6b4a !important; transform: translateY(-1px); }
-    .tree-card .release-btn { background: #d94d4d !important; }
-    .tree-card .release-btn:hover { background: #c13b3b !important; }
-    .tree-card .details-btn { background: #B8860B !important; }
-    .tree-card .details-btn:hover { background: #9a7209 !important; }
-    .tree-card .adopt-btn { background: #6B7F5A !important; }
-    .modal-overlay { z-index: 1000; }
-    #tree-detail-modal { z-index: 1100; }
-    #sell-modal { z-index: 2000; }
-    .hidden { display: none !important; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olivium — Private Villa Concierge</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="stay.css">
+    
+    <style>
+        /* Additional light theme overrides */
+        body {
+            background: #FAF8F3 !important;
+        }
+        .text-white, 
+        h1, h2, h3, h4, p, span, li, a {
+            color: #2C2C2C !important;
+        }
+        .tech-card {
+            background: #FFFFFF !important;
+            border: 1px solid rgba(74, 93, 62, 0.1) !important;
+        }
+        input, select, textarea {
+            background: #F4EFE6 !important;
+            color: #2C2C2C !important;
+            border: 1px solid rgba(74, 93, 62, 0.2) !important;
+        }
+        .bg-black\/40, .bg-stone-900\/40, .from-stone-900\/40 {
+            background: transparent !important;
+        }
+        .border-white\/5, .border-white\/10 {
+            border-color: rgba(74, 93, 62, 0.1) !important;
+        }
+        .text-stone-400, .text-stone-500, .text-stone-300 {
+            color: #7A8275 !important;
+        }
+        .text-gold {
+            color: #D4AF37 !important;
+        }
+        .bg-gold {
+            background: #D4AF37 !important;
+        }
+        .serif, .font-serif {
+            font-family: 'Cormorant Garamond', serif !important;
+        }
+        .italic {
+            font-style: italic;
+        }
+        footer a, footer p {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        footer {
+            background: #2C2C2C !important;
+        }
+        footer h4 {
+            color: #D4AF37 !important;
+        }
+        .modal-overlay .tech-card {
+            background: #FFFFFF !important;
+        }
+        .modal-overlay .text-white,
+        .modal-overlay h2,
+        .modal-overlay .font-bold {
+            color: #2C2C2C !important;
+        }
+        .modal-overlay .text-stone-400,
+        .modal-overlay .text-stone-500 {
+            color: #7A8275 !important;
+        }
+        .modal-overlay input {
+            background: #F4EFE6 !important;
+            color: #2C2C2C !important;
+        }
+        #passwordMetricsBox {
+            background: #F4EFE6 !important;
+            border-color: rgba(74, 93, 62, 0.15) !important;
+        }
+        #passwordMetricsBox .text-stone-400 {
+            color: #4A5D3E !important;
+        }
+        #passwordMetricsBox .text-red-400 {
+            color: #C86B4A !important;
+        }
+    </style>
 </head>
 <body>
 
-  <header class="top-nav">
-    <div class="nav-inner">
-      <div class="brand">
-        <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png" alt="Olivium Logo">
-        <span>Olivium DAO</span>
-      </div>
-      <nav class="nav-links" id="navLinks">
-        <a class="nav-link" href="understand.html">About Olivium</a>
-        <a class="nav-link" href="map.html">View Grove</a>
-        <a class="nav-link" href="webgame3.html">Olivium Web3 Game</a>
-        <a class="nav-link" href="villa_stay.html">Rewards</a>
-        <button class="nav-btn wallet-btn" id="connectBtn">Connect Profile</button>
-      </nav>
-      <button class="mobile-toggle" id="mobileToggle">☰</button>
+<!-- VIDEO HERO -->
+<div class="luxury-video-hero">
+    <video autoplay loop muted playsinline poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+        <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+    </video>
+    <div class="video-overlay"></div>
+    <div class="hero-content">
+        <h1>Experience the Grove</h1>
+        <p>A living testament to Tuscan heritage and digital stewardship.</p>
     </div>
-  </header>
+</div>
 
-  <section class="hero">
-    <div>
-      <h1 class="hero-title">Reserve Your Tree 🌿</h1>
-      <p class="hero-subtitle">Adopt a real olive tree, track your grove ownership on-chain, and unlock ecosystem rewards through Olivium DAO.</p>
-      <div class="hero-actions">
-        <button class="primary-btn" style="width:auto;padding:16px 24px;" onclick="if(window.loadTrees) window.loadTrees('available')">Explore Grove</button>
-      </div>
-    </div>
-    <div class="hero-card">
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-label">Trees On-Chain</div><div class="stat-value" id="treeCountStat">--</div></div>
-        <div class="stat-box"><div class="stat-label">Total Shares</div><div class="stat-value" id="shareCountStat">--</div></div>
-        <div class="stat-box"><div class="stat-label">Connected Identity</div><div class="stat-value" id="identityTypeStat">Guest</div></div>
-        <div class="stat-box"><div class="stat-label">Grove Positions</div><div class="stat-value" id="grovePositionStat">0</div></div>
-      </div>
-    </div>
-  </section>
-
-  <div class="filters-wrap">
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">All Trees</button>
-      <button class="filter-btn" data-filter="available">Available</button>
-      <button class="filter-btn" data-filter="my">My Trees</button>
-      <button class="filter-btn" data-filter="full">Fully Adopted</button>
-    </div>
-    <div class="identity-pill" id="identityPill">🌿 Guest Mode</div>
-  </div>
-
-  <main class="tree-grid" id="treeGrid">
-    <div class="loading-state"><div class="spinner"></div><p>🌿 Syncing live grove availability...</p></div>
-  </main>
-
-  <!-- PURCHASE MODAL -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal" role="dialog" aria-modal="true">
-      <button class="close-btn" onclick="if(window.closeModal) window.closeModal()">×</button>
-      <div class="modal-hero"><img id="modalImage" src="" alt="Selected Tree" /></div>
-      <div class="modal-body">
-        <h2 class="modal-title" id="modalTitle">Tree Name</h2>
-        <p class="modal-description" id="modalDescription">Secure your digital olive tree adoption.</p>
-        <div class="trust-box"><div class="trust-grid"><div class="trust-item">🌿 Real Olive Tree</div><div class="trust-item">⛓ Verified On-Chain</div><div class="trust-item">🫒 Harvest Participation</div><div class="trust-item">🔒 Secure Solana Payment</div></div></div>
-        <div class="payment-methods">
-          <div class="payment-option active" id="mollieOption" data-payment="mollie">💳 Credit Card<span class="payment-sub">Visa · Mastercard · Apple Pay</span></div>
-          <div class="payment-option" id="paypalOption" data-payment="paypal">🅿️ PayPal<span class="payment-sub">Fast easy checkout</span></div>
-          <div class="payment-option" id="cryptoOption" data-payment="crypto">◎ Crypto Wallet<span class="payment-sub">Solana</span></div>
+<!-- CONNECT MODAL -->
+<div class="modal-overlay" id="connectModal">
+    <div class="modal-container" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.5rem;">🌿 Connect to Olivium</h3>
+            <button class="close-modal" onclick="closeConnectModal()">✕</button>
         </div>
-        <div class="share-section">
-          <label class="share-label">Select Shares</label>
-          <div class="stepper"><button class="step-btn" onclick="if(window.changeShares) window.changeShares(-1)">−</button><div class="share-count"><div class="share-count-value" id="shareValue">1</div><div class="share-count-label">shares selected</div></div><button class="step-btn" onclick="if(window.changeShares) window.changeShares(1)">+</button></div>
-          <div class="share-slider-wrap"><input type="range" min="1" max="1000" step="1" value="1" id="shareSlider" oninput="if(window.syncFromSlider) window.syncFromSlider()" /><div class="slider-labels"><span>1</span><span id="sliderMaxLabel">1000</span></div></div>
-          <div class="quick-shares"><button onclick="if(window.setShares) window.setShares(100)">100</button><button onclick="if(window.setShares) window.setShares(200)">200</button><button onclick="if(window.setShares) window.setShares(500)">500</button><button id="maxShareBtn" onclick="if(window.setShares) window.setShares('max')">Max</button></div>
-          <input type="hidden" id="shareInput" value="1" />
+        <div class="modal-body">
+            <p style="margin-bottom: 1.5rem; color: #7A8275;">Select Estate Verification Vector</p>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="padding: 1.25rem; border: 1px solid rgba(74, 93, 62, 0.1); border-radius: 16px; background: #F4EFE6;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <strong>◎ Wallet Authentication</strong>
+                        <span style="font-size: 0.7rem; background: #D4AF37; padding: 0.2rem 0.6rem; border-radius: 20px;">Web3</span>
+                    </div>
+                    <p style="font-size: 0.75rem; color: #7A8275; margin-bottom: 1rem;">Connect your Solana wallet for direct on-chain ownership.</p>
+                    <button id="connectWalletBtnModal" style="width: 100%; background: #4A5D3E; color: white; padding: 0.75rem; border-radius: 50px; border: none; cursor: pointer;">Connect Phantom / Solana</button>
+                </div>
+                <div style="padding: 1.25rem; border: 1px solid rgba(74, 93, 62, 0.1); border-radius: 16px; background: #F4EFE6;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <strong>✉ Custodial Profile Access</strong>
+                        <span style="font-size: 0.7rem; background: #6B7F5A; padding: 0.2rem 0.6rem; border-radius: 20px; color: white;">Secure MFA</span>
+                    </div>
+                    <p style="font-size: 0.75rem; color: #7A8275; margin-bottom: 1rem;">Use email with multi-factor authentication.</p>
+                    <button id="emailLoginBtn" style="width: 100%; background: #6B7F5A; color: white; padding: 0.75rem; border-radius: 50px; border: none; cursor: pointer;">Continue with Email</button>
+                </div>
+            </div>
         </div>
-        <div class="price-card" style="margin-bottom: 24px;"><div class="price-title">Total Price</div><div class="price-display" id="priceDisplay">€12.40</div><div class="price-sub" id="priceSub">1 share × €12.40</div></div>
-        <!-- Shown in crypto mode when no wallet is connected; hidden otherwise -->
-        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">
-          🔗 Connect Wallet to Continue
-        </button>
-        <button class="primary-btn" id="adoptBtn" onclick="if(window.openAgreement) window.openAgreement()">Continue to Agreement</button>
-      </div>
     </div>
-  </div>
+</div>
 
-  <!-- AGREEMENT MODAL -->
-  <div id="agreementModal" class="modal-overlay">
-    <div class="modal">
-      <div class="agreement-card">
-        <h2 class="modal-title" id="agreeTitle">Tree Adoption Agreement</h2>
-        <img id="agreeImage" class="agreement-image" src="" alt="Tree preview" />
-        <div class="tree-specs">
-          <div class="spec"><div class="spec-label">Location</div><div class="spec-value" id="agreeLocation">—</div></div>
-          <div class="spec"><div class="spec-label">Age</div><div class="spec-value" id="agreeAge">—</div></div>
-          <div class="spec"><div class="spec-label">Height</div><div class="spec-value" id="agreeHeight">—</div></div>
-          <div class="spec"><div class="spec-label">Variety</div><div class="spec-value" id="agreeVariety">—</div></div>
+<!-- AUTH MODAL (MFA) -->
+<div id="authModalOverlay" class="modal-overlay">
+    <div class="modal-container" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3>Identity Gateway</h3>
+            <button id="closeAuthModal" class="close-modal">✕</button>
         </div>
-        <div class="agreement-box"><h3>🌱 Acknowledgement</h3><p>I understand this is a lifestyle and environmental participation experience, not a financial investment.</p><div class="checkbox-row"><input type="checkbox" id="agreeCheckbox" /><label for="agreeCheckbox">I understand and agree to continue.</label></div></div>
-        <div class="modal-footer"><div class="button-row"><button class="secondary-btn" onclick="if(window.closeAgreement) window.closeAgreement()">Back</button><button class="primary-btn" id="finalConfirmBtn" disabled>Confirm & Pay</button></div></div>
-      </div>
-    </div>
-  </div>
+        <div class="modal-body">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(74, 93, 62, 0.1); padding-bottom: 0.5rem;">
+                <button id="loginTab" style="padding: 0.5rem 1rem; background: #4A5D3E; color: white; border: none; border-radius: 8px; cursor: pointer;">Login</button>
+                <button id="signupTab" style="padding: 0.5rem 1rem; background: transparent; color: #7A8275; border: none; border-radius: 8px; cursor: pointer;">Signup</button>
+            </div>
 
-  <!-- SUCCESS MODAL -->
-  <div class="modal-overlay" id="successModal">
-    <div class="modal"><div class="agreement-card success-state"><div class="success-icon">🌿</div><h2 class="modal-title">Adoption Confirmed</h2><p style="color: var(--muted); margin-bottom: 24px;">Thank you for supporting the Olivium ecosystem.</p><button class="primary-btn" onclick="if(window.closeSuccess) window.closeSuccess()">Continue</button></div></div>
-  </div>
+            <!-- LOGIN FORM -->
+            <form id="loginForm" style="display: block;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; text-transform: uppercase; color: #4A5D3E;">Email Address</label>
+                    <input id="loginEmail" type="email" style="width: 100%; padding: 0.75rem; border-radius: 12px; margin-top: 0.25rem;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; text-transform: uppercase; color: #4A5D3E;">Password</label>
+                    <input id="loginPassword" type="password" style="width: 100%; padding: 0.75rem; border-radius: 12px; margin-top: 0.25rem;">
+                </div>
+                <button id="loginBtn" type="button" style="width: 100%; background: #D4AF37; color: #2C2C2C; padding: 0.85rem; border-radius: 50px; border: none; font-weight: 600; cursor: pointer;">Request Token Gate</button>
+                <div id="loginOtpBox" style="display: none; margin-top: 1rem;">
+                    <input id="loginOtp" placeholder="6-Digit Code" style="width: 100%; padding: 0.75rem; border-radius: 12px; text-align: center; letter-spacing: 4px;">
+                    <button id="verifyLoginOtp" type="button" style="width: 100%; background: #4A5D3E; color: white; padding: 0.75rem; border-radius: 50px; margin-top: 0.75rem; cursor: pointer;">Verify</button>
+                </div>
+            </form>
 
-  <!-- CONNECT MODAL -->
-  <div class="modal-overlay" id="connectModal">
-    <div class="modal" style="max-width: 480px;">
-      <button class="close-btn" onclick="if(window.closeConnectModal) window.closeConnectModal()">&times;</button>
-      <div class="modal-body">
-        <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
-        <p class="modal-description">Choose your preferred access method. Wallet users interact directly with Solana. Email users receive a custodial grove wallet.</p>
-        <div class="auth-options">
-          <div class="auth-card" id="walletConnectCard"><div class="auth-card-title">◎ Wallet Login</div><div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div><button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button></div>
-          <div class="auth-card" id="emailConnectCard"><div class="auth-card-title">✉ Email Login</div><div class="auth-card-sub">Fiat purchases with automatic custodial wallet creation.</div><button id="emailLoginBtn" class="primary-btn">Continue with Email</button></div>
+            <!-- SIGNUP FORM -->
+            <form id="signupForm" style="display: none;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; text-transform: uppercase; color: #4A5D3E;">Email</label>
+                    <input id="signupEmail" type="email" style="width: 100%; padding: 0.75rem; border-radius: 12px;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; text-transform: uppercase; color: #4A5D3E;">Password</label>
+                    <input id="signupPassword" type="password" style="width: 100%; padding: 0.75rem; border-radius: 12px;">
+                </div>
+                <div id="passwordMetricsBox" style="background: #F4EFE6; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <p style="font-size: 0.65rem; font-weight: bold; margin-bottom: 0.5rem;">Password Requirements:</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; font-size: 0.7rem;">
+                        <div id="metric-len">❌ Min 6 chars</div>
+                        <div id="metric-cap">❌ Uppercase</div>
+                        <div id="metric-low">❌ Lowercase</div>
+                        <div id="metric-num">❌ Number</div>
+                        <div id="metric-spe">❌ Special char</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; text-transform: uppercase; color: #4A5D3E;">Confirm Password</label>
+                    <input id="signupConfirmPassword" type="password" style="width: 100%; padding: 0.75rem; border-radius: 12px;">
+                </div>
+                <button id="signupBtn" type="button" disabled style="width: 100%; background: #ccc; color: #999; padding: 0.85rem; border-radius: 50px; border: none; cursor: not-allowed;">Initialize Account</button>
+                <div id="qr" style="display: none; justify-content: center; margin-top: 1rem;"></div>
+                <div id="signupOtpBox" style="display: none; margin-top: 1rem;">
+                    <input id="signupOtp" placeholder="6-Digit Code" style="width: 100%; padding: 0.75rem; border-radius: 12px; text-align: center;">
+                    <button id="verifySignupOtp" type="button" style="width: 100%; background: #4A5D3E; color: white; padding: 0.75rem; border-radius: 50px; margin-top: 0.75rem; cursor: pointer;">Verify & Initialize</button>
+                </div>
+            </form>
+            <div id="msg" style="margin-top: 1rem; text-align: center; font-size: 0.75rem; min-height: 2rem;"></div>
         </div>
-      </div>
     </div>
-  </div>
+</div>
 
-  <!-- AUTH MODAL (MFA) -->
-  <div id="authModalOverlay" class="modal-overlay" style="display: none;">
-    <div class="modal" style="max-width: 400px;">
-      <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px;">&times;</button>
-      <div class="modal-body">
-        <h2 style="text-align:center;">MFA Authentication</h2>
-        <div class="tabs" style="display:flex;"><button id="loginTab" class="tab active">Login</button><button id="signupTab" class="tab">Signup</button></div>
-        <form id="loginForm"><input id="loginEmail" type="email" placeholder="Email" /><input id="loginPassword" type="password" placeholder="Password" /><button id="loginBtn" type="button" class="primary-btn">Login</button><div id="loginOtpBox" style="display:none;"><input id="loginOtp" placeholder="MFA Code" /><button id="verifyLoginOtp" class="primary-btn">Verify MFA</button></div></form>
-        <form id="signupForm" style="display:none;"><input id="signupEmail" type="email" placeholder="Email" /><input id="signupPassword" type="password" placeholder="Password" /><input id="signupConfirmPassword" type="password" placeholder="Confirm" /><div id="qr"></div><button id="signupBtn" class="primary-btn" disabled>Signup</button><div id="signupOtpBox" style="display:none;"><input id="signupOtp" placeholder="Authenticator Code" /><button id="verifySignupOtp" class="primary-btn">Enable MFA</button></div></form>
-        <div id="msg"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SELL MODAL (SINGLE COPY) -->
-  <div id="sell-modal" class="modal-overlay hidden fixed inset-0 w-full h-full flex items-center justify-center bg-black/60 backdrop-blur-sm z-[2000]">
-    <div class="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-2xl border border-stone-100">
-      <button onclick="if(window.closeSellModal) window.closeSellModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 font-bold text-xl">✕</button>
-      <div class="mb-4">
-        <span class="text-xs uppercase tracking-widest font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">Liquidate Asset</span>
-        <h3 id="sell-modal-title" class="text-2xl font-serif text-stone-900 mt-2">Sell Tree Shares</h3>
-        <p id="sell-modal-subtitle" class="text-sm text-stone-500">Relinquish partial stakes back into the protocol treasury buffer.</p>
-      </div>
-      <div class="bg-stone-50 border border-stone-200/60 rounded-xl p-4 mb-4">
-        <div class="flex justify-between text-sm mb-2"><span class="text-stone-500">Currently Owned:</span><span id="sell-modal-owned" class="font-bold text-stone-800">0 Shares</span></div>
-        <div class="flex justify-between text-sm"><span class="text-stone-500">Estimated Settlement:</span><span id="sell-modal-payout" class="font-bold text-green-700">0.00 SOL</span></div>
-      </div>
-      <div class="mb-6">
-        <label class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-2">Amount to Sell</label>
-        <div class="relative flex items-center">
-          <input type="number" id="sell-amount-input" min="1" step="1" value="10" class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-400 text-stone-900 font-mono" />
-          <button onclick="if(window.setSellMax) window.setSellMax()" class="absolute right-3 px-2.5 py-1 text-xs font-bold bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg transition">MAX</button>
+<!-- NAVIGATION - LIGHT THEME -->
+<nav>
+    <div class="nav-container">
+        <div class="logo">OLIVIUM <span style="color: #C86B4A;">PRIVATE</span></div>
+        <ul class="nav-links">
+            <li><a href="index2.html">DASHBOARD</a></li>
+            <li><a href="#" class="active">VILLA CONCIERGE</a></li>
+            <li><a href="#">HARVEST LOG</a></li>
+        </ul>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="text-align: right;">
+                <p id="nav-tier-label" style="font-size: 0.7rem; color: #7A8275;">Guest Mode</p>
+                <p id="nav-identity-display" style="font-size: 0.75rem; color: #D4AF37;">UNRESOLVED_USER</p>
+            </div>
+            <button id="navConnectTriggerBtn" class="nav-cta">Connect Profile</button>
         </div>
-      </div>
-      <div class="flex gap-3">
-        <button onclick="if(window.closeSellModal) window.closeSellModal()" class="flex-1 py-3 border border-stone-200 hover:bg-stone-50 text-stone-700 text-sm font-bold rounded-xl transition">Cancel</button>
-        <button onclick="if(window.confirmSellAction) window.confirmSellAction()" id="sell-submit-btn" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-red-600/10">Confirm Liquidation</button>
-      </div>
     </div>
-  </div>
+</nav>
 
-  <!-- TREE DETAIL MODAL -->
-  <div id="tree-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" style="background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);">
-    <div class="min-h-screen flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden" onclick="event.stopPropagation()">
-
-        <!-- Close -->
-        <button onclick="if(window.closeTreeDetailModal) window.closeTreeDetailModal()" class="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-lg transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-
-        <!-- Hero image + name -->
-        <div class="relative h-80 overflow-hidden">
-          <div id="tree-detail-hero-img" class="absolute inset-0 bg-cover bg-center transition-all duration-500" style="background-image: url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg');"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <div class="flex items-end justify-between">
-              <div>
-                <p id="tree-detail-field-id" class="text-xs font-mono text-white/60 mb-1">—</p>
-                <h2 id="tree-detail-name" class="text-3xl font-bold mb-1">—</h2>
-                <p id="tree-detail-location" class="text-sm text-white/80">—</p>
-              </div>
-              <div class="text-right">
-                <p class="text-xs text-white/60 mb-1">Health Score</p>
-                <p id="tree-detail-health" class="text-2xl font-bold text-green-400">—</p>
-              </div>
+<!-- MAIN CONTENT -->
+<main>
+    <!-- HERO SECTION -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 4rem; align-items: center;">
+        <div>
+            <p style="color: #D4AF37; font-size: 0.75rem; letter-spacing: 3px; margin-bottom: 1rem;">EXCLUSIVE PATRON SANCTUARY</p>
+            <h1 style="font-size: 3.5rem;">Your Stay at <br><span style="color: #D4AF37;">The Villa Estate</span></h1>
+            <p style="color: #7A8275; margin-top: 1rem;">As a Mignole holder, you are not a guest—you are a steward. Your participation unlocks customized milestone levels, structural stay vouchers, and priority harvest reserves.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="tech-card" style="text-align: center;">
+                <p style="font-size: 0.7rem; color: #7A8275;">Trees Adopted</p>
+                <p id="shares-count-display" style="font-size: 2.5rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; margin: 0.5rem 0;">0</p>
+                <p style="font-size: 0.7rem; color: #D4AF37;">Nodes Detected</p>
             </div>
-          </div>
-          <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full text-white text-xs font-medium shadow-lg">
-            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>LIVE SENSORS
-          </div>
-          <div id="tree-detail-status-badge" class="absolute top-4 right-20 px-3 py-1.5 bg-green-600 rounded-full text-white text-xs font-medium shadow-lg">registered</div>
+            <div class="tech-card" id="creditsPulseCard" style="text-align: center;">
+                <p style="font-size: 0.7rem; color: #7A8275;">Available Credits</p>
+                <p id="credits-count-display" style="font-size: 2.5rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; margin: 0.5rem 0;">00</p>
+                <p style="font-size: 0.7rem; color: #D4AF37;">Sanctuary Days</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2.5rem;">
+        
+        <!-- LEFT: TIERS -->
+        <div>
+            <div class="tech-card">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                    <div style="width: 60px; height: 60px; background: #E8EFE3; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🫒</div>
+                    <div>
+                        <p style="font-size: 0.7rem; color: #7A8275;">RESOLVED ASSET TIER</p>
+                        <h3 id="tier-name" style="font-size: 1.6rem;">Guest Mode</h3>
+                        <p id="tier-progress-text" style="font-size: 0.75rem; color: #D4AF37;">Please log in to query chain states</p>
+                    </div>
+                </div>
+
+                <!-- TIER 1 -->
+                <div class="tier-card">
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: #E8EFE3; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🌱</div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <h4 style="font-size: 1.1rem;">Seed Supporter</h4>
+                                <span style="font-size: 0.65rem; background: #E8EFE3; padding: 0.2rem 0.6rem; border-radius: 20px;">Entry</span>
+                            </div>
+                            <p style="color: #D4AF37; font-size: 0.7rem;">€500 • ~5 Tree Adoptions</p>
+                            <ul style="margin-top: 0.75rem; list-style: none;">
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ 3L annual olive oil delivery</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Seasonal grove updates</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Estate visits & tasting access</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIER 2 -->
+                <div class="tier-card">
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: #E8EFE3; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🌿</div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <h4 style="font-size: 1.1rem;">Tree Guardian</h4>
+                                <span style="font-size: 0.65rem; background: #6B7F5A; padding: 0.2rem 0.6rem; border-radius: 20px; color: white;">Steward</span>
+                            </div>
+                            <p style="color: #D4AF37; font-size: 0.7rem;">€2,000 • ~20 Tree Adoptions</p>
+                            <ul style="margin-top: 0.75rem; list-style: none;">
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Annual olive oil allocation</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ 15% villa booking discount</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Harvest participation invitations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIER 3 - FEATURED -->
+                <div class="tier-card featured">
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: #D4AF37; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">👑</div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <h4 style="font-size: 1.1rem;">Grove Patron</h4>
+                                <span style="font-size: 0.65rem; background: #D4AF37; padding: 0.2rem 0.6rem; border-radius: 20px;">Premium</span>
+                            </div>
+                            <p style="color: #D4AF37; font-size: 0.7rem;">€10,000 • ~85 Tree Adoptions</p>
+                            <ul style="margin-top: 0.75rem; list-style: none;">
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0; color: #C86B4A; font-weight: bold;">✔ Complimentary 3-night villa stay</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Dedicated olive tree allocation</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ VIP private harvest invitation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIER 4 -->
+                <div class="tier-card">
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: #4A5D3E; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">🌲</div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <h4 style="font-size: 1.1rem;">Full Tree Estate</h4>
+                                <span style="font-size: 0.65rem; background: #4A5D3E; padding: 0.2rem 0.6rem; border-radius: 20px; color: white;">Elite</span>
+                            </div>
+                            <p style="color: #D4AF37; font-size: 0.7rem;">€20,000 • ~165 Tree Adoptions</p>
+                            <ul style="margin-top: 0.75rem; list-style: none;">
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Full symbolic tree stewardship</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Exclusive villa & concierge access</li>
+                                <li style="font-size: 0.8rem; padding: 0.25rem 0;">○ Personalized estate plaque</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="p-8">
-          <div class="flex gap-2 mb-6 border-b border-stone-200 overflow-x-auto">
-            <button class="tree-detail-tab active px-4 py-2 text-sm font-medium border-b-2 border-green-600 text-green-600 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('overview')">Overview</button>
-            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('physical')">📐 Physical</button>
-            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('environment')">🌡️ Live Sensors</button>
-            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('weather')">☁️ Weather</button>
-            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('metadata')">⛓ On-Chain</button>
-            <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('gallery')">🖼 Gallery</button>
-          </div>
+        <!-- RIGHT: BOOKING FORM -->
+        <div>
+            <div class="tech-card">
+                <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Request Residency</h2>
+                <p style="color: #7A8275; margin-bottom: 2rem;">Select your travel window below. Patron profiles override pricing protocols.</p>
 
-          <!-- OVERVIEW TAB -->
-          <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
-            <div class="grid md:grid-cols-4 gap-4 mb-6">
-              <div class="bg-stone-50 rounded-xl p-4 text-center">
-                <div class="text-2xl mb-1">🌳</div>
-                <p class="text-xs text-stone-400 mb-1">Age</p>
-                <p id="tree-detail-age" class="text-xl font-bold text-stone-900">—</p>
-              </div>
-              <div class="bg-stone-50 rounded-xl p-4 text-center">
-                <div class="text-2xl mb-1">📏</div>
-                <p class="text-xs text-stone-400 mb-1">Height</p>
-                <p id="tree-detail-height" class="text-xl font-bold text-stone-900">—</p>
-              </div>
-              <div class="bg-stone-50 rounded-xl p-4 text-center">
-                <div class="text-2xl mb-1">🫒</div>
-                <p class="text-xs text-stone-400 mb-1">Variety</p>
-                <p id="tree-detail-variety" class="text-lg font-bold text-stone-900">—</p>
-              </div>
-              <div class="bg-stone-50 rounded-xl p-4 text-center">
-                <div class="text-2xl mb-1">📊</div>
-                <p class="text-xs text-stone-400 mb-1">Shares Sold</p>
-                <p id="tree-overview-shares" class="text-xl font-bold text-stone-900">—</p>
-              </div>
-            </div>
-            <!-- Share progress -->
-            <div class="bg-stone-50 rounded-xl p-4 mb-4">
-              <div class="flex justify-between text-sm mb-2">
-                <span class="text-stone-500">Adoption Progress</span>
-                <span id="tree-overview-pct" class="font-bold text-stone-800">—%</span>
-              </div>
-              <div class="w-full bg-stone-200 rounded-full h-2.5">
-                <div id="tree-overview-bar" class="bg-green-600 h-2.5 rounded-full transition-all" style="width:0%"></div>
-              </div>
-              <div class="flex justify-between text-xs text-stone-400 mt-1">
-                <span id="tree-overview-sold-label">— sold</span>
-                <span id="tree-overview-total-label">— total</span>
-              </div>
-            </div>
-            <!-- Treatment info -->
-            <div class="grid md:grid-cols-2 gap-4">
-              <div class="border border-stone-100 rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Last Treatment</p>
-                <p id="tree-detail-last-treatment" class="font-semibold text-stone-800">—</p>
-                <p id="tree-detail-treatment-type" class="text-xs text-stone-500 mt-0.5">—</p>
-              </div>
-              <div class="border border-stone-100 rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Last Fertilizer</p>
-                <p id="tree-detail-last-fertilizer" class="font-semibold text-stone-800">—</p>
-                <p id="tree-detail-fertilizer-type" class="text-xs text-stone-500 mt-0.5">—</p>
-              </div>
-            </div>
-          </div>
+                <form id="bookingNotificationForm" onsubmit="return false;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="font-size: 0.7rem; color: #4A5D3E;">Booking Window</label>
+                            <input type="text" id="dateRangePicker" placeholder="Select dates" style="width: 100%; margin-top: 0.25rem;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.7rem; color: #4A5D3E;">Nights</label>
+                            <select id="nightsSelectionFrame" style="width: 100%; margin-top: 0.25rem;">
+                                <option value="3">3 Nights</option>
+                                <option value="5">5 Nights</option>
+                                <option value="7">7 Nights</option>
+                            </select>
+                        </div>
+                    </div>
 
-          <!-- PHYSICAL TAB -->
-          <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden">
-            <div class="grid md:grid-cols-2 gap-4">
-              <div class="border rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Age</p>
-                <p id="phys-age" class="text-2xl font-bold text-stone-900">—</p>
-                <p class="text-xs text-stone-400">years</p>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Height</p>
-                <p id="phys-height" class="text-2xl font-bold text-stone-900">—</p>
-                <p class="text-xs text-stone-400">cm</p>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Circumference</p>
-                <p id="phys-circumference" class="text-2xl font-bold text-stone-900">—</p>
-                <p class="text-xs text-stone-400">cm</p>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Diameter</p>
-                <p id="phys-diameter" class="text-2xl font-bold text-stone-900">—</p>
-                <p class="text-xs text-stone-400">cm</p>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Crown Spread</p>
-                <p id="phys-crown" class="text-2xl font-bold text-stone-900">—</p>
-                <p class="text-xs text-stone-400">cm</p>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-xs text-stone-400 mb-1">Altitude</p>
-                <p id="phys-altitude" class="text-2xl font-bold text-stone-900">—</p>
-                <p class="text-xs text-stone-400">m</p>
-              </div>
-              <div class="border rounded-xl p-4 md:col-span-2">
-                <p class="text-xs text-stone-400 mb-1">GPS Coordinates</p>
-                <p id="phys-coords" class="font-mono text-stone-800">—</p>
-              </div>
-            </div>
-          </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="font-size: 0.7rem; color: #4A5D3E;">Full Name</label>
+                        <input type="text" id="bookingName" placeholder="Your full name" style="width: 100%; margin-top: 0.25rem;">
+                    </div>
 
-          <!-- ENVIRONMENT TAB -->
-          <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden">
-            <h4 class="font-semibold text-stone-900 mb-3">🌱 Live Field Sensors — <span id="env-field-label" class="text-stone-400 font-normal text-sm">—</span></h4>
-            <div class="grid md:grid-cols-3 gap-4 mb-4">
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">💧 Soil Moisture</p>
-                <span id="oracle-soil-moisture" class="text-xl font-bold text-stone-900">—</span>
-                <div class="bg-stone-100 rounded-full h-2 mt-2"><div id="oracle-moisture-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width:0%"></div></div>
-                <p id="oracle-moisture-status" class="text-xs text-stone-400 mt-1">—</p>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">🌡️ Temperature</p>
-                <span id="oracle-soil-temp" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">🍃 Leaf Wetness</p>
-                <span id="oracle-leaf-wetness" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">☀️ UV Index</p>
-                <span id="oracle-uv" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">🌬️ CO₂</p>
-                <span id="oracle-co2" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p>
-                <span id="oracle-wind" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">💧 Humidity</p>
-                <span id="oracle-humidity" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-              <div class="border rounded-xl p-4">
-                <p class="text-sm text-stone-500 mb-1">🌧️ Rain Rate</p>
-                <span id="oracle-rain" class="text-xl font-bold text-stone-900">—</span>
-              </div>
-            </div>
-            <p class="text-xs text-stone-400">Last reading: <span id="oracle-last-update" class="font-medium">—</span></p>
-          </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="font-size: 0.7rem; color: #4A5D3E;">Special Requests</label>
+                        <textarea id="bookingNotes" rows="3" placeholder="Dietary requirements, accessibility needs, etc." style="width: 100%; margin-top: 0.25rem;"></textarea>
+                    </div>
 
-          <!-- WEATHER TAB -->
-          <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden">
-            <h4 class="font-semibold text-stone-900 mb-3">☁️ Current Conditions — <span id="weather-coords-label" class="text-stone-400 font-normal text-sm">—</span></h4>
-            <div class="grid md:grid-cols-3 gap-4">
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌡️ Air Temperature</p><span id="weather-temp" class="text-xl font-bold text-stone-900">—</span></div>
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p><span id="weather-wind" class="text-xl font-bold text-stone-900">—</span></div>
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💧 Humidity</p><span id="weather-humidity" class="text-xl font-bold text-stone-900">—</span></div>
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🔵 Pressure</p><span id="weather-pressure" class="text-xl font-bold text-stone-900">—</span></div>
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌧️ Rain</p><span id="weather-rain" class="text-xl font-bold text-stone-900">—</span></div>
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">☀️ UV Index</p><span id="weather-uv" class="text-xl font-bold text-stone-900">—</span></div>
-              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">⚡ Solar Radiation</p><span id="weather-solar" class="text-xl font-bold text-stone-900">—</span></div>
-            </div>
-          </div>
+                    <div style="background: #F4EFE6; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <div>
+                            <p style="font-size: 0.65rem; color: #7A8275;">CALCULATED COST</p>
+                            <p id="bookingRateDisplay" style="font-weight: bold;">€450 / night</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 0.65rem; color: #7A8275;">PRIVILEGE SCOPE</p>
+                            <p id="patronDiscountBadge" style="font-size: 0.7rem; background: #E8EFE3; padding: 0.25rem 0.75rem; border-radius: 20px;">Standard Account</p>
+                        </div>
+                    </div>
 
-          <!-- ON-CHAIN / METADATA TAB -->
-          <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden">
-            <div class="space-y-0 text-sm divide-y divide-stone-100">
-              <div class="flex justify-between py-3"><span class="text-stone-500">Tree ID</span><span id="tree-detail-meta-id" class="font-mono font-medium text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Field ID</span><span id="tree-detail-meta-field" class="font-mono text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Address</span><span id="tree-detail-meta-onchain" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Mint</span><span id="tree-detail-meta-mint" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Status</span><span id="tree-detail-meta-status" class="font-medium text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Total Shares</span><span id="tree-detail-meta-total" class="font-bold text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Shares Sold (live)</span><span id="tree-detail-meta-sold" class="font-bold text-green-700">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Shares Available</span><span id="tree-detail-meta-available" class="font-bold text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Variety</span><span id="tree-detail-meta-variety" class="text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Coordinates</span><span id="tree-detail-meta-coords" class="font-mono text-xs text-stone-900">—</span></div>
-              <div class="flex justify-between py-3"><span class="text-stone-500">Last Updated</span><span id="tree-detail-meta-updated" class="text-stone-900">—</span></div>
+                    <button type="button" id="submitBookingBtn" style="width: 100%; background: #C86B4A; color: white; padding: 1rem; border-radius: 50px; border: none; font-weight: 600; cursor: pointer;">Submit Residency Request</button>
+                    <div id="bookingMsg" style="margin-top: 1rem; text-align: center; font-size: 0.8rem;"></div>
+                </form>
             </div>
-          </div>
 
-          <!-- GALLERY TAB -->
-          <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden">
-            <div id="tree-detail-gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <p class="text-stone-400 text-sm col-span-3">Loading gallery...</p>
+            <!-- Info Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                <div class="tech-card">
+                    <h3 style="color: #D4AF37; font-size: 0.7rem;">SEASON BENEFITS</h3>
+                    <p style="font-size: 0.8rem; margin-top: 0.5rem;">Harvest: Oct 12 - Nov 05</p>
+                    <p style="font-size: 0.8rem;">Yield: 12L Reserves</p>
+                    <a href="https://toscagialla.com/" target="_blank" style="display: inline-block; margin-top: 1rem; color: #4A5D3E; font-size: 0.7rem;">Virtual Tour →</a>
+                </div>
+                <div class="tech-card" style="position: relative; overflow: hidden;">
+                    <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.15;">
+                    <div style="position: relative;">
+                        <h3 style="font-size: 1.1rem;">The 2024 Harvest</h3>
+                        <p style="font-size: 0.7rem; color: #7A8275;">High polyphenol profile</p>
+                    </div>
+                </div>
             </div>
-          </div>
-
         </div>
-      </div>
     </div>
-  </div>
 
-  <footer style="text-align:center; padding:2rem; border-top:1px solid #eaeaea;">
-    <a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms</a> | <a href="/refunds.html">Refund Policy</a> | <a href="mailto:support@yourdomain.com">Contact</a>
-  </footer>
+    <!-- ACTIVITIES SECTION -->
+    <div style="margin-top: 4rem;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Curated Estate Activities</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+            <div>
+                <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/view1.jpeg" style="width: 100%; height: 250px; object-fit: cover; border-radius: 20px;">
+                <h4 style="margin-top: 1rem;">Frantoio Workshop</h4>
+                <p style="color: #7A8275;">Learn the Art of Cold Pressing</p>
+            </div>
+            <div>
+                <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg" style="width: 100%; height: 250px; object-fit: cover; border-radius: 20px;">
+                <h4 style="margin-top: 1rem;">Drone Pathfinding</h4>
+                <p style="color: #7A8275;">Mapping Grove Vitality</p>
+            </div>
+            <div>
+                <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/view1.jpeg" style="width: 100%; height: 250px; object-fit: cover; border-radius: 20px;">
+                <h4 style="margin-top: 1rem;">Estate Dining</h4>
+                <p style="color: #7A8275;">Farm-to-Table Evenings</p>
+            </div>
+        </div>
+    </div>
+</main>
 
-  <script type="module">
-    import { sb } from "./src/connection.ts";
-    import { PublicKey, SystemProgram } from "@solana/web3.js";
-    import * as anchor from "@coral-xyz/anchor";
+<!-- FOOTER -->
+<footer>
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>OLIVIUM</h4>
+            <p>Digital Stewardship & Tuscan Heritage</p>
+        </div>
+        <div class="footer-section">
+            <h4>Legal</h4>
+            <ul class="footer-links">
+                <li><a href="/privacy.html">Privacy Policy</a></li>
+                <li><a href="/terms.html">Terms of Service</a></li>
+                <li><a href="/refunds.html">Refund Policy</a></li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h4>Contact</h4>
+            <ul class="footer-links">
+                <li><a href="mailto:support@olivium.com">support@olivium.com</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2024 Olivium DAO. All rights reserved.</p>
+    </div>
+</footer>
 
-    window.sb = sb;
-    window.PublicKey = PublicKey;
-    window.SystemProgram = SystemProgram;
-    window.anchor = anchor;
-    window.loadTrees = (filter) => { if(window._loadTreesImpl) window._loadTreesImpl(filter); };
-  </script>
-
-  <script type="module">
-    import { sb } from "./src/connection.ts";
-    import { PublicKey, Keypair, Connection } from "@solana/web3.js";
-
-    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-
-        window.OliviumAuth = {
-          user: null,
-          setUser(u) {
-            this.user = u;
-            localStorage.setItem("olivium_user", JSON.stringify(u));
-          },
-          getUser() {
-            return this.user || JSON.parse(localStorage.getItem("olivium_user") || "null");
-          }
-        };
-
-        const openModalBtn = document.getElementById("emailLoginBtn");
-        const closeModalBtn = document.getElementById("closeAuthModal");
-        const modalOverlay = document.getElementById("authModalOverlay");
-        const connectModal = document.getElementById("connectModal");
-
-        const loginTab = document.getElementById("loginTab");
-        const signupTab = document.getElementById("signupTab");
-        const loginForm = document.getElementById("loginForm");
-        const signupForm = document.getElementById("signupForm");
-
-        const loginOtpBox = document.getElementById("loginOtpBox");
-        const signupOtpBox = document.getElementById("signupOtpBox");
-        const qrContainer = document.getElementById("qr");
-        const msg = document.getElementById("msg");
-        const signupEmail = document.getElementById("signupEmail");
-        const signupPassword = document.getElementById("signupPassword");
-        const signupConfirmPassword = document.getElementById("signupConfirmPassword");
-        const signupBtn = document.getElementById("signupBtn");
-
-        const metrics = {
-          len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
-          cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
-          low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
-          num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
-          spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
-        };
-
-        function validateSignupForm() {
-          const passVal = signupPassword.value || "";
-          const confirmVal = signupConfirmPassword.value || "";
-          let allPass = true;
-
-          for (const key in metrics) {
-            const matched = metrics[key].reg.test(passVal);
-            const element = metrics[key].el;
-            if (element) {
-              if (matched) {
-                element.style.color = "#2e7d32";
-                element.querySelector(".icon").innerText = "✔";
-              } else {
-                element.style.color = "#d94d4d";
-                element.querySelector(".icon").innerText = "❌";
-                allPass = false;
-              }
-            }
-          }
-
-          const matches = passVal === confirmVal && passVal.length > 0;
-
-          if (allPass && matches && signupEmail.value.trim().length > 0) {
-            signupBtn.disabled = false;
-            signupBtn.style.background = "var(--green)";
-          } else {
-            signupBtn.disabled = true;
-            signupBtn.style.background = "#cccccc";
-          }
+<script>
+    // Flatpickr initialization
+    flatpickr("#dateRangePicker", {
+        mode: "range",
+        minDate: "today",
+        dateFormat: "Y-m-d",
+        onChange: (selectedDates, dateStr) => {
+            window.selectedDateRange = dateStr;
         }
+    });
 
-        signupEmail?.addEventListener("input", validateSignupForm);
-        signupPassword?.addEventListener("input", validateSignupForm);
-        signupConfirmPassword?.addEventListener("input", validateSignupForm);
+    // Modal controls
+    const connectModal = document.getElementById('connectModal');
+    const authModal = document.getElementById('authModalOverlay');
+    const navBtn = document.getElementById('navConnectTriggerBtn');
 
-        function show(text, ok = true) {
-          msg.innerText = text;
-          msg.style.color = ok ? "var(--green)" : "#d94d4d";
-        }
-
-        // Single source of truth for all identity UI: pill, stat, connect button.
-        // Called on DOMContentLoaded, solana:connection-complete, and after disconnect.
-      async function updateIdentityBalanceUI() {
-  try {
-    const pillEl = document.getElementById("identityPill");
-    const stat = document.getElementById("identityTypeStat");
-    const connectBtn = document.getElementById("connectBtn");
-
-    const saved = JSON.parse(
-      localStorage.getItem("olivium_identity") || "null"
-    );
-
-    // =====================================================
-    // GUEST MODE (single source of truth)
-    // =====================================================
-    if (!saved) {
-      if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
-      if (stat) stat.innerHTML = "Guest";
-
-      if (connectBtn) {
-        connectBtn.innerText = "Connect Profile";
-        connectBtn.style.color = "white";
-        connectBtn.style.border = "";
-        connectBtn.style.background = "var(--green)";
-      }
-
-      return;
-    }
-
-    // =====================================================
-    // EMAIL MODE
-    // =====================================================
-    if (saved.type === "email") {
-      if (pillEl) {
-        pillEl.innerHTML = `✉️ ${saved.address || "Email User"}`;
-      }
-
-      if (stat) {
-        stat.innerHTML = "Email Secured";
-      }
-
-      if (connectBtn) {
-        connectBtn.innerText = "Disconnect";
-        connectBtn.style.color = "#d94d4d";
-        connectBtn.style.border = "1px solid #d94d4d";
-        connectBtn.style.background = "transparent";
-      }
-
-      return;
-    }
-
-    // =====================================================
-    // WALLET MODE
-    // =====================================================
-    if (saved.type === "wallet" && saved.wallet) {
-      let shortAddr =
-        saved.wallet.slice(0, 4) +
-        "..." +
-        saved.wallet.slice(-4);
-
-      let solBalance = "—";
-
-      try {
-        const pubKey = new PublicKey(saved.wallet);
-        const lamports = await connection.getBalance(pubKey);
-        solBalance = (lamports / 1_000_000_000).toFixed(3);
-      } catch (err) {
-        console.warn("Balance fetch failed:", err);
-      }
-
-      if (pillEl) {
-        pillEl.innerHTML =
-          `◎ ${solBalance} SOL ` +
-          `<span style="opacity:.5;margin:0 6px">|</span>` +
-          `🔑 ${shortAddr}`;
-      }
-
-      if (stat) {
-        stat.innerHTML = "Wallet Mode";
-      }
-
-      if (connectBtn) {
-        connectBtn.innerText = "Disconnect";
-        connectBtn.style.color = "#d94d4d";
-        connectBtn.style.border = "1px solid #d94d4d";
-        connectBtn.style.background = "transparent";
-      }
-
-      return;
-    }
-
-  } catch (err) {
-    console.error("[updateIdentityBalanceUI]", err);
-  }
-}
-
-window.updateIdentityBalanceUI = updateIdentityBalanceUI;
-
-        openModalBtn?.addEventListener("click", () => {
-          if (connectModal) connectModal.style.display = "none";
-          if (modalOverlay) modalOverlay.style.display = "flex";
-          show("");
-        });
-
-        closeModalBtn?.addEventListener("click", () => {
-          modalOverlay.style.display = "none";
-        });
-
-        modalOverlay?.addEventListener("click", (e) => {
-          if (e.target === modalOverlay) {
-            modalOverlay.style.display = "none";
-          }
-        });
-
-        loginTab?.addEventListener("click", () => {
-          loginTab.style.background = "var(--green)";
-          loginTab.style.color = "white";
-          signupTab.style.background = "transparent";
-          signupTab.style.color = "var(--text)";
-          loginForm.style.display = "block";
-          signupForm.style.display = "none";
-          show("");
-        });
-
-        signupTab?.addEventListener("click", () => {
-          signupTab.style.background = "var(--green)";
-          signupTab.style.color = "white";
-          loginTab.style.background = "transparent";
-          loginTab.style.color = "var(--text)";
-          signupForm.style.display = "block";
-          loginForm.style.display = "none";
-          show("");
-        });
-
-        let generatedCustodialWallet = "";
-        const secretSeed = "OLIVIUMDAO777MFASEED";
-
-        document.getElementById("signupBtn")?.addEventListener("click", async () => {
-          const emailVal = (document.getElementById("signupEmail").value || "").trim().toLowerCase();
-          const passwordVal = (document.getElementById("signupPassword").value || "").trim();
-
-          if (!emailVal || !passwordVal) {
-            show("Please complete both Email and Password fields.", false);
-            return;
-          }
-
-          show("Generating secure cryptographic MFA parameters...", true);
-          qrContainer.innerHTML = "";
-
-          try {
-            const credentialCombination = `${emailVal}:${passwordVal}:${secretSeed}`;
-            const encoder = new TextEncoder();
-            const dataBytes = encoder.encode(credentialCombination);
-            const hashBuffer = await crypto.subtle.digest("SHA-256", dataBytes);
-            const deterministicSeedUint8 = new Uint8Array(hashBuffer);
-            const derivedKeypair = Keypair.fromSeed(deterministicSeedUint8);
-            generatedCustodialWallet = derivedKeypair.publicKey.toBase58();
-
-            const issuer = encodeURIComponent("Olivium DAO");
-            const account = encodeURIComponent(emailVal);
-            const totpUri = `otpauth://totp/${issuer}:${account}?secret=${secretSeed}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
-
-            new QRCode(qrContainer, {
-              text: totpUri,
-              width: 180,
-              height: 180,
-              colorDark: "#1f402a",
-              colorLight: "#ffffff",
-              correctLevel: QRCode.CorrectLevel.H
-            });
-
-            signupOtpBox.style.display = "block";
-          } catch (err) {
-            console.error("Cryptographic derivation failed:", err);
-            show("Failed to securely generate credentials.", false);
-          }
-        });
-
-        document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
-          const emailVal = (document.getElementById("signupEmail").value || "").trim().toLowerCase();
-          const enteredOtp = (document.getElementById("signupOtp").value || "").trim();
-
-          if (!enteredOtp || enteredOtp.length < 6) {
-            show("Please input your 6-digit authenticator pass code.", false);
-            return;
-          }
-
-          show("Syncing secure account profile parameters to database...", true);
-
-          try {
-            const { error: dbError } = await sb
-              .from("users")
-              .insert([{
-                Email_address: emailVal,
-                wallet: generatedCustodialWallet,
-                token: secretSeed
-              }]);
-
-            if (dbError && dbError.code !== "23505") {
-              throw dbError;
-            }
-
-            show("MFA Enabled! Profile synced. Flipping to Login tab...", true);
-
-            setTimeout(() => {
-              loginTab.click();
-              const loginEmailInput = document.getElementById("loginEmail");
-              if (loginEmailInput) loginEmailInput.value = emailVal;
-              signupOtpBox.style.display = "none";
-              qrContainer.innerHTML = "";
-            }, 1500);
-          } catch (err) {
-            console.error("Supabase verification mapping sync crash:", err);
-            show(`Failed to update database: ${err.message || 'Check database constraints.'}`, false);
-          }
-        });
-
-        document.getElementById("loginBtn")?.addEventListener("click", () => {
-          const emailVal = (document.getElementById("loginEmail").value || "").trim();
-          const passwordVal = (document.getElementById("loginPassword").value || "").trim();
-
-          if (!emailVal || !passwordVal) {
-            show("Please fill out your account credentials.", false);
-            return;
-          }
-
-          show("Processing login authorization details...", true);
-          loginOtpBox.style.display = "block";
-        });
-
-        document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
-          const emailVal = (document.getElementById("loginEmail").value || "").trim().toLowerCase();
-          if (!emailVal) {
-            show("Please enter your email.", false);
-            return;
-          }
-
-          try {
-            show("Retrieving secure cryptographic wallet association keys...", true);
-
-            const { data: profile, error: profileErr } = await sb
-              .from("users")
-              .select("wallet")
-              .eq("Email_address", emailVal)
-              .maybeSingle();
-              if (profileErr) {
-      console.error("Database lookup error:", profileErr);
-      show("Failed to retrieve user profile. Please try again.", false);
-      return;
-    }
-
-    const activeOnChainKeyStr = (profile && profile.wallet)
-      ? profile.wallet
-      : null;  // Don't use fallback wallet - require valid user
-
-    if (!activeOnChainKeyStr) {
-      show("No wallet associated with this email. Please contact support.", false);
-      return;
-    }
-            window.OliviumAuth.setUser({ email: emailVal, tier: "Standard" });
-
-            window._provider = {
-              publicKey: new PublicKey(activeOnChainKeyStr),
-              wallet: {
-                publicKey: new PublicKey(activeOnChainKeyStr),
-              },
-              signTransaction: async (tx) => {
-                console.log("[Embedded Signer Module] Sign instruction intercepted successfully.");
-                return tx;
-              }
-            };
-            window.walletPubKey = new PublicKey(activeOnChainKeyStr);
-
-            localStorage.setItem('olivium_identity', JSON.stringify({
-              type: "email",
-              address: emailVal,
-              custodialWallet: activeOnChainKeyStr
-            }));
-
-            show("MFA verified successfully! Syncing layout...", true);
-
-            setTimeout(() => {
-              modalOverlay.style.display = "none";
-              window.dispatchEvent(new Event('solana:connection-complete'));
-            }, 800);
-          } catch (err) {
-            console.error("Login verification adapter compilation failure:", err);
-            show("An unexpected authentication pipeline error occurred.", false);
-          }
-        });
-
-        window.addEventListener('solana:connection-complete', () => {
-          setTimeout(() => {
-            updateIdentityBalanceUI();
-          }, 100);
-        });
-
-        document.addEventListener("DOMContentLoaded", () => {
-          setTimeout(() => {
-            updateIdentityBalanceUI();
-          }, 600);
-        });
-      </script>
-
-      <script>
-        const mobileToggle = document.getElementById('mobileToggle');
-        const navLinks = document.getElementById('navLinks');
-
-        mobileToggle?.addEventListener('click', () => {
-          navLinks.classList.toggle('active');
-        });
-
-        const connectModalEl = document.getElementById('connectModal');
-        const connectBtn = document.getElementById('connectBtn');
-        const connectWalletBtn = document.querySelector('#walletConnectCard #connectWalletBtn');
-
-        async function getActiveWallet() {
-          if (window.solana?.publicKey) {
-            return { type: 'wallet', address: window.solana.publicKey.toBase58() };
-          }
-          const cached = localStorage.getItem('olivium_identity');
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (parsed.type === 'wallet' && parsed.wallet) {
-                return { type: 'wallet', address: parsed.wallet };
-              }
-              if (parsed.type === 'email' && parsed.custodialWallet) {
-                return { type: 'email', address: parsed.custodialWallet, label: parsed.address };
-              }
-            } catch(e){}
-          }
-          return null;
-        }
-
-        connectBtn?.addEventListener('click', async () => {
-        const identity = await getActiveWallet(); // Check actual state, not button text
-
-        if (identity) {
-          handleDisconnectWorkflow();
+    window.closeConnectModal = () => connectModal.style.display = 'none';
+    
+    navBtn?.addEventListener('click', () => {
+        if (localStorage.getItem('olivium_identity')) {
+            localStorage.removeItem('olivium_identity');
+            location.reload();
         } else {
-          connectModalEl.classList.remove('hidden');
-          connectModalEl.style.display = 'flex';
+            connectModal.style.display = 'flex';
         }
-      });
+    });
 
-        connectWalletBtn?.addEventListener('click', async () => {
-          try {
-            const provider = window.solana || window.phantom?.solana;
-            if (!provider) {
-              alert("Solana wallet extension not detected!");
-              return;
-            }
-            const resp = await provider.connect();
-            const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
+    document.getElementById('emailLoginBtn')?.addEventListener('click', () => {
+        connectModal.style.display = 'none';
+        authModal.style.display = 'flex';
+    });
 
-            localStorage.setItem('olivium_identity', JSON.stringify({
-              type: "wallet",
-              wallet: pubKeyStr,
-              source: "solana"
-            }));
+    document.getElementById('closeAuthModal')?.addEventListener('click', () => {
+        authModal.style.display = 'none';
+    });
 
-            closeConnectModal();
-            window.dispatchEvent(new Event('solana:connection-complete'));
-          } catch (err) {
-            console.error("Wallet connection declined:", err);
-          }
-        });
+    // Tab switching
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const loginForm = document.getElementById('loginForm');
+    const signupFormDisplay = document.getElementById('signupForm');
 
-        window.closeConnectModal = function() {
-          if(connectModalEl) connectModalEl.style.display = 'none';
-        }
+    loginTab?.addEventListener('click', () => {
+        loginTab.style.background = '#4A5D3E';
+        loginTab.style.color = 'white';
+        signupTab.style.background = 'transparent';
+        signupTab.style.color = '#7A8275';
+        loginForm.style.display = 'block';
+        signupFormDisplay.style.display = 'none';
+    });
 
-       async function handleDisconnectWorkflow() {
-  console.log("Disconnecting...");
+    signupTab?.addEventListener('click', () => {
+        signupTab.style.background = '#4A5D3E';
+        signupTab.style.color = 'white';
+        loginTab.style.background = 'transparent';
+        loginTab.style.color = '#7A8275';
+        signupFormDisplay.style.display = 'block';
+        loginForm.style.display = 'none';
+    });
 
-  // Clear storage
-  localStorage.removeItem("olivium_identity");
-  localStorage.removeItem("olivium_user");
-  localStorage.removeItem("walletConnected");
+    // Mock wallet connection
+    document.getElementById('connectWalletBtnModal')?.addEventListener('click', () => {
+        const mockWallet = "5Xc8zRx2KxZxQxLxVxPxNxMxJxHxGxFxDxSxAx";
+        localStorage.setItem('olivium_identity', JSON.stringify({ type: "wallet", wallet: mockWallet }));
+        connectModal.style.display = 'none';
+        location.reload();
+    });
 
-  // Clear globals
-  if (window.OliviumAuth) {
-    window.OliviumAuth.user = null;
-  }
-
-  window._provider = null;
-  window.walletPubKey = null;
-  window._program = null;
-
-  // Disconnect Phantom if present
-  try {
-    if (
-      window.solana &&
-      typeof window.solana.disconnect === "function"
-    ) {
-      await window.solana.disconnect();
-    }
-  } catch (err) {
-    console.warn("Wallet disconnect failed:", err);
-  }
-
-  // Reset application stats
-  const treeCountStat = document.getElementById("treeCountStat");
-  const shareCountStat = document.getElementById("shareCountStat");
-  const grovePositionStat = document.getElementById("grovePositionStat");
-
-  if (treeCountStat) treeCountStat.innerText = "--";
-  if (shareCountStat) shareCountStat.innerText = "--";
-  if (grovePositionStat) grovePositionStat.innerText = "0";
-
-  // Close modals
-  [
-    "modalOverlay",
-    "agreementModal",
-    "successModal",
-    "sell-modal",
-    "tree-detail-modal"
-  ].forEach(id => {
-    const modal = document.getElementById(id);
-
-    if (modal) {
-      modal.style.display = "none";
-      modal.classList.add("hidden");
-    }
-  });
-
-  // Notify app
-  window.dispatchEvent(
-    new CustomEvent("olivium:disconnected")
-  );
-
-  // Refresh ALL identity UI from one source
-  await updateIdentityBalanceUI();
-
-  console.log("Disconnect complete");
-}
-        // refreshIdentityUI: plain <script> runs before the module script, so
-        // window.updateIdentityBalanceUI doesn't exist yet at this point.
-        // Wrap it so the reference is resolved at call time, not assignment time.
-        window.refreshIdentityUI = function() {
-          if (typeof window.updateIdentityBalanceUI === 'function') {
-            window.updateIdentityBalanceUI();
-          }
-        };
-
-        window.addEventListener('solana:connection-complete', () => {
-          updateIdentityBalanceUI();
-        });
-
-        function closeModal() {
-          document.getElementById('modalOverlay').style.display = 'none';
-        }
-        function openAgreement() {
-          document.getElementById('agreementModal').style.display = 'flex';
-        }
-        function closeAgreement() {
-          document.getElementById('agreementModal').style.display = 'none';
-        }
-      </script>
-
-      <script type="module" src="./src/reserve_board.ts"></script>
-</body>
-</html>
+    // Update UI based on login state
+    function updateUI() {
+        const identity = localStorage.getItem('olivium_identity');
+        const tierNameEl = document.getElementById('tier-name');
+        const sharesEl = document.getElementById('shares-count-display');
+        const creditsEl = document.getElementById('credits-count-display');
+        
+        if (identity) {
+            tierNameEl.textContent = 'G
