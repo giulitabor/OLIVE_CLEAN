@@ -519,74 +519,100 @@
 
         // Single source of truth for all identity UI: pill, stat, connect button.
         // Called on DOMContentLoaded, solana:connection-complete, and after disconnect.
-        async function updateIdentityBalanceUI() {
-          try {
-            const pillEl      = document.getElementById("identityPill");
-            const stat        = document.getElementById("identityTypeStat");
-           const connectBtn  = document.getElementById("connectBtn");
+      async function updateIdentityBalanceUI() {
+  try {
+    const pillEl = document.getElementById("identityPill");
+    const stat = document.getElementById("identityTypeStat");
+    const connectBtn = document.getElementById("connectBtn");
 
-            // Resolve active identity — check live wallet first, then _provider, then localStorage
-            const liveKey  = window.solana?.publicKey || window.walletPubKey
-                          || (window._provider?.publicKey) || null;
-            const saved    = JSON.parse(localStorage.getItem("olivium_identity") || "null");
-            const isEmail  = saved?.type === "email";
-            const isWallet = !isEmail && (liveKey || (saved?.type === "wallet" && saved?.wallet));
+    const saved = JSON.parse(
+      localStorage.getItem("olivium_identity") || "null"
+    );
 
-            if (isEmail) {
-              // Email-custodial login
-              const label = saved.address || "";
-              if (pillEl) pillEl.innerHTML = `✉️ ${label}`;
-              if (stat)   stat.innerHTML   = "Email Secured";
-              if (connectBtn) {
-                connectBtn.innerText      = "Disconnect";
-                connectBtn.style.color    = "var(--danger, #d94d4d)";
-                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
-                connectBtn.style.background = "transparent";
-              }
+    // =====================================================
+    // GUEST MODE (single source of truth)
+    // =====================================================
+    if (!saved) {
+      if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+      if (stat) stat.innerHTML = "Guest";
 
-            } else if (isWallet) {
-              // Extension wallet or cached wallet address
-              const pubKey = liveKey || (() => {
-                try { return new PublicKey(saved.wallet); } catch { return null; }
-              })();
+      if (connectBtn) {
+        connectBtn.innerText = "Connect Profile";
+        connectBtn.style.color = "white";
+        connectBtn.style.border = "";
+        connectBtn.style.background = "var(--green)";
+      }
 
-              let solBalance = "—";
-              let shortAddr  = saved?.wallet
-                ? `${saved.wallet.slice(0,4)}...${saved.wallet.slice(-4)}`
-                : "—";
+      return;
+    }
 
-              if (pubKey) {
-                shortAddr = `${pubKey.toBase58().slice(0,4)}...${pubKey.toBase58().slice(-4)}`;
-                try {
-                  const lamports = await connection.getBalance(pubKey);
-                  solBalance = (lamports / 1_000_000_000).toFixed(3);
-                } catch (_) {}
-              }
+    // =====================================================
+    // EMAIL MODE
+    // =====================================================
+    if (saved.type === "email") {
+      if (pillEl) {
+        pillEl.innerHTML = `✉️ ${saved.address || "Email User"}`;
+      }
 
-              if (pillEl) pillEl.innerHTML = `◎ ${solBalance} SOL <span style="opacity:0.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
-              if (stat)   stat.innerHTML   = "Wallet Mode";
-              if (connectBtn) {
-                connectBtn.innerText      = `${shortAddr} (Disconnect)`;
-                connectBtn.style.color    = "var(--danger, #d94d4d)";
-                connectBtn.style.border   = "1px solid var(--danger, #d94d4d)";
-                connectBtn.style.background = "transparent";
-              }
+      if (stat) {
+        stat.innerHTML = "Email Secured";
+      }
 
-            } else {
-              // Guest
-              if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
-              if (stat)   stat.innerHTML   = "Guest";
-              if (connectBtn) {
-                connectBtn.innerText      = "Connect Profile";
-                connectBtn.style.color    = "white";
-                connectBtn.style.border   = "";
-                connectBtn.style.background = "var(--green)";
-              }
-            }
-          } catch (err) {
-            console.error("[identityUI] render error:", err);
-          }
-        }
+      if (connectBtn) {
+        connectBtn.innerText = "Disconnect";
+        connectBtn.style.color = "#d94d4d";
+        connectBtn.style.border = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+      }
+
+      return;
+    }
+
+    // =====================================================
+    // WALLET MODE
+    // =====================================================
+    if (saved.type === "wallet" && saved.wallet) {
+      let shortAddr =
+        saved.wallet.slice(0, 4) +
+        "..." +
+        saved.wallet.slice(-4);
+
+      let solBalance = "—";
+
+      try {
+        const pubKey = new PublicKey(saved.wallet);
+        const lamports = await connection.getBalance(pubKey);
+        solBalance = (lamports / 1_000_000_000).toFixed(3);
+      } catch (err) {
+        console.warn("Balance fetch failed:", err);
+      }
+
+      if (pillEl) {
+        pillEl.innerHTML =
+          `◎ ${solBalance} SOL ` +
+          `<span style="opacity:.5;margin:0 6px">|</span>` +
+          `🔑 ${shortAddr}`;
+      }
+
+      if (stat) {
+        stat.innerHTML = "Wallet Mode";
+      }
+
+      if (connectBtn) {
+        connectBtn.innerText = "Disconnect";
+        connectBtn.style.color = "#d94d4d";
+        connectBtn.style.border = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+      }
+
+      return;
+    }
+
+  } catch (err) {
+    console.error("[updateIdentityBalanceUI]", err);
+  }
+}
+
 window.updateIdentityBalanceUI = updateIdentityBalanceUI;
 
         openModalBtn?.addEventListener("click", () => {
@@ -864,81 +890,70 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
           if(connectModalEl) connectModalEl.style.display = 'none';
         }
 
-        function handleDisconnectWorkflow() {
-  console.log("Disconnecting - clearing all data...");
-            const pillEl      = document.getElementById("identityPill");
-            const stat        = document.getElementById("identityTypeStat");
-            const connectBtn  = document.getElementById("connectBtn");
-console.log(pillEl,stat);
-  
-  // Clear all storage
-  localStorage.removeItem('olivium_identity');
-  localStorage.removeItem('olivium_user');
-  localStorage.removeItem('walletConnected');
-            if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
-              if (stat)   stat.innerHTML   = "Guest";
-              if (connectBtn) {
-                connectBtn.innerText      = "Connect Profile";
-                connectBtn.style.color    = "white";
-                connectBtn.style.border   = "";
-                connectBtn.style.background = "var(--green)";
-              }
-  
-  // Clear global objects
-  if(window.OliviumAuth) window.OliviumAuth.user = null;
+       async function handleDisconnectWorkflow() {
+  console.log("Disconnecting...");
+
+  // Clear storage
+  localStorage.removeItem("olivium_identity");
+  localStorage.removeItem("olivium_user");
+  localStorage.removeItem("walletConnected");
+
+  // Clear globals
+  if (window.OliviumAuth) {
+    window.OliviumAuth.user = null;
+  }
+
   window._provider = null;
   window.walletPubKey = null;
   window._program = null;
-  
-  // Disconnect wallet if connected
-  if (window.solana && typeof window.solana.disconnect === 'function') {
-    try { window.solana.disconnect(); } catch(e) {}
+
+  // Disconnect Phantom if present
+  try {
+    if (
+      window.solana &&
+      typeof window.solana.disconnect === "function"
+    ) {
+      await window.solana.disconnect();
+    }
+  } catch (err) {
+    console.warn("Wallet disconnect failed:", err);
   }
-  
-  // RESET ALL STATS DISPLAYS
+
+  // Reset application stats
   const treeCountStat = document.getElementById("treeCountStat");
   const shareCountStat = document.getElementById("shareCountStat");
   const grovePositionStat = document.getElementById("grovePositionStat");
-  const identityTypeStat = document.getElementById("identityTypeStat");
-  const identityPill = document.getElementById("identityPill");
- // const connectBtn = document.getElementById("connectBtn");
-  
+
   if (treeCountStat) treeCountStat.innerText = "--";
   if (shareCountStat) shareCountStat.innerText = "--";
   if (grovePositionStat) grovePositionStat.innerText = "0";
-  if (identityTypeStat) identityTypeStat.innerText = "Guest";
-  if (identityPill) identityPill.innerHTML = "🌿 Guest Mode";
-  
-  // Reset connect button
-  if (connectBtn) {
-    connectBtn.innerText = "Connect Profile";
-    connectBtn.style.color = "white";
-    connectBtn.style.border = "";
-    connectBtn.style.background = "var(--green)";
-  }
-  
-  // Close any open modals
-  const modals = ['modalOverlay', 'agreementModal', 'successModal', 'sell-modal', 'tree-detail-modal'];
-  // connectModal intentionally excluded — it must stay openable after disconnect
-  modals.forEach(id => {
+
+  // Close modals
+  [
+    "modalOverlay",
+    "agreementModal",
+    "successModal",
+    "sell-modal",
+    "tree-detail-modal"
+  ].forEach(id => {
     const modal = document.getElementById(id);
+
     if (modal) {
-      modal.style.display = 'none';
-      modal.classList.add('hidden');
+      modal.style.display = "none";
+      modal.classList.add("hidden");
     }
   });
-  
-  // Fire both events:
-  // 'olivium:disconnected' → reserve_board.ts handleDisconnectReset (nulls caches,
-  //    reloads tree grid as guest, clears owned-state buttons)
-  // 'solana:connection-complete' → updateIdentityBalanceUI (resets pill/stat/btn)
-  window.dispatchEvent(new CustomEvent('olivium:disconnected'));
-  window.dispatchEvent(new Event('solana:connection-complete'));
 
-  console.log("Disconnect complete - stats reset");
+  // Notify app
+  window.dispatchEvent(
+    new CustomEvent("olivium:disconnected")
+  );
+
+  // Refresh ALL identity UI from one source
+  await updateIdentityBalanceUI();
+
+  console.log("Disconnect complete");
 }
-
-
         // refreshIdentityUI: plain <script> runs before the module script, so
         // window.updateIdentityBalanceUI doesn't exist yet at this point.
         // Wrap it so the reference is resolved at call time, not assignment time.
