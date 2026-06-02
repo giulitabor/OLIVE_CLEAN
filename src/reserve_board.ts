@@ -2372,7 +2372,10 @@ async function sellShares(treeId: string | number, amount: number) {
   console.log(`\n[SELL] Starting sale: Tree ${treeIdStr}, ${amount} shares`);
 
   // 1. GATHER GLOBALS
-  const program = window._program;
+  const program = (window as any)._program;
+  const provider = (window as any)._provider || (window as any).provider;
+  
+ // const program = window._program;
   // Use the provider's wallet publicKey if available, else fall back to the saved string
   const walletInput = window._provider?.wallet?.publicKey || window.walletPubKey;
 
