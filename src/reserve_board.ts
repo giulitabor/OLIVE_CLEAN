@@ -997,55 +997,127 @@ function _randomFallback(): string {
 // MODAL FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-let selectedTree: Tree | null = null;
+// ═══════════════════════════════════════════════════════════════════════════
+// PURCHASE MODAL - COMPLETE FIXED VERSION
+// Normalizes Supabase data so agreement modal works correctly
+// ═══════════════════════════════════════════════════════════════════════════
 
-(window as any).openModal = (tree: Tree) => {
-  if (!tree) return;
+let selectedTree: Tree | null = null;
+let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
+
 (window as any).openModal = (tree: any) => {
-  // ✅ Normalize the data IMMEDIATELY
-  selectedTree = {
+  console.log("[MODAL] === OPENING PURCHASE MODAL ===");
+  console.log("[MODAL] Raw tree data from Supabase:", tree);
+  
+  if (!tree) {
+    console.error("[MODAL] No tree data provided!");
+    showToast("Error loading tree details", true);
+    return;
+  }
+
+  // ✅ NORMALIZE THE DATA - Map Supabase field names to what the UI expects
+  const normalizedTree = {
+    // Core identifiers
     tree_id: tree.tree_id,
+    
+    // Display fields with fallbacks
     name: tree.name || `Tree ${tree.tree_id}`,
-    location: tree.location || `Field ${tree.field_id || 'F1'}`,
+    description: tree.description || "Secure your digital olive tree adoption. Each share represents partial ownership of a real olive tree, with verified on-chain proof.",
+    
+    // Location data
+    location: tree.location || (tree.field_id ? `Field ${tree.field_id}` : "Olivium Grove, Tuscany"),
+    field_id: tree.field_id,
+    latitude: tree.latitude,
+    longitude: tree.longitude,
+    
+    // Physical characteristics - Map your actual field names
     age: tree.age || (tree.age_years ? `${tree.age_years} years` : "5+ years"),
+    age_years: tree.age_years,
     height: tree.height || (tree.height_cm ? `${tree.height_cm} cm` : "2.5m"),
+    height_cm: tree.height_cm,
     variety: tree.variety || "Frantoio",
+    
+    // Images
     image_url: tree.image_url || tree.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png",
-    total_shares: tree.total_shares || 1000,
-    shares_sold: tree.shares_sold || 0,
-    description: tree.description
+    photo_url: tree.photo_url,
+    
+    // Share data
+    total_shares: Number(tree.total_shares) || 1000,
+    shares_sold: Number(tree.shares_sold) || 0,
+    
+    // On-chain data
+    on_chain: tree.on_chain || false,
+    on_chain_address: tree.on_chain_address,
+    mint: tree.mint,
+    status: tree.status,
+    
+    // Health data
+    health_score: tree.health_score,
+    
+    // Metadata
+    field_pda: tree.field_pda,
+    updated_at: tree.updated_at
   };
   
-  console.log("[MODAL] Normalized selectedTree:", selectedTree);
-  console.log(selectedTree);
+  console.log("[MODAL] Normalized tree data:", normalizedTree);
+  console.log("[MODAL] Name:", normalizedTree.name);
+  console.log("[MODAL] Location:", normalizedTree.location);
+  console.log("[MODAL] Age:", normalizedTree.age);
+  console.log("[MODAL] Height:", normalizedTree.height);
+  console.log("[MODAL] Variety:", normalizedTree.variety);
+  console.log("[MODAL] Image URL:", normalizedTree.image_url);
+  console.log("[MODAL] Shares:", normalizedTree.total_shares, "Sold:", normalizedTree.shares_sold);
+  
+  // ✅ Store the normalized tree for agreement modal
+  selectedTree = normalizedTree;
+  
+  // Also expose to window for debugging
+  (window as any).selectedTree = selectedTree;
 
+  // Get modal element
   const modal = document.getElementById("modalOverlay");
-  if (!modal) return;
+  if (!modal) {
+    console.error("[MODAL] Modal overlay not found!");
+    return;
+  }
 
+  // Lock body scroll
   document.body.style.overflow = "hidden";
+  
+  // Reset payment mode to default
   paymentMode = "mollie";
+  
+  // Reset payment options UI
   document.querySelectorAll(".payment-option").forEach(el => el.classList.remove("active"));
-  document.getElementById("mollieOption")?.classList.add("active");
+  const mollieOption = document.getElementById("mollieOption");
+  if (mollieOption) mollieOption.classList.add("active");
 
-  const total = tree.total_shares || 1000;
-  const sold = tree.shares_sold || 0;
-  const available = total - sold;
+  // Calculate available shares
+  const totalShares = normalizedTree.total_shares;
+  const sharesSold = normalizedTree.shares_sold;
+  const available = Math.max(0, totalShares - sharesSold);
+  
+  console.log("[MODAL] Available shares:", available);
 
-  const setT = (id: string, v: string) => {
-    const el = document.getElementById(id);
-    if (el) el.innerText = v;
-  };
-  setT("modalTitle", tree.name || tree.tree_id);
-  setT("modalDescription", tree.description || "Secure your digital olive tree adoption.");
+  // Update modal title
+  const titleEl = document.getElementById("modalTitle");
+  if (titleEl) titleEl.innerText = normalizedTree.name;
 
+  // Update description
+  const descEl = document.getElementById("modalDescription");
+  if (descEl) descEl.innerText = normalizedTree.description;
+
+  // Update image with fallback
   const img = document.getElementById("modalImage") as HTMLImageElement | null;
   if (img) {
-    img.src = tree.image_url || _randomFallback();
+    img.src = normalizedTree.image_url;
     img.onerror = () => {
-      img.src = _randomFallback();
+      console.warn("[MODAL] Image failed to load, using fallback");
+      img.src = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
     };
   }
 
+  // Update share input
   const shareInput = document.getElementById("shareInput") as HTMLInputElement | null;
   const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
   const maxLabel = document.getElementById("sliderMaxLabel");
@@ -1055,35 +1127,54 @@ let selectedTree: Tree | null = null;
   if (shareInput) {
     shareInput.value = available <= 0 ? "0" : "1";
     shareInput.dataset.max = String(available);
+    shareInput.max = String(available);
   }
+  
   if (slider) {
     slider.min = available <= 0 ? "0" : "1";
     slider.max = String(available);
     slider.value = available <= 0 ? "0" : "1";
   }
+  
   if (maxLabel) maxLabel.textContent = String(available);
   if (maxBtn) maxBtn.textContent = `Max (${available})`;
+  
   if (adoptBtn) {
-    adoptBtn.disabled = available <= 0;
-    adoptBtn.innerText = available <= 0 ? "Sold Out" : "Continue to Agreement";
+    if (available <= 0) {
+      adoptBtn.disabled = true;
+      adoptBtn.innerText = "Sold Out";
+    } else {
+      adoptBtn.disabled = false;
+      adoptBtn.innerText = "Continue to Agreement";
+    }
   }
 
+  // Show the modal
   modal.style.display = "flex";
-  (window as any).updateShares?.();
+  console.log("[MODAL] Purchase modal opened");
+  
+  // Update price display
+  if (typeof (window as any).updateShares === "function") {
+    (window as any).updateShares();
+  }
 };
 
 (window as any).closeModal = () => {
+  console.log("[MODAL] Closing purchase modal");
+  
   const modal = document.getElementById("modalOverlay");
   if (modal) modal.style.display = "none";
   document.body.style.overflow = "";
+  
+  // Reset share inputs to default
   const shareInput = document.getElementById("shareInput") as HTMLInputElement | null;
   const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
   const shareValue = document.getElementById("shareValue");
+  
   if (shareInput) shareInput.value = "1";
   if (slider) slider.value = "1";
   if (shareValue) shareValue.textContent = "1";
 };
-
 // ═══════════════════════════════════════════════════════════════════════════
 // AGREEMENT MODAL - FIXED
 // ═══════════════════════════════════════════════════════════════════════════
