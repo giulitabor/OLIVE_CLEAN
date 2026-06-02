@@ -1077,150 +1077,106 @@ let selectedTree: Tree | null = null;
 // AGREEMENT MODAL - COMPLETE FIXED VERSION
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AGREEMENT MODAL - FIXED FOR YOUR ACTUAL DATA STRUCTURE
+// ═══════════════════════════════════════════════════════════════════════════
+
 (window as any).openAgreement = () => {
-  console.log("[AGREEMENT] === OPENING AGREEMENT MODAL ===");
-  
-  // DEBUG: Check selectedTree
-  console.log("[AGREEMENT] selectedTree value:", activeSellTreeId);
-  console.log("[AGREEMENT] selectedTree type:", typeof activeSellTreeId);
+  console.log("[AGREEMENT] Opening agreement modal");
+  console.log("[AGREEMENT] selectedTree:", selectedTree);
   
   if (!selectedTree) {
-    console.error("[AGREEMENT] ❌ selectedTree is NULL or UNDEFINED!");
-    console.error("[AGREEMENT] Make sure openModal was called first");
-    showToast("Error: No tree selected. Please try again.", true);
+    console.error("[AGREEMENT] No selected tree!");
+    alert("Error: No tree selected");
     return;
   }
 
-  // DEBUG: Log all tree properties
-  console.log("[AGREEMENT] Tree properties:", {
-    tree_id: activeSellTreeId.tree_id,
-    name: selectedTree.name,
-    location: selectedTree.location,
-    age: selectedTree.age,
-    height: selectedTree.height,
-    variety: selectedTree.variety,
-    image_url: selectedTree.image_url,
-    total_shares: selectedTree.total_shares,
-    shares_sold: selectedTree.shares_sold
+  // ✅ Map your actual Supabase field names to what the modal expects
+  const treeName = selectedTree.name || `Tree ${selectedTree.tree_id}`;
+  const treeLocation = selectedTree.location || `Field ${selectedTree.field_id || 'F1'}`;
+  const treeAge = selectedTree.age || (selectedTree.age_years ? `${selectedTree.age_years} years` : "5+ years");
+  const treeHeight = selectedTree.height || (selectedTree.height_cm ? `${selectedTree.height_cm} cm` : "2.5m");
+  const treeVariety = selectedTree.variety || "Frantoio";
+  
+  // Image fallback - your photo_url is null, so use fallback
+  const treeImage = selectedTree.image_url || selectedTree.photo_url || 
+    "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
+  
+  console.log("[AGREEMENT] Mapped values:", {
+    treeName, treeLocation, treeAge, treeHeight, treeVariety, treeImage
   });
 
-  // Check DOM elements before proceeding
+  // Get DOM elements
   const agreeModal = document.getElementById("agreementModal");
-  const selModal = document.getElementById("modalOverlay");
-  const agreeImg = document.getElementById("agreeImage");
-  const agreeTitle = document.getElementById("agreeTitle");
-  const agreeLocation = document.getElementById("agreeLocation");
-  const agreeAge = document.getElementById("agreeAge");
-  const agreeHeight = document.getElementById("agreeHeight");
-  const agreeVariety = document.getElementById("agreeVariety");
-  const agreeCheckbox = document.getElementById("agreeCheckbox");
-  const finalBtn = document.getElementById("finalConfirmBtn");
-
-  console.log("[AGREEMENT] DOM Elements check:");
-  console.log("  - agreementModal:", agreeModal ? "✅ Found" : "❌ MISSING");
-  console.log("  - modalOverlay:", selModal ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeImage:", agreeImg ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeTitle:", agreeTitle ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeLocation:", agreeLocation ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeAge:", agreeAge ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeHeight:", agreeHeight ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeVariety:", agreeVariety ? "✅ Found" : "❌ MISSING");
-  console.log("  - agreeCheckbox:", agreeCheckbox ? "✅ Found" : "❌ MISSING");
-  console.log("  - finalConfirmBtn:", finalBtn ? "✅ Found" : "❌ MISSING");
-
+  const purchaseModal = document.getElementById("modalOverlay");
+  
   if (!agreeModal) {
-    console.error("[AGREEMENT] ❌ agreementModal element not found in DOM!");
-    showToast("Error: Agreement modal not found", true);
+    console.error("[AGREEMENT] Agreement modal not found!");
     return;
   }
 
   // Hide body scroll
   document.body.style.overflow = "hidden";
-
-  // Set image with fallback
-  const fallback = _randomFallback();
-  if (agreeImg) {
-    const imgUrl = selectedTree.image_url || selectedTree.photo_url || fallback;
-    console.log("[AGREEMENT] Setting image to:", imgUrl);
-    agreeImg.src = imgUrl;
-    agreeImg.onerror = () => {
+  
+  // Hide purchase modal, show agreement modal
+  if (purchaseModal) purchaseModal.style.display = "none";
+  agreeModal.style.display = "flex";
+  
+  // Populate all fields
+  const titleEl = document.getElementById("agreeTitle");
+  if (titleEl) titleEl.innerText = `Adopting ${treeName}`;
+  
+  const imgEl = document.getElementById("agreeImage") as HTMLImageElement;
+  if (imgEl) {
+    imgEl.src = treeImage;
+    imgEl.onerror = () => {
       console.warn("[AGREEMENT] Image failed to load, using fallback");
-      agreeImg.src = fallback;
+      imgEl.src = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
     };
   }
-
-  // Set title
-  const treeName = selectedTree.name || selectedTree.tree_id || "Unknown Tree";
-  if (agreeTitle) {
-    agreeTitle.innerText = `Adopting ${treeName}`;
-    console.log("[AGREEMENT] Title set to:", agreeTitle.innerText);
-  }
-
-  // Set location
-  const location = selectedTree.location || selectedTree.field_location || "Field F1 - Tuscany, Italy";
-  if (agreeLocation) {
-    agreeLocation.innerText = location;
-    console.log("[AGREEMENT] Location set to:", location);
-  }
-
-  // Set age
-  const age = selectedTree.age || selectedTree.age_years || "5+ years";
-  if (agreeAge) {
-    agreeAge.innerText = typeof age === 'number' ? `${age} years` : age;
-    console.log("[AGREEMENT] Age set to:", agreeAge.innerText);
-  }
-
-  // Set height
-  const height = selectedTree.height || selectedTree.height_cm || "2.5m";
-  if (agreeHeight) {
-    agreeHeight.innerText = typeof height === 'number' ? `${height} cm` : height;
-    console.log("[AGREEMENT] Height set to:", agreeHeight.innerText);
-  }
-
-  // Set variety
-  const variety = selectedTree.variety || "Frantoio";
-  if (agreeVariety) {
-    agreeVariety.innerText = variety;
-    console.log("[AGREEMENT] Variety set to:", variety);
-  }
-
+  
+  const locationEl = document.getElementById("agreeLocation");
+  if (locationEl) locationEl.innerText = treeLocation;
+  
+  const ageEl = document.getElementById("agreeAge");
+  if (ageEl) ageEl.innerText = treeAge;
+  
+  const heightEl = document.getElementById("agreeHeight");
+  if (heightEl) heightEl.innerText = treeHeight;
+  
+  const varietyEl = document.getElementById("agreeVariety");
+  if (varietyEl) varietyEl.innerText = treeVariety;
+  
   // Setup checkbox and button
-  if (agreeCheckbox && finalBtn) {
-    agreeCheckbox.checked = false;
+  const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement;
+  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement;
+  
+  if (checkbox && finalBtn) {
+    checkbox.checked = false;
     finalBtn.disabled = true;
     finalBtn.innerText = "Confirm & Pay";
     
-    // Remove any existing listeners to avoid duplicates
-    agreeCheckbox.onchange = null;
-    agreeCheckbox.addEventListener('change', function(e) {
-      finalBtn.disabled = !(e.target as HTMLInputElement).checked;
-      console.log("[AGREEMENT] Checkbox changed, disabled:", finalBtn.disabled);
-    });
-    
-    console.log("[AGREEMENT] Checkbox and button configured");
-  }
-
-  // Hide purchase modal, show agreement modal
-  if (selModal) {
-    selModal.style.display = "none";
-    console.log("[AGREEMENT] Purchase modal hidden");
+    // Remove old listeners and add fresh one
+    checkbox.onchange = null;
+    checkbox.onchange = function() {
+      finalBtn.disabled = !this.checked;
+      console.log("[AGREEMENT] Checkbox changed, button disabled:", finalBtn.disabled);
+    };
   }
   
-  agreeModal.style.display = "flex";
-  console.log("[AGREEMENT] Agreement modal displayed (flex)");
-  
-  // Verify modal is visible
-  const computedDisplay = window.getComputedStyle(agreeModal).display;
-  console.log("[AGREEMENT] Modal computed display:", computedDisplay);
-  
-  console.log("[AGREEMENT] === AGREEMENT MODAL OPENED SUCCESSFULLY ===");
+  console.log("[AGREEMENT] Agreement modal opened successfully");
 };
 
 (window as any).closeAgreement = () => {
+  console.log("[AGREEMENT] Closing agreement modal");
+  
   const agreeModal = document.getElementById("agreementModal");
-  const selModal = document.getElementById("modalOverlay");
+  const purchaseModal = document.getElementById("modalOverlay");
+  
   if (agreeModal) agreeModal.style.display = "none";
-  if (selModal) selModal.style.display = "flex";
+  if (purchaseModal) purchaseModal.style.display = "flex";
+  
+  document.body.style.overflow = "";
 };
 
 (window as any).closeSuccess = () => {
