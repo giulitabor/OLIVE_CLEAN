@@ -1074,6 +1074,38 @@ let selectedTree: Tree | null = null;
 
 (window as any).openAgreement = () => {
   console.log("[AGREEMENT] Opening agreement modal");
+    console.log("[AGREEMENT] === DEBUG START ===");
+  console.log("[AGREEMENT] selectedTree:", selectedTree);
+  
+  if (!selectedTree) {
+    console.error("[AGREEMENT] selectedTree is NULL!");
+    showToast("Error: No tree selected", true);
+    return;
+  }
+  
+  // Log each field being set
+  console.log("[AGREEMENT] Tree name:", selectedTree.name || selectedTree.tree_id);
+  console.log("[AGREEMENT] Tree location:", selectedTree.location);
+  console.log("[AGREEMENT] Tree age:", selectedTree.age);
+  console.log("[AGREEMENT] Tree height:", selectedTree.height);
+  console.log("[AGREEMENT] Tree variety:", selectedTree.variety);
+  
+  // Check DOM elements
+  const agreeModal = document.getElementById("agreementModal");
+  console.log("[AGREEMENT] agreementModal element:", agreeModal);
+  
+  const agreeImg = document.getElementById("agreeImage");
+  console.log("[AGREEMENT] agreeImage element:", agreeImg);
+  
+  const finalBtn = document.getElementById("finalConfirmBtn");
+  console.log("[AGREEMENT] finalConfirmBtn element:", finalBtn);
+  
+  const check = document.getElementById("agreeCheckbox");
+  console.log("[AGREEMENT] agreeCheckbox element:", check);
+  
+  // Continue with normal flow...
+  document.body.style.overflow = "hidden";
+ 
   
   if (!selectedTree) {
     console.error("[AGREEMENT] No selected tree");
