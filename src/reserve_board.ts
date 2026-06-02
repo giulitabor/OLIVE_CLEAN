@@ -1001,7 +1001,22 @@ let selectedTree: Tree | null = null;
 
 (window as any).openModal = (tree: Tree) => {
   if (!tree) return;
-  selectedTree = tree;
+(window as any).openModal = (tree: any) => {
+  // ✅ Normalize the data IMMEDIATELY
+  selectedTree = {
+    tree_id: tree.tree_id,
+    name: tree.name || `Tree ${tree.tree_id}`,
+    location: tree.location || `Field ${tree.field_id || 'F1'}`,
+    age: tree.age || (tree.age_years ? `${tree.age_years} years` : "5+ years"),
+    height: tree.height || (tree.height_cm ? `${tree.height_cm} cm` : "2.5m"),
+    variety: tree.variety || "Frantoio",
+    image_url: tree.image_url || tree.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png",
+    total_shares: tree.total_shares || 1000,
+    shares_sold: tree.shares_sold || 0,
+    description: tree.description
+  };
+  
+  console.log("[MODAL] Normalized selectedTree:", selectedTree);
   console.log(selectedTree);
 
   const modal = document.getElementById("modalOverlay");
