@@ -18,6 +18,14 @@ interface Tree {
 
 let selectedTree: Tree | null = null;
 let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
+
+function showToast(msg: string, isError = false) {
+  if ((window as any).showGlobalToast) {
+    (window as any).showGlobalToast(msg, isError);
+  } else {
+    console.log(`[TOAST] ${msg}`);
+  }
+}
 /* =========================================================
    WAIT FOR PROGRAM
 ========================================================= */
