@@ -130,10 +130,6 @@ function Wallet() {
       if (parsed.type === "wallet" && parsed.wallet) {
         return parsed.wallet;
       }
-      // Legacy fallback: old villa_stay stored "address" not "wallet"
-      if (parsed.type === "wallet" && parsed.address) {
-        return parsed.address;
-      }
       if (parsed.type === "email" && parsed.custodialWallet) {
         return parsed.custodialWallet; // This maps to the fiat user's non-custodial on-chain key
       }
@@ -1252,7 +1248,7 @@ if (villaDiscount) villaDiscount.textContent = "0%";
 
 async function syncVillaUI() {
     const activeSessionData = localStorage.getItem("olivium_identity");
-    const navBtn = document.getElementById("navConnectTriggerBtn") || document.getElementById("connectBtn");
+    const navBtn = document.getElementById("connectBtn");  // ✅ Correct ID
     const navTierLabel = document.getElementById("nav-tier-label");
     const navIdentityDisplay = document.getElementById("nav-identity-display");
 
@@ -1315,8 +1311,8 @@ async function syncVillaUI() {
 
         // After updateVillaStayUI runs, update nav-tier-label with tier name
         const tierNameEl = document.getElementById("tier-name");
-        if (tierNameEl && navTierLabel && activeSessionData) {
-            navTierLabel.innerText = tierNameEl.innerText || "Standard Account";
+        if (tierNameEl && nav-tier-label && activeSessionData) {
+            navtierlabel.innerText = tierNameEl.innerText || "Standard Account";
         }
     }
 }interface Position {
@@ -2689,10 +2685,8 @@ if (sharesCountDisplay) {
 if (creditsCountDisplay) {
   creditsCountDisplay.innerHTML = `${totalCredits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
 }
-    // 3. Compute Aggregated Total Metrics (guard: positions may be empty array)
-    if (positions && positions.length > 0) {
-      totalSharesOwned = positions.reduce((s: number, p: any) => s + p.sharesOwned, 0);
-    }
+    // 3. Compute Aggregated Total Metrics
+    totalSharesOwned = positions.reduce((s, p) => s + p.sharesOwned, 0);
     const totalOlvStaked = positions[0]?.totalStakedOlv || 0;
 
     // Update Layout Metric display targets
