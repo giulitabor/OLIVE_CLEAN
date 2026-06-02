@@ -1,33 +1,36 @@
 /**
  * reserve_board.ts — Olivium DAO
  * ─────────────────────────────────────────────────────────────────────────────
- * Responsibilities:
- *  • Tree grid rendering (all / available / full / my filters)
- *  • Stats header (tree count, share count, grove positions)
- *  • Villa stay tier logic
- *  • Sell modal
- *  • Tree detail modal (overview, physical, sensors, weather, metadata, gallery)
- *  • Purchase modal (adopt flow, price calculator)
- *  • Blockchain tx for crypto purchases
+ * All original functionality preserved + the following bugs fixed:
  *
- * What was fixed vs the original:
- *  1. walletState / Wallet() replaced by getIdentity() from connection.ts SSOT.
- *  2. updateWalletUI() no longer sets window.OliviumIdentity — that is managed
- *     exclusively by connection.ts.
- *  3. updateStatsUI() + updateVillaStayUI() both guard against being called
- *     before the program is ready, using waitForProgram() properly.
- *  4. positionsCache / positionsPromise moved to module scope (not window),
- *     accessed only through getAllPositions(). Old AllPositions() duplicate removed.
- *  5. getTrees() now invalidates its cache on olivium:disconnected so guest
- *     users always see fresh data after a reconnect.
- *  6. loadTrees() / loadUserTreePositions() de-duplication: a second call while
- *     the first is still running returns the same Promise.
- *  7. DOMContentLoaded is the single initialisation gate — no duplicate calls.
- *  8. Event listeners: olivium:connected + olivium:disconnected only.
- *     solana:connection-complete removed (bridged in reserveb.ts already).
- *  9. initWalletOnLoad() deleted — the olivium:connected event fires after
- *     restoreSession() in connection.ts, which already triggers the handlers.
- * 10. clearAllUserUiAndStates() is the single disconnect handler.
+ *  FIX 1  loadUserTreePositions — the position filter now checks all candidate
+ *          owner fields (authority, owner, wallet, user, buyer) via a safe
+ *          normalise helper.  The original rewrite hardcoded "buyer" which
+ *          caused every position fetch to return [] for most users.
+ *
+ *  FIX 2  positionsCache/treesCache invalidation now goes through the
+ *          module-scoped _invalidateCaches() — not window globals — so it
+ *          actually works.
+ *
+ *  FIX 3  getAllPositions() latch: on error the promise handle is cleared so
+ *          subsequent calls can retry.
+ *
+ *  FIX 4  loadTrees() de-duplicated: concurrent calls while a load is
+ *          in-flight return the same Promise.  After the load completes the
+ *          latch is cleared so the next call works normally.
+ *
+ *  FIX 5  updateShares(), processBlockchainTx(), sellShares(),
+ *          openAgreement(), findPositionPDA(), syncTransactionToSupabase(),
+ *          getSolPriceEUR() — all were omitted from the first rewrite;
+ *          re-added here with the same logic but using getIdentity() SSOT.
+ *
+ *  FIX 6  switchTreeDetailTab() — tab CSS selector aligned with HTML
+ *          (.tree-detail-tab, not .tree-detail-tab-btn).
+ *
+ *  FIX 7  olivium:disconnected registered once only (removed duplicate
+ *          resetProfileAndUI handler that was also firing).
+ *
+ *  FIX 8  DOMContentLoaded is the single init gate — no parallel calls.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -35,14 +38,10 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   sb,
+  connection,
   getIdentity,
   isConnected,
 } from "./connection";
-
-// ─── Re-expose for inline scripts ─────────────────────────────────────────
-(window as any).findProtocolPDA = findProtocolPDA;
-(window as any).findTreePDA     = findTreePDA;
-(window as any).findTreasuryPDA = findTreasuryPDA;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -62,12 +61,15 @@ interface Tree {
 }
 
 interface NormalisedPosition {
-  treeId:      string;
-  sharesOwned: number;
+  treeId:         string;
+  sharesOwned:    number;
+  treeName?:      string;
+  treeMetadata?:  any;
+  totalStakedOlv?: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PDA HELPERS
+// PROGRAM HELPER
 // ═══════════════════════════════════════════════════════════════════════════
 
 function _requireProgram() {
@@ -75,6 +77,20 @@ function _requireProgram() {
   if (!p) throw new Error("Program not ready");
   return p;
 }
+
+async function waitForProgram(timeout = 10_000): Promise<any> {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const p = (window as any)._program;
+    if (p) return p;
+    await new Promise(r => setTimeout(r, 150));
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PDA HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
 
 function findProtocolPDA() {
   return anchor.web3.PublicKey.findProgramAddressSync(
@@ -90,12 +106,23 @@ function findTreePDA(treeId: string) {
   );
 }
 
-function findTreasuryPDA(activeProgram: any) {
+function findTreasuryPDA(prog: any) {
   return anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("treasury")],
-    activeProgram.programId
+    prog.programId
   );
 }
+
+async function findPositionPDA(ownerKey: PublicKey, treeId: string) {
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("position"), ownerKey.toBuffer(), Buffer.from(treeId)],
+    _requireProgram().programId
+  );
+}
+
+(window as any).findProtocolPDA = findProtocolPDA;
+(window as any).findTreePDA     = findTreePDA;
+(window as any).findTreasuryPDA = findTreasuryPDA;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TOAST
@@ -110,37 +137,23 @@ function showToast(msg: string, isError = false) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// WAIT FOR PROGRAM
+// DATA CACHES  (module-scoped — the ONLY place these variables live)
 // ═══════════════════════════════════════════════════════════════════════════
 
-async function waitForProgram(timeout = 10_000): Promise<any> {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const p = (window as any)._program;
-    if (p) return p;
-    await new Promise(r => setTimeout(r, 150));
-  }
-  return null;
-}
+let treesCache:        any[] | null            = null;
+let treesPromise:      Promise<any[]> | null   = null;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DATA CACHES  (module-scoped; invalidated on disconnect)
-// ═══════════════════════════════════════════════════════════════════════════
+let positionsCache:    any[] | null            = null;
+let positionsPromise:  Promise<any[]> | null   = null;
+let positionsCacheTime = 0;
+const POSITIONS_TTL    = 8_000;
 
-let treesCache:     any[]            | null = null;
-let treesPromise:   Promise<any[]>   | null = null;
-
-let positionsCache:     any[]            | null = null;
-let positionsPromise:   Promise<any[]>   | null = null;
-let positionsCacheTime  = 0;
-const POSITIONS_TTL     = 8_000; // ms
-
-let loadTreesPromise: Promise<void> | null = null;
+let loadTreesPromise:  Promise<void> | null    = null;
 
 function _invalidateCaches() {
-  treesCache      = null;
-  treesPromise    = null;
-  positionsCache  = null;
+  treesCache       = null;
+  treesPromise     = null;
+  positionsCache   = null;
   positionsPromise = null;
   positionsCacheTime = 0;
 }
@@ -181,57 +194,137 @@ export async function getAllPositions(force = false): Promise<any[]> {
   return positionsPromise;
 }
 
+// ─── Normalise any public-key representation to a base58 string ──────────
+function _pkToString(raw: any): string {
+  if (!raw) return "";
+  if (typeof raw === "string") return raw;
+  if (typeof raw.toBase58 === "function") return raw.toBase58();
+  // BN / Buffer / byte-array style
+  try { return new PublicKey(raw).toBase58(); } catch { return String(raw); }
+}
+
 /**
- * Returns normalised position objects for the currently connected wallet.
- * Empty array when not connected or no positions found.
+ * FIX 1 — checks ALL candidate owner fields in the account struct.
+ * The on-chain layout may use authority, owner, wallet, user, or buyer
+ * depending on the program version.  We try every one.
  */
 export async function loadUserTreePositions(): Promise<NormalisedPosition[]> {
   const identity = getIdentity();
   if (!identity.wallet) return [];
 
+  const targetAddr = identity.wallet;
+
   try {
-    const raw = await getAllPositions();
-    return raw
-      .filter(p => {
-        const buyer = p.account?.buyer;
-        return buyer && buyer.toBase58() === identity.wallet;
+    const prog = await waitForProgram();
+
+    const [allPositions, allTrees] = await Promise.all([
+      getAllPositions(),
+      getTrees(),
+    ]);
+
+    if (allPositions.length > 0) {
+      console.log("[POSITIONS] Sample account fields:", Object.keys(allPositions[0].account));
+    }
+
+    // Fetch staked OLV if available (non-critical)
+    let totalStakedOlv = 0;
+    if (prog) {
+      try {
+        const ownerKey = new PublicKey(targetAddr);
+        const [stakePda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("stake"), ownerKey.toBuffer()],
+          prog.programId
+        );
+        const stakeAcc = await prog.account.stakeAccount.fetch(stakePda);
+        totalStakedOlv = (stakeAcc.amount?.toNumber() || 0) / 1_000_000_000;
+      } catch { /* no stake account — normal for most users */ }
+    }
+
+    const positions = allPositions
+      .filter((pos: any) => {
+        const acc = pos.account;
+        // Try every field name the program might use for the owner
+        const ownerRaw =
+          acc.authority ?? acc.owner ?? acc.wallet ?? acc.user ?? acc.buyer ?? null;
+        if (!ownerRaw) return false;
+        return _pkToString(ownerRaw) === targetAddr;
       })
-      .map(p => ({
-        treeId:      String(p.account.treeId),
-        sharesOwned: typeof p.account.sharesOwned?.toNumber === "function"
-          ? p.account.sharesOwned.toNumber()
-          : Number(p.account.sharesOwned ?? 0),
-      }));
+      .map((pos: any) => {
+        const acc = pos.account;
+        const treeId = acc.treeId?.toString() ?? "";
+        const sharesOwned =
+          typeof acc.sharesOwned?.toNumber === "function"
+            ? acc.sharesOwned.toNumber()
+            : Number(acc.sharesOwned ?? 0);
+
+        const tree = allTrees.find(
+          (t: any) => t.account.treeId?.toString() === treeId
+        );
+
+        return {
+          treeId,
+          sharesOwned,
+          treeName:      tree?.account.name   || "Unknown",
+          treeMetadata:  tree?.account.treeMetadata || null,
+          totalStakedOlv,
+        } as NormalisedPosition;
+      })
+      .filter(p => p.sharesOwned > 0);
+
+    console.log(`[POSITIONS] Found ${positions.length} positions for ${targetAddr.slice(0,8)}…`);
+    return positions;
+
   } catch (err) {
     console.error("[loadUserTreePositions]", err);
     return [];
   }
 }
+
 (window as any).loadUserTreePositions = loadUserTreePositions;
-(window as any).getAllPositions       = getAllPositions;
+(window as any).getAllPositions        = getAllPositions;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOL PRICE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _cachedSolPrice   = 100;
+let _lastPriceFetch   = 0;
+(window as any).cachedSolPrice = _cachedSolPrice;
+
+async function getSolPriceEUR(): Promise<number> {
+  const now = Date.now();
+  if (now - _lastPriceFetch < 60_000) return _cachedSolPrice;
+  try {
+    const res  = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur");
+    const data = await res.json();
+    if (data?.solana?.eur) {
+      _cachedSolPrice = data.solana.eur;
+      _lastPriceFetch = now;
+      (window as any).cachedSolPrice = _cachedSolPrice;
+    }
+  } catch { /* fallback */ }
+  return _cachedSolPrice;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SELL MODAL
 // ═══════════════════════════════════════════════════════════════════════════
 
-let activeSellTreeId:        string | null = null;
-let maxAvailableSellShares   = 0;
+let activeSellTreeId:      string | null = null;
+let maxAvailableSellShares = 0;
 
 (window as any).openSellModal = (treeId: string, currentShares: number) => {
-  activeSellTreeId         = String(treeId);
-  maxAvailableSellShares   = currentShares;
+  activeSellTreeId       = String(treeId);
+  maxAvailableSellShares = currentShares;
 
-  const modal   = document.getElementById("sell-modal");
-  const title   = document.getElementById("sell-modal-title");
-  const owned   = document.getElementById("sell-modal-owned");
-  const input   = document.getElementById("sell-amount-input") as HTMLInputElement | null;
+  const modal = document.getElementById("sell-modal");
+  const title = document.getElementById("sell-modal-title");
+  const owned = document.getElementById("sell-modal-owned");
+  const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
 
   if (title)  title.textContent = `Sell Shares — Tree #${treeId}`;
   if (owned)  owned.textContent = `${currentShares.toLocaleString()} Shares Registered`;
-  if (input) {
-    input.value = String(Math.min(10, currentShares));
-    input.max   = String(currentShares);
-  }
+  if (input) { input.value = String(Math.min(10, currentShares)); input.max = String(currentShares); }
 
   _recalculatePayout();
   modal?.classList.remove("hidden");
@@ -246,27 +339,20 @@ function _closeSellModal() {
 
 (window as any).setSellMax = () => {
   const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
-  if (input) {
-    input.value = String(maxAvailableSellShares);
-    _recalculatePayout();
-  }
+  if (input) { input.value = String(maxAvailableSellShares); _recalculatePayout(); }
 };
 
 function _recalculatePayout() {
   const input   = document.getElementById("sell-amount-input") as HTMLInputElement | null;
   const display = document.getElementById("sell-modal-payout");
   if (!input || !display) return;
-
-  const shares   = parseInt(input.value) || 0;
-  const euro     = shares * 12.40;
-  const solPrice = (window as any).cachedSolPrice || 100;
-  display.textContent = `${(euro / solPrice).toFixed(3)} SOL`;
+  const shares = parseInt(input.value) || 0;
+  display.textContent = `${((shares * 12.40) / _cachedSolPrice).toFixed(3)} SOL`;
 }
 
 async function _confirmSellAction() {
-  const btn   = document.getElementById("sell-submit-btn") as HTMLButtonElement | null;
+  const btn   = document.getElementById("sell-submit-btn")  as HTMLButtonElement | null;
   const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
-
   if (!activeSellTreeId || !input || !btn) return;
 
   const amount = parseInt(input.value) || 0;
@@ -274,18 +360,15 @@ async function _confirmSellAction() {
     alert("Please specify a valid quantity within your ownership bounds.");
     return;
   }
-
-  btn.disabled    = true;
-  btn.textContent = "Processing…";
+  btn.disabled = true; btn.textContent = "Processing…";
   try {
-    await (window as any).sellShares(activeSellTreeId, amount);
+    await sellShares(activeSellTreeId, amount);
     _closeSellModal();
   } catch (err) {
     console.error("[SELL ERROR]", err);
     showToast("Sell transaction failed.", true);
   } finally {
-    btn.disabled    = false;
-    btn.textContent = "Confirm Liquidation";
+    btn.disabled = false; btn.textContent = "Confirm Liquidation";
   }
 }
 (window as any).confirmSellAction = _confirmSellAction;
@@ -299,7 +382,6 @@ async function updateStatsUI() {
   const shareCountEl = document.getElementById("shareCountStat");
   const groveCountEl = document.getElementById("grovePositionStat");
 
-  // Always show global tree count (works for guests)
   try {
     await waitForProgram();
     const allTrees = await getTrees();
@@ -309,7 +391,6 @@ async function updateStatsUI() {
   }
 
   const identity = getIdentity();
-
   if (!identity.wallet) {
     if (shareCountEl) shareCountEl.innerText = "--";
     if (groveCountEl) groveCountEl.innerText = "0";
@@ -317,10 +398,9 @@ async function updateStatsUI() {
   }
 
   try {
-    const positions = await loadUserTreePositions();
-    const totalShares  = positions.reduce((s, p) => s + p.sharesOwned, 0);
-    const uniqueTrees  = new Set(positions.map(p => p.treeId)).size;
-
+    const positions   = await loadUserTreePositions();
+    const totalShares = positions.reduce((s, p) => s + p.sharesOwned, 0);
+    const uniqueTrees = new Set(positions.map(p => p.treeId)).size;
     if (shareCountEl) shareCountEl.innerText = String(totalShares);
     if (groveCountEl) groveCountEl.innerText = String(uniqueTrees);
   } catch (err) {
@@ -331,11 +411,10 @@ async function updateStatsUI() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// WALLET UI  (delegates label rendering to reserveb.ts's updateIdentityBalanceUI)
+// WALLET UI  (delegates to reserveb.ts's single renderer)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function updateWalletUI() {
-  // Delegate pill / button / stat rendering to the single renderer in reserveb.ts
   if (typeof (window as any).updateIdentityBalanceUI === "function") {
     await (window as any).updateIdentityBalanceUI();
   }
@@ -346,38 +425,38 @@ async function updateWalletUI() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function updateVillaStayUI() {
-  // DOM refs
-  const sharesCountDisplay  = document.getElementById("villaSharesCount");
-  const creditsCountDisplay = document.getElementById("villaNightsCount");
-  const tierName            = document.getElementById("tier-name");
-  const tierIcon            = document.getElementById("tier-icon");
-  const tierProgressText    = document.getElementById("tier-progress-text");
-  const nextTierLabel       = document.getElementById("next-tier-label");
-  const tierPercentLabel    = document.getElementById("tier-percent-label");
-  const tierProgressBar     = document.getElementById("tier-progress-bar");
-  const patronDiscountBadge = document.getElementById("patron-discount-badge");
-  const bookingRateDisplay  = document.getElementById("booking-rate-display");
-  const cardTier1 = document.getElementById("tier-card-1");
-  const cardTier2 = document.getElementById("tier-card-2");
-  const cardTier3 = document.getElementById("tier-card-3");
-  const perkGov      = document.getElementById("perk-governance");
-  const perkShipping = document.getElementById("perk-shipping");
-  const perkDiscount = document.getElementById("perk-discount");
-  const perkStay     = document.getElementById("perk-stay");
+  // Element refs use the IDs that exist in the original HTML
+  const sharesDisplay  = document.getElementById("shares-count-display");
+  const creditsDisplay = document.getElementById("credits-count-display");
+  const tierName       = document.getElementById("tier-name");
+  const tierIcon       = document.getElementById("tier-icon");
+  const tierPrgTxt     = document.getElementById("tier-progress-text");
+  const nextTierLbl    = document.getElementById("next-tier-label");
+  const tierPctLbl     = document.getElementById("tier-percent-label");
+  const tierBar        = document.getElementById("tier-progress-bar");
+  const patronBadge    = document.getElementById("patronDiscountBadge");
+  const bookingRate    = document.getElementById("bookingRateDisplay");
+  const cardTier1      = document.getElementById("card-tier-1");
+  const cardTier2      = document.getElementById("card-tier-2");
+  const cardTier3      = document.getElementById("card-tier-3");
+  const perkGov        = document.getElementById("perk-gov");
+  const perkShipping   = document.getElementById("perk-shipping");
+  const perkDiscount   = document.getElementById("perk-discount");
+  const perkStay       = document.getElementById("perk-stay");
 
   const tierEls = [cardTier1, cardTier2, cardTier3, perkGov, perkShipping, perkDiscount, perkStay];
   const dim = (el: Element | null) => { el?.classList.remove("opacity-100"); el?.classList.add("opacity-40"); };
-  const lit = (el: Element | null) => { el?.classList.remove("opacity-40"); el?.classList.add("opacity-100"); };
+  const lit = (el: Element | null) => { el?.classList.remove("opacity-40");  el?.classList.add("opacity-100"); };
 
-  // ── Guest default ────────────────────────────────────────────────────
   const identity = getIdentity();
+
   if (!identity.wallet) {
-    if (sharesCountDisplay)  sharesCountDisplay.innerHTML  = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
-    if (creditsCountDisplay) creditsCountDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
-    if (tierName)            tierName.innerText            = "Guest Mode";
-    if (tierProgressText)    tierProgressText.innerText    = "Connect to view tier status";
-    if (patronDiscountBadge) patronDiscountBadge.innerText = "Standard Account";
-    if (bookingRateDisplay)  bookingRateDisplay.innerText  = "$450 USD / Nightly standard baseline";
+    if (sharesDisplay)  sharesDisplay.innerHTML  = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
+    if (creditsDisplay) creditsDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
+    if (tierName)       tierName.innerText       = "Guest Mode";
+    if (tierPrgTxt)     tierPrgTxt.innerText     = "Connect to view tier status";
+    if (patronBadge)    patronBadge.innerText    = "Standard Account";
+    if (bookingRate)    bookingRate.innerText    = "$450 USD / Nightly standard baseline";
     tierEls.forEach(dim);
     return;
   }
@@ -388,73 +467,54 @@ async function updateVillaStayUI() {
     const positions   = await loadUserTreePositions();
     const totalShares = positions.reduce((s, p) => s + p.sharesOwned, 0);
 
-    // Credits from Supabase
     let totalCredits = 0;
     try {
-      const { data } = await sb
-        .from("users")
-        .select("credits")
-        .eq("wallet", identity.wallet)
-        .maybeSingle();
+      const { data } = await sb.from("users").select("credits").eq("wallet", identity.wallet).maybeSingle();
       if (data) totalCredits = data.credits || 0;
     } catch { /* non-critical */ }
 
-    if (sharesCountDisplay)  sharesCountDisplay.innerHTML  = `${totalShares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
-    if (creditsCountDisplay) creditsCountDisplay.innerHTML = `${totalCredits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
+    if (sharesDisplay)  sharesDisplay.innerHTML  = `${totalShares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
+    if (creditsDisplay) creditsDisplay.innerHTML = `${totalCredits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
 
-    // ── Tier logic ─────────────────────────────────────────────────────
     tierEls.forEach(dim);
 
-    let currentTier     = "Standard Account";
-    let nextTier        = "Seed Supporter";
-    let progressPercent = 0;
-    let iconEmoji       = "🫒";
-    let progressLabel   = "";
+    let currentTier   = "Standard Account";
+    let nextTier      = "Seed Supporter";
+    let pct           = 0;
+    let icon          = "🫒";
+    let label         = "";
 
     if (totalShares >= 1000) {
-      currentTier = "Grove Patron"; nextTier = "Max Tier Achieved";
-      progressPercent = 100; iconEmoji = "👑"; progressLabel = "VIP Privileges unlocked";
+      currentTier = "Grove Patron"; nextTier = "Max Tier Achieved"; pct = 100; icon = "👑"; label = "VIP Privileges unlocked";
       lit(cardTier3); [perkGov, perkShipping, perkDiscount, perkStay].forEach(lit);
     } else if (totalShares >= 500) {
       currentTier = "Tree Guardian"; nextTier = "Grove Patron";
-      progressPercent = Math.round(((totalShares - 500) / 500) * 100);
-      iconEmoji = "🌳"; progressLabel = `${1000 - totalShares} shares to Patron`;
+      pct = Math.round(((totalShares - 500) / 500) * 100); icon = "🌳"; label = `${1000 - totalShares} shares to Patron`;
       lit(cardTier2); [perkGov, perkShipping, perkDiscount].forEach(lit);
     } else if (totalShares >= 100) {
       currentTier = "Seed Supporter"; nextTier = "Tree Guardian";
-      progressPercent = Math.round(((totalShares - 100) / 400) * 100);
-      iconEmoji = "🌱"; progressLabel = `${500 - totalShares} shares to Guardian`;
+      pct = Math.round(((totalShares - 100) / 400) * 100); icon = "🌱"; label = `${500 - totalShares} shares to Guardian`;
       lit(cardTier1); [perkGov, perkShipping].forEach(lit);
     } else {
-      currentTier = "Standard Account"; nextTier = "Seed Supporter";
-      progressPercent = Math.round((totalShares / 100) * 100);
-      progressLabel = `${100 - totalShares} shares to Seed level`;
+      pct = Math.round((totalShares / 100) * 100); label = `${100 - totalShares} shares to Seed level`;
     }
 
-    if (tierName)         tierName.innerText         = currentTier;
-    if (tierIcon)         tierIcon.innerText         = iconEmoji;
-    if (tierProgressText) tierProgressText.innerText = progressLabel;
-    if (nextTierLabel)    nextTierLabel.innerText    = `Next: ${nextTier}`;
-    if (tierPercentLabel) tierPercentLabel.innerText = `${progressPercent}%`;
-    if (tierProgressBar)  (tierProgressBar as HTMLElement).style.width = `${progressPercent}%`;
+    if (tierName)    tierName.innerText    = currentTier;
+    if (tierIcon)    tierIcon.innerText    = icon;
+    if (tierPrgTxt)  tierPrgTxt.innerText  = label;
+    if (nextTierLbl) nextTierLbl.innerText = `Next: ${nextTier}`;
+    if (tierPctLbl)  tierPctLbl.innerText  = `${pct}%`;
+    if (tierBar)     (tierBar as HTMLElement).style.width = `${pct}%`;
 
-    // ── Booking rate ─────────────────────────────────────────────────
     const hasGenesis = positions.some(p => Number(p.treeId) <= 3);
     let pricingLabel = "Standard Account";
     let rateStr      = "$450 USD / Nightly standard baseline";
+    if (hasGenesis || totalShares >= 1000) { pricingLabel = "👑 Grove Patron Tier"; rateStr = "$382.50 USD / Nightly (15% Patron Override Applied)"; }
+    else if (totalShares >= 500)           { pricingLabel = "🌳 Guardian Tier";     rateStr = "$382.50 USD / Nightly (15% Guardian Override Applied)"; }
+    else if (totalShares >= 100)           { pricingLabel = "🌱 Seed Supporter"; }
 
-    if (hasGenesis || totalShares >= 1000) {
-      pricingLabel = "👑 Grove Patron Tier";
-      rateStr      = "$382.50 USD / Nightly (15% Patron Override Applied)";
-    } else if (totalShares >= 500) {
-      pricingLabel = "🌳 Guardian Tier";
-      rateStr      = "$382.50 USD / Nightly (15% Guardian Override Applied)";
-    } else if (totalShares >= 100) {
-      pricingLabel = "🌱 Seed Supporter";
-    }
-
-    if (patronDiscountBadge) patronDiscountBadge.innerText = pricingLabel;
-    if (bookingRateDisplay)  bookingRateDisplay.innerText  = rateStr;
+    if (patronBadge) patronBadge.innerText = pricingLabel;
+    if (bookingRate) bookingRate.innerText  = rateStr;
 
   } catch (err) {
     console.error("[updateVillaStayUI]", err);
@@ -462,42 +522,36 @@ async function updateVillaStayUI() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CLEAR ALL USER UI  (called on disconnect)
+// DISCONNECT CLEANUP  (single definition)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function clearAllUserUiAndStates() {
+async function clearAllUserUiAndStates() {
   console.log("🔄 Clearing user UI and caches…");
+
   _invalidateCaches();
 
   localStorage.removeItem("olivium_user");
   if ((window as any).OliviumAuth) (window as any).OliviumAuth.user = null;
 
-  // Stats
-  const setEl = (id: string, v: string) => {
-    const el = document.getElementById(id);
-    if (el) el.innerText = v;
-  };
+  const setEl = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
   setEl("shareCountStat",    "--");
   setEl("grovePositionStat", "0");
   setEl("identityTypeStat",  "Guest");
-
-  // Villa
   setEl("villaStayIdentity", "Not Connected");
   setEl("villaTierStat",     "Standard Guest");
   setEl("villaDiscountStat", "0%");
 
-  // Reload tree grid (filter to "all" so guest still sees trees)
+  await updateStatsUI();
+  await updateVillaStayUI();
+
   const activeFilter = document.querySelector<HTMLElement>(".filter-btn.active");
   if (activeFilter?.dataset.filter === "my") {
     document.querySelector<HTMLElement>('[data-filter="all"]')?.click();
   } else {
     loadTrees("all");
   }
-
-  // Re-run stats to repopulate global tree count
-  updateStatsUI();
-  updateVillaStayUI();
 }
+(window as any).resetProfileAndUI = clearAllUserUiAndStates;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FILTER BUTTONS
@@ -513,23 +567,14 @@ function initFilters() {
 
       if (filter === "my") {
         if (!isConnected()) {
-          const container = document.getElementById("treeGrid");
-          if (container) {
-            container.innerHTML = `
-              <div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);">
-                <h3>Connect your profile to view your grove</h3>
-              </div>`;
-          }
+          const c = document.getElementById("treeGrid");
+          if (c) c.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);"><h3>Connect your profile to view your grove</h3></div>`;
           return;
         }
         const positions = await loadUserTreePositions();
         if (!positions.length) {
-          const container = document.getElementById("treeGrid");
-          if (container) container.innerHTML = `
-            <div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);">
-              <h3>No trees in your grove yet</h3>
-              <p>Adopt shares to get started.</p>
-            </div>`;
+          const c = document.getElementById("treeGrid");
+          if (c) c.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);"><h3>No trees in your grove yet</h3><p>Adopt shares to get started.</p></div>`;
           return;
         }
         renderMyTreesFromPositions(positions);
@@ -554,38 +599,129 @@ function initPaymentSelector() {
       opt.classList.add("active");
       paymentMode = (opt.dataset.payment as any) || "mollie";
       (window as any).updateShares?.();
-      _syncCryptoConnectButton();
     });
   });
 }
 
-function _syncCryptoConnectButton() {
-  const connectBtn = document.getElementById("adoptConnectBtn");
-  const adoptBtn   = document.getElementById("adoptBtn");
-  if (!connectBtn || !adoptBtn) return;
+// ═══════════════════════════════════════════════════════════════════════════
+// SHARE CONTROLS  (exposed on window for inline HTML calls)
+// ═══════════════════════════════════════════════════════════════════════════
 
-  if (paymentMode === "crypto" && !isConnected()) {
-    connectBtn.style.display = "block";
-    adoptBtn.style.display   = "none";
-  } else {
-    connectBtn.style.display = "none";
-    adoptBtn.style.display   = "block";
-  }
+function _getValidShares(val: number): number {
+  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
+  if (!slider) return val;
+  return Math.max(Number(slider.min) || 1, Math.min(Number(slider.max) || 1000, val));
 }
 
+(window as any).syncFromSlider = () => {
+  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
+  const input  = document.getElementById("shareInput")  as HTMLInputElement | null;
+  if (!slider || !input) return;
+  input.value = slider.value;
+  (window as any).updateShares?.();
+};
+
+(window as any).changeShares = (delta: number) => {
+  const input  = document.getElementById("shareInput")  as HTMLInputElement | null;
+  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
+  if (!input) return;
+  const next = _getValidShares((Number(input.value) || 1) + delta);
+  input.value = String(next);
+  if (slider) slider.value = String(next);
+  (window as any).updateShares?.();
+};
+
+(window as any).setShares = (amount: number | "max") => {
+  const input  = document.getElementById("shareInput")  as HTMLInputElement | null;
+  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
+  if (!input || !slider) return;
+  const next = amount === "max" ? Number(slider.max) : _getValidShares(Number(amount));
+  input.value  = String(next);
+  slider.value = String(next);
+  (window as any).updateShares?.();
+};
+
+(window as any).updateShares = async () => {
+  const input          = document.getElementById("shareInput")     as HTMLInputElement | null;
+  const shareDisplay   = document.getElementById("shareValue");
+  const priceDisplay   = document.getElementById("priceDisplay");
+  const priceSub       = document.getElementById("priceSub");
+  const adoptBtn       = document.getElementById("adoptBtn")       as HTMLButtonElement | null;
+  const connectBtn     = document.getElementById("adoptConnectBtn") as HTMLButtonElement | null;
+
+  if (!input) return;
+
+  const shares       = Number(input.value) || 1;
+  const euroPerShare = 12.40;
+  const totalEuro    = shares * euroPerShare;
+  const solPrice     = await getSolPriceEUR();
+  const totalSol     = totalEuro / solPrice;
+  const isCrypto     = paymentMode === "crypto";
+  const isSoldOut    = adoptBtn?.innerText === "Sold Out";
+
+  // Tier SOL price labels
+  const update = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+  update("starter-sol-price",   `~${((10  * euroPerShare) / solPrice).toFixed(2)} SOL`);
+  update("keeper-sol-price",    `~${((100 * euroPerShare) / solPrice).toFixed(2)} SOL`);
+  update("fulltree-sol-price",  `~${((1000 * euroPerShare) / solPrice).toFixed(2)} SOL`);
+
+  if (shareDisplay) shareDisplay.innerText = shares.toLocaleString();
+
+  if (priceDisplay) {
+    priceDisplay.innerHTML = isCrypto
+      ? `◎ ${totalSol.toFixed(2)} <span style="font-size:.6em;font-weight:normal;">SOL</span>`
+      : `€${totalEuro.toLocaleString()}`;
+  }
+
+  if (priceSub) {
+    priceSub.innerText = isCrypto
+      ? `${shares} share${shares > 1 ? "s" : ""} × ◎ ${(euroPerShare / solPrice).toFixed(4)} SOL`
+      : `${shares} share${shares > 1 ? "s" : ""} × €${euroPerShare}`;
+  }
+
+  // Crypto mode: show wallet-connect prompt if no wallet
+  const identity = getIdentity();
+  if (isCrypto && !isSoldOut) {
+    if (identity.wallet) {
+      if (connectBtn) connectBtn.style.display = "none";
+      if (adoptBtn)   { adoptBtn.style.display = "block"; adoptBtn.innerText = "Continue to Agreement"; }
+    } else {
+      if (adoptBtn)   adoptBtn.style.display = "none";
+      if (connectBtn) {
+        connectBtn.style.display   = "block";
+        connectBtn.innerText       = "🔗 Connect Wallet to Continue";
+        connectBtn.onclick = async () => {
+          try {
+            if (typeof (window as any).connectWallet === "function") {
+              await (window as any).connectWallet(false);
+            } else {
+              const prov = (window as any).phantom?.solana || (window as any).solana;
+              if (!prov) { alert("Phantom wallet required."); return; }
+              const resp = await prov.connect();
+              const pk   = resp.publicKey?.toBase58() ?? prov.publicKey?.toBase58();
+              if (pk) window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey: pk } }));
+            }
+          } catch (err) { console.error("wallet connect:", err); }
+          (window as any).updateShares?.();
+        };
+      }
+    }
+  } else {
+    if (connectBtn) connectBtn.style.display = "none";
+    if (!isSoldOut && adoptBtn) { adoptBtn.style.display = "block"; adoptBtn.innerText = "Continue to Agreement"; }
+  }
+};
+
 // ═══════════════════════════════════════════════════════════════════════════
-// LOAD TREES  (de-duplicated)
+// LOAD TREES  (de-duplicated with latch)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function loadTrees(filter = "all") {
   const container = document.getElementById("treeGrid");
   if (!container) return;
 
-  // If a load is already in progress for the same filter, don't duplicate
-  if (loadTreesPromise) {
-    await loadTreesPromise;
-    return;
-  }
+  // If already loading the same filter, wait for that to finish
+  if (loadTreesPromise) { await loadTreesPromise; return; }
 
   container.innerHTML = `
     <div class="loading-state">
@@ -604,29 +740,23 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
   const program = await waitForProgram();
 
   const { data: dbTrees, error } = await sb
-    .from("tree_metadata")
-    .select("*")
-    .order("tree_id", { ascending: true });
+    .from("tree_metadata").select("*").order("tree_id", { ascending: true });
 
   if (error || !dbTrees) {
     container.innerHTML = `<p style="padding:40px;text-align:center;">Failed to load trees. Please try again.</p>`;
     return;
   }
 
-  let onChainTrees:  any[]                   = [];
-  let userPositions: NormalisedPosition[]    = [];
+  let onChainTrees:  any[]                = [];
+  let userPositions: NormalisedPosition[] = [];
 
   if (program) {
-    try {
-      onChainTrees = await program.account.tree.all();
-    } catch (err) {
-      console.error("[loadTrees] On-chain fetch failed:", err);
-    }
+    try { onChainTrees = await program.account.tree.all(); }
+    catch (err) { console.error("[loadTrees] on-chain fetch:", err); }
     userPositions = await loadUserTreePositions();
   }
 
   container.innerHTML = "";
-
   let cardCount = 0;
 
   for (const dbTree of dbTrees) {
@@ -634,7 +764,7 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
 
     let sharesSold  = dbTree.shares_sold  || 0;
     let totalShares = dbTree.total_shares || 1000;
-    const isLiveOnChain = !!onChainData;
+    const isLive    = !!onChainData;
 
     if (onChainData) {
       sharesSold  = onChainData.account.sharesSold.toNumber();
@@ -647,28 +777,26 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
     const status    = percent >= 100 ? "full" : "available";
     const available = totalShares - sharesSold;
 
-    // ── Ownership check ────────────────────────────────────────────────
-    const authUser         = (window as any).OliviumAuth?.getUser?.();
-    const emailOrId        = authUser?.email || authUser?.id;
-    const matchesFiatOwner = emailOrId
+    // Ownership
+    const authUser    = (window as any).OliviumAuth?.getUser?.();
+    const emailOrId   = authUser?.email || authUser?.id;
+    const matchesFiat = emailOrId
       ? dbTree.owner === emailOrId || dbTree.user_email === emailOrId
       : false;
-
     const matchedPos  = userPositions.find(p => String(p.treeId) === String(dbTree.tree_id));
     const ownedShares = matchedPos?.sharesOwned ?? 0;
-    const isMine      = matchesFiatOwner || ownedShares > 0;
+    const isMine      = matchesFiat || ownedShares > 0;
 
-    // ── Filter gates ───────────────────────────────────────────────────
-    if (!isLiveOnChain && filter !== "all") continue;
-    if (filter === "my"        && !isMine)          continue;
+    // Filter gates
+    if (!isLive && filter !== "all")          continue;
+    if (filter === "my" && !isMine)           continue;
     if (filter === "available" && status !== "available") continue;
     if (filter === "full"      && status !== "full")      continue;
 
-    // ── Card ───────────────────────────────────────────────────────────
     const card = document.createElement("div");
     card.className = "tree-card";
-    if (sharesSold > 0)  card.classList.add("has-sales");
-    if (percent >= 90)   card.style.border = "2px solid #d94d4d";
+    if (sharesSold > 0) card.classList.add("has-sales");
+    if (percent >= 90)  card.style.border = "2px solid #d94d4d";
     else if (percent >= 60) card.style.border = "2px solid #d7a728";
 
     const displayImg = dbTree.image_url
@@ -687,11 +815,14 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
           <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
           <div class="shares-left">${available > 0 ? "Available now" : "Fully adopted"}</div>
         </div>
-        ${isLiveOnChain ? '<div class="live-badge">⛓ LIVE ON-CHAIN</div>' : ""}
+        ${isLive ? '<div class="live-badge">⛓ LIVE ON-CHAIN</div>' : ""}
+        ${isMine && ownedShares > 0
+          ? `<div class="owned-badge" style="margin-top:6px;font-size:.75rem;color:#6B7F5A;font-weight:600;">✅ You own ${ownedShares.toLocaleString()} shares</div>`
+          : ""}
         <div class="card-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
           <button class="action-btn details-btn">Details</button>
           ${available > 0 ? '<button class="action-btn adopt-btn">Adopt</button>' : ""}
-          ${isMine       ? '<button class="action-btn release-btn">Release Shares</button>' : ""}
+          ${isMine ? '<button class="action-btn release-btn" style="background:#d94d4d;">Release Shares</button>' : ""}
         </div>
       </div>`;
 
@@ -720,63 +851,52 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
   }
 }
 
-// ── Register the impl so the proxy in reserveb.ts works ──────────────────
 (window as any)._loadTreesImpl = loadTrees;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MY-TREES CARD RENDERER  (positions already loaded)
+// MY-TREES CARD RENDERER
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function renderMyTreesFromPositions(positions: NormalisedPosition[]) {
   const container = document.getElementById("treeGrid");
   if (!container) return;
-
   container.innerHTML = "";
 
   if (!positions.length) {
-    container.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:40px;color:#7A8275;">
-        <p>🌿 No adopted positions yet for this wallet.</p>
-      </div>`;
+    container.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#7A8275;"><p>🌿 No adopted positions yet for this wallet.</p></div>`;
     return;
   }
 
-  // Batch-fetch metadata
   let treeMap = new Map<string, any>();
   try {
     const { data } = await sb.from("tree_metadata").select("*");
-    if (Array.isArray(data)) {
-      treeMap = new Map(data.map(t => [String(t.tree_id), t]));
-    }
+    if (Array.isArray(data)) treeMap = new Map(data.map(t => [String(t.tree_id), t]));
   } catch { /* non-critical */ }
 
   for (const pos of positions) {
-    const meta           = treeMap.get(String(pos.treeId));
-    const displayName    = _esc(meta?.name || `Tree #${pos.treeId}`);
-    const totalCapacity  = meta?.total_shares ?? 1000;
-    const displayImg     = meta?.image_url
-      || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
-    const ownerPct       = Math.min((pos.sharesOwned / totalCapacity) * 100, 100).toFixed(2);
+    const meta       = treeMap.get(String(pos.treeId));
+    const name       = _esc(meta?.name || `Tree #${pos.treeId}`);
+    const totalCap   = meta?.total_shares ?? 1000;
+    const img        = meta?.image_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
+    const ownerPct   = Math.min((pos.sharesOwned / totalCap) * 100, 100).toFixed(2);
 
     const card = document.createElement("div");
     card.className = "tree-card has-sales";
     card.innerHTML = `
-      <img class="tree-image" src="${_esc(displayImg)}" alt="${displayName}"
+      <img class="tree-image" src="${_esc(img)}" alt="${name}"
            style="width:100%;height:160px;object-fit:cover;border-radius:8px;"
            onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png'" />
       <div class="tree-content" style="margin-top:12px;">
-        <div class="tree-name" style="font-size:1.2rem;font-weight:600;">${displayName}</div>
-        <div class="tree-meta" style="margin-top:4px;font-size:0.85rem;">
+        <div class="tree-name" style="font-size:1.2rem;font-weight:600;">${name}</div>
+        <div class="tree-meta" style="margin-top:4px;font-size:.85rem;">
           <strong>${pos.sharesOwned.toLocaleString()}</strong> shares owned
-          <span style="opacity:.65;">(${totalCapacity.toLocaleString()} total)</span>
+          <span style="opacity:.65;">(${totalCap.toLocaleString()} total)</span>
         </div>
         <div class="availability" style="margin-top:12px;">
           <div class="progress-bar" style="width:100%;height:6px;background:rgba(0,0,0,.05);border-radius:3px;overflow:hidden;">
             <div class="progress-fill" style="width:${ownerPct}%;height:100%;background:#6B7F5A;transition:width .3s;"></div>
           </div>
-          <div style="margin-top:6px;font-size:.8rem;font-weight:600;color:#6B7F5A;text-transform:uppercase;">
-            ${ownerPct}% ownership
-          </div>
+          <div style="margin-top:6px;font-size:.8rem;font-weight:600;color:#6B7F5A;text-transform:uppercase;">${ownerPct}% ownership</div>
         </div>
       </div>
       <div class="card-actions" style="display:flex;gap:8px;margin-top:16px;">
@@ -812,7 +932,6 @@ let selectedTree: Tree | null = null;
 
   document.body.style.overflow = "hidden";
   paymentMode = "mollie";
-
   document.querySelectorAll(".payment-option").forEach(el => el.classList.remove("active"));
   document.getElementById("mollieOption")?.classList.add("active");
 
@@ -825,28 +944,21 @@ let selectedTree: Tree | null = null;
   setT("modalDescription", tree.description || "Secure your digital olive tree adoption.");
 
   const img = document.getElementById("modalImage") as HTMLImageElement | null;
-  if (img) {
-    img.src = tree.image_url || _randomFallback();
-    img.onerror = () => { img.src = _randomFallback(); };
-  }
+  if (img) { img.src = tree.image_url || _randomFallback(); img.onerror = () => { img.src = _randomFallback(); }; }
 
   const shareInput = document.getElementById("shareInput")  as HTMLInputElement | null;
   const slider     = document.getElementById("shareSlider") as HTMLInputElement | null;
   const maxLabel   = document.getElementById("sliderMaxLabel");
   const maxBtn     = document.getElementById("maxShareBtn");
-  const adoptBtn   = document.getElementById("adoptBtn")    as HTMLButtonElement | null;
+  const adoptBtn   = document.getElementById("adoptBtn") as HTMLButtonElement | null;
 
   if (shareInput) { shareInput.value = available <= 0 ? "0" : "1"; shareInput.dataset.max = String(available); }
   if (slider)     { slider.min = available <= 0 ? "0" : "1"; slider.max = String(available); slider.value = available <= 0 ? "0" : "1"; }
-  if (maxLabel)   maxLabel.textContent  = String(available);
-  if (maxBtn)     maxBtn.textContent    = `Max (${available})`;
-  if (adoptBtn) {
-    adoptBtn.disabled  = available <= 0;
-    adoptBtn.innerText = available <= 0 ? "Sold Out" : "Continue to Agreement";
-  }
+  if (maxLabel)   maxLabel.textContent = String(available);
+  if (maxBtn)     maxBtn.textContent   = `Max (${available})`;
+  if (adoptBtn) { adoptBtn.disabled = available <= 0; adoptBtn.innerText = available <= 0 ? "Sold Out" : "Continue to Agreement"; }
 
   modal.style.display = "flex";
-  _syncCryptoConnectButton();
   (window as any).updateShares?.();
 };
 
@@ -854,14 +966,213 @@ let selectedTree: Tree | null = null;
   const modal = document.getElementById("modalOverlay");
   if (modal) modal.style.display = "none";
   document.body.style.overflow = "";
-
   const shareInput = document.getElementById("shareInput")  as HTMLInputElement | null;
   const slider     = document.getElementById("shareSlider") as HTMLInputElement | null;
   const shareValue = document.getElementById("shareValue");
-  if (shareInput) shareInput.value     = "1";
-  if (slider)     slider.value         = "1";
+  if (shareInput) shareInput.value      = "1";
+  if (slider)     slider.value          = "1";
   if (shareValue) shareValue.textContent = "1";
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AGREEMENT MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+
+(window as any).openAgreement = () => {
+  if (!selectedTree) return;
+  document.body.style.overflow = "hidden";
+
+  const fallback  = _randomFallback();
+  const agreeImg  = document.getElementById("agreeImage") as HTMLImageElement | null;
+  if (agreeImg) { agreeImg.src = selectedTree.image_url || fallback; agreeImg.onerror = () => { agreeImg.src = fallback; }; }
+
+  const setT = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+  setT("agreeTitle",    `Adopting ${selectedTree.name || selectedTree.tree_id}`);
+  setT("agreeLocation", selectedTree.location || "Field F1");
+  setT("agreeAge",      selectedTree.age      || "5");
+  setT("agreeHeight",   selectedTree.height   || "1.5m");
+  setT("agreeVariety",  selectedTree.variety  || "Frantoio");
+
+  const check    = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
+  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
+
+  if (check && finalBtn) {
+    check.checked    = false;
+    finalBtn.disabled = true;
+    finalBtn.innerText = "Confirm & Pay";
+    check.onchange = () => { finalBtn.disabled = !check.checked; };
+  }
+
+  const selModal = document.getElementById("modalOverlay");
+  const agreeModal = document.getElementById("agreementModal");
+  if (selModal)  selModal.style.display  = "none";
+  if (agreeModal) agreeModal.style.display = "flex";
+};
+
+(window as any).closeAgreement = () => {
+  const agreeModal = document.getElementById("agreementModal");
+  const selModal   = document.getElementById("modalOverlay");
+  if (agreeModal)  agreeModal.style.display = "none";
+  if (selModal)    selModal.style.display   = "flex";
+};
+
+(window as any).closeSuccess = () => {
+  const el = document.getElementById("successModal");
+  if (el) el.style.display = "none";
+  document.body.style.overflow = "";
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BLOCKCHAIN TX
+// ═══════════════════════════════════════════════════════════════════════════
+
+(window as any).processBlockchainTx = async () => {
+  const program  = (window as any)._program;
+  const provider = (window as any)._provider || (window as any).provider;
+  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
+
+  if (finalBtn && (finalBtn.disabled || finalBtn.dataset.processing === "true")) return;
+  if (!program || !provider) { alert("Wallet not fully connected. Please sign in."); return; }
+  if (!selectedTree) return;
+
+  const amountInput = document.getElementById("shareInput") as HTMLInputElement | null;
+  if (!amountInput) return;
+
+  const amount        = new anchor.BN(amountInput.value);
+  const buyerPublicKey = provider.wallet?.publicKey || provider.publicKey;
+  if (!buyerPublicKey) { alert("Could not resolve wallet public key."); return; }
+
+  try {
+    if (finalBtn) { finalBtn.disabled = true; finalBtn.dataset.processing = "true"; finalBtn.innerText = "Processing…"; }
+
+    const [treePda]     = PublicKey.findProgramAddressSync([Buffer.from("tree"),     Buffer.from(selectedTree.tree_id)], program.programId);
+    const [positionPda] = PublicKey.findProgramAddressSync([Buffer.from("position"), buyerPublicKey.toBuffer(), Buffer.from(selectedTree.tree_id)], program.programId);
+    const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
+    const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("treasury")], program.programId);
+
+    const ix = await program.methods
+      .purchaseShares(selectedTree.tree_id, amount)
+      .accounts({ tree: treePda, position: positionPda, protocol: protocolPda, treasury: treasuryPda, buyer: buyerPublicKey, systemProgram: SystemProgram.programId })
+      .instruction();
+
+    const conn = program.provider.connection;
+    const tx   = new anchor.web3.Transaction().add(ix);
+    tx.feePayer = buyerPublicKey;
+    tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+
+    let sig = "";
+    if (provider.wallet?.signTransaction)        { const s = await provider.wallet.signTransaction(tx); sig = await conn.sendRawTransaction(s.serialize()); }
+    else if (provider.signTransaction)           { const s = await provider.signTransaction(tx);        sig = await conn.sendRawTransaction(s.serialize()); }
+    else                                         { sig = await program.provider.sendAndConfirm(tx, []); }
+
+    await conn.confirmTransaction(sig, "confirmed");
+
+    // Invalidate position cache so the next fetch is fresh
+    _invalidateCaches();
+
+    const agreeModal = document.getElementById("agreementModal");
+    const successModal = document.getElementById("successModal");
+    if (agreeModal)  agreeModal.style.display  = "none";
+    if (successModal) successModal.style.display = "flex";
+    if (finalBtn) delete finalBtn.dataset.processing;
+
+    // Reload grid with fresh on-chain data
+    loadTrees();
+
+  } catch (err) {
+    console.error("TX Error:", err);
+    alert("Transaction failed. Check wallet balance or signing approval.");
+    if (finalBtn) { finalBtn.disabled = false; delete finalBtn.dataset.processing; finalBtn.innerText = "Confirm & Pay"; }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SELL SHARES
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function sellShares(treeId: string | number, amount: number) {
+  const treeIdStr  = String(treeId);
+  const program    = (window as any)._program;
+  const identity   = getIdentity();
+  const walletStr  = identity.wallet;
+
+  if (!program || !walletStr) { console.error("[SELL] Missing program or wallet"); return; }
+
+  try {
+    const ownerKey    = new anchor.web3.PublicKey(walletStr);
+    const [treePDA]   = findTreePDA(treeIdStr);
+    const [posPDA]    = await findPositionPDA(ownerKey, treeIdStr);
+    const [protoPDA]  = findProtocolPDA();
+    const [treasPDA]  = findTreasuryPDA(program);
+
+    const current     = await program.account.sharePosition.fetch(posPDA);
+    const currentQty  = Number(current.sharesOwned);
+    const newTotal    = currentQty - amount;
+    if (newTotal < 0) throw new Error(`Insufficient shares. Own ${currentQty}, selling ${amount}.`);
+
+    const tx = await program.methods
+      .sellShares(treeIdStr, new anchor.BN(amount))
+      .accounts({ tree: treePDA, position: posPDA, protocol: protoPDA, treasury: treasPDA, seller: ownerKey, systemProgram: anchor.web3.SystemProgram.programId })
+      .rpc();
+
+    console.log("[SELL] SUCCESS:", tx);
+
+    await syncTransactionToSupabase(walletStr, treeIdStr, amount, "SELL", tx, newTotal, newTotal >= 1000);
+
+    _invalidateCaches();
+    loadTrees();
+    updateStatsUI();
+
+  } catch (err: any) {
+    console.error("[SELL FAILED]", err);
+    throw err;
+  }
+}
+(window as any).sellShares = sellShares;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE TRANSACTION SYNC
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function syncTransactionToSupabase(
+  wallet: string,
+  treeId: string,
+  amount: number,
+  type: "BUY" | "SELL",
+  txSig: string,
+  newTotal: number,
+  isGuardian: boolean
+) {
+  try {
+    await sb.from("transactions").insert([{
+      wallet, tree_id: treeId, amount, type, tx_signature: txSig,
+      new_total: newTotal, is_guardian: isGuardian,
+    }]);
+  } catch (err) {
+    console.warn("[syncTransactionToSupabase]", err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECKOUT
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function startMollieCheckout() {
+  const shares = Number((document.getElementById("shareInput") as HTMLInputElement)?.value || 1);
+  try {
+    const res  = await fetch("http://localhost:3000/create-mollie-payment", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shares, treeId: selectedTree?.tree_id, treeName: selectedTree?.name, userEmail: (window as any).OliviumAuth?.user?.email || null }),
+    });
+    const data = await res.json();
+    if (data.checkoutUrl) window.location.href = data.checkoutUrl;
+    else alert("Failed to create payment");
+  } catch (err) { console.error(err); alert("Payment server error"); }
+}
+
+async function startPaypalCheckout() {
+  console.log("[PAYPAL] startPaypalCheckout — implement backend endpoint");
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TREE DETAIL MODAL
@@ -874,26 +1185,21 @@ async function openTreeDetailModal(treeId: string) {
   modal.classList.remove("hidden");
   switchTreeDetailTab("overview");
 
-  const set = (id: string, val: string) => {
-    const el = document.getElementById(id);
-    if (el) el.innerText = val;
-  };
+  const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
 
   const [sbResult, onChainTrees] = await Promise.all([
     sb.from("tree_metadata").select("*").eq("tree_id", treeId).single(),
     (async () => {
-      try {
-        const prog = (window as any)._program;
-        return prog ? await prog.account.tree.all() : [];
-      } catch { return []; }
+      try { const p = (window as any)._program; return p ? await p.account.tree.all() : []; }
+      catch { return []; }
     })(),
   ]);
 
   const d = sbResult?.data ?? null;
-
-  const onChain     = (onChainTrees as any[]).find(
-    t => t.account?.treeId === treeId || String(t.account?.treeId) === String(treeId)
+  const onChain = (onChainTrees as any[]).find(t =>
+    t.account?.treeId === treeId || String(t.account?.treeId) === String(treeId)
   );
+
   const totalShares = onChain ? onChain.account.totalShares.toNumber() : (d?.total_shares ?? 1000);
   const sharesSold  = onChain ? onChain.account.sharesSold.toNumber()  : (d?.shares_sold  ?? 0);
   const available   = totalShares - sharesSold;
@@ -903,16 +1209,14 @@ async function openTreeDetailModal(treeId: string) {
   const heroEl = document.getElementById("tree-detail-hero-img");
   if (heroEl) heroEl.style.backgroundImage = `url('${d?.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg"}')`;
 
-  set("tree-detail-name",     d?.name       || `Tree #${treeId}`);
-  set("tree-detail-location", d?.field_id   ? `Field ${d.field_id} · ${d.latitude?.toFixed(4)}, ${d.longitude?.toFixed(4)}` : "—");
-  set("tree-detail-field-id", d?.field_id   || "—");
-  set("tree-detail-health",   d?.health_score != null ? `${(d.health_score * 100).toFixed(0)}%` : "—");
-  set("tree-detail-status-badge", d?.status || "—");
-
-  // Overview
-  set("tree-detail-age",     d?.age_years  != null ? `${d.age_years} yrs` : "—");
-  set("tree-detail-height",  d?.height_cm  != null ? `${d.height_cm} cm`  : "—");
-  set("tree-detail-variety", d?.variety    || "—");
+  set("tree-detail-name",          d?.name       || `Tree #${treeId}`);
+  set("tree-detail-location",      d?.field_id   ? `Field ${d.field_id} · ${d.latitude?.toFixed(4)}, ${d.longitude?.toFixed(4)}` : "—");
+  set("tree-detail-field-id",      d?.field_id   || "—");
+  set("tree-detail-health",        d?.health_score != null ? `${(d.health_score * 100).toFixed(0)}%` : "—");
+  set("tree-detail-status-badge",  d?.status     || "—");
+  set("tree-detail-age",           d?.age_years  != null ? `${d.age_years} yrs` : "—");
+  set("tree-detail-height",        d?.height_cm  != null ? `${d.height_cm} cm`  : "—");
+  set("tree-detail-variety",       d?.variety    || "—");
   set("tree-overview-shares",      `${sharesSold.toLocaleString()} / ${totalShares.toLocaleString()}`);
   set("tree-overview-pct",         `${pct}%`);
   set("tree-overview-sold-label",  `${sharesSold.toLocaleString()} sold`);
@@ -926,16 +1230,14 @@ async function openTreeDetailModal(treeId: string) {
   set("tree-detail-last-fertilizer", d?.last_fertilizer ? new Date(d.last_fertilizer).toLocaleDateString() : "—");
   set("tree-detail-fertilizer-type", d?.fertilizer_type || "—");
 
-  // Physical
   set("phys-age",           d?.age_years        != null ? String(d.age_years)         : "—");
   set("phys-height",        d?.height_cm        != null ? String(d.height_cm)         : "—");
   set("phys-circumference", d?.circumference_cm != null ? String(d.circumference_cm)  : "—");
   set("phys-diameter",      d?.diameter_cm      != null ? String(d.diameter_cm)       : "—");
   set("phys-crown",         d?.crown_spread_cm  != null ? String(d.crown_spread_cm)   : "—");
   set("phys-altitude",      d?.altitude_m       != null ? String(d.altitude_m)        : "—");
-  set("phys-coords", d?.latitude != null && d?.longitude != null ? `${d.latitude}, ${d.longitude}` : "—");
+  set("phys-coords",        d?.latitude != null && d?.longitude != null ? `${d.latitude}, ${d.longitude}` : "—");
 
-  // Metadata
   set("tree-detail-meta-id",        treeId);
   set("tree-detail-meta-field",     d?.field_id         || "—");
   set("tree-detail-meta-onchain",   d?.on_chain_address || "—");
@@ -948,29 +1250,24 @@ async function openTreeDetailModal(treeId: string) {
   set("tree-detail-meta-coords",    d?.latitude != null ? `${d.latitude}, ${d.longitude}` : "—");
   set("tree-detail-meta-updated",   d?.updated_at ? new Date(d.updated_at).toLocaleString() : "—");
 
-  // Gallery
   const galleryGrid = document.getElementById("tree-detail-gallery-grid");
   if (galleryGrid) {
     const photos: string[] = [];
     if (d?.photo_url) photos.push(d.photo_url);
     if (!photos.length) {
-      const base = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main";
-      photos.push(`${base}/Tree%20F1-FR-001.jpeg`, `${base}/Tree%20F1-FR-002.jpeg`, `${base}/close1.jpeg`);
+      const b = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main";
+      photos.push(`${b}/Tree%20F1-FR-001.jpeg`, `${b}/Tree%20F1-FR-002.jpeg`, `${b}/close1.jpeg`);
     }
-    galleryGrid.innerHTML = photos
-      .map(url => `<img src="${url}" class="rounded-xl w-full h-40 object-cover" onerror="this.style.display='none'" />`)
-      .join("");
+    galleryGrid.innerHTML = photos.map(url =>
+      `<img src="${url}" class="rounded-xl w-full h-40 object-cover" onerror="this.style.display='none'" />`
+    ).join("");
   }
 
-  // Sensors + weather (parallel, after modal is visible)
   const fieldId    = d?.field_id ?? null;
   const sensorData = await fetchFieldSensors(fieldId);
-  const lat        = sensorData?.lat ?? d?.latitude  ?? null;
-  const lon        = sensorData?.lon ?? d?.longitude ?? null;
-
-  if (lat != null && lon != null) {
-    set("weather-coords-label", `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
-  }
+  const lat  = sensorData?.lat ?? d?.latitude  ?? null;
+  const lon  = sensorData?.lon ?? d?.longitude ?? null;
+  if (lat != null && lon != null) set("weather-coords-label", `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
   if (fieldId) set("env-field-label", fieldId);
 
   const weatherData = await fetchOpenMeteo(lat, lon);
@@ -979,204 +1276,86 @@ async function openTreeDetailModal(treeId: string) {
 }
 (window as any).openTreeDetailModal = openTreeDetailModal;
 
-function switchTreeDetailTab(tab: string) {
-  document.querySelectorAll<HTMLElement>(".tree-detail-tab-content").forEach(el => el.classList.add("hidden"));
-  document.querySelectorAll<HTMLElement>(".tree-detail-tab-btn").forEach(el => el.classList.remove("active"));
-  document.getElementById(`tree-detail-tab-${tab}`)?.classList.remove("hidden");
-  document.querySelector<HTMLElement>(`[data-tab="${tab}"]`)?.classList.add("active");
+function closeTreeDetailModal() {
+  document.getElementById("tree-detail-modal")?.classList.add("hidden");
+}
+(window as any).closeTreeDetailModal = closeTreeDetailModal;
+
+/**
+ * FIX 6 — uses .tree-detail-tab (matching the onclick="switchTreeDetailTab('x')" HTML)
+ */
+function switchTreeDetailTab(tabName: string) {
+  document.querySelectorAll(".tree-detail-tab-content").forEach(el => el.classList.add("hidden"));
+  document.getElementById(`tree-detail-tab-${tabName}`)?.classList.remove("hidden");
+
+  document.querySelectorAll(".tree-detail-tab").forEach(tab => {
+    tab.classList.remove("active", "border-green-600", "text-green-600");
+    tab.classList.add("border-transparent", "text-stone-500");
+  });
+  const active = Array.from(document.querySelectorAll(".tree-detail-tab")).find(
+    t => t.getAttribute("onclick")?.includes(`'${tabName}'`)
+  );
+  if (active) {
+    active.classList.add("active", "border-green-600", "text-green-600");
+    active.classList.remove("border-transparent", "text-stone-500");
+  }
 }
 (window as any).switchTreeDetailTab = switchTreeDetailTab;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SENSOR + WEATHER FETCHERS  (unchanged logic, just type-annotated)
+// SENSORS & WEATHER
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function fetchFieldSensors(fieldId: string | null): Promise<any | null> {
   if (!fieldId) return null;
   try {
     const { data, error } = await sb
-      .from("node_sensors")
-      .select("*")
-      .eq("field_id", fieldId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .from("node_sensors").select("*").eq("field_id", fieldId)
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
     if (error) { console.error("[SENSORS]", error); return null; }
     return data;
-  } catch (err) {
-    console.error("[SENSORS]", err);
-    return null;
-  }
+  } catch (err) { console.error("[SENSORS]", err); return null; }
 }
 
 async function fetchOpenMeteo(lat: number | null, lon: number | null): Promise<any | null> {
   if (lat == null || lon == null) return null;
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-      + `&current=temperature_2m,wind_speed_10m,relative_humidity_2m,surface_pressure,precipitation,uv_index,shortwave_radiation`;
-    const res = await fetch(url);
-    return res.ok ? await res.json() : null;
+    const params = new URLSearchParams({
+      latitude: String(lat), longitude: String(lon),
+      current: ["temperature_2m","relative_humidity_2m","wind_speed_10m","surface_pressure","rain","uv_index","shortwave_radiation"].join(","),
+      wind_speed_unit: "ms", timezone: "auto",
+    });
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.current ?? null;
   } catch { return null; }
 }
 
-function populateSensorUI(data: any) {
-  if (!data) return;
-  const set = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
-  set("oracle-soil-moisture", data.soil_moisture != null ? `${data.soil_moisture}%`  : "—");
-  set("oracle-soil-temp",     data.temperature   != null ? `${data.temperature}°C`   : "—");
-  set("oracle-leaf-wetness",  data.leaf_wetness  != null ? `${data.leaf_wetness}`    : "—");
-  set("oracle-uv",            data.uv_index      != null ? `${data.uv_index}`        : "—");
-  set("oracle-co2",           data.co2           != null ? `${data.co2} ppm`         : "—");
-  set("oracle-wind",          data.wind_speed    != null ? `${data.wind_speed} m/s`  : "—");
-  set("oracle-humidity",      data.humidity      != null ? `${data.humidity}%`       : "—");
-  set("oracle-rain",          data.rain_rate     != null ? `${data.rain_rate} mm/h`  : "—");
-  set("oracle-last-update",   data.created_at    ? new Date(data.created_at).toLocaleString() : "—");
+function populateSensorUI(s: any | null) {
+  const na  = "—";
+  const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
 
-  const bar = document.getElementById("oracle-moisture-bar");
-  if (bar && data.soil_moisture != null) {
-    (bar as HTMLElement).style.width = `${Math.min(data.soil_moisture, 100)}%`;
+  if (!s) {
+    ["oracle-soil-moisture","oracle-moisture-status","oracle-soil-temp","oracle-leaf-wetness",
+     "oracle-light","oracle-co2","oracle-wind","oracle-rain","oracle-humidity","oracle-uv","oracle-last-update"
+    ].forEach(id => set(id, id === "oracle-moisture-status" ? "No data" : id === "oracle-last-update" ? "No sensor data" : na));
+    const bar = document.getElementById("oracle-moisture-bar") as HTMLElement | null;
+    if (bar) bar.style.width = "0%";
+    return;
   }
-  const statusEl = document.getElementById("oracle-moisture-status");
-  if (statusEl && data.soil_moisture != null) {
-    statusEl.innerText = data.soil_moisture < 20 ? "🔴 Dry" : data.soil_moisture < 60 ? "🟡 Moderate" : "🟢 Optimal";
-  }
-}
 
-function populateWeatherUI(data: any) {
-  if (!data?.current) return;
-  const c   = data.current;
-  const set = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
-  set("weather-temp",     c.temperature_2m      != null ? `${c.temperature_2m}°C`        : "—");
-  set("weather-wind",     c.wind_speed_10m       != null ? `${c.wind_speed_10m} km/h`    : "—");
-  set("weather-humidity", c.relative_humidity_2m != null ? `${c.relative_humidity_2m}%`  : "—");
-  set("weather-pressure", c.surface_pressure     != null ? `${c.surface_pressure} hPa`   : "—");
-  set("weather-rain",     c.precipitation        != null ? `${c.precipitation} mm`       : "—");
-  set("weather-uv",       c.uv_index             != null ? `${c.uv_index}`               : "—");
-  set("weather-solar",    c.shortwave_radiation  != null ? `${c.shortwave_radiation} W/m²` : "—");
-}
+  const moisture = s.soil_moisture ?? null;
+  set("oracle-soil-moisture",   moisture !== null ? `${Number(moisture).toFixed(1)}%` : na);
+  set("oracle-moisture-status", moisture !== null ? (moisture > 50 ? "Optimal" : "Balanced") : "No data");
+  set("oracle-soil-temp",       s.temperature  != null ? `${Number(s.temperature).toFixed(1)}°C`  : na);
+  set("oracle-leaf-wetness",    s.leaf_wetness != null ? Number(s.leaf_wetness).toFixed(2)          : na);
+  set("oracle-co2",             s.co2          != null ? `${Number(s.co2).toFixed(1)} ppm`          : na);
+  set("oracle-wind",            s.wind_speed   != null ? `${Number(s.wind_speed).toFixed(1)} m/s`   : na);
+  set("oracle-rain",            s.rain_rate    != null ? `${Number(s.rain_rate).toFixed(2)} mm/hr`  : na);
+  set("oracle-humidity",        s.humidity     != null ? `${Number(s.humidity).toFixed(1)}%`        : na);
+  set("oracle-uv",              s.uv_index     != null ? String(s.uv_index)                         : na);
+  set("oracle-last-update",     s.created_at   ? new Date(s.created_at).toLocaleTimeString() : new Date().toLocaleTimeString());
 
-// ═══════════════════════════════════════════════════════════════════════════
-// CHECKOUT HANDLERS
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function startMollieCheckout() {
-  const shareInput = document.getElementById("shareInput") as HTMLInputElement | null;
-  const res = await fetch("/create-mollie-checkout", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      treeId: selectedTree?.tree_id,
-      shares: Number(shareInput?.value || 1),
-      user:   (window as any).OliviumAuth?.getUser?.(),
-    }),
-  });
-  const data = await res.json();
-  if (data?.url) window.location.href = data.url;
-  else showToast("Failed to start checkout.", true);
-}
-
-async function startPaypalCheckout() {
-  const shareInput = document.getElementById("shareInput") as HTMLInputElement | null;
-  const res = await fetch("/create-paypal-checkout", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      treeId: selectedTree?.tree_id,
-      shares: Number(shareInput?.value || 1),
-      user:   (window as any).OliviumAuth?.getUser?.(),
-    }),
-  });
-  const data = await res.json();
-  if (data?.url) window.location.href = data.url;
-  else showToast("Failed to start PayPal checkout.", true);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// UTILITY
-// ═══════════════════════════════════════════════════════════════════════════
-
-function _esc(v: string): string {
-  return String(v).replace(/[&<>"']/g, c =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c] ?? c)
-  );
-}
-
-const _fallbackImages = [
-  "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/Tree%20F1-FR-001.jpeg",
-  "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/Tree%20F1-FR-002.jpeg",
-  "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/tree04.jpeg",
-  "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/tree08.jpeg",
-];
-function _randomFallback() {
-  return _fallbackImages[Math.floor(Math.random() * _fallbackImages.length)];
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// GLOBAL WINDOW EXPORTS
-// ═══════════════════════════════════════════════════════════════════════════
-
-(window as any).updateVillaStayUI  = updateVillaStayUI;
-(window as any).updateStatsUI      = updateStatsUI;
-(window as any).updateWalletUI     = updateWalletUI;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// EVENT LISTENERS  — single registration, canonical events only
-// ═══════════════════════════════════════════════════════════════════════════
-
-window.addEventListener("olivium:connected", async () => {
-  console.log("[SYNC] olivium:connected — refreshing UI…");
-  _invalidateCaches();                       // force fresh data after re-connect
-
-  await updateWalletUI();
-  await Promise.all([updateStatsUI(), updateVillaStayUI()]);
-
-  // Reload grid respecting current active filter
-  const activeFilter = document.querySelector<HTMLElement>(".filter-btn.active");
-  const filter       = activeFilter?.dataset.filter || "all";
-
-  if (filter === "my") {
-    const positions = await loadUserTreePositions();
-    positions.length ? renderMyTreesFromPositions(positions) : loadTrees("all");
-  } else {
-    loadTrees(filter);
-  }
-});
-
-window.addEventListener("olivium:disconnected", () => {
-  clearAllUserUiAndStates();
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DOM INIT  — single DOMContentLoaded handler
-// ═══════════════════════════════════════════════════════════════════════════
-
-window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[INIT] DOMContentLoaded — reserve_board.ts");
-
-  initFilters();
-  initPaymentSelector();
-
-  // Initial data load (no wallet needed for tree grid + global stats)
-  await waitForProgram();
-  loadTrees("all");
-  updateStatsUI();
-  updateVillaStayUI();
-
-  // Wire up sell-amount input live updates
-  document.getElementById("sell-amount-input")
-    ?.addEventListener("input", _recalculatePayout);
-
-  // Wire final confirm button
-  document.getElementById("finalConfirmBtn")?.addEventListener("click", async () => {
-    if (paymentMode === "mollie")  { await startMollieCheckout();  return; }
-    if (paymentMode === "paypal")  { await startPaypalCheckout();  return; }
-    if (paymentMode === "crypto")  { (window as any).processBlockchainTx?.(); return; }
-  });
-
-  // Tab buttons inside tree detail modal
-  document.querySelectorAll<HTMLElement>(".tree-detail-tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      switchTreeDetailTab(btn.dataset.tab || "overview");
-    });
-  });
-});
+  const bar = document.getElementById("oracle-moisture-bar") as HTMLElement | null;
+  if (bar) bar.style.width = moisture !== null ? `${Math.min(moistur
