@@ -1264,6 +1264,10 @@ async function sellShares(treeId: string | number, amount: number) {
 // SUPABASE TRANSACTION SYNC
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE TRANSACTION SYNC (Fixed column name)
+// ═══════════════════════════════════════════════════════════════════════════
+
 async function syncTransactionToSupabase(
   wallet: string,
   treeId: string,
@@ -1274,22 +1278,28 @@ async function syncTransactionToSupabase(
   isGuardian: boolean
 ) {
   try {
-    await sb.from("transactions").insert([
+    const { error } = await sb.from("transactions").insert([
       {
-        wallet,
+        wallet_address: wallet,  // ✅ Changed from 'wallet' to 'wallet_address'
         tree_id: treeId,
-        amount,
-        type,
+        amount: amount,
+        type: type,
         tx_signature: txSig,
         new_total: newTotal,
         is_guardian: isGuardian,
       },
     ]);
+    
+    if (error) {
+      console.warn("[syncTransactionToSupabase] Insert failed:", error.message);
+    } else {
+      console.log("[syncTransactionToSupabase] Successfully synced transaction:", txSig);
+    }
   } catch (err) {
-    console.warn("[syncTransactionToSupabase]", err);
+    // Non-critical - don't break the main flow
+    console.warn("[syncTransactionToSupabase] Non-critical error:", err);
   }
 }
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CHECKOUT
 // ═══════════════════════════════════════════════════════════════════════════
