@@ -1002,6 +1002,7 @@ let selectedTree: Tree | null = null;
 (window as any).openModal = (tree: Tree) => {
   if (!tree) return;
   selectedTree = tree;
+  console.log(selectedTree);
 
   const modal = document.getElementById("modalOverlay");
   if (!modal) return;
