@@ -1082,58 +1082,40 @@ let selectedTree: Tree | null = null;
 // ═══════════════════════════════════════════════════════════════════════════
 
 (window as any).openAgreement = () => {
-  console.log("[AGREEMENT] Opening agreement modal");
-  console.log("[AGREEMENT] selectedTree:", selectedTree);
+  console.log("[AGREEMENT] Opening with tree:", selectedTree);
   
   if (!selectedTree) {
     console.error("[AGREEMENT] No selected tree!");
-    alert("Error: No tree selected");
     return;
   }
 
-  // ✅ Map your actual Supabase field names to what the modal expects
+  // ✅ READ YOUR ACTUAL FIELD NAMES
   const treeName = selectedTree.name || `Tree ${selectedTree.tree_id}`;
   const treeLocation = selectedTree.location || `Field ${selectedTree.field_id || 'F1'}`;
   const treeAge = selectedTree.age || (selectedTree.age_years ? `${selectedTree.age_years} years` : "5+ years");
   const treeHeight = selectedTree.height || (selectedTree.height_cm ? `${selectedTree.height_cm} cm` : "2.5m");
   const treeVariety = selectedTree.variety || "Frantoio";
-  
-  // Image fallback - your photo_url is null, so use fallback
-  const treeImage = selectedTree.image_url || selectedTree.photo_url || 
-    "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
-  
-  console.log("[AGREEMENT] Mapped values:", {
-    treeName, treeLocation, treeAge, treeHeight, treeVariety, treeImage
-  });
+  const treeImage = selectedTree.image_url || selectedTree.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
 
-  // Get DOM elements
+  console.log("[AGREEMENT] Mapped values:", {treeName, treeLocation, treeAge, treeHeight, treeVariety});
+
+  // Get modal elements
   const agreeModal = document.getElementById("agreementModal");
   const purchaseModal = document.getElementById("modalOverlay");
   
-  if (!agreeModal) {
-    console.error("[AGREEMENT] Agreement modal not found!");
-    return;
-  }
+  if (!agreeModal) return;
 
-  // Hide body scroll
+  // Toggle modals
   document.body.style.overflow = "hidden";
-  
-  // Hide purchase modal, show agreement modal
   if (purchaseModal) purchaseModal.style.display = "none";
   agreeModal.style.display = "flex";
-  
-  // Populate all fields
+
+  // Set the values using your actual data
   const titleEl = document.getElementById("agreeTitle");
   if (titleEl) titleEl.innerText = `Adopting ${treeName}`;
   
   const imgEl = document.getElementById("agreeImage") as HTMLImageElement;
-  if (imgEl) {
-    imgEl.src = treeImage;
-    imgEl.onerror = () => {
-      console.warn("[AGREEMENT] Image failed to load, using fallback");
-      imgEl.src = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
-    };
-  }
+  if (imgEl) imgEl.src = treeImage;
   
   const locationEl = document.getElementById("agreeLocation");
   if (locationEl) locationEl.innerText = treeLocation;
@@ -1146,25 +1128,16 @@ let selectedTree: Tree | null = null;
   
   const varietyEl = document.getElementById("agreeVariety");
   if (varietyEl) varietyEl.innerText = treeVariety;
-  
-  // Setup checkbox and button
+
+  // Setup checkbox
   const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement;
   const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement;
   
   if (checkbox && finalBtn) {
     checkbox.checked = false;
     finalBtn.disabled = true;
-    finalBtn.innerText = "Confirm & Pay";
-    
-    // Remove old listeners and add fresh one
-    checkbox.onchange = null;
-    checkbox.onchange = function() {
-      finalBtn.disabled = !this.checked;
-      console.log("[AGREEMENT] Checkbox changed, button disabled:", finalBtn.disabled);
-    };
+    checkbox.onchange = () => { finalBtn.disabled = !checkbox.checked; };
   }
-  
-  console.log("[AGREEMENT] Agreement modal opened successfully");
 };
 
 (window as any).closeAgreement = () => {
