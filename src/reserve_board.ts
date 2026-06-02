@@ -356,6 +356,11 @@ async function initWalletOnLoad() {
 
   if (wallet) {
     console.log("[WALLET] Auto-detected:", wallet);
+    console.log("[WALLET STORAGE DEBUG]", {
+  walletAddress,
+  appState: window.App?.state,
+  identity: window.App?.state?.identity
+});
 
     // load identity immediately
     window.OliviumIdentity = {
@@ -2365,68 +2370,70 @@ console.log("startPaypalCheckout");
 
 
 // ══════════════════════════════════════════════════════════════
-// SELL SHARES - Fixed PDA and Type Casting
+// SELL SHARES - FIXED (clean wallet + provider resolution)
 // ══════════════════════════════════════════════════════════════
 async function sellShares(treeId: string | number, amount: number) {
   const treeIdStr = String(treeId);
   console.log(`\n[SELL] Starting sale: Tree ${treeIdStr}, ${amount} shares`);
 
-  // 1. GATHER GLOBALS
+  // 1. GLOBALS
   const program = (window as any)._program;
-  const provider = (window as any)._provider || (window as any).provider;
-  
- // const program = window._program;
-  // Use the provider's wallet publicKey if available, else fall back to the saved string
-  const walletInput = window._provider?.wallet?.publicKey || window.walletPubKey;
-console.log("[SELL DEBUG] program =", program);
-console.log("[SELL DEBUG] provider =", provider);
-console.log("[SELL DEBUG] window._provider =", (window as any)._provider);
-console.log("[SELL DEBUG] window.provider =", (window as any).provider);
-console.log("[SELL DEBUG] walletPubKey =", (window as any).walletPubKey);
-console.log("[SELL DEBUG] walletInput =", walletInput);
 
-if (!program || !walletInput) {
-  console.error("[SELL] Missing dependency", {
+  // 🔥 FIX: unified wallet source of truth
+  const walletInput =
+    (window as any)._provider?.wallet?.publicKey ||
+    (window as any).provider?.wallet?.publicKey ||
+    (window as any).App?.state?.identity?.wallet ||
+    (window as any).OliviumIdentity?.wallet;
+
+  // DEBUG
+  console.log("[SELL DEBUG]", {
     program,
-    walletInput
+    walletInput,
+    oliviumIdentity: (window as any).OliviumIdentity,
+    appIdentity: (window as any).App?.state?.identity,
   });
-  return;
-}
+
+  // ❌ HARD STOP if missing
   if (!program || !walletInput) {
-    console.log("Protocol not initialized or wallet not connected", true);
+    console.error("[SELL] Missing dependency", { program, walletInput });
     return;
   }
 
   try {
-    // 2. NORMALIZE PUBLICKEY
-    // This ensures findPositionPDA receives a proper PublicKey object
-    const ownerPublicKey = typeof walletInput === 'string'
-      ? new anchor.web3.PublicKey(walletInput)
-      : walletInput;
+    // 2. NORMALIZE PUBLIC KEY
+    const ownerPublicKey =
+      typeof walletInput === "string"
+        ? new anchor.web3.PublicKey(walletInput)
+        : walletInput;
 
-    // 3. DERIVE PDAs (Consistency check: use 'positionPDA' everywhere)
+    // 3. PDAs
     const [treePDA] = findTreePDA(treeIdStr);
     const [positionPDA] = await findPositionPDA(ownerPublicKey, treeIdStr);
     const [protocolPDA] = findProtocolPDA();
     const [treasuryPDA] = findTreasuryPDA(program);
 
-    console.log("[SELL] PDAs derived:", { treePDA: treePDA.toBase58(), positionPDA: positionPDA.toBase58() });
+    console.log("[SELL] PDAs:", {
+      treePDA: treePDA.toBase58(),
+      positionPDA: positionPDA.toBase58(),
+    });
 
-    // 4. FETCH POSITION DATA
-    // Note: Ensure your anchor account name matches 'sharePosition' in your IDL
+    // 4. FETCH POSITION
     const currentPosition = await program.account.sharePosition.fetch(positionPDA);
     const currentShares = Number(currentPosition.sharesOwned);
     const newTotal = currentShares - amount;
 
     if (newTotal < 0) {
-      throw new Error(`Insufficient shares. You own ${currentShares}, trying to sell ${amount}.`);
+      throw new Error(
+        `Insufficient shares. You own ${currentShares}, trying to sell ${amount}.`
+      );
     }
 
-    // Logic for Guardian status (if applicable to your DB sync)
     const isGuardian = newTotal >= 1000;
 
-    // 5. EXECUTE ON-CHAIN TRANSACTION
+    // 5. TRANSACTION
     console.log("[SELL] Sending transaction...");
+
     const tx = await program.methods
       .sellShares(treeIdStr, new anchor.BN(amount))
       .accounts({
@@ -2439,35 +2446,32 @@ if (!program || !walletInput) {
       })
       .rpc();
 
-    console.log(`[SELL] ✅ On-chain success: ${tx}`);
-   // showToast(`Sold ${amount} shares!`);
+    console.log(`[SELL] SUCCESS: ${tx}`);
 
-    // 6. SYNC TO DATABASE
-    if (typeof syncTransactionToSupabase === 'function') {
-        await syncTransactionToSupabase(
-          ownerPublicKey.toBase58(),
-          treeIdStr,
-          amount,
-          'SELL',
-          tx,
-          newTotal,
-          isGuardian
-        );
+    // 6. SYNC DB
+    if (typeof syncTransactionToSupabase === "function") {
+      await syncTransactionToSupabase(
+        ownerPublicKey.toBase58(),
+        treeIdStr,
+        amount,
+        "SELL",
+        tx,
+        newTotal,
+        isGuardian
+      );
     }
 
     // 7. REFRESH UI
-    await     loadTrees();
-
+    await loadTrees();
   } catch (err: any) {
-    console.error(`[SELL] ❌ Sale failed:`, err);
-    // Handle the "Account not found" error specifically
-    if (err.message.includes("Account does not exist")) {
-        console.log("Error: Share position record not found on-chain.", true);
-    } else {
-        console.log("Sell failed: " + err.message, true);
+    console.error("[SELL] FAILED:", err);
+
+    if (err?.message?.includes("Account does not exist")) {
+      console.error("Share position not found on-chain");
     }
   }
 }
+
 (window as any).sellShares = sellShares;
 /* =========================================================
    ESCAPE KEY
