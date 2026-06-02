@@ -2378,7 +2378,20 @@ async function sellShares(treeId: string | number, amount: number) {
  // const program = window._program;
   // Use the provider's wallet publicKey if available, else fall back to the saved string
   const walletInput = window._provider?.wallet?.publicKey || window.walletPubKey;
+console.log("[SELL DEBUG] program =", program);
+console.log("[SELL DEBUG] provider =", provider);
+console.log("[SELL DEBUG] window._provider =", (window as any)._provider);
+console.log("[SELL DEBUG] window.provider =", (window as any).provider);
+console.log("[SELL DEBUG] walletPubKey =", (window as any).walletPubKey);
+console.log("[SELL DEBUG] walletInput =", walletInput);
 
+if (!program || !walletInput) {
+  console.error("[SELL] Missing dependency", {
+    program,
+    walletInput
+  });
+  return;
+}
   if (!program || !walletInput) {
     console.log("Protocol not initialized or wallet not connected", true);
     return;
