@@ -18,6 +18,26 @@ interface Tree {
 
 let selectedTree: Tree | null = null;
 let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
+const findTreePDA = (treeId: string) => {
+  const program = (window as any)._program || (window as any).program;
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("tree"), Buffer.from(treeId)],
+    program.programId
+  );
+};
+
+const findTreasuryPDA = (activeProgram: any) => {
+    return anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from("treasury")],
+        activeProgram.programId
+    );
+};
+
+// --- 2. IMMEDIATELY Expose to Window ---
+(window as any).findProtocolPDA = findProtocolPDA;
+(window as any).findTreePDA = findTreePDA;
+(window as any).findTreasuryPDA = findTreasuryPDA;
+
 
 function showToast(msg: string, isError = false) {
   if ((window as any).showGlobalToast) {
