@@ -1301,64 +1301,90 @@ if (villaDiscount) villaDiscount.textContent = "0%";
 
 
 async function syncVillaUI() {
-    const activeSessionData = localStorage.getItem("olivium_identity");
-    const navBtn = document.getElementById("connectBtn");  // ✅ Correct ID
-    const navTierLabel = document.getElementById("nav-tier-label");
-    const navIdentityDisplay = document.getElementById("nav-identity-display");
+  const activeSessionData = localStorage.getItem("olivium_identity");
 
-    if (!activeSessionData) {
-        // Guest mode
-        if (navBtn) {
-            navBtn.innerText = "Connect";
-            navBtn.style.color = '';
-            navBtn.style.borderColor = '';
-        }
-        if (navTierLabel) navTierLabel.innerText = "Guest Mode";
-        if (navIdentityDisplay) navIdentityDisplay.innerText = "UNRESOLVED_USER";
-    } else {
-        try {
-            const parsedIdentity = JSON.parse(activeSessionData);
+  const navBtn = document.getElementById("connectBtn");
+  const navTierLabel = document.getElementById("nav-tier-label");
+  const navIdentityDisplay = document.getElementById("nav-identity-display");
 
-            // Determine wallet address based on identity type
-            let walletAddress = '';
-            let identityLabel = '';
-
-            if (parsedIdentity.type === 'wallet' && parsedIdentity.wallet) {
-                walletAddress = parsedIdentity.wallet;
-                identityLabel = "Wallet Connected";
-            } else if (parsedIdentity.type === 'email' && parsedIdentity.custodialWallet) {
-                walletAddress = parsedIdentity.custodialWallet;
-                identityLabel = "Email Secured";
-            } else if (parsedIdentity.address) {
-                // Fallback for legacy format
-                walletAddress = parsedIdentity.address;
-                identityLabel = "Connected";
-            }
-
-            if (walletAddress) {
-                const truncated = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
-
-                // Update button
-                if (navBtn) {
-                    navBtn.innerText = "Disconnect";
-                    navBtn.style.color = '#d94d4d';
-                    navBtn.style.borderColor = '#d94d4d';
-                }
-
-                // Update nav tier label (will be updated by updateVillaStayUI)
-                if (navTierLabel) navTierLabel.innerText = identityLabel;
-
-                // Update nav identity display
-                if (navIdentityDisplay) navIdentityDisplay.innerText = truncated;
-            }
-        } catch (e) {
-            console.error('Failed to parse identity:', e);
-            if (navBtn) navBtn.innerText = "Connect";
-            if (navTierLabel) navTierLabel.innerText = "Guest Mode";
-            if (navIdentityDisplay) navIdentityDisplay.innerText = "PARSE_ERROR";
-        }
+  // =========================
+  // GUEST MODE
+  // =========================
+  if (!activeSessionData) {
+    if (navBtn) {
+      navBtn.innerText = "Connect";
+      navBtn.style.color = "";
+      navBtn.style.borderColor = "";
     }
 
+    if (navTierLabel) navTierLabel.innerText = "Guest Mode";
+    if (navIdentityDisplay) navIdentityDisplay.innerText = "UNRESOLVED_USER";
+    return;
+  }
+
+  // =========================
+  // AUTH MODE
+  // =========================
+  try {
+    const parsedIdentity = JSON.parse(activeSessionData);
+
+    let wallet = "";
+    let identityLabel = "Connected";
+
+    if (parsedIdentity?.type === "wallet" && parsedIdentity?.wallet) {
+      wallet = parsedIdentity.wallet;
+      identityLabel = "Wallet Connected";
+    } 
+    else if (parsedIdentity?.type === "email" && parsedIdentity?.custodialWallet) {
+      wallet = parsedIdentity.custodialWallet;
+      identityLabel = "Email Secured";
+    } 
+    else if (parsedIdentity?.address) {
+      wallet = parsedIdentity.address;
+      identityLabel = "Connected";
+    }
+
+    // =========================
+    // VALID WALLET FOUND
+    // =========================
+    if (wallet && typeof wallet === "string") {
+      const truncated =
+        wallet.length > 8
+          ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}`
+          : wallet;
+
+      if (navBtn) {
+        navBtn.innerText = "Disconnect";
+        navBtn.style.color = "#d94d4d";
+        navBtn.style.borderColor = "#d94d4d";
+      }
+
+      if (navTierLabel) navTierLabel.innerText = identityLabel;
+      if (navIdentityDisplay) navIdentityDisplay.innerText = truncated;
+
+      return;
+    }
+
+    // =========================
+    // INVALID IDENTITY FORMAT
+    // =========================
+    if (navBtn) {
+      navBtn.innerText = "Connect";
+      navBtn.style.color = "";
+      navBtn.style.borderColor = "";
+    }
+
+    if (navTierLabel) navTierLabel.innerText = "Guest Mode";
+    if (navIdentityDisplay) navIdentityDisplay.innerText = "INVALID_IDENTITY";
+
+  } catch (e) {
+    console.error("Failed to parse identity:", e);
+
+    if (navBtn) navBtn.innerText = "Connect";
+    if (navTierLabel) navTierLabel.innerText = "Guest Mode";
+    if (navIdentityDisplay) navIdentityDisplay.innerText = "PARSE_ERROR";
+  }
+}
     // Fetch tier info and update nav-tier-label with actual tier
     if (window.updateVillaStayUI) {
         await window.updateVillaStayUI();
