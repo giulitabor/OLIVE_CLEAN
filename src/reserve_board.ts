@@ -1072,90 +1072,147 @@ let selectedTree: Tree | null = null;
 // AGREEMENT MODAL - FIXED
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AGREEMENT MODAL - COMPLETE FIXED VERSION
+// ═══════════════════════════════════════════════════════════════════════════
+
 (window as any).openAgreement = () => {
-  console.log("[AGREEMENT] Opening agreement modal");
-    console.log("[AGREEMENT] === DEBUG START ===");
-  console.log("[AGREEMENT] selectedTree:", selectedTree);
+  console.log("[AGREEMENT] === OPENING AGREEMENT MODAL ===");
+  
+  // DEBUG: Check selectedTree
+  console.log("[AGREEMENT] selectedTree value:", selectedTree);
+  console.log("[AGREEMENT] selectedTree type:", typeof selectedTree);
   
   if (!selectedTree) {
-    console.error("[AGREEMENT] selectedTree is NULL!");
-    showToast("Error: No tree selected", true);
+    console.error("[AGREEMENT] ❌ selectedTree is NULL or UNDEFINED!");
+    console.error("[AGREEMENT] Make sure openModal was called first");
+    showToast("Error: No tree selected. Please try again.", true);
     return;
   }
-  
-  // Log each field being set
-  console.log("[AGREEMENT] Tree name:", selectedTree.name || selectedTree.tree_id);
-  console.log("[AGREEMENT] Tree location:", selectedTree.location);
-  console.log("[AGREEMENT] Tree age:", selectedTree.age);
-  console.log("[AGREEMENT] Tree height:", selectedTree.height);
-  console.log("[AGREEMENT] Tree variety:", selectedTree.variety);
-  
-  // Check DOM elements
+
+  // DEBUG: Log all tree properties
+  console.log("[AGREEMENT] Tree properties:", {
+    tree_id: selectedTree.tree_id,
+    name: selectedTree.name,
+    location: selectedTree.location,
+    age: selectedTree.age,
+    height: selectedTree.height,
+    variety: selectedTree.variety,
+    image_url: selectedTree.image_url,
+    total_shares: selectedTree.total_shares,
+    shares_sold: selectedTree.shares_sold
+  });
+
+  // Check DOM elements before proceeding
   const agreeModal = document.getElementById("agreementModal");
-  console.log("[AGREEMENT] agreementModal element:", agreeModal);
-  
+  const selModal = document.getElementById("modalOverlay");
   const agreeImg = document.getElementById("agreeImage");
-  console.log("[AGREEMENT] agreeImage element:", agreeImg);
-  
+  const agreeTitle = document.getElementById("agreeTitle");
+  const agreeLocation = document.getElementById("agreeLocation");
+  const agreeAge = document.getElementById("agreeAge");
+  const agreeHeight = document.getElementById("agreeHeight");
+  const agreeVariety = document.getElementById("agreeVariety");
+  const agreeCheckbox = document.getElementById("agreeCheckbox");
   const finalBtn = document.getElementById("finalConfirmBtn");
-  console.log("[AGREEMENT] finalConfirmBtn element:", finalBtn);
-  
-  const check = document.getElementById("agreeCheckbox");
-  console.log("[AGREEMENT] agreeCheckbox element:", check);
-  
-  // Continue with normal flow...
-  document.body.style.overflow = "hidden";
- 
-  
-  if (!selectedTree) {
-    console.error("[AGREEMENT] No selected tree");
-    showToast("Please select a tree first", true);
+
+  console.log("[AGREEMENT] DOM Elements check:");
+  console.log("  - agreementModal:", agreeModal ? "✅ Found" : "❌ MISSING");
+  console.log("  - modalOverlay:", selModal ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeImage:", agreeImg ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeTitle:", agreeTitle ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeLocation:", agreeLocation ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeAge:", agreeAge ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeHeight:", agreeHeight ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeVariety:", agreeVariety ? "✅ Found" : "❌ MISSING");
+  console.log("  - agreeCheckbox:", agreeCheckbox ? "✅ Found" : "❌ MISSING");
+  console.log("  - finalConfirmBtn:", finalBtn ? "✅ Found" : "❌ MISSING");
+
+  if (!agreeModal) {
+    console.error("[AGREEMENT] ❌ agreementModal element not found in DOM!");
+    showToast("Error: Agreement modal not found", true);
     return;
   }
-  
+
+  // Hide body scroll
   document.body.style.overflow = "hidden";
 
+  // Set image with fallback
   const fallback = _randomFallback();
-  const agreeImg = document.getElementById("agreeImage") as HTMLImageElement | null;
   if (agreeImg) {
     const imgUrl = selectedTree.image_url || selectedTree.photo_url || fallback;
+    console.log("[AGREEMENT] Setting image to:", imgUrl);
     agreeImg.src = imgUrl;
     agreeImg.onerror = () => {
+      console.warn("[AGREEMENT] Image failed to load, using fallback");
       agreeImg.src = fallback;
     };
   }
 
-  const setT = (id: string, v: string) => {
-    const el = document.getElementById(id);
-    if (el) el.innerText = v;
-  };
-  
+  // Set title
   const treeName = selectedTree.name || selectedTree.tree_id || "Unknown Tree";
-  setT("agreeTitle", `Adopting ${treeName}`);
-  setT("agreeLocation", selectedTree.location || "Field F1 - Tuscany, Italy");
-  setT("agreeAge", selectedTree.age || "5+ years");
-  setT("agreeHeight", selectedTree.height || "2.5m");
-  setT("agreeVariety", selectedTree.variety || "Frantoio");
-
-  const check = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
-  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
-
-  if (check && finalBtn) {
-    check.checked = false;
-    finalBtn.disabled = true;
-    finalBtn.innerText = "Confirm & Pay";
-    check.onchange = () => {
-      finalBtn.disabled = !check.checked;
-    };
+  if (agreeTitle) {
+    agreeTitle.innerText = `Adopting ${treeName}`;
+    console.log("[AGREEMENT] Title set to:", agreeTitle.innerText);
   }
 
-  const selModal = document.getElementById("modalOverlay");
-  const agreeModal = document.getElementById("agreementModal");
+  // Set location
+  const location = selectedTree.location || selectedTree.field_location || "Field F1 - Tuscany, Italy";
+  if (agreeLocation) {
+    agreeLocation.innerText = location;
+    console.log("[AGREEMENT] Location set to:", location);
+  }
+
+  // Set age
+  const age = selectedTree.age || selectedTree.age_years || "5+ years";
+  if (agreeAge) {
+    agreeAge.innerText = typeof age === 'number' ? `${age} years` : age;
+    console.log("[AGREEMENT] Age set to:", agreeAge.innerText);
+  }
+
+  // Set height
+  const height = selectedTree.height || selectedTree.height_cm || "2.5m";
+  if (agreeHeight) {
+    agreeHeight.innerText = typeof height === 'number' ? `${height} cm` : height;
+    console.log("[AGREEMENT] Height set to:", agreeHeight.innerText);
+  }
+
+  // Set variety
+  const variety = selectedTree.variety || "Frantoio";
+  if (agreeVariety) {
+    agreeVariety.innerText = variety;
+    console.log("[AGREEMENT] Variety set to:", variety);
+  }
+
+  // Setup checkbox and button
+  if (agreeCheckbox && finalBtn) {
+    agreeCheckbox.checked = false;
+    finalBtn.disabled = true;
+    finalBtn.innerText = "Confirm & Pay";
+    
+    // Remove any existing listeners to avoid duplicates
+    agreeCheckbox.onchange = null;
+    agreeCheckbox.addEventListener('change', function(e) {
+      finalBtn.disabled = !(e.target as HTMLInputElement).checked;
+      console.log("[AGREEMENT] Checkbox changed, disabled:", finalBtn.disabled);
+    });
+    
+    console.log("[AGREEMENT] Checkbox and button configured");
+  }
+
+  // Hide purchase modal, show agreement modal
+  if (selModal) {
+    selModal.style.display = "none";
+    console.log("[AGREEMENT] Purchase modal hidden");
+  }
   
-  if (selModal) selModal.style.display = "none";
-  if (agreeModal) agreeModal.style.display = "flex";
+  agreeModal.style.display = "flex";
+  console.log("[AGREEMENT] Agreement modal displayed (flex)");
   
-  console.log("[AGREEMENT] Agreement modal opened");
+  // Verify modal is visible
+  const computedDisplay = window.getComputedStyle(agreeModal).display;
+  console.log("[AGREEMENT] Modal computed display:", computedDisplay);
+  
+  console.log("[AGREEMENT] === AGREEMENT MODAL OPENED SUCCESSFULLY ===");
 };
 
 (window as any).closeAgreement = () => {
