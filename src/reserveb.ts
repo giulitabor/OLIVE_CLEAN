@@ -541,24 +541,74 @@ const connectBtn        = document.getElementById("connectBtn");
 const connectWalletBtn  = document.querySelector("#walletConnectCard #connectWalletBtn");
 
 async function getActiveWallet() {
-  if ((window as any).walletPubKey)
-    return { type: "wallet", address: (window as any).walletPubKey.toBase58?.() || String((window as any).walletPubKey) };
-  if ((window as any)._provider?.publicKey)
-    return { type: "wallet", address: (window as any)._provider.publicKey.toBase58() };
-  
+  const provider = (window as any)._provider || (window as any).provider;
+
+  // 1. LIVE WALLET (Phantom / injected)
+  if (provider?.publicKey) {
+    const address = provider.publicKey.toBase58();
+    return {
+      type: "wallet",
+      address,
+      source: "provider"
+    };
+  }
+
+  // 2. GLOBAL CACHE (your app runtime state)
+  if ((window as any).walletPubKey) {
+    const pk = (window as any).walletPubKey;
+
+    const address =
+      typeof pk === "string"
+        ? pk
+        : pk?.toBase58?.() || String(pk);
+
+    return {
+      type: "wallet",
+      address,
+      source: "walletPubKey"
+    };
+  }
+
+  // 3. APP STATE (your UI identity system)
+  const appIdentity = (window as any)?.App?.state?.identity;
+  if (appIdentity?.wallet) {
+    return {
+      type: "wallet",
+      address: appIdentity.wallet,
+      source: "appState"
+    };
+  }
+
+  // 4. LOCAL STORAGE (fallback only)
   const cached = localStorage.getItem("olivium_identity");
+
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      if (parsed.type === "wallet" && parsed.wallet)
-        return { type: "wallet", address: parsed.wallet };
-      if (parsed.type === "email" && parsed.custodialWallet)
-        return { type: "email", address: parsed.custodialWallet, label: parsed.address };
-    } catch(_) {}
+
+      if (parsed?.type === "wallet" && parsed?.wallet) {
+        return {
+          type: "wallet",
+          address: parsed.wallet,
+          source: "localStorage"
+        };
+      }
+
+      if (parsed?.type === "email" && parsed?.custodialWallet) {
+        return {
+          type: "email",
+          address: parsed.custodialWallet,
+          label: parsed.address,
+          source: "localStorage"
+        };
+      }
+    } catch (e) {
+      console.warn("[getActiveWallet] cache parse failed", e);
+    }
   }
+
   return null;
 }
-
 async function handleDisconnectWorkflow() {
   // Prefer the connection.ts disconnectWallet if available (clears _program etc.)
   if (typeof (window as any).disconnectWallet === "function") {
