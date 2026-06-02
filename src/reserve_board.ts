@@ -2399,7 +2399,14 @@ console.log("startPaypalCheckout");
 async function sellShares(treeId: string | number, amount: number) {
   const treeIdStr = String(treeId);
   console.log(`\n[SELL] Starting sale: Tree ${treeIdStr}, ${amount} shares`);
+const walletSession = await getActiveWallet();
 
+if (!walletSession?.address) {
+  console.error("No wallet found");
+  return;
+}
+
+const ownerPublicKey = new anchor.web3.PublicKey(walletSession.address);
   // 1. GLOBALS
   const program = (window as any)._program;
 
