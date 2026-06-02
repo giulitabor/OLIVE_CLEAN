@@ -2377,7 +2377,7 @@ async function sellShares(treeId: string | number, amount: number) {
   const walletInput = window._provider?.wallet?.publicKey || window.walletPubKey;
 
   if (!program || !walletInput) {
-    showToast("Protocol not initialized or wallet not connected", true);
+    console.log("Protocol not initialized or wallet not connected", true);
     return;
   }
 
