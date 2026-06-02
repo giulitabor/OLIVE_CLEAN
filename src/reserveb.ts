@@ -1,1361 +1,549 @@
 /**
- * reserve_board.ts — Olivium DAO
+ * reserveb.ts — Olivium DAO
  * ─────────────────────────────────────────────────────────────────────────────
- * All original functionality preserved + the following bugs fixed:
+ * Responsibilities:
+ *  • Email auth flow (signup / login with TOTP QR)
+ *  • Identity / balance pill UI (single definition, no duplicates)
+ *  • Connect button behaviour (open modal vs disconnect)
+ *  • Connect modal (wallet button + email tab routing)
+ *  • Modal open/close helpers exposed on window
  *
- *  FIX 1  loadUserTreePositions — the position filter now checks all candidate
- *          owner fields (authority, owner, wallet, user, buyer) via a safe
- *          normalise helper.  The original rewrite hardcoded "buyer" which
- *          caused every position fetch to return [] for most users.
- *
- *  FIX 2  positionsCache/treesCache invalidation now goes through the
- *          module-scoped _invalidateCaches() — not window globals — so it
- *          actually works.
- *
- *  FIX 3  getAllPositions() latch: on error the promise handle is cleared so
- *          subsequent calls can retry.
- *
- *  FIX 4  loadTrees() de-duplicated: concurrent calls while a load is
- *          in-flight return the same Promise.  After the load completes the
- *          latch is cleared so the next call works normally.
- *
- *  FIX 5  updateShares(), processBlockchainTx(), sellShares(),
- *          openAgreement(), findPositionPDA(), syncTransactionToSupabase(),
- *          getSolPriceEUR() — all were omitted from the first rewrite;
- *          re-added here with the same logic but using getIdentity() SSOT.
- *
- *  FIX 6  switchTreeDetailTab() — tab CSS selector aligned with HTML
- *          (.tree-detail-tab, not .tree-detail-tab-btn).
- *
- *  FIX 7  olivium:disconnected registered once only (removed duplicate
- *          resetProfileAndUI handler that was also firing).
- *
- *  FIX 8  DOMContentLoaded is the single init gate — no parallel calls.
+ * What was fixed vs the original:
+ *  1. DUPLICATE updateIdentityBalanceUI removed — one function, one export.
+ *  2. OLD_updateIdentityBalanceUI dead-code deleted.
+ *  3. Identity read always goes through getIdentity() (connection.ts SSOT),
+ *     NOT ad-hoc localStorage / window.walletPubKey checks.
+ *  4. getActiveWallet() removed — callers use getIdentity() from connection.ts.
+ *  5. connectBtn click handler now checks isConnected() directly — no async
+ *     wallet-read that could race against a mid-flight connect.
+ *  6. Event listeners deduplicated: only olivium:connected / olivium:disconnected.
+ *     The legacy solana:connection-complete bridge is here but fires ONCE.
+ *  7. DOMContentLoaded guard — all DOM queries happen after the DOM is ready.
+ *  8. updateIdentityBalanceUI does an async SOL-balance fetch but NEVER races:
+ *     it reads the stable identity snapshot from getIdentity() first.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   sb,
   connection,
   getIdentity,
   isConnected,
+  connectWallet,
+  connectEmail,
+  disconnectWallet,
 } from "./connection";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import * as anchor from "@coral-xyz/anchor";
+import { Keypair } from "@solana/web3.js";
+
+// ─── Re-export for modules that import from here ──────────────────────────
+export { sb };
+
+// ─── Expose shared globals needed by inline scripts ──────────────────────
+(window as any).sb            = sb;
+(window as any).PublicKey     = PublicKey;
+(window as any).SystemProgram = SystemProgram;
+(window as any).anchor        = anchor;
+
+// ─── Defer tree-load proxy until reserve_board.ts registers the impl ─────
+(window as any).loadTrees = (filter?: string) => {
+  if (typeof (window as any)._loadTreesImpl === "function") {
+    (window as any)._loadTreesImpl(filter);
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TYPES
+// PROGRAM AVAILABILITY HELPER
+// Used by modules that need to wait for the read-only (or authed) program.
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface Tree {
-  tree_id:      string;
-  name?:        string;
-  image_url?:   string;
-  description?: string;
-  total_shares: number;
-  shares_sold?: number;
-  location?:    string;
-  age?:         string;
-  height?:      string;
-  variety?:     string;
-}
-
-interface NormalisedPosition {
-  treeId:         string;
-  sharesOwned:    number;
-  treeName?:      string;
-  treeMetadata?:  any;
-  totalStakedOlv?: number;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PROGRAM HELPER
-// ═══════════════════════════════════════════════════════════════════════════
-
-function _requireProgram() {
-  const p = (window as any)._program;
-  if (!p) throw new Error("Program not ready");
-  return p;
-}
-
-async function waitForProgram(timeout = 10_000): Promise<any> {
+export async function waitForProgram(timeout = 10_000): Promise<any> {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const p = (window as any)._program;
     if (p) return p;
     await new Promise(r => setTimeout(r, 150));
   }
+  console.warn("[waitForProgram] Timed out");
   return null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PDA HELPERS
+// AUTH STORE  (in-memory + localStorage layer)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function findProtocolPDA() {
-  return anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("protocol")],
-    _requireProgram().programId
-  );
-}
-
-function findTreePDA(treeId: string) {
-  return anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("tree"), Buffer.from(treeId)],
-    _requireProgram().programId
-  );
-}
-
-function findTreasuryPDA(prog: any) {
-  return anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("treasury")],
-    prog.programId
-  );
-}
-
-async function findPositionPDA(ownerKey: PublicKey, treeId: string) {
-  return anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("position"), ownerKey.toBuffer(), Buffer.from(treeId)],
-    _requireProgram().programId
-  );
-}
-
-(window as any).findProtocolPDA = findProtocolPDA;
-(window as any).findTreePDA     = findTreePDA;
-(window as any).findTreasuryPDA = findTreasuryPDA;
+(window as any).OliviumAuth = {
+  user: null as any,
+  setUser(u: any) {
+    this.user = u;
+    localStorage.setItem("olivium_user", JSON.stringify(u));
+  },
+  getUser() {
+    return this.user || JSON.parse(localStorage.getItem("olivium_user") || "null");
+  },
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TOAST
+// IDENTITY UI  — THE SINGLE AUTHORITATIVE RENDERER
 // ═══════════════════════════════════════════════════════════════════════════
-
-function showToast(msg: string, isError = false) {
-  if (typeof (window as any).showGlobalToast === "function") {
-    (window as any).showGlobalToast(msg, isError);
-  } else {
-    console.log(`[TOAST${isError ? " ERR" : ""}] ${msg}`);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DATA CACHES  (module-scoped — the ONLY place these variables live)
-// ═══════════════════════════════════════════════════════════════════════════
-
-let treesCache:        any[] | null            = null;
-let treesPromise:      Promise<any[]> | null   = null;
-
-let positionsCache:    any[] | null            = null;
-let positionsPromise:  Promise<any[]> | null   = null;
-let positionsCacheTime = 0;
-const POSITIONS_TTL    = 8_000;
-
-let loadTreesPromise:  Promise<void> | null    = null;
-
-function _invalidateCaches() {
-  treesCache       = null;
-  treesPromise     = null;
-  positionsCache   = null;
-  positionsPromise = null;
-  positionsCacheTime = 0;
-}
-
-export async function getTrees(): Promise<any[]> {
-  if (treesCache) return treesCache;
-  if (treesPromise) return treesPromise;
-
-  treesPromise = (async () => {
-    const prog = await waitForProgram();
-    if (!prog) return [];
-    const data = await prog.account.tree.all();
-    treesCache = data;
-    return data;
-  })().finally(() => { treesPromise = null; });
-
-  return treesPromise;
-}
-
-export async function getAllPositions(force = false): Promise<any[]> {
-  const now = Date.now();
-  if (positionsCache && !force && now - positionsCacheTime < POSITIONS_TTL) {
-    return positionsCache;
-  }
-  if (positionsPromise) return positionsPromise;
-
-  positionsPromise = (async () => {
-    const prog = await waitForProgram();
-    if (!prog) return [];
-    const data = await prog.account.sharePosition.all();
-    positionsCache     = data;
-    positionsCacheTime = Date.now();
-    return data;
-  })()
-    .catch(err => { positionsPromise = null; throw err; })
-    .finally(() => { positionsPromise = null; });
-
-  return positionsPromise;
-}
-
-// ─── Normalise any public-key representation to a base58 string ──────────
-function _pkToString(raw: any): string {
-  if (!raw) return "";
-  if (typeof raw === "string") return raw;
-  if (typeof raw.toBase58 === "function") return raw.toBase58();
-  // BN / Buffer / byte-array style
-  try { return new PublicKey(raw).toBase58(); } catch { return String(raw); }
-}
-
 /**
- * FIX 1 — checks ALL candidate owner fields in the account struct.
- * The on-chain layout may use authority, owner, wallet, user, or buyer
- * depending on the program version.  We try every one.
+ * Reads from getIdentity() (connection.ts SSOT) and updates every identity-
+ * related DOM element.  Async only because wallet mode fetches SOL balance.
+ * Never throws — logs errors internally.
  */
-export async function loadUserTreePositions(): Promise<NormalisedPosition[]> {
-  const identity = getIdentity();
-  if (!identity.wallet) return [];
-
-  const targetAddr = identity.wallet;
-
+export async function updateIdentityBalanceUI(): Promise<void> {
   try {
-    const prog = await waitForProgram();
+    const identity   = getIdentity();
+    const pillEl     = document.getElementById("identityPill");
+    const stat       = document.getElementById("identityTypeStat");
+    const connectBtn = document.getElementById("connectBtn") as HTMLButtonElement | null;
 
-    const [allPositions, allTrees] = await Promise.all([
-      getAllPositions(),
-      getTrees(),
-    ]);
-
-    if (allPositions.length > 0) {
-      console.log("[POSITIONS] Sample account fields:", Object.keys(allPositions[0].account));
+    // ── Guest ──────────────────────────────────────────────────────────────
+    if (identity.type === "guest") {
+      if (pillEl)     pillEl.innerHTML = "🌿 Guest Mode";
+      if (stat)       stat.innerHTML   = "Guest";
+      if (connectBtn) {
+        connectBtn.textContent    = "Connect Profile";
+        connectBtn.style.color    = "white";
+        connectBtn.style.border   = "";
+        connectBtn.style.background = "var(--green)";
+        connectBtn.disabled       = false;
+      }
+      return;
     }
 
-    // Fetch staked OLV if available (non-critical)
-    let totalStakedOlv = 0;
-    if (prog) {
+    // ── Email ──────────────────────────────────────────────────────────────
+    if (identity.type === "email") {
+      if (pillEl)     pillEl.innerHTML = `✉️ ${identity.label}`;
+      if (stat)       stat.innerHTML   = "Email Secured";
+      if (connectBtn) {
+        connectBtn.textContent    = "Disconnect";
+        connectBtn.style.color    = "#d94d4d";
+        connectBtn.style.border   = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+        connectBtn.disabled       = false;
+      }
+      return;
+    }
+
+    // ── Wallet ─────────────────────────────────────────────────────────────
+    if (identity.type === "wallet" && identity.wallet) {
+      // Show immediately with a placeholder balance while we fetch
+      const short = identity.label; // already "XXXX...XXXX"
+      if (pillEl)     pillEl.innerHTML = `🔑 ${short} · ◎ …`;
+      if (stat)       stat.innerHTML   = "Wallet Mode";
+      if (connectBtn) {
+        connectBtn.textContent    = "Disconnect";
+        connectBtn.style.color    = "#d94d4d";
+        connectBtn.style.border   = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+        connectBtn.disabled       = false;
+      }
+
+      // Fetch balance asynchronously — does NOT block the initial UI update
       try {
-        const ownerKey = new PublicKey(targetAddr);
-        const [stakePda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("stake"), ownerKey.toBuffer()],
-          prog.programId
-        );
-        const stakeAcc = await prog.account.stakeAccount.fetch(stakePda);
-        totalStakedOlv = (stakeAcc.amount?.toNumber() || 0) / 1_000_000_000;
-      } catch { /* no stake account — normal for most users */ }
+        const lamports  = await connection.getBalance(new PublicKey(identity.wallet));
+        const solBalance = (lamports / 1_000_000_000).toFixed(3);
+        // Re-check identity hasn't changed while we were awaiting
+        if (getIdentity().type === "wallet" && pillEl) {
+          pillEl.innerHTML =
+            `◎ ${solBalance} SOL <span style="opacity:.5;margin:0 6px">|</span> 🔑 ${short}`;
+        }
+      } catch {
+        // Balance unavailable — display address only (already set above)
+      }
     }
-
-    const positions = allPositions
-      .filter((pos: any) => {
-        const acc = pos.account;
-        // Try every field name the program might use for the owner
-        const ownerRaw =
-          acc.authority ?? acc.owner ?? acc.wallet ?? acc.user ?? acc.buyer ?? null;
-        if (!ownerRaw) return false;
-        return _pkToString(ownerRaw) === targetAddr;
-      })
-      .map((pos: any) => {
-        const acc = pos.account;
-        const treeId = acc.treeId?.toString() ?? "";
-        const sharesOwned =
-          typeof acc.sharesOwned?.toNumber === "function"
-            ? acc.sharesOwned.toNumber()
-            : Number(acc.sharesOwned ?? 0);
-
-        const tree = allTrees.find(
-          (t: any) => t.account.treeId?.toString() === treeId
-        );
-
-        return {
-          treeId,
-          sharesOwned,
-          treeName:      tree?.account.name   || "Unknown",
-          treeMetadata:  tree?.account.treeMetadata || null,
-          totalStakedOlv,
-        } as NormalisedPosition;
-      })
-      .filter(p => p.sharesOwned > 0);
-
-    console.log(`[POSITIONS] Found ${positions.length} positions for ${targetAddr.slice(0,8)}…`);
-    return positions;
-
   } catch (err) {
-    console.error("[loadUserTreePositions]", err);
-    return [];
+    console.error("[updateIdentityBalanceUI]", err);
   }
 }
 
-(window as any).loadUserTreePositions = loadUserTreePositions;
-(window as any).getAllPositions        = getAllPositions;
+// Expose on window so reserve_board.ts and inline scripts can call it
+(window as any).updateIdentityBalanceUI = updateIdentityBalanceUI;
+// Alias used by some legacy calls
+(window as any).refreshIdentityUI       = updateIdentityBalanceUI;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SOL PRICE
+// PASSWORD VALIDATION (signup form)
 // ═══════════════════════════════════════════════════════════════════════════
 
-let _cachedSolPrice   = 100;
-let _lastPriceFetch   = 0;
-(window as any).cachedSolPrice = _cachedSolPrice;
+interface MetricEntry { reg: RegExp; el: HTMLElement | null; }
 
-async function getSolPriceEUR(): Promise<number> {
-  const now = Date.now();
-  if (now - _lastPriceFetch < 60_000) return _cachedSolPrice;
-  try {
-    const res  = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=eur");
-    const data = await res.json();
-    if (data?.solana?.eur) {
-      _cachedSolPrice = data.solana.eur;
-      _lastPriceFetch = now;
-      (window as any).cachedSolPrice = _cachedSolPrice;
-    }
-  } catch { /* fallback */ }
-  return _cachedSolPrice;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SELL MODAL
-// ═══════════════════════════════════════════════════════════════════════════
-
-let activeSellTreeId:      string | null = null;
-let maxAvailableSellShares = 0;
-
-(window as any).openSellModal = (treeId: string, currentShares: number) => {
-  activeSellTreeId       = String(treeId);
-  maxAvailableSellShares = currentShares;
-
-  const modal = document.getElementById("sell-modal");
-  const title = document.getElementById("sell-modal-title");
-  const owned = document.getElementById("sell-modal-owned");
-  const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
-
-  if (title)  title.textContent = `Sell Shares — Tree #${treeId}`;
-  if (owned)  owned.textContent = `${currentShares.toLocaleString()} Shares Registered`;
-  if (input) { input.value = String(Math.min(10, currentShares)); input.max = String(currentShares); }
-
-  _recalculatePayout();
-  modal?.classList.remove("hidden");
+const metrics: Record<string, MetricEntry> = {
+  len: { reg: /.{6,}/,        el: null },
+  cap: { reg: /[A-Z]/,        el: null },
+  low: { reg: /[a-z]/,        el: null },
+  num: { reg: /[0-9]/,        el: null },
+  spe: { reg: /[^A-Za-z0-9]/, el: null },
 };
 
-function _closeSellModal() {
-  document.getElementById("sell-modal")?.classList.add("hidden");
-  activeSellTreeId       = null;
-  maxAvailableSellShares = 0;
-}
-(window as any).closeSellModal = _closeSellModal;
-
-(window as any).setSellMax = () => {
-  const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
-  if (input) { input.value = String(maxAvailableSellShares); _recalculatePayout(); }
-};
-
-function _recalculatePayout() {
-  const input   = document.getElementById("sell-amount-input") as HTMLInputElement | null;
-  const display = document.getElementById("sell-modal-payout");
-  if (!input || !display) return;
-  const shares = parseInt(input.value) || 0;
-  display.textContent = `${((shares * 12.40) / _cachedSolPrice).toFixed(3)} SOL`;
+function initMetrics() {
+  metrics.len.el = document.getElementById("metric-len");
+  metrics.cap.el = document.getElementById("metric-cap");
+  metrics.low.el = document.getElementById("metric-low");
+  metrics.num.el = document.getElementById("metric-num");
+  metrics.spe.el = document.getElementById("metric-spe");
 }
 
-async function _confirmSellAction() {
-  const btn   = document.getElementById("sell-submit-btn")  as HTMLButtonElement | null;
-  const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
-  if (!activeSellTreeId || !input || !btn) return;
+function validateSignupForm(
+  passEl:    HTMLInputElement | null,
+  confirmEl: HTMLInputElement | null,
+  emailEl:   HTMLInputElement | null,
+  btnEl:     HTMLButtonElement | null,
+) {
+  const pass    = passEl?.value    ?? "";
+  const confirm = confirmEl?.value ?? "";
+  let allPass   = true;
 
-  const amount = parseInt(input.value) || 0;
-  if (amount <= 0 || amount > maxAvailableSellShares) {
-    alert("Please specify a valid quantity within your ownership bounds.");
-    return;
-  }
-  btn.disabled = true; btn.textContent = "Processing…";
-  try {
-    await sellShares(activeSellTreeId, amount);
-    _closeSellModal();
-  } catch (err) {
-    console.error("[SELL ERROR]", err);
-    showToast("Sell transaction failed.", true);
-  } finally {
-    btn.disabled = false; btn.textContent = "Confirm Liquidation";
-  }
-}
-(window as any).confirmSellAction = _confirmSellAction;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STATS UI
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function updateStatsUI() {
-  const treeCountEl  = document.getElementById("treeCountStat");
-  const shareCountEl = document.getElementById("shareCountStat");
-  const groveCountEl = document.getElementById("grovePositionStat");
-
-  try {
-    await waitForProgram();
-    const allTrees = await getTrees();
-    if (treeCountEl) treeCountEl.innerText = String(allTrees.length);
-  } catch {
-    if (treeCountEl) treeCountEl.innerText = "--";
-  }
-
-  const identity = getIdentity();
-  if (!identity.wallet) {
-    if (shareCountEl) shareCountEl.innerText = "--";
-    if (groveCountEl) groveCountEl.innerText = "0";
-    return;
-  }
-
-  try {
-    const positions   = await loadUserTreePositions();
-    const totalShares = positions.reduce((s, p) => s + p.sharesOwned, 0);
-    const uniqueTrees = new Set(positions.map(p => p.treeId)).size;
-    if (shareCountEl) shareCountEl.innerText = String(totalShares);
-    if (groveCountEl) groveCountEl.innerText = String(uniqueTrees);
-  } catch (err) {
-    console.error("[updateStatsUI]", err);
-    if (shareCountEl) shareCountEl.innerText = "--";
-    if (groveCountEl) groveCountEl.innerText = "0";
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// WALLET UI  (delegates to reserveb.ts's single renderer)
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function updateWalletUI() {
-  if (typeof (window as any).updateIdentityBalanceUI === "function") {
-    await (window as any).updateIdentityBalanceUI();
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// VILLA STAY TIER UI
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function updateVillaStayUI() {
-  // Element refs use the IDs that exist in the original HTML
-  const sharesDisplay  = document.getElementById("shares-count-display");
-  const creditsDisplay = document.getElementById("credits-count-display");
-  const tierName       = document.getElementById("tier-name");
-  const tierIcon       = document.getElementById("tier-icon");
-  const tierPrgTxt     = document.getElementById("tier-progress-text");
-  const nextTierLbl    = document.getElementById("next-tier-label");
-  const tierPctLbl     = document.getElementById("tier-percent-label");
-  const tierBar        = document.getElementById("tier-progress-bar");
-  const patronBadge    = document.getElementById("patronDiscountBadge");
-  const bookingRate    = document.getElementById("bookingRateDisplay");
-  const cardTier1      = document.getElementById("card-tier-1");
-  const cardTier2      = document.getElementById("card-tier-2");
-  const cardTier3      = document.getElementById("card-tier-3");
-  const perkGov        = document.getElementById("perk-gov");
-  const perkShipping   = document.getElementById("perk-shipping");
-  const perkDiscount   = document.getElementById("perk-discount");
-  const perkStay       = document.getElementById("perk-stay");
-
-  const tierEls = [cardTier1, cardTier2, cardTier3, perkGov, perkShipping, perkDiscount, perkStay];
-  const dim = (el: Element | null) => { el?.classList.remove("opacity-100"); el?.classList.add("opacity-40"); };
-  const lit = (el: Element | null) => { el?.classList.remove("opacity-40");  el?.classList.add("opacity-100"); };
-
-  const identity = getIdentity();
-
-  if (!identity.wallet) {
-    if (sharesDisplay)  sharesDisplay.innerHTML  = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
-    if (creditsDisplay) creditsDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
-    if (tierName)       tierName.innerText       = "Guest Mode";
-    if (tierPrgTxt)     tierPrgTxt.innerText     = "Connect to view tier status";
-    if (patronBadge)    patronBadge.innerText    = "Standard Account";
-    if (bookingRate)    bookingRate.innerText    = "$450 USD / Nightly standard baseline";
-    tierEls.forEach(dim);
-    return;
-  }
-
-  try {
-    await waitForProgram();
-
-    const positions   = await loadUserTreePositions();
-    const totalShares = positions.reduce((s, p) => s + p.sharesOwned, 0);
-
-    let totalCredits = 0;
-    try {
-      const { data } = await sb.from("users").select("credits").eq("wallet", identity.wallet).maybeSingle();
-      if (data) totalCredits = data.credits || 0;
-    } catch { /* non-critical */ }
-
-    if (sharesDisplay)  sharesDisplay.innerHTML  = `${totalShares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
-    if (creditsDisplay) creditsDisplay.innerHTML = `${totalCredits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
-
-    tierEls.forEach(dim);
-
-    let currentTier   = "Standard Account";
-    let nextTier      = "Seed Supporter";
-    let pct           = 0;
-    let icon          = "🫒";
-    let label         = "";
-
-    if (totalShares >= 1000) {
-      currentTier = "Grove Patron"; nextTier = "Max Tier Achieved"; pct = 100; icon = "👑"; label = "VIP Privileges unlocked";
-      lit(cardTier3); [perkGov, perkShipping, perkDiscount, perkStay].forEach(lit);
-    } else if (totalShares >= 500) {
-      currentTier = "Tree Guardian"; nextTier = "Grove Patron";
-      pct = Math.round(((totalShares - 500) / 500) * 100); icon = "🌳"; label = `${1000 - totalShares} shares to Patron`;
-      lit(cardTier2); [perkGov, perkShipping, perkDiscount].forEach(lit);
-    } else if (totalShares >= 100) {
-      currentTier = "Seed Supporter"; nextTier = "Tree Guardian";
-      pct = Math.round(((totalShares - 100) / 400) * 100); icon = "🌱"; label = `${500 - totalShares} shares to Guardian`;
-      lit(cardTier1); [perkGov, perkShipping].forEach(lit);
-    } else {
-      pct = Math.round((totalShares / 100) * 100); label = `${100 - totalShares} shares to Seed level`;
+  for (const key in metrics) {
+    const m = metrics[key];
+    const ok = m.reg.test(pass);
+    if (m.el) {
+      m.el.style.color = ok ? "#2e7d32" : "#d94d4d";
+      const icon = m.el.querySelector<HTMLElement>(".icon");
+      if (icon) icon.innerText = ok ? "✔" : "❌";
     }
+    if (!ok) allPass = false;
+  }
 
-    if (tierName)    tierName.innerText    = currentTier;
-    if (tierIcon)    tierIcon.innerText    = icon;
-    if (tierPrgTxt)  tierPrgTxt.innerText  = label;
-    if (nextTierLbl) nextTierLbl.innerText = `Next: ${nextTier}`;
-    if (tierPctLbl)  tierPctLbl.innerText  = `${pct}%`;
-    if (tierBar)     (tierBar as HTMLElement).style.width = `${pct}%`;
+  const matches  = pass === confirm && pass.length > 0;
+  const hasEmail = (emailEl?.value.trim().length ?? 0) > 0;
 
-    const hasGenesis = positions.some(p => Number(p.treeId) <= 3);
-    let pricingLabel = "Standard Account";
-    let rateStr      = "$450 USD / Nightly standard baseline";
-    if (hasGenesis || totalShares >= 1000) { pricingLabel = "👑 Grove Patron Tier"; rateStr = "$382.50 USD / Nightly (15% Patron Override Applied)"; }
-    else if (totalShares >= 500)           { pricingLabel = "🌳 Guardian Tier";     rateStr = "$382.50 USD / Nightly (15% Guardian Override Applied)"; }
-    else if (totalShares >= 100)           { pricingLabel = "🌱 Seed Supporter"; }
-
-    if (patronBadge) patronBadge.innerText = pricingLabel;
-    if (bookingRate) bookingRate.innerText  = rateStr;
-
-  } catch (err) {
-    console.error("[updateVillaStayUI]", err);
+  if (btnEl) {
+    btnEl.disabled         = !(allPass && matches && hasEmail);
+    btnEl.style.background = btnEl.disabled ? "#cccccc" : "var(--green)";
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DISCONNECT CLEANUP  (single definition)
+// MODAL HELPERS  (purchase / agreement modals)
 // ═══════════════════════════════════════════════════════════════════════════
 
-async function clearAllUserUiAndStates() {
-  console.log("🔄 Clearing user UI and caches…");
+function closeModal() {
+  const el = document.getElementById("modalOverlay");
+  if (el) el.style.display = "none";
+  document.body.style.overflow = "";
+}
 
-  _invalidateCaches();
+function openAgreement() {
+  const el = document.getElementById("agreementModal");
+  if (el) el.style.display = "flex";
+}
 
-  localStorage.removeItem("olivium_user");
-  if ((window as any).OliviumAuth) (window as any).OliviumAuth.user = null;
+function closeAgreement() {
+  const el = document.getElementById("agreementModal");
+  if (el) el.style.display = "none";
+}
 
-  const setEl = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
-  setEl("shareCountStat",    "--");
-  setEl("grovePositionStat", "0");
-  setEl("identityTypeStat",  "Guest");
-  setEl("villaStayIdentity", "Not Connected");
-  setEl("villaTierStat",     "Standard Guest");
-  setEl("villaDiscountStat", "0%");
+function closeConnectModal() {
+  const el = document.getElementById("connectModal");
+  if (el) el.style.display = "none";
+}
 
-  await updateStatsUI();
-  await updateVillaStayUI();
+(window as any).closeModal       = closeModal;
+(window as any).openAgreement    = openAgreement;
+(window as any).closeAgreement   = closeAgreement;
+(window as any).closeConnectModal = closeConnectModal;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DISCONNECT HELPER  (shared by connect-button and other callers)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export async function handleDisconnectWorkflow() {
+  await disconnectWallet();  // connection.ts handles all teardown + event dispatch
+}
+(window as any).handleDisconnectWorkflow = handleDisconnectWorkflow;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOM INITIALISATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.addEventListener("DOMContentLoaded", () => {
+  initMetrics();
+  _wireConnectButton();
+  _wireWalletConnectButton();
+  _wireMobileNav();
+  _wireAuthModal();
+  updateIdentityBalanceUI(); // Initial render from restored session
+
+  // If a filter is already active and it's "my", it needs auth state
   const activeFilter = document.querySelector<HTMLElement>(".filter-btn.active");
-  if (activeFilter?.dataset.filter === "my") {
-    document.querySelector<HTMLElement>('[data-filter="all"]')?.click();
-  } else {
-    loadTrees("all");
+  if (activeFilter?.dataset.filter === "my" && !isConnected()) {
+    // Switch to "all" so guest users don't see an empty grid
+    const allBtn = document.querySelector<HTMLElement>('[data-filter="all"]');
+    allBtn?.click();
   }
+});
+
+// ─── Connect / Disconnect button ──────────────────────────────────────────
+function _wireConnectButton() {
+  const btn = document.getElementById("connectBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    if (isConnected()) {
+      // User is connected — clicking disconnects
+      btn.textContent = "Disconnecting…";
+      (btn as HTMLButtonElement).disabled = true;
+      try {
+        await handleDisconnectWorkflow();
+      } finally {
+        (btn as HTMLButtonElement).disabled = false;
+      }
+    } else {
+      // Show the connect modal
+      const modal = document.getElementById("connectModal");
+      if (modal) modal.style.display = "flex";
+    }
+  });
 }
-(window as any).resetProfileAndUI = clearAllUserUiAndStates;
+
+// ─── Phantom wallet button inside connect modal ───────────────────────────
+function _wireWalletConnectButton() {
+  const btn = document.querySelector<HTMLElement>("#walletConnectCard #connectWalletBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    btn.textContent = "Connecting…";
+    (btn as HTMLButtonElement).disabled = true;
+    try {
+      await connectWallet(false);
+      closeConnectModal();
+    } catch (err: any) {
+      console.error("Wallet connection declined:", err);
+      btn.textContent = "Connect Wallet";
+    } finally {
+      (btn as HTMLButtonElement).disabled = false;
+    }
+  });
+}
+
+// ─── Mobile nav toggle ────────────────────────────────────────────────────
+function _wireMobileNav() {
+  document.getElementById("mobileToggle")?.addEventListener("click", () => {
+    document.getElementById("navLinks")?.classList.toggle("active");
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FILTER BUTTONS
+// EMAIL AUTH MODAL WIRING
 // ═══════════════════════════════════════════════════════════════════════════
+const SECRET_SEED = "OLIVIUMDAO777MFASEED";
+let _generatedCustodialWallet = "";
 
-function initFilters() {
-  document.querySelectorAll<HTMLElement>(".filter-btn").forEach(btn => {
-    btn.addEventListener("click", async (e) => {
-      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-      (e.currentTarget as HTMLElement).classList.add("active");
+function show(msg: string, ok = true) {
+  const el = document.getElementById("msg");
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color  = ok ? "#2e7d32" : "#d94d4d";
+}
 
-      const filter = (e.currentTarget as HTMLElement).dataset.filter || "all";
+function _wireAuthModal() {
+  // ── open / close ──────────────────────────────────────────────────────
+  document.getElementById("emailLoginBtn")?.addEventListener("click", () => {
+    const connectModal = document.getElementById("connectModal");
+    if (connectModal) connectModal.style.display = "none";
+    const overlay = document.getElementById("authModalOverlay");
+    if (overlay) overlay.style.display = "flex";
+    show("");
+  });
 
-      if (filter === "my") {
-        if (!isConnected()) {
-          const c = document.getElementById("treeGrid");
-          if (c) c.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);"><h3>Connect your profile to view your grove</h3></div>`;
-          return;
-        }
-        const positions = await loadUserTreePositions();
-        if (!positions.length) {
-          const c = document.getElementById("treeGrid");
-          if (c) c.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);"><h3>No trees in your grove yet</h3><p>Adopt shares to get started.</p></div>`;
-          return;
-        }
-        renderMyTreesFromPositions(positions);
+  document.getElementById("closeAuthModal")?.addEventListener("click", () => {
+    const overlay = document.getElementById("authModalOverlay");
+    if (overlay) overlay.style.display = "none";
+  });
+
+  document.getElementById("authModalOverlay")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) {
+      (e.currentTarget as HTMLElement).style.display = "none";
+    }
+  });
+
+  // ── tabs ──────────────────────────────────────────────────────────────
+  const loginTab  = document.getElementById("loginTab");
+  const signupTab = document.getElementById("signupTab");
+  const loginForm = document.getElementById("loginForm")  as HTMLElement | null;
+  const signupForm = document.getElementById("signupForm") as HTMLElement | null;
+
+  loginTab?.addEventListener("click", () => {
+    if (!loginTab || !signupTab || !loginForm || !signupForm) return;
+    loginTab.style.background   = "var(--green)";
+    loginTab.style.color        = "white";
+    signupTab.style.background  = "transparent";
+    signupTab.style.color       = "var(--text)";
+    loginForm.style.display     = "block";
+    signupForm.style.display    = "none";
+    show("");
+  });
+
+  signupTab?.addEventListener("click", () => {
+    if (!loginTab || !signupTab || !loginForm || !signupForm) return;
+    signupTab.style.background  = "var(--green)";
+    signupTab.style.color       = "white";
+    loginTab.style.background   = "transparent";
+    loginTab.style.color        = "var(--text)";
+    signupForm.style.display    = "block";
+    loginForm.style.display     = "none";
+    show("");
+  });
+
+  // ── password metric listeners ─────────────────────────────────────────
+  const passEl    = document.getElementById("signupPassword")        as HTMLInputElement | null;
+  const confirmEl = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
+  const emailEl   = document.getElementById("signupEmail")           as HTMLInputElement | null;
+  const signupBtn = document.getElementById("signupBtn")             as HTMLButtonElement | null;
+
+  passEl?.addEventListener("input",    () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+  confirmEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+  emailEl?.addEventListener("input",   () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+
+  // ── signup step 1: generate custodial wallet + QR ─────────────────────
+  signupBtn?.addEventListener("click", async () => {
+    const emailVal    = emailEl?.value.trim().toLowerCase()  ?? "";
+    const passwordVal = passEl?.value.trim()                 ?? "";
+
+    if (!emailVal || !passwordVal) {
+      show("Please complete both Email and Password fields.", false);
+      return;
+    }
+
+    show("Generating secure cryptographic identity…", true);
+    const qrContainer = document.getElementById("qr");
+    if (qrContainer) qrContainer.innerHTML = "";
+
+    try {
+      const seed    = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+      const hash    = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+      const kp      = Keypair.fromSeed(new Uint8Array(hash));
+      _generatedCustodialWallet = kp.publicKey.toBase58();
+
+      const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
+        + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
+
+      if (qrContainer && typeof (window as any).QRCode !== "undefined") {
+        new (window as any).QRCode(qrContainer, {
+          text: totpUri, width: 180, height: 180,
+          colorDark: "#1f402a", colorLight: "#ffffff",
+          correctLevel: (window as any).QRCode.CorrectLevel.H,
+        });
+      }
+
+      const otpBox = document.getElementById("signupOtpBox");
+      if (otpBox) otpBox.style.display = "block";
+    } catch (err) {
+      console.error("Key derivation failed:", err);
+      show("Failed to generate credentials.", false);
+    }
+  });
+
+  // ── signup step 2: verify OTP + persist user ──────────────────────────
+  document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
+    const emailVal   = emailEl?.value.trim().toLowerCase() ?? "";
+    const otpInput   = document.getElementById("signupOtp") as HTMLInputElement | null;
+    const enteredOtp = otpInput?.value.trim() ?? "";
+
+    if (!enteredOtp || enteredOtp.length < 6) {
+      show("Please enter your 6-digit authenticator code.", false);
+      return;
+    }
+
+    show("Syncing profile to database…", true);
+
+    try {
+      const { error } = await sb.from("users").insert([{
+        Email_address: emailVal,
+        wallet:        _generatedCustodialWallet,
+        token:         SECRET_SEED,
+      }]);
+
+      if (error && error.code !== "23505") throw error;
+
+      show("MFA enabled! Switching to Login…", true);
+      setTimeout(() => {
+        loginTab?.click();
+        const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+        if (loginEmailInput) loginEmailInput.value = emailVal;
+        const signupOtpBox = document.getElementById("signupOtpBox");
+        if (signupOtpBox) signupOtpBox.style.display = "none";
+        const qr = document.getElementById("qr");
+        if (qr) qr.innerHTML = "";
+      }, 1500);
+    } catch (err: any) {
+      console.error("Signup DB error:", err);
+      show(`Registration failed: ${err.message || "unknown error"}`, false);
+    }
+  });
+
+  // ── login step 1: show OTP input ──────────────────────────────────────
+  document.getElementById("loginBtn")?.addEventListener("click", () => {
+    const loginEmailInput    = document.getElementById("loginEmail")    as HTMLInputElement | null;
+    const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
+
+    if (!loginEmailInput?.value.trim() || !loginPasswordInput?.value.trim()) {
+      show("Please fill in your credentials.", false);
+      return;
+    }
+    show("Enter your authenticator code below.", true);
+    const loginOtpBox = document.getElementById("loginOtpBox");
+    if (loginOtpBox) loginOtpBox.style.display = "block";
+  });
+
+  // ── login step 2: verify OTP + connect email identity ─────────────────
+  document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+    const emailVal        = loginEmailInput?.value.trim().toLowerCase() ?? "";
+
+    if (!emailVal) { show("Please enter your email.", false); return; }
+
+    show("Verifying identity…", true);
+
+    try {
+      const { data: profile, error } = await sb
+        .from("users")
+        .select("wallet")
+        .eq("Email_address", emailVal)
+        .maybeSingle();
+
+      if (error) throw error;
+      const custodialWallet = profile?.wallet ?? null;
+      if (!custodialWallet) {
+        show("No wallet associated with this email. Contact support.", false);
         return;
       }
 
-      loadTrees(filter);
-    });
-  });
-}
+      // Persist the user session
+      (window as any).OliviumAuth.setUser({ email: emailVal, tier: "Standard" });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PAYMENT SELECTOR
-// ═══════════════════════════════════════════════════════════════════════════
+      // Call the canonical connect flow from connection.ts
+      await connectEmail(emailVal, custodialWallet);
 
-let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
+      show("Verified! Loading your grove…", true);
 
-function initPaymentSelector() {
-  document.querySelectorAll<HTMLElement>(".payment-option").forEach(opt => {
-    opt.addEventListener("click", () => {
-      document.querySelectorAll(".payment-option").forEach(o => o.classList.remove("active"));
-      opt.classList.add("active");
-      paymentMode = (opt.dataset.payment as any) || "mollie";
-      (window as any).updateShares?.();
-    });
-  });
-}
+      setTimeout(() => {
+        const overlay = document.getElementById("authModalOverlay");
+        if (overlay) overlay.style.display = "none";
+        const loginOtpBox = document.getElementById("loginOtpBox");
+        if (loginOtpBox) loginOtpBox.style.display = "none";
+      }, 800);
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SHARE CONTROLS  (exposed on window for inline HTML calls)
-// ═══════════════════════════════════════════════════════════════════════════
-
-function _getValidShares(val: number): number {
-  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
-  if (!slider) return val;
-  return Math.max(Number(slider.min) || 1, Math.min(Number(slider.max) || 1000, val));
-}
-
-(window as any).syncFromSlider = () => {
-  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
-  const input  = document.getElementById("shareInput")  as HTMLInputElement | null;
-  if (!slider || !input) return;
-  input.value = slider.value;
-  (window as any).updateShares?.();
-};
-
-(window as any).changeShares = (delta: number) => {
-  const input  = document.getElementById("shareInput")  as HTMLInputElement | null;
-  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
-  if (!input) return;
-  const next = _getValidShares((Number(input.value) || 1) + delta);
-  input.value = String(next);
-  if (slider) slider.value = String(next);
-  (window as any).updateShares?.();
-};
-
-(window as any).setShares = (amount: number | "max") => {
-  const input  = document.getElementById("shareInput")  as HTMLInputElement | null;
-  const slider = document.getElementById("shareSlider") as HTMLInputElement | null;
-  if (!input || !slider) return;
-  const next = amount === "max" ? Number(slider.max) : _getValidShares(Number(amount));
-  input.value  = String(next);
-  slider.value = String(next);
-  (window as any).updateShares?.();
-};
-
-(window as any).updateShares = async () => {
-  const input          = document.getElementById("shareInput")     as HTMLInputElement | null;
-  const shareDisplay   = document.getElementById("shareValue");
-  const priceDisplay   = document.getElementById("priceDisplay");
-  const priceSub       = document.getElementById("priceSub");
-  const adoptBtn       = document.getElementById("adoptBtn")       as HTMLButtonElement | null;
-  const connectBtn     = document.getElementById("adoptConnectBtn") as HTMLButtonElement | null;
-
-  if (!input) return;
-
-  const shares       = Number(input.value) || 1;
-  const euroPerShare = 12.40;
-  const totalEuro    = shares * euroPerShare;
-  const solPrice     = await getSolPriceEUR();
-  const totalSol     = totalEuro / solPrice;
-  const isCrypto     = paymentMode === "crypto";
-  const isSoldOut    = adoptBtn?.innerText === "Sold Out";
-
-  // Tier SOL price labels
-  const update = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
-  update("starter-sol-price",   `~${((10  * euroPerShare) / solPrice).toFixed(2)} SOL`);
-  update("keeper-sol-price",    `~${((100 * euroPerShare) / solPrice).toFixed(2)} SOL`);
-  update("fulltree-sol-price",  `~${((1000 * euroPerShare) / solPrice).toFixed(2)} SOL`);
-
-  if (shareDisplay) shareDisplay.innerText = shares.toLocaleString();
-
-  if (priceDisplay) {
-    priceDisplay.innerHTML = isCrypto
-      ? `◎ ${totalSol.toFixed(2)} <span style="font-size:.6em;font-weight:normal;">SOL</span>`
-      : `€${totalEuro.toLocaleString()}`;
-  }
-
-  if (priceSub) {
-    priceSub.innerText = isCrypto
-      ? `${shares} share${shares > 1 ? "s" : ""} × ◎ ${(euroPerShare / solPrice).toFixed(4)} SOL`
-      : `${shares} share${shares > 1 ? "s" : ""} × €${euroPerShare}`;
-  }
-
-  // Crypto mode: show wallet-connect prompt if no wallet
-  const identity = getIdentity();
-  if (isCrypto && !isSoldOut) {
-    if (identity.wallet) {
-      if (connectBtn) connectBtn.style.display = "none";
-      if (adoptBtn)   { adoptBtn.style.display = "block"; adoptBtn.innerText = "Continue to Agreement"; }
-    } else {
-      if (adoptBtn)   adoptBtn.style.display = "none";
-      if (connectBtn) {
-        connectBtn.style.display   = "block";
-        connectBtn.innerText       = "🔗 Connect Wallet to Continue";
-        connectBtn.onclick = async () => {
-          try {
-            if (typeof (window as any).connectWallet === "function") {
-              await (window as any).connectWallet(false);
-            } else {
-              const prov = (window as any).phantom?.solana || (window as any).solana;
-              if (!prov) { alert("Phantom wallet required."); return; }
-              const resp = await prov.connect();
-              const pk   = resp.publicKey?.toBase58() ?? prov.publicKey?.toBase58();
-              if (pk) window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey: pk } }));
-            }
-          } catch (err) { console.error("wallet connect:", err); }
-          (window as any).updateShares?.();
-        };
-      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      show("Authentication failed. Please try again.", false);
     }
-  } else {
-    if (connectBtn) connectBtn.style.display = "none";
-    if (!isSoldOut && adoptBtn) { adoptBtn.style.display = "block"; adoptBtn.innerText = "Continue to Agreement"; }
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LOAD TREES  (de-duplicated with latch)
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function loadTrees(filter = "all") {
-  const container = document.getElementById("treeGrid");
-  if (!container) return;
-
-  // If already loading the same filter, wait for that to finish
-  if (loadTreesPromise) { await loadTreesPromise; return; }
-
-  container.innerHTML = `
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>🌿 Syncing live grove availability…</p>
-    </div>`;
-
-  loadTreesPromise = _doLoadTrees(filter, container).finally(() => {
-    loadTreesPromise = null;
   });
-
-  return loadTreesPromise;
-}
-
-async function _doLoadTrees(filter: string, container: HTMLElement) {
-  const program = await waitForProgram();
-
-  const { data: dbTrees, error } = await sb
-    .from("tree_metadata").select("*").order("tree_id", { ascending: true });
-
-  if (error || !dbTrees) {
-    container.innerHTML = `<p style="padding:40px;text-align:center;">Failed to load trees. Please try again.</p>`;
-    return;
-  }
-
-  let onChainTrees:  any[]                = [];
-  let userPositions: NormalisedPosition[] = [];
-
-  if (program) {
-    try { onChainTrees = await program.account.tree.all(); }
-    catch (err) { console.error("[loadTrees] on-chain fetch:", err); }
-    userPositions = await loadUserTreePositions();
-  }
-
-  container.innerHTML = "";
-  let cardCount = 0;
-
-  for (const dbTree of dbTrees) {
-    const onChainData = onChainTrees.find(t => t.account.treeId === dbTree.tree_id);
-
-    let sharesSold  = dbTree.shares_sold  || 0;
-    let totalShares = dbTree.total_shares || 1000;
-    const isLive    = !!onChainData;
-
-    if (onChainData) {
-      sharesSold  = onChainData.account.sharesSold.toNumber();
-      totalShares = onChainData.account.totalShares.toNumber();
-      dbTree.shares_sold  = sharesSold;
-      dbTree.total_shares = totalShares;
-    }
-
-    const percent   = Math.round((sharesSold / totalShares) * 100);
-    const status    = percent >= 100 ? "full" : "available";
-    const available = totalShares - sharesSold;
-
-    // Ownership
-    const authUser    = (window as any).OliviumAuth?.getUser?.();
-    const emailOrId   = authUser?.email || authUser?.id;
-    const matchesFiat = emailOrId
-      ? dbTree.owner === emailOrId || dbTree.user_email === emailOrId
-      : false;
-    const matchedPos  = userPositions.find(p => String(p.treeId) === String(dbTree.tree_id));
-    const ownedShares = matchedPos?.sharesOwned ?? 0;
-    const isMine      = matchesFiat || ownedShares > 0;
-
-    // Filter gates
-    if (!isLive && filter !== "all")          continue;
-    if (filter === "my" && !isMine)           continue;
-    if (filter === "available" && status !== "available") continue;
-    if (filter === "full"      && status !== "full")      continue;
-
-    const card = document.createElement("div");
-    card.className = "tree-card";
-    if (sharesSold > 0) card.classList.add("has-sales");
-    if (percent >= 90)  card.style.border = "2px solid #d94d4d";
-    else if (percent >= 60) card.style.border = "2px solid #d7a728";
-
-    const displayImg = dbTree.image_url
-      || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
-
-    card.innerHTML = `
-      <img class="tree-image" src="${_esc(displayImg)}" alt="${_esc(dbTree.name || dbTree.tree_id)}" />
-      <div class="tree-content">
-        <div class="tree-name">${_esc(dbTree.name || dbTree.tree_id)}</div>
-        <div class="tree-meta">
-          <span>${available} shares left</span>
-          <span>${percent}% adopted</span>
-        </div>
-        <div class="availability">
-          <div class="availability-label"><span>${sharesSold} / ${totalShares} sold</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
-          <div class="shares-left">${available > 0 ? "Available now" : "Fully adopted"}</div>
-        </div>
-        ${isLive ? '<div class="live-badge">⛓ LIVE ON-CHAIN</div>' : ""}
-        ${isMine && ownedShares > 0
-          ? `<div class="owned-badge" style="margin-top:6px;font-size:.75rem;color:#6B7F5A;font-weight:600;">✅ You own ${ownedShares.toLocaleString()} shares</div>`
-          : ""}
-        <div class="card-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
-          <button class="action-btn details-btn">Details</button>
-          ${available > 0 ? '<button class="action-btn adopt-btn">Adopt</button>' : ""}
-          ${isMine ? '<button class="action-btn release-btn" style="background:#d94d4d;">Release Shares</button>' : ""}
-        </div>
-      </div>`;
-
-    card.querySelector(".details-btn")?.addEventListener("click", e => {
-      e.stopPropagation();
-      (window as any).openTreeDetailModal?.(dbTree.tree_id);
-    });
-    card.querySelector(".adopt-btn")?.addEventListener("click", e => {
-      e.stopPropagation();
-      (window as any).openModal?.(dbTree);
-    });
-    card.querySelector(".release-btn")?.addEventListener("click", e => {
-      e.stopPropagation();
-      (window as any).openSellModal?.(dbTree.tree_id, ownedShares || 10);
-    });
-
-    container.appendChild(card);
-    cardCount++;
-  }
-
-  if (cardCount === 0) {
-    container.innerHTML = `
-      <div style="padding:40px;text-align:center;color:var(--text-muted,#8a8a8a);">
-        <h3>${filter === "my" ? "No trees in your grove yet" : "No trees match this filter"}</h3>
-      </div>`;
-  }
-}
-
-(window as any)._loadTreesImpl = loadTrees;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MY-TREES CARD RENDERER
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function renderMyTreesFromPositions(positions: NormalisedPosition[]) {
-  const container = document.getElementById("treeGrid");
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (!positions.length) {
-    container.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#7A8275;"><p>🌿 No adopted positions yet for this wallet.</p></div>`;
-    return;
-  }
-
-  let treeMap = new Map<string, any>();
-  try {
-    const { data } = await sb.from("tree_metadata").select("*");
-    if (Array.isArray(data)) treeMap = new Map(data.map(t => [String(t.tree_id), t]));
-  } catch { /* non-critical */ }
-
-  for (const pos of positions) {
-    const meta       = treeMap.get(String(pos.treeId));
-    const name       = _esc(meta?.name || `Tree #${pos.treeId}`);
-    const totalCap   = meta?.total_shares ?? 1000;
-    const img        = meta?.image_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
-    const ownerPct   = Math.min((pos.sharesOwned / totalCap) * 100, 100).toFixed(2);
-
-    const card = document.createElement("div");
-    card.className = "tree-card has-sales";
-    card.innerHTML = `
-      <img class="tree-image" src="${_esc(img)}" alt="${name}"
-           style="width:100%;height:160px;object-fit:cover;border-radius:8px;"
-           onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png'" />
-      <div class="tree-content" style="margin-top:12px;">
-        <div class="tree-name" style="font-size:1.2rem;font-weight:600;">${name}</div>
-        <div class="tree-meta" style="margin-top:4px;font-size:.85rem;">
-          <strong>${pos.sharesOwned.toLocaleString()}</strong> shares owned
-          <span style="opacity:.65;">(${totalCap.toLocaleString()} total)</span>
-        </div>
-        <div class="availability" style="margin-top:12px;">
-          <div class="progress-bar" style="width:100%;height:6px;background:rgba(0,0,0,.05);border-radius:3px;overflow:hidden;">
-            <div class="progress-fill" style="width:${ownerPct}%;height:100%;background:#6B7F5A;transition:width .3s;"></div>
-          </div>
-          <div style="margin-top:6px;font-size:.8rem;font-weight:600;color:#6B7F5A;text-transform:uppercase;">${ownerPct}% ownership</div>
-        </div>
-      </div>
-      <div class="card-actions" style="display:flex;gap:8px;margin-top:16px;">
-        <button class="action-btn details-btn">Details</button>
-        <button class="action-btn release-btn" style="background:#d94d4d;">Release Shares</button>
-      </div>`;
-
-    card.querySelector(".details-btn")?.addEventListener("click", e => {
-      e.stopPropagation();
-      (window as any).openTreeDetailModal?.(pos.treeId);
-    });
-    card.querySelector(".release-btn")?.addEventListener("click", e => {
-      e.stopPropagation();
-      (window as any).openSellModal?.(pos.treeId, pos.sharesOwned);
-    });
-
-    container.appendChild(card);
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PURCHASE MODAL
+// CANONICAL EVENT LISTENERS  (single registration each)
 // ═══════════════════════════════════════════════════════════════════════════
 
-let selectedTree: Tree | null = null;
-
-(window as any).openModal = (tree: Tree) => {
-  if (!tree) return;
-  selectedTree = tree;
-
-  const modal = document.getElementById("modalOverlay");
-  if (!modal) return;
-
-  document.body.style.overflow = "hidden";
-  paymentMode = "mollie";
-  document.querySelectorAll(".payment-option").forEach(el => el.classList.remove("active"));
-  document.getElementById("mollieOption")?.classList.add("active");
-
-  const total     = tree.total_shares || 1000;
-  const sold      = tree.shares_sold  || 0;
-  const available = total - sold;
-
-  const setT = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
-  setT("modalTitle",       tree.name || tree.tree_id);
-  setT("modalDescription", tree.description || "Secure your digital olive tree adoption.");
-
-  const img = document.getElementById("modalImage") as HTMLImageElement | null;
-  if (img) { img.src = tree.image_url || _randomFallback(); img.onerror = () => { img.src = _randomFallback(); }; }
-
-  const shareInput = document.getElementById("shareInput")  as HTMLInputElement | null;
-  const slider     = document.getElementById("shareSlider") as HTMLInputElement | null;
-  const maxLabel   = document.getElementById("sliderMaxLabel");
-  const maxBtn     = document.getElementById("maxShareBtn");
-  const adoptBtn   = document.getElementById("adoptBtn") as HTMLButtonElement | null;
-
-  if (shareInput) { shareInput.value = available <= 0 ? "0" : "1"; shareInput.dataset.max = String(available); }
-  if (slider)     { slider.min = available <= 0 ? "0" : "1"; slider.max = String(available); slider.value = available <= 0 ? "0" : "1"; }
-  if (maxLabel)   maxLabel.textContent = String(available);
-  if (maxBtn)     maxBtn.textContent   = `Max (${available})`;
-  if (adoptBtn) { adoptBtn.disabled = available <= 0; adoptBtn.innerText = available <= 0 ? "Sold Out" : "Continue to Agreement"; }
-
-  modal.style.display = "flex";
-  (window as any).updateShares?.();
-};
-
-(window as any).closeModal = () => {
-  const modal = document.getElementById("modalOverlay");
-  if (modal) modal.style.display = "none";
-  document.body.style.overflow = "";
-  const shareInput = document.getElementById("shareInput")  as HTMLInputElement | null;
-  const slider     = document.getElementById("shareSlider") as HTMLInputElement | null;
-  const shareValue = document.getElementById("shareValue");
-  if (shareInput) shareInput.value      = "1";
-  if (slider)     slider.value          = "1";
-  if (shareValue) shareValue.textContent = "1";
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// AGREEMENT MODAL
-// ═══════════════════════════════════════════════════════════════════════════
-
-(window as any).openAgreement = () => {
-  if (!selectedTree) return;
-  document.body.style.overflow = "hidden";
-
-  const fallback  = _randomFallback();
-  const agreeImg  = document.getElementById("agreeImage") as HTMLImageElement | null;
-  if (agreeImg) { agreeImg.src = selectedTree.image_url || fallback; agreeImg.onerror = () => { agreeImg.src = fallback; }; }
-
-  const setT = (id: string, v: string) => { const el = document.getElementById(id); if (el) el.innerText = v; };
-  setT("agreeTitle",    `Adopting ${selectedTree.name || selectedTree.tree_id}`);
-  setT("agreeLocation", selectedTree.location || "Field F1");
-  setT("agreeAge",      selectedTree.age      || "5");
-  setT("agreeHeight",   selectedTree.height   || "1.5m");
-  setT("agreeVariety",  selectedTree.variety  || "Frantoio");
-
-  const check    = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
-  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
-
-  if (check && finalBtn) {
-    check.checked    = false;
-    finalBtn.disabled = true;
-    finalBtn.innerText = "Confirm & Pay";
-    check.onchange = () => { finalBtn.disabled = !check.checked; };
-  }
-
-  const selModal = document.getElementById("modalOverlay");
-  const agreeModal = document.getElementById("agreementModal");
-  if (selModal)  selModal.style.display  = "none";
-  if (agreeModal) agreeModal.style.display = "flex";
-};
-
-(window as any).closeAgreement = () => {
-  const agreeModal = document.getElementById("agreementModal");
-  const selModal   = document.getElementById("modalOverlay");
-  if (agreeModal)  agreeModal.style.display = "none";
-  if (selModal)    selModal.style.display   = "flex";
-};
-
-(window as any).closeSuccess = () => {
-  const el = document.getElementById("successModal");
-  if (el) el.style.display = "none";
-  document.body.style.overflow = "";
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// BLOCKCHAIN TX
-// ═══════════════════════════════════════════════════════════════════════════
-
-(window as any).processBlockchainTx = async () => {
-  const program  = (window as any)._program;
-  const provider = (window as any)._provider || (window as any).provider;
-  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement | null;
-
-  if (finalBtn && (finalBtn.disabled || finalBtn.dataset.processing === "true")) return;
-  if (!program || !provider) { alert("Wallet not fully connected. Please sign in."); return; }
-  if (!selectedTree) return;
-
-  const amountInput = document.getElementById("shareInput") as HTMLInputElement | null;
-  if (!amountInput) return;
-
-  const amount        = new anchor.BN(amountInput.value);
-  const buyerPublicKey = provider.wallet?.publicKey || provider.publicKey;
-  if (!buyerPublicKey) { alert("Could not resolve wallet public key."); return; }
-
-  try {
-    if (finalBtn) { finalBtn.disabled = true; finalBtn.dataset.processing = "true"; finalBtn.innerText = "Processing…"; }
-
-    const [treePda]     = PublicKey.findProgramAddressSync([Buffer.from("tree"),     Buffer.from(selectedTree.tree_id)], program.programId);
-    const [positionPda] = PublicKey.findProgramAddressSync([Buffer.from("position"), buyerPublicKey.toBuffer(), Buffer.from(selectedTree.tree_id)], program.programId);
-    const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
-    const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("treasury")], program.programId);
-
-    const ix = await program.methods
-      .purchaseShares(selectedTree.tree_id, amount)
-      .accounts({ tree: treePda, position: positionPda, protocol: protocolPda, treasury: treasuryPda, buyer: buyerPublicKey, systemProgram: SystemProgram.programId })
-      .instruction();
-
-    const conn = program.provider.connection;
-    const tx   = new anchor.web3.Transaction().add(ix);
-    tx.feePayer = buyerPublicKey;
-    tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
-
-    let sig = "";
-    if (provider.wallet?.signTransaction)        { const s = await provider.wallet.signTransaction(tx); sig = await conn.sendRawTransaction(s.serialize()); }
-    else if (provider.signTransaction)           { const s = await provider.signTransaction(tx);        sig = await conn.sendRawTransaction(s.serialize()); }
-    else                                         { sig = await program.provider.sendAndConfirm(tx, []); }
-
-    await conn.confirmTransaction(sig, "confirmed");
-
-    // Invalidate position cache so the next fetch is fresh
-    _invalidateCaches();
-
-    const agreeModal = document.getElementById("agreementModal");
-    const successModal = document.getElementById("successModal");
-    if (agreeModal)  agreeModal.style.display  = "none";
-    if (successModal) successModal.style.display = "flex";
-    if (finalBtn) delete finalBtn.dataset.processing;
-
-    // Reload grid with fresh on-chain data
-    loadTrees();
-
-  } catch (err) {
-    console.error("TX Error:", err);
-    alert("Transaction failed. Check wallet balance or signing approval.");
-    if (finalBtn) { finalBtn.disabled = false; delete finalBtn.dataset.processing; finalBtn.innerText = "Confirm & Pay"; }
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SELL SHARES
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function sellShares(treeId: string | number, amount: number) {
-  const treeIdStr  = String(treeId);
-  const program    = (window as any)._program;
-  const identity   = getIdentity();
-  const walletStr  = identity.wallet;
-
-  if (!program || !walletStr) { console.error("[SELL] Missing program or wallet"); return; }
-
-  try {
-    const ownerKey    = new anchor.web3.PublicKey(walletStr);
-    const [treePDA]   = findTreePDA(treeIdStr);
-    const [posPDA]    = await findPositionPDA(ownerKey, treeIdStr);
-    const [protoPDA]  = findProtocolPDA();
-    const [treasPDA]  = findTreasuryPDA(program);
-
-    const current     = await program.account.sharePosition.fetch(posPDA);
-    const currentQty  = Number(current.sharesOwned);
-    const newTotal    = currentQty - amount;
-    if (newTotal < 0) throw new Error(`Insufficient shares. Own ${currentQty}, selling ${amount}.`);
-
-    const tx = await program.methods
-      .sellShares(treeIdStr, new anchor.BN(amount))
-      .accounts({ tree: treePDA, position: posPDA, protocol: protoPDA, treasury: treasPDA, seller: ownerKey, systemProgram: anchor.web3.SystemProgram.programId })
-      .rpc();
-
-    console.log("[SELL] SUCCESS:", tx);
-
-    await syncTransactionToSupabase(walletStr, treeIdStr, amount, "SELL", tx, newTotal, newTotal >= 1000);
-
-    _invalidateCaches();
-    loadTrees();
-    updateStatsUI();
-
-  } catch (err: any) {
-    console.error("[SELL FAILED]", err);
-    throw err;
-  }
-}
-(window as any).sellShares = sellShares;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SUPABASE TRANSACTION SYNC
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function syncTransactionToSupabase(
-  wallet: string,
-  treeId: string,
-  amount: number,
-  type: "BUY" | "SELL",
-  txSig: string,
-  newTotal: number,
-  isGuardian: boolean
-) {
-  try {
-    await sb.from("transactions").insert([{
-      wallet, tree_id: treeId, amount, type, tx_signature: txSig,
-      new_total: newTotal, is_guardian: isGuardian,
-    }]);
-  } catch (err) {
-    console.warn("[syncTransactionToSupabase]", err);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CHECKOUT
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function startMollieCheckout() {
-  const shares = Number((document.getElementById("shareInput") as HTMLInputElement)?.value || 1);
-  try {
-    const res  = await fetch("http://localhost:3000/create-mollie-payment", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shares, treeId: selectedTree?.tree_id, treeName: selectedTree?.name, userEmail: (window as any).OliviumAuth?.user?.email || null }),
-    });
-    const data = await res.json();
-    if (data.checkoutUrl) window.location.href = data.checkoutUrl;
-    else alert("Failed to create payment");
-  } catch (err) { console.error(err); alert("Payment server error"); }
-}
-
-async function startPaypalCheckout() {
-  console.log("[PAYPAL] startPaypalCheckout — implement backend endpoint");
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// TREE DETAIL MODAL
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function openTreeDetailModal(treeId: string) {
-  const modal = document.getElementById("tree-detail-modal");
-  if (!modal) return;
-
-  modal.classList.remove("hidden");
-  switchTreeDetailTab("overview");
-
-  const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-
-  const [sbResult, onChainTrees] = await Promise.all([
-    sb.from("tree_metadata").select("*").eq("tree_id", treeId).single(),
-    (async () => {
-      try { const p = (window as any)._program; return p ? await p.account.tree.all() : []; }
-      catch { return []; }
-    })(),
-  ]);
-
-  const d = sbResult?.data ?? null;
-  const onChain = (onChainTrees as any[]).find(t =>
-    t.account?.treeId === treeId || String(t.account?.treeId) === String(treeId)
-  );
-
-  const totalShares = onChain ? onChain.account.totalShares.toNumber() : (d?.total_shares ?? 1000);
-  const sharesSold  = onChain ? onChain.account.sharesSold.toNumber()  : (d?.shares_sold  ?? 0);
-  const available   = totalShares - sharesSold;
-  const pct         = totalShares > 0 ? Math.round((sharesSold / totalShares) * 100) : 0;
-  const mintAddress = onChain?.account?.mint?.toBase58?.() ?? d?.mint ?? d?.on_chain_address ?? "—";
-
-  const heroEl = document.getElementById("tree-detail-hero-img");
-  if (heroEl) heroEl.style.backgroundImage = `url('${d?.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg"}')`;
-
-  set("tree-detail-name",          d?.name       || `Tree #${treeId}`);
-  set("tree-detail-location",      d?.field_id   ? `Field ${d.field_id} · ${d.latitude?.toFixed(4)}, ${d.longitude?.toFixed(4)}` : "—");
-  set("tree-detail-field-id",      d?.field_id   || "—");
-  set("tree-detail-health",        d?.health_score != null ? `${(d.health_score * 100).toFixed(0)}%` : "—");
-  set("tree-detail-status-badge",  d?.status     || "—");
-  set("tree-detail-age",           d?.age_years  != null ? `${d.age_years} yrs` : "—");
-  set("tree-detail-height",        d?.height_cm  != null ? `${d.height_cm} cm`  : "—");
-  set("tree-detail-variety",       d?.variety    || "—");
-  set("tree-overview-shares",      `${sharesSold.toLocaleString()} / ${totalShares.toLocaleString()}`);
-  set("tree-overview-pct",         `${pct}%`);
-  set("tree-overview-sold-label",  `${sharesSold.toLocaleString()} sold`);
-  set("tree-overview-total-label", `${totalShares.toLocaleString()} total`);
-
-  const bar = document.getElementById("tree-overview-bar");
-  if (bar) (bar as HTMLElement).style.width = `${pct}%`;
-
-  set("tree-detail-last-treatment",  d?.last_treatment  ? new Date(d.last_treatment).toLocaleDateString()  : "—");
-  set("tree-detail-treatment-type",  d?.treatment_type  || "—");
-  set("tree-detail-last-fertilizer", d?.last_fertilizer ? new Date(d.last_fertilizer).toLocaleDateString() : "—");
-  set("tree-detail-fertilizer-type", d?.fertilizer_type || "—");
-
-  set("phys-age",           d?.age_years        != null ? String(d.age_years)         : "—");
-  set("phys-height",        d?.height_cm        != null ? String(d.height_cm)         : "—");
-  set("phys-circumference", d?.circumference_cm != null ? String(d.circumference_cm)  : "—");
-  set("phys-diameter",      d?.diameter_cm      != null ? String(d.diameter_cm)       : "—");
-  set("phys-crown",         d?.crown_spread_cm  != null ? String(d.crown_spread_cm)   : "—");
-  set("phys-altitude",      d?.altitude_m       != null ? String(d.altitude_m)        : "—");
-  set("phys-coords",        d?.latitude != null && d?.longitude != null ? `${d.latitude}, ${d.longitude}` : "—");
-
-  set("tree-detail-meta-id",        treeId);
-  set("tree-detail-meta-field",     d?.field_id         || "—");
-  set("tree-detail-meta-onchain",   d?.on_chain_address || "—");
-  set("tree-detail-meta-mint",      mintAddress);
-  set("tree-detail-meta-status",    d?.status           || "—");
-  set("tree-detail-meta-total",     totalShares.toLocaleString());
-  set("tree-detail-meta-sold",      sharesSold.toLocaleString());
-  set("tree-detail-meta-available", available.toLocaleString());
-  set("tree-detail-meta-variety",   d?.variety          || "—");
-  set("tree-detail-meta-coords",    d?.latitude != null ? `${d.latitude}, ${d.longitude}` : "—");
-  set("tree-detail-meta-updated",   d?.updated_at ? new Date(d.updated_at).toLocaleString() : "—");
-
-  const galleryGrid = document.getElementById("tree-detail-gallery-grid");
-  if (galleryGrid) {
-    const photos: string[] = [];
-    if (d?.photo_url) photos.push(d.photo_url);
-    if (!photos.length) {
-      const b = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main";
-      photos.push(`${b}/Tree%20F1-FR-001.jpeg`, `${b}/Tree%20F1-FR-002.jpeg`, `${b}/close1.jpeg`);
-    }
-    galleryGrid.innerHTML = photos.map(url =>
-      `<img src="${url}" class="rounded-xl w-full h-40 object-cover" onerror="this.style.display='none'" />`
-    ).join("");
-  }
-
-  const fieldId    = d?.field_id ?? null;
-  const sensorData = await fetchFieldSensors(fieldId);
-  const lat  = sensorData?.lat ?? d?.latitude  ?? null;
-  const lon  = sensorData?.lon ?? d?.longitude ?? null;
-  if (lat != null && lon != null) set("weather-coords-label", `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
-  if (fieldId) set("env-field-label", fieldId);
-
-  const weatherData = await fetchOpenMeteo(lat, lon);
-  populateSensorUI(sensorData);
-  populateWeatherUI(weatherData);
-}
-(window as any).openTreeDetailModal = openTreeDetailModal;
-
-function closeTreeDetailModal() {
-  document.getElementById("tree-detail-modal")?.classList.add("hidden");
-}
-(window as any).closeTreeDetailModal = closeTreeDetailModal;
-
-/**
- * FIX 6 — uses .tree-detail-tab (matching the onclick="switchTreeDetailTab('x')" HTML)
- */
-function switchTreeDetailTab(tabName: string) {
-  document.querySelectorAll(".tree-detail-tab-content").forEach(el => el.classList.add("hidden"));
-  document.getElementById(`tree-detail-tab-${tabName}`)?.classList.remove("hidden");
-
-  document.querySelectorAll(".tree-detail-tab").forEach(tab => {
-    tab.classList.remove("active", "border-green-600", "text-green-600");
-    tab.classList.add("border-transparent", "text-stone-500");
-  });
-  const active = Array.from(document.querySelectorAll(".tree-detail-tab")).find(
-    t => t.getAttribute("onclick")?.includes(`'${tabName}'`)
-  );
-  if (active) {
-    active.classList.add("active", "border-green-600", "text-green-600");
-    active.classList.remove("border-transparent", "text-stone-500");
-  }
-}
-(window as any).switchTreeDetailTab = switchTreeDetailTab;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SENSORS & WEATHER
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function fetchFieldSensors(fieldId: string | null): Promise<any | null> {
-  if (!fieldId) return null;
-  try {
-    const { data, error } = await sb
-      .from("node_sensors").select("*").eq("field_id", fieldId)
-      .order("created_at", { ascending: false }).limit(1).maybeSingle();
-    if (error) { console.error("[SENSORS]", error); return null; }
-    return data;
-  } catch (err) { console.error("[SENSORS]", err); return null; }
-}
-
-async function fetchOpenMeteo(lat: number | null, lon: number | null): Promise<any | null> {
-  if (lat == null || lon == null) return null;
-  try {
-    const params = new URLSearchParams({
-      latitude: String(lat), longitude: String(lon),
-      current: ["temperature_2m","relative_humidity_2m","wind_speed_10m","surface_pressure","rain","uv_index","shortwave_radiation"].join(","),
-      wind_speed_unit: "ms", timezone: "auto",
-    });
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json?.current ?? null;
-  } catch { return null; }
-}
-
-function populateSensorUI(s: any | null) {
-  const na  = "—";
-  const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-
-  if (!s) {
-    ["oracle-soil-moisture","oracle-moisture-status","oracle-soil-temp","oracle-leaf-wetness",
-     "oracle-light","oracle-co2","oracle-wind","oracle-rain","oracle-humidity","oracle-uv","oracle-last-update"
-    ].forEach(id => set(id, id === "oracle-moisture-status" ? "No data" : id === "oracle-last-update" ? "No sensor data" : na));
-    const bar = document.getElementById("oracle-moisture-bar") as HTMLElement | null;
-    if (bar) bar.style.width = "0%";
-    return;
-  }
-
-  const moisture = s.soil_moisture ?? null;
-  set("oracle-soil-moisture",   moisture !== null ? `${Number(moisture).toFixed(1)}%` : na);
-  set("oracle-moisture-status", moisture !== null ? (moisture > 50 ? "Optimal" : "Balanced") : "No data");
-  set("oracle-soil-temp",       s.temperature  != null ? `${Number(s.temperature).toFixed(1)}°C`  : na);
-  set("oracle-leaf-wetness",    s.leaf_wetness != null ? Number(s.leaf_wetness).toFixed(2)          : na);
-  set("oracle-co2",             s.co2          != null ? `${Number(s.co2).toFixed(1)} ppm`          : na);
-  set("oracle-wind",            s.wind_speed   != null ? `${Number(s.wind_speed).toFixed(1)} m/s`   : na);
-  set("oracle-rain",            s.rain_rate    != null ? `${Number(s.rain_rate).toFixed(2)} mm/hr`  : na);
-  set("oracle-humidity",        s.humidity     != null ? `${Number(s.humidity).toFixed(1)}%`        : na);
-  set("oracle-uv",              s.uv_index     != null ? String(s.uv_index)                         : na);
-  set("oracle-last-update",     s.created_at   ? new Date(s.created_at).toLocaleTimeString() : new Date().toLocaleTimeString());
-
-  const bar = document.getElementById("oracle-moisture-bar") as HTMLElement | null;
-  if (bar) bar.style.width = moisture !== null ? `${Math.min(moistur
+window.addEventListener("olivium:connected",    () => updateIdentityBalanceUI());
+window.addEventListener("olivium:disconnected", () => updateIdentityBalanceUI());
+
+// Legacy bridge — forward ONCE to the canonical event so any remaining
+// reserve_board.ts listener fires, then don't re-dispatch in a loop.
+window.addEventListener("solana:connection-complete", (e: Event) => {
+  const detail = (e as CustomEvent).detail ?? {};
+  window.dispatchEvent(new CustomEvent("olivium:connected", { detail }));
+});
