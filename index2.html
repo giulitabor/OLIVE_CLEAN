@@ -8,6 +8,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
+    :root {
+  --green: #6B7F5A;
+  --muted: #777777;
+  --text: #222222;
+}
     .tree-card .action-btn {
       background: #6B7F5A !important;
       color: white !important;
@@ -475,13 +480,13 @@ window.connection = new Connection(
         const signupConfirmPassword = document.getElementById("signupConfirmPassword");
         const signupBtn = document.getElementById("signupBtn");
 
-        const metrics = {
-          len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
-          cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
-          low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
-          num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
-          spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
-        };
+       const metrics = {
+  len: { reg: /.{6,}/ },
+  cap: { reg: /[A-Z]/ },
+  low: { reg: /[a-z]/ },
+  num: { reg: /[0-9]/ },
+  spe: { reg: /[^A-Za-z0-9]/ }
+};
 
         function validateSignupForm() {
           const passVal = signupPassword.value || "";
@@ -816,13 +821,13 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
 
         window.addEventListener('solana:connection-complete', () => {
           setTimeout(() => {
-            updateIdentityBalanceUI();
+window.updateIdentityBalanceUI?.();
           }, 100);
         });
 
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
-            updateIdentityBalanceUI();
+window.updateIdentityBalanceUI?.();
           }, 600);
         });
       </script>
@@ -857,8 +862,7 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
           }
           return null;
         }
-
-     connectBtn?.addEventListener('click', async () => {
+connectBtn?.addEventListener('click', async () => {
   try {
     const identity = await getActiveWallet();
 
@@ -875,17 +879,9 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
   } catch (err) {
     console.error("[CONNECT_BTN_ERROR]", err);
   }
-
-    // OPEN CONNECT MODAL
-    if (connectModalEl) {
-      connectModalEl.classList.remove('hidden');
-      connectModalEl.style.display = 'flex';
-    }
-
-  } catch (err) {
-    console.error("[CONNECT_BTN_ERROR]", err);
-  }
 });
+        
+        
         connectWalletBtn?.addEventListener('click', async () => {
           try {
             const provider = window.solana || window.phantom?.solana;
@@ -893,7 +889,7 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
               alert("Solana wallet extension not detected!");
               return;
             }
-            const resp = await provider.connect();
+            const resp = await provider.connect({ onlyIfTrusted: false });
             const pubKeyStr = resp.publicKey ? resp.publicKey.toBase58() : provider.publicKey?.toBase58();
 
            window.App.state.identity = {
@@ -901,11 +897,9 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
   wallet: pubKeyStr
 };
 
-localStorage.setItem("olivium_identity", JSON.stringify(window.App.state.identity));
+  localStorage.setItem("olivium_identity", JSON.stringify(window.App.state.identity));
 
-window.dispatchEvent(new Event("solana:connection-complete"));
-
-            closeConnectModal();
+         closeConnectModal();
             window.dispatchEvent(new Event('solana:connection-complete'));
           } catch (err) {
             console.error("Wallet connection declined:", err);
@@ -976,7 +970,7 @@ window.dispatchEvent(new Event("solana:connection-complete"));
   );
 
   // Refresh ALL identity UI from one source
-  await updateIdentityBalanceUI();
+  await window.updateIdentityBalanceUI?.();
 
   console.log("Disconnect complete");
 }
@@ -990,7 +984,7 @@ window.dispatchEvent(new Event("solana:connection-complete"));
         };
 
         window.addEventListener('solana:connection-complete', () => {
-          updateIdentityBalanceUI();
+window.updateIdentityBalanceUI?.();
         });
 
         function closeModal() {
