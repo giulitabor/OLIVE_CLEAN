@@ -18,6 +18,16 @@ interface Tree {
 
 let selectedTree: Tree | null = null;
 let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
+
+// --- 1. Define Helpers First ---
+const findProtocolPDA = () => {
+  const program = (window as any)._program || (window as any).program;
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("protocol")],
+    program.programId
+  );
+};
+
 const findTreePDA = (treeId: string) => {
   const program = (window as any)._program || (window as any).program;
   return anchor.web3.PublicKey.findProgramAddressSync(
@@ -32,6 +42,7 @@ const findTreasuryPDA = (activeProgram: any) => {
         activeProgram.programId
     );
 };
+
 
 // --- 2. IMMEDIATELY Expose to Window ---
 (window as any).findProtocolPDA = findProtocolPDA;
