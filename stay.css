@@ -16,6 +16,15 @@
     --gold: #D4AF37;
     --charcoal: #2C2C2C;
     --white: #FFFFFF;
+    
+    /* ✅ ADD THESE MISSING VARIABLES */
+    --green: #6B7F5A;        /* Same as olive-medium */
+    --text: #2C2C2C;         /* Same as charcoal */
+    --text-muted: #666666;   /* Muted text color */
+    --muted: #8A8A8A;        /* Muted color for secondary text */
+    
+    --serif: 'Cormorant Garamond', serif;
+    --sans: 'Inter', sans-serif;
     --mono: monospace;
 }
 
