@@ -1003,7 +1003,6 @@ function _randomFallback(): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 let selectedTree: Tree | null = null;
-let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
 
 (window as any).openModal = (tree: any) => {
   console.log("[MODAL] === OPENING PURCHASE MODAL ===");
