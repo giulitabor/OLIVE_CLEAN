@@ -354,6 +354,15 @@ async function _confirmSellAction() {
     _invalidateCaches();
     await loadTrees();
     await updateStatsUI();
+    
+    // ✅ ADD THIS: Refresh wallet balance display after sell
+    if (typeof (window as any).updateIdentityBalanceUI === "function") {
+      await (window as any).updateIdentityBalanceUI();
+    }
+    
+    // ✅ ADD THIS: Show success toast
+    showToast(`Successfully sold ${amount} shares!`, false);
+    
   } catch (err) {
     console.error("[SELL ERROR]", err);
     showToast("Sell transaction failed.", true);
