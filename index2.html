@@ -858,15 +858,24 @@ window.updateIdentityBalanceUI = updateIdentityBalanceUI;
           return null;
         }
 
-       connectBtn?.addEventListener('click', async () => {
+     connectBtn?.addEventListener('click', async () => {
   try {
     const identity = await getActiveWallet();
 
-    // SAFE: explicitly check object first
     if (identity && identity.address) {
       await handleDisconnectWorkflow();
       return;
     }
+
+    if (connectModalEl) {
+      connectModalEl.classList.remove('hidden');
+      connectModalEl.style.display = 'flex';
+    }
+
+  } catch (err) {
+    console.error("[CONNECT_BTN_ERROR]", err);
+  }
+});
 
     // OPEN CONNECT MODAL
     if (connectModalEl) {
