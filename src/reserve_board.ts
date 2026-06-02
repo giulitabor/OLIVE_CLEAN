@@ -1081,8 +1081,8 @@ let selectedTree: Tree | null = null;
   console.log("[AGREEMENT] === OPENING AGREEMENT MODAL ===");
   
   // DEBUG: Check selectedTree
-  console.log("[AGREEMENT] selectedTree value:", selectedTree);
-  console.log("[AGREEMENT] selectedTree type:", typeof selectedTree);
+  console.log("[AGREEMENT] selectedTree value:", activeSellTreeId);
+  console.log("[AGREEMENT] selectedTree type:", typeof activeSellTreeId);
   
   if (!selectedTree) {
     console.error("[AGREEMENT] ❌ selectedTree is NULL or UNDEFINED!");
@@ -1093,7 +1093,7 @@ let selectedTree: Tree | null = null;
 
   // DEBUG: Log all tree properties
   console.log("[AGREEMENT] Tree properties:", {
-    tree_id: selectedTree.tree_id,
+    tree_id: activeSellTreeId.tree_id,
     name: selectedTree.name,
     location: selectedTree.location,
     age: selectedTree.age,
