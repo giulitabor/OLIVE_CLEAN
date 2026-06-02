@@ -1,6 +1,351 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { sb } from "./connection.ts";
+
+
+// reserve_board.ts - COMPLETE REWRITE OF CRITICAL SECTIONS
+
+import { sb, connection, getIdentityState, subscribeToIdentity, IdentityState } from "./connection.ts";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SINGLE UI UPDATE FUNCTION (NO RACE CONDITIONS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _uiUpdatePromise: Promise<void> | null = null;
+let _lastUiUpdate = 0;
+const UI_UPDATE_DEBOUNCE_MS = 100;
+
+async function updateAllUI(force = false): Promise<void> {
+  const now = Date.now();
+  if (!force && now - _lastUiUpdate < UI_UPDATE_DEBOUNCE_MS) {
+    console.log('[UI] Skipping duplicate update (debounced)');
+    return;
+  }
+  
+  if (_uiUpdatePromise && !force) {
+    console.log('[UI] Waiting for existing UI update...');
+    return _uiUpdatePromise;
+  }
+  
+  _uiUpdatePromise = (async () => {
+    _lastUiUpdate = Date.now();
+    console.log('[UI] Starting full UI sync...');
+    
+    try {
+      const identity = getIdentityState();
+      
+      // Update all UI elements in parallel where possible
+      await Promise.all([
+        updateIdentityAndWalletUI(identity),
+        updateStatsUI(),
+        updateVillaStayUI()
+      ]);
+      
+      console.log('[UI] Full UI sync complete');
+    } catch (err) {
+      console.error('[UI] Sync error:', err);
+    } finally {
+      _uiUpdatePromise = null;
+    }
+  })();
+  
+  return _uiUpdatePromise;
+}
+
+// Single source of truth for identity/connect button UI
+async function updateIdentityAndWalletUI(identity: IdentityState) {
+  const connectBtn = document.getElementById("connectBtn");
+  const identityPill = document.getElementById("identityPill");
+  const identityTypeStat = document.getElementById("identityTypeStat");
+  
+  if (!connectBtn) return;
+  
+  switch (identity.type) {
+    case 'wallet':
+      const shortAddr = identity.walletAddress 
+        ? `${identity.walletAddress.slice(0, 4)}...${identity.walletAddress.slice(-4)}`
+        : 'Unknown';
+      
+      if (connectBtn) {
+        connectBtn.innerText = "Disconnect";
+        connectBtn.style.color = "#d94d4d";
+        connectBtn.style.border = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+      }
+      
+      if (identityPill) {
+        // Fetch balance asynchronously but don't block
+        fetchAndDisplayBalance(identity.walletAddress, identityPill);
+      }
+      
+      if (identityTypeStat) identityTypeStat.innerText = "Wallet Mode";
+      break;
+      
+    case 'email':
+      if (connectBtn) {
+        connectBtn.innerText = "Disconnect";
+        connectBtn.style.color = "#d94d4d";
+        connectBtn.style.border = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+      }
+      
+      if (identityPill) {
+        identityPill.innerHTML = `✉️ ${identity.email || "Email User"}`;
+      }
+      
+      if (identityTypeStat) identityTypeStat.innerText = "Email Secured";
+      break;
+      
+    case 'guest':
+    default:
+      if (connectBtn) {
+        connectBtn.innerText = "Connect Profile";
+        connectBtn.style.color = "white";
+        connectBtn.style.border = "";
+        connectBtn.style.background = "var(--green)";
+      }
+      
+      if (identityPill) identityPill.innerHTML = "🌿 Guest Mode";
+      if (identityTypeStat) identityTypeStat.innerHTML = "Guest";
+      break;
+  }
+}
+
+async function fetchAndDisplayBalance(walletAddress: string | null, pillElement: HTMLElement) {
+  if (!walletAddress) return;
+  
+  try {
+    const pubKey = new PublicKey(walletAddress);
+    const lamports = await connection.getBalance(pubKey);
+    const solBalance = (lamports / 1_000_000_000).toFixed(3);
+    const shortAddr = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+    
+    pillElement.innerHTML = `◎ ${solBalance} SOL <span style="opacity:.5;margin:0 6px">|</span> 🔑 ${shortAddr}`;
+  } catch (err) {
+    console.warn("Balance fetch failed:", err);
+    const shortAddr = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+    pillElement.innerHTML = `🔑 ${shortAddr}`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FIXED STATS UI (No stale data)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _statsPromise: Promise<void> | null = null;
+
+async function updateStatsUI(): Promise<void> {
+  if (_statsPromise) {
+    console.log('[STATS] Waiting for existing stats fetch...');
+    return _statsPromise;
+  }
+  
+  _statsPromise = (async () => {
+    const treeCountEl = document.getElementById("treeCountStat");
+    const shareCountEl = document.getElementById("shareCountStat");
+    const groveCountEl = document.getElementById("grovePositionStat");
+    
+    const identity = getIdentityState();
+    
+    try {
+      await waitForProgram();
+      const allTrees = await getTrees();
+      
+      if (treeCountEl) {
+        treeCountEl.innerText = String(allTrees ? allTrees.length : 0);
+      }
+      
+      if (identity.type === 'guest') {
+        if (shareCountEl) shareCountEl.innerText = "--";
+        if (groveCountEl) groveCountEl.innerText = "0";
+        return;
+      }
+      
+      // Fetch user positions only if authenticated
+      const positions = await loadUserTreePositions();
+      
+      if (shareCountEl) {
+        const totalShares = positions.reduce((sum, p) => sum + (p.sharesOwned || 0), 0);
+        shareCountEl.innerText = String(totalShares);
+      }
+      
+      if (groveCountEl) {
+        const uniqueTrees = new Set(positions.map(p => p.treeId)).size;
+        groveCountEl.innerText = String(uniqueTrees);
+      }
+      
+    } catch (err) {
+      console.error("[STATS] Update failed:", err);
+      if (treeCountEl) treeCountEl.innerText = "--";
+      if (shareCountEl) shareCountEl.innerText = "--";
+      if (groveCountEl) groveCountEl.innerText = "0";
+    } finally {
+      _statsPromise = null;
+    }
+  })();
+  
+  return _statsPromise;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FIXED loadUserTreePositions (Correct authority matching)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _positionsCache: any[] | null = null;
+let _positionsCacheTime = 0;
+const POSITIONS_CACHE_TTL = 30000; // 30 seconds
+
+async function loadUserTreePositions(): Promise<any[]> {
+  const identity = getIdentityState();
+  
+  if (identity.type === 'guest' || !identity.walletAddress) {
+    return [];
+  }
+  
+  // Check cache
+  if (_positionsCache && Date.now() - _positionsCacheTime < POSITIONS_CACHE_TTL) {
+    return _positionsCache;
+  }
+  
+  try {
+    const program = (window as any)._program;
+    if (!program) {
+      console.warn('[POSITIONS] Program not initialized');
+      return [];
+    }
+    
+    const allPositions = await getAllPositions();
+    const targetAddress = identity.walletAddress;
+    
+    const userPositions = allPositions
+      .filter(pos => {
+        const acc = pos.account;
+        const authority = acc.authority || acc.owner || acc.wallet || acc.user;
+        
+        if (!authority) return false;
+        
+        let authorityStr = '';
+        if (typeof authority === 'string') {
+          authorityStr = authority;
+        } else if (typeof authority?.toBase58 === 'function') {
+          authorityStr = authority.toBase58();
+        } else {
+          try {
+            authorityStr = new PublicKey(authority).toBase58();
+          } catch {
+            authorityStr = String(authority);
+          }
+        }
+        
+        return authorityStr === targetAddress;
+      })
+      .map(pos => ({
+        treeId: pos.account.treeId.toString(),
+        sharesOwned: pos.account.sharesOwned?.toNumber?.() || pos.account.sharesOwned || 0,
+        account: pos.account
+      }))
+      .filter(p => p.sharesOwned > 0);
+    
+    _positionsCache = userPositions;
+    _positionsCacheTime = Date.now();
+    
+    return userPositions;
+    
+  } catch (err) {
+    console.error('[POSITIONS] Error:', err);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INITIALIZATION (Single execution)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _initialized = false;
+
+async function initializeApp() {
+  if (_initialized) {
+    console.log('[INIT] Already initialized');
+    return;
+  }
+  
+  _initialized = true;
+  console.log('[INIT] Starting application...');
+  
+  // Subscribe to identity changes for reactive UI updates
+  subscribeToIdentity(async (identity) => {
+    console.log('[INIT] Identity changed:', identity.type);
+    await updateAllUI(true);
+    
+    // Reload trees based on new identity
+    const activeFilter = document.querySelector(".filter-btn.active") as HTMLElement | null;
+    const filter = activeFilter?.dataset?.filter || 'all';
+    
+    if (filter === 'my' && identity.type !== 'guest') {
+      const positions = await loadUserTreePositions();
+      if (positions.length > 0) {
+        renderMyTreesFromPositions(positions);
+      } else {
+        loadTrees(filter);
+      }
+    } else {
+      loadTrees(filter);
+    }
+  });
+  
+  // Initial UI load
+  await updateAllUI(true);
+  await loadTrees('all');
+  
+  // Setup filter buttons
+  setupFilters();
+  
+  console.log('[INIT] Application ready');
+}
+
+// Setup filters with proper state handling
+function setupFilters() {
+  const filterButtons = document.querySelectorAll(".filter-btn");
+  
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", async (e) => {
+      filterButtons.forEach(btn => btn.classList.remove("active"));
+      (e.currentTarget as HTMLElement).classList.add("active");
+      
+      const filter = (e.currentTarget as HTMLElement).dataset.filter || "all";
+      const identity = getIdentityState();
+      
+      if (filter === "my" && identity.type === 'guest') {
+        const container = document.getElementById("treeGrid");
+        if (container) {
+          container.innerHTML = `
+            <div style="padding:40px;text-align:center;color:var(--text-muted, #8a8a8a);">
+              <h3>Connect to view your grove</h3>
+              <p>Please connect your wallet or sign in via email to see your positions.</p>
+            </div>
+          `;
+        }
+        return;
+      }
+      
+      await loadTrees(filter);
+    });
+  });
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
+
+// Export for backward compatibility
+(window as any).updateAllUI = updateAllUI;
+(window as any).updateStatsUI = updateStatsUI;
+(window as any).loadUserTreePositions = loadUserTreePositions;
+
+
+
 
 interface Tree {
   tree_id: string;
