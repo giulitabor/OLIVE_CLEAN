@@ -2355,6 +2355,96 @@ console.log("startPaypalCheckout");
   }
 };
 
+
+// ══════════════════════════════════════════════════════════════
+// SELL SHARES - Fixed PDA and Type Casting
+// ══════════════════════════════════════════════════════════════
+async function sellShares(treeId: string | number, amount: number) {
+  const treeIdStr = String(treeId);
+  console.log(`\n[SELL] Starting sale: Tree ${treeIdStr}, ${amount} shares`);
+
+  // 1. GATHER GLOBALS
+  const program = window._program;
+  // Use the provider's wallet publicKey if available, else fall back to the saved string
+  const walletInput = window._provider?.wallet?.publicKey || window.walletPubKey;
+
+  if (!program || !walletInput) {
+    showToast("Protocol not initialized or wallet not connected", true);
+    return;
+  }
+
+  try {
+    // 2. NORMALIZE PUBLICKEY
+    // This ensures findPositionPDA receives a proper PublicKey object
+    const ownerPublicKey = typeof walletInput === 'string'
+      ? new anchor.web3.PublicKey(walletInput)
+      : walletInput;
+
+    // 3. DERIVE PDAs (Consistency check: use 'positionPDA' everywhere)
+    const [treePDA] = findTreePDA(treeIdStr);
+    const [positionPDA] = await findPositionPDA(ownerPublicKey, treeIdStr);
+    const [protocolPDA] = findProtocolPDA();
+    const [treasuryPDA] = findTreasuryPDA(program);
+
+    console.log("[SELL] PDAs derived:", { treePDA: treePDA.toBase58(), positionPDA: positionPDA.toBase58() });
+
+    // 4. FETCH POSITION DATA
+    // Note: Ensure your anchor account name matches 'sharePosition' in your IDL
+    const currentPosition = await program.account.sharePosition.fetch(positionPDA);
+    const currentShares = Number(currentPosition.sharesOwned);
+    const newTotal = currentShares - amount;
+
+    if (newTotal < 0) {
+      throw new Error(`Insufficient shares. You own ${currentShares}, trying to sell ${amount}.`);
+    }
+
+    // Logic for Guardian status (if applicable to your DB sync)
+    const isGuardian = newTotal >= 1000;
+
+    // 5. EXECUTE ON-CHAIN TRANSACTION
+    console.log("[SELL] Sending transaction...");
+    const tx = await program.methods
+      .sellShares(treeIdStr, new anchor.BN(amount))
+      .accounts({
+        tree: treePDA,
+        position: positionPDA,
+        protocol: protocolPDA,
+        treasury: treasuryPDA,
+        seller: ownerPublicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log(`[SELL] ✅ On-chain success: ${tx}`);
+   // showToast(`Sold ${amount} shares!`);
+
+    // 6. SYNC TO DATABASE
+    if (typeof syncTransactionToSupabase === 'function') {
+        await syncTransactionToSupabase(
+          ownerPublicKey.toBase58(),
+          treeIdStr,
+          amount,
+          'SELL',
+          tx,
+          newTotal,
+          isGuardian
+        );
+    }
+
+    // 7. REFRESH UI
+    await     loadTrees();
+
+  } catch (err: any) {
+    console.error(`[SELL] ❌ Sale failed:`, err);
+    // Handle the "Account not found" error specifically
+    if (err.message.includes("Account does not exist")) {
+        console.log("Error: Share position record not found on-chain.", true);
+    } else {
+        console.log("Sell failed: " + err.message, true);
+    }
+  }
+}
+(window as any).sellShares = sellShares;
 /* =========================================================
    ESCAPE KEY
 ========================================================= */
