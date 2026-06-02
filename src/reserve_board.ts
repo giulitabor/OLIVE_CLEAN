@@ -1187,63 +1187,93 @@ let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
 // AGREEMENT MODAL - FIXED FOR YOUR ACTUAL DATA STRUCTURE
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AGREEMENT MODAL - COMPLETE FIXED VERSION
+// Now works because selectedTree has been normalized
+// ═══════════════════════════════════════════════════════════════════════════
+
 (window as any).openAgreement = () => {
-  console.log("[AGREEMENT] Opening with tree:", selectedTree);
+  console.log("[AGREEMENT] === OPENING AGREEMENT MODAL ===");
+  console.log("[AGREEMENT] selectedTree:", selectedTree);
   
   if (!selectedTree) {
-    console.error("[AGREEMENT] No selected tree!");
+    console.error("[AGREEMENT] No selected tree! Make sure openModal was called first.");
+    showToast("Error: No tree selected. Please go back and try again.", true);
     return;
   }
 
-  // ✅ READ YOUR ACTUAL FIELD NAMES
-  const treeName = selectedTree.name || `Tree ${selectedTree.tree_id}`;
-  const treeLocation = selectedTree.location || `Field ${selectedTree.field_id || 'F1'}`;
-  const treeAge = selectedTree.age || (selectedTree.age_years ? `${selectedTree.age_years} years` : "5+ years");
-  const treeHeight = selectedTree.height || (selectedTree.height_cm ? `${selectedTree.height_cm} cm` : "2.5m");
-  const treeVariety = selectedTree.variety || "Frantoio";
-  const treeImage = selectedTree.image_url || selectedTree.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
-
-  console.log("[AGREEMENT] Mapped values:", {treeName, treeLocation, treeAge, treeHeight, treeVariety});
-
-  // Get modal elements
+  // Get DOM elements
   const agreeModal = document.getElementById("agreementModal");
   const purchaseModal = document.getElementById("modalOverlay");
   
-  if (!agreeModal) return;
+  if (!agreeModal) {
+    console.error("[AGREEMENT] Agreement modal element not found!");
+    return;
+  }
 
-  // Toggle modals
+  // Hide body scroll
   document.body.style.overflow = "hidden";
+  
+  // Hide purchase modal, show agreement modal
   if (purchaseModal) purchaseModal.style.display = "none";
   agreeModal.style.display = "flex";
-
-  // Set the values using your actual data
+  
+  // Populate all fields using normalized data
   const titleEl = document.getElementById("agreeTitle");
-  if (titleEl) titleEl.innerText = `Adopting ${treeName}`;
+  if (titleEl) titleEl.innerText = `Adopting ${selectedTree.name}`;
   
   const imgEl = document.getElementById("agreeImage") as HTMLImageElement;
-  if (imgEl) imgEl.src = treeImage;
+  if (imgEl) {
+    imgEl.src = selectedTree.image_url;
+    imgEl.onerror = () => {
+      console.warn("[AGREEMENT] Image failed to load, using fallback");
+      imgEl.src = "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
+    };
+  }
   
   const locationEl = document.getElementById("agreeLocation");
-  if (locationEl) locationEl.innerText = treeLocation;
+  if (locationEl) locationEl.innerText = selectedTree.location;
   
   const ageEl = document.getElementById("agreeAge");
-  if (ageEl) ageEl.innerText = treeAge;
+  if (ageEl) ageEl.innerText = selectedTree.age;
   
   const heightEl = document.getElementById("agreeHeight");
-  if (heightEl) heightEl.innerText = treeHeight;
+  if (heightEl) heightEl.innerText = selectedTree.height;
   
   const varietyEl = document.getElementById("agreeVariety");
-  if (varietyEl) varietyEl.innerText = treeVariety;
-
-  // Setup checkbox
+  if (varietyEl) varietyEl.innerText = selectedTree.variety;
+  
+  // Setup checkbox and button
   const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement;
   const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement;
   
   if (checkbox && finalBtn) {
     checkbox.checked = false;
     finalBtn.disabled = true;
-    checkbox.onchange = () => { finalBtn.disabled = !checkbox.checked; };
+    finalBtn.innerText = "Confirm & Pay";
+    
+    // Remove old listeners and add fresh one
+    const newCheckbox = checkbox.cloneNode(true) as HTMLInputElement;
+    if (checkbox.parentNode) {
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+    }
+    
+    newCheckbox.addEventListener('change', (e) => {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      finalBtn.disabled = !isChecked;
+      console.log("[AGREEMENT] Checkbox changed, button disabled:", finalBtn.disabled);
+    });
+    
+    console.log("[AGREEMENT] Checkbox and button configured");
   }
+  
+  console.log("[AGREEMENT] Agreement modal opened successfully with:", {
+    name: selectedTree.name,
+    location: selectedTree.location,
+    age: selectedTree.age,
+    height: selectedTree.height,
+    variety: selectedTree.variety
+  });
 };
 
 (window as any).closeAgreement = () => {
@@ -1257,7 +1287,6 @@ let paymentMode: "mollie" | "paypal" | "crypto" = "mollie";
   
   document.body.style.overflow = "";
 };
-
 (window as any).closeSuccess = () => {
   const el = document.getElementById("successModal");
   if (el) el.style.display = "none";
