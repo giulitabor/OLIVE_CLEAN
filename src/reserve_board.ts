@@ -1299,7 +1299,6 @@ if (villaDiscount) villaDiscount.textContent = "0%";
   if (shareValue) shareValue.textContent = "1";
 };
 
-
 async function syncVillaUI() {
   const activeSessionData = localStorage.getItem("olivium_identity");
 
@@ -1362,6 +1361,17 @@ async function syncVillaUI() {
       if (navTierLabel) navTierLabel.innerText = identityLabel;
       if (navIdentityDisplay) navIdentityDisplay.innerText = truncated;
 
+      // optional hook after UI update
+      if (window.updateVillaStayUI) {
+        await window.updateVillaStayUI();
+
+        const tierNameEl = document.getElementById("tier-name");
+        if (tierNameEl && navTierLabel) {
+          navTierLabel.innerText =
+            tierNameEl.innerText || identityLabel;
+        }
+      }
+
       return;
     }
 
@@ -1385,18 +1395,6 @@ async function syncVillaUI() {
     if (navIdentityDisplay) navIdentityDisplay.innerText = "PARSE_ERROR";
   }
 }
-    // Fetch tier info and update nav-tier-label with actual tier
-    if (window.updateVillaStayUI) {
-        await window.updateVillaStayUI();
-
-        // After updateVillaStayUI runs, update nav-tier-label with tier name
-        const tierNameEl = document.getElementById("tier-name");
-        if (tierNameEl && navTierLabel && activeSessionData) {
-            navTierLabel.innerText = tierNameEl.innerText || "Standard Account";
-        }
-    }
-}
-
 const FALLBACK_TREE_IMAGE =
   "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
 
