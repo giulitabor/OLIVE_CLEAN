@@ -133,7 +133,106 @@ function validateSignupForm_FIXED(
 // version on window. This file delegates to it so both modules
 // always run the same logic regardless of script load order.
 // ============================================================
+
+
+
 async function updateIdentityBalanceUI() {
+  try {
+    const pillEl = document.getElementById("identityPill");
+    const stat = document.getElementById("identityTypeStat");
+    const connectBtn = document.getElementById("connectBtn");
+
+    const saved = JSON.parse(
+      localStorage.getItem("olivium_identity") || "null"
+    );
+
+    // =====================================================
+    // GUEST MODE (single source of truth)
+    // =====================================================
+    if (!saved) {
+      if (pillEl) pillEl.innerHTML = "🌿 Guest Mode";
+      if (stat) stat.innerHTML = "Guest";
+
+      if (connectBtn) {
+        connectBtn.innerText = "Connect Profile";
+        connectBtn.style.color = "white";
+        connectBtn.style.border = "";
+        connectBtn.style.background = "var(--green)";
+      }
+
+      return;
+    }
+
+    // =====================================================
+    // EMAIL MODE
+    // =====================================================
+    if (saved.type === "email") {
+      if (pillEl) {
+        pillEl.innerHTML = `✉️ ${saved.address || "Email User"}`;
+      }
+
+      if (stat) {
+        stat.innerHTML = "Email Secured";
+      }
+
+      if (connectBtn) {
+        connectBtn.innerText = "Disconnect";
+        connectBtn.style.color = "#d94d4d";
+        connectBtn.style.border = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+      }
+
+      return;
+    }
+
+    // =====================================================
+    // WALLET MODE
+    // =====================================================
+    if (saved.type === "wallet" && saved.wallet) {
+      let shortAddr =
+        saved.wallet.slice(0, 4) +
+        "..." +
+        saved.wallet.slice(-4);
+
+      let solBalance = "—";
+
+      try {
+        const pubKey = new PublicKey(saved.wallet);
+        const lamports = await connection.getBalance(pubKey);
+        solBalance = (lamports / 1_000_000_000).toFixed(3);
+      } catch (err) {
+        console.warn("Balance fetch failed:", err);
+      }
+
+      if (pillEl) {
+        pillEl.innerHTML =
+          `◎ ${solBalance} SOL ` +
+          `<span style="opacity:.5;margin:0 6px">|</span>` +
+          `🔑 ${shortAddr}`;
+      }
+
+      if (stat) {
+        stat.innerHTML = "Wallet Mode";
+      }
+
+      if (connectBtn) {
+        connectBtn.innerText = "Disconnect";
+        connectBtn.style.color = "#d94d4d";
+        connectBtn.style.border = "1px solid #d94d4d";
+        connectBtn.style.background = "transparent";
+      }
+
+      return;
+    }
+
+  } catch (err) {
+    console.error("[updateIdentityBalanceUI]", err);
+  }
+}
+
+window.updateIdentityBalanceUI = updateIdentityBalanceUI;
+
+async function OLD_updateIdentityBalanceUI() {
   // Prefer the version from reserve_board.ts if it's already loaded
   if (typeof (window as any).updateIdentityBalanceUI === "function" &&
       (window as any).updateIdentityBalanceUI !== updateIdentityBalanceUI) {
