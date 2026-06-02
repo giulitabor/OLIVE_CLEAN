@@ -1068,14 +1068,26 @@ let selectedTree: Tree | null = null;
   if (shareValue) shareValue.textContent = "1";
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AGREEMENT MODAL - FIXED
+// ═══════════════════════════════════════════════════════════════════════════
+
 (window as any).openAgreement = () => {
-  if (!selectedTree) return;
+  console.log("[AGREEMENT] Opening agreement modal");
+  
+  if (!selectedTree) {
+    console.error("[AGREEMENT] No selected tree");
+    showToast("Please select a tree first", true);
+    return;
+  }
+  
   document.body.style.overflow = "hidden";
 
   const fallback = _randomFallback();
   const agreeImg = document.getElementById("agreeImage") as HTMLImageElement | null;
   if (agreeImg) {
-    agreeImg.src = selectedTree.image_url || fallback;
+    const imgUrl = selectedTree.image_url || selectedTree.photo_url || fallback;
+    agreeImg.src = imgUrl;
     agreeImg.onerror = () => {
       agreeImg.src = fallback;
     };
@@ -1085,10 +1097,12 @@ let selectedTree: Tree | null = null;
     const el = document.getElementById(id);
     if (el) el.innerText = v;
   };
-  setT("agreeTitle", `Adopting ${selectedTree.name || selectedTree.tree_id}`);
-  setT("agreeLocation", selectedTree.location || "Field F1");
-  setT("agreeAge", selectedTree.age || "5");
-  setT("agreeHeight", selectedTree.height || "1.5m");
+  
+  const treeName = selectedTree.name || selectedTree.tree_id || "Unknown Tree";
+  setT("agreeTitle", `Adopting ${treeName}`);
+  setT("agreeLocation", selectedTree.location || "Field F1 - Tuscany, Italy");
+  setT("agreeAge", selectedTree.age || "5+ years");
+  setT("agreeHeight", selectedTree.height || "2.5m");
   setT("agreeVariety", selectedTree.variety || "Frantoio");
 
   const check = document.getElementById("agreeCheckbox") as HTMLInputElement | null;
@@ -1105,8 +1119,11 @@ let selectedTree: Tree | null = null;
 
   const selModal = document.getElementById("modalOverlay");
   const agreeModal = document.getElementById("agreementModal");
+  
   if (selModal) selModal.style.display = "none";
   if (agreeModal) agreeModal.style.display = "flex";
+  
+  console.log("[AGREEMENT] Agreement modal opened");
 };
 
 (window as any).closeAgreement = () => {
