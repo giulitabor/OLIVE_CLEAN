@@ -1284,7 +1284,7 @@ let selectedTree: Tree | null = null;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BLOCKCHAIN TX
+// BLOCKCHAIN TX - FIXED VERSION
 // ═══════════════════════════════════════════════════════════════════════════
 
 (window as any).processBlockchainTx = async () => {
@@ -1302,7 +1302,7 @@ let selectedTree: Tree | null = null;
   const amountInput = document.getElementById("shareInput") as HTMLInputElement | null;
   if (!amountInput) return;
 
-  const amount = new anchor.BN(amountInput.value);
+  const amount = new anchor.BN(Number(amountInput.value)); // FIXED: Convert to number first
   const buyerPublicKey = provider.wallet?.publicKey || provider.publicKey;
   if (!buyerPublicKey) {
     alert("Could not resolve wallet public key.");
@@ -1326,7 +1326,7 @@ let selectedTree: Tree | null = null;
     );
     const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
     const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("treasury")], program.programId);
-//const solPaid = Number(amountInput.value) * SHARE_PRICE_SOL;
+
     const ix = await program.methods
       .purchaseShares(selectedTree.tree_id, amount)
       .accounts({
@@ -1357,14 +1357,15 @@ let selectedTree: Tree | null = null;
 
     await conn.confirmTransaction(sig, "confirmed");
 
- _invalidateCaches();
+    _invalidateCaches();
     loadTrees();
     updateStatsUI();
     const agreeModal = document.getElementById("agreementModal");
     const successModal = document.getElementById("successModal");
     if (agreeModal) agreeModal.style.display = "none";
     if (successModal) successModal.style.display = "flex";
-if (finalBtn) {
+    
+    if (finalBtn) {
       delete finalBtn.dataset.processing;
       finalBtn.disabled = false;
       finalBtn.textContent = "Confirm & Pay";
@@ -1378,27 +1379,28 @@ if (finalBtn) {
     }
     
     showToast("Adoption successful! Your Mignole is added.", false);
-    const txDetails = await program.provider.connection.getTransaction(tx, {
-  commitment: "confirmed"
-});
-
-const solPaid =
-  txDetails?.meta?.fee
-    ? txDetails.meta.fee / 1_000_000_000
-    : amount * _cachedSolPrice;
-    syncTransactionToSupabase(
-  buyerPublicKey.toBase58(),
-  selectedTree.tree_id,
-  Number(amountInput.value),
-  "BUY",
-  sig,
-  0,
-  false,
-  solPaid
-);
     
-  } 
-  catch (err) {
+    // FIXED: Use 'sig' (the transaction signature string) instead of 'tx' (the transaction object)
+    const txDetails = await program.provider.connection.getTransaction(sig, {
+      commitment: "confirmed"
+    });
+
+    const solPaid = txDetails?.meta?.fee
+      ? txDetails.meta.fee / 1_000_000_000
+      : Number(amount) * _cachedSolPrice;
+      
+    await syncTransactionToSupabase(
+      buyerPublicKey.toBase58(),
+      selectedTree.tree_id,
+      Number(amountInput.value),
+      "BUY",
+      sig,
+      0,
+      false,
+      solPaid
+    );
+    
+  } catch (err) {
     console.error("TX Error:", err);
     alert("Transaction failed. Check wallet balance or signing approval.");
     if (finalBtn) {
@@ -1408,7 +1410,6 @@ const solPaid =
     }
   }
 };
-
 // ═══════════════════════════════════════════════════════════════════════════
 // SELL SHARES
 // ═══════════════════════════════════════════════════════════════════════════
