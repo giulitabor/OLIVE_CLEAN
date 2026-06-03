@@ -40,6 +40,11 @@ console.log(`[CONNECTION] RPC: ${RPC_URL}`);
 export const connection = new Connection(RPC_URL, "confirmed");
 export const PROGRAM_ID = new PublicKey(idl.address);
 
+
+// Legacy exports for backwards compatibility
+export let program: Program | null = null;
+export let provider: AnchorProvider | null = null;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // CANONICAL APP STATE  — only mutated by the functions in this file
 // ═══════════════════════════════════════════════════════════════════════════
@@ -86,7 +91,7 @@ function _setIdentity(id: AppIdentity) {
 }
 
 function _exposeGlobals() {
-  // Write-once globals that modules read; DO NOT write back to _state from these
+  // Canonical globals
   (window as any)._program      = _state.program;
   (window as any).program       = _state.program;
   (window as any)._provider     = _state.provider;
@@ -95,12 +100,31 @@ function _exposeGlobals() {
   (window as any).sb            = sb;
   (window as any)._connection   = connection;
   (window as any).connection    = connection;
-  (window as any).walletPubKey  = _state.identity.wallet
-    ? new PublicKey(_state.identity.wallet)
-    : null;
-  (window as any).emailMode     = _state.identity.type === "email";
-}
 
+  // Legacy module exports
+  program  = _state.program;
+  provider = _state.provider;
+
+  // Legacy wallet globals
+  const rawWallet =
+    (window as any).phantom?.solana ||
+    (window as any).solana ||
+    null;
+
+  (window as any).wallet = rawWallet;
+
+  (window as any).walletPubKey =
+    _state.identity.wallet
+      ? new PublicKey(_state.identity.wallet)
+      : null;
+
+  (window as any).emailMode =
+    _state.identity.type === "email";
+
+  (window as any).OliviumIdentity = {
+    ..._state.identity
+  };
+}
 function _dispatchConnected(detail: Record<string, unknown>) {
   window.dispatchEvent(new CustomEvent("olivium:connected", { detail }));
 }
@@ -268,6 +292,13 @@ export async function connectWallet(auto = false) {
     const isAdmin = pubkey === "8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54";
     await ensureProtocolInitialized();
 
+    if (typeof (window as any).updateWalletUI === "function") {
+  try {
+    (window as any).updateWalletUI(pubkey);
+  } catch (err) {
+    console.warn("updateWalletUI failed:", err);
+  }
+}
     _dispatchConnected({ pubkey, isAdmin, type: "wallet" });
 
     return { provider, program, pubkey, isAdmin };
@@ -414,7 +445,11 @@ export async function restoreSession() {
     return;
   }
 
-  if (saved?.type === "email" && saved?.custodialWallet) {
+  const custodialWallet =
+  saved?.custodialWallet ||
+  saved?.wallet;
+
+if (saved?.type === "email" && custodialWallet) {
     // For email users the custodial wallet never changes — just restore the
     // identity without re-creating the provider (initReadOnly already set one).
     _setIdentity({
