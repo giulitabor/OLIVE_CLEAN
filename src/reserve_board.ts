@@ -1374,7 +1374,7 @@ if (finalBtn) {
       await (window as any).updateIdentityBalanceUI();
     }
     
-    showToast("Purchase successful! Your shares have been added.", false);
+    showToast("Adoption successful! Your Mignole is added.", false);
     
   } 
   catch (err) {
