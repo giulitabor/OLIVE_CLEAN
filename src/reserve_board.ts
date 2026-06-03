@@ -303,7 +303,7 @@ let maxAvailableSellShares = 0;
   const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
 
   if (title) title.textContent = `Release Mignoli — Tree #${treeId}`;
-  if (owned) owned.textContent = `${currentShares.toLocaleString()} Shares Registered`;
+  if (owned) owned.textContent = `${currentShares.toLocaleString()} Mignole Registered`;
   if (input) {
     input.value = String(Math.min(10, currentShares));
     input.max = String(currentShares);
