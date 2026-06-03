@@ -102,7 +102,7 @@
             line-height: 1.3;
             text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
             opacity: 0;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: 'Playfair Display', 'Georgia', serif;
             margin-bottom: 20px;
         }
@@ -113,6 +113,7 @@
 
         .cinematic-line.fade-out {
             opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 1, 1);
         }
 
         .cinematic-line.small {
@@ -121,7 +122,7 @@
             font-weight: 300;
         }
 
-        /* Logo reveal at end of cinematic */
+        /* Logo reveal */
         .cinematic-logo-reveal {
             position: absolute;
             top: 50%;
@@ -156,7 +157,7 @@
             font-weight: 300;
         }
 
-        /* Cinematic progress bar */
+        /* Progress bar */
         .cinematic-progress {
             position: absolute;
             bottom: 0;
@@ -240,12 +241,17 @@
         <!-- Skip button -->
         <button id="cinematicSkipBtn" class="cinematic-skip">SKIP →</button>
         
-          </div>
+        <!-- Original hero content (hidden during cinematic) -->
+        <div class="original-hero-content hero-content">
+            <h1>Experience the Grove</h1>
+            <p>A living testament to Tuscan heritage and digital stewardship.</p>
+        </div>
+    </div>
 
     <!-- ═══════════════════════════════════════
          NAVIGATION
     ════════════════════════════════════════ -->
-    <nav class="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-white/5 transition-all duration-500" id="mainNav" style="opacity:0;">
+    <nav id="mainNav" class="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-white/5 transition-all duration-500" style="opacity:0;">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="font-serif text-xl font-bold text-white tracking-widest">
@@ -276,8 +282,6 @@
          MAIN CONTENT (hidden until cinematic ends)
     ════════════════════════════════════════ -->
     <main id="mainContent" class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative" style="opacity:0; transition: opacity 1s ease;">
-        <!-- Rest of your main content remains exactly the same -->
-        
         <!-- HERO STATS -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16 relative z-10">
             <div class="lg:col-span-7">
@@ -602,8 +606,8 @@
 
     </main>
 
-    <!-- FOOTER (hidden initially) -->
-    <footer id="mainFooter" class="border-t border-white/5 py-12 text-center opacity-40" style="opacity:0; transition: opacity 1s ease;">
+    <!-- FOOTER -->
+    <footer id="mainFooter" class="border-t border-white/5 py-12 text-center opacity-0 transition-opacity duration-1000" style="opacity:0;">
         <p class="font-serif text-sm italic">Digital Stewardship &amp; Tuscan Heritage</p>
         <p class="font-mono text-[8px] mt-2 tracking-widest text-[#C5A059] uppercase">
             Smart Contract Architecture: 0x4f…92a
@@ -745,21 +749,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-    <!-- Cinematic Sequence Script -->
+    <!-- Cinematic Sequence Script - FIXED TIMING -->
     <script>
-        // Cinematic narrative sequence
+        // Cinematic narrative sequence - FASTER TIMINGS
         const cinematicNarrative = [
-            { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 4000, small: false },
-            { text: "Adopt one or more of these trees.", duration: 3500, small: false },
-            { text: "Rooted in nature.<br>Growing for generations.", duration: 4000, small: false },
-            { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 6000, small: true },
-            { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 5000, small: true }
+            { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 2500, delay: 300 },
+            { text: "Adopt one or more of these trees.", duration: 2200, delay: 300 },
+            { text: "Rooted in nature.<br>Growing for generations.", duration: 2500, delay: 300 },
+            { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 3500, delay: 300 },
+            { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 2800, delay: 300 }
         ];
 
         let currentIndex = 0;
         let currentTimeout = null;
         let progressInterval = null;
         let isPlaying = true;
+        let startDelay = 500; // Start text after 0.5 seconds
 
         const textDisplay = document.getElementById('cinematicLine');
         const logoReveal = document.getElementById('cinematicLogoReveal');
@@ -781,10 +786,16 @@
 
             const item = cinematicNarrative[index];
             textDisplay.innerHTML = item.text;
-            textDisplay.className = `cinematic-line ${item.small ? 'small' : ''}`;
+            textDisplay.classList.remove('small');
+            if (index >= 3) {
+                textDisplay.classList.add('small');
+            }
             
-            void textDisplay.offsetWidth;
-            textDisplay.classList.add('active');
+            // Small delay before fade in
+            setTimeout(() => {
+                if (!isPlaying) return;
+                textDisplay.classList.add('active');
+            }, item.delay || 300);
             
             startCinematicProgress(item.duration);
             
@@ -793,10 +804,11 @@
                 textDisplay.classList.add('fade-out');
                 
                 setTimeout(() => {
+                    if (!isPlaying) return;
                     textDisplay.classList.remove('fade-out');
                     currentIndex++;
                     showCinematicText(currentIndex);
-                }, 800);
+                }, 300);
             }, item.duration);
         }
 
@@ -839,11 +851,11 @@
                         cinematicHero.style.display = 'none';
                         mainContent.style.opacity = '1';
                         mainNav.style.opacity = '1';
-                        if (mainFooter) mainFooter.style.opacity = '0.4';
+                        mainFooter.style.opacity = '0.4';
                         document.body.style.overflow = 'auto';
-                    }, 1000);
-                }, 2000);
-            }, 800);
+                    }, 800);
+                }, 1200);
+            }, 300);
         }
 
         function skipCinematic() {
@@ -861,35 +873,34 @@
                 
                 setTimeout(() => {
                     cinematicHero.style.opacity = '0';
-                    cinematicHero.style.transition = 'opacity 0.8s ease';
+                    cinematicHero.style.transition = 'opacity 0.5s ease';
                     setTimeout(() => {
                         cinematicHero.style.display = 'none';
                         mainContent.style.opacity = '1';
                         mainNav.style.opacity = '1';
-                        if (mainFooter) mainFooter.style.opacity = '0.4';
+                        mainFooter.style.opacity = '0.4';
                         document.body.style.overflow = 'auto';
-                    }, 800);
-                }, 500);
-            }, 300);
+                    }, 500);
+                }, 300);
+            }, 200);
         }
 
         skipBtn.addEventListener('click', skipCinematic);
         
-        // Optional: Click anywhere on video to skip
-        cinematicHero.addEventListener('click', (e) => {
-            if (e.target === cinematicHero || e.target === video) {
-                skipCinematic();
-            }
-        });
-        
-        video.addEventListener('canplay', () => {
-            showCinematicText(0);
-        });
-        
-        if (video.readyState >= 3) {
-            showCinematicText(0);
+        // Start sequence when video is ready
+        function startSequence() {
+            console.log('[CINEMATIC] Starting sequence');
+            setTimeout(() => {
+                showCinematicText(0);
+            }, startDelay);
         }
-
+        
+        if (video.readyState >= 2) {
+            startSequence();
+        } else {
+            video.addEventListener('canplay', startSequence);
+        }
+        
         // Prevent scroll during cinematic
         document.body.style.overflow = 'hidden';
         
