@@ -384,14 +384,13 @@ async function _confirmSellAction() {
       await (window as any).updateIdentityBalanceUI();
     }
     
-    showToast(`Successfully released ${amount} mignole!`, false);
+    showToast(`Successfully released ${amount} Mignole!`, false);
     
   } catch (err: any) {
     console.error("[SELL ERROR]", err);
     showToast(`Sell failed: ${err.message || "Unknown error"}`, true);
     
   } finally {
-    // ✅ Reset button HERE (in the confirm function, not sellShares)
     if (btn) {
       btn.disabled = false;
       btn.textContent = "Confirm Release";
@@ -422,7 +421,7 @@ async function updateStatsUI() {
   const identity = getIdentity();
   if (!identity.wallet) {
     if (shareCountEl) shareCountEl.innerText = "--";
-    if (groveCountEl) groveCountEl.innerText = "0";
+    if (groveCountEl) groveCountEl.innerText = "--";
     return;
   }
 
@@ -434,7 +433,7 @@ async function updateStatsUI() {
     if (groveCountEl) groveCountEl.innerText = String(uniqueTrees);
   } catch (err) {
     console.error("[updateStatsUI]", err);
-    if (shareCountEl) shareCountEl.innerText = "--";
+    if (shareCountEl) shareCountEl.innerText = "0";
     if (groveCountEl) groveCountEl.innerText = "0";
   }
 }
@@ -486,7 +485,7 @@ async function updateVillaStayUI() {
 
   if (!identity.wallet) {
     if (sharesDisplay)
-      sharesDisplay.innerHTML = `0 <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
+      sharesDisplay.innerHTML = `0 <span class="text-xs text-gold font-mono block mt-1">Mignole Detected</span>`;
     if (creditsDisplay)
       creditsDisplay.innerHTML = `00 <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
     if (tierName) tierName.innerText = "Guest Mode";
@@ -516,37 +515,37 @@ async function updateVillaStayUI() {
     }
 
     if (sharesDisplay)
-      sharesDisplay.innerHTML = `${totalShares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
+      sharesDisplay.innerHTML = `${totalShares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Mignole Detected</span>`;
     if (creditsDisplay)
       creditsDisplay.innerHTML = `${totalCredits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
 
     tierEls.forEach(dim);
 
     let currentTier = "Standard Account";
-    let nextTier = "Seed Supporter";
+    let nextTier = "Mignole Supporter";
     let pct = 0;
     let icon = "🫒";
     let label = "";
 
     if (totalShares >= 1000) {
-      currentTier = "Grove Patron";
-      nextTier = "Max Tier Achieved";
+      currentTier = "Tree Guardian";
+      nextTier = "Grove Patron";
       pct = 100;
       icon = "👑";
       label = "VIP Privileges unlocked";
       lit(cardTier3);
       [perkGov, perkShipping, perkDiscount, perkStay].forEach(lit);
     } else if (totalShares >= 500) {
-      currentTier = "Tree Guardian";
-      nextTier = "Grove Patron";
+      currentTier = "Mignole Guardian";
+      nextTier = "Tree Guardian";
       pct = Math.round(((totalShares - 500) / 500) * 100);
       icon = "🌳";
       label = `${1000 - totalShares} shares to Patron`;
       lit(cardTier2);
       [perkGov, perkShipping, perkDiscount].forEach(lit);
     } else if (totalShares >= 100) {
-      currentTier = "Seed Supporter";
-      nextTier = "Tree Guardian";
+      currentTier = "Mignole Supporter";
+      nextTier = "Mignole Guardian";
       pct = Math.round(((totalShares - 100) / 400) * 100);
       icon = "🌱";
       label = `${500 - totalShares} shares to Guardian`;
@@ -574,7 +573,7 @@ async function updateVillaStayUI() {
       pricingLabel = "🌳 Guardian Tier";
       rateStr = "$382.50 USD / Nightly (15% Guardian Override Applied)";
     } else if (totalShares >= 100) {
-      pricingLabel = "🌱 Seed Supporter";
+      pricingLabel = "🌱 Mignole Supporter";
     }
 
     if (patronBadge) patronBadge.innerText = pricingLabel;
@@ -601,7 +600,7 @@ async function clearAllUserUiAndStates() {
     if (el) el.innerText = v;
   };
   setEl("shareCountStat", "--");
-  setEl("grovePositionStat", "0");
+  setEl("grovePositionStat", "--");
   setEl("identityTypeStat", "Guest");
 
   await updateStatsUI();
@@ -896,11 +895,11 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
           <div class="shares-left">${available > 0 ? "Available now" : "Fully adopted"}</div>
         </div>
         ${isLive ? '<div class="live-badge">⛓ LIVE ON-CHAIN</div>' : ""}
-        ${isMine && ownedShares > 0 ? `<div class="owned-badge" style="margin-top:6px;font-size:.75rem;color:#6B7F5A;font-weight:600;">✅ You own ${ownedShares.toLocaleString()} shares</div>` : ""}
+        ${isMine && ownedShares > 0 ? `<div class="owned-badge" style="margin-top:6px;font-size:.75rem;color:#6B7F5A;font-weight:600;">✅ You own ${ownedShares.toLocaleString()} Mignole</div>` : ""}
         <div class="card-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
           <button class="action-btn details-btn">Details</button>
           ${available > 0 ? '<button class="action-btn adopt-btn">Adopt</button>' : ""}
-          ${isMine ? '<button class="action-btn release-btn" style="background:#d94d4d;">Release Shares</button>' : ""}
+          ${isMine ? '<button class="action-btn release-btn" style="background:#d94d4d;">Release Mignole</button>' : ""}
         </div>
       </div>`;
 
@@ -970,19 +969,19 @@ async function renderMyTreesFromPositions(positions: NormalisedPosition[]) {
       <div class="tree-content" style="margin-top:12px;">
         <div class="tree-name" style="font-size:1.2rem;font-weight:600;">${name}</div>
         <div class="tree-meta" style="margin-top:4px;font-size:.85rem;">
-          <strong>${pos.sharesOwned.toLocaleString()}</strong> shares owned
+          <strong>${pos.sharesOwned.toLocaleString()}</strong> Mignole adopted
           <span style="opacity:.65;">(${totalCap.toLocaleString()} total)</span>
         </div>
         <div class="availability" style="margin-top:12px;">
           <div class="progress-bar" style="width:100%;height:6px;background:rgba(0,0,0,.05);border-radius:3px;overflow:hidden;">
             <div class="progress-fill" style="width:${ownerPct}%;height:100%;background:#6B7F5A;transition:width .3s;"></div>
           </div>
-          <div style="margin-top:6px;font-size:.8rem;font-weight:600;color:#6B7F5A;text-transform:uppercase;">${ownerPct}% ownership</div>
+          <div style="margin-top:6px;font-size:.8rem;font-weight:600;color:#6B7F5A;text-transform:uppercase;">${ownerPct}% participation</div>
         </div>
       </div>
       <div class="card-actions" style="display:flex;gap:8px;margin-top:16px;">
         <button class="action-btn details-btn">Details</button>
-        <button class="action-btn release-btn" style="background:#d94d4d;">Release Shares</button>
+        <button class="action-btn release-btn" style="background:#d94d4d;">Release Mignole</button>
       </div>`;
 
     card.querySelector(".details-btn")?.addEventListener("click", e => {
@@ -1050,10 +1049,10 @@ let selectedTree: Tree | null = null;
     
     // Display fields with fallbacks
     name: tree.name || `Tree ${tree.tree_id}`,
-    description: tree.description || "Secure your digital olive tree adoption. Each share represents partial ownership of a real olive tree, with verified on-chain proof.",
+    description: tree.description || "Secure your digital olive tree adoption. Each mignole represents participation in adoption of a real olive tree, with verified on-chain proof.",
     
     // Location data
-    location: tree.location || (tree.field_id ? `Field ${tree.field_id}` : "Olivium Grove, Tuscany"),
+    location: tree.location || (tree.field_id ? `Field ${tree.field_id}` : "Toscagialla Heritage Grove, Tuscany"),
     field_id: tree.field_id,
     latitude: tree.latitude,
     longitude: tree.longitude,
@@ -1204,18 +1203,6 @@ let selectedTree: Tree | null = null;
   if (shareValue) shareValue.textContent = "1";
 };
 // ═══════════════════════════════════════════════════════════════════════════
-// AGREEMENT MODAL - FIXED
-// ═══════════════════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════════════════
-// AGREEMENT MODAL - COMPLETE FIXED VERSION
-// ═══════════════════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════════════════
-// AGREEMENT MODAL - FIXED FOR YOUR ACTUAL DATA STRUCTURE
-// ═══════════════════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════════════════
 // AGREEMENT MODAL - COMPLETE FIXED VERSION
 // Now works because selectedTree has been normalized
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1339,7 +1326,7 @@ let selectedTree: Tree | null = null;
     );
     const [protocolPda] = PublicKey.findProgramAddressSync([Buffer.from("protocol")], program.programId);
     const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("treasury")], program.programId);
-
+//const solPaid = Number(amountInput.value) * SHARE_PRICE_SOL;
     const ix = await program.methods
       .purchaseShares(selectedTree.tree_id, amount)
       .accounts({
@@ -1391,6 +1378,24 @@ if (finalBtn) {
     }
     
     showToast("Adoption successful! Your Mignole is added.", false);
+    const txDetails = await program.provider.connection.getTransaction(tx, {
+  commitment: "confirmed"
+});
+
+const solPaid =
+  txDetails?.meta?.fee
+    ? txDetails.meta.fee / 1_000_000_000
+    : amount * SHARE_PRICE_SOL;
+    syncTransactionToSupabase(
+  buyerPublicKey.toBase58(),
+  selectedTree.tree_id,
+  Number(amountInput.value),
+  "BUY",
+  sig,
+  0,
+  false,
+  solPaid
+);
     
   } 
   catch (err) {
@@ -1442,11 +1447,28 @@ async function sellShares(treeId: string | number, amount: number) {
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
+    showToast("Release successful! Your support was appreciated.", false);
+    const txDetails = await program.provider.connection.getTransaction(tx, {
+  commitment: "confirmed"
+});
+
+const solPaid =
+  txDetails?.meta?.fee
+    ? txDetails.meta.fee / 1_000_000_000
+    : amount * SHARE_PRICE_SOL;
 
     console.log("[SELL] SUCCESS:", tx);
 
-    await syncTransactionToSupabase(walletStr, treeIdStr, amount, "SELL", tx, newTotal, newTotal >= 1000);
-
+await syncTransactionToSupabase(
+  walletStr,
+  treeIdStr,
+  amount,
+  "SELL",
+  tx,
+  newTotal,
+  newTotal >= 1000,
+  solPaid
+);
     _invalidateCaches();
     loadTrees();
     updateStatsUI();
@@ -1477,13 +1499,14 @@ async function syncTransactionToSupabase(
   try {
     const { error } = await sb.from("transactions").insert([
       {
-        wallet_address: wallet,  // ✅ Changed from 'wallet' to 'wallet_address'
-        tree_id: treeId,
-        amount: amount,
-        type: type,
-        tx_signature: txSig,
-        new_total: newTotal,
-        is_guardian: isGuardian,
+          wallet: string,
+  treeId: string,
+  amount: number,
+  type: "BUY" | "SELL",
+  txSig: string,
+  newTotal: number,
+  isGuardian: boolean,
+  solPaid?: number,
       },
     ]);
     
