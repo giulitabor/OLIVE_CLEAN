@@ -302,7 +302,7 @@ let maxAvailableSellShares = 0;
   const owned = document.getElementById("sell-modal-owned");
   const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
 
-  if (title) title.textContent = `Sell Shares — Tree #${treeId}`;
+  if (title) title.textContent = `Release Mignoli — Tree #${treeId}`;
   if (owned) owned.textContent = `${currentShares.toLocaleString()} Shares Registered`;
   if (input) {
     input.value = String(Math.min(10, currentShares));
@@ -368,7 +368,7 @@ async function _confirmSellAction() {
       await (window as any).updateIdentityBalanceUI();
     }
     
-    showToast(`Successfully sold ${amount} shares!`, false);
+    showToast(`Successfully released ${amount} mignole!`, false);
     
   } catch (err: any) {
     console.error("[SELL ERROR]", err);
@@ -378,7 +378,7 @@ async function _confirmSellAction() {
     // ✅ Reset button HERE (in the confirm function, not sellShares)
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "Confirm Liquidation";
+      btn.textContent = "Confirm Release";
       delete btn.dataset.processing;
     }
   }
