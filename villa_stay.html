@@ -149,6 +149,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <!-- SINGLE SOURCE OF TRUTH: The stay.ts module now handles ALL logic -->
-    <script type="module" src="/src/stay.ts"></script>
+<!-- Simple global functions for modal close buttons -->
+<script>
+    // Define global functions that inline onclick attributes expect
+    window.closeConnectModal = function() {
+        const modal = document.getElementById('connectModal');
+        if (modal) modal.style.display = 'none';
+    };
+    
+    window.closeAuthModal = function() {
+        const modal = document.getElementById('authModalOverlay');
+        if (modal) modal.style.display = 'none';
+    };
+</script>
+
+<!-- Your main module -->
+<script type="module" src="/src/stay.ts"></script>
 </body>
 </html>
