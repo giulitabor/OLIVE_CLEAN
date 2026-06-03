@@ -267,6 +267,8 @@ export async function connectWallet(auto = false) {
     }
 
     const pubkey = wallet.publicKey.toBase58();
+    localStorage.setItem("walletConnected", "true");
+(window as any).wallet = wallet;
     console.log(`✅ Wallet: ${pubkey.slice(0, 8)}…`);
 
     // Build provider + program
@@ -410,6 +412,13 @@ export async function disconnectWallet() {
   }
 
   console.log("✅ Disconnected");
+  if (typeof (window as any).resetProfileAndUI === "function") {
+  try {
+    await (window as any).resetProfileAndUI();
+  } catch (err) {
+    console.warn("resetProfileAndUI failed:", err);
+  }
+}
   _dispatchDisconnected();
 }
 
@@ -454,13 +463,13 @@ if (saved?.type === "email" && custodialWallet) {
     // identity without re-creating the provider (initReadOnly already set one).
     _setIdentity({
       type:   "email",
-      wallet: saved.custodialWallet,
-      label:  saved.address || saved.email || saved.custodialWallet,
+      wallet: custodialWallet,
+      label:  saved.address || saved.email || custodialWallet,
       email:  saved.address || saved.email || null,
     });
     // Re-wire the provider to the email wallet so on-chain reads are scoped
     const emailAdapter = {
-      publicKey: new PublicKey(saved.custodialWallet),
+      publicKey: new PublicKey(custodialWallet),
       signTransaction:    async (tx: any) => tx,
       signAllTransactions: async (txs: any[]) => txs,
     };
@@ -471,8 +480,8 @@ if (saved?.type === "email" && custodialWallet) {
     _state.provider = provider;
     _state.program  = new Program(idl as any, provider);
     _exposeGlobals();
-    // Do NOT fire olivium:connected here — we are in a silent restore; the UI
-    // will call updateIdentityUI() from its own DOMContentLoaded handler.
+  (window as any).wallet = null;
+(window as any).walletPubKey = null;
   }
 }
 
