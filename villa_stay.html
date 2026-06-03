@@ -26,40 +26,35 @@
           <p>A living testament to Tuscan heritage and digital stewardship.</p>
       </div>
   </div>
-    <!-- CONNECT MODAL -->
-    <div class="modal-overlay" id="connectModal">
-        <div class="max-w-md w-full tech-card p-8 rounded-3xl text-center relative overflow-hidden mx-4">
-            <div class="hero-grain absolute inset-0 opacity-20"></div>
-            <div class="relative z-10">
-                <button class="absolute -top-2 right-0 text-xl font-mono text-stone-500 hover:text-white transition" onclick="closeConnectModal()">&times;</button>
-                <span class="text-3xl mb-3 block">🌿</span>
-                <h2 class="serif text-2xl font-bold mb-2 text-white">Connect to Olivium</h2>
-                <p class="text-xs text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
-
-                <div class="space-y-4 text-left">
-                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-gold/30 transition-all group">
-                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
-                            <span>◎ Wallet Authentication</span>
-                            <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono">Web3</span>
-                        </div>
-                        <p class="text-[11px] text-stone-400 mb-3">Resolve direct web3 asset holdings instantly using your browser extension.</p>
-                        <button id="connectWalletBtn" class="w-full bg-[#5a7a2b] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#6b8e36] transition-colors">Connect Phantom / Solana</button>
-                    </div>
-
-                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-gold/30 transition-all group">
-                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
-                            <span>✉ Custodial Profile Access</span>
-                            <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">Secure MFA</span>
-                        </div>
-                        <p class="text-[11px] text-stone-400 mb-3">Authorize parameters securely using your traditional off-chain email profile parameters.</p>
-                        <button id="emailLoginBtn" class="w-full bg-stone-800 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-stone-700 border border-white/5 transition-colors">Continue with Email</button>
-                    </div>
+<!-- CONNECT MODAL -->
+<div class="modal-overlay" id="connectModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Connect to Olivium</h3>
+            <span class="modal-close" id="closeConnectModalBtn">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="glass-card-light" style="margin-bottom: 1rem; cursor: pointer;" id="walletConnectCard">
+                <div class="flex flex-between">
+                    <span style="font-weight: bold;">◎ Wallet Authentication</span>
+                    <span style="font-size: 0.65rem; color: var(--gold);">Web3</span>
                 </div>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0.5rem 0;">Connect directly with Phantom or Solflare</p>
+                <button id="connectWalletBtn" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Connect Phantom / Solana</button>
+            </div>
+            
+            <div class="glass-card-light" style="cursor: pointer;" id="emailConnectCard">
+                <div class="flex flex-between">
+                    <span style="font-weight: bold;">✉ Email Access</span>
+                    <span style="font-size: 0.65rem; color: var(--gold);">Secure MFA</span>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0.5rem 0;">Sign in with email and authenticator</p>
+                <button id="emailLoginBtn" class="btn-secondary" style="width: 100%;">Continue with Email</button>
             </div>
         </div>
     </div>
-
-
+</div>
+    
     <!-- AUTH MODAL -->
     <div id="authModalOverlay" class="modal-overlay">
         <div class="max-w-md w-full tech-card rounded-3xl relative overflow-hidden mx-4">
