@@ -1487,6 +1487,10 @@ await syncTransactionToSupabase(
 // SUPABASE TRANSACTION SYNC (Fixed column name)
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE TRANSACTION SYNC (Fixed column name)
+// ═══════════════════════════════════════════════════════════════════════════
+
 async function syncTransactionToSupabase(
   wallet: string,
   treeId: string,
@@ -1494,29 +1498,27 @@ async function syncTransactionToSupabase(
   type: "BUY" | "SELL",
   txSig: string,
   newTotal: number,
-  isGuardian: boolean
+  isGuardian: boolean,
+  solPaid: number | null = null
 ) {
   try {
     const { error } = await sb.from("transactions").insert([
       {
-          wallet: string,
-  treeId: string,
-  amount: number,
-  type: "BUY" | "SELL",
-  txSig: string,
-  newTotal: number,
-  isGuardian: boolean,
-  solPaid?: number,
+        wallet_address: wallet,
+        tree_id: treeId,
+        amount: amount,
+        type: type,
+        tx_signature: txSig,
+        new_total: newTotal,
+        is_guardian: isGuardian,
+        sol_paid: solPaid,
       },
     ]);
-    
+
     if (error) {
       console.warn("[syncTransactionToSupabase] Insert failed:", error.message);
-    } else {
-      console.log("[syncTransactionToSupabase] Successfully synced transaction:", txSig);
     }
   } catch (err) {
-    // Non-critical - don't break the main flow
     console.warn("[syncTransactionToSupabase] Non-critical error:", err);
   }
 }
