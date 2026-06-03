@@ -1424,6 +1424,11 @@ async function sellShares(treeId: string | number, amount: number) {
   } catch (err: any) {
     console.error("[SELL FAILED]", err);
     throw err;
+  }finally {
+    // ✅ Reset button regardless of success/failure
+    btn.disabled = false;
+    btn.textContent = "Confirm Liquidation";
+    delete btn.dataset.processing;
   }
 }
 (window as any).sellShares = sellShares;
