@@ -1385,7 +1385,7 @@ if (finalBtn) {
 const solPaid =
   txDetails?.meta?.fee
     ? txDetails.meta.fee / 1_000_000_000
-    : amount * SHARE_PRICE_SOL;
+    : amount * _cachedSolPrice;
     syncTransactionToSupabase(
   buyerPublicKey.toBase58(),
   selectedTree.tree_id,
@@ -1455,7 +1455,7 @@ async function sellShares(treeId: string | number, amount: number) {
 const solPaid =
   txDetails?.meta?.fee
     ? txDetails.meta.fee / 1_000_000_000
-    : amount * SHARE_PRICE_SOL;
+    : amount * _cachedSolPrice;
 
     console.log("[SELL] SUCCESS:", tx);
 
