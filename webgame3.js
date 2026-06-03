@@ -1,5 +1,180 @@
 // ============================================================
-// OLIVIUM GAME - Complete Game Logic
+// OLIVIUM GAME - Using existing Supabase client from connection.ts
+// ============================================================
+
+import { sb, getIdentity, isConnected } from "./connection.ts";
+
+let currentUser = null;
+
+// ============================================================
+// AUTHENTICATION FUNCTIONS (using your existing system)
+// ============================================================
+
+async function checkAuthAndLoadGame() {
+    const identity = getIdentity();
+    if (identity && identity.wallet) {
+        currentUser = {
+            wallet: identity.wallet,
+            type: 'wallet'
+        };
+        
+        const navIdentity = document.getElementById('nav-identity-display');
+        const navTier = document.getElementById('nav-tier-label');
+        const connectBtn = document.getElementById('connectBtn');
+        
+        if (navIdentity) navIdentity.innerText = identity.wallet.slice(0, 8) + '...';
+        if (navTier) navTier.innerText = 'Mignole Steward';
+        if (connectBtn) connectBtn.innerText = 'Connected';
+        
+        await loadGameFromCloud();
+        return true;
+    }
+    return false;
+}
+
+// Listen for auth events from your existing system
+window.addEventListener('olivium:connected', async (event) => {
+    const identity = getIdentity();
+    if (identity && identity.wallet) {
+        currentUser = {
+            wallet: identity.wallet,
+            type: 'wallet'
+        };
+        
+        document.getElementById('nav-identity-display').innerText = identity.wallet.slice(0, 8) + '...';
+        document.getElementById('nav-tier-label').innerText = 'Mignole Steward';
+        document.getElementById('connectBtn').innerText = 'Connected';
+        
+        await loadGameFromCloud();
+        showToast('✅ Connected! Your estate is loading...');
+    }
+});
+
+window.addEventListener('olivium:disconnected', () => {
+    currentUser = null;
+    document.getElementById('nav-identity-display').innerText = 'NOT CONNECTED';
+    document.getElementById('nav-tier-label').innerText = 'Guest Mode';
+    document.getElementById('connectBtn').innerText = 'Connect Profile';
+    showToast('Disconnected. Progress won\'t be saved to cloud.');
+});
+
+// ============================================================
+// CLOUD SAVE FUNCTIONS (using your existing sb client)
+// ============================================================
+
+async function saveGameToCloud() {
+    if (!currentUser || !sb) return;
+    
+    const walletId = currentUser.wallet;
+    
+    const saveData = {
+        wallet: walletId,
+        sol: state.sol,
+        seeds: state.seeds,
+        oil: state.oil,
+        hopper: state.hopper,
+        lifetimeSol: state.lifetimeSol,
+        treesPlanted: state.treesPlanted,
+        totalHarvests: state.totalHarvests,
+        comboRecord: state.comboRecord,
+        rareCount: state.rareCount,
+        trees: JSON.stringify(state.trees),
+        upgrades: JSON.stringify(state.upgrades),
+        skills: state.skills,
+        skillMultipliers: JSON.stringify(state.skillMultipliers),
+        mill: JSON.stringify(state.mill),
+        quest: JSON.stringify(state.quest),
+        achievements: JSON.stringify(state.achievements),
+        updated_at: new Date().toISOString()
+    };
+    
+    try {
+        const { error } = await sb
+            .from('game_saves')
+            .upsert(saveData, { onConflict: 'wallet' });
+        
+        if (error) console.error('Save error:', error);
+        else console.log('💾 Game saved to cloud');
+    } catch (err) {
+        console.error('Cloud save failed:', err);
+    }
+}
+
+async function loadGameFromCloud() {
+    if (!currentUser || !sb) return false;
+    
+    const walletId = currentUser.wallet;
+    
+    try {
+        const { data, error } = await sb
+            .from('game_saves')
+            .select('*')
+            .eq('wallet', walletId)
+            .maybeSingle();
+        
+        if (error || !data) {
+            console.log('No saved game found');
+            return false;
+        }
+        
+        // Load saved data
+        state.sol = data.sol;
+        state.seeds = data.seeds;
+        state.oil = data.oil;
+        state.hopper = data.hopper;
+        state.lifetimeSol = data.lifetimeSol;
+        state.treesPlanted = data.treesPlanted;
+        state.totalHarvests = data.totalHarvests;
+        state.comboRecord = data.comboRecord;
+        state.rareCount = data.rareCount;
+        state.trees = JSON.parse(data.trees);
+        state.upgrades = JSON.parse(data.upgrades);
+        state.skills = data.skills || [];
+        state.skillMultipliers = JSON.parse(data.skillMultipliers);
+        state.mill = JSON.parse(data.mill);
+        state.quest = JSON.parse(data.quest);
+        state.achievements = JSON.parse(data.achievements);
+        
+        // Apply skill multipliers from loaded skills
+        if (state.skills.includes('yield')) state.skillMultipliers.yield = 1.8;
+        if (state.skills.includes('speed')) state.skillMultipliers.speed = 2.5;
+        if (state.skills.includes('cold')) state.skillMultipliers.extraction = 1.6;
+        if (state.skills.includes('rare')) state.skillMultipliers.rare = 0.25;
+        
+        render();
+        log("🌿 Game loaded from cloud! Welcome back.");
+        return true;
+    } catch (err) {
+        console.error('Load error:', err);
+        return false;
+    }
+}
+
+// ============================================================
+// SHOW CONNECT MODAL (trigger your existing modal)
+// ============================================================
+
+function showConnectModal() {
+    // Trigger your existing connect modal
+    const connectModal = document.getElementById('connectModal');
+    if (connectModal) {
+        connectModal.style.display = 'flex';
+    } else {
+        // Fallback - your existing system might have its own way
+        const event = new CustomEvent('olivium:show-connect');
+        window.dispatchEvent(event);
+    }
+}
+
+function hideConnectModal() {
+    const connectModal = document.getElementById('connectModal');
+    if (connectModal) {
+        connectModal.style.display = 'none';
+    }
+}
+
+// ============================================================
+// GAME STATE (same as before)
 // ============================================================
 
 const state = {
@@ -20,6 +195,10 @@ const rarityIcons = {
     common: { icon: '🌳', bonus: 1.0, name: 'Common' },
     rare: { icon: '💎', bonus: 2.0, name: 'Rare' }
 };
+
+// ============================================================
+// GAME FUNCTIONS (all your existing functions go here)
+// ============================================================
 
 function getRarity() {
     let roll = Math.random();
@@ -46,30 +225,33 @@ function showToast(msg, isError = false) {
     setTimeout(() => toast.remove(), 2000);
 }
 
+function log(msg) {
+    const ledger = document.getElementById('ledger');
+    if (!ledger) return;
+    const entry = document.createElement('div');
+    entry.innerHTML = `> ${msg}`;
+    entry.className = 'opacity-60 pb-1';
+    ledger.prepend(entry);
+    if (ledger.children.length > 20) ledger.lastChild.remove();
+}
+
 function addCombo() {
     state.combo += 0.15;
     if (state.combo > state.comboRecord) state.comboRecord = state.combo;
-    document.getElementById('combo-display').innerHTML = `${state.combo.toFixed(1)}x`;
+    const comboDisplay = document.getElementById('combo-display');
+    if (comboDisplay) comboDisplay.innerHTML = `${state.combo.toFixed(1)}x`;
     clearTimeout(state.comboRef);
     state.comboRef = setTimeout(() => {
         state.combo = 1.0;
-        document.getElementById('combo-display').innerHTML = '1.0x';
+        if (comboDisplay) comboDisplay.innerHTML = '1.0x';
     }, 3000);
     if (state.comboRecord >= 5 && !state.achievements.comboKing) {
         state.achievements.comboKing = true;
         state.sol += 5;
         showToast("🏆 Combo King! +5 SOL");
         render();
+        if (currentUser) saveGameToCloud();
     }
-}
-
-function log(msg) {
-    const ledger = document.getElementById('ledger');
-    const entry = document.createElement('div');
-    entry.innerHTML = `> ${msg}`;
-    entry.className = 'opacity-60 pb-1';
-    ledger.prepend(entry);
-    if (ledger.children.length > 20) ledger.lastChild.remove();
 }
 
 function buyTree() {
@@ -86,6 +268,7 @@ function buyTree() {
     log(`🌱 Planted ${rarityIcons[rarity].name} tree`);
     render();
     checkAchievements();
+    if (currentUser) saveGameToCloud();
 }
 
 function interactTree(index) {
@@ -111,6 +294,7 @@ function interactTree(index) {
         showToast('💧 +30% Water');
     }
     render();
+    if (currentUser) saveGameToCloud();
 }
 
 function pressMill() {
@@ -132,6 +316,7 @@ function pressMill() {
         showToast(`+${oilYield.toFixed(1)}L Oil`);
     }
     render();
+    if (currentUser) saveGameToCloud();
 }
 
 function cleanMill() {
@@ -141,6 +326,7 @@ function cleanMill() {
     showToast("Mill cleaned!");
     log("🧼 Mill cleaned");
     render();
+    if (currentUser) saveGameToCloud();
 }
 
 function upgrade(type) {
@@ -151,6 +337,7 @@ function upgrade(type) {
     state.upgrades[type] = true;
     log(`✅ ${type} installed!`);
     render();
+    if (currentUser) saveGameToCloud();
 }
 
 function unlockSkill(skill) {
@@ -165,6 +352,7 @@ function unlockSkill(skill) {
     if (skill === 'rare') state.skillMultipliers.rare = 0.25;
     log(`✨ Unlocked ${skill.toUpperCase()}!`);
     render();
+    if (currentUser) saveGameToCloud();
 }
 
 function sellOil() {
@@ -177,6 +365,7 @@ function sellOil() {
     state.oil = 0;
     render();
     checkAchievements();
+    if (currentUser) saveGameToCloud();
 }
 
 function sprayGrove() {
@@ -186,6 +375,7 @@ function sprayGrove() {
     showToast("Pests removed!");
     log("🐛 Pest control applied");
     render();
+    if (currentUser) saveGameToCloud();
 }
 
 function prestige() {
@@ -204,6 +394,7 @@ function prestige() {
         for (let i = 0; i < 3; i++) buyTree();
         log("🔄 Estate liquidated! Ancient knowledge preserved.");
         render();
+        if (currentUser) saveGameToCloud();
     }
 }
 
@@ -245,7 +436,6 @@ function checkQuest() {
     }
 }
 
-// Game Loop
 function gameLoop() {
     state.trees.forEach(tree => {
         if (tree.health <= 0) return;
@@ -283,13 +473,18 @@ function marketCycle() {
     state.world.demand = demandLevels[Math.min(4, idx)];
     const trendPercent = (drift * 10).toFixed(1);
     const trendEl = document.getElementById('ui-trend');
-    trendEl.innerText = (drift >= 0 ? '+' : '') + trendPercent + '%';
-    trendEl.className = drift >= 0 ? 'text-xs text-green-500' : 'text-xs text-red-500';
-    document.getElementById('ui-demand').innerText = state.world.demand;
+    if (trendEl) {
+        trendEl.innerText = (drift >= 0 ? '+' : '') + trendPercent + '%';
+        trendEl.className = drift >= 0 ? 'text-xs text-green-500' : 'text-xs text-red-500';
+    }
+    const demandEl = document.getElementById('ui-demand');
+    if (demandEl) demandEl.innerText = state.world.demand;
     render();
 }
 
 function render() {
+    if (!document.getElementById('ui-sol')) return;
+    
     document.getElementById('ui-sol').innerText = state.sol.toFixed(2);
     document.getElementById('ui-oil').innerText = state.oil.toFixed(1);
     document.getElementById('ui-seeds').innerText = state.seeds;
@@ -301,8 +496,11 @@ function render() {
     document.getElementById('ui-level').innerText = Math.floor(state.lifetimeSol / 20) + 1;
     document.getElementById('tree-count').innerText = state.trees.length;
     document.getElementById('rare-count').innerText = state.rareCount;
-    document.getElementById('mash-bar').style.width = state.mill.mash + '%';
-    document.getElementById('gunk-bar').style.width = state.mill.gunk + '%';
+    
+    const mashBar = document.getElementById('mash-bar');
+    if (mashBar) mashBar.style.width = state.mill.mash + '%';
+    const gunkBar = document.getElementById('gunk-bar');
+    if (gunkBar) gunkBar.style.width = state.mill.gunk + '%';
     document.getElementById('mash-pct').innerHTML = state.mill.mash + '%';
     document.getElementById('gunk-pct').innerHTML = state.mill.gunk + '%';
     document.getElementById('quest-current').innerHTML = state.quest.current.toFixed(0);
@@ -329,6 +527,8 @@ function render() {
     document.getElementById('ui-season').innerHTML = seasonEmoji;
     
     const container = document.getElementById('grove-container');
+    if (!container) return;
+    
     container.innerHTML = '';
     state.trees.forEach((tree, idx) => {
         const isReady = tree.stage === 'mature';
@@ -355,42 +555,62 @@ function render() {
 // Panel Navigation
 function openPanel(panelId) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-    document.getElementById(`panel-${panelId}`).classList.add('open');
-    document.getElementById('panel-overlay').classList.add('active');
+    const panel = document.getElementById(`panel-${panelId}`);
+    if (panel) panel.classList.add('open');
+    const overlay = document.getElementById('panel-overlay');
+    if (overlay) overlay.classList.add('active');
 }
 
 function closePanel() {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-    document.getElementById('panel-overlay').classList.remove('active');
+    const overlay = document.getElementById('panel-overlay');
+    if (overlay) overlay.classList.remove('active');
 }
 
-// Event Listeners
-document.getElementById('plant-btn').onclick = () => buyTree();
-document.getElementById('spray-btn').onclick = () => sprayGrove();
-document.getElementById('sell-btn').onclick = () => sellOil();
-document.getElementById('fab-mill').onclick = () => pressMill();
+// ============================================================
+// INITIALIZATION
+// ============================================================
 
-document.querySelectorAll('.nav-item').forEach(item => {
-    item.onclick = () => openPanel(item.dataset.panel);
+document.addEventListener('DOMContentLoaded', () => {
+    // Set up event listeners
+    document.getElementById('plant-btn').onclick = () => buyTree();
+    document.getElementById('spray-btn').onclick = () => sprayGrove();
+    document.getElementById('sell-btn').onclick = () => sellOil();
+    document.getElementById('fab-mill').onclick = () => pressMill();
+    document.getElementById('connectBtn').onclick = showConnectModal;
+    document.getElementById('closeConnectModalBtn').onclick = hideConnectModal;
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.onclick = () => openPanel(item.dataset.panel);
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('connectModal').onclick = (e) => {
+        if (e.target === document.getElementById('connectModal')) hideConnectModal();
+    };
+    
+    window.game = { 
+        upgrade: (t) => { upgrade(t); closePanel(); }, 
+        unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
+        cleanMill, prestige, buyTree, sprayGrove, sellOil, pressMill 
+    };
+    window.closePanel = closePanel;
+    
+    // Check if already connected
+    checkAuthAndLoadGame();
+    
+    // Start game
+    for (let i = 0; i < 3; i++) buyTree();
+    setInterval(gameLoop, 2000);
+    setInterval(weatherCycle, 20000);
+    setInterval(marketCycle, 15000);
+    setInterval(() => { state.world.time = (state.world.time + 1) % 24; render(); }, 30000);
+    render();
+    log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
+    log("🔐 Click 'Connect Profile' to save your progress to the cloud!");
 });
 
-// Expose game for inline onclick
-window.game = { 
-    upgrade: (t) => { upgrade(t); closePanel(); }, 
-    unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
-    cleanMill, 
-    prestige, 
-    buyTree, 
-    sprayGrove, 
-    sellOil, 
-    pressMill 
-};
-
-// Initialize
-for (let i = 0; i < 3; i++) buyTree();
-setInterval(gameLoop, 2000);
-setInterval(weatherCycle, 20000);
-setInterval(marketCycle, 15000);
-setInterval(() => { state.world.time = (state.world.time + 1) % 24; render(); }, 30000);
-render();
-log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
+// Auto-save every 30 seconds
+setInterval(() => {
+    if (currentUser) saveGameToCloud();
+}, 30000);
