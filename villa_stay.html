@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium — Private Villa Estae Rewards</title>
+    <title>Olivium — Private Villa Estate Rewards</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -34,21 +34,214 @@
         [id^="card-tier-"] {
             transition: opacity 0.5s ease, border-color 0.3s ease;
         }
+
+        /* ========== CINEMATIC TEXT OVERLAY STYLES ========== */
+        .luxury-video-hero {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .luxury-video-hero video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.85) contrast(1.05) saturate(1.1);
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.5) 0%,
+                rgba(0, 0, 0, 0.3) 40%,
+                rgba(0, 0, 0, 0.6) 100%
+            );
+            pointer-events: none;
+        }
+
+        /* Letterbox bars for cinematic feel */
+        .cinematic-letterbox {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 8vh;
+            background: #000;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .cinematic-letterbox-top {
+            top: 0;
+        }
+
+        .cinematic-letterbox-bottom {
+            bottom: 0;
+        }
+
+        /* Cinematic text container */
+        .cinematic-text-container {
+            position: absolute;
+            bottom: 25%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 20;
+            padding: 0 20px;
+        }
+
+        .cinematic-line {
+            color: #fff;
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            line-height: 1.3;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Playfair Display', 'Georgia', serif;
+            margin-bottom: 20px;
+        }
+
+        .cinematic-line.active {
+            opacity: 1;
+        }
+
+        .cinematic-line.fade-out {
+            opacity: 0;
+        }
+
+        .cinematic-line.small {
+            font-size: clamp(1rem, 3vw, 1.8rem);
+            letter-spacing: 0.15em;
+            font-weight: 300;
+        }
+
+        /* Logo reveal at end of cinematic */
+        .cinematic-logo-reveal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            width: 100%;
+        }
+
+        .cinematic-logo-reveal.active {
+            opacity: 1;
+        }
+
+        .cinematic-logo-reveal h1 {
+            font-size: clamp(3rem, 10vw, 6rem);
+            color: #C5A059;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            margin-bottom: 20px;
+            font-family: 'Playfair Display', serif;
+            text-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
+        }
+
+        .cinematic-logo-reveal p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        /* Cinematic progress bar */
+        .cinematic-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 40;
+        }
+
+        .cinematic-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #C5A059;
+            transition: width linear;
+        }
+
+        /* Skip button */
+        .cinematic-skip {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cinematic-skip:hover {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-color: #C5A059;
+        }
+
+        /* Hide original hero content during cinematic */
+        .original-hero-content {
+            display: none;
+        }
     </style>
 </head>
 
 <body class="antialiased min-h-screen" style="background: radial-gradient(ellipse at top, rgba(30,35,20,0.4), #0c0e0a, #040503);">
 
     <!-- ═══════════════════════════════════════
-         VIDEO HERO
+         VIDEO HERO WITH CINEMATIC TEXT OVERLAY
     ════════════════════════════════════════ -->
-    <div class="luxury-video-hero">
-        <video autoplay loop muted playsinline aria-hidden="true"
+    <div class="luxury-video-hero" id="cinematicHero">
+        <video id="cinematicVideo" autoplay muted playsinline aria-hidden="true"
                poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
             <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
         </video>
         <div class="video-overlay"></div>
-        <div class="hero-content">
+        
+        <!-- Cinematic letterbox bars -->
+        <div class="cinematic-letterbox cinematic-letterbox-top"></div>
+        <div class="cinematic-letterbox cinematic-letterbox-bottom"></div>
+        
+        <!-- Cinematic text container -->
+        <div class="cinematic-text-container">
+            <div id="cinematicLine" class="cinematic-line"></div>
+        </div>
+        
+        <!-- Logo reveal -->
+        <div id="cinematicLogoReveal" class="cinematic-logo-reveal">
+            <h1>OLIVIUM</h1>
+            <p>Not an investment.<br>A place you return to.</p>
+        </div>
+        
+        <!-- Progress bar -->
+        <div class="cinematic-progress">
+            <div id="cinematicProgressFill" class="cinematic-progress-fill"></div>
+        </div>
+        
+        <!-- Skip button -->
+        <button id="cinematicSkipBtn" class="cinematic-skip">SKIP →</button>
+        
+        <!-- Original hero content (hidden during cinematic) -->
+        <div class="original-hero-content hero-content">
             <h1>Experience the Grove</h1>
             <p>A living testament to Tuscan heritage and digital stewardship.</p>
         </div>
@@ -56,11 +249,8 @@
 
     <!-- ═══════════════════════════════════════
          NAVIGATION
-         AUDIT: Single id="connectBtn". Previously the
-         inline script was also looking for "navConnectTriggerBtn"
-         which didn't exist — the disconnect handler was never wired.
     ════════════════════════════════════════ -->
-    <nav class="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-white/5">
+    <nav class="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-white/5 transition-all duration-500" id="mainNav" style="opacity:0;">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="font-serif text-xl font-bold text-white tracking-widest">
@@ -74,21 +264,11 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
-                    <!--
-                        AUDIT: nav-tier-label was being written by BOTH
-                        syncVillaUI() in the inline script AND updateNavUI() in the
-                        TS module. Whichever ran second "won", creating flicker.
-                        Now only renderUI() in stay.ts touches these.
-                    -->
                     <p id="nav-tier-label"
                        class="text-[8px] text-stone-500 uppercase tracking-widest">Guest Mode</p>
                     <p id="nav-identity-display"
                        class="text-[10px] text-[#C5A059] font-mono uppercase tracking-wider">NOT CONNECTED</p>
                 </div>
-                <!--
-                    AUDIT: Button click handler is wired in stay.ts setupConnectButton().
-                    No onclick attribute, no inline JS, no duplicate handlers.
-                -->
                 <button id="connectBtn"
                         class="bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95">
                     Connect Profile
@@ -98,149 +278,11 @@
     </nav>
 
     <!-- ═══════════════════════════════════════
-         CONNECT MODAL
-         AUDIT: closeConnectModal() was a global function defined in
-         the inline script. Removed onclick attribute; wired via
-         setupModals() in stay.ts using id="closeConnectModalBtn".
+         MAIN CONTENT (hidden until cinematic ends)
     ════════════════════════════════════════ -->
-    <div class="modal-overlay" id="connectModal" style="display:none;">
-        <div class="max-w-md w-full tech-card p-8 rounded-3xl text-center relative overflow-hidden mx-4">
-            <div class="relative z-10">
-                <button id="closeConnectModalBtn"
-                        class="absolute -top-2 right-0 text-xl font-mono text-stone-500 hover:text-white transition">&times;</button>
-                <span class="text-3xl mb-3 block">🌿</span>
-                <h2 class="font-serif text-2xl font-bold mb-2 text-white">Connect to Olivium</h2>
-                <p class="text-xs text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
-
-                <div class="space-y-4 text-left">
-                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
-                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
-                            <span>◎ Wallet Authentication</span>
-                            <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono">Web3</span>
-                        </div>
-                        <p class="text-[11px] text-stone-400 mb-3">
-                            Resolve direct web3 asset holdings instantly using your browser extension.
-                        </p>
-                        <button id="connectWalletBtn"
-                                class="w-full bg-[#5a7a2b] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#6b8e36] transition-colors">
-                            Connect Phantom / Solana
-                        </button>
-                    </div>
-
-                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
-                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
-                            <span>✉ Custodial Profile Access</span>
-                            <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">Secure MFA</span>
-                        </div>
-                        <p class="text-[11px] text-stone-400 mb-3">
-                            Authorize using your traditional off-chain email profile.
-                        </p>
-                        <button id="emailLoginBtn"
-                                class="w-full bg-stone-800 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-stone-700 border border-white/5 transition-colors">
-                            Continue with Email
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════
-         AUTH MODAL (Email Login / Signup)
-         AUDIT: Previously had its own inline password validation
-         AND a duplicate in stay.ts. Now handled exclusively in stay.ts.
-         The "verifyLoginOtp" handler previously used a hardcoded
-         fallback wallet address — that is gone.
-    ════════════════════════════════════════ -->
-    <div id="authModalOverlay" class="modal-overlay" style="display:none;">
-        <div class="max-w-md w-full tech-card rounded-3xl relative overflow-hidden mx-4">
-            <button id="closeAuthModal"
-                    class="absolute top-4 right-5 text-xl font-mono text-stone-400 hover:text-white z-20">&times;</button>
-
-            <div class="p-8 relative z-10">
-                <h2 class="font-serif text-center font-bold text-2xl text-white mb-4">Identity Gateway</h2>
-
-                <div class="flex mb-6 bg-black/40 p-1 rounded-xl border border-white/5">
-                    <button id="loginTab"
-                            class="flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all"
-                            style="background:#C5A059;color:#000;">Login</button>
-                    <button id="signupTab"
-                            class="flex-1 py-2 text-center text-xs font-bold rounded-lg bg-transparent text-stone-400 transition-all">Signup</button>
-                </div>
-
-                <!-- LOGIN FORM -->
-                <form id="loginForm" onsubmit="return false;" class="space-y-3">
-                    <input id="loginEmail" type="email" placeholder="Email Address"
-                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
-                    <input id="loginPassword" type="password" placeholder="Access Password"
-                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
-                    <button id="loginBtn" type="button"
-                            class="w-full bg-[#C5A059] text-black font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest hover:bg-amber-500 transition-all">
-                        Request Token Gate
-                    </button>
-                    <div class="hidden pt-4 border-t border-dashed border-white/10" id="loginOtpBox">
-                        <input id="loginOtp" placeholder="6-Digit MFA Code"
-                               class="w-full tracking-[0.25em] bg-black/50 border-2 border-[#C5A059] rounded-xl p-3 text-center text-lg font-bold font-mono focus:outline-none"
-                               maxlength="6" inputmode="numeric">
-                        <button id="verifyLoginOtp" type="button"
-                                class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white font-bold py-3 rounded-xl mt-3 text-xs uppercase tracking-wider transition-all">
-                            Confirm Entry
-                        </button>
-                    </div>
-                </form>
-
-                <!-- SIGNUP FORM -->
-                <form id="signupForm" onsubmit="return false;" class="hidden space-y-3">
-                    <input id="signupEmail" type="email" placeholder="Identity Email Address"
-                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
-                    <input id="signupPassword" type="password" placeholder="Security Password"
-                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
-
-                    <div id="passwordMetricsBox"
-                         class="bg-black/50 border border-white/5 p-3 rounded-xl text-[11px] leading-relaxed font-mono">
-                        <p class="font-bold text-stone-400 mb-1.5 uppercase tracking-wide text-[9px]">Password Requirements:</p>
-                        <div class="grid grid-cols-2 gap-x-3 gap-y-1">
-                            <div id="metric-len" class="text-red-400"><span class="icon">❌</span> Min 6 Chars</div>
-                            <div id="metric-cap" class="text-red-400"><span class="icon">❌</span> Uppercase</div>
-                            <div id="metric-low" class="text-red-400"><span class="icon">❌</span> Lowercase</div>
-                            <div id="metric-num" class="text-red-400"><span class="icon">❌</span> Number</div>
-                            <div id="metric-spe" class="text-red-400"><span class="icon">❌</span> Special Char</div>
-                        </div>
-                    </div>
-
-                    <input id="signupConfirmPassword" type="password" placeholder="Confirm Password"
-                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
-                    <button id="signupBtn" type="button" disabled
-                            class="w-full font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all cursor-not-allowed"
-                            style="background:rgb(68,64,60);color:rgb(168,162,158);">
-                        Initialize Account
-                    </button>
-
-                    <!-- QR Container -->
-                    <div id="qr" class="hidden mt-4 justify-center bg-white p-3 rounded-2xl border-4 border-emerald-600/20 max-w-[180px] mx-auto"></div>
-
-                    <div class="hidden pt-4 border-t border-dashed border-white/10" id="signupOtpBox">
-                        <input id="signupOtp" placeholder="Authenticator Passcode"
-                               class="w-full bg-black/50 rounded-xl p-3 text-center text-base font-bold font-mono tracking-widest focus:outline-none"
-                               maxlength="6" inputmode="numeric">
-                        <button id="verifySignupOtp" type="button"
-                                class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white font-bold py-3 rounded-xl mt-3 text-xs uppercase tracking-wider transition-all">
-                            Verify & Initialize
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Single status message element for auth flows -->
-                <div id="msg" class="mt-4 text-center text-xs font-mono font-bold min-h-[16px]"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════
-         MAIN CONTENT
-    ════════════════════════════════════════ -->
-    <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative">
-
+    <main id="mainContent" class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative" style="opacity:0; transition: opacity 1s ease;">
+        <!-- Rest of your main content remains exactly the same -->
+        
         <!-- HERO STATS -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16 relative z-10">
             <div class="lg:col-span-7">
@@ -261,11 +303,6 @@
             <div class="lg:col-span-5 grid grid-cols-2 gap-4 w-full">
                 <div class="tech-card p-6 rounded-2xl relative overflow-hidden">
                     <p class="text-[10px] text-stone-500 uppercase tracking-widest mb-1 font-bold">Trees Adopted</p>
-                    <!--
-                        AUDIT: shares-count-display innerHTML is written only by
-                        renderUI() in stay.ts. Previously also touched by updateMainUI()
-                        in the TS module AND syncVillaUI() in the inline script.
-                    -->
                     <p id="shares-count-display" class="font-serif text-3xl text-white font-bold">
                         0 <span class="text-xs text-[#C5A059] font-mono block mt-1">Minole Detected</span>
                     </p>
@@ -313,11 +350,7 @@
                         </div>
                     </div>
 
-                    <!-- TIER CARDS
-                         AUDIT: card-tier-4 was never activated in the original code —
-                         opacity logic only handled tiers 1-3.
-                         All 4 tiers now handled correctly in renderUI().
-                    -->
+                    <!-- TIER CARDS -->
                     <div class="space-y-4">
 
                         <!-- Seed Supporter -->
@@ -385,7 +418,7 @@
                                     <div class="flex items-start justify-between gap-4">
                                         <div>
                                             <h4 class="font-bold text-white text-sm">Grove Patron</h4>
-                                            <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€10,000 · ~85 TFull ree Adoptions</p>
+                                            <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€10,000 · ~85 Full Tree Adoptions</p>
                                         </div>
                                         <span class="px-2 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20 text-[8px] uppercase tracking-widest text-[#C5A059] font-bold">Premium</span>
                                     </div>
@@ -444,24 +477,12 @@
                         Select your travel window below. Patron profiles override standard pricing.
                     </p>
 
-                    <!--
-                        AUDIT: This form previously had TWO event listeners attached
-                        via two separate <script> blocks at the bottom of the page.
-                        Both ran, both submitted, both set bookingMsg. The second
-                        also reset the form before the first could complete its async delay.
-                        Fixed: one listener in stay.ts setupBookingForm().
-                    -->
                     <form id="bookingNotificationForm" onsubmit="return false;" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="md:col-span-2">
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2 font-mono">
                                     Select Booking Window
                                 </label>
-                                <!--
-                                    AUDIT: flatpickr was initialized twice (once per duplicate script block).
-                                    This caused two onChange handlers fighting over selectedDateRangeString.
-                                    Now initialized once in stay.ts setupBookingForm().
-                                -->
                                 <input type="text" id="dateRangePicker"
                                        placeholder="Arrival &amp; Departure"
                                        class="w-full rounded-xl p-3 text-sm font-mono" required>
@@ -586,8 +607,8 @@
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="border-t border-white/5 py-12 text-center opacity-40">
+    <!-- FOOTER (hidden initially) -->
+    <footer id="mainFooter" class="border-t border-white/5 py-12 text-center opacity-40" style="opacity:0; transition: opacity 1s ease;">
         <p class="font-serif text-sm italic">Digital Stewardship &amp; Tuscan Heritage</p>
         <p class="font-mono text-[8px] mt-2 tracking-widest text-[#C5A059] uppercase">
             Smart Contract Architecture: 0x4f…92a
@@ -600,23 +621,290 @@
         </div>
     </footer>
 
-    <!--
-        AUDIT: flatpickr script loaded ONCE here (was loaded twice, matching the two script blocks).
-        No inline scripts below this point. All logic is in stay.ts.
-    -->
+    <!-- Connect Modal -->
+    <div class="modal-overlay" id="connectModal" style="display:none;">
+        <div class="max-w-md w-full tech-card p-8 rounded-3xl text-center relative overflow-hidden mx-4">
+            <div class="relative z-10">
+                <button id="closeConnectModalBtn"
+                        class="absolute -top-2 right-0 text-xl font-mono text-stone-500 hover:text-white transition">&times;</button>
+                <span class="text-3xl mb-3 block">🌿</span>
+                <h2 class="font-serif text-2xl font-bold mb-2 text-white">Connect to Olivium</h2>
+                <p class="text-xs text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
+
+                <div class="space-y-4 text-left">
+                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                            <span>◎ Wallet Authentication</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono">Web3</span>
+                        </div>
+                        <p class="text-[11px] text-stone-400 mb-3">
+                            Resolve direct web3 asset holdings instantly using your browser extension.
+                        </p>
+                        <button id="connectWalletBtn"
+                                class="w-full bg-[#5a7a2b] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#6b8e36] transition-colors">
+                            Connect Phantom / Solana
+                        </button>
+                    </div>
+
+                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                            <span>✉ Custodial Profile Access</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">Secure MFA</span>
+                        </div>
+                        <p class="text-[11px] text-stone-400 mb-3">
+                            Authorize using your traditional off-chain email profile.
+                        </p>
+                        <button id="emailLoginBtn"
+                                class="w-full bg-stone-800 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-stone-700 border border-white/5 transition-colors">
+                            Continue with Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModalOverlay" class="modal-overlay" style="display:none;">
+        <div class="max-w-md w-full tech-card rounded-3xl relative overflow-hidden mx-4">
+            <button id="closeAuthModal"
+                    class="absolute top-4 right-5 text-xl font-mono text-stone-400 hover:text-white z-20">&times;</button>
+
+            <div class="p-8 relative z-10">
+                <h2 class="font-serif text-center font-bold text-2xl text-white mb-4">Identity Gateway</h2>
+
+                <div class="flex mb-6 bg-black/40 p-1 rounded-xl border border-white/5">
+                    <button id="loginTab"
+                            class="flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all"
+                            style="background:#C5A059;color:#000;">Login</button>
+                    <button id="signupTab"
+                            class="flex-1 py-2 text-center text-xs font-bold rounded-lg bg-transparent text-stone-400 transition-all">Signup</button>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <form id="loginForm" onsubmit="return false;" class="space-y-3">
+                    <input id="loginEmail" type="email" placeholder="Email Address"
+                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <input id="loginPassword" type="password" placeholder="Access Password"
+                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <button id="loginBtn" type="button"
+                            class="w-full bg-[#C5A059] text-black font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest hover:bg-amber-500 transition-all">
+                        Request Token Gate
+                    </button>
+                    <div class="hidden pt-4 border-t border-dashed border-white/10" id="loginOtpBox">
+                        <input id="loginOtp" placeholder="6-Digit MFA Code"
+                               class="w-full tracking-[0.25em] bg-black/50 border-2 border-[#C5A059] rounded-xl p-3 text-center text-lg font-bold font-mono focus:outline-none"
+                               maxlength="6" inputmode="numeric">
+                        <button id="verifyLoginOtp" type="button"
+                                class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white font-bold py-3 rounded-xl mt-3 text-xs uppercase tracking-wider transition-all">
+                            Confirm Entry
+                        </button>
+                    </div>
+                </form>
+
+                <!-- SIGNUP FORM -->
+                <form id="signupForm" onsubmit="return false;" class="hidden space-y-3">
+                    <input id="signupEmail" type="email" placeholder="Identity Email Address"
+                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <input id="signupPassword" type="password" placeholder="Security Password"
+                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+
+                    <div id="passwordMetricsBox"
+                         class="bg-black/50 border border-white/5 p-3 rounded-xl text-[11px] leading-relaxed font-mono">
+                        <p class="font-bold text-stone-400 mb-1.5 uppercase tracking-wide text-[9px]">Password Requirements:</p>
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                            <div id="metric-len" class="text-red-400"><span class="icon">❌</span> Min 6 Chars</div>
+                            <div id="metric-cap" class="text-red-400"><span class="icon">❌</span> Uppercase</div>
+                            <div id="metric-low" class="text-red-400"><span class="icon">❌</span> Lowercase</div>
+                            <div id="metric-num" class="text-red-400"><span class="icon">❌</span> Number</div>
+                            <div id="metric-spe" class="text-red-400"><span class="icon">❌</span> Special Char</div>
+                        </div>
+                    </div>
+
+                    <input id="signupConfirmPassword" type="password" placeholder="Confirm Password"
+                           class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <button id="signupBtn" type="button" disabled
+                            class="w-full font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all cursor-not-allowed"
+                            style="background:rgb(68,64,60);color:rgb(168,162,158);">
+                        Initialize Account
+                    </button>
+
+                    <!-- QR Container -->
+                    <div id="qr" class="hidden mt-4 justify-center bg-white p-3 rounded-2xl border-4 border-emerald-600/20 max-w-[180px] mx-auto"></div>
+
+                    <div class="hidden pt-4 border-t border-dashed border-white/10" id="signupOtpBox">
+                        <input id="signupOtp" placeholder="Authenticator Passcode"
+                               class="w-full bg-black/50 rounded-xl p-3 text-center text-base font-bold font-mono tracking-widest focus:outline-none"
+                               maxlength="6" inputmode="numeric">
+                        <button id="verifySignupOtp" type="button"
+                                class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white font-bold py-3 rounded-xl mt-3 text-xs uppercase tracking-wider transition-all">
+                            Verify & Initialize
+                        </button>
+                    </div>
+                </form>
+
+                <div id="msg" class="mt-4 text-center text-xs font-mono font-bold min-h-[16px]"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <!-- Cinematic Sequence Script -->
+    <script>
+        // Cinematic narrative sequence
+        const cinematicNarrative = [
+            { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 4000, small: false },
+            { text: "Adopt one or more of these trees.", duration: 3500, small: false },
+            { text: "Rooted in nature.<br>Growing for generations.", duration: 4000, small: false },
+            { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 6000, small: true },
+            { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 5000, small: true }
+        ];
 
-    <!--
-        AUDIT: Removed the two competing inline <script> blocks that were:
-          1. Attaching duplicate submitBookingBtn click listeners
-          2. Calling flatpickr() twice on #dateRangePicker
-          3. Containing a syncVillaUI() that raced with updateNavUI() in the TS module
-          4. Using a hardcoded custodial wallet "D6xZ8A29g..." as email login fallback
-          5. Referencing "navConnectTriggerBtn" (wrong ID) for the disconnect handler
-          6. Dispatching 'solana:connection-complete' from disconnect (a connect event)
+        let currentIndex = 0;
+        let currentTimeout = null;
+        let progressInterval = null;
+        let isPlaying = true;
 
-        All that logic now lives in stay.ts as the single authority.
-    -->
+        const textDisplay = document.getElementById('cinematicLine');
+        const logoReveal = document.getElementById('cinematicLogoReveal');
+        const progressFill = document.getElementById('cinematicProgressFill');
+        const skipBtn = document.getElementById('cinematicSkipBtn');
+        const cinematicHero = document.getElementById('cinematicHero');
+        const mainContent = document.getElementById('mainContent');
+        const mainNav = document.getElementById('mainNav');
+        const mainFooter = document.getElementById('mainFooter');
+        const video = document.getElementById('cinematicVideo');
+
+        function showCinematicText(index) {
+            if (!isPlaying) return;
+            
+            if (index >= cinematicNarrative.length) {
+                showLogoAndRevealContent();
+                return;
+            }
+
+            const item = cinematicNarrative[index];
+            textDisplay.innerHTML = item.text;
+            textDisplay.className = `cinematic-line ${item.small ? 'small' : ''}`;
+            
+            void textDisplay.offsetWidth;
+            textDisplay.classList.add('active');
+            
+            startCinematicProgress(item.duration);
+            
+            currentTimeout = setTimeout(() => {
+                textDisplay.classList.remove('active');
+                textDisplay.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    textDisplay.classList.remove('fade-out');
+                    currentIndex++;
+                    showCinematicText(currentIndex);
+                }, 800);
+            }, item.duration);
+        }
+
+        function startCinematicProgress(duration) {
+            if (progressInterval) clearInterval(progressInterval);
+            
+            progressFill.style.width = '0%';
+            const startTimeProgress = Date.now();
+            
+            progressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTimeProgress;
+                const percent = (elapsed / duration) * 100;
+                
+                if (percent >= 100) {
+                    clearInterval(progressInterval);
+                    progressFill.style.width = '100%';
+                } else {
+                    progressFill.style.width = `${percent}%`;
+                }
+            }, 16);
+        }
+
+        function showLogoAndRevealContent() {
+            if (currentTimeout) clearTimeout(currentTimeout);
+            if (progressInterval) clearInterval(progressInterval);
+            
+            textDisplay.classList.remove('active');
+            textDisplay.classList.add('fade-out');
+            
+            setTimeout(() => {
+                textDisplay.style.display = 'none';
+                logoReveal.classList.add('active');
+                progressFill.style.width = '100%';
+                
+                // Reveal main content after logo animation
+                setTimeout(() => {
+                    cinematicHero.style.opacity = '0';
+                    cinematicHero.style.transition = 'opacity 1s ease';
+                    setTimeout(() => {
+                        cinematicHero.style.display = 'none';
+                        mainContent.style.opacity = '1';
+                        mainNav.style.opacity = '1';
+                        if (mainFooter) mainFooter.style.opacity = '0.4';
+                        document.body.style.overflow = 'auto';
+                    }, 1000);
+                }, 2000);
+            }, 800);
+        }
+
+        function skipCinematic() {
+            isPlaying = false;
+            if (currentTimeout) clearTimeout(currentTimeout);
+            if (progressInterval) clearInterval(progressInterval);
+            
+            textDisplay.classList.remove('active');
+            textDisplay.classList.add('fade-out');
+            
+            setTimeout(() => {
+                textDisplay.style.display = 'none';
+                logoReveal.classList.add('active');
+                progressFill.style.width = '100%';
+                
+                setTimeout(() => {
+                    cinematicHero.style.opacity = '0';
+                    cinematicHero.style.transition = 'opacity 0.8s ease';
+                    setTimeout(() => {
+                        cinematicHero.style.display = 'none';
+                        mainContent.style.opacity = '1';
+                        mainNav.style.opacity = '1';
+                        if (mainFooter) mainFooter.style.opacity = '0.4';
+                        document.body.style.overflow = 'auto';
+                    }, 800);
+                }, 500);
+            }, 300);
+        }
+
+        skipBtn.addEventListener('click', skipCinematic);
+        
+        // Optional: Click anywhere on video to skip
+        cinematicHero.addEventListener('click', (e) => {
+            if (e.target === cinematicHero || e.target === video) {
+                skipCinematic();
+            }
+        });
+        
+        video.addEventListener('canplay', () => {
+            showCinematicText(0);
+        });
+        
+        if (video.readyState >= 3) {
+            showCinematicText(0);
+        }
+
+        // Prevent scroll during cinematic
+        document.body.style.overflow = 'hidden';
+        
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (currentTimeout) clearTimeout(currentTimeout);
+            if (progressInterval) clearInterval(progressInterval);
+        });
+    </script>
+
     <script type="module" src="./src/stay.ts"></script>
 
 </body>
