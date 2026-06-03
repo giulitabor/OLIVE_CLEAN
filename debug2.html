@@ -1,144 +1,394 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>OLIVIUM — FULL SYNC TRACE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://bundle.run/buffer@6.0.3"></script>
-    <style>
-        body { background: #0c0a09; color: #e7e5e4; font-family: 'Courier New', monospace; }
-        .card { background: #1c1917; border: 1px solid #333; padding: 16px; border-radius: 12px; margin-bottom: 12px; }
-        .match-ok { border-left: 4px solid #10b981; }
-        .match-fail { border-left: 4px solid #f59e0b; }
-        .error-crit { border-left: 4px solid #ef4444; background: #2d1616; }
-        .stat-label { color: #a8a29e; font-size: 0.75rem; text-transform: uppercase; }
-        .stat-val { color: #10b981; font-weight: bold; font-size: 1rem; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olivin — Cinematic Story</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinema', 'Playfair Display', 'Georgia', serif;
+      overflow: hidden;
+      background: #0a0f0a;
+    }
+
+    /* Cinematic container */
+    .cinematic-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Video background */
+    #bgVideo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: translate(-50%, -50%);
+      filter: brightness(0.85) contrast(1.05) saturate(1.1);
+    }
+
+    /* Dark gradient overlay for cinematic feel */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.2) 30%,
+        rgba(0, 0, 0, 0.5) 70%,
+        rgba(0, 0, 0, 0.7) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* Letterbox bars (cinematic aspect ratio) */
+    .letterbox {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 8vh;
+      background: #000;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .letterbox-top {
+      top: 0;
+    }
+
+    .letterbox-bottom {
+      bottom: 0;
+    }
+
+    /* Text container */
+    .text-container {
+      position: absolute;
+      bottom: 20%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      z-index: 20;
+      padding: 0 20px;
+    }
+
+    .cinematic-text {
+      color: #fff;
+      font-size: clamp(1.5rem, 5vw, 3rem);
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      line-height: 1.3;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Playfair Display', 'Georgia', serif;
+    }
+
+    .cinematic-text.active {
+      opacity: 1;
+    }
+
+    .cinematic-text.fade-out {
+      opacity: 0;
+    }
+
+    /* Small subtitle style */
+    .cinematic-text.small {
+      font-size: clamp(1rem, 3vw, 1.8rem);
+      letter-spacing: 0.15em;
+      font-weight: 300;
+    }
+
+    /* Logo reveal at the end */
+    .logo-reveal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .logo-reveal.active {
+      opacity: 1;
+    }
+
+    .logo-reveal h1 {
+      font-size: clamp(3rem, 10vw, 6rem);
+      color: #d4af37;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      margin-bottom: 20px;
+      font-family: 'Cinema', 'Playfair Display', serif;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+    }
+
+    .logo-reveal p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+      letter-spacing: 0.1em;
+      font-weight: 300;
+    }
+
+    /* Progress indicator (cinematic timeline) */
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      z-index: 40;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #d4af37;
+      transition: width linear;
+    }
+
+    /* Skip button */
+    .skip-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      color: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .skip-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-color: #d4af37;
+    }
+
+    /* Animation for fade-in effect */
+    @keyframes subtleGlow {
+      0% { text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5); }
+      100% { text-shadow: 0 2px 40px rgba(212, 175, 55, 0.3); }
+    }
+
+    .cinematic-text.active {
+      animation: subtleGlow 2s ease-out;
+    }
+  </style>
 </head>
-<body class="p-8">
-    <div class="max-w-5xl mx-auto">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-emerald-500">Full System Sync Trace</h1>
-            <p class="text-stone-500 italic">Validating Blockchain &lt;-&gt; Supabase alignment</p>
-        </header>
+<body>
+  <div class="cinematic-container">
+    <!-- Video background - replace with your actual video URL -->
+    <video id="bgVideo" autoplay muted playsinline>
+      <source src="https://assets.mixkit.co/videos/39719/39719-720.mp4" type="video/mp4">
+      <!-- Replace with your Tuscany hills video -->
+      Your browser does not support the video tag.
+    </video>
 
-        <div class="flex gap-4 mb-8">
-            <button onclick="runFullTrace()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-xl font-bold transition flex items-center gap-2">
-                <span>🔍</span> RUN FULL ALIGNMENT CHECK
-            </button>
-        </div>
+    <!-- Cinematic overlays -->
+    <div class="overlay"></div>
+    <div class="letterbox letterbox-top"></div>
+    <div class="letterbox letterbox-bottom"></div>
 
-        <div id="output" class="space-y-4">
-            <div class="card text-stone-500">Ready for diagnostic...</div>
-        </div>
+    <!-- Text container -->
+    <div class="text-container">
+      <div id="textDisplay" class="cinematic-text"></div>
     </div>
 
-    <script type="module">
-        import * as web3 from "https://esm.sh/@solana/web3.js";
-        import * as anchor from "https://esm.sh/@coral-xyz/anchor";
+    <!-- Logo reveal -->
+    <div id="logoReveal" class="logo-reveal">
+      <h1>OLIVIN</h1>
+      <p>Not an investment.<br>A place you return to.</p>
+    </div>
 
-        window.Buffer = window.buffer.Buffer;
+    <!-- Progress bar -->
+    <div class="progress-bar">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
 
-        const PROGRAM_ID_STR = "9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV";
-        const RPC_URL = "http://localhost:8899";
-        const output = document.getElementById('output');
+    <!-- Skip button -->
+    <button class="skip-btn" id="skipBtn">SKIP →</button>
+  </div>
 
-        const printCard = (html, type = '') => {
-            const div = document.createElement('div');
-            div.className = `card ${type}`;
-            div.innerHTML = html;
-            output.appendChild(div);
-        };
+  <script>
+    // Cinematic narrative sequence
+    const narrative = [
+      { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 4000, small: false },
+      { text: "Adopt one or more of these trees.", duration: 3500, small: false },
+      { text: "Rooted in nature.<br>Growing for generations.", duration: 4000, small: false },
+      { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 6000, small: true },
+      { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 5000, small: true }
+    ];
 
-        window.runFullTrace = async () => {
-            output.innerHTML = "";
+    let currentIndex = 0;
+    let currentTimeout = null;
+    let startTime = null;
+    let progressInterval = null;
+    let isPlaying = true;
 
-            // 🛠️ HANDSHAKE FIX: Try to get sb from window or wait for connection.ts
-            let activeSb = window._sb || window.sb;
+    const textDisplay = document.getElementById('textDisplay');
+    const logoReveal = document.getElementById('logoReveal');
+    const progressFill = document.getElementById('progressFill');
+    const skipBtn = document.getElementById('skipBtn');
+    const video = document.getElementById('bgVideo');
 
-            if (!activeSb) {
-                printCard("⏳ Supabase not found in window. Attempting to initialize connection...", "text-amber-400");
-                try {
-                    // Try to trigger the connection logic if it's available
-                    if (window.connectWallet) await window.connectWallet(true);
-                    activeSb = window._sb || window.sb;
-                } catch (e) { console.error("Auto-init failed", e); }
-            }
+    // Function to show text with fade effect
+    function showText(index) {
+      if (!isPlaying) return;
+      
+      if (index >= narrative.length) {
+        // End of narrative - show logo
+        showLogo();
+        return;
+      }
 
-            if (!activeSb) {
-                printCard("❌ CRITICAL: Supabase client not found. Ensure connection.ts is running and window._sb is set.", "error-crit");
-                return;
-            }
+      const item = narrative[index];
+      textDisplay.innerHTML = item.text;
+      textDisplay.className = `cinematic-text ${item.small ? 'small' : ''}`;
+      
+      // Trigger reflow then add active class for fade in
+      void textDisplay.offsetWidth;
+      textDisplay.classList.add('active');
+      
+      // Start progress bar animation
+      startProgressBar(item.duration);
+      
+      // Schedule fade out and next text
+      currentTimeout = setTimeout(() => {
+        // Fade out current text
+        textDisplay.classList.remove('active');
+        textDisplay.classList.add('fade-out');
+        
+        // Move to next text after fade out completes
+        setTimeout(() => {
+          textDisplay.classList.remove('fade-out');
+          currentIndex++;
+          showText(currentIndex);
+        }, 800);
+      }, item.duration);
+    }
 
-            try {
-                const connection = new web3.Connection(RPC_URL, "confirmed");
-                const wallet = window.solana || window.phantom?.solana;
-                if (!wallet.publicKey) await wallet.connect();
+    // Start progress bar animation
+    function startProgressBar(duration) {
+      if (progressInterval) clearInterval(progressInterval);
+      
+      progressFill.style.width = '0%';
+      const startTimeProgress = Date.now();
+      
+      progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTimeProgress;
+        const percent = (elapsed / duration) * 100;
+        
+        if (percent >= 100) {
+          clearInterval(progressInterval);
+          progressFill.style.width = '100%';
+        } else {
+          progressFill.style.width = `${percent}%`;
+        }
+      }, 16); // ~60fps
+    }
 
-                const idl = {
-                    "version": "0.1.0", "name": "olivium_dao", "address": PROGRAM_ID_STR,
-                    "instructions": [{ "name": "dummy", "discriminator": [0,0,0,0,0,0,0,0], "accounts": [], "args": [] }],
-                    "accounts": [
-                        { "name": "ProtocolConfig", "discriminator": [207, 91, 250, 28, 152, 179, 215, 209] },
-                        { "name": "Tree", "discriminator": [100, 9, 213, 154, 6, 136, 109, 55] },
-                        { "name": "SharePosition", "discriminator": [239, 228, 59, 88, 149, 73, 218, 15] }
-                    ],
-                    "types": [
-                        { "name": "ProtocolConfig", "type": { "kind": "struct", "fields": [
-                            { "name": "authority", "type": "pubkey" }, { "name": "treasury", "type": "pubkey" },
-                            { "name": "sharePriceLamports", "type": "u64" }, { "name": "totalTrees", "type": "u32" }
-                        ]}},
-                        { "name": "Tree", "type": { "kind": "struct", "fields": [
-                            { "name": "treeId", "type": "string" }, { "name": "name", "type": "string" },
-                            { "name": "variety", "type": "string" }, { "name": "sharesSold", "type": "u64" }
-                        ]}},
-                        { "name": "SharePosition", "type": { "kind": "struct", "fields": [
-                            { "name": "owner", "type": "pubkey" }, { "name": "treeId", "type": "string" }, { "name": "sharesOwned", "type": "u64" }
-                        ]}}
-                    ]
-                };
+    // Show logo reveal
+    function showLogo() {
+      // Clear any remaining timeouts
+      if (currentTimeout) clearTimeout(currentTimeout);
+      if (progressInterval) clearInterval(progressInterval);
+      
+      // Fade out text
+      textDisplay.classList.remove('active');
+      textDisplay.classList.add('fade-out');
+      
+      // Show logo with cinematic fade
+      setTimeout(() => {
+        textDisplay.style.display = 'none';
+        logoReveal.classList.add('active');
+        progressFill.style.width = '100%';
+      }, 800);
+    }
 
-                const provider = new anchor.AnchorProvider(connection, wallet, {});
-                const program = new anchor.Program(idl, provider);
+    // Skip to end
+    function skipToEnd() {
+      isPlaying = false;
+      
+      // Clear all timers
+      if (currentTimeout) clearTimeout(currentTimeout);
+      if (progressInterval) clearInterval(progressInterval);
+      
+      // Immediately fade out text and show logo
+      textDisplay.classList.remove('active');
+      textDisplay.classList.add('fade-out');
+      
+      setTimeout(() => {
+        textDisplay.style.display = 'none';
+        logoReveal.classList.add('active');
+        progressFill.style.width = '100%';
+      }, 300);
+    }
 
-                // Parallel Fetch
-                const [allTrees, allPositions, { data: sbTrees, error: sbError }] = await Promise.all([
-                    program.account.tree.all(),
-                    program.account.sharePosition.all(),
-                    activeSb.from('tree_metadata').select('*')
-                ]);
+    // Reset and replay the sequence
+    function replaySequence() {
+      isPlaying = true;
+      currentIndex = 0;
+      textDisplay.style.display = 'block';
+      logoReveal.classList.remove('active');
+      textDisplay.classList.remove('active', 'fade-out');
+      
+      // Clear any existing timers
+      if (currentTimeout) clearTimeout(currentTimeout);
+      if (progressInterval) clearInterval(progressInterval);
+      
+      // Start from beginning
+      showText(0);
+    }
 
-                if (sbError) throw new Error("Supabase Error: " + sbError.message);
+    // Event listeners
+    skipBtn.addEventListener('click', skipToEnd);
+    
+    // Optional: Click anywhere to skip (cinematic convention)
+    document.body.addEventListener('click', skipToEnd);
+    
+    // Start the sequence when video can play
+    video.addEventListener('canplay', () => {
+      showText(0);
+    });
+    
+    // If video is already loaded
+    if (video.readyState >= 3) {
+      showText(0);
+    }
+    
+    // Optional: Replay when video ends
+    video.addEventListener('ended', () => {
+      // Don't auto-replay, but you can uncomment the line below if desired
+      // video.play();
+    });
 
-                printCard(`
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><p class="stat-label">On-Chain Trees</p><p class="stat-val">${allTrees.length}</p></div>
-                        <div><p class="stat-label">Supabase Rows</p><p class="stat-val">${sbTrees.length}</p></div>
-                    </div>
-                `, "match-ok");
-
-                // Audit
-                allTrees.forEach(t => {
-                    const tid = t.account.treeId;
-                    const meta = sbTrees.find(s => s.tree_id === tid);
-                    if (meta) {
-                        printCard(`✅ MATCH: <b>${tid}</b> found in both.`, "match-ok");
-                    } else {
-                        printCard(`⚠️ MISMATCH: <b>${tid}</b> missing in Supabase.`, "match-fail");
-                    }
-                });
-
-            } catch (err) {
-                printCard(`FATAL ERROR: ${err.message}`, "error-crit");
-            }
-        };
-    </script>
-
-    <script type="module">
-        import { connectWallet } from "/src/connection.ts";
-        window.connectWallet = connectWallet;
-        // Auto-run if trusted
-        connectWallet(true).catch(() => console.log("Waiting for manual connect..."));
-    </script>
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      if (currentTimeout) clearTimeout(currentTimeout);
+      if (progressInterval) clearInterval(progressInterval);
+    });
+  </script>
 </body>
 </html>
