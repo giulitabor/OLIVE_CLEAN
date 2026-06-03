@@ -886,7 +886,7 @@ async function _doLoadTrees(filter: string, container: HTMLElement) {
       <div class="tree-content">
         <div class="tree-name">${_esc(dbTree.name || dbTree.tree_id)}</div>
         <div class="tree-meta">
-          <span>${available} shares left</span>
+          <span>${available} Mignole left</span>
           <span>${percent}% adopted</span>
         </div>
         <div class="availability">
