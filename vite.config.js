@@ -25,6 +25,9 @@ export default defineConfig({
         Tease: resolve(__dirname, "FD_REAL_index.html"),
         game: resolve(__dirname, "landing.html"),
         debug: resolve(__dirname, "debug2.html"),
+        Map: resolve(__dirname, "map.html"),
+        Game: resolve(__dirname, "webgame3.html"),
+
         rewards: resolve(__dirname, "villa_stay.html"),
         adopt: resolve(__dirname, "ADOPT_v2.html"),
 
