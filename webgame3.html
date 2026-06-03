@@ -21,8 +21,8 @@
             </div>
             <div class="nav-links">
                 <a href="index2.html">DASHBOARD</a>
-                <a href="https://toscagialla.com">VILLA TOUR</a>
-                <a href="#">HARVEST LOG</a>
+                <a href="villa_stay.html">VILLA STAY</a>
+                <a href="webgame3.html" class="active">ESTATE GAME</a>
             </div>
             <div class="flex items-center gap-4">
                 <div class="wallet-info hidden sm:block">
@@ -50,7 +50,11 @@
             <div class="flex gap-2">
                 <div class="stat-box" style="padding: 8px 12px;">
                     <div class="stat-label">SOL</div>
-                    <div class="stat-value text-base" id="ui-sol">25.00</div>
+                    <div class="stat-value text-base" id="ui-sol">0.00</div>
+                </div>
+                <div class="stat-box" style="padding: 8px 12px;">
+                    <div class="stat-label">OLV</div>
+                    <div class="stat-value text-base" id="ui-olv">0</div>
                 </div>
                 <div class="stat-box" style="padding: 8px 12px;">
                     <div class="stat-label">OIL</div>
@@ -88,6 +92,22 @@
                 </div>
                 <button class="btn btn-success" id="sell-btn" style="padding: 8px 20px;">SELL</button>
             </div>
+        </div>
+
+        <!-- Wallet Balances Card -->
+        <div class="card mb-3" style="background: rgba(197,160,89,0.05); border-color: #c9903e;">
+            <div class="flex-between">
+                <div>
+                    <div class="text-xs opacity-50">💰 WALLET BALANCES</div>
+                    <div class="flex gap-4 mt-1">
+                        <div><span class="text-gold">◎ SOL:</span> <span id="wallet-sol-balance" class="font-bold">0.00</span></div>
+                        <div><span class="text-gold">🫒 OLV:</span> <span id="wallet-olv-balance" class="font-bold">0</span></div>
+                    </div>
+                </div>
+                <button id="refreshBalanceBtn" class="text-[9px] text-gold/60 hover:text-gold">⟳ Refresh</button>
+            </div>
+            <div class="progress-bar mt-2"><div id="estate-sync-bar" class="progress-fill" style="background:#c9903e; width:0%"></div></div>
+            <div class="text-[8px] opacity-40 mt-1" id="estate-value">Estate Value: 0 SOL</div>
         </div>
 
         <!-- Mill Status -->
@@ -259,7 +279,7 @@
         </div>
     </div>
 
-    <!-- Single script import - all game logic is here -->
+    <!-- Script imports -->
     <script type="module" src="webgame3.js"></script>
 </body>
 </html>
