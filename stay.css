@@ -16,7 +16,35 @@
     --gold: #D4AF37;
     --charcoal: #2C2C2C;
     --white: #FFFFFF;
+
+   :root {
+    /* Main theme colors (for compatibility) */
+    --green: #2f5d3f;
+    --green-dark: #1f402a;
+    --green-light: #4f8f5a;
     
+    /* Villa theme colors (extended) */
+    --olive-dark: #4A5D3E;
+    --olive-medium: #6B7F5A;
+    --olive-light: #8FA87D;
+    --olive-pale: #E8EFE3;
+    --cream: #FAF8F3;
+    --sand: #F4EFE6;
+    --terracotta: #C86B4A;
+    --gold: #D4AF37;
+    
+    /* Shared */
+    --charcoal: #2C2C2C;
+    --white: #FFFFFF;
+    --text: #1f2b1f;
+    --text-muted: #667366;
+    --muted: #667366;
+    --border: #e3e5dd;
+    --soft: #f3f5ef;
+    --blue: #007bff;
+    --danger: #d94d4d;
+    --shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
     /* ✅ ADD THESE MISSING VARIABLES */
     --green: #6B7F5A;        /* Same as olive-medium */
     --text: #2C2C2C;         /* Same as charcoal */
