@@ -1,15 +1,10 @@
 /**
  * stay.ts - Olivium Villa Stay Page
- * 
- * Responsibilities:
- * - Fetch user's tree positions (shares owned)
- * - Fetch user's credits from Supabase
- * - Calculate tier level based on shares owned
- * - Update UI with real on-chain data
+ * Uses only events (no subscribeToIdentity)
  */
 
 import { PublicKey } from "@solana/web3.js";
-import { sb, connection, getIdentity, subscribeToIdentity } from "./connection.ts";
+import { sb, connection, getIdentity } from "./connection.ts";
 
 // ============================================================
 // TYPES
@@ -26,7 +21,6 @@ interface Position {
 
 let totalShares = 0;
 let totalCredits = 0;
-let currentTier = "Standard Account";
 
 // ============================================================
 // HELPER - WAIT FOR PROGRAM
@@ -58,11 +52,9 @@ async function fetchUserPositions(): Promise<Position[]> {
     const program = await waitForProgram();
     if (!program) return [];
 
-    // Fetch all share positions from blockchain
     const allPositions = await program.account.sharePosition.all();
     const targetAddress = identity.walletAddress;
 
-    // Filter positions owned by this user
     const userPositions = allPositions
       .filter((pos: any) => {
         const acc = pos.account;
@@ -99,6 +91,7 @@ async function fetchUserPositions(): Promise<Position[]> {
 
 async function fetchUserCredits(walletAddress: string): Promise<number> {
   try {
+    // Try wallet_address first, then wallet
     const { data, error } = await sb
       .from("users")
       .select("credits")
@@ -106,8 +99,18 @@ async function fetchUserCredits(walletAddress: string): Promise<number> {
       .maybeSingle();
 
     if (error) {
-      console.warn("[STAY] Credits fetch error:", error.message);
-      return 0;
+      // Try with 'wallet' column
+      const { data: data2, error: error2 } = await sb
+        .from("users")
+        .select("credits")
+        .eq("wallet", walletAddress)
+        .maybeSingle();
+      
+      if (error2) {
+        console.warn("[STAY] Credits fetch error:", error2.message);
+        return 0;
+      }
+      return data2?.credits || 0;
     }
     return data?.credits || 0;
   } catch (err) {
@@ -144,7 +147,6 @@ function updateNavUI(identity: any, tier: string) {
   if (!connectBtn) return;
 
   if (identity.walletAddress) {
-    // Connected state
     const shortAddr = `${identity.walletAddress.slice(0, 4)}...${identity.walletAddress.slice(-4)}`;
     connectBtn.innerText = "Disconnect";
     connectBtn.style.color = "#d94d4d";
@@ -154,14 +156,13 @@ function updateNavUI(identity: any, tier: string) {
     if (navTierLabel) navTierLabel.innerText = tier;
     if (navIdentityDisplay) navIdentityDisplay.innerText = shortAddr;
     
-    // Disconnect handler
     connectBtn.onclick = async () => {
       const { disconnectWallet } = await import("./connection.ts");
       await disconnectWallet();
+      // Refresh page after disconnect
       window.location.reload();
     };
   } else {
-    // Guest mode
     connectBtn.innerText = "Connect Profile";
     connectBtn.style.color = "white";
     connectBtn.style.border = "";
@@ -181,7 +182,7 @@ function updateNavUI(identity: any, tier: string) {
 // UPDATE MAIN UI (Tiers, Counters, Booking Rate)
 // ============================================================
 
-async function updateMainUI() {
+async function updateMainUI(totalShares: number, totalCredits: number) {
   console.log("[STAY] Updating main UI...");
   
   const sharesDisplay = document.getElementById("shares-count-display");
@@ -195,8 +196,6 @@ async function updateMainUI() {
   const patronDiscountBadge = document.getElementById("patronDiscountBadge");
   const bookingRateDisplay = document.getElementById("bookingRateDisplay");
   
-  const identity = getIdentity();
-  
   // Update displays
   if (sharesDisplay) {
     sharesDisplay.innerHTML = `${totalShares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
@@ -208,7 +207,6 @@ async function updateMainUI() {
   
   // Calculate and update tier
   const tierInfo = calculateTier(totalShares);
-  currentTier = tierInfo.tier;
   
   if (tierNameEl) tierNameEl.innerText = tierInfo.tier;
   if (tierIconEl) tierIconEl.innerText = tierInfo.icon;
@@ -231,21 +229,13 @@ async function updateMainUI() {
   const cardTier3 = document.getElementById("card-tier-3");
   const cardTier4 = document.getElementById("card-tier-4");
   
-  // Reset all opacities
   [cardTier1, cardTier2, cardTier3, cardTier4].forEach(card => {
     if (card) card.style.opacity = "0.4";
   });
   
-  // Highlight achieved tiers
-  if (totalShares >= 100) {
-    if (cardTier1) cardTier1.style.opacity = "1";
-  }
-  if (totalShares >= 500) {
-    if (cardTier2) cardTier2.style.opacity = "1";
-  }
-  if (totalShares >= 1000) {
-    if (cardTier3) cardTier3.style.opacity = "1";
-  }
+  if (totalShares >= 100) { if (cardTier1) cardTier1.style.opacity = "1"; }
+  if (totalShares >= 500) { if (cardTier2) cardTier2.style.opacity = "1"; }
+  if (totalShares >= 1000) { if (cardTier3) cardTier3.style.opacity = "1"; }
   
   // Update booking rate based on tier
   let rateString = "$450 USD / Nightly standard baseline";
@@ -264,10 +254,6 @@ async function updateMainUI() {
   
   if (patronDiscountBadge) patronDiscountBadge.innerText = badgeText;
   if (bookingRateDisplay) bookingRateDisplay.innerText = rateString;
-  
-  // Update nav tier label
-  const navTierLabel = document.getElementById("nav-tier-label");
-  if (navTierLabel) navTierLabel.innerText = tierInfo.tier;
 }
 
 // ============================================================
@@ -281,9 +267,7 @@ async function refreshAllData() {
   
   if (!identity.walletAddress) {
     // Guest mode - reset UI
-    totalShares = 0;
-    totalCredits = 0;
-    await updateMainUI();
+    await updateMainUI(0, 0);
     updateNavUI(identity, "Guest Mode");
     return;
   }
@@ -294,15 +278,13 @@ async function refreshAllData() {
     fetchUserCredits(identity.walletAddress)
   ]);
   
-  totalShares = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
-  totalCredits = credits;
+  const shares = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
+  const tierInfo = calculateTier(shares);
   
-  const tierInfo = calculateTier(totalShares);
-  
-  await updateMainUI();
+  await updateMainUI(shares, credits);
   updateNavUI(identity, tierInfo.tier);
   
-  console.log(`[STAY] Refresh complete: ${totalShares} shares, ${totalCredits} credits, tier: ${tierInfo.tier}`);
+  console.log(`[STAY] Refresh complete: ${shares} shares, ${credits} credits, tier: ${tierInfo.tier}`);
 }
 
 // ============================================================
@@ -335,13 +317,7 @@ async function init() {
   // Initial data load
   await refreshAllData();
   
-  // Subscribe to identity changes
-  subscribeToIdentity(async () => {
-    console.log("[STAY] Identity changed, refreshing...");
-    await refreshAllData();
-  });
-  
-  // Listen for connection events
+  // Listen for connection events (no subscribeToIdentity needed)
   window.addEventListener("olivium:connected", async () => {
     console.log("[STAY] Connected event received");
     await refreshAllData();
@@ -352,14 +328,13 @@ async function init() {
     await refreshAllData();
   });
   
-  // Connect modal - close button
-  const closeModalBtn = document.getElementById("closeAuthModal");
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener("click", () => {
-      const modal = document.getElementById("authModalOverlay");
-      if (modal) modal.style.display = "none";
-    });
-  }
+  // Also listen for storage events (if identity changes in another tab)
+  window.addEventListener("storage", async (e) => {
+    if (e.key === "olivium_identity" || e.key === "olivium_identity_v2") {
+      console.log("[STAY] Storage changed, refreshing...");
+      await refreshAllData();
+    }
+  });
   
   console.log("[STAY] Villa page ready");
 }
@@ -371,5 +346,5 @@ if (document.readyState === "loading") {
   init();
 }
 
-// Expose functions for debugging
+// Expose for debugging
 (window as any).refreshVillaData = refreshAllData;
