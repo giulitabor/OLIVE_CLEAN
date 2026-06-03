@@ -16,7 +16,7 @@ import {
   connection,
   getIdentity,
   isConnected,
-} from "./connection";
+} from "./src/connection";
 
 // ── Supabase client — provided by connection.ts ─────────────
 // We read it lazily via window.sb so connection.ts init order
