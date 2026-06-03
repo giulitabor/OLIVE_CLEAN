@@ -2,7 +2,7 @@
 // OLIVIUM GAME - Using existing Supabase client from connection.ts
 // ============================================================
 
-import { sb, getIdentity, isConnected } from "./connection.ts";
+import { sb, getIdentity, isConnected } from "./src/connection.ts";
 
 let currentUser = null;
 
