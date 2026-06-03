@@ -48,6 +48,22 @@ interface NormalisedPosition {
 // ═══════════════════════════════════════════════════════════════════════════
 // PROGRAM HELPER
 // ═══════════════════════════════════════════════════════════════════════════
+const mobileToggle = document.getElementById("mobileToggle");
+const navLinks = document.getElementById("navLinks");
+
+if (mobileToggle && navLinks) {
+  // OPEN / CLOSE MENU
+  mobileToggle.addEventListener("click", () => {
+    navLinks.classList.toggle("open");
+  });
+
+  // CLOSE MENU WHEN ANY LINK OR BUTTON IS CLICKED
+  navLinks.querySelectorAll("a, button").forEach((el) => {
+    el.addEventListener("click", () => {
+      navLinks.classList.remove("open");
+    });
+  });
+}
 
 function _requireProgram() {
   const p = (window as any)._program;
