@@ -2,870 +2,884 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OLIVIUM: DEFINITIVE ESTATE — The Ultimate Web3 Grove Simulator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>OLIVIUM — The Olive Estate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --gold: #c9903e; 
-            --prestige: #a855f7; 
-            --danger: #ef4444; 
-            --night: #05070a; 
-            --water: #3b82f6; 
-            --grass: #5a7a2b;
-            --legendary: #f59e0b;
-            --mythic: #ec4899;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-        body { background: var(--night); color: #f5eed8; font-family: 'JetBrains Mono', monospace; overflow: hidden; height: 100vh; }
-        .serif { font-family: 'Playfair Display', serif; }
 
-        #ambient-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 10; opacity: 0.6; }
-        .app-shell { position: relative; z-index: 20; height: 100vh; display: flex; flex-direction: column; padding: 1.5rem; }
+        body {
+            background: #05070a;
+            color: #f5eed8;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 16px;
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
 
-        /* FLOATING TEXT */
-        .fct { position: absolute; pointer-events: none; font-weight: 900; animation: fct-float 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards; z-index: 1000; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        @keyframes fct-float { 0% { opacity: 0; transform: translateY(0) scale(0.5); } 20% { opacity: 1; transform: translateY(-20px) scale(1.2); } 100% { opacity: 0; transform: translateY(-120px) scale(1.5); } }
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
 
-        /* COMBO BADGE */
-        #combo-badge { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; z-index: 100; }
-        .combo-burn { font-size: 5rem; font-weight: 900; font-style: italic; color: var(--gold); text-shadow: 0 0 40px rgba(201,144,62,0.6); animation: combo-shudder 0.1s infinite; }
-        @keyframes combo-shudder { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } }
+        /* Gold accent */
+        .text-gold { color: #c9903e; }
+        .bg-gold { background: #c9903e; }
+        .border-gold { border-color: #c9903e; }
 
-        /* GROVE GRID */
-        #grove-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 10px; max-height: 100%; overflow-y: auto; }
-        .tree-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative; overflow: hidden; }
-        .tree-card:hover { transform: translateY(-5px); border-color: var(--gold); background: rgba(255,255,255,0.05); }
-        .tree-card:active { transform: scale(0.98); }
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(197, 160, 89, 0.1);
+            border-radius: 20px;
+            padding: 16px;
+        }
 
-        /* TREE STATUS EFFECTS */
-        .infested { border-color: var(--danger) !important; animation: pulse-red 1.5s infinite; }
-        .miniola-burn { border-color: #f97316 !important; background: linear-gradient(45deg, rgba(249,115,22,0.1), transparent); }
-        .rare-strain { border-color: var(--prestige) !important; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
-        .legendary-strain { border-color: var(--legendary) !important; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); background: linear-gradient(135deg, rgba(245,158,11,0.05), transparent); }
-        .mythic-strain { border-color: var(--mythic) !important; box-shadow: 0 0 25px rgba(236, 72, 153, 0.5); background: linear-gradient(135deg, rgba(236,72,153,0.08), transparent); animation: mythic-pulse 2s infinite; }
-        @keyframes mythic-pulse { 0%, 100% { box-shadow: 0 0 15px rgba(236,72,153,0.3); } 50% { box-shadow: 0 0 30px rgba(236,72,153,0.6); } }
-        @keyframes pulse-red { 50% { border-color: transparent; } }
+        /* Stats row */
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 10px;
+            text-align: center;
+            min-width: 70px;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #c9903e;
+        }
+        .stat-label {
+            font-size: 9px;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
 
-        /* BARS */
-        .bar-stack { height: 4px; background: rgba(255,255,255,0.05); width: 100%; border-radius: 2px; margin-top: 6px; overflow: hidden; }
-        .bar-fill { height: 100%; transition: width 0.5s ease-out; }
+        /* Grove Grid - responsive */
+        .grove-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
 
-        /* BUTTONS */
-        .btn-gold { border: 1px solid var(--gold); color: var(--gold); padding: 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; width: 100%; transition: 0.3s; background: transparent; cursor: pointer; border-radius: 8px; }
-        .btn-gold:hover:not(:disabled) { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(201,144,62,0.4); transform: scale(1.02); }
-        .btn-gold:disabled { opacity: 0.2; cursor: not-allowed; }
+        @media (min-width: 500px) {
+            .grove-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
 
-        .skill-btn { border: 1px solid var(--prestige); color: var(--prestige); padding: 8px; font-size: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.2s; }
-        .skill-btn:hover { background: rgba(168,85,247,0.2); transform: scale(1.02); }
-        .skill-btn.unlocked { background: var(--prestige); color: white; }
+        /* Tree Card */
+        .tree-card {
+            background: linear-gradient(145deg, #12120f, #070705);
+            border: 1px solid rgba(197, 160, 89, 0.15);
+            border-radius: 16px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            position: relative;
+        }
+        .tree-card:active {
+            transform: scale(0.97);
+        }
+        .tree-card.ready {
+            border-color: #c9903e;
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
+        }
+        .tree-card.infested {
+            border-color: #ef4444;
+        }
+        .tree-emoji {
+            font-size: 48px;
+            text-align: center;
+            margin: 8px 0;
+        }
+        .tree-id {
+            font-size: 8px;
+            text-align: center;
+            opacity: 0.5;
+            margin-bottom: 8px;
+        }
+        .rarity-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+        }
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 4px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .fill-water { background: #3b82f6; }
+        .fill-health { background: #22c55e; }
+        .fill-pest { background: #ef4444; }
 
-        /* MILL ZONE */
-        .mill-zone { transition: transform 0.1s; cursor: pointer; }
-        .mill-zone:active { transform: scale(0.97); }
+        /* Buttons */
+        .btn {
+            background: rgba(197, 160, 89, 0.15);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            color: #c9903e;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.1s ease;
+        }
+        .btn:active {
+            transform: scale(0.97);
+            background: rgba(197, 160, 89, 0.3);
+        }
+        .btn-primary {
+            background: #c9903e;
+            color: black;
+        }
+        .btn-danger {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        .btn-success {
+            background: #22c55e;
+            color: black;
+            border: none;
+        }
 
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
-
-        /* ACHIEVEMENT NOTIFICATION */
-        .achievement-toast {
+        /* Mill Button (FAB) */
+        .fab-mill {
             position: fixed;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, var(--gold), #b8860b);
-            color: black;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 12px;
-            z-index: 1000;
-            animation: slideUp 0.5s ease, fadeOut 0.5s ease 3s forwards;
-            white-space: nowrap;
-            font-family: 'JetBrains Mono', monospace;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            right: 20px;
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            background: linear-gradient(135deg, #c9903e, #b8860b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 100;
+            border: none;
         }
-        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+        .fab-mill:active {
+            transform: scale(0.92);
+        }
+
+        /* Sections */
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #c9903e;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px 20px;
+            border-top: 1px solid rgba(197, 160, 89, 0.2);
+            z-index: 90;
+        }
+        .nav-item {
+            text-align: center;
+            font-size: 10px;
+            opacity: 0.5;
+            cursor: pointer;
+            padding: 8px;
+            flex: 1;
+        }
+        .nav-item.active {
+            opacity: 1;
+            color: #c9903e;
+        }
+
+        /* Panels */
+        .panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 320px;
+            height: 100vh;
+            background: #0a0c0a;
+            z-index: 200;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            padding: 20px;
+            border-left: 2px solid #c9903e;
+        }
+        .panel.open {
+            right: 0;
+        }
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 199;
+            display: none;
+        }
+        .panel-overlay.active {
+            display: block;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(197,160,89,0.2);
+        }
+        .close-btn {
+            font-size: 28px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        /* Utility */
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mt-4 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .text-center { text-align: center; }
+        .text-xs { font-size: 10px; }
+        .text-sm { font-size: 12px; }
+        .opacity-50 { opacity: 0.5; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     </style>
 </head>
 <body>
-<canvas id="ambient-canvas"></canvas>
-<div id="combo-badge" class="hidden">
-    <p class="text-[10px] uppercase tracking-[0.5em] opacity-50">Combo Multiplier</p>
-    <h1 id="combo-val" class="combo-burn">x1.0</h1>
-</div>
 
-<div class="app-shell">
-    <header class="flex justify-between items-end border-b border-white/10 pb-6 mb-6 flex-wrap gap-4">
+    <!-- Header -->
+    <div class="flex-between mb-3">
         <div>
-            <h1 class="serif text-4xl italic text-gold">OLIVIUM <span class="text-white/20 text-lg font-mono">DEFINITIVE</span></h1>
-            <div id="env-data" class="flex gap-4 text-[9px] font-mono opacity-50 mt-3 tracking-tighter uppercase flex-wrap">
-                <span>Time: <b id="ui-time">08:00</b></span>
-                <span>Temp: <b id="ui-temp">24°C</b></span>
-                <span>Sky: <b id="ui-weather">Clear</b></span>
-                <span>Season: <b id="ui-season">Spring</b></span>
+            <h1 class="serif text-2xl text-gold">OLIVIUM</h1>
+            <div class="flex gap-3 text-[9px] opacity-50 mt-1">
+                <span>⏰ <span id="ui-time">08:00</span></span>
+                <span>🌡️ <span id="ui-temp">24°C</span></span>
+                <span>🌤️ <span id="ui-weather">Clear</span></span>
+                <span>🌸 <span id="ui-season">Spring</span></span>
             </div>
         </div>
-        <div class="flex gap-8">
-            <div class="text-right"><p class="text-[8px] opacity-40 uppercase">Capital</p><p id="ui-sol" class="text-3xl font-bold text-gold">25.00</p></div>
-            <div class="text-right border-l border-white/10 pl-6"><p class="text-[8px] text-purple-400 uppercase">Ancient Seeds</p><p id="ui-seeds" class="text-3xl font-bold text-purple-500">0</p></div>
-            <div class="text-right border-l border-white/10 pl-6"><p class="text-[8px] opacity-40 uppercase">Inventory</p><p id="ui-oil" class="text-3xl font-bold">0.00L</p></div>
-            <div class="text-right border-l border-white/10 pl-6"><p class="text-[8px] text-gold uppercase">Level</p><p id="ui-level" class="text-3xl font-bold text-gold">1</p></div>
+        <div class="flex gap-2">
+            <div class="stat-box" style="padding: 8px 12px;">
+                <div class="stat-label">SOL</div>
+                <div class="stat-value text-base" id="ui-sol">25.00</div>
+            </div>
+            <div class="stat-box" style="padding: 8px 12px;">
+                <div class="stat-label">OIL</div>
+                <div class="stat-value text-base" id="ui-oil">0.00</div>
+            </div>
         </div>
-    </header>
-
-    <div class="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
-        <!-- LEFT PANEL: Infrastructure & Upgrades -->
-        <aside class="col-span-3 space-y-4 overflow-y-auto pr-3">
-            <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
-                <h3 class="text-[10px] text-gold font-bold mb-4 uppercase tracking-widest">Infrastructure</h3>
-                <div class="space-y-2">
-                    <button onclick="game.buyTree()" class="btn-gold">🌱 Genesis Node (5 SOL)</button>
-                    <button onclick="game.sprayGrove()" class="btn-gold border-red-900/50">🐛 Spintofly Spray (0.5 SOL)</button>
-                    <button id="upg-irrigation" onclick="game.upgrade('irrigation')" class="btn-gold">💧 Auto-Irrigation (15 SOL)</button>
-                    <button id="upg-misting" onclick="game.upgrade('misting')" class="btn-gold">🌫️ Misting System (10 SOL)</button>
-                    <button id="upg-fertilizer" onclick="game.upgrade('fertilizer')" class="btn-gold">🌿 Organic Fertilizer (8 SOL)</button>
-                </div>
-            </div>
-
-            <!-- Frantoio Mill -->
-            <div id="mill-hub" onclick="game.pressMill(event)" class="mill-zone bg-black/60 border border-white/10 p-6 rounded-2xl cursor-pointer group transition-all">
-                <div class="flex justify-between items-center mb-4">
-                    <p class="text-[9px] uppercase opacity-40">The Frantoio</p>
-                    <div id="mill-light" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                </div>
-                <div class="text-center py-3">
-                    <h2 id="ui-hopper" class="text-4xl font-bold mb-1">0.0</h2>
-                    <p class="text-[8px] opacity-30 uppercase">Kilograms In Hopper</p>
-                </div>
-                <div class="space-y-3 mt-5">
-                    <div class="bar-stack"><div id="mash-bar" class="bar-fill bg-gold" style="width:0%"></div></div>
-                    <div class="bar-stack"><div id="gunk-bar" class="bar-fill bg-red-600" style="width:0%"></div></div>
-                    <div class="flex justify-between text-[7px] opacity-40 uppercase"><span>Sediment Gunk</span><span id="ui-gunk">0%</span></div>
-                </div>
-                <button onclick="event.stopPropagation(); game.cleanMill()" class="w-full mt-5 text-[8px] text-gold/40 hover:text-gold uppercase font-bold tracking-widest">🧼 Steam Clean (0.2 SOL)</button>
-            </div>
-
-            <!-- Ancient Lab / Skill Tree -->
-            <div class="bg-purple-950/10 p-5 rounded-2xl border border-purple-500/20">
-                <h3 class="text-[10px] text-purple-400 font-bold mb-3 uppercase">Ancient Lab</h3>
-                <div class="grid grid-cols-2 gap-2" id="skill-grid">
-                    <div id="sk-yield" onclick="game.unlockSkill('yield')" class="skill-btn">📈 Hyper-Yield</div>
-                    <div id="sk-speed" onclick="game.unlockSkill('speed')" class="skill-btn">⚡ Rapid Bloom</div>
-                    <div id="sk-cold" onclick="game.unlockSkill('cold')" class="skill-btn">❄️ Pure Cold</div>
-                    <div id="sk-rare" onclick="game.unlockSkill('rare')" class="skill-btn">🧬 DNA Grafting</div>
-                    <div id="sk-legendary" onclick="game.unlockSkill('legendary')" class="skill-btn">👑 Legendary Strain</div>
-                    <div id="sk-mythic" onclick="game.unlockSkill('mythic')" class="skill-btn">✨ Mythic Awakening</div>
-                </div>
-                <button onclick="game.prestige()" class="w-full mt-5 bg-purple-600 py-3 rounded-xl text-[9px] font-black uppercase shadow-xl shadow-purple-900/40 hover:brightness-110 transition">🔄 Liquidate Estate (Prestige)</button>
-            </div>
-
-            <!-- Stats Panel -->
-            <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
-                <h3 class="text-[10px] text-gold font-bold mb-3 uppercase tracking-widest">Estate Stats</h3>
-                <div class="space-y-2 text-[9px]">
-                    <div class="flex justify-between"><span class="opacity-50">Lifetime SOL</span><span id="ui-lifetime" class="text-gold">0.00</span></div>
-                    <div class="flex justify-between"><span class="opacity-50">Trees Planted</span><span id="ui-trees-planted">0</span></div>
-                    <div class="flex justify-between"><span class="opacity-50">Total Harvests</span><span id="ui-total-harvests">0</span></div>
-                    <div class="flex justify-between"><span class="opacity-50">Combo Record</span><span id="ui-combo-record">x1.0</span></div>
-                    <div class="flex justify-between"><span class="opacity-50">Rare Trees</span><span id="ui-rare-count">0</span></div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- CENTER: Grove -->
-        <main class="col-span-6 bg-black/40 rounded-3xl border border-white/5 overflow-hidden flex flex-col">
-            <div class="px-4 py-2 border-b border-white/5 flex justify-between items-center">
-                <span class="text-[8px] uppercase tracking-widest opacity-40">Your Estate Grove</span>
-                <div class="flex gap-3">
-                    <span class="text-[8px]"><span class="text-gold">🌳</span> <span id="tree-count">0</span> Trees</span>
-                    <span class="text-[8px]"><span class="text-purple-400">⭐</span> <span id="rare-count">0</span> Rare</span>
-                </div>
-            </div>
-            <div id="grove-container" class="flex-1 overflow-y-auto"></div>
-        </main>
-
-        <!-- RIGHT PANEL: Market & Ledger -->
-        <aside class="col-span-3 flex flex-col gap-4 overflow-hidden">
-            <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
-                <h3 class="text-[9px] opacity-30 uppercase mb-3 tracking-widest">Global Market</h3>
-                <div class="flex justify-between items-end">
-                    <div>
-                        <h1 id="ui-price" class="text-5xl font-bold tracking-tighter">2.50</h1>
-                        <p class="text-gold font-bold text-[9px]">SOL/Liter</p>
-                    </div>
-                    <div class="text-right">
-                        <p id="ui-trend" class="text-green-500 font-bold text-[10px]">+0.00%</p>
-                        <p id="ui-demand" class="text-[7px] opacity-40">Demand: <span id="ui-demand-level">Normal</span></p>
-                    </div>
-                </div>
-                <button onclick="game.sellOil()" class="w-full mt-5 bg-white text-black py-3 rounded-xl font-black text-[10px] uppercase hover:bg-gold transition-all">💰 Execute Order</button>
-            </div>
-
-            <!-- Daily Quest -->
-            <div class="bg-blue-950/20 p-5 rounded-2xl border border-blue-500/20">
-                <h3 class="text-[9px] text-blue-400 font-bold mb-2 uppercase">Daily Quest</h3>
-                <div class="text-[10px]" id="quest-desc">Harvest 50kg of olives</div>
-                <div class="bar-stack mt-2"><div id="quest-progress" class="bar-fill bg-blue-500" style="width:0%"></div></div>
-                <div class="flex justify-between text-[8px] mt-1"><span id="quest-current">0</span><span>/ <span id="quest-target">50</span> kg</span></div>
-                <div class="text-[8px] text-gold mt-2" id="quest-reward">Reward: 10 SOL + Ancient Seed</div>
-            </div>
-
-            <!-- Achievements -->
-            <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
-                <h3 class="text-[9px] text-gold font-bold mb-2 uppercase">Achievements</h3>
-                <div id="achievements-list" class="text-[8px] space-y-1 max-h-32 overflow-y-auto">
-                    <div class="opacity-50">🏆 First Harvest - <span id="ach-first-harvest">❌</span></div>
-                    <div class="opacity-50">🌳 Grove Master (10 trees) - <span id="ach-grove-master">❌</span></div>
-                    <div class="opacity-50">💰 Tycoon (100 SOL) - <span id="ach-tycoon">❌</span></div>
-                    <div class="opacity-50">⚡ Combo King (x5) - <span id="ach-combo">❌</span></div>
-                    <div class="opacity-50">✨ Rare Collector (5 rare) - <span id="ach-rare">❌</span></div>
-                    <div class="opacity-50">👑 Legendary - <span id="ach-legendary">❌</span></div>
-                </div>
-            </div>
-
-            <!-- Estate Ledger -->
-            <div class="flex-1 bg-black/60 p-5 rounded-2xl border border-white/5 flex flex-col overflow-hidden min-h-0">
-                <h3 class="text-[9px] opacity-40 uppercase mb-3 tracking-widest">Estate Ledger</h3>
-                <div id="ledger" class="text-[9px] font-mono space-y-2 overflow-y-auto flex-1 opacity-60"></div>
-            </div>
-        </aside>
     </div>
-</div>
 
-<script>
-    // ============================================================
-    // ULTIMATE ESTATE STATE - Combining ALL features
-    // ============================================================
-    
-    const state = {
-        // Resources
-        sol: 25.0,
-        seeds: 0,
-        oil: 0,
-        hopper: 0,
-        lifetimeSol: 25.0,
-        
-        // Stats
-        treesPlanted: 3,
-        totalHarvests: 0,
-        comboRecord: 1.0,
-        rareCount: 0,
-        
-        // Trees
-        trees: [],
-        
-        // Upgrades & Skills
-        upgrades: { irrigation: false, misting: false, fertilizer: false },
-        skills: [],
-        skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1, legendary: 0, mythic: 0 },
-        
-        // World State
-        world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
-        
-        // Mill
-        mill: { mash: 0, gunk: 0, totalPressed: 0 },
-        
-        // Combo System
-        combo: 1.0,
-        comboRef: null,
-        
-        // Quest
-        quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
-        
-        // Achievements
-        achievements: {
-            firstHarvest: false,
-            groveMaster: false,
-            tycoon: false,
-            comboKing: false,
-            rareCollector: false,
-            legendary: false
-        }
-    };
+    <!-- Quick Stats -->
+    <div class="stats-row">
+        <div class="stat-box"><div class="stat-label">⭐ SEEDS</div><div class="stat-value" id="ui-seeds">0</div></div>
+        <div class="stat-box"><div class="stat-label">🌳 TREES</div><div class="stat-value" id="tree-count">0</div></div>
+        <div class="stat-box"><div class="stat-label">⚡ COMBO</div><div class="stat-value" id="combo-display">1.0x</div></div>
+        <div class="stat-box"><div class="stat-label">📊 LEVEL</div><div class="stat-value" id="ui-level">1</div></div>
+    </div>
 
-    // Rarity levels with SVG icons
-    const rarityIcons = {
-        common: { icon: '🌳', color: '', bonus: 1.0, name: 'Common' },
-        rare: { icon: '💎', color: 'rare-strain', bonus: 2.0, name: 'Rare' },
-        legendary: { icon: '👑', color: 'legendary-strain', bonus: 4.0, name: 'Legendary' },
-        mythic: { icon: '⭐', color: 'mythic-strain', bonus: 8.0, name: 'Mythic' }
-    };
+    <!-- Action Buttons Row -->
+    <div class="grid-2 mb-3">
+        <button class="btn" id="plant-btn">🌱 PLANT (5 SOL)</button>
+        <button class="btn btn-danger" id="spray-btn">🐛 SPRAY (0.5)</button>
+    </div>
 
-    // Tree SVG icons for different growth stages
-    const treeIcons = {
-        seed: `<svg viewBox="0 0 100 100" class="w-12 h-12 mx-auto"><circle cx="50" cy="85" r="4" fill="#3d2b1f"/><path d="M50 85 Q52 75 50 70" stroke="#5a7a2b" stroke-width="2" fill="none"/></svg>`,
-        sapling: `<svg viewBox="0 0 100 100" class="w-14 h-16 mx-auto"><path d="M50 90 L50 70" stroke="#3d2b1f" stroke-width="4"/><path d="M50 70 Q75 50 50 30 Q25 50 50 70" fill="#5a7a2b"/></svg>`,
-        mature: `<svg viewBox="0 0 100 100" class="w-16 h-20 mx-auto"><path d="M50 90 L50 60" stroke="#3d2b1f" stroke-width="5"/><circle cx="50" cy="45" r="28" fill="#5a7a2b"/><circle cx="42" cy="38" r="2" fill="#c9903e"/><circle cx="60" cy="45" r="2" fill="#c9903e"/></svg>`,
-        dead: `<svg viewBox="0 0 100 100" class="w-12 h-12 mx-auto opacity-30"><path d="M50 90 L50 70 M50 70 L35 55" stroke="#555" stroke-width="2" fill="none"/></svg>`
-    };
+    <!-- Market Row -->
+    <div class="card mb-3">
+        <div class="flex-between">
+            <div>
+                <div class="text-xs opacity-50">GLOBAL MARKET</div>
+                <div class="text-2xl font-bold text-gold" id="ui-price">2.50</div>
+                <div class="text-xs">SOL / Liter</div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs opacity-50">Demand</div>
+                <div id="ui-demand" class="text-sm">Normal</div>
+                <div id="ui-trend" class="text-xs text-green-500">+0%</div>
+            </div>
+            <button class="btn btn-success" id="sell-btn" style="padding: 8px 20px;">SELL</button>
+        </div>
+    </div>
 
-    // ============================================================
-    // CORE GAME FUNCTIONS
-    // ============================================================
+    <!-- Mill Status -->
+    <div class="card mb-3">
+        <div class="flex-between">
+            <div>
+                <div class="text-xs opacity-50">🏺 HOPPER</div>
+                <div class="text-xl font-bold" id="ui-hopper">0.0 kg</div>
+            </div>
+            <div>
+                <div class="text-xs opacity-50">⚙️ MASH</div>
+                <div id="mash-pct">0%</div>
+                <div class="progress-bar w-24"><div id="mash-bar" class="progress-fill bg-gold" style="width:0%"></div></div>
+            </div>
+            <div>
+                <div class="text-xs opacity-50">🧼 GUNK</div>
+                <div id="gunk-pct">0%</div>
+                <div class="progress-bar w-24"><div id="gunk-bar" class="progress-fill" style="background:#ef4444; width:0%"></div></div>
+            </div>
+        </div>
+    </div>
 
-    function getRarity() {
-        let roll = Math.random();
-        if (state.skillMultipliers.mythic > 0 && roll < 0.02) return 'mythic';
-        if (state.skillMultipliers.legendary > 0 && roll < 0.05) return 'legendary';
-        if (roll < state.skillMultipliers.rare) return 'rare';
-        return 'common';
-    }
+    <!-- Daily Quest -->
+    <div class="card mb-3" style="background: rgba(59,130,246,0.05); border-color: #3b82f6;">
+        <div class="flex-between">
+            <span class="text-xs text-blue-400">📋 DAILY QUEST</span>
+            <span class="text-xs text-gold" id="quest-reward">Reward: 10 SOL</span>
+        </div>
+        <div class="text-sm mt-1">Harvest <span id="quest-current">0</span>/<span id="quest-target">50</span> kg</div>
+        <div class="progress-bar mt-2"><div id="quest-progress" class="progress-fill" style="background:#3b82f6; width:0%"></div></div>
+    </div>
 
-    function addFloatingText(x, y, text, color = 'text-gold') {
-        const div = document.createElement('div');
-        div.className = `fct ${color} text-sm font-bold`;
-        div.style.left = x + 'px';
-        div.style.top = y + 'px';
-        div.innerText = text;
-        document.body.appendChild(div);
-        setTimeout(() => div.remove(), 1200);
-    }
+    <!-- Grove Section -->
+    <div class="flex-between mb-2">
+        <span class="section-title">🌿 YOUR GROVE</span>
+        <span class="text-xs opacity-50"><span class="text-gold">⭐</span> <span id="rare-count">0</span> Rare</span>
+    </div>
+    <div id="grove-container" class="grove-grid">
+        <!-- Trees render here -->
+    </div>
 
-    function addCombo(event, value = 0.15) {
-        state.combo += value;
-        if (state.combo > state.comboRecord) state.comboRecord = state.combo;
-        
-        const badge = document.getElementById('combo-badge');
-        badge.classList.remove('hidden');
-        document.getElementById('combo-val').innerText = `x${state.combo.toFixed(1)}`;
-        clearTimeout(state.comboRef);
-        state.comboRef = setTimeout(() => {
-            state.combo = 1.0;
-            badge.classList.add('hidden');
-        }, 3000);
-        
-        // Check combo achievement
-        if (state.comboRecord >= 5 && !state.achievements.comboKing) {
-            state.achievements.comboKing = true;
-            showAchievement('⚡ Combo King! - x5 Multiplier achieved! +5 SOL');
-            state.sol += 5;
-        }
-    }
+    <!-- Ledger -->
+    <div class="card mt-3">
+        <div class="text-xs opacity-50 mb-2">📜 ESTATE LEDGER</div>
+        <div id="ledger" class="text-[9px] space-y-1 max-h-32 overflow-y-auto opacity-60"></div>
+    </div>
 
-    function showAchievement(msg) {
-        const toast = document.createElement('div');
-        toast.className = 'achievement-toast';
-        toast.innerHTML = `🏆 ACHIEVEMENT UNLOCKED! 🏆<br>${msg}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3500);
-        log(`🏆 ${msg}`, 'text-gold font-bold');
-        render();
-    }
+    <!-- Floating Mill Button -->
+    <button id="fab-mill" class="fab-mill">🏺</button>
 
-    function checkAchievements() {
-        // First Harvest
-        if (state.totalHarvests >= 1 && !state.achievements.firstHarvest) {
-            state.achievements.firstHarvest = true;
-            showAchievement('First Harvest! +2 SOL');
-            state.sol += 2;
-        }
-        // Grove Master
-        if (state.trees.length >= 10 && !state.achievements.groveMaster) {
-            state.achievements.groveMaster = true;
-            showAchievement('Grove Master! +10 SOL + Ancient Seed');
-            state.sol += 10;
-            state.seeds++;
-        }
-        // Tycoon
-        if (state.lifetimeSol >= 100 && !state.achievements.tycoon) {
-            state.achievements.tycoon = true;
-            showAchievement('Tycoon! +20 SOL');
-            state.sol += 20;
-        }
-        // Rare Collector
-        if (state.rareCount >= 5 && !state.achievements.rareCollector) {
-            state.achievements.rareCollector = true;
-            showAchievement('Rare Collector! +15 SOL + Ancient Seed');
-            state.sol += 15;
-            state.seeds++;
-        }
-        // Legendary
-        if (state.rareCount >= 1 && !state.achievements.legendary) {
-            state.achievements.legendary = true;
-            showAchievement('Legendary Tree! +25 SOL');
-            state.sol += 25;
-        }
-        renderAchievements();
-    }
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" data-panel="grove">🌳<br>GROVE</div>
+        <div class="nav-item" data-panel="upgrades">⚙️<br>UPGRADES</div>
+        <div class="nav-item" data-panel="skills">🧬<br>SKILLS</div>
+        <div class="nav-item" data-panel="stats">📊<br>STATS</div>
+    </div>
 
-    function checkQuest() {
-        if (state.quest.current >= state.quest.target) {
-            state.sol += state.quest.reward;
-            state.seeds += state.quest.seedReward;
-            log(`✅ Daily Quest Complete! +${state.quest.reward} SOL + ${state.quest.seedReward} Ancient Seed`, 'text-green-400 font-bold');
-            state.quest.current = 0;
-            // Randomize new quest
-            const newTarget = Math.floor(Math.random() * 80) + 40;
-            state.quest.target = newTarget;
-            state.quest.reward = Math.floor(newTarget / 5) + 5;
-            render();
-        }
-    }
+    <!-- UPGRADES PANEL -->
+    <div id="panel-upgrades" class="panel">
+        <div class="panel-header">
+            <h3 class="serif text-xl text-gold">⚙️ UPGRADES</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="space-y-3">
+            <button onclick="game.upgrade('irrigation'); closePanel()" id="upg-irrigation-mobile" class="btn w-full text-left">
+                💧 Auto-Irrigation <span class="float-right text-gold">15 SOL</span>
+                <div class="text-[9px] opacity-50">Maintains water at 70%</div>
+            </button>
+            <button onclick="game.upgrade('misting'); closePanel()" id="upg-misting-mobile" class="btn w-full text-left">
+                🌫️ Misting System <span class="float-right text-gold">10 SOL</span>
+                <div class="text-[9px] opacity-50">Reduces pest spread</div>
+            </button>
+            <button onclick="game.upgrade('fertilizer'); closePanel()" id="upg-fertilizer-mobile" class="btn w-full text-left">
+                🌿 Organic Fertilizer <span class="float-right text-gold">8 SOL</span>
+                <div class="text-[9px] opacity-50">Boosts growth rate</div>
+            </button>
+            <button onclick="game.cleanMill(); closePanel()" class="btn w-full text-left">
+                🧼 Steam Clean Mill <span class="float-right text-gold">0.2 SOL</span>
+            </button>
+        </div>
+    </div>
 
-    function log(msg, cls = "") {
-        const ledger = document.getElementById('ledger');
-        const entry = document.createElement('div');
-        entry.className = `border-l border-white/10 pl-2 pb-1 ${cls}`;
-        entry.innerHTML = `<span class="opacity-30 text-[7px]">[${state.world.time}:00]</span> ${msg}`;
-        ledger.prepend(entry);
-        if (ledger.children.length > 40) ledger.lastChild.remove();
-    }
+    <!-- SKILLS PANEL -->
+    <div id="panel-skills" class="panel">
+        <div class="panel-header">
+            <h3 class="serif text-xl text-purple-400">🧬 ANCIENT LAB</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="text-center text-sm mb-3">✨ Seeds: <span id="seeds-display" class="text-purple-400 font-bold">0</span></div>
+        <div class="space-y-2">
+            <button onclick="game.unlockSkill('yield'); closePanel()" id="sk-yield-mobile" class="btn w-full text-left">
+                📈 Hyper-Yield <span class="float-right text-purple-400">5 Seeds</span>
+                <div class="text-[9px] opacity-50">+80% harvest yield</div>
+            </button>
+            <button onclick="game.unlockSkill('speed'); closePanel()" id="sk-speed-mobile" class="btn w-full text-left">
+                ⚡ Rapid Bloom <span class="float-right text-purple-400">5 Seeds</span>
+                <div class="text-[9px] opacity-50">2.5x faster growth</div>
+            </button>
+            <button onclick="game.unlockSkill('cold'); closePanel()" id="sk-cold-mobile" class="btn w-full text-left">
+                ❄️ Pure Cold <span class="float-right text-purple-400">5 Seeds</span>
+                <div class="text-[9px] opacity-50">+60% night extraction</div>
+            </button>
+            <button onclick="game.unlockSkill('rare'); closePanel()" id="sk-rare-mobile" class="btn w-full text-left">
+                🧬 DNA Grafting <span class="float-right text-purple-400">8 Seeds</span>
+                <div class="text-[9px] opacity-50">25% rare tree chance</div>
+            </button>
+        </div>
+        <button onclick="game.prestige()" class="btn w-full mt-4" style="background:#a855f7; color:white; border:none;">
+            🔄 LIQUIDATE ESTATE
+        </button>
+    </div>
 
-    // ============================================================
-    // TREE MANAGEMENT
-    // ============================================================
-
-    function buyTree(isGenesis = false) {
-        if (!isGenesis && state.sol < 5) {
-            log("Insufficient SOL to plant tree", "text-red-400");
-            return;
-        }
-        if (!isGenesis) state.sol -= 5;
-        
-        const rarity = getRarity();
-        if (rarity !== 'common') state.rareCount++;
-        
-        state.trees.push({
-            id: 'OLV-' + Math.random().toString(36).substr(2, 5).toUpperCase(),
-            age: 0,
-            health: 100,
-            water: 85,
-            pests: 0,
-            stage: 'seed',
-            rarity: rarity,
-            miniola: false,
-            lastHarvestTime: Date.now()
-        });
-        state.treesPlanted++;
-        log(`🌱 Planted ${rarityIcons[rarity].name} tree`, rarity !== 'common' ? 'text-purple-400' : '');
-        render();
-        checkAchievements();
-    }
-
-    function interactTree(index, event) {
-        const tree = state.trees[index];
-        if (!tree || tree.health <= 0) return;
-        
-        const stages = ['seed', 'sapling', 'mature'];
-        const currentStageIndex = stages.indexOf(tree.stage);
-        
-        if (tree.stage === 'mature') {
-            // HARVEST
-            let baseYield = 12 * (tree.health / 100);
-            baseYield *= tree.water / 100;
-            const rarityBonus = rarityIcons[tree.rarity].bonus;
-            const yieldBonus = state.skillMultipliers.yield;
-            const pestPenalty = (100 - tree.pests) / 100;
-            const miniolaPenalty = tree.miniola ? 0.6 : 1.0;
-            
-            let finalYield = baseYield * rarityBonus * yieldBonus * pestPenalty * miniolaPenalty * state.combo;
-            
-            state.hopper += finalYield;
-            state.totalHarvests++;
-            state.quest.current += finalYield;
-            
-            // Reset tree
-            tree.age = 0;
-            tree.stage = 'seed';
-            tree.pests = 0;
-            tree.miniola = false;
-            tree.lastHarvestTime = Date.now();
-            
-            addFloatingText(event.clientX, event.clientY, `+${finalYield.toFixed(1)}kg`, 'text-gold font-bold');
-            addCombo(event);
-            log(`🫒 Harvested ${finalYield.toFixed(1)}kg from ${tree.id} (${rarityIcons[tree.rarity].name})`, 'text-green-400');
-            checkQuest();
-            checkAchievements();
-        } else {
-            // WATER the tree
-            tree.water = Math.min(100, tree.water + 30);
-            addFloatingText(event.clientX, event.clientY, '+30% 💧', 'text-blue-400');
-            log(`💧 Watered ${tree.id}`, 'text-blue-400');
-        }
-        render();
-    }
-
-    // ============================================================
-    // MILL / FRANTOIO
-    // ============================================================
-
-    function pressMill(event) {
-        if (state.hopper <= 0) {
-            if (event) addFloatingText(event.clientX, event.clientY, 'No fruit!', 'text-red-400');
-            return;
-        }
-        if (state.mill.gunk >= 100) {
-            if (event) addFloatingText(event.clientX, event.clientY, 'Mill clogged! Clean it!', 'text-red-400');
-            return;
-        }
-        
-        state.mill.mash += 15;
-        state.hopper = Math.max(0, state.hopper - 1.5);
-        state.mill.gunk = Math.min(100, state.mill.gunk + 1.5);
-        
-        if (event) addFloatingText(event.clientX, event.clientY, '🔧 PRESS!', 'text-gold');
-        
-        if (state.mill.mash >= 100) {
-            const isNight = state.world.time > 20 || state.world.time < 6;
-            const coldBonus = (isNight && state.skillMultipliers.extraction > 1) ? 1.5 : 1.0;
-            const gunkPenalty = (100 - state.mill.gunk) / 100;
-            const extractionBonus = state.skillMultipliers.extraction;
-            
-            const oilYield = (state.hopper + 15) * 0.22 * gunkPenalty * coldBonus * extractionBonus;
-            state.oil += oilYield;
-            state.mill.totalPressed += oilYield;
-            state.hopper = 0;
-            state.mill.mash = 0;
-            
-            log(`🏺 Pressed ${oilYield.toFixed(2)}L EVOO ${isNight ? '(Cold Extraction Bonus!)' : ''}`, 'text-gold font-bold');
-        }
-        render();
-    }
-
-    function cleanMill() {
-        if (state.sol < 0.2) {
-            log("Need 0.2 SOL to clean mill", "text-red-400");
-            return;
-        }
-        state.sol -= 0.2;
-        state.mill.gunk = 0;
-        log("🧼 Mill steam cleaned! Efficiency restored.", "text-blue-400");
-        render();
-    }
-
-    // ============================================================
-    // UPGRADES & SKILLS
-    // ============================================================
-
-    function upgrade(type) {
-        const costs = { irrigation: 15, misting: 10, fertilizer: 8 };
-        if (state.sol < costs[type]) {
-            log(`Insufficient SOL for ${type}`, "text-red-400");
-            return;
-        }
-        if (state.upgrades[type]) {
-            log(`${type} already purchased`, "text-yellow-400");
-            return;
-        }
-        state.sol -= costs[type];
-        state.upgrades[type] = true;
-        document.getElementById(`upg-${type}`).disabled = true;
-        document.getElementById(`upg-${type}`).innerHTML = type === 'irrigation' ? '💧 Auto-Irrigation (ACTIVE)' : 
-                                                            type === 'misting' ? '🌫️ Misting System (ACTIVE)' : 
-                                                            '🌿 Organic Fertilizer (ACTIVE)';
-        log(`✅ ${type} system installed!`, "text-green-400");
-        render();
-    }
-
-    function unlockSkill(skill) {
-        const costs = { yield: 5, speed: 5, cold: 5, rare: 8, legendary: 12, mythic: 20 };
-        if (state.seeds < costs[skill]) {
-            log(`Need ${costs[skill]} Ancient Seeds`, "text-red-400");
-            return;
-        }
-        if (state.skills.includes(skill)) {
-            log(`Skill ${skill} already unlocked`, "text-yellow-400");
-            return;
-        }
-        
-        state.seeds -= costs[skill];
-        state.skills.push(skill);
-        
-        const bonuses = {
-            yield: () => state.skillMultipliers.yield = 1.8,
-            speed: () => state.skillMultipliers.speed = 2.5,
-            cold: () => state.skillMultipliers.extraction = 1.6,
-            rare: () => state.skillMultipliers.rare = 0.25,
-            legendary: () => { state.skillMultipliers.legendary = 1; state.skillMultipliers.rare = 0.35; },
-            mythic: () => { state.skillMultipliers.mythic = 1; state.skillMultipliers.rare = 0.5; }
-        };
-        bonuses[skill]();
-        
-        document.getElementById(`sk-${skill}`).classList.add('unlocked');
-        log(`✨ Ancient Skill Unlocked: ${skill.toUpperCase()}!`, "text-purple-400 font-bold");
-        render();
-    }
-
-    function prestige() {
-        const reward = Math.floor(state.lifetimeSol / 40);
-        if (reward < 1) {
-            alert("Earn 40 lifetime SOL to prestige!");
-            return;
-        }
-        if (confirm(`Liquidate Estate? You will gain ${reward} Ancient Seeds and reset your grove.`)) {
-            state.seeds += reward;
-            state.sol = 25;
-            state.oil = 0;
-            state.hopper = 0;
-            state.trees = [];
-            state.lifetimeSol = 0;
-            state.totalHarvests = 0;
-            state.rareCount = 0;
-            state.comboRecord = 1.0;
-            state.mill = { mash: 0, gunk: 0, totalPressed: 0 };
-            
-            // Keep skills and upgrades
-            // Reset trees planted count but keep skills
-            state.treesPlanted = 0;
-            
-            // Give 3 starter trees
-            for (let i = 0; i < 3; i++) buyTree(true);
-            
-            log("🔄 ESTATE LIQUIDATED! Ancient knowledge preserved.", "text-purple-500 font-bold");
-            render();
-        }
-    }
-
-    // ============================================================
-    // MARKET & ECONOMY
-    // ============================================================
-
-    function sellOil() {
-        if (state.oil < 0.1) {
-            log("No oil to sell", "text-red-400");
-            return;
-        }
-        const revenue = state.oil * state.world.price;
-        state.sol += revenue;
-        state.lifetimeSol += revenue;
-        log(`💰 Sold ${state.oil.toFixed(2)}L for ${revenue.toFixed(2)} SOL @ ${state.world.price} SOL/L`, "text-green-400 font-bold");
-        state.oil = 0;
-        render();
-        checkAchievements();
-    }
-
-    function sprayGrove() {
-        if (state.sol < 0.5) {
-            log("Need 0.5 SOL for spray", "text-red-400");
-            return;
-        }
-        state.sol -= 0.5;
-        state.trees.forEach(t => t.pests = 0);
-        log("🐛 Pest control applied to entire grove!", "text-green-400");
-        render();
-    }
-
-    // ============================================================
-    // WORLD SIMULATION
-    // ============================================================
-
-    function gameLoop() {
-        const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
-        const seasonIndex = Math.floor(Date.now() / 600000) % 4;
-        state.world.season = seasons[seasonIndex];
-        
-        state.trees.forEach(tree => {
-            if (tree.health <= 0) return;
-            
-            // Water decay
-            let waterLoss = 3;
-            if (state.world.weather === 'Rainy') waterLoss = -8;
-            if (state.world.weather === 'Heatwave') waterLoss = 12;
-            if (state.upgrades.irrigation && tree.water < 70) waterLoss = -5;
-            
-            tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
-            if (state.upgrades.fertilizer && tree.stage !== 'mature') {
-                tree.water = Math.min(100, tree.water + 2);
-            }
-            
-            // Growth
-            let growthRate = 0.05 * state.skillMultipliers.speed;
-            if (state.world.season === 'Spring') growthRate *= 1.3;
-            if (tree.water > 40 && tree.health > 30 && tree.age < 15) {
-                tree.age += growthRate;
-            }
-            
-            // Stage progression
-            if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
-            if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
-            if (tree.age > 25 && tree.stage === 'mature') {
-                // Tree ages and reduces yield - reset cycle
-                tree.age = 10;
-            }
-            
-            // Pest spread
-            if (state.world.season === 'Summer' && Math.random() < 0.03) {
-                tree.pests = Math.min(100, tree.pests + 5);
-            }
-            if (state.upgrades.misting && tree.pests > 0) {
-                tree.pests = Math.max(0, tree.pests - 2);
-            }
-            
-            // Miniola (heat stress)
-            tree.miniola = (state.world.temp > 32 && tree.water < 30 && !state.upgrades.misting);
-            
-            // Health decay
-            if (tree.water < 15) tree.health -= 4;
-            if (tree.pests > 40) tree.health -= 3;
-            if (tree.miniola) tree.health -= 2;
-            if (tree.health < 0) tree.health = 0;
-            if (tree.health === 0) tree.stage = 'dead';
-        });
-        
-        // Mash decay
-        state.mill.mash = Math.max(0, state.mill.mash - 4);
-        
-        render();
-    }
-
-    function weatherCycle() {
-        const weathers = [
-            { type: 'Clear', temp: 24, humidity: 45 },
-            { type: 'Rainy', temp: 18, humidity: 85 },
-            { type: 'Heatwave', temp: 36, humidity: 30 },
-            { type: 'Windy', temp: 22, humidity: 50 }
-        ];
-        const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
-        state.world.weather = newWeather.type;
-        state.world.temp = newWeather.temp;
-        
-        // Rain effect on trees
-        if (newWeather.type === 'Rainy') {
-            state.trees.forEach(t => t.water = Math.min(100, t.water + 15));
-            log("🌧️ Rainfall nourishes the grove!", "text-blue-400");
-        } else if (newWeather.type === 'Heatwave') {
-            log("🔥 Heatwave! Trees losing water faster.", "text-orange-400");
-        }
-        
-        render();
-    }
-
-    function marketCycle() {
-        let drift = (Math.random() - 0.5) * 1.2;
-        state.world.price = Math.max(0.8, Math.min(8.0, state.world.price + drift));
-        
-        const demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
-        const demandIndex = Math.floor(state.world.price / 1.6);
-        state.world.demand = demandLevels[Math.min(4, demandIndex)];
-        
-        const trendPercent = (drift * 10).toFixed(1);
-        const trendEl = document.getElementById('ui-trend');
-        trendEl.innerText = (drift >= 0 ? '+' : '') + trendPercent + '%';
-        trendEl.className = drift >= 0 ? 'text-green-500 font-bold text-[10px]' : 'text-red-500 font-bold text-[10px]';
-        
-        document.getElementById('ui-demand-level').innerText = state.world.demand;
-        render();
-    }
-
-    // ============================================================
-    // RENDER UI
-    // ============================================================
-
-    function renderAchievements() {
-        document.getElementById('ach-first-harvest').innerHTML = state.achievements.firstHarvest ? '✅' : '❌';
-        document.getElementById('ach-grove-master').innerHTML = state.achievements.groveMaster ? '✅' : '❌';
-        document.getElementById('ach-tycoon').innerHTML = state.achievements.tycoon ? '✅' : '❌';
-        document.getElementById('ach-combo').innerHTML = state.achievements.comboKing ? '✅' : '❌';
-        document.getElementById('ach-rare').innerHTML = state.achievements.rareCollector ? '✅' : '❌';
-        document.getElementById('ach-legendary').innerHTML = state.achievements.legendary ? '✅' : '❌';
-    }
-
-    function render() {
-        // Basic stats
-        document.getElementById('ui-sol').innerText = state.sol.toFixed(2);
-        document.getElementById('ui-seeds').innerText = state.seeds;
-        document.getElementById('ui-oil').innerText = state.oil.toFixed(2);
-        document.getElementById('ui-hopper').innerText = state.hopper.toFixed(1);
-        document.getElementById('ui-price').innerText = state.world.price.toFixed(2);
-        document.getElementById('ui-level').innerText = Math.floor(state.lifetimeSol / 20) + 1;
-        document.getElementById('ui-lifetime').innerText = state.lifetimeSol.toFixed(2);
-        document.getElementById('ui-trees-planted').innerText = state.treesPlanted;
-        document.getElementById('ui-total-harvests').innerText = state.totalHarvests;
-        document.getElementById('ui-combo-record').innerText = `x${state.comboRecord.toFixed(1)}`;
-        document.getElementById('ui-rare-count').innerText = state.rareCount;
-        
-        // World
-        document.getElementById('ui-time').innerText = state.world.time.toString().padStart(2, '0') + ':00';
-        document.getElementById('ui-temp').innerText = state.world.temp.toFixed(0) + '°C';
-        document.getElementById('ui-weather').innerText = state.world.weather;
-        document.getElementById('ui-season').innerText = state.world.season;
-        
-        // Mill
-        document.getElementById('mash-bar').style.width = state.mill.mash + '%';
-        document.getElementById('gunk-bar').style.width = state.mill.gunk + '%';
-        document.getElementById('ui-gunk').innerText = state.mill.gunk + '%';
-        
-        // Quest
-        document.getElementById('quest-progress').style.width = (state.quest.current / state.quest.target) * 100 + '%';
-        document.getElementById('quest-current').innerText = state.quest.current.toFixed(0);
-        document.getElementById('quest-target').innerText = state.quest.target;
-        document.getElementById('quest-reward').innerHTML = `Reward: ${state.quest.reward} SOL + ${state.quest.seedReward} Seed`;
-        
-        // Tree count
-        document.getElementById('tree-count').innerText = state.trees.length;
-        document.getElementById('rare-count').innerText = state.trees.filter(t => t.rarity !== 'common').length;
-        
-        // Grove rendering
-        const container = document.getElementById('grove-container');
-        container.innerHTML = '';
-        
-        state.trees.forEach((tree, idx) => {
-            const rarity = rarityIcons[tree.rarity];
-            const isReady = tree.stage === 'mature' && tree.health > 0;
-            const card = document.createElement('div');
-            card.className = `tree-card ${tree.pests > 30 ? 'infested' : ''} ${tree.miniola ? 'miniola-burn' : ''} ${rarity.color}`;
-            card.onclick = (e) => interactTree(idx, e);
-            card.innerHTML = `
-                <div class="flex justify-between text-[7px] opacity-40 mb-2 uppercase">
-                    <b>${tree.id}</b>
-                    <span>${tree.stage === 'mature' ? 'READY' : tree.stage}</span>
+    <!-- STATS PANEL -->
+    <div id="panel-stats" class="panel">
+        <div class="panel-header">
+            <h3 class="serif text-xl text-gold">📊 STATISTICS</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="space-y-3">
+            <div class="card">
+                <div class="flex-between"><span>💰 Lifetime SOL</span><span id="stats-lifetime" class="text-gold">0.00</span></div>
+                <div class="flex-between mt-2"><span>🌳 Trees Planted</span><span id="stats-trees-planted">0</span></div>
+                <div class="flex-between mt-2"><span>🫒 Total Harvests</span><span id="stats-harvests">0</span></div>
+                <div class="flex-between mt-2"><span>⚡ Combo Record</span><span id="stats-combo">x1.0</span></div>
+                <div class="flex-between mt-2"><span>⭐ Rare Trees</span><span id="stats-rare">0</span></div>
+            </div>
+            <div class="card">
+                <div class="text-gold text-xs mb-2">🏆 ACHIEVEMENTS</div>
+                <div class="text-[9px] space-y-1">
+                    <div>First Harvest: <span id="ach1">❌</span></div>
+                    <div>Grove Master (10 trees): <span id="ach2">❌</span></div>
+                    <div>Tycoon (100 SOL): <span id="ach3">❌</span></div>
+                    <div>Combo King (x5): <span id="ach4">❌</span></div>
+                    <div>Rare Collector: <span id="ach5">❌</span></div>
                 </div>
-                <div class="flex justify-center py-2">${treeIcons[tree.stage === 'dead' ? 'dead' : tree.stage]}</div>
-                ${tree.rarity !== 'common' ? `<div class="absolute top-2 right-2 text-xs">${rarity.icon}</div>` : ''}
-                <div class="bar-stack"><div class="bar-fill bg-blue-500" style="width:${tree.water}%"></div></div>
-                <div class="bar-stack"><div class="bar-fill bg-green-500" style="width:${tree.health}%"></div></div>
-                ${tree.pests > 0 ? `<div class="bar-stack"><div class="bar-fill bg-red-600" style="width:${tree.pests}%"></div></div>` : ''}
-                ${isReady ? '<p class="text-[8px] text-gold font-black text-center mt-3 animate-pulse">⬤ READY TO HARVEST ⬤</p>' : ''}
-                ${tree.miniola ? '<p class="text-[7px] text-orange-500 text-center mt-1">⚠️ Heat stress - yield reduced</p>' : ''}
-            `;
-            container.appendChild(card);
-        });
+            </div>
+        </div>
+    </div>
+
+    <div id="panel-overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+    <script>
+        // ============================================================
+        // COMPLETE GAME STATE
+        // ============================================================
         
-        if (state.trees.length === 0) {
-            container.innerHTML = '<div class="text-center py-20 opacity-40 col-span-full">No trees in your grove. Click "Genesis Node" to begin.</div>';
+        const state = {
+            sol: 25.0, seeds: 0, oil: 0, hopper: 0, lifetimeSol: 25.0,
+            treesPlanted: 3, totalHarvests: 0, comboRecord: 1.0, rareCount: 0,
+            trees: [],
+            upgrades: { irrigation: false, misting: false, fertilizer: false },
+            skills: [],
+            skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 },
+            world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
+            mill: { mash: 0, gunk: 0 },
+            combo: 1.0, comboRef: null,
+            quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
+            achievements: { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false }
+        };
+
+        const rarityIcons = {
+            common: { icon: '🌳', bonus: 1.0, name: 'Common' },
+            rare: { icon: '💎', bonus: 2.0, name: 'Rare' }
+        };
+
+        function getRarity() {
+            let roll = Math.random();
+            if (roll < state.skillMultipliers.rare) return 'rare';
+            return 'common';
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.innerText = msg;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '100px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.background = isError ? '#ef4444' : 'linear-gradient(135deg, #c9903e, #b8860b)';
+            toast.style.color = isError ? 'white' : 'black';
+            toast.style.padding = '10px 20px';
+            toast.style.borderRadius = '40px';
+            toast.style.fontSize = '12px';
+            toast.style.fontWeight = 'bold';
+            toast.style.zIndex = '1000';
+            toast.style.whiteSpace = 'nowrap';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        function addCombo() {
+            state.combo += 0.15;
+            if (state.combo > state.comboRecord) state.comboRecord = state.combo;
+            document.getElementById('combo-display').innerHTML = `${state.combo.toFixed(1)}x`;
+            clearTimeout(state.comboRef);
+            state.comboRef = setTimeout(() => {
+                state.combo = 1.0;
+                document.getElementById('combo-display').innerHTML = '1.0x';
+            }, 3000);
+            if (state.comboRecord >= 5 && !state.achievements.comboKing) {
+                state.achievements.comboKing = true;
+                state.sol += 5;
+                showToast("🏆 Combo King! +5 SOL");
+                render();
+            }
+        }
+
+        function log(msg) {
+            const ledger = document.getElementById('ledger');
+            const entry = document.createElement('div');
+            entry.innerHTML = `> ${msg}`;
+            entry.className = 'opacity-60 pb-1';
+            ledger.prepend(entry);
+            if (ledger.children.length > 20) ledger.lastChild.remove();
+        }
+
+        // ============================================================
+        // GAME ACTIONS
+        // ============================================================
+
+        function buyTree() {
+            if (state.sol < 5) { showToast("Need 5 SOL!", true); return; }
+            state.sol -= 5;
+            const rarity = getRarity();
+            if (rarity === 'rare') state.rareCount++;
+            state.trees.push({
+                id: '#' + (state.treesPlanted + 1),
+                age: 0, health: 100, water: 85, pests: 0,
+                stage: 'seed', rarity: rarity
+            });
+            state.treesPlanted++;
+            log(`🌱 Planted ${rarityIcons[rarity].name} tree`);
+            render();
+            checkAchievements();
+        }
+
+        function interactTree(index) {
+            const tree = state.trees[index];
+            if (!tree || tree.health <= 0) return;
+            
+            if (tree.stage === 'mature') {
+                let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+                let finalYield = baseYield * rarityIcons[tree.rarity].bonus * state.skillMultipliers.yield * state.combo;
+                if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+                
+                state.hopper += finalYield;
+                state.totalHarvests++;
+                state.quest.current += finalYield;
+                tree.age = 0; tree.stage = 'seed'; tree.pests = 0;
+                addCombo();
+                showToast(`+${finalYield.toFixed(1)}kg`);
+                log(`🫒 Harvested ${finalYield.toFixed(1)}kg`);
+                checkQuest();
+                checkAchievements();
+            } else {
+                tree.water = Math.min(100, tree.water + 30);
+                showToast('💧 +30% Water');
+            }
+            render();
+        }
+
+        function pressMill() {
+            if (state.hopper <= 0) { showToast("No fruit in hopper!", true); return; }
+            if (state.mill.gunk >= 100) { showToast("Mill clogged! Clean it!", true); return; }
+            
+            state.mill.mash += 15;
+            state.hopper = Math.max(0, state.hopper - 1.5);
+            state.mill.gunk = Math.min(100, state.mill.gunk + 1.5);
+            
+            if (state.mill.mash >= 100) {
+                const isNight = state.world.time > 20 || state.world.time < 6;
+                const coldBonus = (isNight && state.skillMultipliers.extraction > 1) ? 1.5 : 1.0;
+                const oilYield = (state.hopper + 15) * 0.22 * ((100 - state.mill.gunk) / 100) * coldBonus * state.skillMultipliers.extraction;
+                state.oil += oilYield;
+                state.hopper = 0;
+                state.mill.mash = 0;
+                log(`🏺 Pressed ${oilYield.toFixed(2)}L EVOO`);
+                showToast(`+${oilYield.toFixed(1)}L Oil`);
+            }
+            render();
+        }
+
+        function cleanMill() {
+            if (state.sol < 0.2) { showToast("Need 0.2 SOL", true); return; }
+            state.sol -= 0.2;
+            state.mill.gunk = 0;
+            showToast("Mill cleaned!");
+            log("🧼 Mill cleaned");
+            render();
+        }
+
+        function upgrade(type) {
+            const costs = { irrigation: 15, misting: 10, fertilizer: 8 };
+            if (state.sol < costs[type]) { showToast(`Need ${costs[type]} SOL`, true); return; }
+            if (state.upgrades[type]) { showToast("Already purchased!", true); return; }
+            state.sol -= costs[type];
+            state.upgrades[type] = true;
+            log(`✅ ${type} installed!`);
+            render();
+        }
+
+        function unlockSkill(skill) {
+            const costs = { yield: 5, speed: 5, cold: 5, rare: 8 };
+            if (state.seeds < costs[skill]) { showToast(`Need ${costs[skill]} Ancient Seeds`, true); return; }
+            if (state.skills.includes(skill)) { showToast("Already unlocked!", true); return; }
+            state.seeds -= costs[skill];
+            state.skills.push(skill);
+            if (skill === 'yield') state.skillMultipliers.yield = 1.8;
+            if (skill === 'speed') state.skillMultipliers.speed = 2.5;
+            if (skill === 'cold') state.skillMultipliers.extraction = 1.6;
+            if (skill === 'rare') state.skillMultipliers.rare = 0.25;
+            log(`✨ Unlocked ${skill.toUpperCase()}!`);
+            render();
+        }
+
+        function sellOil() {
+            if (state.oil < 0.1) { showToast("No oil to sell", true); return; }
+            let revenue = state.oil * state.world.price;
+            state.sol += revenue;
+            state.lifetimeSol += revenue;
+            showToast(`+${revenue.toFixed(2)} SOL`);
+            log(`💰 Sold ${state.oil.toFixed(1)}L for ${revenue.toFixed(2)} SOL`);
+            state.oil = 0;
+            render();
+            checkAchievements();
+        }
+
+        function sprayGrove() {
+            if (state.sol < 0.5) { showToast("Need 0.5 SOL", true); return; }
+            state.sol -= 0.5;
+            state.trees.forEach(t => t.pests = 0);
+            showToast("Pests removed!");
+            log("🐛 Pest control applied");
+            render();
+        }
+
+        function prestige() {
+            let reward = Math.floor(state.lifetimeSol / 40);
+            if (reward < 1) { showToast("Earn 40 lifetime SOL first!", true); return; }
+            if (confirm(`Liquidate estate for ${reward} Ancient Seeds?`)) {
+                state.seeds += reward;
+                state.sol = 25;
+                state.oil = 0;
+                state.hopper = 0;
+                state.trees = [];
+                state.lifetimeSol = 0;
+                state.totalHarvests = 0;
+                state.rareCount = 0;
+                state.mill = { mash: 0, gunk: 0 };
+                for (let i = 0; i < 3; i++) buyTree();
+                log("🔄 Estate liquidated! Ancient knowledge preserved.");
+                render();
+            }
+        }
+
+        function checkAchievements() {
+            if (state.totalHarvests >= 1 && !state.achievements.firstHarvest) {
+                state.achievements.firstHarvest = true;
+                state.sol += 2;
+                showToast("🏆 First Harvest! +2 SOL");
+            }
+            if (state.trees.length >= 10 && !state.achievements.groveMaster) {
+                state.achievements.groveMaster = true;
+                state.sol += 10;
+                state.seeds++;
+                showToast("🏆 Grove Master! +10 SOL + Seed");
+            }
+            if (state.lifetimeSol >= 100 && !state.achievements.tycoon) {
+                state.achievements.tycoon = true;
+                state.sol += 20;
+                showToast("🏆 Tycoon! +20 SOL");
+            }
+            if (state.rareCount >= 5 && !state.achievements.rareCollector) {
+                state.achievements.rareCollector = true;
+                state.sol += 15;
+                state.seeds++;
+                showToast("🏆 Rare Collector! +15 SOL + Seed");
+            }
+            render();
+        }
+
+        function checkQuest() {
+            if (state.quest.current >= state.quest.target) {
+                state.sol += state.quest.reward;
+                state.seeds += state.quest.seedReward;
+                showToast(`✅ Quest complete! +${state.quest.reward} SOL`);
+                state.quest.current = 0;
+                state.quest.target = Math.floor(Math.random() * 80) + 40;
+                state.quest.reward = Math.floor(state.quest.target / 5) + 5;
+                render();
+            }
+        }
+
+        // Game Loop
+        function gameLoop() {
+            state.trees.forEach(tree => {
+                if (tree.health <= 0) return;
+                let waterLoss = state.world.weather === 'Heatwave' ? 12 : (state.world.weather === 'Rainy' ? -8 : 3);
+                if (state.upgrades.irrigation && tree.water < 70) waterLoss = -5;
+                tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
+                let growthRate = 0.05 * state.skillMultipliers.speed;
+                if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
+                if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
+                if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
+                if (state.world.season === 'Summer' && Math.random() < 0.03) tree.pests = Math.min(100, tree.pests + 5);
+                if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
+                if (tree.water < 15) tree.health -= 4;
+                if (tree.pests > 40) tree.health -= 3;
+                if (tree.health <= 0) tree.stage = 'dead';
+            });
+            state.mill.mash = Math.max(0, state.mill.mash - 4);
+            render();
+        }
+
+        function weatherCycle() {
+            const weathers = [{ type: 'Clear', temp: 24 }, { type: 'Rainy', temp: 18 }, { type: 'Heatwave', temp: 36 }];
+            const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
+            state.world.weather = newWeather.type;
+            state.world.temp = newWeather.temp;
+            if (newWeather.type === 'Rainy') state.trees.forEach(t => t.water = Math.min(100, t.water + 15));
+            render();
+        }
+
+        function marketCycle() {
+            let drift = (Math.random() - 0.5) * 0.8;
+            state.world.price = Math.max(0.8, Math.min(6.0, state.world.price + drift));
+            const demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
+            const idx = Math.floor(state.world.price / 1.2);
+            state.world.demand = demandLevels[Math.min(4, idx)];
+            const trendPercent = (drift * 10).toFixed(1);
+            const trendEl = document.getElementById('ui-trend');
+            trendEl.innerText = (drift >= 0 ? '+' : '') + trendPercent + '%';
+            trendEl.className = drift >= 0 ? 'text-xs text-green-500' : 'text-xs text-red-500';
+            document.getElementById('ui-demand').innerText = state.world.demand;
+            render();
+        }
+
+        // ============================================================
+        // RENDER
+        // ============================================================
+
+        function render() {
+            document.getElementById('ui-sol').innerText = state.sol.toFixed(2);
+            document.getElementById('ui-oil').innerText = state.oil.toFixed(1);
+            document.getElementById('ui-seeds').innerText = state.seeds;
+            document.getElementById('ui-hopper').innerText = state.hopper.toFixed(1) + ' kg';
+            document.getElementById('ui-price').innerText = state.world.price.toFixed(2);
+            document.getElementById('ui-time').innerText = state.world.time.toString().padStart(2,'0') + ':00';
+            document.getElementById('ui-temp').innerText = state.world.temp + '°C';
+            document.getElementById('ui-weather').innerText = state.world.weather;
+            document.getElementById('ui-level').innerText = Math.floor(state.lifetimeSol / 20) + 1;
+            document.getElementById('tree-count').innerText = state.trees.length;
+            document.getElementById('rare-count').innerText = state.rareCount;
+            document.getElementById('mash-bar').style.width = state.mill.mash + '%';
+            document.getElementById('gunk-bar').style.width = state.mill.gunk + '%';
+            document.getElementById('mash-pct').innerHTML = state.mill.mash + '%';
+            document.getElementById('gunk-pct').innerHTML = state.mill.gunk + '%';
+            document.getElementById('quest-current').innerHTML = state.quest.current.toFixed(0);
+            document.getElementById('quest-target').innerHTML = state.quest.target;
+            document.getElementById('quest-progress').style.width = (state.quest.current / state.quest.target) * 100 + '%';
+            document.getElementById('seeds-display').innerHTML = state.seeds;
+            
+            // Stats panel
+            document.getElementById('stats-lifetime').innerHTML = state.lifetimeSol.toFixed(2);
+            document.getElementById('stats-trees-planted').innerHTML = state.treesPlanted;
+            document.getElementById('stats-harvests').innerHTML = state.totalHarvests;
+            document.getElementById('stats-combo').innerHTML = `x${state.comboRecord.toFixed(1)}`;
+            document.getElementById('stats-rare').innerHTML = state.rareCount;
+            
+            // Achievements
+            document.getElementById('ach1').innerHTML = state.achievements.firstHarvest ? '✅' : '❌';
+            document.getElementById('ach2').innerHTML = state.achievements.groveMaster ? '✅' : '❌';
+            document.getElementById('ach3').innerHTML = state.achievements.tycoon ? '✅' : '❌';
+            document.getElementById('ach4').innerHTML = state.achievements.comboKing ? '✅' : '❌';
+            document.getElementById('ach5').innerHTML = state.achievements.rareCollector ? '✅' : '❌';
+            
+            // Season
+            const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+            const seasonIndex = Math.floor(Date.now() / 600000) % 4;
+            state.world.season = seasons[seasonIndex];
+            document.getElementById('ui-season').innerHTML = state.world.season === 'Spring' ? '🌸' : state.world.season === 'Summer' ? '☀️' : state.world.season === 'Autumn' ? '🍂' : '❄️';
+            
+            // Grove
+            const container = document.getElementById('grove-container');
+            container.innerHTML = '';
+            state.trees.forEach((tree, idx) => {
+                const isReady = tree.stage === 'mature';
+                const emoji = tree.stage === 'seed' ? '🌱' : tree.stage === 'sapling' ? '🌿' : tree.stage === 'mature' ? '🫒' : '🍂';
+                const card = document.createElement('div');
+                card.className = `tree-card ${isReady ? 'ready' : ''} ${tree.pests > 30 ? 'infested' : ''}`;
+                card.onclick = () => interactTree(idx);
+                card.innerHTML = `
+                    <div class="tree-emoji">${emoji}</div>
+                    <div class="tree-id">${tree.id}</div>
+                    <div class="progress-bar"><div class="progress-fill fill-water" style="width:${tree.water}%"></div></div>
+                    <div class="progress-bar"><div class="progress-fill fill-health" style="width:${tree.health}%"></div></div>
+                    ${tree.pests > 0 ? `<div class="progress-bar"><div class="progress-fill fill-pest" style="width:${tree.pests}%"></div></div>` : ''}
+                    ${isReady ? '<div class="text-center text-gold text-[9px] mt-2">⬤ READY</div>' : ''}
+                    ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : ''}
+                `;
+                container.appendChild(card);
+            });
+            if (state.trees.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 opacity-50 col-span-full">Tap + PLANT to start</div>';
+            }
+        }
+
+        // Panel Navigation
+        function openPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+            document.getElementById(`panel-${panelId}`).classList.add('open');
+            document.getElementById('panel-overlay').classList.add('active');
+        }
+        function closePanel() {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+            document.getElementById('panel-overlay').classList.remove('active');
         }
         
-        renderAchievements();
-    }
-
-    // ============================================================
-    // INITIALIZATION
-    // ============================================================
-
-    function startIntervals() {
-        setInterval(() => gameLoop(), 2000);
-        setInterval(() => weatherCycle(), 20000);
-        setInterval(() => marketCycle(), 15000);
+        // Event Listeners
+        document.getElementById('plant-btn').onclick = () => buyTree();
+        document.getElementById('spray-btn').onclick = () => sprayGrove();
+        document.getElementById('sell-btn').onclick = () => sellOil();
+        document.getElementById('fab-mill').onclick = () => pressMill();
         
-        // Time progression
-        setInterval(() => {
-            state.world.time = (state.world.time + 1) % 24;
-            render();
-        }, 30000);
-    }
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.onclick = () => openPanel(item.dataset.panel);
+        });
 
-    function init() {
-        // Create starter trees
-        for (let i = 0; i < 3; i++) buyTree(true);
-        startIntervals();
+        // Expose game for inline onclick
+        window.game = { upgrade: (t) => { upgrade(t); closePanel(); }, unlockSkill: (s) => { unlockSkill(s); closePanel(); }, cleanMill, prestige, buyTree, sprayGrove, sellOil, pressMill };
+
+        // Initialize
+        for (let i = 0; i < 3; i++) buyTree();
+        setInterval(gameLoop, 2000);
+        setInterval(weatherCycle, 20000);
+        setInterval(marketCycle, 15000);
+        setInterval(() => { state.world.time = (state.world.time + 1) % 24; render(); }, 30000);
         render();
-        log("🌿 OLIVIUM Estate initialized. Welcome, Steward!", "text-gold font-bold");
-        log("Click trees to water or harvest. Press the Frantoio to extract oil.", "text-white/60");
-    }
-
-    // Expose game functions globally
-    const game = {
-        buyTree, upgrade, unlockSkill, prestige, sellOil, sprayGrove,
-        pressMill, cleanMill, interactTree
-    };
-    window.game = game;
-
-    // Start
-    init();
-</script>
+        log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
+    </script>
 </body>
 </html>
