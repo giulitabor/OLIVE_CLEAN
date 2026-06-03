@@ -1,38 +1,33 @@
 /* ==========================================================================
-   OLIVIUM - VILLA STAY PAGE
-   Fully unified with main theme variables & luxury aesthetic
+   OLIVIUM - VILLA STAY PAGE (Light Theme with Better Contrast)
    ========================================================================== */
 
-/* Font Imports */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ==========================================================================
-   CSS VARIABLES - MATCHING MAIN THEME
+   CSS VARIABLES - Enhanced Contrast
    ========================================================================== */
 
 :root {
-    /* Main theme colors (from 1style.css) */
+    /* Main theme colors */
     --bg: #f6f4ee;
     --card: #ffffff;
-    --text: #1f2b1f;
-    --muted: #667366;
+    --text: #1a2a1a;
+    --text-light: #4a5a4a;
+    --muted: #6b7a6b;
     --green: #2f5d3f;
     --green-dark: #1f402a;
     --green-light: #4f8f5a;
     --border: #e3e5dd;
     --soft: #f3f5ef;
-    --blue: #007bff;
-    --danger: #d94d4d;
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
     
-    /* Villa extended colors */
+    /* Villa colors - better contrast */
     --gold: #C5A059;
-    --gold-light: #D4AF37;
     --gold-dark: #9E7E3E;
     --terracotta: #C86B4A;
-    --cream: #FAF8F3;
-    --sand: #F4EFE6;
     --charcoal: #2C2C2C;
+    --white: #FFFFFF;
     
     /* Typography */
     --serif: 'Cormorant Garamond', serif;
@@ -56,24 +51,24 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--serif);
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.2;
     color: var(--charcoal);
 }
 
-h1 { font-size: clamp(3rem, 8vw, 6rem); }
-h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); }
-h3 { font-size: clamp(1.8rem, 4vw, 3rem); }
-h4 { font-size: clamp(1.4rem, 3vw, 2rem); }
+h1 { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 600; }
+h2 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 500; }
+h3 { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 500; }
+h4 { font-size: clamp(1.2rem, 3vw, 1.6rem); font-weight: 500; }
 
 /* ==========================================================================
-   LUXURY VIDEO HERO
+   VIDEO HERO
    ========================================================================== */
 
 .luxury-video-hero {
     position: relative;
-    height: 85vh;
-    min-height: 650px;
+    height: 70vh;
+    min-height: 500px;
     overflow: hidden;
     margin-top: -80px;
 }
@@ -93,7 +88,7 @@ h4 { font-size: clamp(1.4rem, 3vw, 2rem); }
 .video-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(31, 43, 31, 0.5) 0%, rgba(47, 93, 63, 0.3) 100%);
+    background: linear-gradient(135deg, rgba(246, 244, 238, 0.9) 0%, rgba(47, 93, 63, 0.5) 100%);
     z-index: 1;
 }
 
@@ -106,28 +101,28 @@ h4 { font-size: clamp(1.4rem, 3vw, 2rem); }
     align-items: center;
     height: 100%;
     text-align: center;
-    color: white;
     padding: 2rem;
 }
 
 .luxury-video-hero .hero-content h1 {
-    font-weight: 300;
+    font-weight: 600;
     margin-bottom: 1rem;
-    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-    color: white;
-    letter-spacing: -0.02em;
+    color: var(--green-dark);
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
 }
 
 .luxury-video-hero .hero-content p {
-    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-    font-weight: 300;
-    opacity: 0.9;
-    font-family: var(--serif);
-    font-style: italic;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    font-weight: 500;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    backdrop-filter: blur(5px);
 }
 
 /* ==========================================================================
-   NAVIGATION - MATCHING MAIN THEME
+   NAVIGATION
    ========================================================================== */
 
 nav {
@@ -139,12 +134,6 @@ nav {
     background: rgba(246, 244, 238, 0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    transition: all 0.3s ease;
-}
-
-nav.scrolled {
-    background: rgba(246, 244, 238, 0.98);
-    box-shadow: var(--shadow);
 }
 
 .nav-container {
@@ -159,9 +148,8 @@ nav.scrolled {
 .logo {
     font-family: var(--serif);
     font-size: 1.6rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--green-dark);
-    letter-spacing: 0.5px;
 }
 
 .nav-links {
@@ -175,8 +163,7 @@ nav.scrolled {
     color: var(--text);
     text-decoration: none;
     font-size: 0.85rem;
-    font-weight: 500;
-    transition: color 0.3s ease;
+    font-weight: 600;
     letter-spacing: 0.5px;
 }
 
@@ -185,31 +172,17 @@ nav.scrolled {
     color: var(--green);
 }
 
-.nav-links a.active::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--gold);
-}
-
 .nav-cta {
     background: var(--green);
     color: white;
     padding: 0.6rem 1.5rem;
     border-radius: 50px;
-    text-decoration: none;
     font-weight: 600;
     font-size: 0.85rem;
-    transition: all 0.3s ease;
 }
 
 .nav-cta:hover {
     background: var(--green-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(47, 93, 63, 0.2);
 }
 
 /* ==========================================================================
@@ -224,121 +197,134 @@ main {
 }
 
 /* ==========================================================================
-   TECH CARDS - PREMIUM STYLE
+   CARDS - Better Text Contrast
    ========================================================================== */
 
 .tech-card {
     background: var(--card);
     border-radius: 24px;
-    padding: 2rem;
-    transition: all 0.3s ease;
+    padding: 1.5rem;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
-    position: relative;
-    overflow: hidden;
 }
 
-.tech-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-    border-color: var(--green-light);
-}
-
-/* Glass morphism variant */
-.tech-card.glass {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
+.tech-card p {
+    color: var(--text-light);
+    line-height: 1.7;
 }
 
 /* ==========================================================================
-   MEMBERSHIP TIERS - LUXURY STYLED
+   STATS CARDS - High Visibility
+   ========================================================================== */
+
+.stats-card {
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%);
+    border-radius: 24px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+}
+
+.stats-card .stat-value {
+    font-size: 3rem;
+    font-weight: 700;
+    font-family: var(--serif);
+    color: var(--gold);
+    line-height: 1.2;
+}
+
+.stats-card .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+/* ==========================================================================
+   MEMBERSHIP TIERS - Clear Text
    ========================================================================== */
 
 .tiers-container {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
 }
 
 .tier-card {
     background: var(--card);
     border-radius: 20px;
-    padding: 1.5rem;
+    padding: 1.25rem;
     transition: all 0.3s ease;
     border: 1px solid var(--border);
-    position: relative;
-    overflow: hidden;
+    cursor: pointer;
 }
 
 .tier-card:hover {
-    transform: translateX(8px);
+    transform: translateX(5px);
     border-color: var(--gold);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 
 .tier-card.featured {
     border: 2px solid var(--gold);
-    background: linear-gradient(135deg, var(--card) 0%, rgba(197, 160, 89, 0.05) 100%);
+    background: linear-gradient(135deg, var(--card) 0%, rgba(197, 160, 89, 0.08) 100%);
 }
 
 .tier-card.featured::before {
-    content: "POPULAR CHOICE";
+    content: "POPULAR";
     position: absolute;
-    top: -12px;
-    left: 2rem;
+    top: -10px;
+    left: 1.5rem;
     background: var(--gold);
     color: white;
-    padding: 0.25rem 1rem;
+    padding: 0.2rem 0.8rem;
     border-radius: 20px;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 700;
-    letter-spacing: 2px;
 }
 
 .tier-icon {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     background: var(--soft);
-    border-radius: 16px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    transition: all 0.3s ease;
-}
-
-.tier-card:hover .tier-icon {
-    background: var(--green-light);
-    transform: scale(1.05);
+    font-size: 1.6rem;
 }
 
 .tier-name {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--green-dark);
     margin-bottom: 0.25rem;
-    font-family: var(--serif);
 }
 
 .tier-price {
+    font-size: 0.75rem;
+    color: var(--gold-dark);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.tier-description {
     font-size: 0.8rem;
-    color: var(--gold);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    letter-spacing: 0.5px;
+    color: var(--text-light);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
 }
 
 .tier-features {
     list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
 }
 
 .tier-features li {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text);
+    padding: 0.25rem 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -351,50 +337,31 @@ main {
 }
 
 /* ==========================================================================
-   CREDIT STATUS PANEL
+   CREDIT PANEL - High Contrast
    ========================================================================== */
 
 .credit-status-ledger {
     background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%);
     color: white;
     border-radius: 24px;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.credit-status-ledger::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.ledger-metric-group {
-    margin-bottom: 2rem;
-    position: relative;
-    z-index: 1;
+    padding: 1.5rem;
 }
 
 .ledger-label {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: rgba(255, 255, 255, 0.7);
+    opacity: 0.8;
     font-weight: 600;
 }
 
 .ledger-large-balance {
     font-family: var(--serif);
-    font-size: 3.5rem;
+    font-size: 3rem;
     line-height: 1;
     margin: 0.5rem 0;
-    color: var(--gold-light);
-    font-weight: 600;
+    color: var(--gold);
+    font-weight: 700;
 }
 
 /* ==========================================================================
@@ -404,13 +371,12 @@ main {
 .booking-form-panel {
     background: var(--card);
     border-radius: 24px;
-    padding: 2rem;
+    padding: 1.5rem;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow);
 }
 
 .booking-headline {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-family: var(--serif);
     margin-bottom: 0.5rem;
     color: var(--green-dark);
@@ -418,39 +384,35 @@ main {
 }
 
 .booking-subtext {
-    color: var(--muted);
+    color: var(--text-light);
     margin-bottom: 1.5rem;
     font-size: 0.85rem;
+    line-height: 1.6;
 }
 
 .form-group-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
-}
-
-.input-element-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .input-element-wrapper label {
     font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     font-weight: 700;
     color: var(--green-dark);
+    margin-bottom: 0.25rem;
+    display: block;
 }
 
 input, select, textarea {
     background: var(--soft);
     border: 1px solid var(--border);
     color: var(--text);
-    transition: all 0.3s ease;
     border-radius: 12px;
-    padding: 0.85rem 1.2rem;
+    padding: 0.75rem 1rem;
     font-family: var(--sans);
     font-size: 0.9rem;
     width: 100%;
@@ -464,53 +426,36 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   BUTTONS - MATCHING MAIN THEME
+   BUTTONS
    ========================================================================== */
 
-.btn {
-    padding: 0.85rem 1.75rem;
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-block;
-    cursor: pointer;
-    border: none;
-    font-family: var(--sans);
-    letter-spacing: 0.5px;
-}
-
-.btn-primary {
+.primary-btn, .btn-primary {
     background: var(--green);
     color: white;
+    padding: 0.8rem 1.8rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.primary-btn:hover, .btn-primary:hover {
     background: var(--green-dark);
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(47, 93, 63, 0.2);
 }
 
-.btn-secondary {
+.secondary-btn {
     background: transparent;
     color: var(--green);
     border: 2px solid var(--green);
-}
-
-.btn-secondary:hover {
-    background: var(--green);
-    color: white;
-}
-
-.btn-gold {
-    background: var(--gold);
-    color: white;
-}
-
-.btn-gold:hover {
-    background: var(--gold-dark);
-    transform: translateY(-2px);
+    padding: 0.8rem 1.8rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
 }
 
 /* ==========================================================================
@@ -519,79 +464,67 @@ input:focus, select:focus, textarea:focus {
 
 .activities-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
-    margin-top: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
 }
 
 .activity-card {
     background: var(--card);
     border-radius: 20px;
     overflow: hidden;
-    transition: all 0.4s ease;
     border: 1px solid var(--border);
-}
-
-.activity-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
-    border-color: var(--gold);
 }
 
 .activity-card img {
     width: 100%;
-    height: 280px;
+    height: 220px;
     object-fit: cover;
-    transition: transform 0.6s ease;
-}
-
-.activity-card:hover img {
-    transform: scale(1.05);
 }
 
 .activity-card-content {
-    padding: 1.5rem;
+    padding: 1.25rem;
 }
 
 .activity-card h4 {
-    font-size: 1.3rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
     color: var(--green-dark);
+    font-weight: 600;
 }
 
 .activity-card p {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     font-weight: 600;
 }
 
 /* ==========================================================================
-   MODAL - MATCHING MAIN THEME
+   MODAL
    ========================================================================== */
 
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(31, 43, 31, 0.85);
+    background: rgba(31, 43, 31, 0.9);
     backdrop-filter: blur(8px);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    padding: 1.5rem;
+    padding: 1rem;
 }
 
 .modal-container {
     background: var(--card);
     border-radius: 28px;
     width: 100%;
-    max-width: 680px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    animation: modalSlide 0.35s ease-out;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalSlide 0.3s ease-out;
 }
 
 @keyframes modalSlide {
@@ -600,7 +533,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .modal-header {
-    padding: 1.5rem 2rem;
+    padding: 1.25rem 1.5rem;
     border-bottom: 1px solid var(--border);
     background: var(--soft);
     display: flex;
@@ -608,24 +541,13 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
 }
 
+.modal-header h3 {
+    color: var(--green-dark);
+    font-weight: 600;
+}
+
 .modal-body {
-    padding: 2rem;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-.close-modal {
-    cursor: pointer;
-    font-size: 1.5rem;
-    opacity: 0.5;
-    transition: 0.3s;
-    background: none;
-    border: none;
-}
-
-.close-modal:hover {
-    opacity: 1;
-    color: var(--gold);
+    padding: 1.5rem;
 }
 
 /* ==========================================================================
@@ -635,39 +557,34 @@ input:focus, select:focus, textarea:focus {
 footer {
     background: var(--charcoal);
     color: white;
-    padding: 3rem 2rem 1.5rem;
-    margin-top: 4rem;
+    padding: 2.5rem 2rem 1.5rem;
+    margin-top: 3rem;
 }
 
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 2.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .footer-section h4 {
-    margin-bottom: 1.25rem;
     color: var(--gold);
-    font-size: 1rem;
-    letter-spacing: 1px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
 }
 
 .footer-links {
     list-style: none;
 }
 
-.footer-links li {
-    margin-bottom: 0.6rem;
-}
-
 .footer-links a {
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    transition: color 0.3s ease;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 .footer-links a:hover {
@@ -678,43 +595,8 @@ footer {
     text-align: center;
     padding-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     opacity: 0.6;
-}
-
-/* ==========================================================================
-   ANIMATIONS
-   ========================================================================== */
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s ease-out;
-}
-
-.fade-in.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-@keyframes pulse-gold {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.4); }
-    50% { box-shadow: 0 0 0 15px rgba(197, 160, 89, 0); }
-}
-
-.pulse-gold {
-    animation: pulse-gold 2s infinite;
 }
 
 /* ==========================================================================
@@ -722,34 +604,21 @@ footer {
    ========================================================================== */
 
 .text-gold { color: var(--gold); }
-.bg-gold { background: var(--gold); }
-.text-terracotta { color: var(--terracotta); }
-.bg-terracotta { background: var(--terracotta); }
 .text-green { color: var(--green); }
+.text-dark { color: var(--charcoal); }
+.text-light { color: var(--text-light); }
+
+.bg-gold { background: var(--gold); }
 .bg-green { background: var(--green); }
 
 .serif { font-family: var(--serif); }
 .sans { font-family: var(--sans); }
-.mono { font-family: var(--mono); }
-
+.bold { font-weight: 700; }
 .italic { font-style: italic; }
-.tracking-wide { letter-spacing: 2px; }
-.tracking-wider { letter-spacing: 3px; }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN
+   RESPONSIVE
    ========================================================================== */
-
-@media (max-width: 1024px) {
-    .booking-layout {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-    }
-    
-    .activities-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    }
-}
 
 @media (max-width: 768px) {
     .nav-links {
@@ -760,57 +629,20 @@ footer {
         padding: 1rem;
     }
     
-    .tech-card {
-        padding: 1.25rem;
-    }
-    
     .form-group-row {
         grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .credit-status-ledger {
-        padding: 1.5rem;
-    }
-    
-    .ledger-large-balance {
-        font-size: 2.5rem;
-    }
-    
-    .activities-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .tier-card {
-        padding: 1rem;
-    }
-    
-    .modal-container {
-        max-width: 95%;
     }
     
     .booking-headline {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
     
-    .tier-features {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-}
-
-@media (max-width: 480px) {
     .luxury-video-hero {
-        height: 60vh;
-        min-height: 450px;
+        height: 50vh;
+        min-height: 400px;
     }
     
-    .luxury-video-hero .hero-content h1 {
+    .stats-card .stat-value {
         font-size: 2rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
     }
 }
