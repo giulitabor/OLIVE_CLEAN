@@ -226,15 +226,6 @@ function closeModal() {
   document.body.style.overflow = "";
 }
 
-function openAgreement() {
-  const el = document.getElementById("agreementModal");
-  if (el) el.style.display = "flex";
-}
-
-function closeAgreement() {
-  const el = document.getElementById("agreementModal");
-  if (el) el.style.display = "none";
-}
 
 function closeConnectModal() {
   const el = document.getElementById("connectModal");
@@ -242,7 +233,6 @@ function closeConnectModal() {
 }
 
 (window as any).closeModal       = closeModal;
-(window as any).openAgreement    = openAgreement;
 (window as any).closeAgreement   = closeAgreement;
 (window as any).closeConnectModal = closeConnectModal;
 
