@@ -336,9 +336,14 @@ function _recalculatePayout() {
   display.textContent = `${((shares * 12.4) / _cachedSolPrice).toFixed(3)} SOL`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SELL CONFIRM ACTION - Button reset belongs here
+// ═══════════════════════════════════════════════════════════════════════════
+
 async function _confirmSellAction() {
   const btn = document.getElementById("sell-submit-btn") as HTMLButtonElement | null;
   const input = document.getElementById("sell-amount-input") as HTMLInputElement | null;
+  
   if (!activeSellTreeId || !input || !btn) return;
 
   const amount = parseInt(input.value) || 0;
@@ -346,8 +351,12 @@ async function _confirmSellAction() {
     alert("Please specify a valid quantity within your ownership bounds.");
     return;
   }
+  
+  // Disable button and show processing
   btn.disabled = true;
-  btn.textContent = "Processing…";
+  btn.textContent = "Processing...";
+  btn.dataset.processing = "true";
+  
   try {
     await sellShares(activeSellTreeId, amount);
     _closeSellModal();
@@ -355,22 +364,26 @@ async function _confirmSellAction() {
     await loadTrees();
     await updateStatsUI();
     
-    // ✅ ADD THIS: Refresh wallet balance display after sell
     if (typeof (window as any).updateIdentityBalanceUI === "function") {
       await (window as any).updateIdentityBalanceUI();
     }
     
-    // ✅ ADD THIS: Show success toast
     showToast(`Successfully sold ${amount} shares!`, false);
     
-  } catch (err) {
+  } catch (err: any) {
     console.error("[SELL ERROR]", err);
-    showToast("Sell transaction failed.", true);
+    showToast(`Sell failed: ${err.message || "Unknown error"}`, true);
+    
   } finally {
-    btn.disabled = false;
-    btn.textContent = "Confirm Liquidation";
+    // ✅ Reset button HERE (in the confirm function, not sellShares)
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Confirm Liquidation";
+      delete btn.dataset.processing;
+    }
   }
 }
+
 (window as any).confirmSellAction = _confirmSellAction;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1424,11 +1437,6 @@ async function sellShares(treeId: string | number, amount: number) {
   } catch (err: any) {
     console.error("[SELL FAILED]", err);
     throw err;
-  }finally {
-    // ✅ Reset button regardless of success/failure
-    btn.disabled = false;
-    btn.textContent = "Confirm Liquidation";
-    delete btn.dataset.processing;
   }
 }
 (window as any).sellShares = sellShares;
