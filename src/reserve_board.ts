@@ -1191,43 +1191,76 @@ let selectedTree: Tree | null = null;
 // Now works because selectedTree has been normalized
 // ═══════════════════════════════════════════════════════════════════════════
 (window as any).openAgreement = () => {
-  console.log("[AGREEMENT] START");
+  console.log("[AGREEMENT] Opening with tree:", selectedTree);
+  
+  if (!selectedTree) {
+    console.error("[AGREEMENT] No selected tree!");
+    return;
+  }
 
-  try {
+  // ✅ READ YOUR ACTUAL FIELD NAMES
+  const treeName = selectedTree.name || `Tree ${selectedTree.tree_id}`;
+  const treeLocation = selectedTree.location || `Field ${selectedTree.field_id || 'F1'}`;
+  const treeAge = selectedTree.age || (selectedTree.age_years ? `${selectedTree.age_years} years` : "5+ years");
+  const treeHeight = selectedTree.height || (selectedTree.height_cm ? `${selectedTree.height_cm} cm` : "2.5m");
+  const treeVariety = selectedTree.variety || "Frantoio";
+  const treeImage = selectedTree.image_url || selectedTree.photo_url || "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png";
 
-    console.log("[AGREEMENT] selectedTree =", selectedTree);
+  console.log("[AGREEMENT] Mapped values:", {treeName, treeLocation, treeAge, treeHeight, treeVariety});
 
-    const agreeModal = document.getElementById("agreementModal");
-    const purchaseModal = document.getElementById("modalOverlay");
+  // Get modal elements
+  const agreeModal = document.getElementById("agreementModal");
+  const purchaseModal = document.getElementById("modalOverlay");
+  
+  if (!agreeModal) return;
 
-    console.log("[AGREEMENT] modal refs", {
-      agreeModal,
-      purchaseModal
-    });
+  // Toggle modals
+  document.body.style.overflow = "hidden";
+  if (purchaseModal) purchaseModal.style.display = "none";
+  agreeModal.style.display = "flex";
 
-    const locationEl = document.getElementById("agreeLocation");
-    const ageEl = document.getElementById("agreeAge");
-    const heightEl = document.getElementById("agreeHeight");
-    const varietyEl = document.getElementById("agreeVariety");
+  // Set the values using your actual data
+  const titleEl = document.getElementById("agreeTitle");
+  if (titleEl) titleEl.innerText = `Adopting ${treeName}`;
+  
+  const imgEl = document.getElementById("agreeImage") as HTMLImageElement;
+  if (imgEl) imgEl.src = treeImage;
+  
+  const locationEl = document.getElementById("agreeLocation");
+  if (locationEl) locationEl.innerText = treeLocation;
+  
+  const ageEl = document.getElementById("agreeAge");
+  if (ageEl) ageEl.innerText = treeAge;
+  
+  const heightEl = document.getElementById("agreeHeight");
+  if (heightEl) heightEl.innerText = treeHeight;
+  
+  const varietyEl = document.getElementById("agreeVariety");
+  if (varietyEl) varietyEl.innerText = treeVariety;
 
-    console.log("[AGREEMENT] field refs", {
-      locationEl,
-      ageEl,
-      heightEl,
-      varietyEl
-    });
-
-    locationEl!.textContent = selectedTree.location;
-    ageEl!.textContent = selectedTree.age;
-    heightEl!.textContent = selectedTree.height;
-    varietyEl!.textContent = selectedTree.variety;
-
-    console.log("[AGREEMENT] VALUES WRITTEN");
-
-  } catch (err) {
-    console.error("[AGREEMENT] CRASHED", err);
+  // Setup checkbox
+  const checkbox = document.getElementById("agreeCheckbox") as HTMLInputElement;
+  const finalBtn = document.getElementById("finalConfirmBtn") as HTMLButtonElement;
+  
+  if (checkbox && finalBtn) {
+    checkbox.checked = false;
+    finalBtn.disabled = true;
+    checkbox.onchange = () => { finalBtn.disabled = !checkbox.checked; };
   }
 };
+
+(window as any).closeAgreement = () => {
+  console.log("[AGREEMENT] Closing agreement modal");
+  
+  const agreeModal = document.getElementById("agreementModal");
+  const purchaseModal = document.getElementById("modalOverlay");
+  
+  if (agreeModal) agreeModal.style.display = "none";
+  if (purchaseModal) purchaseModal.style.display = "flex";
+  
+  document.body.style.overflow = "";
+};
+
 (window as any).closeSuccess = () => {
   const el = document.getElementById("successModal");
   if (el) el.style.display = "none";
