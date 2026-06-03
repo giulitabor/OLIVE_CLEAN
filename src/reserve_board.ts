@@ -1341,8 +1341,9 @@ let selectedTree: Tree | null = null;
 
     await conn.confirmTransaction(sig, "confirmed");
 
-    _invalidateCaches();
-
+ _invalidateCaches();
+    loadTrees();
+    updateStatsUI();
     const agreeModal = document.getElementById("agreementModal");
     const successModal = document.getElementById("successModal");
     if (agreeModal) agreeModal.style.display = "none";
