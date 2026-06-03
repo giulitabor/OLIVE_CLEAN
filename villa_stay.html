@@ -71,7 +71,6 @@
             font-weight: 300;
         }
 
-        /* Progress bar */
         .cinematic-progress {
             position: fixed;
             bottom: 0;
@@ -90,7 +89,6 @@
             transition: width linear;
         }
 
-        /* Skip button */
         .cinematic-skip {
             position: fixed;
             bottom: 20px;
@@ -115,7 +113,6 @@
             border-color: #C5A059;
         }
 
-        /* Video hero stays as background */
         .luxury-video-hero {
             position: fixed;
             top: 0;
@@ -148,7 +145,6 @@
             pointer-events: none;
         }
 
-        /* Main content stays visible over video */
         .main-content-wrapper {
             position: relative;
             z-index: 10;
@@ -159,14 +155,17 @@
             background: rgba(0, 0, 0, 0.5) !important;
             backdrop-filter: blur(8px);
         }
+        
+        /* Fix for modal z-index */
+        .modal-overlay {
+            z-index: 200;
+        }
     </style>
 </head>
 
 <body class="antialiased min-h-screen" style="background: transparent;">
 
-    <!-- ═══════════════════════════════════════
-         VIDEO HERO - BACKGROUND
-    ════════════════════════════════════════ -->
+    <!-- VIDEO HERO - BACKGROUND -->
     <div class="luxury-video-hero">
         <video id="bgVideo" autoplay loop muted playsinline aria-hidden="true"
                poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
@@ -175,9 +174,7 @@
         <div class="video-overlay"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         CINEMATIC TEXT OVERLAY (fades in/out over video)
-    ════════════════════════════════════════ -->
+    <!-- CINEMATIC TEXT OVERLAY -->
     <div class="cinematic-overlay-container">
         <div id="cinematicLine" class="cinematic-line"></div>
         <div class="cinematic-progress">
@@ -186,9 +183,7 @@
         <button id="cinematicSkipBtn" class="cinematic-skip">SKIP →</button>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         NAVIGATION - VISIBLE FROM START
-    ════════════════════════════════════════ -->
+    <!-- NAVIGATION -->
     <nav class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -203,30 +198,23 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
-                    <p id="nav-tier-label"
-                       class="text-[8px] text-stone-500 uppercase tracking-widest">Guest Mode</p>
-                    <p id="nav-identity-display"
-                       class="text-[10px] text-[#C5A059] font-mono uppercase tracking-wider">NOT CONNECTED</p>
+                    <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase tracking-widest">Guest Mode</p>
+                    <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase tracking-wider">NOT CONNECTED</p>
                 </div>
-                <button id="connectBtn"
-                        class="bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95">
+                <button id="connectBtn" class="bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95">
                     Connect Profile
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- ═══════════════════════════════════════
-         MAIN CONTENT - VISIBLE FROM START
-    ════════════════════════════════════════ -->
+    <!-- MAIN CONTENT -->
     <div class="main-content-wrapper">
         <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative">
             <!-- HERO STATS -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16 relative z-10">
                 <div class="lg:col-span-7">
-                    <p class="text-[11px] text-[#C5A059] font-bold tracking-[0.3em] uppercase mb-2">
-                        Exclusive Patron Sanctuary
-                    </p>
+                    <p class="text-[11px] text-[#C5A059] font-bold tracking-[0.3em] uppercase mb-2">Exclusive Patron Sanctuary</p>
                     <h1 class="font-serif text-5xl md:text-7xl text-white mb-6 leading-tight">
                         Your Stay at <br/>
                         <span class="italic text-[#C5A059]">The Villa Estate</span>
@@ -254,7 +242,7 @@
                 </div>
             </div>
 
-            <!-- REST OF YOUR CONTENT CONTINUES HERE -->
+            <!-- MAIN GRID -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
                 <!-- LEFT: TIER INFO -->
                 <div class="lg:col-span-5 space-y-6">
@@ -267,6 +255,7 @@
                                 <p id="tier-progress-text" class="text-[11px] text-[#C5A059] font-mono mt-0.5">Connect to resolve tier status</p>
                             </div>
                         </div>
+
                         <div class="mb-4">
                             <div class="flex justify-between items-center mb-1">
                                 <span id="next-tier-label" class="text-[9px] text-stone-500 font-mono uppercase tracking-widest">Next: Seed Supporter</span>
@@ -276,7 +265,7 @@
                                 <div id="tier-progress-bar" class="progress-fill" style="width:0%"></div>
                             </div>
                         </div>
-                        <!-- TIER CARDS -->
+
                         <div class="space-y-4">
                             <div id="card-tier-1" class="group p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5" style="opacity:0.35;">
                                 <div class="flex items-start gap-4">
@@ -285,7 +274,7 @@
                                         <h4 class="font-bold text-white text-sm">Mignole Supporter</h4>
                                         <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€500</p>
                                         <ul class="space-y-2 text-xs text-stone-400 mt-4">
-                                            <li>○  1 Full Tree Adoption(*Founders Only)</li>
+                                            <li>○ 1 Full Tree Adoption (*Founders Only)</li>
                                             <li>○ 3L annual olive oil delivery</li>
                                             <li>○ Seasonal grove &amp; harvest updates</li>
                                             <li>○ Estate visits &amp; tasting access</li>
@@ -293,6 +282,7 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div id="card-tier-2" class="group p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5" style="opacity:0.35;">
                                 <div class="flex items-start gap-4">
                                     <div class="w-12 h-12 rounded-2xl bg-[#8BAE45]/10 border border-[#8BAE45]/20 flex items-center justify-center text-2xl">🌿</div>
@@ -300,7 +290,7 @@
                                         <h4 class="font-bold text-white text-sm">Mignole Guardian</h4>
                                         <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€2,000</p>
                                         <ul class="space-y-2 text-xs text-stone-400 mt-4">
-                                            <li>○  ~5 Full Tree Adoptions(*Founders Only)</li>
+                                            <li>○ ~5 Full Tree Adoptions (*Founders Only)</li>
                                             <li>○ Annual olive oil allocation</li>
                                             <li>○ Olive Credits accumulation</li>
                                             <li>○ 15% villa booking discount</li>
@@ -308,14 +298,15 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div id="card-tier-3" class="group p-5 rounded-2xl bg-gradient-to-br from-[#C5A059]/10 to-black border border-[#C5A059]/20" style="opacity:0.35;">
                                 <div class="flex items-start gap-4">
                                     <div class="w-12 h-12 rounded-2xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-2xl">👑</div>
                                     <div class="flex-1">
                                         <h4 class="font-bold text-white text-sm">Tree Guardian</h4>
-                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€10,000 /p>
+                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€10,000</p>
                                         <ul class="space-y-2 text-xs text-stone-300 mt-4">
-                                            <li>○ 15 Full Tree Adoptions(*Founders Only)< </li>
+                                            <li>○ 15 Full Tree Adoptions (*Founders Only)</li>
                                             <li class="text-emerald-400 font-semibold">✔ Complimentary 3-night villa stay</li>
                                             <li>○ Dedicated olive tree allocation</li>
                                             <li>○ VIP private harvest invitation</li>
@@ -323,12 +314,13 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div id="card-tier-4" class="group p-5 rounded-2xl bg-gradient-to-br from-[#5a7a2b]/15 to-black border border-[#5a7a2b]/30" style="opacity:0.35;">
                                 <div class="flex items-start gap-4">
                                     <div class="w-12 h-12 rounded-2xl bg-[#5a7a2b]/20 border border-[#5a7a2b]/30 flex items-center justify-center text-2xl">🌲</div>
                                     <div class="flex-1">
                                         <h4 class="font-bold text-white text-sm">Estate Guardian</h4>
-                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€20,000 · ~25 Full Tree Adoptions(*Founders Only)</p>
+                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€20,000 · ~25 Full Tree Adoptions (*Founders Only)</p>
                                     </div>
                                 </div>
                             </div>
@@ -402,6 +394,82 @@
         </div>
     </footer>
 
+    <!-- MODALS (required for stay.ts) -->
+    <div class="modal-overlay" id="connectModal" style="display:none;">
+        <div class="max-w-md w-full tech-card p-8 rounded-3xl text-center relative overflow-hidden mx-4">
+            <div class="relative z-10">
+                <button id="closeConnectModalBtn" class="absolute -top-2 right-0 text-xl font-mono text-stone-500 hover:text-white transition">&times;</button>
+                <span class="text-3xl mb-3 block">🌿</span>
+                <h2 class="font-serif text-2xl font-bold mb-2 text-white">Connect to Olivium</h2>
+                <p class="text-xs text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
+                <div class="space-y-4 text-left">
+                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                            <span>◎ Wallet Authentication</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono">Web3</span>
+                        </div>
+                        <p class="text-[11px] text-stone-400 mb-3">Resolve direct web3 asset holdings instantly using your browser extension.</p>
+                        <button id="connectWalletBtn" class="w-full bg-[#5a7a2b] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#6b8e36] transition-colors">Connect Phantom / Solana</button>
+                    </div>
+                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                            <span>✉ Custodial Profile Access</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">Secure MFA</span>
+                        </div>
+                        <p class="text-[11px] text-stone-400 mb-3">Authorize using your traditional off-chain email profile.</p>
+                        <button id="emailLoginBtn" class="w-full bg-stone-800 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-stone-700 border border-white/5 transition-colors">Continue with Email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="authModalOverlay" class="modal-overlay" style="display:none;">
+        <div class="max-w-md w-full tech-card rounded-3xl relative overflow-hidden mx-4">
+            <button id="closeAuthModal" class="absolute top-4 right-5 text-xl font-mono text-stone-400 hover:text-white z-20">&times;</button>
+            <div class="p-8 relative z-10">
+                <h2 class="font-serif text-center font-bold text-2xl text-white mb-4">Identity Gateway</h2>
+                <div class="flex mb-6 bg-black/40 p-1 rounded-xl border border-white/5">
+                    <button id="loginTab" class="flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all" style="background:#C5A059;color:#000;">Login</button>
+                    <button id="signupTab" class="flex-1 py-2 text-center text-xs font-bold rounded-lg bg-transparent text-stone-400 transition-all">Signup</button>
+                </div>
+                <form id="loginForm" onsubmit="return false;" class="space-y-3">
+                    <input id="loginEmail" type="email" placeholder="Email Address" class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <input id="loginPassword" type="password" placeholder="Access Password" class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <button id="loginBtn" type="button" class="w-full bg-[#C5A059] text-black font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest hover:bg-amber-500 transition-all">Request Token Gate</button>
+                    <div class="hidden pt-4 border-t border-dashed border-white/10" id="loginOtpBox">
+                        <input id="loginOtp" placeholder="6-Digit MFA Code" class="w-full tracking-[0.25em] bg-black/50 border-2 border-[#C5A059] rounded-xl p-3 text-center text-lg font-bold font-mono focus:outline-none" maxlength="6" inputmode="numeric">
+                        <button id="verifyLoginOtp" type="button" class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white font-bold py-3 rounded-xl mt-3 text-xs uppercase tracking-wider transition-all">Confirm Entry</button>
+                    </div>
+                </form>
+                <form id="signupForm" onsubmit="return false;" class="hidden space-y-3">
+                    <input id="signupEmail" type="email" placeholder="Identity Email Address" class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <input id="signupPassword" type="password" placeholder="Security Password" class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <div id="passwordMetricsBox" class="bg-black/50 border border-white/5 p-3 rounded-xl text-[11px] leading-relaxed font-mono">
+                        <p class="font-bold text-stone-400 mb-1.5 uppercase tracking-wide text-[9px]">Password Requirements:</p>
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                            <div id="metric-len" class="text-red-400"><span class="icon">❌</span> Min 6 Chars</div>
+                            <div id="metric-cap" class="text-red-400"><span class="icon">❌</span> Uppercase</div>
+                            <div id="metric-low" class="text-red-400"><span class="icon">❌</span> Lowercase</div>
+                            <div id="metric-num" class="text-red-400"><span class="icon">❌</span> Number</div>
+                            <div id="metric-spe" class="text-red-400"><span class="icon">❌</span> Special Char</div>
+                        </div>
+                    </div>
+                    <input id="signupConfirmPassword" type="password" placeholder="Confirm Password" class="w-full rounded-xl p-3 text-sm focus:outline-none" required>
+                    <button id="signupBtn" type="button" disabled class="w-full font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all cursor-not-allowed" style="background:rgb(68,64,60);color:rgb(168,162,158);">Initialize Account</button>
+                    <div id="qr" class="hidden mt-4 justify-center bg-white p-3 rounded-2xl border-4 border-emerald-600/20 max-w-[180px] mx-auto"></div>
+                    <div class="hidden pt-4 border-t border-dashed border-white/10" id="signupOtpBox">
+                        <input id="signupOtp" placeholder="Authenticator Passcode" class="w-full bg-black/50 rounded-xl p-3 text-center text-base font-bold font-mono tracking-widest focus:outline-none" maxlength="6" inputmode="numeric">
+                        <button id="verifySignupOtp" type="button" class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white font-bold py-3 rounded-xl mt-3 text-xs uppercase tracking-wider transition-all">Verify & Initialize</button>
+                    </div>
+                </form>
+                <div id="msg" class="mt-4 text-center text-xs font-mono font-bold min-h-[16px]"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
     <!-- Cinematic Script -->
     <script>
         const narrative = [
@@ -425,7 +493,6 @@
             if (!isPlaying) return;
             
             if (index >= narrative.length) {
-                // Hide the cinematic overlay when done
                 if (textDisplay) textDisplay.style.display = 'none';
                 if (progressFill) progressFill.parentElement.style.display = 'none';
                 if (skipBtn) skipBtn.style.display = 'none';
@@ -488,14 +555,11 @@
 
         skipBtn.addEventListener('click', skipCinematic);
         
-        // Start after a short delay
         setTimeout(() => {
             showText(0);
         }, 800);
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script type="module" src="./src/stay.ts"></script>
-
 </body>
 </html>
