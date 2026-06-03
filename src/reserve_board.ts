@@ -1348,10 +1348,23 @@ let selectedTree: Tree | null = null;
     const successModal = document.getElementById("successModal");
     if (agreeModal) agreeModal.style.display = "none";
     if (successModal) successModal.style.display = "flex";
-    if (finalBtn) delete finalBtn.dataset.processing;
+if (finalBtn) {
+      delete finalBtn.dataset.processing;
+      finalBtn.disabled = false;
+      finalBtn.textContent = "Confirm & Pay";
+    }    
 
     loadTrees();
-  } catch (err) {
+    updateStatsUI();
+    
+    if (typeof (window as any).updateIdentityBalanceUI === "function") {
+      await (window as any).updateIdentityBalanceUI();
+    }
+    
+    showToast("Purchase successful! Your shares have been added.", false);
+    
+  } 
+  catch (err) {
     console.error("TX Error:", err);
     alert("Transaction failed. Check wallet balance or signing approval.");
     if (finalBtn) {
