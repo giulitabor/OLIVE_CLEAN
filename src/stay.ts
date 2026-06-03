@@ -139,7 +139,7 @@ function calculateTier(shares: number): TierInfo {
   if (shares >= 500) {
     const progress = Math.round(((shares - 500) / 500) * 100);
     return {
-      name: "Tree Guardian", icon: "🌳", nextTier: "Grove Patron", sharesNeeded: 1000 - shares,
+      name: "Mignole Guardian", icon: "🌳", nextTier: "Grove Patron", sharesNeeded: 1000 - shares,
       progressPercent: progress, discountPercent: 15,
       nightlyRate: BASE_RATE * 0.85,
       rateLabel: `$${(BASE_RATE * 0.85).toFixed(2)} USD / Nightly (15% Guardian Discount)`,
@@ -148,7 +148,7 @@ function calculateTier(shares: number): TierInfo {
   if (shares >= 100) {
     const progress = Math.round(((shares - 100) / 400) * 100);
     return {
-      name: "Seed Supporter", icon: "🌱", nextTier: "Tree Guardian", sharesNeeded: 500 - shares,
+      name: "Mignole Supporter", icon: "🌱", nextTier: "Tree Guardian", sharesNeeded: 500 - shares,
       progressPercent: progress, discountPercent: 0,
       nightlyRate: BASE_RATE,
       rateLabel: `$${BASE_RATE} USD / Nightly (Standard Rate)`,
@@ -156,7 +156,7 @@ function calculateTier(shares: number): TierInfo {
   }
   const progress = shares === 0 ? 0 : Math.round((shares / 100) * 100);
   return {
-    name: "Standard Account", icon: "🫒", nextTier: "Seed Supporter", sharesNeeded: 100 - shares,
+    name: "Standard Account", icon: "🫒", nextTier: "Mignole Supporter", sharesNeeded: 100 - shares,
     progressPercent: progress, discountPercent: 0,
     nightlyRate: BASE_RATE,
     rateLabel: `$${BASE_RATE} USD / Nightly Standard Baseline`,
@@ -342,7 +342,7 @@ function renderUI() {
   const sharesDisplay = document.getElementById("shares-count-display");
   const creditsDisplay = document.getElementById("credits-count-display");
   if (sharesDisplay) {
-    sharesDisplay.innerHTML = `${shares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Nodes Detected</span>`;
+    sharesDisplay.innerHTML = `${shares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Mignole Detected</span>`;
   }
   if (creditsDisplay) {
     creditsDisplay.innerHTML = `${credits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
@@ -360,7 +360,7 @@ function renderUI() {
   if (tierNameEl) tierNameEl.textContent = connected ? tier.name : "Guest Mode";
   if (tierProgressText) {
     tierProgressText.textContent = connected
-      ? (tier.sharesNeeded > 0 ? `${tier.sharesNeeded} shares to ${tier.nextTier}` : "Maximum tier achieved!")
+      ? (tier.sharesNeeded > 0 ? `${tier.sharesNeeded} Mignole to ${tier.nextTier}` : "Maximum tier achieved!")
       : "Connect to resolve tier status";
   }
   if (tierProgressBar) (tierProgressBar as HTMLElement).style.width = `${connected ? tier.progressPercent : 0}%`;
