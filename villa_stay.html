@@ -185,29 +185,98 @@
 
     <!-- NAVIGATION -->
     <nav class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="font-serif text-xl font-bold text-white tracking-widest">
-                    OLIVIUM <span class="italic text-[#C5A059]">PRIVATE</span>
-                </span>
-            </div>
-            <div class="flex items-center gap-8 text-[10px] font-bold tracking-[0.2em]">
-                <a href="index2.html" class="hover:text-[#C5A059] text-stone-400 transition">DASHBOARD</a>
-                <a href="https://toscagialla.com" class="text-[#C5A059]">VILLA TOUR</a>
-                <a href="#" class="hover:text-[#C5A059] text-stone-400 transition">HARVEST LOG</a>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="text-right hidden sm:block">
-                    <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase tracking-widest">Guest Mode</p>
-                    <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase tracking-wider">NOT CONNECTED</p>
-                </div>
-                <button id="connectBtn" class="bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95">
-                    Connect Profile
-                </button>
-            </div>
-        </div>
-    </nav>
 
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+
+        <div>
+            <span class="font-serif text-xl font-bold text-white tracking-widest">
+                OLIVIUM
+                <span class="italic text-[#C5A059]">PRIVATE</span>
+            </span>
+        </div>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex items-center gap-8 text-[10px] font-bold tracking-[0.2em]">
+
+            <a href="index2.html"
+               class="hover:text-[#C5A059] text-stone-400">
+               DASHBOARD
+            </a>
+
+            <a href="https://toscagialla.com"
+               class="text-[#C5A059]">
+               VILLA TOUR
+            </a>
+
+            <a href="#"
+               class="hover:text-[#C5A059] text-stone-400">
+               HARVEST LOG
+            </a>
+
+        </div>
+
+        <!-- Desktop Right -->
+        <div class="hidden md:flex items-center gap-4">
+
+            <div class="text-right">
+
+                <p id="nav-tier-label"
+                   class="text-[8px] text-stone-500 uppercase">
+                    Guest Mode
+                </p>
+
+                <p id="nav-identity-display"
+                   class="text-[10px] text-[#C5A059] font-mono uppercase">
+                    NOT CONNECTED
+                </p>
+
+            </div>
+
+            <button id="connectBtn"
+                    class="bg-[#5a7a2b] text-white text-[10px] px-5 py-2.5 rounded-xl">
+                Connect
+            </button>
+
+        </div>
+
+        <!-- Mobile Hamburger -->
+
+        <button id="mobileMenuBtn"
+                class="md:hidden text-3xl text-white">
+
+            ☰
+
+        </button>
+
+    </div>
+
+    <!-- Mobile Drawer -->
+
+    <div id="mobileMenu"
+         class="hidden md:hidden bg-black/95 border-t border-white/10">
+
+        <div class="flex flex-col p-6 gap-6">
+
+            <a href="index2.html">Dashboard</a>
+
+            <a href="https://toscagialla.com">
+                Villa Tour
+            </a>
+
+            <a href="#">
+                Harvest Log
+            </a>
+
+            <button id="mobileConnectBtn"
+                    class="bg-[#5a7a2b] py-3 rounded-xl">
+                Connect Profile
+            </button>
+
+        </div>
+
+    </div>
+
+</nav>
     <!-- MAIN CONTENT -->
     <div class="main-content-wrapper">
         <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative">
