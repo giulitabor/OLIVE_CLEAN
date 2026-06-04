@@ -787,50 +787,93 @@ function setupWalletConnect() {
     (btn as HTMLButtonElement).disabled = true;
 
     try {
-      const provider = (window as any).solana ?? (window as any).phantom?.solana;
+      const provider =
+        (window as any).solana ??
+        (window as any).phantom?.solana;
+
       if (!provider) {
         alert("No Solana wallet extension detected.");
         return;
       }
 
       const response = await provider.connect();
-      const pubkey: string = response.publicKey?.toBase58?.() ?? provider.publicKey?.toBase58?.();
-      if (!pubkey) throw new Error("No public key returned");
+
+      const pubkey =
+        response.publicKey?.toBase58?.() ??
+        provider.publicKey?.toBase58?.();
+
+      if (!pubkey)
+        throw new Error("No public key returned");
 
       const identity: OliviumIdentity = {
         type: "wallet",
         walletAddress: pubkey,
-        displayLabel: `${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`,
+        displayLabel:
+          `${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`,
       };
+
       writeIdentity(identity);
 
-      const modal = document.getElementById("connectModal");
-      if (modal) modal.style.display = "none";
+      const modal =
+        document.getElementById("connectModal");
 
-      window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey, type: "wallet" } }));
+      if (modal) {
+        modal.style.display = "none";
+      }
+
+      closeMobileMenu();
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "olivium:connected",
+          {
+            detail: {
+              pubkey,
+              type: "wallet",
+            },
+          }
+        )
+      );
+
       await refreshAllData();
 
     } catch (err) {
-      console.error("[WALLET] connect error:", err);
-      setMsg("Wallet connection failed", true);
+
+      console.error(
+        "[WALLET] connect error:",
+        err
+      );
+
+      setMsg(
+        "Wallet connection failed",
+        true
+      );
+
     } finally {
-      btn.textContent = "Connect Phantom / Solana";
-      (btn as HTMLButtonElement).disabled = false;
+
+      btn.textContent =
+        "Connect Phantom / Solana";
+
+      (btn as HTMLButtonElement)
+        .disabled = false;
     }
   });
-  document
-  .getElementById("mobileConnectBtn")
-  ?.addEventListener("click", () => {
-
-    closeMobileMenu();
-
-    document
-      .getElementById("connectBtn")
-      ?.click();
-
-  });
 }
+function setupMobileConnectButton() {
 
+  document
+    .getElementById("mobileConnectBtn")
+    ?.addEventListener("click", () => {
+
+      closeMobileMenu();
+
+      document
+        .getElementById("connectBtn")
+        ?.click();
+
+    });
+
+}
 // ============================================================
 // EMAIL AUTH — Password Validation
 // ============================================================
@@ -1214,7 +1257,8 @@ async function init() {
   setupLogin();
   setupMobileMenu();
   setupVerifyLogin();
-  setupWalletConnect();
+setupWalletConnect();
+setupMobileConnectButton();
   setupEmailLoginButton();
   setupBookingForm();
 
