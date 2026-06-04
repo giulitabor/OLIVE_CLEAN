@@ -128,46 +128,108 @@ interface TierInfo {
 
 function calculateTier(shares: number): TierInfo {
   const BASE_RATE = 450;
-  if (shares >= 1000) {
+
+  // ------------------------------------------------------------
+  // 🫒 Standard Account (0–99)
+  // ------------------------------------------------------------
+  if (shares < 100) {
+    const progress = Math.round((shares / 100) * 100);
+
     return {
-      name: "Grove Patron", icon: "👑", nextTier: "Max", sharesNeeded: 0,
-      progressPercent: 100, discountPercent: 15,
-      nightlyRate: BASE_RATE * 0.85,
-      rateLabel: `$${(BASE_RATE * 0.85).toFixed(2)} USD / Nightly (15% Patron Discount)`,
-    };
-  }
-  if (shares >= 500) {
-    const progress = Math.round(((shares - 500) / 500) * 100);
-    return {
-      name: "Mignole Guardian", icon: "🌳", nextTier: "Grove Patron", sharesNeeded: 1000 - shares,
-      progressPercent: progress, discountPercent: 15,
-      nightlyRate: BASE_RATE * 0.85,
-      rateLabel: `$${(BASE_RATE * 0.85).toFixed(2)} USD / Nightly (15% Guardian Discount)`,
-    };
-  }
-  if (shares >= 100) {
-    const progress = Math.round(((shares - 100) / 400) * 100);
-    return {
-      name: "Mignole Supporter", icon: "🌱", nextTier: "Tree Guardian", sharesNeeded: 500 - shares,
-      progressPercent: progress, discountPercent: 0,
+      name: "Standard Account",
+      icon: "🫒",
+      nextTier: "Mignole Supporter",
+      sharesNeeded: 100 - shares,
+      progressPercent: progress,
+      discountPercent: 0,
       nightlyRate: BASE_RATE,
       rateLabel: `$${BASE_RATE} USD / Nightly (Standard Rate)`,
     };
   }
-  const progress = shares === 0 ? 0 : Math.round((shares / 100) * 100);
+
+  // ------------------------------------------------------------
+  // 🌱 Mignole Supporter (100–499)
+  // ------------------------------------------------------------
+  if (shares < 500) {
+    const progress = Math.round(((shares - 100) / 400) * 100);
+
+    return {
+      name: "Mignole Supporter",
+      icon: "🌱",
+      nextTier: "Mignole Guardian",
+      sharesNeeded: 500 - shares,
+      progressPercent: progress,
+      discountPercent: 0,
+      nightlyRate: BASE_RATE,
+      rateLabel: `$${BASE_RATE} USD / Nightly (Standard Rate)`,
+    };
+  }
+
+  // ------------------------------------------------------------
+  // 🌳 Mignole Guardian (500–999)
+  // ------------------------------------------------------------
+  if (shares < 1000) {
+    const progress = Math.round(((shares - 500) / 500) * 100);
+    const rate = BASE_RATE * 0.85;
+
+    return {
+      name: "Mignole Guardian",
+      icon: "🌳",
+      nextTier: "Grove Patron",
+      sharesNeeded: 1000 - shares,
+      progressPercent: progress,
+      discountPercent: 15,
+      nightlyRate: rate,
+      rateLabel: `$${rate.toFixed(2)} USD / Nightly (15% Guardian Discount)`,
+    };
+  }
+
+  // ------------------------------------------------------------
+  // 👑 Grove Patron (1000+)
+  // ------------------------------------------------------------
+  const rate = BASE_RATE * 0.85;
+
   return {
-    name: "Standard Account", icon: "🫒", nextTier: "Mignole Supporter", sharesNeeded: 100 - shares,
-    progressPercent: progress, discountPercent: 0,
-    nightlyRate: BASE_RATE,
-    rateLabel: `$${BASE_RATE} USD / Nightly Standard Baseline`,
+    name: "Grove Patron",
+    icon: "👑",
+    nextTier: "Max Tier Reached",
+    sharesNeeded: 0,
+    progressPercent: 100,
+    discountPercent: 15,
+    nightlyRate: rate,
+    rateLabel: `$${rate.toFixed(2)} USD / Nightly (15% Patron Discount)`,
   };
-  if(totalMignole >= 500){
-
- document.getElementById("trackingNumber")
-         .innerText =
-         "OLV-" + wallet.slice(0,6).toUpperCase();
-
 }
+
+function updateOilAccess(mignole: number) {
+  const card = document.getElementById("oilDeliveryCard");
+  const notice = document.getElementById("oilDeliveryLockNotice");
+  const tracking = document.getElementById("trackingNumber");
+
+  if (!card || !notice) return;
+
+  const unlocked = mignole >= 500;
+
+  // ------------------------------------------------------------
+  // Card lock/unlock state
+  // ------------------------------------------------------------
+  card.classList.toggle("opacity-40", !unlocked);
+  card.classList.toggle("pointer-events-none", !unlocked);
+
+  notice.style.display = unlocked ? "none" : "block";
+
+  // ------------------------------------------------------------
+  // Tracking display
+  // ------------------------------------------------------------
+  if (tracking) {
+    if (unlocked && state.identity.walletAddress) {
+      tracking.textContent =
+        "OLV-" +
+        state.identity.walletAddress.slice(0, 6).toUpperCase();
+    } else {
+      tracking.textContent = "LOCKED";
+    }
+  }
 }
 
 // ============================================================
@@ -302,11 +364,6 @@ async function fetchUserCredits(walletAddress: string): Promise<number> {
   }
 }
 
-// ============================================================
-// SINGLE RENDER FUNCTION
-// This is the ONLY place that writes to the DOM for state-driven UI.
-// ============================================================
-
 function renderUI() {
   const { identity, shares, credits, tier, isLoading } = state;
   const connected = identity.type !== "none" && identity.walletAddress !== "";
@@ -320,15 +377,18 @@ function renderUI() {
     if (isLoading) {
       connectBtn.textContent = "Loading…";
       connectBtn.setAttribute("disabled", "true");
-      connectBtn.className = "bg-stone-700 text-stone-400 text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all cursor-not-allowed";
+      connectBtn.className =
+        "bg-stone-700 text-stone-400 text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all cursor-not-allowed";
     } else if (connected) {
       connectBtn.textContent = "Disconnect";
       connectBtn.removeAttribute("disabled");
-      connectBtn.className = "text-red-400 border border-red-500/50 bg-transparent text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl transition-all hover:bg-red-500/10 active:scale-95";
+      connectBtn.className =
+        "text-red-400 border border-red-500/50 bg-transparent text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl transition-all hover:bg-red-500/10 active:scale-95";
     } else {
       connectBtn.textContent = "Connect Profile";
       connectBtn.removeAttribute("disabled");
-      connectBtn.className = "bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95";
+      connectBtn.className =
+        "bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-[10px] tracking-widest uppercase font-bold px-5 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95";
     }
   }
 
@@ -337,22 +397,27 @@ function renderUI() {
   }
 
   if (navIdentityDisplay) {
-    if (connected) {
-      const addr = identity.walletAddress;
-      navIdentityDisplay.textContent = `${addr.slice(0, 4)}…${addr.slice(-4)}`;
-    } else {
-      navIdentityDisplay.textContent = "NOT CONNECTED";
-    }
+    navIdentityDisplay.textContent = connected
+      ? `${identity.walletAddress.slice(0, 4)}…${identity.walletAddress.slice(-4)}`
+      : "NOT CONNECTED";
   }
 
   // — Stats —
   const sharesDisplay = document.getElementById("shares-count-display");
   const creditsDisplay = document.getElementById("credits-count-display");
+
   if (sharesDisplay) {
-    sharesDisplay.innerHTML = `${shares.toLocaleString()} <span class="text-xs text-gold font-mono block mt-1">Mignole Detected</span>`;
+    sharesDisplay.innerHTML = `${shares.toLocaleString()}
+      <span class="text-xs text-gold font-mono block mt-1">
+        Mignole Detected
+      </span>`;
   }
+
   if (creditsDisplay) {
-    creditsDisplay.innerHTML = `${credits} <span class="text-xs text-gold font-mono block mt-1">Sanctuary Days</span>`;
+    creditsDisplay.innerHTML = `${credits}
+      <span class="text-xs text-gold font-mono block mt-1">
+        Sanctuary Days
+      </span>`;
   }
 
   // — Tier card —
@@ -365,14 +430,29 @@ function renderUI() {
 
   if (tierIconEl) tierIconEl.textContent = connected ? tier.icon : "🫒";
   if (tierNameEl) tierNameEl.textContent = connected ? tier.name : "Guest Mode";
+
   if (tierProgressText) {
     tierProgressText.textContent = connected
-      ? (tier.sharesNeeded > 0 ? `${tier.sharesNeeded} Mignole to ${tier.nextTier}` : "Maximum tier achieved!")
+      ? (tier.sharesNeeded > 0
+          ? `${tier.sharesNeeded} Mignole to ${tier.nextTier}`
+          : "Maximum tier achieved!")
       : "Connect to resolve tier status";
   }
-  if (tierProgressBar) (tierProgressBar as HTMLElement).style.width = `${connected ? tier.progressPercent : 0}%`;
-  if (tierPercentLabel) tierPercentLabel.textContent = `${connected ? tier.progressPercent : 0}%`;
-  if (nextTierLabel) nextTierLabel.textContent = tier.sharesNeeded > 0 ? `Next: ${tier.nextTier}` : "Max Level";
+
+  if (tierProgressBar) {
+    (tierProgressBar as HTMLElement).style.width =
+      `${connected ? tier.progressPercent : 0}%`;
+  }
+
+  if (tierPercentLabel) {
+    tierPercentLabel.textContent =
+      `${connected ? tier.progressPercent : 0}%`;
+  }
+
+  if (nextTierLabel) {
+    nextTierLabel.textContent =
+      tier.sharesNeeded > 0 ? `Next: ${tier.nextTier}` : "Max Level";
+  }
 
   // — Tier card opacities —
   const thresholds: [string, number][] = [
@@ -381,24 +461,59 @@ function renderUI() {
     ["card-tier-3", 1000],
     ["card-tier-4", 2000],
   ];
+
   thresholds.forEach(([id, threshold]) => {
     const el = document.getElementById(id);
-    if (el) el.style.opacity = connected && shares >= threshold ? "1" : "0.35";
+    if (el) {
+      el.style.opacity =
+        connected && shares >= threshold ? "1" : "0.35";
+    }
   });
 
   // — Booking rate —
   const patronDiscountBadge = document.getElementById("patronDiscountBadge");
   const bookingRateDisplay = document.getElementById("bookingRateDisplay");
+
   if (patronDiscountBadge) {
     patronDiscountBadge.textContent = connected
-      ? `${tier.icon} ${tier.name}${tier.discountPercent > 0 ? ` (${tier.discountPercent}% off)` : ""}`
+      ? `${tier.icon} ${tier.name}${
+          tier.discountPercent > 0
+            ? ` (${tier.discountPercent}% off)`
+            : ""
+        }`
       : "Standard Account";
   }
+
   if (bookingRateDisplay) {
     bookingRateDisplay.textContent = tier.rateLabel;
   }
-}
 
+  // ============================================================
+  // 🫒 OIL ACCESS (NEW — integrated fix)
+  // ============================================================
+
+  const oilCard = document.getElementById("oilDeliveryCard");
+  const oilNotice = document.getElementById("oilDeliveryLockNotice");
+  const tracking = document.getElementById("trackingNumber");
+  const unlocked = connected && shares >= 500;
+
+  if (oilCard && oilNotice) {
+    oilCard.classList.toggle("opacity-40", !unlocked);
+    oilCard.classList.toggle("pointer-events-none", !unlocked);
+
+    oilNotice.style.display = unlocked ? "none" : "block";
+  }
+
+  if (tracking) {
+    if (unlocked && identity.walletAddress) {
+      tracking.textContent =
+        "OLV-" +
+        identity.walletAddress.slice(0, 6).toUpperCase();
+    } else {
+      tracking.textContent = "LOCKED";
+    }
+  }
+}
 // ============================================================
 // AUTH MODAL MESSAGE
 // ============================================================
