@@ -465,143 +465,158 @@
     <!-- RIGHT COLUMN -->
     <div class="lg:col-span-7 space-y-6">
 
-        <!-- OIL DELIVERY -->
-        <div id="oilDeliveryCard"
-     class="tech-card p-8 rounded-3xl opacity-40 pointer-events-none">
+    <!-- OIL DELIVERY -->
+<div class="tech-card p-8 rounded-3xl">
 
-            
-            <h2 class="font-serif text-3xl text-white mb-2">
-                Olive Oil Delivery
-            </h2>
-            <div id="oilDeliveryLockNotice"
-     class="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+    <!-- LOCK NOTICE -->
+    <div id="oilDeliveryLockNotice"
+         class="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
 
-    <p class="text-amber-400 text-sm font-semibold">
-        🔒 Olive Oil Deliveries unlock at 500+ Mignole
+        <p class="text-amber-400 text-sm font-semibold">
+            🔒 Olive Oil Deliveries unlock at 500+ Mignole
+        </p>
+
+        <p class="text-stone-400 text-xs mt-1">
+            Connect your profile to determine eligibility.
+        </p>
+
+    </div>
+
+    <h2 class="font-serif text-3xl text-white mb-2">
+        Olive Oil Delivery
+    </h2>
+
+    <p class="text-stone-400 text-sm mb-8">
+        Manage your annual allocation, delivery details and shipment status.
     </p>
 
-    <p class="text-stone-400 text-xs mt-1">
-        Connect your profile to determine eligibility.
-    </p>
+    <!-- LOCKED CONTENT -->
+    <div id="oilDeliveryCard"
+         class="opacity-40 pointer-events-none">
 
-</div>
+        <!-- USER DETAILS -->
+        <div class="grid md:grid-cols-2 gap-6">
 
-            <p class="text-stone-400 text-sm mb-8">
-                Manage shipping information and monitor annual harvest deliveries.
-            </p>
-
-            <div class="grid md:grid-cols-2 gap-6">
-
-                <div>
-                    <label class="text-xs text-stone-500 uppercase">
-                        Recipient Name
-                    </label>
-
-                    <input id="deliveryName"
-                           type="text"
-                           class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10">
-                </div>
-
-                <div>
-                    <label class="text-xs text-stone-500 uppercase">
-                        Email
-                    </label>
-
-                    <input id="deliveryEmail"
-                           type="email"
-                           class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10">
-                </div>
-
-            </div>
-
-            <div class="mt-6">
-
+            <div>
                 <label class="text-xs text-stone-500 uppercase">
-                    Shipping Address
+                    Recipient Name
                 </label>
 
-                <textarea id="deliveryAddress"
-                          class="w-full mt-2 rounded-xl p-4 bg-black border border-white/10 h-28">
-                </textarea>
+                <input id="deliveryName"
+                       type="text"
+                       class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10">
+            </div>
+
+            <div>
+                <label class="text-xs text-stone-500 uppercase">
+                    Email
+                </label>
+
+                <input id="deliveryEmail"
+                       type="email"
+                       class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10">
+            </div>
+
+        </div>
+
+        <div class="mt-6">
+
+            <label class="text-xs text-stone-500 uppercase">
+                Shipping Address
+            </label>
+
+            <textarea id="deliveryAddress"
+                      class="w-full mt-2 rounded-xl p-4 bg-black border border-white/10 h-28">
+            </textarea>
+
+        </div>
+
+        <button id="saveDeliveryBtn"
+                class="mt-6 bg-[#C5A059] text-black font-bold px-8 py-4 rounded-xl">
+            Save Delivery Details
+        </button>
+
+        <hr class="my-8 border-white/10">
+
+        <!-- ALLOCATION -->
+        <div class="rounded-2xl bg-black/30 border border-white/5 p-6">
+
+            <div class="flex justify-between items-start mb-4">
+
+                <div>
+                    <h3 class="font-serif text-xl text-white">
+                        Annual Estate Allocation
+                    </h3>
+
+                    <p class="text-stone-400 mt-2 text-sm">
+                        Your olive oil allocation based on current stewardship level.
+                    </p>
+                </div>
+
+                <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs">
+                    In Transit
+                </span>
 
             </div>
 
-            <button id="saveDeliveryBtn"
-                    class="mt-6 bg-[#C5A059] text-black font-bold px-8 py-4 rounded-xl">
-                Save Delivery Details
-            </button>
+            <div class="mb-6">
 
-            <hr class="my-8 border-white/10">
+                <p class="text-stone-500 text-xs uppercase tracking-widest">
+                    Allocation
+                </p>
 
-            <h3 class="font-serif text-xl text-white mb-6">
-                Harvest Shipment Tracking
-            </h3>
+                <p class="text-white text-lg font-semibold">
+                    6 Bottles Extra Virgin Olive Oil
+                </p>
 
-            <div class="space-y-4">
+            </div>
 
-                <div class="rounded-2xl bg-black/30 p-5 border border-white/5">
+            <!-- TIMELINE -->
 
-                    <div class="flex justify-between">
+            <div class="space-y-4 mb-6">
 
-                        <div>
-                            <h3 class="font-serif text-xl text-white">
-    Annual Estate Allocation
-</h3>
-
-<p class="text-stone-400 mt-2">
-    Your annual olive oil allocation based on your current stewardship tier.
-</p>
-                     <div class="mt-6 space-y-4">
-
-    <div class="flex items-center gap-3">
-        <span class="text-emerald-400">●</span>
-        <span>Harvest Complete</span>
-    </div>
-
-    <div class="flex items-center gap-3">
-        <span class="text-emerald-400">●</span>
-        <span>Bottling Complete</span>
-    </div>
-
-    <div class="flex items-center gap-3">
-        <span class="text-[#C5A059] animate-pulse">●</span>
-        <span>In Transit</span>
-    </div>
-
-    <div class="flex items-center gap-3 opacity-40">
-        <span>○</span>
-        <span>Delivered</span>
-    </div>
-
-</div>
-                            <p class="text-stone-500 text-xs">
-                                6 Bottles Extra Virgin Olive Oil
-                            </p>
-                        </div>
-
-                        <span class="text-emerald-400 text-sm">
-                            In Transit
-                        </span>
-
-                    </div>
-
-                    <div class="mt-4">
-                        <p class="text-xs text-stone-500">
-                            Tracking Number
-                        </p>
-
-                        <p id="trackingNumber"
-                           class="font-mono text-[#C5A059]">
-                            OLV-2026-00928
-                        </p>
-                    </div>
-
+                <div class="flex items-center gap-3">
+                    <span class="text-emerald-400">●</span>
+                    <span class="text-stone-300">Harvest Complete</span>
                 </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-emerald-400">●</span>
+                    <span class="text-stone-300">Bottling Complete</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-[#C5A059] animate-pulse">●</span>
+                    <span class="text-stone-300">In Transit</span>
+                </div>
+
+                <div class="flex items-center gap-3 opacity-40">
+                    <span>○</span>
+                    <span>Delivered</span>
+                </div>
+
+            </div>
+
+            <!-- TRACKING -->
+
+            <div class="border-t border-white/5 pt-4">
+
+                <p class="text-xs text-stone-500 uppercase tracking-widest">
+                    Tracking Number
+                </p>
+
+                <p id="trackingNumber"
+                   class="font-mono text-[#C5A059] text-lg mt-1">
+                    OLV-2026-00928
+                </p>
 
             </div>
 
         </div>
 
+    </div>
+
+</div>
         <!-- RESIDENCY REQUEST -->
         <div class="tech-card p-8 rounded-3xl">
 
