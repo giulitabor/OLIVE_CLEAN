@@ -1510,7 +1510,7 @@ async function syncTransactionToSupabase(
         amount: amount,
         type: type,
         tx_signature: txSig,
-        new_total: newTotal,
+        new_total_shares: newTotal,
         is_guardian: isGuardian,
         sol_paid: solPaid,
       },
