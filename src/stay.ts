@@ -206,7 +206,39 @@ function calculateTier(shares: number): TierInfo {
 // (progress, numbers, tier pulse, allocation updates)
 // ============================================================
 //
+function setupMobileMenu() {
 
+  const menuBtn =
+    document.getElementById("mobileMenuBtn");
+
+  const menu =
+    document.getElementById("mobileMenu");
+
+  if (!menuBtn || !menu) return;
+
+  menuBtn.addEventListener("click", () => {
+    menu.classList.toggle("hidden");
+  });
+
+  menu.querySelectorAll("a").forEach(link => {
+
+    link.addEventListener("click", () => {
+
+      menu.classList.add("hidden");
+
+    });
+
+  });
+
+}
+
+function closeMobileMenu() {
+
+  document
+    .getElementById("mobileMenu")
+    ?.classList.add("hidden");
+
+}
 function animateProgressBar(el: HTMLElement, target: number) {
   let current = parseFloat(el.style.width || "0");
 
@@ -548,6 +580,42 @@ function renderUI() {
       ? `${identity.walletAddress.slice(0, 4)}…${identity.walletAddress.slice(-4)}`
       : "NOT CONNECTED";
   }
+  const mobileTierLabel =
+  document.getElementById("mobile-tier-label");
+
+const mobileIdentityDisplay =
+  document.getElementById("mobile-identity-display");
+
+const mobileConnectBtn =
+  document.getElementById("mobileConnectBtn");
+
+if (mobileTierLabel) {
+
+  mobileTierLabel.textContent =
+    connected
+      ? tier.name
+      : "Guest Mode";
+
+}
+
+if (mobileIdentityDisplay) {
+
+  mobileIdentityDisplay.textContent =
+    connected
+      ? identity.displayLabel ||
+        `${identity.walletAddress.slice(0, 4)}…${identity.walletAddress.slice(-4)}`
+      : "NOT CONNECTED";
+
+}
+
+if (mobileConnectBtn) {
+
+  mobileConnectBtn.textContent =
+    connected
+      ? "Disconnect"
+      : "Connect Profile";
+
+}
 
   // ============================================================
   // STATS (ANIMATED)
@@ -749,6 +817,17 @@ function setupWalletConnect() {
       btn.textContent = "Connect Phantom / Solana";
       (btn as HTMLButtonElement).disabled = false;
     }
+  });
+  document
+  .getElementById("mobileConnectBtn")
+  ?.addEventListener("click", () => {
+
+    closeMobileMenu();
+
+    document
+      .getElementById("connectBtn")
+      ?.click();
+
   });
 }
 
@@ -1133,6 +1212,7 @@ async function init() {
   setupSignup();
   setupVerifySignup();
   setupLogin();
+  setupMobileMenu();
   setupVerifyLogin();
   setupWalletConnect();
   setupEmailLoginButton();
