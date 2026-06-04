@@ -160,6 +160,159 @@
         .modal-overlay {
             z-index: 200;
         }
+
+        /* ========== PHANTOM-STYLE MOBILE MENU ========== */
+        #mobileMenuOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+            background: rgba(0, 0, 0, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #mobileMenuOverlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #mobileMenuOverlay .mob-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            height: 80px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        #mobileMenuOverlay .mob-nav-links {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 32px;
+            gap: 0;
+        }
+
+        #mobileMenuOverlay .mob-nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transform: translateY(16px);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease, color 0.2s ease;
+        }
+
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(1) { transform: translateY(0); opacity: 1; transition-delay: 0.05s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(2) { transform: translateY(0); opacity: 1; transition-delay: 0.10s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(3) { transform: translateY(0); opacity: 1; transition-delay: 0.15s; }
+
+        #mobileMenuOverlay .mob-nav-link .mob-arrow {
+            font-size: 1.1rem;
+            opacity: 0.25;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        #mobileMenuOverlay .mob-nav-link:hover { color: #C5A059; }
+        #mobileMenuOverlay .mob-nav-link:hover .mob-arrow { opacity: 1; transform: translateX(4px); }
+        #mobileMenuOverlay .mob-nav-link.active-link { color: #C5A059; }
+
+        #mobileMenuOverlay .mob-nav-footer {
+            padding: 28px 32px 40px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transform: translateY(16px);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1) 0.2s, opacity 0.4s ease 0.2s;
+        }
+
+        #mobileMenuOverlay.open .mob-nav-footer {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #mobileMenuOverlay .mob-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+        }
+
+        #mobileMenuOverlay .mob-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #5a7a2b;
+            flex-shrink: 0;
+        }
+
+        #mobileMenuOverlay .mob-connect-cta {
+            width: 100%;
+            background: #5a7a2b;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 16px 0;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        #mobileMenuOverlay .mob-connect-cta:hover { background: #6b8e36; transform: scale(1.01); }
+        #mobileMenuOverlay .mob-connect-cta:active { transform: scale(0.98); }
+
+        /* Hamburger → X animation */
+        #mobileMenuBtn {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        #mobileMenuBtn span {
+            display: block;
+            width: 22px;
+            height: 1.5px;
+            background: #fff;
+            border-radius: 2px;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+            transform-origin: center;
+        }
+
+        #mobileMenuBtn.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+        #mobileMenuBtn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
     </style>
 </head>
 
@@ -191,7 +344,7 @@
         <div>
             <span class="font-serif text-xl font-bold text-white tracking-widest">
                 OLIVIUM
-                <span class="italic text-[#C5A059]">MEMBERS ESTATE</span>
+                <span class="italic text-[#C5A059]">PRIVATE</span>
             </span>
         </div>
 
@@ -239,62 +392,54 @@
 
         </div>
 
-        <!-- Mobile Hamburger -->
-
-        <button id="mobileMenuBtn"
-                class="md:hidden text-3xl text-white">
-
-            ☰
-
+        <!-- Mobile Hamburger (animated) -->
+        <button id="mobileMenuBtn" class="md:hidden" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
         </button>
 
     </div>
 
-    <!-- Mobile Drawer -->
-
-    <div id="mobileMenu"
-     class="hidden md:hidden bg-black/95 border-t border-white/10">
-
-    <div class="flex flex-col p-6 gap-6">
-
-        <!-- MOBILE USER STATUS -->
-
-        <div class="text-center border-b border-white/10 pb-4">
-
-            <p id="mobile-tier-label"
-               class="text-[9px] uppercase text-stone-500">
-                Guest Mode
-            </p>
-
-            <p id="mobile-identity-display"
-               class="text-xs font-mono text-[#C5A059] mt-1">
-                NOT CONNECTED
-            </p>
-
+    <!-- Mobile Full-Screen Overlay Menu (Phantom-style) -->
+    <div id="mobileMenuOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+        <!-- Header row inside overlay -->
+        <div class="mob-nav-header">
+            <span class="font-serif text-xl font-bold text-white tracking-widest">
+                OLIVIUM <span class="italic text-[#C5A059]">PRIVATE</span>
+            </span>
+            <button id="mobileMenuCloseBtn" aria-label="Close menu"
+                    style="background:none;border:none;cursor:pointer;width:44px;height:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;">
+                <span style="display:block;width:22px;height:1.5px;background:#fff;border-radius:2px;transform:translateY(3.75px) rotate(45deg);transform-origin:center;"></span>
+                <span style="display:block;width:22px;height:1.5px;background:#fff;border-radius:2px;transform:translateY(-3.75px) rotate(-45deg);transform-origin:center;"></span>
+            </button>
         </div>
 
-        <a href="index2.html">
-            Dashboard
-        </a>
+        <!-- Nav links -->
+        <div class="mob-nav-links">
+            <a href="index2.html" class="mob-nav-link">
+                Dashboard <span class="mob-arrow">→</span>
+            </a>
+            <a href="https://toscagialla.com" class="mob-nav-link active-link">
+                Villa Tour <span class="mob-arrow">→</span>
+            </a>
+            <a href="#" class="mob-nav-link">
+                Harvest Log <span class="mob-arrow">→</span>
+            </a>
+        </div>
 
-        <a href="https://toscagialla.com">
-            Villa Tour
-        </a>
-
-        <a href="#">
-            Harvest Log
-        </a>
-
-        <button id="mobileConnectBtn"
-                class="bg-[#5a7a2b] py-3 rounded-xl text-white">
-
-            Connect Profile
-
-        </button>
-
+        <!-- Footer: status + CTA -->
+        <div class="mob-nav-footer">
+            <div class="mob-status-bar">
+                <div class="mob-status-dot"></div>
+                <div>
+                    <p id="mobile-tier-label" class="text-[9px] uppercase text-stone-500 leading-none mb-0.5">Guest Mode</p>
+                    <p id="mobile-identity-display" class="text-xs font-mono text-[#C5A059]">NOT CONNECTED</p>
+                </div>
+            </div>
+            <button id="mobileConnectBtn" class="mob-connect-cta">Connect Profile</button>
+        </div>
     </div>
-
-</div>
 </nav>
     <!-- MAIN CONTENT -->
     <div class="main-content-wrapper">
@@ -898,6 +1043,35 @@
         setTimeout(() => {
             showText(0);
         }, 800);
+    </script>
+
+    <!-- Phantom-style mobile menu wiring -->
+    <script>
+        (function() {
+            const btn      = document.getElementById('mobileMenuBtn');
+            const closeBtn = document.getElementById('mobileMenuCloseBtn');
+            const overlay  = document.getElementById('mobileMenuOverlay');
+
+            function openMenu() {
+                overlay.classList.add('open');
+                btn.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeMenu() {
+                overlay.classList.remove('open');
+                btn.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            if (btn)      btn.addEventListener('click', openMenu);
+            if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
+            // Close on Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeMenu();
+            });
+        })();
     </script>
 
     <script type="module" src="./src/stay.ts"></script>
