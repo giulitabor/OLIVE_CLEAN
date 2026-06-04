@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Olivium Private | Harvest Logs</title>
+  <!-- Tailwind CSS + Font Awesome (for icons & download) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Custom override for font & fine-tuning -->
+  <style>
+    * {
+      scroll-behavior: smooth;
+    }
+    body {
+      background: #0a0c0f;
+    }
+    /* custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C5A059;
+      border-radius: 8px;
+    }
+    .glass-card {
+      background: rgba(20, 22, 27, 0.75);
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      transition: all 0.2s;
+    }
+    .glass-card:hover {
+      border-color: rgba(197, 160, 89, 0.5);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .badge-oil {
+      background: #2b3b1a;
+      color: #e2e8b0;
+    }
+    .btn-outline-gold {
+      border: 1px solid #C5A059;
+      transition: 0.2s;
+    }
+    .btn-outline-gold:hover {
+      background: #C5A059;
+      color: #0a0c0f;
+    }
+  </style>
+</head>
+<body class="text-stone-200 font-sans antialiased">
+
+  <!-- NAVIGATION (exactly as given, with dynamic connect logic + tier/identity updates) -->
+  <nav class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+      <div>
+        <span class="font-serif text-xl font-bold text-white tracking-widest">
+          OLIVIUM
+          <span class="italic text-[#C5A059]">PRIVATE</span>
+        </span>
+      </div>
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex items-center gap-8 text-[10px] font-bold tracking-[0.2em]">
+        <a href="#" class="hover:text-[#C5A059] text-stone-400">DASHBOARD</a>
+        <a href="https://toscagialla.com" target="_blank" class="text-[#C5A059]">VILLA TOUR</a>
+        <a href="#" class="hover:text-[#C5A059] text-stone-400 active-nav-link border-b border-[#C5A059]/40 text-[#C5A059]">HARVEST LOG</a>
+      </div>
+      <!-- Desktop Right -->
+      <div class="hidden md:flex items-center gap-4">
+        <div class="text-right">
+          <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase">Guest Mode</p>
+          <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase">NOT CONNECTED</p>
+        </div>
+        <button id="connectBtn" class="bg-[#5a7a2b] text-white text-[10px] px-5 py-2.5 rounded-xl hover:bg-[#43621f] transition">Connect</button>
+      </div>
+      <!-- Mobile Hamburger -->
+      <button id="mobileMenuBtn" class="md:hidden text-3xl text-white">☰</button>
+    </div>
+    <!-- Mobile Drawer -->
+    <div id="mobileMenu" class="hidden md:hidden bg-black/95 border-t border-white/10">
+      <div class="flex flex-col p-6 gap-6">
+        <a href="#" class="text-stone-300 hover:text-[#C5A059]">Dashboard</a>
+        <a href="https://toscagialla.com" target="_blank" class="text-stone-300 hover:text-[#C5A059]">Villa Tour</a>
+        <a href="#" class="text-[#C5A059] font-semibold">Harvest Log</a>
+        <button id="mobileConnectBtn" class="bg-[#5a7a2b] py-3 rounded-xl text-white font-bold">Connect Profile</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT: HARVEST LOGS -->
+  <main class="pt-28 pb-20 px-6 max-w-7xl mx-auto">
+    <!-- Header with filter & title -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-5">
+      <div>
+        <h1 class="text-3xl font-serif font-bold tracking-tight">Harvest Archive <span class="text-[#C5A059]">· Crusca d'Oro</span></h1>
+        <p class="text-stone-400 text-sm mt-1">Historical yields, oil percentages, frantoio details & downloadable records.</p>
+      </div>
+      <!-- Filter by date range quick -->
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="relative">
+          <input type="date" id="filterDateFrom" class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-stone-200 focus:border-[#C5A059] outline-none" placeholder="From">
+        </div>
+        <span class="text-stone-500">—</span>
+        <div>
+          <input type="date" id="filterDateTo" class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-stone-200 focus:border-[#C5A059] outline-none">
+        </div>
+        <button id="resetFilterBtn" class="text-xs border border-white/20 px-3 py-2 rounded-lg hover:bg-white/5">Reset</button>
+        <span class="text-xs text-stone-400 italic ml-1">🍃 total logs: <span id="totalLogsCount">0</span></span>
+      </div>
+    </div>
+
+    <!-- HARVEST CARDS GRID -->
+    <div id="harvestGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- dynamic cards injected here -->
+    </div>
+
+    <!-- Empty state message -->
+    <div id="emptyMsg" class="hidden text-center py-16 flex flex-col items-center gap-3">
+      <i class="fas fa-leaf text-5xl text-stone-600"></i>
+      <p class="text-stone-400 text-lg">No harvest logs match the selected period.</p>
+      <button id="clearFiltersEmpty" class="text-[#C5A059] underline text-sm">Clear filters</button>
+    </div>
+  </main>
+
+  <!-- footer subtle -->
+  <footer class="border-t border-white/5 py-6 text-center text-[10px] text-stone-500 tracking-wide">
+    OLIVIUM PRIVATE • historical harvest data & frantoio logs • DOCUMENTATION FOR MEMBERS
+  </footer>
+
+  <script>
+    // ------------- HARVEST DATA (rich sample logs: dates, kg olives, oil %, tree types, press time, frantoio location & name, download links) -------------
+    const harvestLogs = [
+      {
+        id: "HV-101",
+        date: "2024-10-15",
+        olivesKg: 1280,
+        oilPercent: 18.3,
+        oilLiters: 234.2,
+        treeTypes: "Moraiolo, Leccino, Frantoio",
+        pressTime: "09:30 AM - 12:15 PM",
+        frantoioName: "Frantoio del Casale",
+        frantoioLocation: "Tavarnelle Val di Pesa, Tuscany",
+        notes: "Early harvest, intense green fruitiness",
+        downloadPdfUrl: "#",     // demo download links
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-102",
+        date: "2024-10-22",
+        olivesKg: 2045,
+        oilPercent: 19.7,
+        oilLiters: 402.8,
+        treeTypes: "Pendolino, Moraiolo, Olivastra",
+        pressTime: "08:00 AM - 02:30 PM",
+        frantoioName: "Frantoio Laudemio",
+        frantoioLocation: "Greve in Chianti, Florence",
+        notes: "High polyphenols, robust spicy finish",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-103",
+        date: "2024-11-05",
+        olivesKg: 975,
+        oilPercent: 15.9,
+        oilLiters: 155.0,
+        treeTypes: "Canino, Frantoio, Leccino",
+        pressTime: "10:30 AM - 01:45 PM",
+        frantoioName: "Fattoria Montellori",
+        frantoioLocation: "San Miniato, Pisa",
+        notes: "Late harvest, sweet almond notes",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-104",
+        date: "2024-09-28",
+        olivesKg: 3120,
+        oilPercent: 21.2,
+        oilLiters: 661.4,
+        treeTypes: "Coratina, Frantoio, Moraiolo",
+        pressTime: "06:30 AM - 04:00 PM",
+        frantoioName: "Frantoio di Sant' Ilario",
+        frantoioLocation: "Impruneta, Florence",
+        notes: "Record oil yield, excellent quality",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-105",
+        date: "2024-10-30",
+        olivesKg: 850,
+        oilPercent: 17.2,
+        oilLiters: 146.2,
+        treeTypes: "Leccino, Frantoio, Ciliegiolo",
+        pressTime: "11:00 AM - 02:20 PM",
+        frantoioName: "Frantoio di Petroio",
+        frantoioLocation: "Castellina in Chianti, Siena",
+        notes: "Organic grove, delicate herbaceous",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-106",
+        date: "2023-10-18",
+        olivesKg: 1580,
+        oilPercent: 18.9,
+        oilLiters: 298.6,
+        treeTypes: "Moraiolo, Pendolino, Maurino",
+        pressTime: "08:45 AM - 01:30 PM",
+        frantoioName: "Frantoio La Torre",
+        frantoioLocation: "Montaione, Valdelsa",
+        notes: "Excellent balance, medium fruit",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-107",
+        date: "2023-11-12",
+        olivesKg: 2300,
+        oilPercent: 16.4,
+        oilLiters: 377.2,
+        treeTypes: "Frantoio, Leccino, Rosciola",
+        pressTime: "07:15 AM - 03:50 PM",
+        frantoioName: "Frantoio Il Palagio",
+        frantoioLocation: "Radda in Chianti, Siena",
+        notes: "Cold extraction method, fruity",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      },
+      {
+        id: "HV-108",
+        date: "2024-12-01",
+        olivesKg: 645,
+        oilPercent: 14.8,
+        oilLiters: 95.5,
+        treeTypes: "Olivastra Seggianese, Leccino",
+        pressTime: "09:00 AM - 11:40 AM",
+        frantoioName: "Frantoio Toscano",
+        frantoioLocation: "Seggiano, Grosseto",
+        notes: "Small late harvest batch",
+        downloadPdfUrl: "#",
+        downloadCsvUrl: "#",
+        downloadReportUrl: "#"
+      }
+    ];
+
+    // helper: format date YYYY-MM-DD to readable "Oct 15, 2024"
+    function formatDate(isoDate) {
+      const d = new Date(isoDate);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    // get active filter values
+    let fromDate = null;
+    let toDate = null;
+
+    // references
+    const gridContainer = document.getElementById('harvestGrid');
+    const emptyMsgDiv = document.getElementById('emptyMsg');
+    const totalLogsSpan = document.getElementById('totalLogsCount');
+    const filterFromInput = document.getElementById('filterDateFrom');
+    const filterToInput = document.getElementById('filterDateTo');
+    const resetBtn = document.getElementById('resetFilterBtn');
+    const clearFiltersEmptyBtn = document.getElementById('clearFiltersEmpty');
+
+    // filter & render
+    function filterAndRender() {
+      let filtered = [...harvestLogs];
+      if (fromDate) {
+        filtered = filtered.filter(log => log.date >= fromDate);
+      }
+      if (toDate) {
+        filtered = filtered.filter(log => log.date <= toDate);
+      }
+      // sort by date descending (newest first)
+      filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+      renderHarvestCards(filtered);
+      totalLogsSpan.innerText = filtered.length;
+      if(filtered.length === 0) {
+        emptyMsgDiv.classList.remove('hidden');
+      } else {
+        emptyMsgDiv.classList.add('hidden');
+      }
+    }
+
+    // render cards with detailed info: kg olives, oil %, tree types, press time, frantoio name & location, download links
+    function renderHarvestCards(logs) {
+      if(!gridContainer) return;
+      if(logs.length === 0) {
+        gridContainer.innerHTML = '';
+        return;
+      }
+      gridContainer.innerHTML = logs.map(log => `
+        <div class="glass-card rounded-2xl p-5 transition-all duration-200 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[#C5A059] text-xs font-mono tracking-wider">${log.id}</span>
+              <h3 class="text-xl font-semibold flex items-center gap-2 mt-1">
+                <i class="fas fa-calendar-alt text-[#C5A059] text-sm"></i> ${formatDate(log.date)}
+              </h3>
+            </div>
+            <span class="badge-oil text-xs px-2 py-1 rounded-full font-bold">${log.oilPercent}% oil</span>
+          </div>
+          
+          <!-- main metrics -->
+          <div class="grid grid-cols-2 gap-3 text-sm border-b border-white/10 pb-3">
+            <div><span class="text-stone-400 block text-[10px] uppercase">Olives (kg)</span><span class="font-semibold text-lg">${log.olivesKg.toLocaleString()} kg</span></div>
+            <div><span class="text-stone-400 block text-[10px] uppercase">Oil yield</span><span class="font-semibold text-lg">${log.oilLiters.toFixed(1)} L</span></div>
+          </div>
+          
+          <!-- tree types & press time -->
+          <div class="text-xs space-y-2">
+            <div class="flex items-start gap-2">
+              <i class="fas fa-tree text-[#C5A059] mt-0.5 text-xs"></i>
+              <div><span class="text-stone-400">Tree varieties:</span> <span class="text-stone-200">${log.treeTypes}</span></div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i class="fas fa-clock text-[#C5A059] mt-0.5 text-xs"></i>
+              <div><span class="text-stone-400">Press time:</span> <span class="text-stone-200">${log.pressTime}</span></div>
+            </div>
+          </div>
+          
+          <!-- Frantoio details -->
+          <div class="bg-black/30 rounded-xl p-3 text-xs mt-1">
+            <div class="flex items-center gap-2 mb-1"><i class="fas fa-oil-can text-[#C5A059]"></i><span class="font-bold uppercase text-[10px] tracking-wider">Frantoio</span></div>
+            <div class="flex justify-between flex-wrap gap-y-1">
+              <span><span class="text-stone-400">Name:</span> ${log.frantoioName}</span>
+              <span><span class="text-stone-400">📍 Location:</span> ${log.frantoioLocation}</span>
+            </div>
+            ${log.notes ? `<div class="italic text-stone-400 text-[11px] mt-2 border-t border-white/5 pt-1">🍈 ${log.notes}</div>` : ''}
+          </div>
+          
+          <!-- DOWNLOAD LINKS section (PDF, CSV, Report) -->
+          <div class="flex flex-wrap gap-2 mt-2 pt-1">
+            <a href="${log.downloadPdfUrl}" class="download-link inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition"><i class="fas fa-file-pdf text-red-400"></i> PDF Log</a>
+            <a href="${log.downloadCsvUrl}" class="download-link inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition"><i class="fas fa-file-csv text-green-400"></i> CSV Data</a>
+            <a href="${log.downloadReportUrl}" class="download-link inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition"><i class="fas fa-download text-[#C5A059]"></i> Full Report</a>
+          </div>
+          <!-- extra hint: demo links work as placeholders but shows interactive download style -->
+        </div>
+      `).join('');
+      
+      // optional: attach prevent default alert for demo links (since # links do nothing, we can show a small toast-like for demo)
+      document.querySelectorAll('.download-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          if(link.getAttribute('href') === '#') {
+            e.preventDefault();
+            alert('📄 [Demo] Harvest document download would be generated. In production, PDF/CSV exports available for members.');
+          }
+        });
+      });
+    }
+
+    // ---------- FILTER HANDLERS ----------
+    function updateFilters() {
+      fromDate = filterFromInput.value ? filterFromInput.value : null;
+      toDate = filterToInput.value ? filterToInput.value : null;
+      filterAndRender();
+    }
+    
+    function resetFilters() {
+      filterFromInput.value = '';
+      filterToInput.value = '';
+      fromDate = null;
+      toDate = null;
+      filterAndRender();
+    }
+    
+    if(filterFromInput) filterFromInput.addEventListener('change', updateFilters);
+    if(filterToInput) filterToInput.addEventListener('change', updateFilters);
+    if(resetBtn) resetBtn.addEventListener('click', resetFilters);
+    if(clearFiltersEmptyBtn) clearFiltersEmptyBtn.addEventListener('click', resetFilters);
+    
+    // ---------- CONNECT BUTTON LOGIC (updates Nav tier & identity) ----------
+    const connectBtn = document.getElementById('connectBtn');
+    const mobileConnectBtn = document.getElementById('mobileConnectBtn');
+    const navTierLabel = document.getElementById('nav-tier-label');
+    const navIdentityDisplay = document.getElementById('nav-identity-display');
+    
+    let isConnected = false;
+    let memberName = "NOT CONNECTED";
+    let tier = "Guest Mode";
+    
+    function updateNavUI() {
+      if(navTierLabel) navTierLabel.innerText = tier;
+      if(navIdentityDisplay) navIdentityDisplay.innerText = memberName;
+      // style adjustments
+      if(isConnected) {
+        if(connectBtn) connectBtn.innerText = "Connected ✓";
+        if(mobileConnectBtn) mobileConnectBtn.innerText = "Connected ✓";
+        if(connectBtn) connectBtn.classList.add('bg-[#2b5e2b]', 'opacity-90');
+      } else {
+        if(connectBtn) connectBtn.innerText = "Connect";
+        if(mobileConnectBtn) mobileConnectBtn.innerText = "Connect Profile";
+        if(connectBtn) connectBtn.classList.remove('bg-[#2b5e2b]');
+        if(connectBtn) connectBtn.classList.add('bg-[#5a7a2b]');
+      }
+    }
+    
+    function connectHandler() {
+      if(!isConnected) {
+        isConnected = true;
+        tier = "Premium Member";
+        memberName = "OLIVIUM · TENUTA";
+        // optional animation
+      } else {
+        // disconnection (optional but mimic toggle)
+        isConnected = false;
+        tier = "Guest Mode";
+        memberName = "NOT CONNECTED";
+      }
+      updateNavUI();
+      // subtle additional update: maybe show toast on connect
+      const toastMsg = isConnected ? "✓ Connected to Olivium Private Vault – full harvest access." : "Disconnected – limited guest view.";
+      alert(toastMsg);
+    }
+    
+    if(connectBtn) connectBtn.addEventListener('click', connectHandler);
+    if(mobileConnectBtn) mobileConnectBtn.addEventListener('click', connectHandler);
+    
+    // ---------- MOBILE DRAWER TOGGLE ----------
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenuDiv = document.getElementById('mobileMenu');
+    if(mobileMenuBtn && mobileMenuDiv) {
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenuDiv.classList.toggle('hidden');
+      });
+      // close if any link inside (optional)
+      const mobileLinks = mobileMenuDiv.querySelectorAll('a');
+      mobileLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenuDiv.classList.add('hidden');
+        });
+      });
+      const mobileConnect = document.getElementById('mobileConnectBtn');
+      if(mobileConnect) {
+        mobileConnect.addEventListener('click', () => {
+          connectHandler();
+          mobileMenuDiv.classList.add('hidden');
+        });
+      }
+    }
+    
+    // Optional: active nav state (Dashboard just placeholder)
+    const dashboardLinkDesk = document.querySelector('nav .hidden.md\\:flex a:first-child');
+    if(dashboardLinkDesk) {
+      dashboardLinkDesk.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Dashboard view (coming soon) – full analytics for harvest trends.');
+      });
+    }
+    // make sure that default "Harvest Log" is active already.
+    
+    // initial render
+    filterAndRender();
+    
+    // additional polish: automatically update when page loaded
+    window.addEventListener('load', () => {
+      // default nothing, but ensure that empty reset works
+    });
+    
+    // download simulation: if any actual external download required we could inject but since spec asks for download links as well, we have three per card (PDF/CSV/Report)
+    // In real world you would replace # with signed URLs, but demo shows functional download requests alert to indicate feature.
+    // Also provide a global export? we can add a small "Export filtered data as CSV" but not mandatory, but enhance? but spec already covers each card downloads.
+    // Add bonus: optional hidden extra feature: export all logs to CSV from header? to be thorough but not require.
+    const headerExtra = document.querySelector('.flex.flex-col.md\\:flex-row.justify-between');
+    if(headerExtra && !document.getElementById('extraExportBtn')) {
+      const exportBtn = document.createElement('button');
+      exportBtn.id = 'extraExportBtn';
+      exportBtn.className = 'text-[10px] border border-white/20 rounded-lg px-4 py-2 hover:bg-white/5 flex items-center gap-2';
+      exportBtn.innerHTML = '<i class="fas fa-download"></i> Export visible logs (CSV)';
+      exportBtn.addEventListener('click', () => {
+        let currentLogs = [...harvestLogs];
+        if(fromDate) currentLogs = currentLogs.filter(l => l.date >= fromDate);
+        if(toDate) currentLogs = currentLogs.filter(l => l.date <= toDate);
+        if(currentLogs.length === 0) { alert('No logs to export.'); return; }
+        let csvRows = [["ID","Date","Olives (kg)","Oil %","Oil Liters","Tree Types","Press Time","Frantoio Name","Frantoio Location","Notes"]];
+        currentLogs.forEach(l => {
+          csvRows.push([l.id, l.date, l.olivesKg, l.oilPercent, l.oilLiters, l.treeTypes, l.pressTime, l.frantoioName, l.frantoioLocation, l.notes]);
+        });
+        const csvContent = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csvContent], {type: "text/csv"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `olivium_harvest_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      const filterContainer = document.querySelector('.flex.flex-wrap.gap-3.items-center');
+      if(filterContainer) filterContainer.appendChild(exportBtn);
+    }
+    
+    // optional: attach active style for mobile drawer connect behavior.
+  </script>
+</body>
+</html>
