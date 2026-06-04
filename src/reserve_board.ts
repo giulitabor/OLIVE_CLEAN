@@ -1458,18 +1458,18 @@ const solPaid =
     ? txDetails.meta.fee / 1_000_000_000
     : amount * _cachedSolPrice;
 
-    console.log("[SELL] SUCCESS:", tx);
+    console.log("[SELL] SUCCESS:", sol_paid,tx);
 
-await syncTransactionToSupabase(
-  walletStr,
-  treeIdStr,
+await supabase.from('transactions').insert({
+  wallet_address,
+  tree_id,
   amount,
-  "SELL",
-  tx,
-  newTotal,
-  newTotal >= 1000,
-  solPaid
-);
+  type,
+  tx_signature,
+  new_total_shares,
+  is_guardian,
+  sol_paid
+});
     _invalidateCaches();
     loadTrees();
     updateStatsUI();
