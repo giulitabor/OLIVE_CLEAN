@@ -7,7 +7,7 @@ import { PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 
 // OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
-const OLV_MINT_ADDRESS = "YOUR_OLV_MINT_ADDRESS_HERE";
+const OLV_MINT_ADDRESS = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa");
 
 let currentUser = null;
 let walletSolBalance = 0;
