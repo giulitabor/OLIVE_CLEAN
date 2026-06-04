@@ -957,24 +957,29 @@ function setupVerifyLogin() {
     try {
       // Always look up from DB — never use a hardcoded fallback address
       const { data, error } = await sb
-        .from("users")
-        .select("wallet")
-        .eq("Email_address", email)
-        .maybeSingle();
+  .from("users")
+  .select("wallet")
+  .eq("Email_address", email)
+  .maybeSingle();
 
-      if (error || !data?.wallet {
-        setMsg("User not found, but no wallet. Please create one first.", true);
-        return;
-      }
+if (error || !data?.wallet) {
+  setMsg(
+    "User found, but no wallet is associated with this account.",
+    true
+  );
+  return;
+}
 
-      const wallet = data.wallet as string;
-      const identity: OliviumIdentity = {
-        type: "email",
-        walletAddress: wallet,
-        displayLabel: email,
-      };
-      writeIdentity(identity);
+const wallet = data.wallet;
 
+const identity: OliviumIdentity = {
+  type: "email",
+  walletAddress: wallet,
+  displayLabel: email,
+};
+
+writeIdentity(identity);
+      
       window.dispatchEvent(new CustomEvent("olivium:connected", { detail: { pubkey: wallet, type: "email" } }));
       setMsg("Login successful!");
 
