@@ -1,13 +1,18 @@
 // ============================================================
-// OLIVIUM GAME - Complete with Wallet Balances
+// OLIVIUM GAME - Complete with Wallet Balances & OLV Shop
 // ============================================================
 
 import { sb, getIdentity, isConnected, connection } from "./src/connection.ts";
 import { PublicKey } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
+
+// OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
+const OLV_MINT_ADDRESS = "YOUR_OLV_MINT_ADDRESS_HERE";
 
 let currentUser = null;
 let walletSolBalance = 0;
 let walletOlvBalance = 0;
+let treasurySolBalance = 0;
 
 // ============================================================
 // GAME STATE
@@ -24,19 +29,237 @@ const state = {
     mill: { mash: 0, gunk: 0 },
     combo: 1.0, comboRef: null,
     quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
-    achievements: { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false }
+    achievements: { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false },
+    // OLV Shop state
+    fertilizerBoost: false,
+    fertilizerBoostEnd: 0,
+    protectionActive: false,
+    protectionEnd: 0,
+    nextTreeLegendary: false
 };
 
 const rarityIcons = {
     common: { icon: '🌳', bonus: 1.0, name: 'Common' },
-    rare: { icon: '💎', bonus: 2.0, name: 'Rare' }
+    rare: { icon: '💎', bonus: 2.0, name: 'Rare' },
+    legendary: { icon: '👑', bonus: 5.0, name: 'Legendary' }
 };
+
+// ============================================================
+// OLV TOKEN FUNCTIONS
+// ============================================================
+
+async function fetchRealOlvBalance(walletAddress) {
+    if (!walletAddress || !connection) return 0;
+    
+    try {
+        const walletPubKey = new PublicKey(walletAddress);
+        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
+        const tokenAccount = await getAssociatedTokenAddress(olvMint, walletPubKey);
+        
+        const accountInfo = await connection.getAccountInfo(tokenAccount);
+        if (!accountInfo) return 0;
+        
+        const balance = await connection.getTokenAccountBalance(tokenAccount);
+        return balance.value.uiAmount || 0;
+    } catch (err) {
+        console.error("OLV balance fetch error:", err);
+        return 0;
+    }
+}
+
+async function getTreasurySolBalance() {
+    try {
+        const activeProgram = window._program;
+        if (!activeProgram) return 0;
+        
+        const [treasuryPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from("treasury")],
+            activeProgram.programId
+        );
+        
+        const treasuryBal = await connection.getBalance(treasuryPDA);
+        return treasuryBal / 1_000_000_000;
+    } catch (err) {
+        console.error("Treasury balance error:", err);
+        return 0;
+    }
+}
+
+async function fetchWalletBalances(walletAddress) {
+    if (!walletAddress || !connection) return { sol: 0, olv: 0, treasury: 0 };
+    
+    try {
+        const solBalance = await connection.getBalance(new PublicKey(walletAddress));
+        const solInSol = solBalance / 1_000_000_000;
+        const olvBalance = await fetchRealOlvBalance(walletAddress);
+        const treasurySol = await getTreasurySolBalance();
+        
+        console.log(`💰 Wallet: ${solInSol} SOL, ${olvBalance} OLV`);
+        console.log(`🏦 Treasury: ${treasurySol} SOL`);
+        
+        return { sol: solInSol, olv: olvBalance, treasury: treasurySol };
+    } catch (err) {
+        console.error("Balance fetch error:", err);
+        return { sol: 0, olv: 0, treasury: 0 };
+    }
+}
+
+async function spendOlvTokens(amount, reason) {
+    if (!currentUser || !currentUser.wallet) {
+        showToast("Connect wallet first!", true);
+        return false;
+    }
+    
+    if (walletOlvBalance < amount) {
+        showToast(`Need ${amount} OLV! You have ${walletOlvBalance}`, true);
+        return false;
+    }
+    
+    try {
+        const provider = window.phantom?.solana || window.solana;
+        if (!provider) {
+            showToast("Phantom wallet not found!", true);
+            return false;
+        }
+        
+        const fromWallet = new PublicKey(currentUser.wallet);
+        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
+        const fromTokenAccount = await getAssociatedTokenAddress(olvMint, fromWallet);
+        
+        // Send to treasury's token account (or burn address)
+        const activeProgram = window._program;
+        const [treasuryPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from("treasury")],
+            activeProgram.programId
+        );
+        const treasuryTokenAccount = await getAssociatedTokenAddress(olvMint, treasuryPDA);
+        
+        // Create transfer instruction
+        const transaction = new Transaction().add(
+            createTransferInstruction(
+                fromTokenAccount,
+                treasuryTokenAccount,
+                fromWallet,
+                amount * Math.pow(10, 6)
+            )
+        );
+        
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromWallet;
+        
+        const signed = await provider.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signed.serialize());
+        await connection.confirmTransaction(signature);
+        
+        walletOlvBalance -= amount;
+        updateWalletBalancesUI();
+        
+        showToast(`✅ Spent ${amount} OLV on ${reason}!`);
+        log(`💸 Spent ${amount} OLV on ${reason}`);
+        return true;
+        
+    } catch (err) {
+        console.error("OLV spend error:", err);
+        showToast("Transaction failed!", true);
+        return false;
+    }
+}
+
+function createTransferInstruction(source, destination, owner, amount) {
+    return new TransactionInstruction({
+        keys: [
+            { pubkey: source, isSigner: false, isWritable: true },
+            { pubkey: destination, isSigner: false, isWritable: true },
+            { pubkey: owner, isSigner: true, isWritable: false },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+        ],
+        programId: TOKEN_PROGRAM_ID,
+        data: Buffer.from([3, ...new BN(amount).toArray('le', 8)])
+    });
+}
+
+// ============================================================
+// OLV SHOP FUNCTIONS
+// ============================================================
+
+const olvShopItems = {
+    seeds: { name: 'Ancient Seeds', cost: 100, reward: { seeds: 5 } },
+    sol: { name: 'SOL Boost', cost: 50, reward: { sol: 10 } },
+    fertilizer: { name: 'Premium Fertilizer', cost: 200, reward: { fertilizerBoost: true, duration: 3600000 } },
+    instantHarvest: { name: 'Instant Harvest', cost: 75, reward: { instantHarvest: true } },
+    protection: { name: 'Tree Protection', cost: 150, reward: { protection: true, duration: 86400000 } },
+    legendary: { name: 'Legendary Seed', cost: 500, reward: { legendary: true } }
+};
+
+async function buyWithOlv(itemId) {
+    const item = olvShopItems[itemId];
+    if (!item) return;
+    
+    if (!currentUser) {
+        showToast("Connect wallet first!", true);
+        return;
+    }
+    
+    const success = await spendOlvTokens(item.cost, item.name);
+    if (!success) return;
+    
+    // Apply rewards
+    if (item.reward.seeds) {
+        state.seeds += item.reward.seeds;
+        log(`🌱 +${item.reward.seeds} Ancient Seeds`);
+        showToast(`+${item.reward.seeds} Ancient Seeds!`);
+    }
+    if (item.reward.sol) {
+        state.sol += item.reward.sol;
+        log(`💰 +${item.reward.sol} SOL`);
+        showToast(`+${item.reward.sol} SOL!`);
+    }
+    if (item.reward.fertilizerBoost) {
+        state.fertilizerBoost = true;
+        state.fertilizerBoostEnd = Date.now() + item.reward.duration;
+        log(`🌿 Fertilizer boost active for 1 hour!`);
+        showToast(`🌿 Fertilizer boost active! +50% growth`);
+    }
+    if (item.reward.instantHarvest) {
+        let totalHarvest = 0;
+        state.trees.forEach(tree => {
+            if (tree.stage === 'mature') {
+                const yieldAmt = 12 * state.skillMultipliers.yield;
+                state.hopper += yieldAmt;
+                totalHarvest += yieldAmt;
+                tree.age = 0;
+                tree.stage = 'seed';
+            }
+        });
+        log(`⚡ Instant harvest! +${totalHarvest.toFixed(1)}kg`);
+        showToast(`⚡ Instant harvest! +${totalHarvest.toFixed(1)}kg`);
+    }
+    if (item.reward.protection) {
+        state.protectionActive = true;
+        state.protectionEnd = Date.now() + item.reward.duration;
+        log(`🛡️ Tree protection active for 24 hours!`);
+        showToast(`🛡️ Trees protected from pests for 24 hours!`);
+    }
+    if (item.reward.legendary) {
+        state.nextTreeLegendary = true;
+        log(`👑 Next tree will be Legendary!`);
+        showToast(`👑 Next tree will be Legendary (5x yield)!`);
+    }
+    
+    render();
+    if (currentUser) saveGameToCloud();
+}
 
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
 
 function getRarity() {
+    if (state.nextTreeLegendary) {
+        state.nextTreeLegendary = false;
+        return 'legendary';
+    }
     let roll = Math.random();
     if (roll < state.skillMultipliers.rare) return 'rare';
     return 'common';
@@ -94,38 +317,24 @@ function addCombo() {
 // WALLET BALANCE FUNCTIONS
 // ============================================================
 
-async function fetchWalletBalances(walletAddress) {
-    if (!walletAddress || !connection) return { sol: 0, olv: 0 };
-    
-    try {
-        const balance = await connection.getBalance(new PublicKey(walletAddress));
-        const solInSol = balance / 1_000_000_000;
-        
-        // OLV balance - replace with your actual OLV token logic
-        let olvBalance = 2500; // Mock for now
-        
-        return { sol: solInSol, olv: olvBalance };
-    } catch (err) {
-        console.error("Balance fetch error:", err);
-        return { sol: 0, olv: 0 };
-    }
-}
-
 async function updateWalletBalancesUI() {
     if (!currentUser || !currentUser.wallet) return;
     
     const balances = await fetchWalletBalances(currentUser.wallet);
     walletSolBalance = balances.sol;
     walletOlvBalance = balances.olv;
+    treasurySolBalance = balances.treasury;
     
     const walletSolEl = document.getElementById('wallet-sol-balance');
     const walletOlvEl = document.getElementById('wallet-olv-balance');
     const uiSolEl = document.getElementById('ui-sol');
     const uiOlvEl = document.getElementById('ui-olv');
+    const treasuryEl = document.getElementById('treasury-balance');
     
     if (walletSolEl) walletSolEl.innerText = walletSolBalance.toFixed(4);
     if (walletOlvEl) walletOlvEl.innerText = Math.floor(walletOlvBalance);
     if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
+    if (treasuryEl) treasuryEl.innerText = treasurySolBalance.toFixed(2);
     
     if (uiSolEl && walletSolBalance > 0 && state.sol === 25) {
         state.sol = walletSolBalance;
@@ -148,7 +357,7 @@ async function refreshBalances() {
 }
 
 // ============================================================
-// CONNECT MODAL FUNCTIONS
+// CONNECT/DISCONNECT FUNCTIONS
 // ============================================================
 
 function showConnectModal() {
@@ -160,10 +369,6 @@ function hideConnectModal() {
     const modal = document.getElementById('connectModal');
     if (modal) modal.style.display = 'none';
 }
-
-// ============================================================
-// DISCONNECT FUNCTION
-// ============================================================
 
 function handleDisconnect() {
     currentUser = null;
@@ -195,10 +400,6 @@ function handleDisconnect() {
     log('Disconnected from profile.');
     render();
 }
-
-// ============================================================
-// WALLET CONNECTION (Phantom)
-// ============================================================
 
 async function connectWallet() {
     try {
@@ -247,10 +448,6 @@ async function connectWallet() {
     }
 }
 
-// ============================================================
-// EMAIL LOGIN
-// ============================================================
-
 async function emailLogin() {
     currentUser = {
         email: 'steward@olivium.io',
@@ -287,13 +484,15 @@ function buyTree() {
     state.sol -= 5;
     const rarity = getRarity();
     if (rarity === 'rare') state.rareCount++;
+    if (rarity === 'legendary') state.rareCount++;
     state.trees.push({
         id: '#' + (state.treesPlanted + 1),
         age: 0, health: 100, water: 85, pests: 0,
-        stage: 'seed', rarity: rarity
+        stage: 'seed', rarity: rarity,
+        protected: state.protectionActive || false
     });
     state.treesPlanted++;
-    log(`🌱 Planted ${rarityIcons[rarity].name} tree`);
+    log(`🌱 Planted ${rarityIcons[rarity]?.name || rarity} tree`);
     render();
     checkAchievements();
     if (currentUser) saveGameToCloud();
@@ -305,7 +504,7 @@ function interactTree(index) {
     
     if (tree.stage === 'mature') {
         let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
-        let finalYield = baseYield * rarityIcons[tree.rarity].bonus * state.skillMultipliers.yield * state.combo;
+        let finalYield = baseYield * (rarityIcons[tree.rarity]?.bonus || 1) * state.skillMultipliers.yield * state.combo;
         if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
         
         state.hopper += finalYield;
@@ -469,16 +668,38 @@ function checkQuest() {
 // ============================================================
 
 function gameLoop() {
+    // Check for expired boosts
+    if (state.fertilizerBoost && Date.now() > state.fertilizerBoostEnd) {
+        state.fertilizerBoost = false;
+        log("Fertilizer boost expired");
+    }
+    if (state.protectionActive && Date.now() > state.protectionEnd) {
+        state.protectionActive = false;
+        log("Tree protection expired");
+    }
+    
     state.trees.forEach(tree => {
         if (tree.health <= 0) return;
+        
+        // Protection prevents pest spread
+        if (tree.protected) {
+            tree.pests = Math.max(0, tree.pests - 5);
+        }
+        
         let waterLoss = state.world.weather === 'Heatwave' ? 12 : (state.world.weather === 'Rainy' ? -8 : 3);
         if (state.upgrades.irrigation && tree.water < 70) waterLoss = -5;
         tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
+        
         let growthRate = 0.05 * state.skillMultipliers.speed;
+        if (state.fertilizerBoost) growthRate *= 1.5;
         if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
+        
         if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
         if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
-        if (state.world.season === 'Summer' && Math.random() < 0.03) tree.pests = Math.min(100, tree.pests + 5);
+        
+        if (!tree.protected && state.world.season === 'Summer' && Math.random() < 0.03) {
+            tree.pests = Math.min(100, tree.pests + 5);
+        }
         if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
         if (tree.water < 15) tree.health -= 4;
         if (tree.pests > 40) tree.health -= 3;
@@ -619,6 +840,29 @@ function render() {
     document.getElementById('tree-count').innerText = state.trees.length;
     document.getElementById('rare-count').innerText = state.rareCount;
     
+    // Update OLV display
+    const uiOlvEl = document.getElementById('ui-olv');
+    if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
+    
+    const shopBalance = document.getElementById('shop-olv-balance');
+    if (shopBalance) shopBalance.innerText = Math.floor(walletOlvBalance);
+    
+    // Update boosts display
+    const boostsContainer = document.getElementById('active-boosts');
+    if (boostsContainer) {
+        let boostsHtml = '';
+        if (state.fertilizerBoost) {
+            const remaining = Math.max(0, Math.ceil((state.fertilizerBoostEnd - Date.now()) / 60000));
+            boostsHtml += `<span class="text-[8px] bg-green-900/40 px-2 py-1 rounded">🌿 Fertilizer: ${remaining}min</span>`;
+        }
+        if (state.protectionActive) {
+            const remaining = Math.max(0, Math.ceil((state.protectionEnd - Date.now()) / 3600000));
+            boostsHtml += `<span class="text-[8px] bg-blue-900/40 px-2 py-1 rounded">🛡️ Protection: ${remaining}h</span>`;
+        }
+        if (!boostsHtml) boostsHtml = '<span class="text-[8px] opacity-40">No active boosts</span>';
+        boostsContainer.innerHTML = boostsHtml;
+    }
+    
     const mashBar = document.getElementById('mash-bar');
     if (mashBar) mashBar.style.width = state.mill.mash + '%';
     const gunkBar = document.getElementById('gunk-bar');
@@ -678,7 +922,8 @@ function render() {
             <div class="progress-bar"><div class="progress-fill fill-health" style="width:${tree.health}%"></div></div>
             ${tree.pests > 0 ? `<div class="progress-bar"><div class="progress-fill fill-pest" style="width:${tree.pests}%"></div></div>` : ''}
             ${isReady ? '<div class="text-center text-gold text-[9px] mt-2">⬤ READY</div>' : ''}
-            ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : ''}
+            ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : tree.rarity === 'legendary' ? '<div class="rarity-badge">👑</div>' : ''}
+            ${tree.protected ? '<div class="text-center text-[8px] text-blue-400 mt-1">🛡️ Protected</div>' : ''}
         `;
         container.appendChild(card);
     });
@@ -706,11 +951,88 @@ function closePanel() {
 }
 
 // ============================================================
+// ADD OLV SHOP PANEL TO UI
+// ============================================================
+
+function addOlvShopPanel() {
+    if (document.getElementById('panel-shop')) return;
+    
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav && !document.querySelector('[data-panel="shop"]')) {
+        const shopNav = document.createElement('div');
+        shopNav.className = 'nav-item';
+        shopNav.setAttribute('data-panel', 'shop');
+        shopNav.innerHTML = '🛒<br>SHOP';
+        bottomNav.appendChild(shopNav);
+        shopNav.onclick = () => openPanel('shop');
+    }
+    
+    const panelsContainer = document.body;
+    const shopPanel = document.createElement('div');
+    shopPanel.id = 'panel-shop';
+    shopPanel.className = 'panel';
+    shopPanel.innerHTML = `
+        <div class="panel-header">
+            <h3 class="serif text-xl text-gold">🛒 OLV SHOP</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="text-center text-sm mb-3">💰 Your OLV: <span id="shop-olv-balance" class="text-gold font-bold">0</span></div>
+        <div class="space-y-3">
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('seeds')">
+                <div class="flex-between"><div><span class="text-lg">🌱</span> Ancient Seeds (5)</div><div class="text-gold">100 OLV</div></div>
+                <div class="text-[9px] opacity-50">Unlock Ancient Lab skills</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('sol')">
+                <div class="flex-between"><div><span class="text-lg">💰</span> SOL Boost (10)</div><div class="text-gold">50 OLV</div></div>
+                <div class="text-[9px] opacity-50">Add 10 SOL to your balance</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('fertilizer')">
+                <div class="flex-between"><div><span class="text-lg">🌿</span> Premium Fertilizer</div><div class="text-gold">200 OLV</div></div>
+                <div class="text-[9px] opacity-50">+50% growth speed for 1 hour</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('instantHarvest')">
+                <div class="flex-between"><div><span class="text-lg">⚡</span> Instant Harvest</div><div class="text-gold">75 OLV</div></div>
+                <div class="text-[9px] opacity-50">Harvest all ready trees instantly</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('protection')">
+                <div class="flex-between"><div><span class="text-lg">🛡️</span> Tree Protection</div><div class="text-gold">150 OLV</div></div>
+                <div class="text-[9px] opacity-50">Protect trees from pests for 24h</div>
+            </div>
+            <div class="card" style="border-color:#a855f7; cursor:pointer" onclick="game.buyWithOlv('legendary')">
+                <div class="flex-between"><div><span class="text-lg">👑</span> Legendary Seed</div><div class="text-purple-400">500 OLV</div></div>
+                <div class="text-[9px] opacity-50">Next tree planted is Legendary (5x yield)</div>
+            </div>
+        </div>
+    `;
+    panelsContainer.appendChild(shopPanel);
+}
+
+// ============================================================
+// ADD BOOSTS DISPLAY TO STATS ROW
+// ============================================================
+
+function addBoostsDisplay() {
+    const statsRow = document.querySelector('.stats-row');
+    if (statsRow && !document.getElementById('active-boosts')) {
+        const boostsDiv = document.createElement('div');
+        boostsDiv.id = 'active-boosts';
+        boostsDiv.className = 'stat-box';
+        boostsDiv.style.background = 'rgba(0,0,0,0.3)';
+        boostsDiv.style.padding = '8px';
+        boostsDiv.innerHTML = '<div class="stat-label">⚡ ACTIVE BOOSTS</div><div class="text-[9px] mt-1">No active boosts</div>';
+        statsRow.appendChild(boostsDiv);
+    }
+}
+
+// ============================================================
 // INITIALIZATION
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎮 OLIVIUM Estate loading...');
+    
+    addOlvShopPanel();
+    addBoostsDisplay();
     
     // Set up event listeners
     const plantBtn = document.getElementById('plant-btn');
@@ -728,11 +1050,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refreshBalanceBtn');
     if (refreshBtn) refreshBtn.onclick = () => refreshBalances();
     
-    // Connect button
     const connectBtn = document.getElementById('connectBtn');
     if (connectBtn) connectBtn.onclick = showConnectModal;
     
-    // Modal buttons
     const connectWalletBtn = document.getElementById('connectWalletBtn');
     if (connectWalletBtn) connectWalletBtn.onclick = connectWallet;
     
@@ -745,15 +1065,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('connectModal');
     if (modal) modal.onclick = (e) => { if (e.target === modal) hideConnectModal(); };
     
-    // Bottom navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.onclick = () => openPanel(item.dataset.panel);
     });
     
-    // Expose game functions globally
+    // Re-bind shop nav after adding
+    setTimeout(() => {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.onclick = () => openPanel(item.dataset.panel);
+        });
+    }, 100);
+    
     window.game = { 
         upgrade: (t) => { upgrade(t); closePanel(); }, 
         unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
+        buyWithOlv,
         cleanMill, 
         prestige, 
         buyTree, 
@@ -764,7 +1090,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.closePanel = closePanel;
     window.openPanel = openPanel;
     
-    // Check if already connected via localStorage
     const savedWallet = localStorage.getItem('walletAddress');
     if (savedWallet) {
         currentUser = {
@@ -776,7 +1101,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGameFromCloud();
     }
     
-    // Start game
     for (let i = 0; i < 3; i++) buyTree();
     setInterval(gameLoop, 2000);
     setInterval(weatherCycle, 20000);
@@ -785,9 +1109,9 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
     log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
     log("🔐 Click 'Connect Profile' to connect your wallet and save progress!");
+    log("🛒 Use OLV tokens in the SHOP for boosts and items!");
 });
 
-// Auto-save every 30 seconds
 setInterval(() => {
     if (currentUser) saveGameToCloud();
 }, 30000);
