@@ -191,7 +191,7 @@
                     OLIVIUM <span class="italic text-[#C5A059]">PRIVATE</span>
                 </span>
             </div>
-            <div class="hidden md:flex items-center gap-8 text-[10px] font-bold tracking-[0.2em]">
+            <div class="flex items-center gap-8 text-[10px] font-bold tracking-[0.2em]">
                 <a href="index2.html" class="hover:text-[#C5A059] text-stone-400 transition">DASHBOARD</a>
                 <a href="https://toscagialla.com" class="text-[#C5A059]">VILLA TOUR</a>
                 <a href="#" class="hover:text-[#C5A059] text-stone-400 transition">HARVEST LOG</a>
@@ -243,117 +243,314 @@
             </div>
 
             <!-- MAIN GRID -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-                <!-- LEFT: TIER INFO -->
-                <div class="lg:col-span-5 space-y-6">
-                    <div class="tech-card p-6 rounded-3xl bg-gradient-to-br from-stone-900/40 to-black/20">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div id="tier-icon" class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center text-3xl shadow-inner border border-white/5">🫒</div>
-                            <div class="flex-1">
-                                <p class="text-[9px] text-stone-500 font-bold uppercase tracking-widest mb-0.5">Resolved Mignole Tier</p>
-                                <h3 id="tier-name" class="font-serif text-xl font-bold text-white tracking-tight">Guest Mode</h3>
-                                <p id="tier-progress-text" class="text-[11px] text-[#C5A059] font-mono mt-0.5">Connect to resolve tier status</p>
-                            </div>
-                        </div>
+           <!-- MEMBER PORTAL -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
 
-                        <div class="mb-4">
-                            <div class="flex justify-between items-center mb-1">
-                                <span id="next-tier-label" class="text-[9px] text-stone-500 font-mono uppercase tracking-widest">Next: Seed Supporter</span>
-                                <span id="tier-percent-label" class="text-[9px] text-[#C5A059] font-mono font-bold">0%</span>
-                            </div>
-                            <div class="progress-container">
-                                <div id="tier-progress-bar" class="progress-fill" style="width:0%"></div>
-                            </div>
-                        </div>
+    <!-- LEFT COLUMN -->
+    <div class="lg:col-span-5 space-y-6">
 
-                        <div class="space-y-4">
-                            <div id="card-tier-1" class="group p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5" style="opacity:0.35;">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-2xl">🌱</div>
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-white text-sm">Mignole Supporter</h4>
-                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€500</p>
-                                        <ul class="space-y-2 text-xs text-stone-400 mt-4">
-                                            <li>○ 1 Full Tree Adoption (*Founders Only)</li>
-                                            <li>○ 3L annual olive oil delivery</li>
-                                            <li>○ Seasonal grove &amp; harvest updates</li>
-                                            <li>○ Estate visits &amp; tasting access</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+        <!-- TIER STATUS -->
+        <div class="tech-card p-6 rounded-3xl">
 
-                            <div id="card-tier-2" class="group p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5" style="opacity:0.35;">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-[#8BAE45]/10 border border-[#8BAE45]/20 flex items-center justify-center text-2xl">🌿</div>
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-white text-sm">Mignole Guardian</h4>
-                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€2,000</p>
-                                        <ul class="space-y-2 text-xs text-stone-400 mt-4">
-                                            <li>○ ~5 Full Tree Adoptions (*Founders Only)</li>
-                                            <li>○ Annual olive oil allocation</li>
-                                            <li>○ Olive Credits accumulation</li>
-                                            <li>○ 15% villa booking discount</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="card-tier-3" class="group p-5 rounded-2xl bg-gradient-to-br from-[#C5A059]/10 to-black border border-[#C5A059]/20" style="opacity:0.35;">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-2xl">👑</div>
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-white text-sm">Tree Guardian</h4>
-                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€10,000</p>
-                                        <ul class="space-y-2 text-xs text-stone-300 mt-4">
-                                            <li>○ 15 Full Tree Adoptions (*Founders Only)</li>
-                                            <li class="text-emerald-400 font-semibold">✔ Complimentary 3-night villa stay</li>
-                                            <li>○ Dedicated olive tree allocation</li>
-                                            <li>○ VIP private harvest invitation</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="card-tier-4" class="group p-5 rounded-2xl bg-gradient-to-br from-[#5a7a2b]/15 to-black border border-[#5a7a2b]/30" style="opacity:0.35;">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-[#5a7a2b]/20 border border-[#5a7a2b]/30 flex items-center justify-center text-2xl">🌲</div>
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-white text-sm">Estate Guardian</h4>
-                                        <p class="text-[9px] text-[#C5A059] font-mono uppercase tracking-[0.25em] mt-1">€20,000 · ~25 Full Tree Adoptions (*Founders Only)</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="flex items-center gap-4 mb-6">
+                <div id="tier-icon"
+                     class="w-14 h-14 rounded-xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-3xl">
+                    🫒
                 </div>
 
-                <!-- RIGHT: BOOKING FORM -->
-                <div class="lg:col-span-7 space-y-6">
-                    <div class="tech-card p-8 rounded-3xl relative overflow-hidden">
-                        <h2 class="font-serif text-2xl text-white mb-2">Request Residency</h2>
-                        <p class="text-stone-400 text-xs mb-8">Select your travel window below. Patron profiles override standard pricing.</p>
-                        <form id="bookingNotificationForm" onsubmit="return false;" class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-2">
-                                    <input type="text" id="dateRangePicker" placeholder="Arrival &amp; Departure" class="w-full rounded-xl p-3 text-sm font-mono" required>
-                                </div>
-                                <div>
-                                    <select id="nightsSelectionFrame" class="w-full rounded-xl p-3 text-sm bg-black border border-white/10 text-white font-mono">
-                                        <option value="3">3 Nights</option>
-                                        <option value="5">5 Nights</option>
-                                        <option value="7">7 Nights (Max)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <input type="text" id="bookingName" placeholder="Full legal name" class="w-full rounded-xl p-3 text-sm" required>
-                            <textarea id="bookingNotes" placeholder="Concierge requests / notes..." class="w-full rounded-xl p-4 h-28 text-sm resize-none"></textarea>
-                            <button id="submitBookingBtn" type="button" class="bg-[#C5A059] text-black font-bold px-10 py-4 rounded-xl text-[10px] uppercase tracking-widest hover:bg-amber-500">Submit Residency Request</button>
-                        </form>
-                        <div id="bookingMsg" class="mt-4 text-center text-xs min-h-[18px]"></div>
+                <div>
+                    <p class="text-[9px] uppercase tracking-widest text-stone-500">
+                        Resolved Tier
+                    </p>
+
+                    <h3 id="tier-name"
+                        class="font-serif text-2xl text-white">
+                        Guest Mode
+                    </h3>
+
+                    <p id="tier-progress-text"
+                       class="text-[#C5A059] text-xs">
+                        Connect Profile
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between text-xs mb-2">
+                    <span id="next-tier-label">
+                        Next Tier
+                    </span>
+
+                    <span id="tier-percent-label">
+                        0%
+                    </span>
+                </div>
+
+                <div class="progress-container">
+                    <div id="tier-progress-bar"
+                         class="progress-fill"
+                         style="width:0%;">
                     </div>
                 </div>
             </div>
+
+            <!-- TIER BENEFITS -->
+            <div class="space-y-4">
+
+                <div id="card-tier-1"
+                     class="p-5 rounded-2xl border border-white/10">
+
+                    <h4 class="text-white font-bold">
+                        🌱 Mignole Supporter
+                    </h4>
+
+                    <ul class="mt-4 space-y-2 text-sm">
+
+                        <li>
+                            <a id="viewTreeLink1"
+                               href="#"
+                               class="pointer-events-none opacity-40 text-stone-400">
+                                View My Tree
+                            </a>
+                        </li>
+
+                        <li>Set Delivery Address</li>
+                        <li>Harvest Updates</li>
+                        <li>Request Visits</li>
+
+                    </ul>
+                </div>
+
+                <div id="card-tier-2"
+                     class="p-5 rounded-2xl border border-white/10">
+
+                    <h4 class="text-white font-bold">
+                        🌿 Mignole Guardian
+                    </h4>
+
+                    <p class="text-emerald-400 text-xs mt-2">
+                        ✔ 3 Night Villa Stay
+                    </p>
+
+                    <ul class="mt-4 space-y-2 text-sm">
+                        <li>
+                            <a id="viewTreeLink2"
+                               href="#"
+                               class="pointer-events-none opacity-40 text-stone-400">
+                                View My Trees
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="card-tier-3"
+                     class="p-5 rounded-2xl border border-[#C5A059]/20">
+
+                    <h4 class="text-white font-bold">
+                        👑 Tree Guardian
+                    </h4>
+
+                    <p class="text-emerald-400 text-xs mt-2">
+                        ✔ 5 Night Villa Stay
+                    </p>
+
+                    <ul class="mt-4 space-y-2 text-sm">
+                        <li>
+                            <a id="viewTreeLink3"
+                               href="#"
+                               class="pointer-events-none opacity-40 text-stone-400">
+                                View My Trees
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="card-tier-4"
+                     class="p-5 rounded-2xl border border-[#5a7a2b]/30">
+
+                    <h4 class="text-white font-bold">
+                        🌲 Estate Guardian
+                    </h4>
+
+                    <p class="text-emerald-400 text-xs mt-2">
+                        ✔ 7 Night Villa Stay
+                    </p>
+
+                    <ul class="mt-4 space-y-2 text-sm">
+                        <li>
+                            <a id="viewTreeLink4"
+                               href="#"
+                               class="pointer-events-none opacity-40 text-stone-400">
+                                View My Trees
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="lg:col-span-7 space-y-6">
+
+        <!-- OIL DELIVERY -->
+        <div class="tech-card p-8 rounded-3xl">
+
+            <h2 class="font-serif text-3xl text-white mb-2">
+                Olive Oil Delivery
+            </h2>
+
+            <p class="text-stone-400 text-sm mb-8">
+                Manage shipping information and monitor annual harvest deliveries.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+
+                <div>
+                    <label class="text-xs text-stone-500 uppercase">
+                        Recipient Name
+                    </label>
+
+                    <input id="deliveryName"
+                           type="text"
+                           class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10">
+                </div>
+
+                <div>
+                    <label class="text-xs text-stone-500 uppercase">
+                        Email
+                    </label>
+
+                    <input id="deliveryEmail"
+                           type="email"
+                           class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10">
+                </div>
+
+            </div>
+
+            <div class="mt-6">
+
+                <label class="text-xs text-stone-500 uppercase">
+                    Shipping Address
+                </label>
+
+                <textarea id="deliveryAddress"
+                          class="w-full mt-2 rounded-xl p-4 bg-black border border-white/10 h-28">
+                </textarea>
+
+            </div>
+
+            <button id="saveDeliveryBtn"
+                    class="mt-6 bg-[#C5A059] text-black font-bold px-8 py-4 rounded-xl">
+                Save Delivery Details
+            </button>
+
+            <hr class="my-8 border-white/10">
+
+            <h3 class="font-serif text-xl text-white mb-6">
+                Harvest Shipment Tracking
+            </h3>
+
+            <div class="space-y-4">
+
+                <div class="rounded-2xl bg-black/30 p-5 border border-white/5">
+
+                    <div class="flex justify-between">
+
+                        <div>
+                            <p class="text-white font-bold">
+                                2026 Harvest Allocation
+                            </p>
+
+                            <p class="text-stone-500 text-xs">
+                                6 Bottles Extra Virgin Olive Oil
+                            </p>
+                        </div>
+
+                        <span class="text-emerald-400 text-sm">
+                            In Transit
+                        </span>
+
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-xs text-stone-500">
+                            Tracking Number
+                        </p>
+
+                        <p id="trackingNumber"
+                           class="font-mono text-[#C5A059]">
+                            OLV-2026-00928
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RESIDENCY REQUEST -->
+        <div class="tech-card p-8 rounded-3xl">
+
+            <h2 class="font-serif text-2xl text-white mb-2">
+                Request Residency
+            </h2>
+
+            <p class="text-stone-400 text-xs mb-8">
+                Reserve villa access using your available credits.
+            </p>
+
+            <form id="bookingNotificationForm"
+                  onsubmit="return false;"
+                  class="space-y-6">
+
+                <input type="text"
+                       id="dateRangePicker"
+                       placeholder="Arrival & Departure"
+                       class="w-full rounded-xl p-3">
+
+                <select id="nightsSelectionFrame"
+                        class="w-full rounded-xl p-3 bg-black border border-white/10">
+
+                    <option value="3">3 Nights</option>
+                    <option value="5">5 Nights</option>
+                    <option value="7">7 Nights</option>
+
+                </select>
+
+                <input type="text"
+                       id="bookingName"
+                       placeholder="Full Name"
+                       class="w-full rounded-xl p-3">
+
+                <textarea id="bookingNotes"
+                          placeholder="Requests"
+                          class="w-full rounded-xl p-4 h-32">
+                </textarea>
+
+                <button id="submitBookingBtn"
+                        type="button"
+                        class="bg-[#C5A059] text-black px-8 py-4 rounded-xl font-bold">
+
+                    Submit Residency Request
+
+                </button>
+
+            </form>
+
+            <div id="bookingMsg"
+                 class="mt-4 text-xs">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
             <!-- ACTIVITIES -->
             <div class="mt-20">
