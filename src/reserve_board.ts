@@ -1496,7 +1496,7 @@ async function syncTransactionToSupabase(
   wallet: string,
   treeId: string,
   amount: number,
-  type: "BUY" | "SELL",
+  tx_type: "BUY" | "SELL",
   txSig: string,
   newTotal: number,
   isGuardian: boolean,
