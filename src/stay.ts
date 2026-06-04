@@ -161,6 +161,13 @@ function calculateTier(shares: number): TierInfo {
     nightlyRate: BASE_RATE,
     rateLabel: `$${BASE_RATE} USD / Nightly Standard Baseline`,
   };
+  if(totalMignole >= 500){
+
+ document.getElementById("trackingNumber")
+         .innerText =
+         "OLV-" + wallet.slice(0,6).toUpperCase();
+
+}
 }
 
 // ============================================================
@@ -824,6 +831,17 @@ function setupBookingForm() {
   });
 }
 
+const menuBtn =
+document.getElementById("mobileMenuBtn");
+
+const mobileMenu =
+document.getElementById("mobileMenu");
+
+menuBtn.addEventListener("click", () => {
+
+    mobileMenu.classList.toggle("hidden");
+
+});
 // ============================================================
 // INITIALIZATION
 // ============================================================
