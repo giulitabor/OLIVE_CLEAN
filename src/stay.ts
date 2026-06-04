@@ -200,6 +200,82 @@ function calculateTier(shares: number): TierInfo {
     rateLabel: `$${rate.toFixed(2)} USD / Nightly (15% Patron Discount)`,
   };
 }
+//
+// ============================================================
+// OLIVIUM UI ANIMATION SYSTEM
+// (progress, numbers, tier pulse, allocation updates)
+// ============================================================
+//
+
+function animateProgressBar(el: HTMLElement, target: number) {
+  let current = parseFloat(el.style.width || "0");
+
+  const step = () => {
+    current += (target - current) * 0.12;
+
+    if (Math.abs(target - current) < 0.5) {
+      el.style.width = `${target}%`;
+      return;
+    }
+
+    el.style.width = `${current}%`;
+    requestAnimationFrame(step);
+  };
+
+  requestAnimationFrame(step);
+}
+
+function animateNumber(
+  el: HTMLElement,
+  target: number,
+  suffix = ""
+) {
+  let current = parseInt(el.dataset.value || "0");
+
+  const step = () => {
+    current += (target - current) * 0.15;
+
+    if (Math.abs(target - current) < 0.5) {
+      el.dataset.value = String(target);
+      el.textContent = `${Math.round(target)}${suffix}`;
+      return;
+    }
+
+    el.textContent = `${Math.round(current)}${suffix}`;
+    requestAnimationFrame(step);
+  };
+
+  requestAnimationFrame(step);
+}
+
+function pulse(el: HTMLElement) {
+  el.classList.add("scale-105", "transition", "duration-300");
+
+  setTimeout(() => {
+    el.classList.remove("scale-105");
+  }, 300);
+}
+
+function updateAllocation(shares: number, connected: boolean) {
+  const allocationEl = document.getElementById("allocationAmount");
+
+  if (!allocationEl) return;
+
+  if (!connected) {
+    allocationEl.textContent = "Locked";
+    return;
+  }
+
+  if (shares >= 1000) {
+    allocationEl.textContent = "12 Bottles Extra Virgin Olive Oil";
+  } else if (shares >= 500) {
+    allocationEl.textContent = "6 Bottles Extra Virgin Olive Oil";
+  } else if (shares >= 100) {
+    allocationEl.textContent = "2 Bottles Extra Virgin Olive Oil";
+  } else {
+    allocationEl.textContent = "Locked until 100 Mignole";
+  }
+}
 
 function updateOilAccess(mignole: number) {
   const card = document.getElementById("oilDeliveryCard");
@@ -368,7 +444,78 @@ function renderUI() {
   const { identity, shares, credits, tier, isLoading } = state;
   const connected = identity.type !== "none" && identity.walletAddress !== "";
 
-  // — Nav —
+  // ============================================================
+  // ANIMATION HELPERS (used only inside render)
+  // ============================================================
+
+  function animateProgressBar(el: HTMLElement, target: number) {
+    let current = parseFloat(el.style.width || "0");
+
+    const step = () => {
+      current += (target - current) * 0.12;
+
+      if (Math.abs(target - current) < 0.5) {
+        el.style.width = `${target}%`;
+        return;
+      }
+
+      el.style.width = `${current}%`;
+      requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  }
+
+  function animateNumber(
+    el: HTMLElement,
+    target: number,
+    suffix = ""
+  ) {
+    let current = parseInt(el.dataset.value || "0");
+
+    const step = () => {
+      current += (target - current) * 0.15;
+
+      if (Math.abs(target - current) < 0.5) {
+        el.dataset.value = String(target);
+        el.textContent = `${Math.round(target)}${suffix}`;
+        return;
+      }
+
+      el.textContent = `${Math.round(current)}${suffix}`;
+      requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  }
+
+  function pulse(el: HTMLElement) {
+    el.classList.add("scale-105", "transition", "duration-300");
+    setTimeout(() => el.classList.remove("scale-105"), 300);
+  }
+
+  function updateAllocation(shares: number, connected: boolean) {
+    const allocationEl = document.getElementById("allocationAmount");
+
+    if (!allocationEl) return;
+
+    if (!connected) {
+      allocationEl.textContent = "Locked";
+    } else if (shares >= 1000) {
+      allocationEl.textContent = "12 Bottles Extra Virgin Olive Oil";
+    } else if (shares >= 500) {
+      allocationEl.textContent = "6 Bottles Extra Virgin Olive Oil";
+    } else if (shares >= 100) {
+      allocationEl.textContent = "2 Bottles Extra Virgin Olive Oil";
+    } else {
+      allocationEl.textContent = "Locked until 100 Mignole";
+    }
+  }
+
+  // ============================================================
+  // NAV
+  // ============================================================
+
   const connectBtn = document.getElementById("connectBtn");
   const navTierLabel = document.getElementById("nav-tier-label");
   const navIdentityDisplay = document.getElementById("nav-identity-display");
@@ -402,25 +549,25 @@ function renderUI() {
       : "NOT CONNECTED";
   }
 
-  // — Stats —
+  // ============================================================
+  // STATS (ANIMATED)
+  // ============================================================
+
   const sharesDisplay = document.getElementById("shares-count-display");
   const creditsDisplay = document.getElementById("credits-count-display");
 
   if (sharesDisplay) {
-    sharesDisplay.innerHTML = `${shares.toLocaleString()}
-      <span class="text-xs text-gold font-mono block mt-1">
-        Mignole Detected
-      </span>`;
+    animateNumber(sharesDisplay, shares, " Mignole Detected");
   }
 
   if (creditsDisplay) {
-    creditsDisplay.innerHTML = `${credits}
-      <span class="text-xs text-gold font-mono block mt-1">
-        Sanctuary Days
-      </span>`;
+    animateNumber(creditsDisplay, credits, " Sanctuary Days");
   }
 
-  // — Tier card —
+  // ============================================================
+  // TIER CARD
+  // ============================================================
+
   const tierIconEl = document.getElementById("tier-icon");
   const tierNameEl = document.getElementById("tier-name");
   const tierProgressText = document.getElementById("tier-progress-text");
@@ -429,7 +576,11 @@ function renderUI() {
   const nextTierLabel = document.getElementById("next-tier-label");
 
   if (tierIconEl) tierIconEl.textContent = connected ? tier.icon : "🫒";
-  if (tierNameEl) tierNameEl.textContent = connected ? tier.name : "Guest Mode";
+
+  if (tierNameEl) {
+    tierNameEl.textContent = connected ? tier.name : "Guest Mode";
+    if (connected) pulse(tierNameEl);
+  }
 
   if (tierProgressText) {
     tierProgressText.textContent = connected
@@ -440,8 +591,10 @@ function renderUI() {
   }
 
   if (tierProgressBar) {
-    (tierProgressBar as HTMLElement).style.width =
-      `${connected ? tier.progressPercent : 0}%`;
+    animateProgressBar(
+      tierProgressBar as HTMLElement,
+      connected ? tier.progressPercent : 0
+    );
   }
 
   if (tierPercentLabel) {
@@ -454,7 +607,10 @@ function renderUI() {
       tier.sharesNeeded > 0 ? `Next: ${tier.nextTier}` : "Max Level";
   }
 
-  // — Tier card opacities —
+  // ============================================================
+  // TIER CARD OPACITY LOCKS
+  // ============================================================
+
   const thresholds: [string, number][] = [
     ["card-tier-1", 100],
     ["card-tier-2", 500],
@@ -470,16 +626,17 @@ function renderUI() {
     }
   });
 
-  // — Booking rate —
+  // ============================================================
+  // BOOKING + RATE
+  // ============================================================
+
   const patronDiscountBadge = document.getElementById("patronDiscountBadge");
   const bookingRateDisplay = document.getElementById("bookingRateDisplay");
 
   if (patronDiscountBadge) {
     patronDiscountBadge.textContent = connected
       ? `${tier.icon} ${tier.name}${
-          tier.discountPercent > 0
-            ? ` (${tier.discountPercent}% off)`
-            : ""
+          tier.discountPercent > 0 ? ` (${tier.discountPercent}% off)` : ""
         }`
       : "Standard Account";
   }
@@ -489,12 +646,13 @@ function renderUI() {
   }
 
   // ============================================================
-  // 🫒 OIL ACCESS (NEW — integrated fix)
+  // 🫒 OIL ACCESS + ALLOCATION (NEW INTEGRATED SYSTEM)
   // ============================================================
 
   const oilCard = document.getElementById("oilDeliveryCard");
   const oilNotice = document.getElementById("oilDeliveryLockNotice");
   const tracking = document.getElementById("trackingNumber");
+
   const unlocked = connected && shares >= 500;
 
   if (oilCard && oilNotice) {
@@ -505,14 +663,13 @@ function renderUI() {
   }
 
   if (tracking) {
-    if (unlocked && identity.walletAddress) {
-      tracking.textContent =
-        "OLV-" +
-        identity.walletAddress.slice(0, 6).toUpperCase();
-    } else {
-      tracking.textContent = "LOCKED";
-    }
+    tracking.textContent =
+      unlocked && identity.walletAddress
+        ? "OLV-" + identity.walletAddress.slice(0, 6).toUpperCase()
+        : "LOCKED";
   }
+
+  updateAllocation(shares, connected);
 }
 // ============================================================
 // AUTH MODAL MESSAGE
