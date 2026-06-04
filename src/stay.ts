@@ -423,7 +423,7 @@ async function fetchUserCredits(walletAddress: string): Promise<number> {
     const { data, error } = await sb
       .from("users")
       .select("credits")
-      .eq("wallet_address", walletAddress)
+      .eq("wallet", walletAddress)
       .maybeSingle();
 
     if (!error && data) return data.credits ?? 0;
@@ -896,8 +896,8 @@ function setupVerifySignup() {
 
     try {
       const { error } = await sb.from("users").insert([{
-        email_address: email,
-        wallet_address: pendingCustodialWallet,
+        Email_address: email,
+        wallet: pendingCustodialWallet,
         credits: 0,
         created_at: new Date().toISOString(),
       }]);
@@ -958,16 +958,16 @@ function setupVerifyLogin() {
       // Always look up from DB — never use a hardcoded fallback address
       const { data, error } = await sb
         .from("users")
-        .select("wallet_address")
-        .eq("email_address", email)
+        .select("wallet")
+        .eq("Email_address", email)
         .maybeSingle();
 
-      if (error || !data?.wallet_address) {
-        setMsg("User not found. Please sign up first.", true);
+      if (error || !data?.wallet {
+        setMsg("User not found, but no wallet. Please create one first.", true);
         return;
       }
 
-      const wallet = data.wallet_address as string;
+      const wallet = data.wallet as string;
       const identity: OliviumIdentity = {
         type: "email",
         walletAddress: wallet,
