@@ -92,31 +92,16 @@ export async function waitForProgram(timeout = 10_000): Promise<any> {
  * related DOM element.  Async only because wallet mode fetches SOL balance.
  * Never throws — logs errors internally.
  */
-function setupMobileMenu() {
+document.getElementById("mobileMenuBtn")?.addEventListener("click", () => {
+  const menu = document.getElementById("mobileMenuOverlay");
+  const btn  = document.getElementById("mobileMenuBtn");
 
-  const menuBtn =
-    document.getElementById("mobileMenuBtn");
+  menu?.classList.toggle("open");
+  btn?.classList.toggle("open");
 
-  const menu =
-    document.getElementById("mobileMenu");
-
-  if (!menuBtn || !menu) return;
-
-  menuBtn.addEventListener("click", () => {
-    menu.classList.toggle("hidden");
-  });
-
-  menu.querySelectorAll("a").forEach(link => {
-
-    link.addEventListener("click", () => {
-
-      menu.classList.add("hidden");
-
-    });
-
-  });
-
-}
+  document.body.style.overflow =
+    menu?.classList.contains("open") ? "hidden" : "";
+});
 
 function closeMobileMenu() {
     document.getElementById("mobileMenuOverlay")
@@ -318,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initMetrics();
   _wireConnectButton();
   _wireWalletConnectButton();
-  _wireMobileNav();
+ // _wireMobileNav();
   _wireAuthModal();
   updateIdentityBalanceUI(); // Initial render from restored session
 
@@ -374,12 +359,7 @@ function _wireWalletConnectButton() {
   });
 }
 
-// ─── Mobile nav toggle ────────────────────────────────────────────────────
-function _wireMobileNav() {
-  document.getElementById("mobileToggle")?.addEventListener("click", () => {
-    document.getElementById("navLinks")?.classList.toggle("active");
-  });
-}
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EMAIL AUTH MODAL WIRING
