@@ -582,3 +582,18 @@ window.addEventListener("solana:connection-complete", (e: Event) => {
   const detail = (e as CustomEvent).detail ?? {};
   window.dispatchEvent(new CustomEvent("olivium:connected", { detail }));
 });
+
+document.addEventListener("click", (e) => {
+  const el = e.target as HTMLElement;
+
+  console.log(
+    "%c[CLICK]",
+    "color:#C5A059;font-weight:bold;",
+    {
+      tag: el.tagName,
+      id: el.id || null,
+      class: el.className || null,
+      text: el.innerText?.trim()?.slice(0, 40) || null
+    }
+  );
+});
