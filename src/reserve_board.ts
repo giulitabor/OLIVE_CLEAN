@@ -48,23 +48,20 @@ interface NormalisedPosition {
 // ═══════════════════════════════════════════════════════════════════════════
 // PROGRAM HELPER
 // ═══════════════════════════════════════════════════════════════════════════
-const mobileToggle = document.getElementById("mobileToggle");
-const navLinks = document.getElementById("navLinks");
+function setConnectedState(label: string) {
+  const ids = [
+    "nav-identity-display",
+    "nav-identity-display-mob",
+    "mobile-identity-display"
+  ];
 
-if (mobileToggle && navLinks) {
-  // OPEN / CLOSE MENU
-  mobileToggle.addEventListener("click", () => {
-    navLinks.classList.toggle("open");
-  });
-
-  // CLOSE MENU WHEN ANY LINK OR BUTTON IS CLICKED
-  navLinks.querySelectorAll("a, button").forEach((el) => {
-    el.addEventListener("click", () => {
-      navLinks.classList.remove("open");
-    });
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
   });
 }
 
+(window as any).setConnectedState = setConnectedState;
 function _requireProgram() {
   const p = (window as any)._program;
   if (!p) throw new Error("Program not ready");
