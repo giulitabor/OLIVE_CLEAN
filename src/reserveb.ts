@@ -98,6 +98,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
     const pillEl     = document.getElementById("identityPill");
     const stat       = document.getElementById("identityTypeStat");
     const connectBtn = document.getElementById("connectBtn") as HTMLButtonElement | null;
+    const navIdentity = document.getElementById("nav-identity-display");
+    const navIdentityMob = document.getElementById("nav-identity-display-mob");
+    const mobileIdentity = document.getElementById("mobile-identity-display");
 
     // ── Guest ──────────────────────────────────────────────────────────────
     if (identity.type === "guest") {
@@ -109,6 +112,10 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         connectBtn.style.border   = "";
         connectBtn.style.background = "var(--green)";
         connectBtn.disabled       = false;
+
+      if (navIdentity) navIdentity.textContent = "NOT CONNECTED";
+      if (navIdentityMob) navIdentityMob.textContent = "NOT CONNECTED";
+      if (mobileIdentity) mobileIdentity.textContent = "NOT CONNECTED";
       }
       return;
     }
@@ -123,6 +130,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         connectBtn.style.border   = "1px solid #d94d4d";
         connectBtn.style.background = "transparent";
         connectBtn.disabled       = false;
+        if (navIdentity) navIdentity.textContent = "CONNECTED";
+        if (navIdentityMob) navIdentityMob.textContent = "CONNECTED";
+        if (mobileIdentity) mobileIdentity.textContent = "CONNECTED";
       }
       return;
     }
@@ -139,6 +149,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         connectBtn.style.border   = "1px solid #d94d4d";
         connectBtn.style.background = "transparent";
         connectBtn.disabled       = false;
+        if (navIdentity) navIdentity.textContent = "CONNECTED";
+        if (navIdentityMob) navIdentityMob.textContent = "CONNECTED";
+        if (mobileIdentity) mobileIdentity.textContent = "CONNECTED";
       }
 
       // Fetch balance asynchronously — does NOT block the initial UI update
