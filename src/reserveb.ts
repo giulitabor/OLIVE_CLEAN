@@ -134,6 +134,8 @@ export async function updateIdentityBalanceUI(): Promise<void> {
     const navIdentity = document.getElementById("nav-identity-display");
     const navIdentityMob = document.getElementById("nav-identity-display-mob");
     const mobileIdentity = document.getElementById("mobile-identity-display");
+    const mobiletier = document.getElementById("mobile-tier-label");
+
 
     // ── Guest ──────────────────────────────────────────────────────────────
     if (identity.type === "guest") {
@@ -149,6 +151,8 @@ export async function updateIdentityBalanceUI(): Promise<void> {
       if (navIdentity) navIdentity.textContent = "NOT CONNECTED";
       if (navIdentityMob) navIdentityMob.textContent = "NOT CONNECTED";
       if (mobileIdentity) mobileIdentity.textContent = "NOT CONNECTED";
+      if (mobiletier) mobiletier.textContent = "Guest Mode";
+
       
       return;
     }
@@ -167,6 +171,8 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         if (navIdentity) navIdentity.textContent = "CONNECTED";
         if (navIdentityMob) navIdentityMob.textContent = "CONNECTED";
         if (mobileIdentity) mobileIdentity.textContent = "CONNECTED";
+        if (mobiletier) mobiletier.textContent = "Email Mode";
+
       
       return;
     }
@@ -187,6 +193,8 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         if (navIdentity) navIdentity.textContent = "CONNECTED";
         if (navIdentityMob) navIdentityMob.textContent = "CONNECTED";
         if (mobileIdentity) mobileIdentity.textContent = "CONNECTED";
+        if (mobiletier) mobiletier.textContent = "Wallet Mode";
+
       
 
       // Fetch balance asynchronously — does NOT block the initial UI update
