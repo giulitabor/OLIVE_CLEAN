@@ -635,6 +635,18 @@
         if(mobConn && deskConn){
             mobConn.addEventListener('click', function(){ closeMenu(); deskConn.click(); });
         }
+  function setConnectedState(label = "CONNECTED") {
+  const ids = [
+    "nav-identity-display",
+    "nav-identity-display-mob",
+    "mobile-identity-display"
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+}
 
         // Sync mobile status labels from desktop ones (after stay.ts updates them)
         var navId   = document.getElementById('nav-identity-display');
