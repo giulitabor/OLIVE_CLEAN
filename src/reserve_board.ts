@@ -48,20 +48,6 @@ interface NormalisedPosition {
 // ═══════════════════════════════════════════════════════════════════════════
 // PROGRAM HELPER
 // ═══════════════════════════════════════════════════════════════════════════
-function setConnectedState(label: string) {
-  const ids = [
-    "nav-identity-display",
-    "nav-identity-display-mob",
-    "mobile-identity-display"
-  ];
-
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = label;
-  });
-}
-
-(window as any).setConnectedState = setConnectedState;
 function _requireProgram() {
   const p = (window as any)._program;
   if (!p) throw new Error("Program not ready");
