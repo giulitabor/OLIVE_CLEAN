@@ -934,3 +934,164 @@ select:focus,
     height: 220px;
   }
 }
+
+/* =========================================================
+   TREE DETAIL MODAL — MOBILE OVERRIDES
+   Targets the tree detail sheet opened on card tap
+========================================================= */
+
+@media (max-width: 768px) {
+
+  /* Modal becomes a bottom sheet */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: 28px 28px 0 0;
+    max-height: 92vh;
+  }
+
+  /* Compact hero */
+  .relative.h-80 {
+    height: 200px !important;
+  }
+
+  /* Tighter hero text */
+  #tree-detail-name {
+    font-size: 1.4rem !important;
+  }
+
+  #tree-detail-health {
+    font-size: 1.2rem !important;
+  }
+
+  #tree-detail-location {
+    font-size: 0.75rem !important;
+  }
+
+  /* Badge labels — hide text, show icon only on very small */
+  .absolute.top-4.left-4 span:not(.w-2) {
+    display: none;
+  }
+
+  /* Reduce tab area padding */
+  .p-8 {
+    padding: 16px !important;
+  }
+
+  /* Tabs: scroll horizontally, smaller text */
+  .flex.gap-2.mb-6.border-b {
+    gap: 0 !important;
+    margin-bottom: 16px !important;
+  }
+
+  .tree-detail-tab {
+    padding: 8px 12px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap;
+  }
+
+  /* Overview stat cards: 2-up instead of 4-up */
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-2xl {
+    font-size: 1.1rem !important;
+    margin-bottom: 2px;
+  }
+
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-xl {
+    font-size: 1.1rem !important;
+  }
+
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 .rounded-xl {
+    padding: 10px 8px !important;
+  }
+
+  /* Adoption progress bar — compact */
+  #tree-detail-tab-overview .bg-stone-50.rounded-xl.p-4.mb-4 {
+    padding: 12px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Treatment grid: stack vertically */
+  #tree-detail-tab-overview .grid.md\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Physical tab: 2-up grid */
+  #tree-detail-tab-physical .grid.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  #tree-detail-tab-physical .border.rounded-xl {
+    padding: 12px !important;
+  }
+
+  #tree-detail-tab-physical .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  /* Environment / sensors tab: 2-up */
+  #tree-detail-tab-environment .grid.md\:grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  #tree-detail-tab-environment .border.rounded-xl {
+    padding: 12px !important;
+  }
+
+  #tree-detail-tab-environment .text-xl {
+    font-size: 1rem !important;
+  }
+
+  /* Weather tab: 2-up */
+  #tree-detail-tab-weather .grid.md\:grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  #tree-detail-tab-weather .border.rounded-xl {
+    padding: 12px !important;
+  }
+
+  #tree-detail-tab-weather .text-xl {
+    font-size: 1rem !important;
+  }
+
+  /* On-chain tab: wrap long addresses */
+  #tree-detail-tab-metadata .flex.justify-between {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  #tree-detail-tab-metadata .font-mono.text-xs {
+    font-size: 0.65rem !important;
+    max-width: 100% !important;
+    word-break: break-all;
+    text-align: left !important;
+  }
+
+  /* Gallery: 2 columns */
+  #tree-detail-gallery-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* Section headings in env/weather tabs */
+  #tree-detail-tab-environment h4,
+  #tree-detail-tab-weather h4 {
+    font-size: 0.9rem !important;
+    margin-bottom: 10px !important;
+  }
+}
