@@ -2,181 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
-  <title>Olivium DASHBOARD | Adopt Your Tree</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Olivium DASHBOARD| Adopt Your Tree</title>
   <link rel="stylesheet" href="1style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    /* ===== FIXED MOBILE MENU - NO CUTOFF, FULL VISIBILITY ===== */
-    #mobileMenuOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(8, 12, 6, 0.98);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      display: flex;
-      flex-direction: column;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      padding-bottom: env(safe-area-inset-bottom, 24px);
-      padding-top: env(safe-area-inset-top, 0px);
-    }
-    #mobileMenuOverlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .mobile-menu-scroll {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 100%;
-      padding: 24px 24px 40px 24px;
-    }
-    .mob-nav-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0 20px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      margin-bottom: 20px;
-      flex-shrink: 0;
-    }
-    .mob-nav-links {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1;
-      margin: 16px 0 24px 0;
-    }
-    .mob-nav-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.85);
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s;
-      transform: translateY(12px);
-      opacity: 0;
-    }
-    #mobileMenuOverlay.open .mob-nav-link {
-      transform: translateY(0);
-      opacity: 1;
-      transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s ease;
-    }
-    #mobileMenuOverlay.open .mob-nav-link:nth-child(1) { transition-delay: 0.04s; }
-    #mobileMenuOverlay.open .mob-nav-link:nth-child(2) { transition-delay: 0.08s; }
-    #mobileMenuOverlay.open .mob-nav-link:nth-child(3) { transition-delay: 0.12s; }
-    #mobileMenuOverlay.open .mob-nav-link:nth-child(4) { transition-delay: 0.16s; }
-    .mob-nav-link:hover, .mob-nav-link.active-link {
-      color: #C5A059;
-      transform: translateX(6px);
-    }
-    .mob-arrow {
-      font-size: 1rem;
-      opacity: 0.4;
-      transition: opacity 0.2s, transform 0.2s;
-    }
-    .mob-nav-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 24px;
-      margin-top: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      transform: translateY(12px);
-      opacity: 0;
-    }
-    #mobileMenuOverlay.open .mob-nav-footer {
-      transform: translateY(0);
-      opacity: 1;
-      transition: transform 0.35s ease 0.2s, opacity 0.3s ease 0.2s;
-    }
-    .mob-status-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 24px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .mob-status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #6fbf4c;
-      box-shadow: 0 0 6px #6fbf4c;
-    }
-    .mob-connect-cta {
-      width: 100%;
-      background: #5a7a2b;
-      color: white;
-      font-weight: 700;
-      font-size: 15px;
-      letter-spacing: 0.5px;
-      padding: 16px 0;
-      border-radius: 40px;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 8px;
-    }
-    .mob-connect-cta:active { transform: scale(0.97); background: #6e8f3a; }
-    .mob-close-icon {
-      background: rgba(255,255,255,0.08);
-      border-radius: 60px;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .mob-close-icon:hover { background: rgba(255,255,255,0.2); }
-    #mobileMenuBtn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 30px;
-      border: none;
-      cursor: pointer;
-    }
-    #mobileMenuBtn span {
-      display: block;
-      width: 20px;
-      height: 2px;
-      background: #ffffff;
-      border-radius: 2px;
-      transition: transform 0.25s ease, opacity 0.2s;
-    }
-    #mobileMenuBtn.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-    #mobileMenuBtn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-    #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-    @media (max-width: 767px) {
-      #nav-desktop-links, #nav-desktop-right { display: none !important; }
-      #nav-mobile-btn { display: flex !important; }
-    }
-    @media (min-width: 768px) {
-      #nav-mobile-btn { display: none !important; }
-      #nav-desktop-links, #nav-desktop-right { display: flex !important; }
-    }
     .tree-card .action-btn {
       background: #6B7F5A !important;
       color: white !important;
@@ -197,45 +28,194 @@
     .tree-card .details-btn { background: #B8860B !important; }
     .tree-card .details-btn:hover { background: #9a7209 !important; }
     .tree-card .adopt-btn { background: #6B7F5A !important; }
+    .modal-overlay { z-index: 1000; }
+    #tree-detail-modal { z-index: 1100; }
+    #sell-modal { z-index: 2000; }
     .hidden { display: none !important; }
-    .hero { padding-top: calc(72px + 2rem) !important; }
+      /* ── PHANTOM MOBILE MENU ─────────────────────────────────────── */
+        #mobileMenuOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+            background: rgba(0,0,0,0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        #mobileMenuOverlay.open { opacity: 1; pointer-events: all; }
+
+        .mob-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            height: 72px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .mob-nav-links {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 28px;
+        }
+
+        .mob-nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 7vw, 2rem);
+            font-weight: 600;
+            transform: translateY(14px);
+            opacity: 0;
+            transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease, color 0.2s;
+        }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(1) { transform:translateY(0); opacity:1; transition-delay:0.05s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(2) { transform:translateY(0); opacity:1; transition-delay:0.10s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(3) { transform:translateY(0); opacity:1; transition-delay:0.15s; }
+        .mob-nav-link:hover, .mob-nav-link.active-link { color: #C5A059; }
+        .mob-arrow { font-size:1rem; opacity:0.25; transition:opacity 0.2s,transform 0.2s; }
+        .mob-nav-link:hover .mob-arrow { opacity:1; transform:translateX(4px); }
+
+        .mob-nav-footer {
+            padding: 24px 28px max(28px, env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transform: translateY(14px);
+            opacity: 0;
+            transition: transform 0.38s cubic-bezier(0.4,0,0.2,1) 0.18s, opacity 0.38s ease 0.18s;
+        }
+        #mobileMenuOverlay.open .mob-nav-footer { transform:translateY(0); opacity:1; }
+
+        .mob-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+        }
+        .mob-status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #5a7a2b;
+            flex-shrink: 0;
+        }
+        .mob-connect-cta {
+            width: 100%;
+            background: #5a7a2b;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 16px 0;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .mob-connect-cta:hover { background: #6b8e36; }
+        .mob-connect-cta:active { transform: scale(0.98); }
+
+        /* Hamburger bars */
+        #mobileMenuBtn {
+            width: 44px; height: 44px;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            gap: 5px;
+            background: none; border: none; cursor: pointer; padding: 0;
+        }
+        #mobileMenuBtn span {
+            display: block; width: 22px; height: 1.5px;
+            background: #fff; border-radius: 2px;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+            transform-origin: center;
+        }
+        #mobileMenuBtn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+        #mobileMenuBtn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+        /* Progress bar mobile */
+        .progress-container { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #5a7a2b, #C5A059); border-radius: 2px; transition: width 0.5s ease; }
+
+
+        /* Nav responsive — no Tailwind dependency */
+        @media (min-width: 768px) {
+            #nav-desktop-links { display: flex !important; }
+            #nav-desktop-right { display: flex !important; }
+            #nav-mobile-btn    { display: none  !important; }
+        }
+        @media (max-width: 767px) {
+            #nav-desktop-links { display: none  !important; }
+            #nav-desktop-right { display: none  !important; }
+            #nav-mobile-btn    { display: flex  !important; }
+        }
   </style>
 </head>
 <body>
 <div>
-  <header>
+  <header style="all:unset; display:block;">
+    <!-- NAVIGATION -->
     <nav class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
-        <div class="font-serif text-lg sm:text-xl font-bold text-white tracking-widest flex-shrink-0">
-          OLIVIUM <span class="italic text-[#C5A059]">ADOPTION</span>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
+
+            <!-- Logo -->
+            <div class="font-serif text-lg sm:text-xl font-bold text-white tracking-widest flex-shrink-0">
+                OLIVIUM <span class="italic text-[#C5A059]">ADOPTION</span>
+            </div>
+
+            <!-- Desktop links -->
+            <div id="nav-desktop-links" style="display:none; align-items:center; gap:2rem; font-size:10px; font-weight:700; letter-spacing:0.2em;">
+                <a href="understand.html" class="hover:text-[#C5A059] text-stone-400 transition">ABOUT OLIVIUM</a>
+                <a href="map.html" class="text-[#C5A059]">VIEW GROVE</a>
+                <a href="webgame3.html" class="text-[#C5A059]">PLAY GAME</a>
+
+                <a href="villa_stay.html" class="hover:text-[#C5A059] text-stone-400 transition">REWARDS</a>
+            </div>
+
+            <!-- Desktop right -->
+            <div id="nav-desktop-right" style="display:none; align-items:center; gap:1rem;">
+                <div class="text-right">
+                    <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase">Guest Mode</p>
+                    <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase">NOT CONNECTED</p>
+                </div>
+                <button id="connectBtn" class="bg-[#5a7a2b] text-white text-[10px] px-5 py-2.5 rounded-xl hover:bg-[#6b8e36] transition">Connect Profile</button>
+            </div>
+
+            <!-- Mobile: status pill + hamburger -->
+            <div id="nav-mobile-btn" style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="text-right">
+                    <p id="nav-tier-label-mob" class="text-[8px] text-stone-500 uppercase leading-none">Guest</p>
+                    <p id="nav-identity-display-mob" class="text-[9px] text-[#C5A059] font-mono">NOT CONNECTED</p>
+                </div>
+                <button id="mobileMenuBtn" aria-label="Open menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
         </div>
-        <div id="nav-desktop-links" style="display:none; align-items:center; gap:2rem; font-size:10px; font-weight:700; letter-spacing:0.2em;">
-          <a href="understand.html" class="hover:text-[#C5A059] text-stone-400 transition">ABOUT OLIVIUM</a>
-          <a href="map.html" class="text-[#C5A059]">VIEW GROVE</a>
-          <a href="webgame3.html" class="hover:text-[#C5A059] text-stone-400 transition">PLAY GAME</a>
-          <a href="villa_stay.html" class="hover:text-[#C5A059] text-stone-400 transition">REWARDS</a>
-        </div>
-        <div id="nav-desktop-right" style="display:none; align-items:center; gap:1rem;">
-          <div class="text-right">
-            <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase">Guest Mode</p>
-            <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase">NOT CONNECTED</p>
-          </div>
-          <button id="connectBtn" class="bg-[#5a7a2b] text-white text-[10px] px-5 py-2.5 rounded-xl hover:bg-[#6b8e36] transition">Connect Profile</button>
-        </div>
-        <div id="nav-mobile-btn" style="display:flex; align-items:center; gap:0.75rem;">
-          <div class="text-right">
-            <p id="nav-tier-label-mob" class="text-[8px] text-stone-500 uppercase leading-none">Guest</p>
-            <p id="nav-identity-display-mob" class="text-[9px] text-[#C5A059] font-mono">NOT CONNECTED</p>
-          </div>
-          <button id="mobileMenuBtn" aria-label="Open menu">
-            <span></span><span></span><span></span>
-          </button>
-        </div>
-      </div>
+
     </nav>
+
   </header>
 
-  <section class="hero" style="max-width:1240px; margin:0 auto; padding:56px 22px 26px">
+  <section class="hero" style="padding-top: calc(64px + 2rem)">
     <div>
       <h1 class="hero-title">Adopt Your Tree 🌿</h1>
       <p class="hero-subtitle">Adopt a real olive tree, track your grove ownership on-chain, and unlock ecosystem rewards!</p>
@@ -267,7 +247,7 @@
     <div class="loading-state"><div class="spinner"></div><p>🌿 Syncing live grove availability...</p></div>
   </main>
 
-  <!-- All your original modals (preserved) -->
+  <!-- PURCHASE MODAL -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal" role="dialog" aria-modal="true">
       <button class="close-btn" onclick="if(window.closeModal) window.closeModal()">×</button>
@@ -289,12 +269,16 @@
           <input type="hidden" id="shareInput" value="1" />
         </div>
         <div class="price-card" style="margin-bottom: 24px;"><div class="price-title">Total Price</div><div class="price-display" id="priceDisplay">€12.40</div><div class="price-sub" id="priceSub">1 share × €12.40</div></div>
-        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">🔗 Connect Wallet to Continue</button>
+        <!-- Shown in crypto mode when no wallet is connected; hidden otherwise -->
+        <button id="adoptConnectBtn" style="display:none;width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;">
+          🔗 Connect Wallet to Continue
+        </button>
         <button class="primary-btn" id="adoptBtn" onclick="if(window.openAgreement) window.openAgreement()">Continue to Agreement</button>
       </div>
     </div>
   </div>
 
+  <!-- AGREEMENT MODAL -->
   <div id="agreementModal" class="modal-overlay">
     <div class="modal">
       <div class="agreement-card">
@@ -312,14 +296,17 @@
     </div>
   </div>
 
+  <!-- SUCCESS MODAL -->
   <div class="modal-overlay" id="successModal">
     <div class="modal"><div class="agreement-card success-state"><div class="success-icon">🌿</div><h2 class="modal-title">Adoption Confirmed</h2><p style="color: var(--muted); margin-bottom: 24px;">Thank you for supporting the Olivium ecosystem.</p><button class="primary-btn" onclick="if(window.closeSuccess) window.closeSuccess()">Continue</button></div></div>
   </div>
-
+   <!-- RELEASE MODAL -->
   <div class="modal-overlay" id="releaseModal">
     <div class="modal"><div class="agreement-card success-state"><div class="success-icon">🌿</div><h2 class="modal-title">Release Confirmed</h2><p style="color: var(--muted); margin-bottom: 24px;">Grove support was greatly apriciated in the Olivium ecosystem.</p><button class="primary-btn" onclick="if(window.closeRelease) window.closeRelease()">Continue</button></div></div>
   </div>
 
+
+  <!-- CONNECT MODAL -->
   <div class="modal-overlay" id="connectModal">
     <div class="modal" style="max-width: 480px;">
       <button class="close-btn" onclick="if(window.closeConnectModal) window.closeConnectModal()">&times;</button>
@@ -334,6 +321,7 @@
     </div>
   </div>
 
+  <!-- AUTH MODAL (MFA) -->
   <div id="authModalOverlay" class="modal-overlay" style="display: none;">
     <div class="modal" style="max-width: 400px;">
       <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px;">&times;</button>
@@ -347,6 +335,7 @@
     </div>
   </div>
 
+  <!-- SELL MODAL (SINGLE COPY) -->
   <div id="sell-modal" class="modal-overlay hidden fixed inset-0 w-full h-full flex items-center justify-center bg-black/60 backdrop-blur-sm z-[2000]">
     <div class="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-2xl border border-stone-100">
       <button onclick="if(window.closeSellModal) window.closeSellModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 font-bold text-xl">✕</button>
@@ -373,24 +362,40 @@
     </div>
   </div>
 
+  <!-- TREE DETAIL MODAL -->
   <div id="tree-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" style="background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);">
     <div class="min-h-screen flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden" onclick="event.stopPropagation()">
+
+        <!-- Close -->
         <button onclick="if(window.closeTreeDetailModal) window.closeTreeDetailModal()" class="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-lg transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
+
+        <!-- Hero image + name -->
         <div class="relative h-80 overflow-hidden">
           <div id="tree-detail-hero-img" class="absolute inset-0 bg-cover bg-center transition-all duration-500" style="background-image: url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg');"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
             <div class="flex items-end justify-between">
-              <div><p id="tree-detail-field-id" class="text-xs font-mono text-white/60 mb-1">—</p><h2 id="tree-detail-name" class="text-3xl font-bold mb-1">—</h2><p id="tree-detail-location" class="text-sm text-white/80">—</p></div>
-              <div class="text-right"><p class="text-xs text-white/60 mb-1">Health Score</p><p id="tree-detail-health" class="text-2xl font-bold text-green-400">—</p></div>
+              <div>
+                <p id="tree-detail-field-id" class="text-xs font-mono text-white/60 mb-1">—</p>
+                <h2 id="tree-detail-name" class="text-3xl font-bold mb-1">—</h2>
+                <p id="tree-detail-location" class="text-sm text-white/80">—</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-white/60 mb-1">Health Score</p>
+                <p id="tree-detail-health" class="text-2xl font-bold text-green-400">—</p>
+              </div>
             </div>
           </div>
-          <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full text-white text-xs font-medium shadow-lg"><span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>LIVE SENSORS</div>
+          <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full text-white text-xs font-medium shadow-lg">
+            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>LIVE SENSORS
+          </div>
           <div id="tree-detail-status-badge" class="absolute top-4 right-20 px-3 py-1.5 bg-green-600 rounded-full text-white text-xs font-medium shadow-lg">registered</div>
         </div>
+
+        <!-- Tabs -->
         <div class="p-8">
           <div class="flex gap-2 mb-6 border-b border-stone-200 overflow-x-auto">
             <button class="tree-detail-tab active px-4 py-2 text-sm font-medium border-b-2 border-green-600 text-green-600 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('overview')">Overview</button>
@@ -400,12 +405,180 @@
             <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('metadata')">⛓ On-Chain</button>
             <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('gallery')">🖼 Gallery</button>
           </div>
-          <div id="tree-detail-tab-overview" class="tree-detail-tab-content"><!-- content --></div>
-          <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden"></div>
-          <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden"></div>
-          <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden"></div>
-          <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden"></div>
-          <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden"></div>
+
+          <!-- OVERVIEW TAB -->
+          <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
+            <div class="grid md:grid-cols-4 gap-4 mb-6">
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">🌳</div>
+                <p class="text-xs text-stone-400 mb-1">Age</p>
+                <p id="tree-detail-age" class="text-xl font-bold text-stone-900">—</p>
+              </div>
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">📏</div>
+                <p class="text-xs text-stone-400 mb-1">Height</p>
+                <p id="tree-detail-height" class="text-xl font-bold text-stone-900">—</p>
+              </div>
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">🫒</div>
+                <p class="text-xs text-stone-400 mb-1">Variety</p>
+                <p id="tree-detail-variety" class="text-lg font-bold text-stone-900">—</p>
+              </div>
+              <div class="bg-stone-50 rounded-xl p-4 text-center">
+                <div class="text-2xl mb-1">📊</div>
+                <p class="text-xs text-stone-400 mb-1">Shares Sold</p>
+                <p id="tree-overview-shares" class="text-xl font-bold text-stone-900">—</p>
+              </div>
+            </div>
+            <!-- Share progress -->
+            <div class="bg-stone-50 rounded-xl p-4 mb-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-stone-500">Adoption Progress</span>
+                <span id="tree-overview-pct" class="font-bold text-stone-800">—%</span>
+              </div>
+              <div class="w-full bg-stone-200 rounded-full h-2.5">
+                <div id="tree-overview-bar" class="bg-green-600 h-2.5 rounded-full transition-all" style="width:0%"></div>
+              </div>
+              <div class="flex justify-between text-xs text-stone-400 mt-1">
+                <span id="tree-overview-sold-label">— sold</span>
+                <span id="tree-overview-total-label">— total</span>
+              </div>
+            </div>
+            <!-- Treatment info -->
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="border border-stone-100 rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Last Treatment</p>
+                <p id="tree-detail-last-treatment" class="font-semibold text-stone-800">—</p>
+                <p id="tree-detail-treatment-type" class="text-xs text-stone-500 mt-0.5">—</p>
+              </div>
+              <div class="border border-stone-100 rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Last Fertilizer</p>
+                <p id="tree-detail-last-fertilizer" class="font-semibold text-stone-800">—</p>
+                <p id="tree-detail-fertilizer-type" class="text-xs text-stone-500 mt-0.5">—</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- PHYSICAL TAB -->
+          <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Age</p>
+                <p id="phys-age" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">years</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Height</p>
+                <p id="phys-height" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Circumference</p>
+                <p id="phys-circumference" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Diameter</p>
+                <p id="phys-diameter" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Crown Spread</p>
+                <p id="phys-crown" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">cm</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-xs text-stone-400 mb-1">Altitude</p>
+                <p id="phys-altitude" class="text-2xl font-bold text-stone-900">—</p>
+                <p class="text-xs text-stone-400">m</p>
+              </div>
+              <div class="border rounded-xl p-4 md:col-span-2">
+                <p class="text-xs text-stone-400 mb-1">GPS Coordinates</p>
+                <p id="phys-coords" class="font-mono text-stone-800">—</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENVIRONMENT TAB -->
+          <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden">
+            <h4 class="font-semibold text-stone-900 mb-3">🌱 Live Field Sensors — <span id="env-field-label" class="text-stone-400 font-normal text-sm">—</span></h4>
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">💧 Soil Moisture</p>
+                <span id="oracle-soil-moisture" class="text-xl font-bold text-stone-900">—</span>
+                <div class="bg-stone-100 rounded-full h-2 mt-2"><div id="oracle-moisture-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width:0%"></div></div>
+                <p id="oracle-moisture-status" class="text-xs text-stone-400 mt-1">—</p>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🌡️ Temperature</p>
+                <span id="oracle-soil-temp" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🍃 Leaf Wetness</p>
+                <span id="oracle-leaf-wetness" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">☀️ UV Index</p>
+                <span id="oracle-uv" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🌬️ CO₂</p>
+                <span id="oracle-co2" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p>
+                <span id="oracle-wind" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">💧 Humidity</p>
+                <span id="oracle-humidity" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+              <div class="border rounded-xl p-4">
+                <p class="text-sm text-stone-500 mb-1">🌧️ Rain Rate</p>
+                <span id="oracle-rain" class="text-xl font-bold text-stone-900">—</span>
+              </div>
+            </div>
+            <p class="text-xs text-stone-400">Last reading: <span id="oracle-last-update" class="font-medium">—</span></p>
+          </div>
+
+          <!-- WEATHER TAB -->
+          <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden">
+            <h4 class="font-semibold text-stone-900 mb-3">☁️ Current Conditions — <span id="weather-coords-label" class="text-stone-400 font-normal text-sm">—</span></h4>
+            <div class="grid md:grid-cols-3 gap-4">
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌡️ Air Temperature</p><span id="weather-temp" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p><span id="weather-wind" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💧 Humidity</p><span id="weather-humidity" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🔵 Pressure</p><span id="weather-pressure" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌧️ Rain</p><span id="weather-rain" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">☀️ UV Index</p><span id="weather-uv" class="text-xl font-bold text-stone-900">—</span></div>
+              <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">⚡ Solar Radiation</p><span id="weather-solar" class="text-xl font-bold text-stone-900">—</span></div>
+            </div>
+          </div>
+
+          <!-- ON-CHAIN / METADATA TAB -->
+          <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden">
+            <div class="space-y-0 text-sm divide-y divide-stone-100">
+              <div class="flex justify-between py-3"><span class="text-stone-500">Tree ID</span><span id="tree-detail-meta-id" class="font-mono font-medium text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Field ID</span><span id="tree-detail-meta-field" class="font-mono text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Address</span><span id="tree-detail-meta-onchain" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Mint</span><span id="tree-detail-meta-mint" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Status</span><span id="tree-detail-meta-status" class="font-medium text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Total Shares</span><span id="tree-detail-meta-total" class="font-bold text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Shares Sold (live)</span><span id="tree-detail-meta-sold" class="font-bold text-green-700">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Shares Available</span><span id="tree-detail-meta-available" class="font-bold text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Variety</span><span id="tree-detail-meta-variety" class="text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Coordinates</span><span id="tree-detail-meta-coords" class="font-mono text-xs text-stone-900">—</span></div>
+              <div class="flex justify-between py-3"><span class="text-stone-500">Last Updated</span><span id="tree-detail-meta-updated" class="text-stone-900">—</span></div>
+            </div>
+          </div>
+
+          <!-- GALLERY TAB -->
+          <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden">
+            <div id="tree-detail-gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <p class="text-stone-400 text-sm col-span-3">Loading gallery...</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -415,77 +588,90 @@
     <a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms</a> | <a href="/refunds.html">Refund Policy</a> | <a href="mailto:support@yourdomain.com">Contact</a>
   </footer>
 
-  <!-- Mobile Menu Overlay (Fixed - No Cutoff) -->
-  <div id="mobileMenuOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
-    <div class="mobile-menu-scroll">
-      <div>
-        <div class="mob-nav-header">
-          <span class="font-serif text-xl font-bold text-white tracking-wider">OLIVIUM <span class="italic text-[#C5A059]">GROVE</span></span>
-          <div class="mob-close-icon" id="mobileMenuCloseBtn" aria-label="Close menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </div>
+    <!-- Phantom menu overlay (outside nav for correct stacking) -->
+    <div id="mobileMenuOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+            <div class="mob-nav-header">
+                <span class="font-serif text-lg font-bold text-white tracking-widest">
+                    OLIVIUM <span class="italic text-[#C5A059]">PRIVATE</span>
+                </span>
+                <button id="mobileMenuCloseBtn" aria-label="Close menu" style="background:none;border:none;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><line x1="1" y1="1" x2="17" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="1" x2="1" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="mob-nav-links">
+                <a href="understand.html" class="hover:text-[#C5A059] text-stone-400 transition">ABOUT OLIVIUM</a>
+                <a href="map.html" class="mob-nav-link active-link">VIEW GROVE <span class="mob-arrow">🫒</span></a>
+                <a href="webgame3.html" class="mob-nav-link active-link">PLAY GAME <span class="mob-arrow">🫒</span></a>
+                <a href="villa_stay" class="mob-nav-link">OLiVIn REWARDS <span class="mob-arrow">→</span></a>
+            </div>
+            <div class="mob-nav-footer">
+                <div class="mob-status-bar">
+                    <div class="mob-status-dot"></div>
+                    <div>
+                        <p id="mobile-tier-label" class="text-[9px] uppercase text-stone-500 leading-none mb-0.5">Guest Mode</p>
+                        <p id="mobile-identity-display" class="text-xs font-mono text-[#C5A059]">NOT CONNECTED</p>
+                    </div>
+                </div>
+                <button id="mobileConnectBtn" class="mob-connect-cta">Connect Profile</button>
+            </div>
         </div>
-        <div class="mob-nav-links">
-          <a href="understand.html" class="mob-nav-link">ABOUT OLIVIUM <span class="mob-arrow">↗</span></a>
-          <a href="map.html" class="mob-nav-link active-link">VIEW GROVE <span class="mob-arrow">🫒</span></a>
-          <a href="webgame3.html" class="mob-nav-link">PLAY GAME <span class="mob-arrow">🎮</span></a>
-          <a href="villa_stay.html" class="mob-nav-link">REWARDS & STAYS <span class="mob-arrow">✨</span></a>
-        </div>
-      </div>
-      <div class="mob-nav-footer">
-        <div class="mob-status-bar">
-          <div class="mob-status-dot"></div>
-          <div style="flex:1">
-            <p id="mobile-tier-label" class="text-[10px] uppercase text-stone-400 leading-tight">Guest Mode</p>
-            <p id="mobile-identity-display" class="text-sm font-mono text-[#C5A059] font-medium">NOT CONNECTED</p>
-          </div>
-        </div>
-        <button id="mobileConnectBtn" class="mob-connect-cta">🔗 Connect Profile</button>
-      </div>
-    </div>
-  </div>
 
-  <script type="module" src="./src/reserve_board.ts"></script>
-  <script type="module" src="./src/reserveb.ts"></script>
-  
-  <script>
-    // Mobile menu wiring - preserves all original functionality
-    document.addEventListener("DOMContentLoaded", function() {
-      var btn = document.getElementById('mobileMenuBtn');
-      var closeBtn = document.getElementById('mobileMenuCloseBtn');
-      var overlay = document.getElementById('mobileMenuOverlay');
-      var mobConn = document.getElementById('mobileConnectBtn');
-      var deskConn = document.getElementById('connectBtn');
+    <!-- Mobile menu wiring -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function(){
+        var btn      = document.getElementById('mobileMenuBtn');
+        var closeBtn = document.getElementById('mobileMenuCloseBtn');
+        var overlay  = document.getElementById('mobileMenuOverlay');
+        var mobConn  = document.getElementById('mobileConnectBtn');
+        var deskConn = document.getElementById('connectBtn');
 
-      function openMenu() { if(overlay) { overlay.classList.add('open'); btn.classList.add('open'); document.body.style.overflow = 'hidden'; } }
-      function closeMenu() { if(overlay) { overlay.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow = ''; } }
+        function openMenu(){ overlay.classList.add('open'); btn.classList.add('open'); document.body.style.overflow='hidden'; }
+        function closeMenu(){ overlay.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow=''; }
 
-      if(btn) btn.addEventListener('click', openMenu);
-      if(closeBtn) closeBtn.addEventListener('click', closeMenu);
-      document.addEventListener('keydown', function(e) { if(e.key === 'Escape') closeMenu(); });
-      if(mobConn && deskConn) mobConn.addEventListener('click', function() { closeMenu(); deskConn.click(); });
+        if(btn)      btn.addEventListener('click', openMenu);
+        if(closeBtn) closeBtn.addEventListener('click', closeMenu);
+        document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
 
-      // Sync identity labels
-      var navId = document.getElementById('nav-identity-display');
-      var navTier = document.getElementById('nav-tier-label');
-      var mobId = document.getElementById('mobile-identity-display');
-      var mobTier = document.getElementById('mobile-tier-label');
-      var mobIdTop = document.getElementById('nav-identity-display-mob');
-      var mobTierTop = document.getElementById('nav-tier-label-mob');
+        // Mirror connect button behaviour
+        if(mobConn && deskConn){
+            mobConn.addEventListener('click', function(){ closeMenu(); deskConn.click(); });
+        }
+  function setConnectedState(label = "CONNECTED") {
+  const ids = [
+    "nav-identity-display",
+    "nav-identity-display-mob",
+    "mobile-identity-display"
+  ];
 
-      function syncIdentity() {
-        if(navId && mobId) mobId.textContent = navId.textContent;
-        if(navId && mobIdTop) mobIdTop.textContent = navId.textContent;
-        if(navTier && mobTier) mobTier.textContent = navTier.textContent;
-        if(navTier && mobTierTop) mobTierTop.textContent = navTier.textContent;
-      }
-      if(navId) {
-        var obs = new MutationObserver(syncIdentity);
-        obs.observe(navId, { childList: true, characterData: true, subtree: true });
-        if(navTier) obs.observe(navTier, { childList: true, characterData: true, subtree: true });
-        syncIdentity();
-      }
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+}
+
+        // Sync mobile status labels from desktop ones (after stay.ts updates them)
+        var navId   = document.getElementById('nav-identity-display');
+        var navTier = document.getElementById('nav-tier-label');
+        var mobId   = document.getElementById('mobile-identity-display');
+        var mobTier = document.getElementById('mobile-tier-label');
+        var mobIdTop   = document.getElementById('nav-identity-display-mob');
+        var mobTierTop = document.getElementById('nav-tier-label-mob');
+
+        if(navId && mobId){
+            var obs = new MutationObserver(function(){
+                if(mobId)     mobId.textContent     = navId.textContent;
+                if(mobTier)   mobTier.textContent   = navTier ? navTier.textContent : '';
+                if(mobIdTop)  mobIdTop.textContent  = navId.textContent;
+                if(mobTierTop) mobTierTop.textContent = navTier ? navTier.textContent : '';
+            });
+            obs.observe(navId, {childList:true, characterData:true, subtree:true});
+            if(navTier) obs.observe(navTier, {childList:true, characterData:true, subtree:true});
+        }
     });
-  </script>
+    </script>
+
+      <script type="module" src="./src/reserve_board.ts"></script>
+        <script type="module" src="./src/reserveb.ts"></script>
+
 </body>
 </html>
