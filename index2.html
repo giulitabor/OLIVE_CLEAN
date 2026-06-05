@@ -37,20 +37,47 @@
 <body>
 
   <header class="top-nav">
-    <div class="nav-inner">
-      <div class="brand">
-        <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png" alt="Olivium Logo">
-        <span>Olivium DASHBOARD</span>
-      </div>
-      <nav class="nav-links" id="navLinks">
-        <a class="nav-link" href="understand.html">About Olivium</a>
-        <a class="nav-link" href="map.html">View Grove</a>
-        <a class="nav-link" href="webgame3.html">Olivium Web3 Game</a>
-        <a class="nav-link" href="villa_stay.html">Rewards</a>
-        <button class="nav-btn wallet-btn" id="connectBtn">Connect Profile</button>
-      </nav>
-      <button class="mobile-toggle" id="mobileToggle">☰</button>
-    </div>
+    <!-- NAVIGATION -->
+    <nav class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
+
+            <!-- Logo -->
+            <a href="#" class="font-serif text-lg sm:text-xl font-bold text-white tracking-widest flex-shrink-0">
+                OLIVIUM <span class="italic text-[#C5A059]">GROVE ADOPTION</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div id="nav-desktop-links" style="display:none; align-items:center; gap:2rem; font-size:10px; font-weight:700; letter-spacing:0.2em;">
+                <a href="understand.html" class="hover:text-[#C5A059] text-stone-400 transition">ABOUT OLIVIUM</a>
+                <a href="map.html" class="text-[#C5A059]">VIEW GROVE</a>
+                <a href="webgame3.html" class="text-[#C5A059]">OLIVUIM GROVE GAME</a>
+
+                <a href="villa_stay.html" class="hover:text-[#C5A059] text-stone-400 transition">REWARDS</a>
+            </div>
+
+            <!-- Desktop right -->
+            <div id="nav-desktop-right" style="display:none; align-items:center; gap:1rem;">
+                <div class="text-right">
+                    <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase">Guest Mode</p>
+                    <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase">NOT CONNECTED</p>
+                </div>
+                <button id="connectBtn" class="bg-[#5a7a2b] text-white text-[10px] px-5 py-2.5 rounded-xl hover:bg-[#6b8e36] transition">Connect Profile</button>
+            </div>
+
+            <!-- Mobile: status pill + hamburger -->
+            <div id="nav-mobile-btn" style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="text-right">
+                    <p id="nav-tier-label-mob" class="text-[8px] text-stone-500 uppercase leading-none">Guest</p>
+                    <p id="nav-identity-display-mob" class="text-[9px] text-[#C5A059] font-mono">NOT CONNECTED</p>
+                </div>
+                <button id="mobileMenuBtn" aria-label="Open menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+
+    </nav>
+   
   </header>
 
   <section class="hero">
