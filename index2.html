@@ -588,6 +588,75 @@
     <a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms</a> | <a href="/refunds.html">Refund Policy</a> | <a href="mailto:support@yourdomain.com">Contact</a>
   </footer>
 
+    <!-- Phantom menu overlay (outside nav for correct stacking) -->
+    <div id="mobileMenuOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+            <div class="mob-nav-header">
+                <span class="font-serif text-lg font-bold text-white tracking-widest">
+                    OLIVIUM <span class="italic text-[#C5A059]">PRIVATE</span>
+                </span>
+                <button id="mobileMenuCloseBtn" aria-label="Close menu" style="background:none;border:none;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><line x1="1" y1="1" x2="17" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="1" x2="1" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="mob-nav-links">
+                <a href="index2.html" class="mob-nav-link">Dashboard <span class="mob-arrow">→</span></a>
+                <a href="https://toscagialla.com" class="mob-nav-link active-link">Villa Tour <span class="mob-arrow">→</span></a>
+                <a href="#" class="mob-nav-link">Harvest Log <span class="mob-arrow">→</span></a>
+            </div>
+            <div class="mob-nav-footer">
+                <div class="mob-status-bar">
+                    <div class="mob-status-dot"></div>
+                    <div>
+                        <p id="mobile-tier-label" class="text-[9px] uppercase text-stone-500 leading-none mb-0.5">Guest Mode</p>
+                        <p id="mobile-identity-display" class="text-xs font-mono text-[#C5A059]">NOT CONNECTED</p>
+                    </div>
+                </div>
+                <button id="mobileConnectBtn" class="mob-connect-cta">Connect Profile</button>
+            </div>
+        </div>
+
+    <!-- Mobile menu wiring -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function(){
+        var btn      = document.getElementById('mobileMenuBtn');
+        var closeBtn = document.getElementById('mobileMenuCloseBtn');
+        var overlay  = document.getElementById('mobileMenuOverlay');
+        var mobConn  = document.getElementById('mobileConnectBtn');
+        var deskConn = document.getElementById('connectBtn');
+
+        function openMenu(){ overlay.classList.add('open'); btn.classList.add('open'); document.body.style.overflow='hidden'; }
+        function closeMenu(){ overlay.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow=''; }
+
+        if(btn)      btn.addEventListener('click', openMenu);
+        if(closeBtn) closeBtn.addEventListener('click', closeMenu);
+        document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+
+        // Mirror connect button behaviour
+        if(mobConn && deskConn){
+            mobConn.addEventListener('click', function(){ closeMenu(); deskConn.click(); });
+        }
+
+        // Sync mobile status labels from desktop ones (after stay.ts updates them)
+        var navId   = document.getElementById('nav-identity-display');
+        var navTier = document.getElementById('nav-tier-label');
+        var mobId   = document.getElementById('mobile-identity-display');
+        var mobTier = document.getElementById('mobile-tier-label');
+        var mobIdTop   = document.getElementById('nav-identity-display-mob');
+        var mobTierTop = document.getElementById('nav-tier-label-mob');
+
+        if(navId && mobId){
+            var obs = new MutationObserver(function(){
+                if(mobId)     mobId.textContent     = navId.textContent;
+                if(mobTier)   mobTier.textContent   = navTier ? navTier.textContent : '';
+                if(mobIdTop)  mobIdTop.textContent  = navId.textContent;
+                if(mobTierTop) mobTierTop.textContent = navTier ? navTier.textContent : '';
+            });
+            obs.observe(navId, {childList:true, characterData:true, subtree:true});
+            if(navTier) obs.observe(navTier, {childList:true, characterData:true, subtree:true});
+        }
+    });
+    </script>
+
       <script type="module" src="./src/reserve_board.ts"></script>
         <script type="module" src="./src/reserveb.ts"></script>
 
