@@ -936,13 +936,12 @@ select:focus,
 }
 
 /* =========================================================
-   TREE DETAIL MODAL — MOBILE OVERRIDES
-   Targets the tree detail sheet opened on card tap
+   TREE DETAIL MODAL — NATIVE MOBILE REDESIGN
 ========================================================= */
 
 @media (max-width: 768px) {
 
-  /* Modal becomes a bottom sheet */
+  /* ── Bottom sheet ── */
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
@@ -950,148 +949,291 @@ select:focus,
 
   .modal {
     max-width: 100%;
-    border-radius: 28px 28px 0 0;
-    max-height: 92vh;
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    max-height: 94vh;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
   }
 
-  /* Compact hero */
+  /* Drag handle pill */
+  .modal::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.18);
+    z-index: 20;
+  }
+
+  /* ── Hero: shorter, text tighter ── */
   .relative.h-80 {
-    height: 200px !important;
+    height: 190px !important;
   }
 
-  /* Tighter hero text */
   #tree-detail-name {
-    font-size: 1.4rem !important;
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 2px !important;
   }
 
   #tree-detail-health {
-    font-size: 1.2rem !important;
+    font-size: 1.1rem !important;
   }
 
   #tree-detail-location {
-    font-size: 0.75rem !important;
+    font-size: 0.72rem !important;
   }
 
-  /* Badge labels — hide text, show icon only on very small */
-  .absolute.top-4.left-4 span:not(.w-2) {
+  #tree-detail-field-id {
+    font-size: 0.65rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* Shrink hero bottom padding */
+  .absolute.bottom-0.left-0.right-0.p-6 {
+    padding: 12px 14px !important;
+  }
+
+  /* Smaller status badges */
+  .absolute.top-4.left-4,
+  #tree-detail-status-badge {
+    font-size: 0.65rem !important;
+    padding: 5px 10px !important;
+    top: 10px !important;
+  }
+
+  .absolute.top-4.left-4 {
+    left: 10px !important;
+  }
+
+  #tree-detail-status-badge {
+    right: 52px !important;
+  }
+
+  .close-btn {
+    top: 8px !important;
+    right: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.1rem !important;
+  }
+
+  /* ── Tab bar: scrollable pill strip ── */
+  .p-8 {
+    padding: 0 !important;
+  }
+
+  .flex.gap-2.mb-6.border-b {
+    display: flex !important;
+    gap: 6px !important;
+    padding: 12px 14px 0 !important;
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .flex.gap-2.mb-6.border-b::-webkit-scrollbar {
     display: none;
   }
 
-  /* Reduce tab area padding */
-  .p-8 {
-    padding: 16px !important;
-  }
-
-  /* Tabs: scroll horizontally, smaller text */
-  .flex.gap-2.mb-6.border-b {
-    gap: 0 !important;
-    margin-bottom: 16px !important;
-  }
-
+  /* Pill-style tabs */
   .tree-detail-tab {
-    padding: 8px 12px !important;
+    padding: 7px 14px !important;
     font-size: 0.78rem !important;
-    white-space: nowrap;
+    white-space: nowrap !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: white;
+    color: var(--muted) !important;
+    flex-shrink: 0;
   }
 
-  /* Overview stat cards: 2-up instead of 4-up */
+  .tree-detail-tab.active {
+    background: var(--green) !important;
+    color: white !important;
+    border-color: var(--green) !important;
+  }
+
+  /* Tab content area padding */
+  .tree-detail-tab-content {
+    padding: 14px 14px 24px !important;
+  }
+
+  /* ── Overview: horizontal stat rows instead of cards ── */
   #tree-detail-tab-overview .grid.md\:grid-cols-4 {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
     margin-bottom: 14px !important;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
   }
 
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 > div {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 13px 16px !important;
+    border-radius: 0 !important;
+    background: white !important;
+    text-align: left !important;
+    border-bottom: 1px solid #f0f0ec;
+  }
+
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 > div:last-child {
+    border-bottom: none;
+  }
+
+  /* Move emoji to left, label + value stacked on right */
   #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-2xl {
-    font-size: 1.1rem !important;
-    margin-bottom: 2px;
+    font-size: 1.3rem !important;
+    margin-bottom: 0 !important;
+    order: 0;
+    flex-shrink: 0;
   }
 
-  #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-xl {
-    font-size: 1.1rem !important;
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-xs {
+    font-size: 0.72rem !important;
+    order: 1;
+    flex: 1;
+    padding: 0 10px;
   }
 
-  #tree-detail-tab-overview .grid.md\:grid-cols-4 .rounded-xl {
-    padding: 10px 8px !important;
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-xl,
+  #tree-detail-tab-overview .grid.md\:grid-cols-4 .text-lg {
+    font-size: 1rem !important;
+    order: 2;
+    font-weight: 800;
   }
 
-  /* Adoption progress bar — compact */
+  /* Adoption progress */
   #tree-detail-tab-overview .bg-stone-50.rounded-xl.p-4.mb-4 {
-    padding: 12px !important;
+    padding: 12px 14px !important;
     margin-bottom: 10px !important;
+    border-radius: 14px !important;
   }
 
-  /* Treatment grid: stack vertically */
+  /* Treatment cards: side-by-side small */
   #tree-detail-tab-overview .grid.md\:grid-cols-2 {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 8px !important;
   }
 
-  /* Physical tab: 2-up grid */
-  #tree-detail-tab-physical .grid.md\:grid-cols-2 {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+  #tree-detail-tab-overview .grid.md\:grid-cols-2 .border {
+    padding: 12px !important;
+    border-radius: 14px !important;
   }
 
-  #tree-detail-tab-physical .border.rounded-xl {
-    padding: 12px !important;
+  /* ── Physical: clean list rows ── */
+  #tree-detail-tab-physical .grid.md\:grid-cols-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  #tree-detail-tab-physical .grid.md\:grid-cols-2 > div {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 13px 16px !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #f0f0ec !important;
+  }
+
+  #tree-detail-tab-physical .grid.md\:grid-cols-2 > div:last-child {
+    border-bottom: none !important;
   }
 
   #tree-detail-tab-physical .text-2xl {
-    font-size: 1.25rem !important;
-  }
-
-  /* Environment / sensors tab: 2-up */
-  #tree-detail-tab-environment .grid.md\:grid-cols-3 {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-    margin-bottom: 12px !important;
-  }
-
-  #tree-detail-tab-environment .border.rounded-xl {
-    padding: 12px !important;
-  }
-
-  #tree-detail-tab-environment .text-xl {
     font-size: 1rem !important;
+    font-weight: 700;
   }
 
-  /* Weather tab: 2-up */
+  #tree-detail-tab-physical .text-xs.text-stone-400:last-child {
+    display: none; /* hide redundant unit label, it reads inline */
+  }
+
+  /* ── Sensors & Weather: 2-col compact chips ── */
+  #tree-detail-tab-environment .grid.md\:grid-cols-3,
   #tree-detail-tab-weather .grid.md\:grid-cols-3 {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
   }
 
+  #tree-detail-tab-environment .border.rounded-xl,
   #tree-detail-tab-weather .border.rounded-xl {
-    padding: 12px !important;
+    padding: 11px 12px !important;
+    border-radius: 14px !important;
   }
 
+  #tree-detail-tab-environment .text-xl,
   #tree-detail-tab-weather .text-xl {
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
+    font-weight: 700;
   }
 
-  /* On-chain tab: wrap long addresses */
-  #tree-detail-tab-metadata .flex.justify-between {
+  #tree-detail-tab-environment .text-sm,
+  #tree-detail-tab-weather .text-sm {
+    font-size: 0.7rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  #tree-detail-tab-environment h4,
+  #tree-detail-tab-weather h4 {
+    font-size: 0.82rem !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* ── On-chain: readable rows ── */
+  #tree-detail-tab-metadata .space-y-0 {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 0 14px;
+  }
+
+  #tree-detail-tab-metadata .flex.justify-between.py-3 {
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 2px;
+    padding: 11px 0 !important;
   }
 
-  #tree-detail-tab-metadata .font-mono.text-xs {
-    font-size: 0.65rem !important;
+  #tree-detail-tab-metadata .text-stone-500 {
+    font-size: 0.75rem !important;
+    width: 100%;
+  }
+
+  #tree-detail-tab-metadata .font-mono,
+  #tree-detail-tab-metadata .font-medium,
+  #tree-detail-tab-metadata .font-bold {
+    font-size: 0.78rem !important;
     max-width: 100% !important;
     word-break: break-all;
     text-align: left !important;
   }
 
-  /* Gallery: 2 columns */
+  /* ── Gallery: 2 col ── */
   #tree-detail-gallery-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-  }
-
-  /* Section headings in env/weather tabs */
-  #tree-detail-tab-environment h4,
-  #tree-detail-tab-weather h4 {
-    font-size: 0.9rem !important;
-    margin-bottom: 10px !important;
+    gap: 8px !important;
   }
 }
