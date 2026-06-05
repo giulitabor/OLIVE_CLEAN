@@ -119,12 +119,17 @@ function setupMobileMenu() {
 }
 
 function closeMobileMenu() {
+    document.getElementById("mobileMenuOverlay")
+        ?.classList.remove("open");
 
-  document
-    .getElementById("mobileMenu")
-    ?.classList.add("hidden");
+    document.getElementById("mobileMenuBtn")
+        ?.classList.remove("open");
 
+    document.body.style.overflow = "";
 }
+
+(window as any).closeMobileMenu = closeMobileMenu;
+
 export async function updateIdentityBalanceUI(): Promise<void> {
   try {
     const identity   = getIdentity();
@@ -134,8 +139,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
     const navIdentity = document.getElementById("nav-identity-display");
     const navIdentityMob = document.getElementById("nav-identity-display-mob");
     const mobileIdentity = document.getElementById("mobile-identity-display");
-    const mobiletier = document.getElementById("mobile-tier-label");
-
+    const mobileTier = document.getElementById("mobile-tier-label");
+    const navTier = document.getElementById("nav-tier-label");
+    const navTierMob = document.getElementById("nav-tier-label-mob");
 
     // ── Guest ──────────────────────────────────────────────────────────────
     if (identity.type === "guest") {
@@ -151,8 +157,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
       if (navIdentity) navIdentity.textContent = "NOT CONNECTED";
       if (navIdentityMob) navIdentityMob.textContent = "NOT CONNECTED";
       if (mobileIdentity) mobileIdentity.textContent = "NOT CONNECTED";
-      if (mobiletier) mobiletier.textContent = "Guest Mode";
-
+      if (navTier) navTier.textContent = "Guest Mode";
+      if (navTierMob) navTierMob.textContent = "Guest";
+      if (mobileTier) mobileTier.textContent = "Guest Mode";
       
       return;
     }
@@ -171,8 +178,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         if (navIdentity) navIdentity.textContent = "CONNECTED";
         if (navIdentityMob) navIdentityMob.textContent = "CONNECTED";
         if (mobileIdentity) mobileIdentity.textContent = "CONNECTED";
-        if (mobiletier) mobiletier.textContent = "Email Mode";
-
+        if (navTier) navTier.textContent = "Email Secured";
+        if (navTierMob) navTierMob.textContent = "Email";
+        if (mobileTier) mobileTier.textContent = "Email Secured";
       
       return;
     }
@@ -193,8 +201,9 @@ export async function updateIdentityBalanceUI(): Promise<void> {
         if (navIdentity) navIdentity.textContent = "CONNECTED";
         if (navIdentityMob) navIdentityMob.textContent = "CONNECTED";
         if (mobileIdentity) mobileIdentity.textContent = "CONNECTED";
-        if (mobiletier) mobiletier.textContent = "Wallet Mode";
-
+        if (navTier) navTier.textContent = "Wallet Mode";
+        if (navTierMob) navTierMob.textContent = "Wallet";
+        if (mobileTier) mobileTier.textContent = "Wallet Mode";
       
 
       // Fetch balance asynchronously — does NOT block the initial UI update
