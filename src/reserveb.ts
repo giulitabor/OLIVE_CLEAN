@@ -92,6 +92,39 @@ export async function waitForProgram(timeout = 10_000): Promise<any> {
  * related DOM element.  Async only because wallet mode fetches SOL balance.
  * Never throws — logs errors internally.
  */
+function setupMobileMenu() {
+
+  const menuBtn =
+    document.getElementById("mobileMenuBtn");
+
+  const menu =
+    document.getElementById("mobileMenu");
+
+  if (!menuBtn || !menu) return;
+
+  menuBtn.addEventListener("click", () => {
+    menu.classList.toggle("hidden");
+  });
+
+  menu.querySelectorAll("a").forEach(link => {
+
+    link.addEventListener("click", () => {
+
+      menu.classList.add("hidden");
+
+    });
+
+  });
+
+}
+
+function closeMobileMenu() {
+
+  document
+    .getElementById("mobileMenu")
+    ?.classList.add("hidden");
+
+}
 export async function updateIdentityBalanceUI(): Promise<void> {
   try {
     const identity   = getIdentity();
