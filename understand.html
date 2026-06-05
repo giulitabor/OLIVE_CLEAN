@@ -28,6 +28,99 @@
   --font-disp: 'Playfair Display',serif;
   --ease: cubic-bezier(0.4,0,0.2,1);
 }
+   /* Go Back Button for YOUR overlay */
+#mob-go-back {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 20px auto 0 auto;
+  padding: 14px 20px;
+  background: rgba(197, 160, 89, 0.15);
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  color: #C5A059;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+#mob-go-back:hover {
+  background: rgba(197, 160, 89, 0.25);
+  border-color: #C5A059;
+  transform: translateX(-4px);
+}
+
+/* Style your existing overlay links consistently */
+#mob-overlay {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 85%;
+  max-width: 320px;
+  height: 100vh;
+  background: rgba(10, 15, 8, 0.98);
+  backdrop-filter: blur(20px);
+  z-index: 2000;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 80px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+#mob-overlay.open {
+  right: 0;
+}
+
+#mob-overlay a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.25rem;
+  font-weight: 500;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s;
+  display: block;
+}
+
+#mob-overlay a:hover {
+  color: #C5A059;
+  padding-left: 8px;
+}
+
+/* Hamburger animation */
+#nav-ham {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#nav-ham span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--green-dark);
+  transition: all 0.3s ease;
+}
+
+#nav-ham.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+#nav-ham.open span:nth-child(2) {
+  opacity: 0;
+}
+
+#nav-ham.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;overflow-x:hidden;}
 body{
