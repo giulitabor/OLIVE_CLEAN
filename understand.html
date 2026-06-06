@@ -190,7 +190,7 @@ body::after{
 #nav-ham.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
 /* mobile overlay */
 #mob-overlay{
-  position:fixed;inset:0;z-index:900;
+  position:fixed;inset:0;z-index:10000;
   background:rgba(5,8,5,0.98);backdrop-filter:blur(24px);
   display:flex;flex-direction:column;
   justify-content:center;padding:3rem 2.5rem;
@@ -860,8 +860,6 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
   <a href="#harvest" onclick="closeMob()">Harvest</a>
   <a href="#faq" onclick="closeMob()">FAQ</a>
   <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a>
-  <!-- ADD GO BACK BUTTON INSIDE YOUR OVERLAY -->
-  <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top: 20px;">← Go Back</button>
 </div>
 
 <!-- YOUR EXISTING NAVIGATION -->
