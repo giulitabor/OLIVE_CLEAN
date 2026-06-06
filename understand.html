@@ -1154,17 +1154,20 @@ function showMainMenu() {
   if (!mobOverlay) return;
   
   mobOverlay.innerHTML = `
-    <a href="#experience" onclick="navigateToExperience(event)">The Experience →</a>
-    <a href="#app" onclick="navigateToApp(event)">The App →</a>
-    <a href="#tiers" onclick="navigateToTiers(event)">Membership →</a>
-    <a href="#harvest" onclick="closeMob()">Harvest →</a>
-    <a href="#faq" onclick="closeMob()">FAQ →</a>
-    <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure 📄</a>
-    <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top: 20px;">← Go Back</button>
+    <button onclick="closeMob()" style="position:absolute;top:20px;right:20px;background:none;border:none;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;z-index:10001;">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><line x1="1" y1="1" x2="17" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="1" x2="1" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <a href="#experience" onclick="closeMob()">The Experience</a>
+    <a href="#app" onclick="closeMob()">The App</a>
+    <a href="#tiers" onclick="closeMob()">Membership</a>
+    <a href="#harvest" onclick="closeMob()">Harvest</a>
+    <a href="#faq" onclick="closeMob()">FAQ</a>
+    <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a>
+    <a href="index2.html" onclick="closeMob()">← Go Back</a>
   `;
-  
   currentSubMenu = null;
 }
+
 
 // Show Experience sub-menu
 function showExperienceSubMenu() {
