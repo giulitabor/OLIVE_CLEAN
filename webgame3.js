@@ -792,16 +792,20 @@ function marketCycle() {
     if (demandEl) demandEl.innerText = state.world.demand;
     render();
 }
-
 // ============================================================
-// CLOUD SAVE FUNCTIONS - FIXED
+// CLOUD SAVE FUNCTIONS - DEBUG VERSION
 // ============================================================
 
 async function saveGameToCloud() {
     if (!currentUser || !sb) {
-        console.log("Cannot save: no user or supabase client");
-        return;
+        console.log("❌ Cannot save: no user or supabase client");
+        console.log("  currentUser:", currentUser);
+        console.log("  sb exists:", !!sb);
+        return false;
     }
+    
+    console.log("💾 Attempting to save game for:", currentUser.wallet);
+    console.log("📊 State to save:", { sol: state.sol, seeds: state.seeds, oil: state.oil, treesCount: state.trees.length });
     
     const saveData = {
         wallet: currentUser.wallet,
@@ -825,46 +829,44 @@ async function saveGameToCloud() {
     };
     
     try {
-        // First check if a record exists
-        const { data: existing } = await sb
+        // Try upsert (insert or update)
+        const { data, error } = await sb
             .from('game_saves')
-            .select('wallet')
-            .eq('wallet', currentUser.wallet)
-            .maybeSingle();
+            .upsert(saveData, { onConflict: 'wallet' })
+            .select();
         
-        let result;
-        if (existing) {
-            // Update existing
-            result = await sb
-                .from('game_saves')
-                .update(saveData)
-                .eq('wallet', currentUser.wallet);
-        } else {
-            // Insert new
-            result = await sb
-                .from('game_saves')
-                .insert(saveData);
+        if (error) {
+            console.error("❌ Save error:", error);
+            console.error("Error message:", error.message);
+            console.error("Error details:", error.details);
+            console.error("Error hint:", error.hint);
+            showToast(`Save failed: ${error.message.substring(0, 50)}`, true);
+            return false;
         }
         
-        if (result.error) {
-            console.error('Save error:', result.error);
-        } else {
-            console.log('💾 Game saved to cloud for', currentUser.wallet);
-        }
+        console.log("✅ Game saved successfully!", data);
+        showToast("💾 Game saved!");
+        return true;
+        
     } catch (err) {
-        console.error('Cloud save failed:', err);
+        console.error("❌ Cloud save exception:", err);
+        console.error("Exception details:", err.message);
+        showToast(`Save error: ${err.message.substring(0, 50)}`, true);
+        return false;
     }
 }
 
 async function loadGameFromCloud() {
     if (!currentUser || !sb) {
-        console.log("Cannot load: no user or supabase client");
+        console.log("❌ Cannot load: no user or supabase client");
+        console.log("  currentUser:", currentUser);
+        console.log("  sb exists:", !!sb);
         return false;
     }
     
+    console.log("📥 Attempting to load game for:", currentUser.wallet);
+    
     try {
-        console.log("Loading game for wallet:", currentUser.wallet);
-        
         const { data, error } = await sb
             .from('game_saves')
             .select('*')
@@ -872,16 +874,20 @@ async function loadGameFromCloud() {
             .maybeSingle();
         
         if (error) {
-            console.error('Load error:', error);
+            console.error("❌ Load error:", error);
+            console.error("Error message:", error.message);
+            showToast(`Load failed: ${error.message.substring(0, 50)}`, true);
             return false;
         }
         
         if (!data) {
-            console.log('No saved game found for', currentUser.wallet);
+            console.log("📭 No saved game found for this wallet");
+            showToast("No saved game found. Starting fresh!", true);
             return false;
         }
         
-        console.log("Found saved game:", data);
+        console.log("✅ Found saved game:", data);
+        console.log("📊 Saved data:", { sol: data.sol, seeds: data.seeds, oil: data.oil, treesCount: data.trees ? JSON.parse(data.trees).length : 0 });
         
         // Restore state from saved data
         state.sol = data.sol ?? 25;
@@ -907,29 +913,18 @@ async function loadGameFromCloud() {
         if (state.skills.includes('cold')) state.skillMultipliers.extraction = 1.6;
         if (state.skills.includes('rare')) state.skillMultipliers.rare = 0.25;
         
-        // Update UI elements
-        const uiSolEl = document.getElementById('ui-sol');
-        if (uiSolEl) uiSolEl.innerText = state.sol.toFixed(4);
-        
-        const uiOilEl = document.getElementById('ui-oil');
-        if (uiOilEl) uiOilEl.innerText = state.oil.toFixed(1);
-        
-        const uiSeedsEl = document.getElementById('ui-seeds');
-        if (uiSeedsEl) uiSeedsEl.innerText = state.seeds;
-        
-        const uiHopperEl = document.getElementById('ui-hopper');
-        if (uiHopperEl) uiHopperEl.innerText = state.hopper.toFixed(1) + ' kg';
-        
         log("🌿 Game loaded from cloud! Welcome back, Steward.");
+        showToast("✅ Game loaded successfully!");
         render();
         return true;
         
     } catch (err) {
-        console.error('Load error:', err);
+        console.error("❌ Load exception:", err);
+        console.error("Exception details:", err.message);
+        showToast(`Load error: ${err.message.substring(0, 50)}`, true);
         return false;
     }
 }
-
 // ============================================================
 // RENDER FUNCTION
 // ============================================================
