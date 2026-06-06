@@ -28,6 +28,63 @@
   --font-disp: 'Playfair Display',serif;
   --ease: cubic-bezier(0.4,0,0.2,1);
 }
+   /* Go Back Button for YOUR overlay */
+#mob-go-back {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 20px auto 0 auto;
+  padding: 14px 20px;
+  background: rgba(197, 160, 89, 0.15);
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  color: #C5A059;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+#mob-go-back:hover {
+  background: rgba(197, 160, 89, 0.25);
+  border-color: #C5A059;
+  transform: translateX(-4px);
+}
+
+/* Style your existing overlay links consistently */
+/* mob-overlay — single definition, full-screen fade */
+
+/* Hamburger animation */
+#nav-ham {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#nav-ham span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--green-dark);
+  transition: all 0.3s ease;
+}
+
+#nav-ham.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+#nav-ham.open span:nth-child(2) {
+  opacity: 0;
+}
+
+#nav-ham.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;overflow-x:hidden;}
 body{
@@ -97,7 +154,7 @@ body::after{
 #nav-ham.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
 /* mobile overlay */
 #mob-overlay{
-  position:fixed;inset:0;z-index:900;
+  position:fixed;inset:0;z-index:10000;
   background:rgba(5,8,5,0.98);backdrop-filter:blur(24px);
   display:flex;flex-direction:column;
   justify-content:center;padding:3rem 2.5rem;
@@ -120,6 +177,7 @@ body::after{
 #mob-overlay.open a:nth-child(4){transform:translateY(0);opacity:1;transition-delay:.16s;}
 #mob-overlay.open a:nth-child(5){transform:translateY(0);opacity:1;transition-delay:.20s;}
 #mob-overlay.open a:nth-child(6){transform:translateY(0);opacity:1;transition-delay:.24s;}
+#mob-overlay.open a:nth-child(7){transform:translateY(0);opacity:1;transition-delay:.28s;}
 #mob-overlay a:hover{color:var(--gold);}
 
 /* ═══════════════════════════════════════════
@@ -759,12 +817,34 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 <!-- LIGHTBOX -->
 <div id="lightbox"><button id="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightbox-img" src="" alt=""/></div>
 
-<!-- MOBILE OVERLAY -->
-<div id="mob-overlay"><a href="#experience" onclick="closeMob()">The Experience</a><a href="#app" onclick="closeMob()">The App</a><a href="#tiers" onclick="closeMob()">Membership</a><a href="#harvest" onclick="closeMob()">Harvest</a><a href="#faq" onclick="closeMob()">FAQ</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a><a href="#" download onclick="closeMob()">Go Back</a></div>
+<!-- YOUR EXISTING MOBILE OVERLAY (keeping your ID) -->
+<div id="mob-overlay">
+  <a href="#experience" onclick="closeMob()">The Experience</a>
+  <a href="#app" onclick="closeMob()">The App</a>
+  <a href="#tiers" onclick="closeMob()">Membership</a>
+  <a href="#harvest" onclick="closeMob()">Harvest</a>
+  <a href="#faq" onclick="closeMob()">FAQ</a>
+  <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a>
+  <a href="javascript:history.back()" onclick="closeMob()">← Go Back</a>
+</div>
 
-<!-- NAV -->
-<nav id="nav"><div class="nav-inner"><div class="nav-logo">OLIVIUM <em>Private Estate</em></div><ul id="nav-links"><li><a href="#experience">Estate</a></li><li><a href="#app">The App</a></li><li><a href="#tiers">Membership</a></li><li><a href="#harvest">Harvest</a></li><li><a href="#gallery">Gallery</a></li><li><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="nav-cta">Brochure PDF</a></li><li><a href="" download class="nav-cta">Go Back</a></li></ul><button id="nav-ham" aria-label="Menu"><span></span><span></span><span></span></button></div></nav>
-
+<!-- YOUR EXISTING NAVIGATION -->
+<nav id="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">OLIVIUM <em>Brochure</em></div>
+    <ul id="nav-links">
+      <li><a href="#experience">Estate</a></li>
+      <li><a href="#app">The App</a></li>
+      <li><a href="#tiers">Membership</a></li>
+      <li><a href="#harvest">Harvest</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="nav-cta">Brochure PDF</a></li>
+    </ul>
+    <button id="nav-ham" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
 <!-- HERO -->
 <section class="hero"><div class="hero-bg"></div><div class="hero-content"><p class="hero-eyebrow">Exclusive Tuscan Residency</p><h1>A Place To<br/><em>Return To</em></h1><p class="hero-sub">Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency.</p><div class="hero-actions"><a href="#tiers" class="btn-primary">Explore Membership</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="btn-secondary">Download PDF Brochure</a></div></div><div class="hero-scroll"><div class="scroll-line"></div><span>Scroll</span></div></section>
 
@@ -852,7 +932,197 @@ function toggleFaq(el){ var item = el.parentElement; var wasOpen = item.classLis
 
 function tourRoom(btn, url){ document.querySelectorAll('.tour-btn').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); var pano = document.getElementById('tour-pano'); pano.style.backgroundImage = "url('"+url+"')"; }
 document.getElementById('tour-play-btn').addEventListener('click', function(){ var pano = document.getElementById('tour-pano'); pano.classList.toggle('pan'); this.textContent = pano.classList.contains('pan') ? '⏸' : '▶'; });
+// Navigation history stack
+let navHistory = ['main'];
+let currentSubMenu = null;
 
+// Get your elements
+const mobOverlay = document.getElementById('mob-overlay');
+const navHam = document.getElementById('nav-ham');
+const navLinks = document.getElementById('nav-links');
+
+// Close mobile menu function
+function closeMob() {
+  if (mobOverlay) mobOverlay.classList.remove('open');
+  if (navHam) navHam.classList.remove('open');
+  document.body.style.overflow = '';
+  
+  // Reset to main menu after closing
+  setTimeout(() => {
+    if (currentSubMenu) {
+      showMainMenu();
+    }
+  }, 300);
+}
+
+// Open mobile menu
+function openMob() {
+  if (mobOverlay) mobOverlay.classList.add('open');
+  if (navHam) navHam.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// Toggle menu
+function toggleMob() {
+  if (mobOverlay && mobOverlay.classList.contains('open')) {
+    closeMob();
+  } else {
+    openMob();
+  }
+}
+
+// Go back in menu navigation
+function goBackInMenu() {
+  if (navHistory.length > 1) {
+    navHistory.pop();
+    const previous = navHistory[navHistory.length - 1];
+    
+    if (previous === 'main') {
+      showMainMenu();
+    } else if (previous === 'experience') {
+      showExperienceSubMenu();
+    } else if (previous === 'app') {
+      showAppSubMenu();
+    } else if (previous === 'tiers') {
+      showTiersSubMenu();
+    }
+  } else {
+    // At root menu, close the overlay
+    closeMob();
+  }
+}
+
+// Show main menu (your original links)
+function showMainMenu() {
+  if (!mobOverlay) return;
+  
+  mobOverlay.innerHTML = `
+    <a href="#experience" onclick="navigateToExperience(event)">The Experience →</a>
+    <a href="#app" onclick="navigateToApp(event)">The App →</a>
+    <a href="#tiers" onclick="navigateToTiers(event)">Membership →</a>
+    <a href="#harvest" onclick="closeMob()">Harvest →</a>
+    <a href="#faq" onclick="closeMob()">FAQ →</a>
+    <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure 📄</a>
+    <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top: 20px;">← Go Back</button>
+  `;
+  
+  currentSubMenu = null;
+}
+
+// Show Experience sub-menu
+function showExperienceSubMenu() {
+  if (!mobOverlay) return;
+  
+  mobOverlay.innerHTML = `
+    <div style="margin-bottom: 20px; color: #C5A059; font-size: 0.85rem;">← Experience</div>
+    <a href="#virtual-tour" onclick="closeMob()">Virtual Tour 🌍</a>
+    <a href="#gallery" onclick="closeMob()">Photo Gallery 📸</a>
+    <a href="#winery" onclick="closeMob()">Winery Tour 🍷</a>
+    <a href="#events" onclick="closeMob()">Private Events ✨</a>
+    <a href="#experience" onclick="closeMob()">Main Experience →</a>
+    <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top: 20px;">← Go Back</button>
+  `;
+  
+  currentSubMenu = 'experience';
+}
+
+// Show App sub-menu
+function showAppSubMenu() {
+  if (!mobOverlay) return;
+  
+  mobOverlay.innerHTML = `
+    <div style="margin-bottom: 20px; color: #C5A059; font-size: 0.85rem;">← The App</div>
+    <a href="#app-features" onclick="closeMob()">Features 📱</a>
+    <a href="#app-download" onclick="closeMob()">Download App ⬇️</a>
+    <a href="#app-tutorial" onclick="closeMob()">Tutorial 🎥</a>
+    <a href="#app" onclick="closeMob()">Back to App →</a>
+    <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top: 20px;">← Go Back</button>
+  `;
+  
+  currentSubMenu = 'app';
+}
+
+// Show Tiers/Membership sub-menu
+function showTiersSubMenu() {
+  if (!mobOverlay) return;
+  
+  mobOverlay.innerHTML = `
+    <div style="margin-bottom: 20px; color: #C5A059; font-size: 0.85rem;">← Membership</div>
+    <a href="#bronze" onclick="closeMob()">Bronze Tier 🥉</a>
+    <a href="#silver" onclick="closeMob()">Silver Tier 🥈</a>
+    <a href="#gold" onclick="closeMob()">Gold Tier 🥇</a>
+    <a href="#platinum" onclick="closeMob()">Platinum Tier 💎</a>
+    <a href="#tiers" onclick="closeMob()">Compare All →</a>
+    <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top: 20px;">← Go Back</button>
+  `;
+  
+  currentSubMenu = 'tiers';
+}
+
+// Navigation functions
+function navigateToExperience(event) {
+  event.preventDefault();
+  navHistory.push('experience');
+  showExperienceSubMenu();
+}
+
+function navigateToApp(event) {
+  event.preventDefault();
+  navHistory.push('app');
+  showAppSubMenu();
+}
+
+function navigateToTiers(event) {
+  event.preventDefault();
+  navHistory.push('tiers');
+  showTiersSubMenu();
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Hamburger menu toggle
+  if (navHam) {
+    navHam.addEventListener('click', toggleMob);
+  }
+  
+  // Close menu when clicking outside (optional)
+  document.addEventListener('click', function(event) {
+    if (mobOverlay && mobOverlay.classList.contains('open')) {
+      const isClickInside = mobOverlay.contains(event.target) || navHam.contains(event.target);
+      if (!isClickInside) {
+        closeMob();
+      }
+    }
+  });
+  
+  // Handle escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && mobOverlay && mobOverlay.classList.contains('open')) {
+      if (navHistory.length > 1) {
+        goBackInMenu();
+      } else {
+        closeMob();
+      }
+    }
+  });
+  
+  // Handle Android hardware back button
+  if (document.addEventListener) {
+    document.addEventListener('backbutton', function(e) {
+      if (mobOverlay && mobOverlay.classList.contains('open')) {
+        e.preventDefault();
+        if (navHistory.length > 1) {
+          goBackInMenu();
+        } else {
+          closeMob();
+        }
+      }
+    });
+  }
+  
+  // Initialize main menu
+  showMainMenu();
+});
 function openLightbox(img){ document.getElementById('lightbox-img').src = img.src.replace('w=600','w=1200'); document.getElementById('lightbox').classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow = ''; }
 document.getElementById('lightbox').addEventListener('click', function(e){ if(e.target===this) closeLightbox(); });
