@@ -268,7 +268,7 @@ function buildSteps(): TourStep[] {
       title: 'Choose Your Login Method',
       body: `<strong>Wallet Login</strong> — connect any Solana wallet (Phantom, Backpack…) for direct on-chain positions.<br><br>
              <strong>Email Login</strong> — enter your email & password with MFA for a managed grove account.`,
-      next: 'I'm connected / Skip',
+      next: "I'm connected / Skip",
       showSkip: false,
       onEnter: () => {
         openConnectModalIfClosed();
