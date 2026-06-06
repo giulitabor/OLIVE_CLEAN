@@ -53,43 +53,7 @@
 }
 
 /* Style your existing overlay links consistently */
-#mob-overlay {
-  position: fixed;
-  top: 0;
-  right: -100%;
-  width: 85%;
-  max-width: 320px;
-  height: 100vh;
-  background: rgba(10, 15, 8, 0.98);
-  backdrop-filter: blur(20px);
-  z-index: 2000;
-  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 80px 24px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-}
-
-#mob-overlay.open {
-  right: 0;
-}
-
-#mob-overlay a {
-  color: white;
-  text-decoration: none;
-  font-size: 1.25rem;
-  font-weight: 500;
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  transition: all 0.2s;
-  display: block;
-}
-
-#mob-overlay a:hover {
-  color: #C5A059;
-  padding-left: 8px;
-}
+/* mob-overlay — single definition, full-screen fade */
 
 /* Hamburger animation */
 #nav-ham {
