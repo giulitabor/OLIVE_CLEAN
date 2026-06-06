@@ -912,11 +912,6 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 var nav = document.getElementById('nav');
 window.addEventListener('scroll', function(){ nav.classList.toggle('scrolled', window.scrollY > 60); });
 
-var ham = document.getElementById('nav-ham');
-var mob = document.getElementById('mob-overlay');
-function closeMob(){ mob.classList.remove('open'); ham.classList.remove('open'); document.body.style.overflow=''; }
-ham.addEventListener('click', function(){ var o = mob.classList.toggle('open'); ham.classList.toggle('open', o); document.body.style.overflow = o ? 'hidden' : ''; });
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMob(); });
 
 var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, {threshold:0.07});
 document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(function(el){ io.observe(el); });
