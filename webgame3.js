@@ -866,7 +866,7 @@ async function loadGameFromCloud() {
         state.comboRecord = data.comboRecord ?? 1.0;
         state.rareCount = data.rareCount ?? 0;
         state.trees = data.trees ? JSON.parse(data.trees) : [];
-        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) : { irrigation: false, misting: false, fertilizer: false };
+        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) :{ irrigation: false, misting: false, fertilizer: false, flyTraps: false };
         state.skills = data.skills || [];
         state.skillMultipliers = data.skillMultipliers ? JSON.parse(data.skillMultipliers) : { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 };
         state.mill = data.mill ? JSON.parse(data.mill) : { mash: 0, gunk: 0 };
