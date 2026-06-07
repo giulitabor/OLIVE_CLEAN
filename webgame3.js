@@ -1198,7 +1198,15 @@ function addOlvShopPanel() {
                 <div class="text-[9px] opacity-50">Next tree planted is Legendary (5x yield)</div>
             </div>
         </div>
+        <div class="card" style="border-color:#ef4444; cursor:pointer; margin-top: 8px;" onclick="game.resetGame()">
+    <div class="flex-between">
+        <div><span class="text-lg">⚠️</span> Reset Estate</div>
+        <div class="text-red-400">3 SOL / 300 OLV</div>
+    </div>
+    <div class="text-[9px] opacity-50">Reset your estate (Keeps Seeds & Skills)</div>
+</div>
     `;
+    
     panelsContainer.appendChild(shopPanel);
 }
 
@@ -1271,17 +1279,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
     
     window.game = { 
-        upgrade: (t) => { upgrade(t); closePanel(); }, 
-        unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
-        buyWithOlv,
-        cleanMill, 
-        prestige, 
-        buyTree, 
-        sprayGrove, 
-        sellOil, 
-        pressMill,
-        saveGameToCloud  // <-- Added this so you can test from console
-    };
+    upgrade: (t) => { upgrade(t); closePanel(); }, 
+    upgradeFlyTraps: () => { upgradeFlyTraps(); closePanel(); },
+    unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
+    buyWithOlv,
+    cleanMill, 
+    prestige, 
+    buyTree, 
+    sprayGrove, 
+    sellOil, 
+    pressMill,
+    saveGameToCloud,
+    resetGame
+};
     window.closePanel = closePanel;
     window.openPanel = openPanel;
     
