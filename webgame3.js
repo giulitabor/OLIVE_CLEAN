@@ -177,6 +177,133 @@ function createTransferInstruction(source, destination, owner, amount) {
     });
 }
 
+
+// ============================================================
+// RESET FUNCTION
+// ============================================================
+
+async function resetGame() {
+    // Show confirmation dialog with options
+    const confirmed = confirm(
+        "⚠️ WARNING: This will reset your entire estate!\n\n" +
+        "All trees, oil, hopper contents, and progress will be lost.\n\n" +
+        "Select payment method:\n" +
+        "• Click OK to pay 3 SOL\n" +
+        "• Cancel then click again to pay 300 OLV\n\n" +
+        "Your Ancient Seeds and skills will be preserved."
+    );
+    
+    if (!confirmed) {
+        // Check for OLV payment option if they cancelled
+        const olvConfirm = confirm(
+            "Reset with 300 OLV instead?\n\n" +
+            "This will deduct 300 OLV from your wallet and reset your estate."
+        );
+        
+        if (!olvConfirm) {
+            showToast("Reset cancelled.");
+            return false;
+        }
+        
+        // OLV payment
+        if (!currentUser) {
+            showToast("Connect wallet first to pay with OLV!", true);
+            return false;
+        }
+        
+        if (walletOlvBalance < 300) {
+            showToast(`Need 300 OLV! You have ${walletOlvBalance}`, true);
+            return false;
+        }
+        
+        const spent = await spendOlvTokens(300, "Estate Reset");
+        if (!spent) return false;
+        
+        performReset();
+        showToast("✅ Estate reset! Paid 300 OLV");
+        return true;
+    }
+    
+    // SOL payment
+    if (state.sol < 3) {
+        showToast("Need 3 SOL to reset! (or 300 OLV)", true);
+        return false;
+    }
+    
+    state.sol -= 3;
+    performReset();
+    showToast("✅ Estate reset! Paid 3 SOL");
+    return true;
+}
+
+function performReset() {
+    // Save current seeds and skills before reset
+    const preservedSeeds = state.seeds;
+    const preservedSkills = [...state.skills];
+    const preservedSkillMultipliers = { ...state.skillMultipliers };
+    const preservedUpgrades = { ...state.upgrades };
+    
+    // Reset all game state
+    state.sol = 25.0;
+    state.oil = 0;
+    state.hopper = 0;
+    state.lifetimeSol = 25.0;
+    state.treesPlanted = 0;
+    state.totalHarvests = 0;
+    state.comboRecord = 1.0;
+    state.rareCount = 0;
+    state.trees = [];
+    state.mill = { mash: 0, gunk: 0 };
+    state.combo = 1.0;
+    state.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
+    state.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
+    state.fertilizerBoost = false;
+    state.fertilizerBoostEnd = 0;
+    state.protectionActive = false;
+    state.protectionEnd = 0;
+    state.nextTreeLegendary = false;
+    
+    // Restore preserved items
+    state.seeds = preservedSeeds;
+    state.skills = preservedSkills;
+    state.skillMultipliers = preservedSkillMultipliers;
+    state.upgrades = preservedUpgrades;
+    
+    // Plant starting trees
+    for (let i = 0; i < 3; i++) {
+        state.trees.push({
+            id: '#' + (state.treesPlanted + i + 1),
+            age: 0, health: 100, water: 85, pests: 0,
+            stage: 'seed', rarity: 'common',
+            protected: false
+        });
+    }
+    state.treesPlanted += 3;
+    
+    log("🔄 Estate reset! Ancient knowledge preserved (Seeds & Skills kept).");
+    log(`✨ Preserved ${preservedSeeds} Ancient Seeds and ${preservedSkills.length} skills`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function upgradeFlyTraps() {
+    const cost = 0.003;
+    if (state.sol < cost) {
+        showToast(`Need ${cost} SOL to install Fly Traps!`, true);
+        return;
+    }
+    if (state.upgrades.flyTraps) {
+        showToast("Fly Traps already installed!", true);
+        return;
+    }
+    state.sol -= cost;
+    state.upgrades.flyTraps = true;
+    log("🪰 Fly Traps installed! Pests now die 50% faster.");
+    showToast("🪰 Fly Traps installed! +50% pest reduction rate");
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
 // ============================================================
 // OLV SHOP FUNCTIONS
 // ============================================================
@@ -742,6 +869,8 @@ function gameLoop() {
             tree.pests = Math.min(100, tree.pests + 5);
         }
         if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
+        if (state.upgrades.flyTraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 3); // Fly traps remove 3% more pests
+        
         if (tree.water < 15) tree.health -= 4;
         if (tree.pests > 40) tree.health -= 3;
         if (tree.health <= 0) tree.stage = 'dead';
