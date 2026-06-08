@@ -41,6 +41,63 @@ img{display:block;max-width:100%;}
 a{text-decoration:none;color:inherit;}
 ::selection{background:rgba(197,160,89,0.3);color:#fff;}
 
+   /* Make "Exclusive Tuscan Residency" highly visible */
+.hero-eyebrow {
+  background: rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  padding: 0.3rem 1rem 0.3rem 0;
+  border-radius: 0 40px 40px 0;
+  letter-spacing: 5px;
+  text-shadow: 0 0 8px rgba(0,0,0,0.8);
+  font-weight: 500;
+  backdrop-filter: blur(2px);
+}
+.hero-eyebrow::before {
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(197,160,89,0.6);
+}
+
+   /* Fix comparison table for mobile */
+.comparison-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 auto;
+  padding: 0;
+}
+.comparison-wrap .glass {
+  padding: 0;
+  overflow: hidden;
+}
+.comp-table {
+  min-width: 560px;  /* Ensures table has enough width to read, allows scroll on mobile */
+  width: 100%;
+  border-collapse: collapse;
+}
+.comp-table th,
+.comp-table td {
+  padding: 0.9rem 1rem;
+  white-space: nowrap;
+}
+.comp-table td:first-child,
+.comp-table th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--dark);
+  z-index: 1;
+}
+@media (max-width: 640px) {
+  .comp-table th,
+  .comp-table td {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.8rem;
+  }
+  .comp-table td:first-child,
+  .comp-table th:first-child {
+    background: #0a100a;
+    font-weight: 500;
+  }
+}
 /* grain overlay */
 body::after{
   content:'';
