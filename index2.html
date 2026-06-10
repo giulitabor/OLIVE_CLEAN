@@ -674,6 +674,29 @@
       <script type="module" src="./src/reserve_board.ts"></script>
         <script type="module" src="./src/reserveb.ts"></script>
   <script type="module" src="./src/tour.ts"></script>
+  <script>
+  // FORCE modal to stay open - prevent any auto-closing
+  (function() {
+    // Prevent any accidental modal closures
+    let authModal = document.getElementById('authModalOverlay');
+    let signupOtpBox = null;
+    
+    // Monitor for any attempts to hide the OTP box
+    const preventHide = setInterval(() => {
+      signupOtpBox = document.getElementById('signupOtpBox');
+      if (signupOtpBox && signupOtpBox.style.display === 'none') {
+        // If something hid it, show it again
+        if (window.showingQR) {
+          signupOtpBox.style.display = 'block';
+          console.log('🔒 Prevented OTP box from being hidden');
+        }
+      }
+    }, 100);
+    
+    // Clean up interval after 30 seconds (enough time to scan QR)
+    setTimeout(() => clearInterval(preventHide), 30000);
+  })();
+</script>
 
 </body>
 </html>
