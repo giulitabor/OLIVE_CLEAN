@@ -346,7 +346,8 @@ function show(msg: string, ok = true) {
   el.style.color = ok ? "#2e7d32" : "#d94d4d";
 }
 
-function _wireAuthModal() {
+function _wireAuthModal() function _wireAuthModal() {
+  // Get all elements first
   const loginTab = document.getElementById("loginTab");
   const signupTab = document.getElementById("signupTab");
   const loginForm = document.getElementById("loginForm") as HTMLElement | null;
@@ -443,6 +444,7 @@ function _wireAuthModal() {
   // ==================== SIGNUP FLOW ====================
   
   signupBtn?.addEventListener("click", async () => {
+    console.log("🔵 SIGNUP BUTTON CLICKED");
     const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
     const passwordVal = passEl?.value.trim() ?? "";
 
@@ -470,6 +472,7 @@ function _wireAuthModal() {
       const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
       const kp = Keypair.fromSeed(new Uint8Array(hash));
       _generatedCustodialWallet = kp.publicKey.toBase58();
+      console.log("🔑 Generated wallet:", _generatedCustodialWallet);
 
       const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
         + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
@@ -480,6 +483,7 @@ function _wireAuthModal() {
           colorDark: "#1f402a", colorLight: "#ffffff",
           correctLevel: (window as any).QRCode.CorrectLevel.H,
         });
+        console.log("✅ QR Code created");
       }
 
       if (signupOtpBox) {
@@ -491,6 +495,7 @@ function _wireAuthModal() {
         password: passwordVal,
         wallet: _generatedCustodialWallet
       };
+      console.log("📦 Pending signup stored:", (window as any)._pendingSignup);
       
       show("📱 Scan QR code with Google Authenticator, then enter the 6-digit code below", true);
       
@@ -507,6 +512,7 @@ function _wireAuthModal() {
     verifySignupBtn.parentNode?.replaceChild(newVerifyBtn, verifySignupBtn);
     
     newVerifyBtn.addEventListener("click", async () => {
+      console.log("🟢 SIGNUP VERIFY BUTTON CLICKED");
       const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
       const otpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
       const enteredOtp = otpInput?.value.trim() ?? "";
@@ -520,11 +526,14 @@ function _wireAuthModal() {
 
       try {
         const pending = (window as any)._pendingSignup;
+        console.log("📦 Pending signup retrieved:", pending);
+        
         if (!pending) {
           show("Session expired. Please try signing up again.", false);
           return;
         }
         
+        console.log("💾 Attempting to insert user into Supabase...");
         const { error } = await sb.from("users").insert([{
           Email_address: emailVal,
           wallet: pending.wallet,
@@ -535,20 +544,29 @@ function _wireAuthModal() {
         if (error && error.code !== "23505") throw error;
         
         if (error && error.code === "23505") {
+          console.log("⚠️ Email already exists");
           show("⚠️ Email already registered. Please login instead.", false);
           return;
         }
+        
+        console.log("✅ User inserted successfully");
 
         show("✅ Account created! Logging you in...", true);
 
+        console.log("🔐 Calling connectEmail with:", pending.email, pending.wallet);
+        
         try {
-          await connectEmail(pending.email, pending.wallet);
+          const result = await connectEmail(pending.email, pending.wallet);
+          console.log("📞 connectEmail result:", result);
           
           (window as any).OliviumAuth.setUser({ 
             email: pending.email, 
             tier: "Standard",
             wallet: pending.wallet
           });
+          
+          console.log("👤 User session stored");
+          console.log("🆔 Current identity after connectEmail:", getIdentity());
           
           show("✅ Login successful! Loading your grove…", true);
           
@@ -573,14 +591,11 @@ function _wireAuthModal() {
             const msg = document.getElementById("msg");
             if (msg) msg.textContent = "";
             
-            setTimeout(() => {
-              console.log("Post-login identity check:", getIdentity());
-              forceRefreshUI();
-            }, 500);
+            console.log("✅ Signup complete, modal closed");
           }, 500);
           
         } catch (loginErr) {
-          console.error("Auto-login failed:", loginErr);
+          console.error("❌ Auto-login failed:", loginErr);
           show("Account created but auto-login failed. Please login manually.", false);
           
           setTimeout(() => {
@@ -591,7 +606,7 @@ function _wireAuthModal() {
         }
         
       } catch (err: any) {
-        console.error("Signup DB error:", err);
+        console.error("❌ Signup DB error:", err);
         show(`Registration failed: ${err.message || "unknown error"}`, false);
       }
     });
@@ -600,6 +615,7 @@ function _wireAuthModal() {
   // ==================== LOGIN FLOW ====================
   
   document.getElementById("loginBtn")?.addEventListener("click", () => {
+    console.log("🔵 LOGIN BUTTON CLICKED");
     const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
     const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
 
@@ -619,6 +635,7 @@ function _wireAuthModal() {
     verifyLoginBtn.parentNode?.replaceChild(newVerifyLoginBtn, verifyLoginBtn);
     
     newVerifyLoginBtn.addEventListener("click", async () => {
+      console.log("🟢 LOGIN VERIFY BUTTON CLICKED");
       const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
       const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
       const emailVal = loginEmailInput?.value.trim().toLowerCase() ?? "";
@@ -640,10 +657,13 @@ function _wireAuthModal() {
       show("🔐 Verifying identity…", true);
 
       try {
+        console.log("🔑 Regenerating wallet from credentials...");
         const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
         const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
         const expectedWallet = Keypair.fromSeed(new Uint8Array(hash)).publicKey.toBase58();
+        console.log("🔑 Expected wallet:", expectedWallet);
         
+        console.log("📡 Fetching user from Supabase...");
         const { data: profile, error } = await sb
           .from("users")
           .select("wallet")
@@ -652,23 +672,31 @@ function _wireAuthModal() {
 
         if (error) throw error;
         const custodialWallet = profile?.wallet ?? null;
+        console.log("📡 Retrieved wallet from DB:", custodialWallet);
+        
         if (!custodialWallet) {
           show("No account found with this email. Please sign up first.", false);
           return;
         }
         
         if (custodialWallet !== expectedWallet) {
+          console.log("❌ Wallet mismatch!");
           show("Invalid email or password. Please try again.", false);
           return;
         }
+        
+        console.log("✅ Credentials verified, calling connectEmail...");
 
-        await connectEmail(emailVal, custodialWallet);
+        const result = await connectEmail(emailVal, custodialWallet);
+        console.log("📞 connectEmail result:", result);
         
         (window as any).OliviumAuth.setUser({ 
           email: emailVal, 
           tier: "Standard",
           wallet: custodialWallet
         });
+
+        console.log("🆔 Current identity after connectEmail:", getIdentity());
 
         show("✅ Login successful! Loading your grove…", true);
 
@@ -691,14 +719,11 @@ function _wireAuthModal() {
           const msg = document.getElementById("msg");
           if (msg) msg.textContent = "";
           
-          setTimeout(() => {
-            console.log("Post-login identity check:", getIdentity());
-            forceRefreshUI();
-          }, 500);
+          console.log("✅ Login complete, modal closed");
         }, 500);
 
       } catch (err: any) {
-        console.error("Login error:", err);
+        console.error("❌ Login error:", err);
         show(`Authentication failed: ${err.message || "Please try again"}`, false);
       }
     });
