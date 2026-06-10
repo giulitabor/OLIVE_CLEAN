@@ -533,7 +533,7 @@ function _wireAuthModal() {
     show("🔐 Generating secure cryptographic identity…", true);
     const qrContainer = document.getElementById("qr");
     if (qrContainer) qrContainer.innerHTML = "";
-    const otpBox = document.getElementById("signupOtpBox");
+   // const otpBox = document.getElementById("signupOtpBox");
     if (otpBox) otpBox.style.display = "none"; // Hide initially
     // Add this INSIDE the signupBtn click handler, right after generating the QR:
 
