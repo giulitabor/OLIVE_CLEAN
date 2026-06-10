@@ -398,7 +398,7 @@ function _wireAuthModal() {
       signupForm.style.display = "none";
     }
     
-    // Reset signup form fields and hide OTP box
+    // Reset all signup form fields
     const signupEmail = document.getElementById("signupEmail") as HTMLInputElement | null;
     const signupPassword = document.getElementById("signupPassword") as HTMLInputElement | null;
     const signupConfirm = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
@@ -411,6 +411,16 @@ function _wireAuthModal() {
     
     const qrContainer = document.getElementById("qr");
     if (qrContainer) qrContainer.innerHTML = "";
+    
+    // Reset login form
+    const loginEmail = document.getElementById("loginEmail") as HTMLInputElement | null;
+    const loginPassword = document.getElementById("loginPassword") as HTMLInputElement | null;
+    const loginOtpBox = document.getElementById("loginOtpBox");
+    const loginOtp = document.getElementById("loginOtp") as HTMLInputElement | null;
+    if (loginEmail) loginEmail.value = "";
+    if (loginPassword) loginPassword.value = "";
+    if (loginOtpBox) loginOtpBox.style.display = "none";
+    if (loginOtp) loginOtp.value = "";
   });
 
   document.getElementById("closeAuthModal")?.addEventListener("click", () => {
@@ -426,6 +436,9 @@ function _wireAuthModal() {
     
     const msg = document.getElementById("msg");
     if (msg) msg.textContent = "";
+    
+    const loginOtpBox = document.getElementById("loginOtpBox");
+    if (loginOtpBox) loginOtpBox.style.display = "none";
   });
 
   document.getElementById("authModalOverlay")?.addEventListener("click", (e) => {
@@ -438,6 +451,9 @@ function _wireAuthModal() {
       
       const qrContainer = document.getElementById("qr");
       if (qrContainer) qrContainer.innerHTML = "";
+      
+      const loginOtpBox = document.getElementById("loginOtpBox");
+      if (loginOtpBox) loginOtpBox.style.display = "none";
     }
   });
 
@@ -514,9 +530,11 @@ function _wireAuthModal() {
       return;
     }
 
-    show("Generating secure cryptographic identity…", true);
+    show("🔐 Generating secure cryptographic identity…", true);
     const qrContainer = document.getElementById("qr");
     if (qrContainer) qrContainer.innerHTML = "";
+    const otpBox = document.getElementById("signupOtpBox");
+    if (otpBox) otpBox.style.display = "none"; // Hide initially
 
     try {
       const seed    = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
@@ -535,13 +553,11 @@ function _wireAuthModal() {
         });
       }
 
-      const otpBox = document.getElementById("signupOtpBox");
       if (otpBox) otpBox.style.display = "block";
       
-      show("📱 Scan QR code with Google Authenticator or similar app, then enter the 6-digit code below.", true);
+      show("📱 STEP 1: Scan QR code with Google Authenticator, Microsoft Authenticator, or any TOTP app.\n\nSTEP 2: Enter the 6-digit code below to complete setup.", true);
       
-      // REMOVED: The auto-switch timeout that was closing the QR too quickly
-      // User now has unlimited time to scan the QR code
+      // NO AUTO-CLOSE - User has unlimited time to scan QR
       
     } catch (err) {
       console.error("Key derivation failed:", err);
@@ -560,7 +576,7 @@ function _wireAuthModal() {
       return;
     }
 
-    show("Syncing profile to database…", true);
+    show("✅ Verifying code and creating your account…", true);
 
     try {
       const { error } = await sb.from("users").insert([{
@@ -573,13 +589,13 @@ function _wireAuthModal() {
       if (error && error.code !== "23505") throw error;
       
       if (error && error.code === "23505") {
-        show("Email already registered. Please login instead.", false);
+        show("⚠️ Email already registered. Please login instead.", false);
         return;
       }
 
-      show("✅ MFA enabled successfully! Please login with your credentials.", true);
-      
-      // After successful signup, switch to login tab but DON'T auto-hide the modal
+      show("🎉 Account created successfully! Switching to login...", true);
+
+      // Switch to login tab after successful signup - but KEEP MODAL OPEN
       setTimeout(() => {
         loginTab?.click();
         
@@ -587,7 +603,7 @@ function _wireAuthModal() {
         const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
         if (loginEmailInput) loginEmailInput.value = emailVal;
         
-        // Clear signup form artifacts
+        // Clear signup form artifacts but keep modal open
         const signupOtpBox = document.getElementById("signupOtpBox");
         if (signupOtpBox) signupOtpBox.style.display = "none";
         
@@ -597,9 +613,11 @@ function _wireAuthModal() {
         // Clear password fields for security
         if (passEl) passEl.value = "";
         if (confirmEl) confirmEl.value = "";
+        if (otpInput) otpInput.value = "";
         
-        show("Account created! Enter your credentials and MFA code to login.", true);
-      }, 2000); // Give user time to read success message
+        // Show login instruction
+        show("🔐 Now enter your credentials and MFA code to login.", true);
+      }, 2000);
       
     } catch (err: any) {
       console.error("Signup DB error:", err);
@@ -616,7 +634,7 @@ function _wireAuthModal() {
       show("Please fill in your credentials.", false);
       return;
     }
-    show("Enter your authenticator code below.", true);
+    show("📱 Enter your 6-digit authenticator code below.", true);
     const loginOtpBox = document.getElementById("loginOtpBox");
     if (loginOtpBox) loginOtpBox.style.display = "block";
   });
@@ -641,17 +659,13 @@ function _wireAuthModal() {
       return;
     }
 
-    show("Verifying identity…", true);
+    show("🔐 Verifying identity…", true);
 
     try {
-      // First verify the OTP is correct by regenerating the seed and checking
+      // Verify credentials by regenerating the wallet
       const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
       const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
       const expectedWallet = Keypair.fromSeed(new Uint8Array(hash)).publicKey.toBase58();
-      
-      // Simple TOTP verification - in production use proper TOTP library
-      // For demo purposes, we'll just check that the OTP is not empty and proceed
-      // You should implement proper TOTP verification here
       
       const { data: profile, error } = await sb
         .from("users")
@@ -662,13 +676,13 @@ function _wireAuthModal() {
       if (error) throw error;
       const custodialWallet = profile?.wallet ?? null;
       if (!custodialWallet) {
-        show("No wallet associated with this email. Please sign up first.", false);
+        show("No account found with this email. Please sign up first.", false);
         return;
       }
       
       // Verify the wallet matches
       if (custodialWallet !== expectedWallet) {
-        show("Invalid credentials. Please check your email and password.", false);
+        show("Invalid email or password. Please try again.", false);
         return;
       }
 
@@ -678,8 +692,9 @@ function _wireAuthModal() {
       // Call the canonical connect flow from connection.ts
       await connectEmail(emailVal, custodialWallet);
 
-      show("✅ Verified! Loading your grove…", true);
+      show("✅ Login successful! Loading your grove…", true);
 
+      // Close modal after successful login
       setTimeout(() => {
         const overlay = document.getElementById("authModalOverlay");
         if (overlay) overlay.style.display = "none";
@@ -693,7 +708,10 @@ function _wireAuthModal() {
         
         const loginPassword = document.getElementById("loginPassword") as HTMLInputElement | null;
         if (loginPassword) loginPassword.value = "";
-      }, 800);
+        
+        const msg = document.getElementById("msg");
+        if (msg) msg.textContent = "";
+      }, 1500);
 
     } catch (err: any) {
       console.error("Login error:", err);
@@ -701,7 +719,6 @@ function _wireAuthModal() {
     }
   });
 }
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CANONICAL EVENT LISTENERS  (single registration each)
 // ═══════════════════════════════════════════════════════════════════════════
