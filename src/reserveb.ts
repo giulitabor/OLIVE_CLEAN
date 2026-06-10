@@ -513,70 +513,267 @@ function _wireAuthModal() {
   emailEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
 
   // SIGNUP - Generate QR
-  // TEST: Simplified signup handler that won't auto-close
-signupBtn?.addEventListener("click", async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  console.log("🔵 SIGNUP BUTTON CLICKED - Starting simplified flow");
-  
-  const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
-  const passwordVal = passEl?.value.trim() ?? "";
+  signupBtn?.addEventListener("click", async () => {
+    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
+    const passwordVal = passEl?.value.trim() ?? "";
 
-  if (!emailVal || !passwordVal) {
-    show("Please complete both Email and Password fields.", false);
-    return;
-  }
-
-  // Show a simple message instead of complex QR first
-  const qrContainer = document.getElementById("qr");
-  const signupOtpBox = document.getElementById("signupOtpBox");
-  
-  if (qrContainer) {
-    qrContainer.innerHTML = "<div style='padding:20px;text-align:center'>Generating QR Code...</div>";
-  }
-  
-  show("Generating QR code...", true);
-  
-  try {
-    const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
-    const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
-    const kp = Keypair.fromSeed(new Uint8Array(hash));
-    _generatedCustodialWallet = kp.publicKey.toBase58();
-
-    const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
-      + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
-
-    if (qrContainer && typeof (window as any).QRCode !== "undefined") {
-      qrContainer.innerHTML = ""; // Clear loading message
-      new (window as any).QRCode(qrContainer, {
-        text: totpUri, width: 200, height: 200,
-        colorDark: "#1f402a", colorLight: "#ffffff",
-        correctLevel: (window as any).QRCode.CorrectLevel.H,
-      });
-      console.log("✅ QR Code created successfully");
+    if (!emailVal || !passwordVal) {
+      show("Please complete both Email and Password fields.", false);
+      return;
     }
 
+    show("🔐 Generating secure cryptographic identity…", true);
+    
+    const qrContainer = document.getElementById("qr");
+    const signupOtpBox = document.getElementById("signupOtpBox");
+    
+    if (qrContainer) {
+      qrContainer.innerHTML = "";
+      qrContainer.style.minHeight = "200px";
+    }
+    
     if (signupOtpBox) {
-      // Direct DOM manipulation - no style changes that could be overridden
-      signupOtpBox.setAttribute('style', 'display: block !important; visibility: visible !important; opacity: 1 !important;');
-      console.log("✅ OTP box forced visible, current display:", signupOtpBox.style.display);
+      signupOtpBox.style.display = "none";
+    }
+
+    try {
+      const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+      const kp = Keypair.fromSeed(new Uint8Array(hash));
+      _generatedCustodialWallet = kp.publicKey.toBase58();
+
+      const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
+        + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
+
+      if (qrContainer && typeof (window as any).QRCode !== "undefined") {
+        new (window as any).QRCode(qrContainer, {
+          text: totpUri, width: 180, height: 180,
+          colorDark: "#1f402a", colorLight: "#ffffff",
+          correctLevel: (window as any).QRCode.CorrectLevel.H,
+        });
+      }
+
+      if (signupOtpBox) {
+        signupOtpBox.style.display = "block";
+      }
+      
+      // Store credentials for auto-login after signup
+      (window as any)._pendingSignup = {
+        email: emailVal,
+        password: passwordVal,
+        wallet: _generatedCustodialWallet
+      };
+      
+      show("📱 Scan QR code with Google Authenticator, then enter the 6-digit code below", true);
+      
+    } catch (err) {
+      console.error("Key derivation failed:", err);
+      show("Failed to generate credentials.", false);
+    }
+  });
+
+  // SIGNUP - Verify OTP AND AUTO-LOGIN
+  document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
+    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
+    const otpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
+    const enteredOtp = otpInput?.value.trim() ?? "";
+
+    if (!enteredOtp || enteredOtp.length < 6) {
+      show("Please enter your 6-digit authenticator code.", false);
+      return;
+    }
+
+    show("✅ Verifying code and creating your account…", true);
+
+    try {
+      // Get stored pending signup data
+      const pending = (window as any)._pendingSignup;
+      if (!pending) {
+        show("Session expired. Please try signing up again.", false);
+        return;
+      }
+      
+      const { error } = await sb.from("users").insert([{
+        Email_address: emailVal,
+        wallet: pending.wallet,
+        token: SECRET_SEED,
+        credits: 0,
+      }]);
+
+      if (error && error.code !== "23505") throw error;
+      
+      if (error && error.code === "23505") {
+        show("⚠️ Email already registered. Please login instead.", false);
+        return;
+      }
+
+      show("✅ Account created! Logging you in...", true);
+
+      // AUTO-LOGIN: Immediately connect the email after successful signup
+      try {
+        await connectEmail(pending.email, pending.wallet);
+        
+        // Store user session
+        (window as any).OliviumAuth.setUser({ 
+          email: pending.email, 
+          tier: "Standard",
+          wallet: pending.wallet
+        });
+        
+        show("✅ Login successful! Loading your grove…", true);
+        
+        // Close modal and refresh UI
+        setTimeout(() => {
+          const overlay = document.getElementById("authModalOverlay");
+          if (overlay) overlay.style.display = "none";
+          
+          // Force UI update
+          if (typeof (window as any).updateIdentityBalanceUI === 'function') {
+            (window as any).updateIdentityBalanceUI();
+          }
+          if (typeof (window as any).updateStatsUI === 'function') {
+            (window as any).updateStatsUI();
+          }
+          if (typeof (window as any).loadTrees === 'function') {
+            (window as any).loadTrees('my');
+          }
+          
+          // Clear pending data
+          delete (window as any)._pendingSignup;
+          
+          // Clear form fields
+          const signupOtpBox = document.getElementById("signupOtpBox");
+          const qrContainer = document.getElementById("qr");
+          if (signupOtpBox) signupOtpBox.style.display = "none";
+          if (qrContainer) qrContainer.innerHTML = "";
+          if (otpInput) otpInput.value = "";
+          
+          const msg = document.getElementById("msg");
+          if (msg) msg.textContent = "";
+        }, 1500);
+        
+      } catch (loginErr) {
+        console.error("Auto-login failed:", loginErr);
+        show("Account created but auto-login failed. Please login manually.", false);
+        
+        // Switch to login tab
+        setTimeout(() => {
+          loginTab?.click();
+          const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+          if (loginEmailInput) loginEmailInput.value = emailVal;
+        }, 2000);
+      }
+      
+    } catch (err: any) {
+      console.error("Signup DB error:", err);
+      show(`Registration failed: ${err.message || "unknown error"}`, false);
+    }
+  });
+
+  // LOGIN - Show OTP input
+  document.getElementById("loginBtn")?.addEventListener("click", () => {
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+    const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
+
+    if (!loginEmailInput?.value.trim() || !loginPasswordInput?.value.trim()) {
+      show("Please fill in your credentials.", false);
+      return;
+    }
+    show("📱 Enter your 6-digit authenticator code below.", true);
+    const loginOtpBox = document.getElementById("loginOtpBox");
+    if (loginOtpBox) loginOtpBox.style.display = "block";
+  });
+
+  // LOGIN - Verify OTP AND CONNECT
+  document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+    const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
+    const emailVal = loginEmailInput?.value.trim().toLowerCase() ?? "";
+    const passwordVal = loginPasswordInput?.value.trim() ?? "";
+
+    if (!emailVal || !passwordVal) {
+      show("Please enter your email and password.", false);
+      return;
     }
     
-    // Add a persistent message
-    show("📱 SCAN QR CODE with Google Authenticator\n\nThen enter the 6-digit code below.\n\n(This window will stay open until you verify)", true);
+    const otpInput = document.getElementById("loginOtp") as HTMLInputElement | null;
+    const enteredOtp = otpInput?.value.trim() ?? "";
     
-    // Store flag that we're in QR mode
-    (window as any).awaitingQRVerification = true;
-    
-    // NO TIMEOUTS - NOTHING THAT AUTO-CLOSES
-    
-  } catch (err) {
-    console.error("Key derivation failed:", err);
-    show("Failed to generate credentials.", false);
-  }
-});
+    if (!enteredOtp || enteredOtp.length < 6) {
+      show("Please enter your 6-digit authenticator code.", false);
+      return;
+    }
 
+    show("🔐 Verifying identity…", true);
+
+    try {
+      const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+      const expectedWallet = Keypair.fromSeed(new Uint8Array(hash)).publicKey.toBase58();
+      
+      const { data: profile, error } = await sb
+        .from("users")
+        .select("wallet")
+        .eq("Email_address", emailVal)
+        .maybeSingle();
+
+      if (error) throw error;
+      const custodialWallet = profile?.wallet ?? null;
+      if (!custodialWallet) {
+        show("No account found with this email. Please sign up first.", false);
+        return;
+      }
+      
+      if (custodialWallet !== expectedWallet) {
+        show("Invalid email or password. Please try again.", false);
+        return;
+      }
+
+      // Connect email - THIS IS THE CRITICAL PART
+      await connectEmail(emailVal, custodialWallet);
+      
+      // Store user session
+      (window as any).OliviumAuth.setUser({ 
+        email: emailVal, 
+        tier: "Standard",
+        wallet: custodialWallet
+      });
+
+      show("✅ Login successful! Loading your grove…", true);
+
+      // Close modal and refresh UI
+      setTimeout(() => {
+        const overlay = document.getElementById("authModalOverlay");
+        if (overlay) overlay.style.display = "none";
+        
+        // Force UI updates
+        if (typeof (window as any).updateIdentityBalanceUI === 'function') {
+          (window as any).updateIdentityBalanceUI();
+        }
+        if (typeof (window as any).updateStatsUI === 'function') {
+          (window as any).updateStatsUI();
+        }
+        if (typeof (window as any).loadTrees === 'function') {
+          (window as any).loadTrees('my');
+        }
+        
+        // Clear login form
+        const loginOtpBox = document.getElementById("loginOtpBox");
+        if (loginOtpBox) loginOtpBox.style.display = "none";
+        
+        if (otpInput) otpInput.value = "";
+        if (loginPasswordInput) loginPasswordInput.value = "";
+        
+        const msg = document.getElementById("msg");
+        if (msg) msg.textContent = "";
+      }, 1500);
+
+    } catch (err: any) {
+      console.error("Login error:", err);
+      show(`Authentication failed: ${err.message || "Please try again"}`, false);
+    }
+  });
+}
   // SIGNUP - Verify OTP
   document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
     const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
