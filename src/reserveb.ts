@@ -1,13 +1,5 @@
 /**
  * reserveb.ts — Olivium DAO
- * ─────────────────────────────────────────────────────────────────────────────
- * Responsibilities:
- *  • Email auth flow (signup / login with TOTP QR)
- *  • Identity / balance pill UI (single definition, no duplicates)
- *  • Connect button behaviour (open modal vs disconnect)
- *  • Connect modal (wallet button + email tab routing)
- *  • Modal open/close helpers exposed on window
- * ─────────────────────────────────────────────────────────────────────────────
  */
 
 import {
@@ -23,25 +15,18 @@ import { PublicKey, SystemProgram } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair } from "@solana/web3.js";
 
-// ─── Re-export for modules that import from here ──────────────────────────
 export { sb };
 
-// ─── Expose shared globals needed by inline scripts ──────────────────────
-(window as any).sb            = sb;
-(window as any).PublicKey     = PublicKey;
+(window as any).sb = sb;
+(window as any).PublicKey = PublicKey;
 (window as any).SystemProgram = SystemProgram;
-(window as any).anchor        = anchor;
+(window as any).anchor = anchor;
 
-// ─── Defer tree-load proxy until reserve_board.ts registers the impl ─────
 (window as any).loadTrees = (filter?: string) => {
   if (typeof (window as any)._loadTreesImpl === "function") {
     (window as any)._loadTreesImpl(filter);
   }
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PROGRAM AVAILABILITY HELPER
-// ═══════════════════════════════════════════════════════════════════════════
 
 export async function waitForProgram(timeout = 10_000): Promise<any> {
   const deadline = Date.now() + timeout;
@@ -50,13 +35,8 @@ export async function waitForProgram(timeout = 10_000): Promise<any> {
     if (p) return p;
     await new Promise(r => setTimeout(r, 150));
   }
-  console.warn("[waitForProgram] Timed out");
   return null;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// AUTH STORE
-// ═══════════════════════════════════════════════════════════════════════════
 
 (window as any).OliviumAuth = {
   user: null as any,
@@ -69,13 +49,9 @@ export async function waitForProgram(timeout = 10_000): Promise<any> {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MOBILE MENU
-// ═══════════════════════════════════════════════════════════════════════════
-
 document.getElementById("mobileMenuBtn")?.addEventListener("click", () => {
   const menu = document.getElementById("mobileMenuOverlay");
-  const btn  = document.getElementById("mobileMenuBtn");
+  const btn = document.getElementById("mobileMenuBtn");
   menu?.classList.toggle("open");
   btn?.classList.toggle("open");
   document.body.style.overflow = menu?.classList.contains("open") ? "hidden" : "";
@@ -87,10 +63,6 @@ function closeMobileMenu() {
   document.body.style.overflow = "";
 }
 (window as any).closeMobileMenu = closeMobileMenu;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// IDENTITY UI — THE SINGLE AUTHORITATIVE RENDERER
-// ═══════════════════════════════════════════════════════════════════════════
 
 export async function updateIdentityBalanceUI(): Promise<void> {
   try {
@@ -176,11 +148,10 @@ export async function updateIdentityBalanceUI(): Promise<void> {
   }
 }
 
-// Force UI refresh helper
 export async function forceRefreshUI() {
   console.log("🔄 FORCE REFRESHING UI...");
   const identity = getIdentity();
-  console.log("Current identity from connection.ts:", identity);
+  console.log("Current identity:", identity);
   await updateIdentityBalanceUI();
   if (typeof (window as any).updateStatsUI === 'function') {
     await (window as any).updateStatsUI();
@@ -188,20 +159,13 @@ export async function forceRefreshUI() {
   if (typeof (window as any).loadTrees === 'function') {
     (window as any).loadTrees('my');
   }
-  console.log("✅ UI refresh complete");
 }
 
 (window as any).updateIdentityBalanceUI = updateIdentityBalanceUI;
 (window as any).refreshIdentityUI = updateIdentityBalanceUI;
 (window as any).forceRefreshUI = forceRefreshUI;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PASSWORD VALIDATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-interface MetricEntry { reg: RegExp; el: HTMLElement | null; }
-
-const metrics: Record<string, MetricEntry> = {
+const metrics: Record<string, { reg: RegExp; el: HTMLElement | null }> = {
   len: { reg: /.{6,}/, el: null },
   cap: { reg: /[A-Z]/, el: null },
   low: { reg: /[a-z]/, el: null },
@@ -247,13 +211,17 @@ function validateSignupForm(
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MODAL HELPERS
-// ═══════════════════════════════════════════════════════════════════════════
-
 function closeModal() {
   const el = document.getElementById("modalOverlay");
   if (el) el.style.display = "none";
+  document.body.style.overflow = "";
+}
+
+function closeAgreement() {
+  const agreementModal = document.getElementById("agreementModal");
+  const selectionModal = document.getElementById("modalOverlay");
+  if (agreementModal) agreementModal.style.display = "none";
+  if (selectionModal) selectionModal.style.display = "flex";
   document.body.style.overflow = "";
 }
 
@@ -262,22 +230,28 @@ function closeConnectModal() {
   if (el) el.style.display = "none";
 }
 
-(window as any).closeModal = closeModal;
-(window as any).closeAgreement = closeModal;
-(window as any).closeConnectModal = closeConnectModal;
+function closeSuccess() {
+  const el = document.getElementById("successModal");
+  if (el) el.style.display = "none";
+  document.body.style.overflow = "";
+}
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DISCONNECT HELPER
-// ═══════════════════════════════════════════════════════════════════════════
+function closeRelease() {
+  const el = document.getElementById("releaseModal");
+  if (el) el.style.display = "none";
+  document.body.style.overflow = "";
+}
+
+(window as any).closeModal = closeModal;
+(window as any).closeAgreement = closeAgreement;
+(window as any).closeConnectModal = closeConnectModal;
+(window as any).closeSuccess = closeSuccess;
+(window as any).closeRelease = closeRelease;
 
 export async function handleDisconnectWorkflow() {
   await disconnectWallet();
 }
 (window as any).handleDisconnectWorkflow = handleDisconnectWorkflow;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DOM INITIALISATION
-// ═══════════════════════════════════════════════════════════════════════════
 
 document.addEventListener("DOMContentLoaded", () => {
   initMetrics();
@@ -332,10 +306,6 @@ function _wireWalletConnectButton() {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// EMAIL AUTH MODAL WIRING
-// ═══════════════════════════════════════════════════════════════════════════
-
 const SECRET_SEED = "OLIVIUMDAO777MFASEED";
 let _generatedCustodialWallet = "";
 
@@ -346,8 +316,7 @@ function show(msg: string, ok = true) {
   el.style.color = ok ? "#2e7d32" : "#d94d4d";
 }
 
-function _wireAuthModal() function _wireAuthModal() {
-  // Get all elements first
+function _wireAuthModal() {
   const loginTab = document.getElementById("loginTab");
   const signupTab = document.getElementById("signupTab");
   const loginForm = document.getElementById("loginForm") as HTMLElement | null;
@@ -357,7 +326,6 @@ function _wireAuthModal() function _wireAuthModal() {
   const emailEl = document.getElementById("signupEmail") as HTMLInputElement | null;
   const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement | null;
 
-  // Open modal from email button
   document.getElementById("emailLoginBtn")?.addEventListener("click", () => {
     const connectModal = document.getElementById("connectModal");
     if (connectModal) connectModal.style.display = "none";
@@ -375,7 +343,6 @@ function _wireAuthModal() function _wireAuthModal() {
     }
   });
 
-  // Close modal
   document.getElementById("closeAuthModal")?.addEventListener("click", () => {
     const overlay = document.getElementById("authModalOverlay");
     if (overlay) overlay.style.display = "none";
@@ -387,7 +354,6 @@ function _wireAuthModal() function _wireAuthModal() {
     if (msg) msg.textContent = "";
   });
 
-  // Click outside to close
   document.getElementById("authModalOverlay")?.addEventListener("click", (e) => {
     if (e.target === e.currentTarget) {
       (e.currentTarget as HTMLElement).style.display = "none";
@@ -398,7 +364,6 @@ function _wireAuthModal() function _wireAuthModal() {
     }
   });
 
-  // Tab switching
   loginTab?.addEventListener("click", () => {
     if (!loginTab || !signupTab || !loginForm || !signupForm) return;
     loginTab.style.background = "var(--green)";
@@ -441,10 +406,7 @@ function _wireAuthModal() function _wireAuthModal() {
   confirmEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
   emailEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
 
-  // ==================== SIGNUP FLOW ====================
-  
   signupBtn?.addEventListener("click", async () => {
-    console.log("🔵 SIGNUP BUTTON CLICKED");
     const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
     const passwordVal = passEl?.value.trim() ?? "";
 
@@ -472,7 +434,6 @@ function _wireAuthModal() function _wireAuthModal() {
       const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
       const kp = Keypair.fromSeed(new Uint8Array(hash));
       _generatedCustodialWallet = kp.publicKey.toBase58();
-      console.log("🔑 Generated wallet:", _generatedCustodialWallet);
 
       const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
         + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
@@ -483,7 +444,6 @@ function _wireAuthModal() function _wireAuthModal() {
           colorDark: "#1f402a", colorLight: "#ffffff",
           correctLevel: (window as any).QRCode.CorrectLevel.H,
         });
-        console.log("✅ QR Code created");
       }
 
       if (signupOtpBox) {
@@ -495,7 +455,6 @@ function _wireAuthModal() function _wireAuthModal() {
         password: passwordVal,
         wallet: _generatedCustodialWallet
       };
-      console.log("📦 Pending signup stored:", (window as any)._pendingSignup);
       
       show("📱 Scan QR code with Google Authenticator, then enter the 6-digit code below", true);
       
@@ -505,14 +464,12 @@ function _wireAuthModal() function _wireAuthModal() {
     }
   });
 
-  // SIGNUP - Verify OTP
   const verifySignupBtn = document.getElementById("verifySignupOtp");
   if (verifySignupBtn) {
     const newVerifyBtn = verifySignupBtn.cloneNode(true);
     verifySignupBtn.parentNode?.replaceChild(newVerifyBtn, verifySignupBtn);
     
     newVerifyBtn.addEventListener("click", async () => {
-      console.log("🟢 SIGNUP VERIFY BUTTON CLICKED");
       const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
       const otpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
       const enteredOtp = otpInput?.value.trim() ?? "";
@@ -526,14 +483,11 @@ function _wireAuthModal() function _wireAuthModal() {
 
       try {
         const pending = (window as any)._pendingSignup;
-        console.log("📦 Pending signup retrieved:", pending);
-        
         if (!pending) {
           show("Session expired. Please try signing up again.", false);
           return;
         }
         
-        console.log("💾 Attempting to insert user into Supabase...");
         const { error } = await sb.from("users").insert([{
           Email_address: emailVal,
           wallet: pending.wallet,
@@ -544,20 +498,14 @@ function _wireAuthModal() function _wireAuthModal() {
         if (error && error.code !== "23505") throw error;
         
         if (error && error.code === "23505") {
-          console.log("⚠️ Email already exists");
           show("⚠️ Email already registered. Please login instead.", false);
           return;
         }
-        
-        console.log("✅ User inserted successfully");
 
         show("✅ Account created! Logging you in...", true);
 
-        console.log("🔐 Calling connectEmail with:", pending.email, pending.wallet);
-        
         try {
-          const result = await connectEmail(pending.email, pending.wallet);
-          console.log("📞 connectEmail result:", result);
+          await connectEmail(pending.email, pending.wallet);
           
           (window as any).OliviumAuth.setUser({ 
             email: pending.email, 
@@ -565,21 +513,12 @@ function _wireAuthModal() function _wireAuthModal() {
             wallet: pending.wallet
           });
           
-          console.log("👤 User session stored");
-          console.log("🆔 Current identity after connectEmail:", getIdentity());
-          
           show("✅ Login successful! Loading your grove…", true);
           
           setTimeout(async () => {
             const overlay = document.getElementById("authModalOverlay");
             if (overlay) overlay.style.display = "none";
-            
             await forceRefreshUI();
-            
-            window.dispatchEvent(new CustomEvent("olivium:connected", { 
-              detail: { type: "email", email: pending.email }
-            }));
-            
             delete (window as any)._pendingSignup;
             
             const signupOtpBox = document.getElementById("signupOtpBox");
@@ -587,15 +526,10 @@ function _wireAuthModal() function _wireAuthModal() {
             if (signupOtpBox) signupOtpBox.style.display = "none";
             if (qrContainer) qrContainer.innerHTML = "";
             if (otpInput) otpInput.value = "";
-            
-            const msg = document.getElementById("msg");
-            if (msg) msg.textContent = "";
-            
-            console.log("✅ Signup complete, modal closed");
           }, 500);
           
         } catch (loginErr) {
-          console.error("❌ Auto-login failed:", loginErr);
+          console.error("Auto-login failed:", loginErr);
           show("Account created but auto-login failed. Please login manually.", false);
           
           setTimeout(() => {
@@ -606,16 +540,13 @@ function _wireAuthModal() function _wireAuthModal() {
         }
         
       } catch (err: any) {
-        console.error("❌ Signup DB error:", err);
+        console.error("Signup DB error:", err);
         show(`Registration failed: ${err.message || "unknown error"}`, false);
       }
     });
   }
 
-  // ==================== LOGIN FLOW ====================
-  
   document.getElementById("loginBtn")?.addEventListener("click", () => {
-    console.log("🔵 LOGIN BUTTON CLICKED");
     const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
     const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
 
@@ -628,14 +559,12 @@ function _wireAuthModal() function _wireAuthModal() {
     if (loginOtpBox) loginOtpBox.style.display = "block";
   });
 
-  // LOGIN - Verify OTP
   const verifyLoginBtn = document.getElementById("verifyLoginOtp");
   if (verifyLoginBtn) {
     const newVerifyLoginBtn = verifyLoginBtn.cloneNode(true);
     verifyLoginBtn.parentNode?.replaceChild(newVerifyLoginBtn, verifyLoginBtn);
     
     newVerifyLoginBtn.addEventListener("click", async () => {
-      console.log("🟢 LOGIN VERIFY BUTTON CLICKED");
       const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
       const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
       const emailVal = loginEmailInput?.value.trim().toLowerCase() ?? "";
@@ -657,13 +586,10 @@ function _wireAuthModal() function _wireAuthModal() {
       show("🔐 Verifying identity…", true);
 
       try {
-        console.log("🔑 Regenerating wallet from credentials...");
         const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
         const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
         const expectedWallet = Keypair.fromSeed(new Uint8Array(hash)).publicKey.toBase58();
-        console.log("🔑 Expected wallet:", expectedWallet);
         
-        console.log("📡 Fetching user from Supabase...");
         const { data: profile, error } = await sb
           .from("users")
           .select("wallet")
@@ -672,7 +598,6 @@ function _wireAuthModal() function _wireAuthModal() {
 
         if (error) throw error;
         const custodialWallet = profile?.wallet ?? null;
-        console.log("📡 Retrieved wallet from DB:", custodialWallet);
         
         if (!custodialWallet) {
           show("No account found with this email. Please sign up first.", false);
@@ -680,15 +605,11 @@ function _wireAuthModal() function _wireAuthModal() {
         }
         
         if (custodialWallet !== expectedWallet) {
-          console.log("❌ Wallet mismatch!");
           show("Invalid email or password. Please try again.", false);
           return;
         }
-        
-        console.log("✅ Credentials verified, calling connectEmail...");
 
-        const result = await connectEmail(emailVal, custodialWallet);
-        console.log("📞 connectEmail result:", result);
+        await connectEmail(emailVal, custodialWallet);
         
         (window as any).OliviumAuth.setUser({ 
           email: emailVal, 
@@ -696,84 +617,26 @@ function _wireAuthModal() function _wireAuthModal() {
           wallet: custodialWallet
         });
 
-        console.log("🆔 Current identity after connectEmail:", getIdentity());
-
         show("✅ Login successful! Loading your grove…", true);
 
         setTimeout(async () => {
           const overlay = document.getElementById("authModalOverlay");
           if (overlay) overlay.style.display = "none";
-          
           await forceRefreshUI();
-          
-          window.dispatchEvent(new CustomEvent("olivium:connected", { 
-            detail: { type: "email", email: emailVal }
-          }));
           
           const loginOtpBox = document.getElementById("loginOtpBox");
           if (loginOtpBox) loginOtpBox.style.display = "none";
-          
           if (otpInput) otpInput.value = "";
           if (loginPasswordInput) loginPasswordInput.value = "";
-          
-          const msg = document.getElementById("msg");
-          if (msg) msg.textContent = "";
-          
-          console.log("✅ Login complete, modal closed");
         }, 500);
 
       } catch (err: any) {
-        console.error("❌ Login error:", err);
+        console.error("Login error:", err);
         show(`Authentication failed: ${err.message || "Please try again"}`, false);
       }
     });
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MODAL HELPERS (purchase / agreement modals)
-// ═══════════════════════════════════════════════════════════════════════════
-
-function closeModal() {
-  const el = document.getElementById("modalOverlay");
-  if (el) el.style.display = "none";
-  document.body.style.overflow = "";
-}
-
-function closeAgreement() {
-  const agreementModal = document.getElementById("agreementModal");
-  const selectionModal = document.getElementById("modalOverlay");
-  if (agreementModal) agreementModal.style.display = "none";
-  if (selectionModal) selectionModal.style.display = "flex";
-  document.body.style.overflow = "";
-}
-
-function closeConnectModal() {
-  const el = document.getElementById("connectModal");
-  if (el) el.style.display = "none";
-}
-
-function closeSuccess() {
-  const el = document.getElementById("successModal");
-  if (el) el.style.display = "none";
-  document.body.style.overflow = "";
-}
-
-function closeRelease() {
-  const el = document.getElementById("releaseModal");
-  if (el) el.style.display = "none";
-  document.body.style.overflow = "";
-}
-
-(window as any).closeModal = closeModal;
-(window as any).closeAgreement = closeAgreement;
-(window as any).closeConnectModal = closeConnectModal;
-(window as any).closeSuccess = closeSuccess;
-(window as any).closeRelease = closeRelease;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CANONICAL EVENT LISTENERS
-// ═══════════════════════════════════════════════════════════════════════════
 
 window.addEventListener("olivium:connected", () => updateIdentityBalanceUI());
 window.addEventListener("olivium:disconnected", () => updateIdentityBalanceUI());
@@ -781,14 +644,4 @@ window.addEventListener("olivium:disconnected", () => updateIdentityBalanceUI())
 window.addEventListener("solana:connection-complete", (e: Event) => {
   const detail = (e as CustomEvent).detail ?? {};
   window.dispatchEvent(new CustomEvent("olivium:connected", { detail }));
-});
-
-document.addEventListener("click", (e) => {
-  const el = e.target as HTMLElement;
-  console.log("%c[CLICK]", "color:#C5A059;font-weight:bold;", {
-    tag: el.tagName,
-    id: el.id || null,
-    class: el.className || null,
-    text: el.innerText?.trim()?.slice(0, 40) || null
-  });
 });
