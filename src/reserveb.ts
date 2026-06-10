@@ -513,57 +513,69 @@ function _wireAuthModal() {
   emailEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
 
   // SIGNUP - Generate QR
-  signupBtn?.addEventListener("click", async () => {
-    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
-    const passwordVal = passEl?.value.trim() ?? "";
+  // TEST: Simplified signup handler that won't auto-close
+signupBtn?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  console.log("🔵 SIGNUP BUTTON CLICKED - Starting simplified flow");
+  
+  const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
+  const passwordVal = passEl?.value.trim() ?? "";
 
-    if (!emailVal || !passwordVal) {
-      show("Please complete both Email and Password fields.", false);
-      return;
+  if (!emailVal || !passwordVal) {
+    show("Please complete both Email and Password fields.", false);
+    return;
+  }
+
+  // Show a simple message instead of complex QR first
+  const qrContainer = document.getElementById("qr");
+  const signupOtpBox = document.getElementById("signupOtpBox");
+  
+  if (qrContainer) {
+    qrContainer.innerHTML = "<div style='padding:20px;text-align:center'>Generating QR Code...</div>";
+  }
+  
+  show("Generating QR code...", true);
+  
+  try {
+    const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+    const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+    const kp = Keypair.fromSeed(new Uint8Array(hash));
+    _generatedCustodialWallet = kp.publicKey.toBase58();
+
+    const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
+      + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
+
+    if (qrContainer && typeof (window as any).QRCode !== "undefined") {
+      qrContainer.innerHTML = ""; // Clear loading message
+      new (window as any).QRCode(qrContainer, {
+        text: totpUri, width: 200, height: 200,
+        colorDark: "#1f402a", colorLight: "#ffffff",
+        correctLevel: (window as any).QRCode.CorrectLevel.H,
+      });
+      console.log("✅ QR Code created successfully");
     }
 
-    show("🔐 Generating secure cryptographic identity…", true);
-    
-    const qrContainer = document.getElementById("qr");
-    const signupOtpBox = document.getElementById("signupOtpBox");
-    
-    if (qrContainer) {
-      qrContainer.innerHTML = "";
-      qrContainer.style.minHeight = "200px";
-    }
-    
     if (signupOtpBox) {
-      signupOtpBox.style.display = "none";
+      // Direct DOM manipulation - no style changes that could be overridden
+      signupOtpBox.setAttribute('style', 'display: block !important; visibility: visible !important; opacity: 1 !important;');
+      console.log("✅ OTP box forced visible, current display:", signupOtpBox.style.display);
     }
-
-    try {
-      const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
-      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
-      const kp = Keypair.fromSeed(new Uint8Array(hash));
-      _generatedCustodialWallet = kp.publicKey.toBase58();
-
-      const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
-        + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
-
-      if (qrContainer && typeof (window as any).QRCode !== "undefined") {
-        new (window as any).QRCode(qrContainer, {
-          text: totpUri, width: 180, height: 180,
-          colorDark: "#1f402a", colorLight: "#ffffff",
-          correctLevel: (window as any).QRCode.CorrectLevel.H,
-        });
-      }
-
-      if (signupOtpBox) {
-        signupOtpBox.style.display = "block";
-      }
-      
-      show("📱 Scan QR code with Google Authenticator, then enter the 6-digit code below", true);
-      
-    } catch (err) {
-      console.error("Key derivation failed:", err);
-      show("Failed to generate credentials.", false);
-    }
-  });
+    
+    // Add a persistent message
+    show("📱 SCAN QR CODE with Google Authenticator\n\nThen enter the 6-digit code below.\n\n(This window will stay open until you verify)", true);
+    
+    // Store flag that we're in QR mode
+    (window as any).awaitingQRVerification = true;
+    
+    // NO TIMEOUTS - NOTHING THAT AUTO-CLOSES
+    
+  } catch (err) {
+    console.error("Key derivation failed:", err);
+    show("Failed to generate credentials.", false);
+  }
+});
 
   // SIGNUP - Verify OTP
   document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
