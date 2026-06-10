@@ -375,7 +375,25 @@ function show(msg: string, ok = true) {
 }
 
 function _wireAuthModal() {
-  // ── open / close ──────────────────────────────────────────────────────
+  // Get all elements first
+  const loginTab = document.getElementById("loginTab");
+  const signupTab = document.getElementById("signupTab");
+  const loginForm = document.getElementById("loginForm") as HTMLElement | null;
+  const signupForm = document.getElementById("signupForm") as HTMLElement | null;
+  const passEl = document.getElementById("signupPassword") as HTMLInputElement | null;
+  const confirmEl = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
+  const emailEl = document.getElementById("signupEmail") as HTMLInputElement | null;
+  const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement | null;
+
+  // Helper function
+  function show(msg: string, ok = true) {
+    const el = document.getElementById("msg");
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = ok ? "#2e7d32" : "#d94d4d";
+  }
+
+  // Open modal from email button
   document.getElementById("emailLoginBtn")?.addEventListener("click", () => {
     const connectModal = document.getElementById("connectModal");
     if (connectModal) connectModal.style.display = "none";
@@ -383,12 +401,7 @@ function _wireAuthModal() {
     if (overlay) overlay.style.display = "flex";
     show("");
     
-    // Reset to login tab by default
-    const loginTab = document.getElementById("loginTab");
-    const signupTab = document.getElementById("signupTab");
-    const loginForm = document.getElementById("loginForm") as HTMLElement | null;
-    const signupForm = document.getElementById("signupForm") as HTMLElement | null;
-    
+    // Reset to login tab
     if (loginTab && signupTab && loginForm && signupForm) {
       loginTab.style.background = "var(--green)";
       loginTab.style.color = "white";
@@ -397,133 +410,112 @@ function _wireAuthModal() {
       loginForm.style.display = "block";
       signupForm.style.display = "none";
     }
-    
-    // Reset all signup form fields
-    const signupEmail = document.getElementById("signupEmail") as HTMLInputElement | null;
-    const signupPassword = document.getElementById("signupPassword") as HTMLInputElement | null;
-    const signupConfirm = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
-    if (signupEmail) signupEmail.value = "";
-    if (signupPassword) signupPassword.value = "";
-    if (signupConfirm) signupConfirm.value = "";
-    
-    const signupOtpBox = document.getElementById("signupOtpBox");
-    if (signupOtpBox) signupOtpBox.style.display = "none";
-    
-    const qrContainer = document.getElementById("qr");
-    if (qrContainer) qrContainer.innerHTML = "";
-    
-    // Reset login form
-    const loginEmail = document.getElementById("loginEmail") as HTMLInputElement | null;
-    const loginPassword = document.getElementById("loginPassword") as HTMLInputElement | null;
-    const loginOtpBox = document.getElementById("loginOtpBox");
-    const loginOtp = document.getElementById("loginOtp") as HTMLInputElement | null;
-    if (loginEmail) loginEmail.value = "";
-    if (loginPassword) loginPassword.value = "";
-    if (loginOtpBox) loginOtpBox.style.display = "none";
-    if (loginOtp) loginOtp.value = "";
   });
 
+  // Close modal
   document.getElementById("closeAuthModal")?.addEventListener("click", () => {
     const overlay = document.getElementById("authModalOverlay");
     if (overlay) overlay.style.display = "none";
-    
-    // Reset all forms when closing
     const signupOtpBox = document.getElementById("signupOtpBox");
-    if (signupOtpBox) signupOtpBox.style.display = "none";
-    
     const qrContainer = document.getElementById("qr");
+    if (signupOtpBox) signupOtpBox.style.display = "none";
     if (qrContainer) qrContainer.innerHTML = "";
-    
     const msg = document.getElementById("msg");
     if (msg) msg.textContent = "";
-    
-    const loginOtpBox = document.getElementById("loginOtpBox");
-    if (loginOtpBox) loginOtpBox.style.display = "none";
   });
 
+  // Click outside to close
   document.getElementById("authModalOverlay")?.addEventListener("click", (e) => {
     if (e.target === e.currentTarget) {
       (e.currentTarget as HTMLElement).style.display = "none";
-      
-      // Reset forms
       const signupOtpBox = document.getElementById("signupOtpBox");
-      if (signupOtpBox) signupOtpBox.style.display = "none";
-      
       const qrContainer = document.getElementById("qr");
+      if (signupOtpBox) signupOtpBox.style.display = "none";
       if (qrContainer) qrContainer.innerHTML = "";
-      
-      const loginOtpBox = document.getElementById("loginOtpBox");
-      if (loginOtpBox) loginOtpBox.style.display = "none";
     }
   });
 
-  // ── tabs ──────────────────────────────────────────────────────────────
-  const loginTab  = document.getElementById("loginTab");
-  const signupTab = document.getElementById("signupTab");
-  const loginForm = document.getElementById("loginForm")  as HTMLElement | null;
-  const signupForm = document.getElementById("signupForm") as HTMLElement | null;
-
+  // Tab switching
   loginTab?.addEventListener("click", () => {
     if (!loginTab || !signupTab || !loginForm || !signupForm) return;
-    loginTab.style.background   = "var(--green)";
-    loginTab.style.color        = "white";
-    signupTab.style.background  = "transparent";
-    signupTab.style.color       = "var(--text)";
-    loginForm.style.display     = "block";
-    signupForm.style.display    = "none";
+    loginTab.style.background = "var(--green)";
+    loginTab.style.color = "white";
+    signupTab.style.background = "transparent";
+    signupTab.style.color = "var(--text)";
+    loginForm.style.display = "block";
+    signupForm.style.display = "none";
     show("");
     
-    // Clear signup artifacts when switching to login
     const signupOtpBox = document.getElementById("signupOtpBox");
-    if (signupOtpBox) signupOtpBox.style.display = "none";
-    
     const qrContainer = document.getElementById("qr");
+    if (signupOtpBox) signupOtpBox.style.display = "none";
     if (qrContainer) qrContainer.innerHTML = "";
   });
 
   signupTab?.addEventListener("click", () => {
     if (!loginTab || !signupTab || !loginForm || !signupForm) return;
-    signupTab.style.background  = "var(--green)";
-    signupTab.style.color       = "white";
-    loginTab.style.background   = "transparent";
-    loginTab.style.color        = "var(--text)";
-    signupForm.style.display    = "block";
-    loginForm.style.display     = "none";
+    signupTab.style.background = "var(--green)";
+    signupTab.style.color = "white";
+    loginTab.style.background = "transparent";
+    loginTab.style.color = "var(--text)";
+    signupForm.style.display = "block";
+    loginForm.style.display = "none";
     show("");
     
-    // Reset signup form fields
-    const signupEmail = document.getElementById("signupEmail") as HTMLInputElement | null;
-    const signupPassword = document.getElementById("signupPassword") as HTMLInputElement | null;
-    const signupConfirm = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
-    if (signupEmail) signupEmail.value = "";
-    if (signupPassword) signupPassword.value = "";
-    if (signupConfirm) signupConfirm.value = "";
+    if (emailEl) emailEl.value = "";
+    if (passEl) passEl.value = "";
+    if (confirmEl) confirmEl.value = "";
     
-    // Hide OTP box and clear QR if showing
     const signupOtpBox = document.getElementById("signupOtpBox");
-    if (signupOtpBox) signupOtpBox.style.display = "none";
-    
     const qrContainer = document.getElementById("qr");
+    if (signupOtpBox) signupOtpBox.style.display = "none";
     if (qrContainer) qrContainer.innerHTML = "";
     
-    // Re-run validation to disable signup button
     validateSignupForm(passEl, confirmEl, emailEl, signupBtn);
   });
 
-  // ── password metric listeners ─────────────────────────────────────────
-  const passEl    = document.getElementById("signupPassword")        as HTMLInputElement | null;
-  const confirmEl = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
-  const emailEl   = document.getElementById("signupEmail")           as HTMLInputElement | null;
-  const signupBtn = document.getElementById("signupBtn")             as HTMLButtonElement | null;
+  // Password validation
+  function validateSignupForm(passEl: HTMLInputElement | null, confirmEl: HTMLInputElement | null, emailEl: HTMLInputElement | null, btnEl: HTMLButtonElement | null) {
+    const pass = passEl?.value ?? "";
+    const confirm = confirmEl?.value ?? "";
+    let allPass = true;
+    
+    const metrics = {
+      len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
+      cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
+      low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
+      num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
+      spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
+    };
+    
+    for (const key in metrics) {
+      const m = metrics[key as keyof typeof metrics];
+      const ok = m.reg.test(pass);
+      if (m.el) {
+        m.el.style.color = ok ? "#2e7d32" : "#d94d4d";
+        const icon = m.el.querySelector<HTMLElement>(".icon");
+        if (icon) icon.innerText = ok ? "✔" : "❌";
+      }
+      if (!ok) allPass = false;
+    }
+    
+    const matches = pass === confirm && pass.length > 0;
+    const hasEmail = (emailEl?.value.trim().length ?? 0) > 0;
+    
+    if (btnEl) {
+      btnEl.disabled = !(allPass && matches && hasEmail);
+      btnEl.style.background = btnEl.disabled ? "#cccccc" : "var(--green)";
+    }
+  }
 
-  passEl?.addEventListener("input",    () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+  passEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
   confirmEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
-  emailEl?.addEventListener("input",   () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+  emailEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
 
-  // ── signup step 1: generate custodial wallet + QR ─────────────────────
+  // SIGNUP - Generate QR
   signupBtn?.addEventListener("click", async () => {
-    const emailVal    = emailEl?.value.trim().toLowerCase()  ?? "";
-    const passwordVal = passEl?.value.trim()                 ?? "";
+    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
+    const passwordVal = passEl?.value.trim() ?? "";
 
     if (!emailVal || !passwordVal) {
       show("Please complete both Email and Password fields.", false);
@@ -531,33 +523,23 @@ function _wireAuthModal() {
     }
 
     show("🔐 Generating secure cryptographic identity…", true);
+    
     const qrContainer = document.getElementById("qr");
-    if (qrContainer) qrContainer.innerHTML = "";
-   // const otpBox = document.getElementById("signupOtpBox");
-    if (otpBox) otpBox.style.display = "none"; // Hide initially
-    // Add this INSIDE the signupBtn click handler, right after generating the QR:
-
-console.log("🔍 QR CODE GENERATED - checking visibility");
-const qrContainer = document.getElementById("qr");
-const otpBox = document.getElementById("signupOtpBox");
-const authModal = document.getElementById("authModalOverlay");
-
-console.log("QR Container:", qrContainer);
-console.log("QR innerHTML:", qrContainer?.innerHTML);
-console.log("OTP Box display:", otpBox?.style.display);
-console.log("Auth Modal display:", authModal?.style.display);
-
-// Force visibility
-if (otpBox) {
-  otpBox.style.display = "block";
-  otpBox.style.visibility = "visible";
-  otpBox.style.opacity = "1";
-}
+    const signupOtpBox = document.getElementById("signupOtpBox");
+    
+    if (qrContainer) {
+      qrContainer.innerHTML = "";
+      qrContainer.style.minHeight = "200px";
+    }
+    
+    if (signupOtpBox) {
+      signupOtpBox.style.display = "none";
+    }
 
     try {
-      const seed    = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
-      const hash    = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
-      const kp      = Keypair.fromSeed(new Uint8Array(hash));
+      const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+      const kp = Keypair.fromSeed(new Uint8Array(hash));
       _generatedCustodialWallet = kp.publicKey.toBase58();
 
       const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
@@ -571,11 +553,11 @@ if (otpBox) {
         });
       }
 
-      if (otpBox) otpBox.style.display = "block";
+      if (signupOtpBox) {
+        signupOtpBox.style.display = "block";
+      }
       
-      show("📱 STEP 1: Scan QR code with Google Authenticator, Microsoft Authenticator, or any TOTP app.\n\nSTEP 2: Enter the 6-digit code below to complete setup.", true);
-      
-      // NO AUTO-CLOSE - User has unlimited time to scan QR
+      show("📱 Scan QR code with Google Authenticator, then enter the 6-digit code below", true);
       
     } catch (err) {
       console.error("Key derivation failed:", err);
@@ -583,10 +565,10 @@ if (otpBox) {
     }
   });
 
-  // ── signup step 2: verify OTP + persist user ──────────────────────────
+  // SIGNUP - Verify OTP
   document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
-    const emailVal   = emailEl?.value.trim().toLowerCase() ?? "";
-    const otpInput   = document.getElementById("signupOtp") as HTMLInputElement | null;
+    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
+    const otpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
     const enteredOtp = otpInput?.value.trim() ?? "";
 
     if (!enteredOtp || enteredOtp.length < 6) {
@@ -599,9 +581,9 @@ if (otpBox) {
     try {
       const { error } = await sb.from("users").insert([{
         Email_address: emailVal,
-        wallet:        _generatedCustodialWallet,
-        token:         SECRET_SEED,
-        credits:       0,
+        wallet: _generatedCustodialWallet,
+        token: SECRET_SEED,
+        credits: 0,
       }]);
 
       if (error && error.code !== "23505") throw error;
@@ -611,29 +593,23 @@ if (otpBox) {
         return;
       }
 
-      show("🎉 Account created successfully! Switching to login...", true);
+      show("🎉 Account created! Switching to login...", true);
 
-      // Switch to login tab after successful signup - but KEEP MODAL OPEN
       setTimeout(() => {
         loginTab?.click();
         
-        // Pre-fill email for convenience
         const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
         if (loginEmailInput) loginEmailInput.value = emailVal;
         
-        // Clear signup form artifacts but keep modal open
         const signupOtpBox = document.getElementById("signupOtpBox");
-        if (signupOtpBox) signupOtpBox.style.display = "none";
-        
         const qrContainer = document.getElementById("qr");
+        if (signupOtpBox) signupOtpBox.style.display = "none";
         if (qrContainer) qrContainer.innerHTML = "";
         
-        // Clear password fields for security
         if (passEl) passEl.value = "";
         if (confirmEl) confirmEl.value = "";
         if (otpInput) otpInput.value = "";
         
-        // Show login instruction
         show("🔐 Now enter your credentials and MFA code to login.", true);
       }, 2000);
       
@@ -643,9 +619,9 @@ if (otpBox) {
     }
   });
 
-  // ── login step 1: show OTP input ──────────────────────────────────────
+  // LOGIN - Show OTP input
   document.getElementById("loginBtn")?.addEventListener("click", () => {
-    const loginEmailInput    = document.getElementById("loginEmail")    as HTMLInputElement | null;
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
     const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
 
     if (!loginEmailInput?.value.trim() || !loginPasswordInput?.value.trim()) {
@@ -657,16 +633,16 @@ if (otpBox) {
     if (loginOtpBox) loginOtpBox.style.display = "block";
   });
 
-  // ── login step 2: verify OTP + connect email identity ─────────────────
+  // LOGIN - Verify OTP
   document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
     const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
     const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
-    const emailVal        = loginEmailInput?.value.trim().toLowerCase() ?? "";
-    const passwordVal     = loginPasswordInput?.value.trim() ?? "";
+    const emailVal = loginEmailInput?.value.trim().toLowerCase() ?? "";
+    const passwordVal = loginPasswordInput?.value.trim() ?? "";
 
-    if (!emailVal || !passwordVal) { 
-      show("Please enter your email and password.", false); 
-      return; 
+    if (!emailVal || !passwordVal) {
+      show("Please enter your email and password.", false);
+      return;
     }
     
     const otpInput = document.getElementById("loginOtp") as HTMLInputElement | null;
@@ -680,7 +656,6 @@ if (otpBox) {
     show("🔐 Verifying identity…", true);
 
     try {
-      // Verify credentials by regenerating the wallet
       const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
       const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
       const expectedWallet = Keypair.fromSeed(new Uint8Array(hash)).publicKey.toBase58();
@@ -698,34 +673,26 @@ if (otpBox) {
         return;
       }
       
-      // Verify the wallet matches
       if (custodialWallet !== expectedWallet) {
         show("Invalid email or password. Please try again.", false);
         return;
       }
 
-      // Persist the user session
       (window as any).OliviumAuth.setUser({ email: emailVal, tier: "Standard" });
-
-      // Call the canonical connect flow from connection.ts
       await connectEmail(emailVal, custodialWallet);
 
       show("✅ Login successful! Loading your grove…", true);
 
-      // Close modal after successful login
       setTimeout(() => {
         const overlay = document.getElementById("authModalOverlay");
         if (overlay) overlay.style.display = "none";
         
-        // Clear login form for next time
         const loginOtpBox = document.getElementById("loginOtpBox");
         if (loginOtpBox) loginOtpBox.style.display = "none";
         
         const loginOtpInput = document.getElementById("loginOtp") as HTMLInputElement | null;
         if (loginOtpInput) loginOtpInput.value = "";
-        
-        const loginPassword = document.getElementById("loginPassword") as HTMLInputElement | null;
-        if (loginPassword) loginPassword.value = "";
+        if (loginPasswordInput) loginPasswordInput.value = "";
         
         const msg = document.getElementById("msg");
         if (msg) msg.textContent = "";
