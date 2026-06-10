@@ -345,7 +345,8 @@ function show(msg: string, ok = true) {
   el.textContent = msg;
   el.style.color = ok ? "#2e7d32" : "#d94d4d";
 }
-function _wireAuthModal() {
+
+function _wireAuthModal() function _wireAuthModal() {
   // Get all elements first
   const loginTab = document.getElementById("loginTab");
   const signupTab = document.getElementById("signupTab");
