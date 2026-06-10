@@ -535,6 +535,24 @@ function _wireAuthModal() {
     if (qrContainer) qrContainer.innerHTML = "";
     const otpBox = document.getElementById("signupOtpBox");
     if (otpBox) otpBox.style.display = "none"; // Hide initially
+    // Add this INSIDE the signupBtn click handler, right after generating the QR:
+
+console.log("🔍 QR CODE GENERATED - checking visibility");
+const qrContainer = document.getElementById("qr");
+const otpBox = document.getElementById("signupOtpBox");
+const authModal = document.getElementById("authModalOverlay");
+
+console.log("QR Container:", qrContainer);
+console.log("QR innerHTML:", qrContainer?.innerHTML);
+console.log("OTP Box display:", otpBox?.style.display);
+console.log("Auth Modal display:", authModal?.style.display);
+
+// Force visibility
+if (otpBox) {
+  otpBox.style.display = "block";
+  otpBox.style.visibility = "visible";
+  otpBox.style.opacity = "1";
+}
 
     try {
       const seed    = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
