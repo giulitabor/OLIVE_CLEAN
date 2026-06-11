@@ -35,6 +35,7 @@ export default defineConfig({
 
 
 
+        partner: resolve(__dirname, "partner.html"),
 
         more: resolve(__dirname, "understand.html"),
 
