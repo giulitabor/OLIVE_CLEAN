@@ -19,7 +19,6 @@
     --border: rgba(201,168,76,0.2);
     --text1: #f0e8d0;
     --text2: #a89880;
-    --font: 'Georgia', serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -78,7 +77,6 @@
     margin-bottom: 12px;
     outline: none;
   }
-  .input-field:focus { border-color: var(--gold); }
   .btn-primary {
     width: 100%;
     padding: 14px;
@@ -91,25 +89,9 @@
     cursor: pointer;
     margin-top: 8px;
   }
-  .btn-primary:hover { background: rgba(201,168,76,0.3); }
   .btn-secondary {
     background: var(--glass);
     color: var(--text2);
-  }
-  .invite-code {
-    background: rgba(78,205,196,0.1);
-    border: 1px dashed var(--teal);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    margin: 16px 0;
-  }
-  .code-display {
-    font-size: 28px;
-    letter-spacing: 4px;
-    font-family: monospace;
-    color: var(--teal);
-    margin: 8px 0;
   }
   .bottom-nav {
     position: fixed;
@@ -156,387 +138,697 @@
   .progress-label { font-size:12px; color:var(--text2); width:110px; }
   .progress-track { flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
   .progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--gold), var(--gold2)); transition:width 0.5s ease; }
-  .progress-fill.teal { background:linear-gradient(90deg, var(--teal), #80e8e2); }
   .tree-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
   .tree-stat { text-align:center; background:var(--glass2); border-radius:12px; padding:8px; }
   .tree-stat-val { font-size:20px; font-weight:600; color:var(--gold2); }
-  .sync-status { font-size: 10px; color: var(--teal); text-align: right; padding: 4px 16px; }
-  .partner-toggle { display: flex; gap: 8px; margin: 12px 16px 0; }
-  .partner-btn { flex:1; padding: 10px; border-radius: 40px; border: 0.5px solid var(--border); background: var(--glass); color: var(--text2); font-size: 13px; cursor: pointer; text-align: center; }
-  .partner-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.15); color: var(--gold); }
-  .tab-row { display: flex; background: var(--navy2); margin: 8px 16px 0; border-radius: 40px; padding: 4px; }
-  .tab { flex:1; padding: 8px; font-size: 12px; color: var(--text2); text-align: center; cursor: pointer; border-radius: 32px; }
-  .tab.active { background: rgba(201,168,76,0.2); color: var(--gold); }
   .journal-entry { padding: 14px; background: var(--glass); border-left: 2px solid var(--gold); border-radius: 0 16px 16px 0; margin-bottom: 10px; }
   .journal-textarea { width:100%; background: var(--glass2); border:0.5px solid var(--border); border-radius:20px; padding:12px; color:var(--text1); font-size:14px; resize:none; height:80px; }
   .journal-btn { width:100%; padding:12px; background:linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1)); border:0.5px solid var(--gold); border-radius:40px; color:var(--gold); margin-top:8px; cursor:pointer; }
   #tree-canvas { width:100%; height:220px; display:block; }
-  .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); backdrop-filter:blur(12px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .modal-content { max-width: 340px; width: 85%; background: #11151f; border: 1px solid var(--gold); border-radius: 32px; padding: 24px; }
-  textarea { width:100%; background: #1a1f2e; border: 0.5px solid var(--border); border-radius: 20px; padding: 12px; color: white; font-family: inherit; margin: 12px 0; resize: vertical; }
+  .questionnaire-step { margin-bottom: 20px; }
+  .progress-steps { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--glass2); transition: all 0.3s; }
+  .step-dot.active { background: var(--gold); width: 20px; border-radius: 4px; }
+  .step-dot.completed { background: var(--teal); }
+  .invite-box {
+    background: rgba(78,205,196,0.1);
+    border: 1px dashed var(--teal);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .code-display {
+    font-size: 28px;
+    letter-spacing: 4px;
+    font-family: monospace;
+    color: var(--teal);
+    margin: 8px 0;
+  }
+  .waiting-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--glass2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <canvas id="stars-canvas"></canvas>
 <div id="app">
 
-  <!-- SUPABASE SETUP SCREEN (first time) -->
-  <div id="setup-screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:40px 24px; text-align:center;">
-    <div style="font-size:60px; margin-bottom:16px;">🌿</div>
-    <div style="font-size:28px; font-family:Georgia, serif; color:var(--gold2); margin-bottom:8px;">Two Paths,<br>One Journey</div>
-    <div class="card" style="width:100%; text-align:left; margin-top:20px;">
+  <!-- SETUP SCREEN -->
+  <div id="setup-screen" class="screen active">
+    <div style="text-align: center; margin: 60px 0 40px;">
+      <div style="font-size: 64px; margin-bottom: 16px;">🌿</div>
+      <div style="font-size: 28px; font-family: Georgia, serif; color: var(--gold2);">Two Paths,<br>One Journey</div>
+    </div>
+    <div class="card">
       <div class="card-title">Connect to Supabase</div>
-      <input type="text" id="sb-url" class="intake-input" placeholder="https://eohdfgvebqdxstwdildk.supabase.co" style="margin-bottom:8px;">
-      <input type="text" id="sb-key" class="intake-input" placeholder="sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY" style="margin-bottom:16px;">
-  <button class="btn-primary" id="connect-btn">Connect ✨</button>
-      <button class="btn-primary btn-secondary" id="demo-btn" style="margin-top:8px;">Demo Mode</button>
+      <input type="text" id="sb-url" class="input-field" placeholder="https://your-project.supabase.co">
+      <input type="text" id="sb-key" class="input-field" placeholder="your-anon-public-key">
+      <button class="btn-primary" id="connect-btn">Connect ✨</button>
     </div>
-    <div style="font-size:11px; color:var(--text3); margin-top:24px;">🔒 Your data is private. Create an account to save your journey.</div>
   </div>
 
-  <!-- AUTH SCREEN (login/signup after Supabase) -->
-  <div id="auth-screen" style="display:none; min-height:100vh; padding:40px 20px;">
-    <div style="text-align:center; margin-bottom:32px;">
-      <div style="font-size:48px;">💑</div>
-      <div style="font-size:24px; font-family:Georgia; color:var(--gold2); margin-top:8px;">Welcome Back</div>
-      <div style="font-size:13px; color:var(--text2); margin-top:4px;">Sign in to continue your journey</div>
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen">
+    <div style="text-align: center; margin-bottom: 32px;">
+      <div style="font-size: 48px;">💑</div>
+      <div style="font-size: 24px; font-family: Georgia; color: var(--gold2);">Welcome</div>
     </div>
     <div class="card">
-      <div class="card-title">Authentication</div>
+      <div class="card-title">Sign In / Sign Up</div>
       <input type="email" id="auth-email" class="input-field" placeholder="Email">
-      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6 characters)">
+      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6)">
       <button class="btn-primary" id="login-btn">Sign In</button>
-      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;">Create New Account</button>
+      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;">Create Account</button>
+      <div id="auth-error" style="color: var(--rose); font-size: 12px; text-align: center; margin-top: 12px;"></div>
     </div>
-    <div id="relationship-status" style="text-align:center; margin-top:16px; font-size:12px; color:var(--text3);"></div>
   </div>
 
-  <!-- RELATIONSHIP SETUP (first time user - no relationship yet) -->
-  <div id="relationship-setup-screen" style="display:none; min-height:100vh; padding:40px 20px;">
-    <div style="text-align:center; margin-bottom:24px;">
-      <div style="font-size:48px;">🏠</div>
-      <div style="font-size:22px; font-family:Georgia; color:var(--gold2);">Start Your Journey</div>
-      <div style="font-size:13px; color:var(--text2); margin-top:8px;">Create a new relationship or join an existing one</div>
+  <!-- RELATIONSHIP SETUP -->
+  <div id="relation-screen" class="screen">
+    <div class="card">
+      <div class="card-title">✨ Create New Relationship</div>
+      <input type="text" id="my-name" class="input-field" placeholder="Your name">
+      <input type="text" id="partner-name" class="input-field" placeholder="Partner's name">
+      <button class="btn-primary" id="create-btn">Create Relationship</button>
     </div>
     <div class="card">
-      <div class="card-title">Create New Relationship</div>
-      <input type="text" id="rel-name-a" class="input-field" placeholder="Your name">
-      <input type="text" id="rel-name-b" class="input-field" placeholder="Partner's name">
-      <button class="btn-primary" id="create-relation-btn">Create Relationship ✨</button>
+      <div class="card-title">🔗 Join Existing</div>
+      <input type="text" id="join-code" class="input-field" placeholder="6-digit invite code" maxlength="6">
+      <button class="btn-primary btn-secondary" id="join-btn">Join Relationship</button>
     </div>
-    <div class="card">
-      <div class="card-title">Join Existing Relationship</div>
-      <input type="text" id="join-code" class="input-field" placeholder="Enter 6-digit invite code">
-      <button class="btn-primary btn-secondary" id="join-relation-btn">Join Relationship</button>
+    <div id="relation-error" style="color: var(--rose); font-size: 12px; text-align: center; margin-top: 12px;"></div>
+  </div>
+
+  <!-- WAITING SCREEN -->
+  <div id="waiting-screen" class="screen">
+    <div class="card" style="text-align: center;">
+      <div style="font-size: 48px;">⏳</div>
+      <div style="font-size: 18px; color: var(--gold2);">Waiting for Partner</div>
+      <div class="invite-box">
+        <div class="code-display" id="invite-code">------</div>
+        <button class="btn-primary btn-secondary" id="copy-code">📋 Copy Code</button>
+      </div>
+      <div class="waiting-spinner" style="margin: 20px auto;"></div>
+      <div style="font-size: 13px; color: var(--text2);">Share this code with your partner to begin your journey together</div>
     </div>
   </div>
 
-  <!-- WAITING FOR PARTNER SCREEN -->
-  <div id="waiting-screen" style="display:none; min-height:100vh; padding:40px 20px; text-align:center;">
-    <div style="font-size:60px; margin-bottom:20px;">⏳</div>
-    <div style="font-size:20px; font-family:Georgia; color:var(--gold2);">Waiting for Partner</div>
-    <div style="font-size:14px; color:var(--text2); margin:16px 0;">Share this code with your partner:</div>
-    <div class="invite-code">
-      <div style="font-size:12px; color:var(--teal);">Your Invite Code</div>
-      <div class="code-display" id="invite-code-display">------</div>
-      <button class="btn-primary btn-secondary" id="copy-code-btn" style="margin-top:8px; padding:8px;">📋 Copy Code</button>
-    </div>
-    <div style="font-size:13px; color:var(--text3);">Once your partner joins, your journey begins together ✨</div>
+  <!-- QUESTIONNAIRE SCREEN -->
+  <div id="questionnaire-screen" class="screen">
+    <div id="questionnaire-container"></div>
   </div>
 
-  <!-- MAIN APP (after relationship is established) -->
-  <div id="main-app" style="display:none;">
-    <div class="sync-status" id="sync-status">🟢 Live Synced</div>
-
+  <!-- MAIN APP -->
+  <div id="main-app" class="screen">
+    <div class="sync-status" id="sync-status" style="font-size: 10px; color: var(--teal); text-align: right; padding: 8px 16px;">🟢 Connected</div>
+    
     <div id="screen-home" class="screen active">
       <div class="header-strip">
         <div class="header-date" id="hdr-date"></div>
-        <div class="header-row"><div class="header-moon">🌔 Waxing Gibbous</div><div class="header-together" id="hdr-together">❤️ Growing Together</div></div>
+        <div class="header-row">
+          <div class="header-moon" id="hdr-moon">🌙 Loading...</div>
+          <div class="header-together" id="hdr-together">❤️ Loading...</div>
+        </div>
       </div>
-      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">78%</div><div class="tree-stat-lbl">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">76%</div><div class="tree-stat-lbl">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">82%</div><div class="tree-stat-lbl">Vision</div></div></div></div>
+      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div>Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div>Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div>Vision</div></div></div></div>
       <div class="card"><div class="card-title">Relationship Weather</div><div id="weather-progress"></div></div>
-    </div>
-
-    <div id="screen-couple" class="screen">
-      <div class="header-strip"><div class="header-date">Our Journey</div><div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div></div>
-      <div class="card"><div class="card-title">Baby Readiness</div><div id="baby-readiness"></div><div style="text-align:center;margin-top:16px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">75%</div></div></div>
-      <div class="session-type-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 16px;"><div class="session-type" onclick="alert('Joint Session: Open the shared journal')"><div class="st-icon">🤝</div><div class="st-name">Joint Session</div></div><div class="session-type" onclick="openPrivateModal()"><div class="st-icon">🔒</div><div class="st-name">Private Session</div></div></div>
-    </div>
-
-    <div id="screen-growth" class="screen">
-      <div class="partner-toggle"><div class="partner-btn active" onclick="switchPartner('A',this)">Partner A</div><div class="partner-btn" onclick="switchPartner('B',this)">Partner B</div></div>
-      <div style="display:flex; align-items:center; gap:12px; padding:16px; background:var(--glass); margin:12px 16px; border-radius:32px;"><div style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;" id="growth-avatar">🌸</div><div><div id="growth-name" style="font-weight:600;">Loading</div><div style="font-size:11px;color:var(--text2);">Your journey</div></div><div id="growth-xp" style="margin-left:auto;background:rgba(201,168,76,0.15);border-radius:20px;padding:4px 12px;">✨ 0 XP</div></div>
-      <div class="tab-row"><div class="tab active" onclick="switchGrowthTab('radar',this)">Growth</div><div class="tab" onclick="switchGrowthTab('private',this)">Private</div></div>
-      <div id="tab-radar"><div class="card"><div id="growth-bars"></div></div></div>
-      <div id="tab-private" style="display:none;"><div class="card"><div id="private-entries-list"></div><button class="btn-primary" onclick="openPrivateModal()">+ Add Private Note</button></div></div>
     </div>
 
     <div id="screen-journal" class="screen">
       <div class="header-strip"><div class="header-date">Shared Journal</div></div>
-      <div class="journal-input-area" style="margin:12px 16px;"><div class="partner-toggle" style="margin:0 0 8px"><div class="partner-btn active" onclick="setJournalPartner('A',this)">Partner A</div><div class="partner-btn" onclick="setJournalPartner('B',this)">Partner B</div></div><textarea class="journal-textarea" id="journal-input" placeholder="Write freely... Partner sees instantly ✨"></textarea><button class="journal-btn" onclick="addJournalEntry()">Add Entry ✦</button></div>
+      <div class="journal-input-area" style="margin:12px 16px;">
+        <textarea class="journal-textarea" id="journal-input" placeholder="Write something for your partner..."></textarea>
+        <button class="journal-btn" id="post-journal">Post to Journal ✨</button>
+      </div>
       <div id="journal-entries" style="padding:0 16px;"></div>
     </div>
 
+    <div id="screen-private" class="screen">
+      <div class="header-strip"><div class="header-date">My Private Space</div></div>
+      <div class="card">
+        <div class="card-title">🔒 Private Notes</div>
+        <textarea id="private-input" class="journal-textarea" placeholder="Only you can see this..." rows="4"></textarea>
+        <button class="journal-btn" id="save-private">Save Private Note</button>
+        <div id="private-entries" style="margin-top: 16px;"></div>
+      </div>
+    </div>
+
     <div id="screen-cosmic" class="screen">
-      <div class="header-strip"><div class="header-date">Cosmic Context</div></div>
-      <div class="card"><div class="card-title">Moon Wisdom</div><div style="text-align:center;padding:20px;"><div style="font-size:48px;">🌔</div><div>Waxing Gibbous - Trust your intuition</div></div></div>
+      <div class="header-strip"><div class="header-date">Cosmic Guidance</div></div>
+      <div class="card"><div class="card-title">🌙 Moon Wisdom</div><div id="moon-content" style="text-align:center; padding:20px;"></div></div>
+      <div class="card"><div class="card-title">✨ Today's Insight</div><div id="horoscope-content" style="padding:20px;"></div></div>
     </div>
   </div>
 
   <nav class="bottom-nav" id="bottom-nav" style="display:none;">
-    <button class="nav-item active" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span>Our Journey</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span>My Growth</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmos</span><div class="nav-dot"></div></button>
+    <button class="nav-item active" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span></button>
+    <button class="nav-item" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span></button>
+    <button class="nav-item" onclick="switchScreen('private',this)"><span class="nav-icon">🔒</span><span>Private</span></button>
+    <button class="nav-item" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmic</span></button>
   </nav>
-</div>
-
-<!-- Modal -->
-<div id="modal-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center;">
-  <div style="background:#11151f; border-radius:32px; max-width:340px; width:85%; padding:24px; border:1px solid var(--gold);">
-    <h3 style="color:var(--gold); margin-bottom:12px;">Private Session</h3>
-    <textarea id="modal-answer" rows="4" placeholder="Your truth..." style="width:100%; background:#1a1f2e; border:0.5px solid var(--border); border-radius:16px; padding:12px; color:white;"></textarea>
-    <label style="display:flex; gap:8px; margin:12px 0;"><input type="checkbox" id="modal-share"> 🌟 Share with partner</label>
-    <button class="btn-primary" onclick="submitPrivateAnswer()">Save & Grow</button>
-    <button class="btn-primary btn-secondary" onclick="closeModal()" style="margin-top:8px;">Cancel</button>
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==================== GLOBALS ====================
-let sbClient = null;
+let supabase = null;
 let currentUser = null;
-let currentRelationshipId = null;
-let currentPartner = 'A';
-let journalPartner = 'A';
-let liveData = {};
+let currentRelationship = null;
+let currentPartnerRole = null; // 'a' or 'b'
+let questionnaireAnswers = {};
+let questionnaireStep = 0;
+let relationshipData = null;
+let journalEntries = [];
+let privateNotes = [];
 
-// ==================== INITIALIZATION ====================
-document.getElementById('connect-btn').onclick = () => {
-  const url = "https://eohdfgvebqdxstwdildk.supabase.co"
-  const key = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY"
+// Questionnaire steps
+const steps = [
+  { id: 'welcome', title: 'Welcome' },
+  { id: 'basic', title: 'About You' },
+  { id: 'origin', title: 'Your Origin Story' },
+  { id: 'love', title: 'Love Language' },
+  { id: 'ratings', title: 'Daily Life' },
+  { id: 'conflict', title: 'Conflict' },
+  { id: 'child', title: 'The Child Question' },
+  { id: 'vision', title: '10 Year Vision' },
+  { id: 'soul', title: 'Soul & Mystery' },
+  { id: 'shadow', title: 'Shadow Work' },
+  { id: 'final', title: 'Your Truth' }
+];
+
+// ==================== SUPABASE SETUP ====================
+document.getElementById('connect-btn').onclick = async () => {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
   if (!url || !key) { alert('Enter Supabase URL and Anon Key'); return; }
-  sbClient = window.supabase.createClient(url, key);
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'block';
+  
+  supabase = window.supabase.createClient(url, key);
+  showScreen('auth');
 };
 
-document.getElementById('demo-btn').onclick = () => {
-  startDemoMode();
+// ==================== AUTH ====================
+document.getElementById('signup-btn').onclick = async () => {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  if (!email || !password || password.length < 6) {
+    document.getElementById('auth-error').innerText = 'Email and password (min 6 chars) required';
+    return;
+  }
+  
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) { document.getElementById('auth-error').innerText = error.message; return; }
+  currentUser = data.user;
+  document.getElementById('auth-error').innerText = '✅ Account created! Now create a relationship.';
+  showScreen('relation');
 };
 
 document.getElementById('login-btn').onclick = async () => {
   const email = document.getElementById('auth-email').value;
   const password = document.getElementById('auth-password').value;
-  if (!email || !password) { alert('Enter email and password'); return; }
-  const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
-  if (error) { alert('Login error: ' + error.message); return; }
+  if (!email || !password) { document.getElementById('auth-error').innerText = 'Enter email and password'; return; }
+  
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) { document.getElementById('auth-error').innerText = error.message; return; }
   currentUser = data.user;
   await loadUserRelationship();
 };
 
-document.getElementById('signup-btn').onclick = async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password || password.length < 6) { alert('Password must be at least 6 characters'); return; }
-  const { data, error } = await sbClient.auth.signUp({ email, password });
-  if (error) { alert('Signup error: ' + error.message); return; }
-  currentUser = data.user;
-  document.getElementById('relationship-status').innerHTML = '✅ Account created! Now create your relationship.';
-  showRelationshipSetup();
-};
-
-document.getElementById('create-relation-btn').onclick = async () => {
-  const nameA = document.getElementById('rel-name-a').value;
-  const nameB = document.getElementById('rel-name-b').value;
-  if (!nameA || !nameB) { alert('Enter both names'); return; }
-
+// ==================== RELATIONSHIP MANAGEMENT ====================
+document.getElementById('create-btn').onclick = async () => {
+  const myName = document.getElementById('my-name').value;
+  const partnerName = document.getElementById('partner-name').value;
+  if (!myName || !partnerName) { document.getElementById('relation-error').innerText = 'Enter both names'; return; }
+  
   const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const relationId = 'rel_' + Date.now();
-
-  const relationData = {
+  
+  const { error } = await supabase.from('relationships').insert([{
     id: relationId,
     invite_code: inviteCode,
     partner_a_id: currentUser.id,
-    partner_a_name: nameA,
+    partner_a_name: myName,
+    partner_a_completed: false,
+    partner_b_name: partnerName,
     partner_b_id: null,
-    partner_b_name: nameB,
+    partner_b_completed: false,
     partner_b_joined: false,
-    couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 },
-    baby_readiness: 70,
+    couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80 },
     journal: [],
     created_at: new Date().toISOString()
-  };
-
-  const { error } = await sbClient.from('relationships').insert([relationData]);
-  if (error) { alert('Error: ' + error.message); return; }
-
-  currentRelationshipId = relationId;
-  document.getElementById('invite-code-display').innerText = inviteCode;
-  showWaitingScreen();
-
-  // Listen for partner joining
-  sbClient.channel(`relation_${relationId}`)
+  }]);
+  
+  if (error) { document.getElementById('relation-error').innerText = error.message; return; }
+  
+  currentRelationship = { id: relationId, invite_code: inviteCode };
+  document.getElementById('invite-code').innerText = inviteCode;
+  showScreen('waiting');
+  
+  // Wait for partner to join
+  supabase.channel(`rel_${relationId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relationId}` }, (payload) => {
       if (payload.new.partner_b_joined) {
-        startMainApp(payload.new);
+        currentRelationship = payload.new;
+        startQuestionnaire('a');
       }
     })
     .subscribe();
 };
 
-document.getElementById('join-relation-btn').onclick = async () => {
+document.getElementById('join-btn').onclick = async () => {
   const code = document.getElementById('join-code').value.toUpperCase();
-  const { data, error } = await sbClient.from('relationships').select('*').eq('invite_code', code).single();
-  if (error || !data) { alert('Invalid invite code'); return; }
-
-  const updateData = {
-    partner_b_id: currentUser.id,
-    partner_b_joined: true
-  };
-  const { error: updateError } = await sbClient.from('relationships').update(updateData).eq('id', data.id);
-  if (updateError) { alert('Error joining: ' + updateError.message); return; }
-
-  currentRelationshipId = data.id;
-  startMainApp({ ...data, ...updateData });
+  const { data, error } = await supabase.from('relationships').select('*').eq('invite_code', code).single();
+  if (error || !data) { document.getElementById('relation-error').innerText = 'Invalid invite code'; return; }
+  
+  const { error: updateError } = await supabase
+    .from('relationships')
+    .update({ partner_b_id: currentUser.id, partner_b_joined: true })
+    .eq('id', data.id);
+  
+  if (updateError) { document.getElementById('relation-error').innerText = updateError.message; return; }
+  
+  currentRelationship = { ...data, partner_b_id: currentUser.id, partner_b_joined: true };
+  startQuestionnaire('b');
 };
 
-document.getElementById('copy-code-btn').onclick = () => {
-  const code = document.getElementById('invite-code-display').innerText;
+document.getElementById('copy-code').onclick = () => {
+  const code = document.getElementById('invite-code').innerText;
   navigator.clipboard.writeText(code);
   alert('Code copied! Share with your partner.');
 };
 
-// ==================== CORE FUNCTIONS ====================
 async function loadUserRelationship() {
-  const { data, error } = await sbClient.from('relationships')
+  const { data, error } = await supabase.from('relationships')
     .select('*')
     .or(`partner_a_id.eq.${currentUser.id},partner_b_id.eq.${currentUser.id}`);
-
-  if (error) { console.error(error); return; }
-
-  if (!data || data.length === 0) {
-    showRelationshipSetup();
-  } else {
-    const relation = data[0];
-    currentRelationshipId = relation.id;
-
-    if (relation.partner_b_joined || relation.partner_b_id) {
-      startMainApp(relation);
-    } else if (relation.partner_a_id === currentUser.id && !relation.partner_b_joined) {
-      document.getElementById('invite-code-display').innerText = relation.invite_code;
-      showWaitingScreen();
-
-      sbClient.channel(`relation_${relation.id}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relation.id}` }, (payload) => {
-          if (payload.new.partner_b_joined) startMainApp(payload.new);
-        })
-        .subscribe();
+  
+  if (error || !data || data.length === 0) {
+    showScreen('relation');
+    return;
+  }
+  
+  currentRelationship = data[0];
+  
+  // Determine if user is partner A or B
+  if (currentRelationship.partner_a_id === currentUser.id) {
+    currentPartnerRole = 'a';
+    if (currentRelationship.partner_a_completed) {
+      loadMainApp();
     } else {
-      startMainApp(relation);
+      startQuestionnaire('a');
+    }
+  } else {
+    currentPartnerRole = 'b';
+    if (currentRelationship.partner_b_completed) {
+      loadMainApp();
+    } else {
+      startQuestionnaire('b');
     }
   }
 }
 
-function showRelationshipSetup() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('relationship-setup-screen').style.display = 'block';
+// ==================== QUESTIONNAIRE ====================
+async function startQuestionnaire(role) {
+  currentPartnerRole = role;
+  questionnaireStep = 0;
+  questionnaireAnswers = {};
+  showScreen('questionnaire');
+  renderQuestionnaire();
 }
 
-function showWaitingScreen() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('relationship-setup-screen').style.display = 'none';
-  document.getElementById('waiting-screen').style.display = 'block';
+function renderQuestionnaire() {
+  const container = document.getElementById('questionnaire-container');
+  if (!container) return;
+  
+  const step = steps[questionnaireStep];
+  const stepNum = questionnaireStep + 1;
+  const partnerName = currentPartnerRole === 'a' ? 
+    (currentRelationship?.partner_a_name || 'You') : 
+    (currentRelationship?.partner_b_name || 'You');
+  
+  container.innerHTML = `
+    <div class="card">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 48px; margin-bottom: 8px;">${currentPartnerRole === 'a' ? '🌸' : '🌿'}</div>
+        <div style="font-size: 20px; color: var(--gold2);">${partnerName}</div>
+        <div style="font-size: 12px; color: var(--text2);">Step ${stepNum} of ${steps.length}: ${step.title}</div>
+        <div class="progress-track" style="margin-top: 12px;"><div class="progress-fill" style="width: ${(stepNum / steps.length) * 100}%"></div></div>
+      </div>
+      <div id="step-content"></div>
+    </div>
+  `;
+  
+  renderStepContent();
 }
 
-async function startMainApp(relation) {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('relationship-setup-screen').style.display = 'none';
-  document.getElementById('waiting-screen').style.display = 'none';
-  document.getElementById('main-app').style.display = 'block';
-  document.getElementById('bottom-nav').style.display = 'flex';
-
-  liveData = relation;
-  document.getElementById('couple-names').innerHTML = `${relation.partner_a_name} & ${relation.partner_b_name || '...'}`;
-
-  setupRealtimeForRelationship();
-  updateAllUI();
-  startAnimations();
+function renderStepContent() {
+  const stepContent = document.getElementById('step-content');
+  if (!stepContent) return;
+  
+  const step = steps[questionnaireStep];
+  const answers = questionnaireAnswers[step.id] || {};
+  
+  switch(step.id) {
+    case 'welcome':
+      stepContent.innerHTML = `
+        <p style="color: var(--text2); line-height: 1.6; margin-bottom: 20px;">
+          Welcome! This questionnaire helps build your relationship map. Answer honestly — this is for your eyes only until you're ready to share.
+        </p>
+        <p style="color: var(--teal); font-size: 13px; margin-bottom: 20px;">
+          After you complete this, your partner will answer the same questions. Then you'll see your relationship map together.
+        </p>
+        <button class="btn-primary" onclick="nextStep()">Begin →</button>
+      `;
+      break;
+      
+    case 'basic':
+      stepContent.innerHTML = `
+        <div class="input-field"><input type="text" id="basic_name" class="input-field" placeholder="Your name" value="${answers.name || ''}"></div>
+        <div class="input-field"><input type="number" id="basic_age" class="input-field" placeholder="Age" value="${answers.age || ''}"></div>
+        <div class="input-field"><input type="text" id="basic_nationality" class="input-field" placeholder="Nationality / Heritage" value="${answers.nationality || ''}"></div>
+        <div class="input-field"><input type="text" id="basic_together" class="input-field" placeholder="How long have you been together?" value="${answers.together || ''}"></div>
+        <button class="btn-primary" onclick="saveStep('basic')">Continue →</button>
+      `;
+      break;
+      
+    case 'origin':
+      stepContent.innerHTML = `
+        <p style="color: var(--text2); margin-bottom: 16px; font-style: italic;">"What was the moment you knew this relationship was different?"</p>
+        <div class="input-field"><textarea id="origin_where" rows="2" class="input-field" placeholder="Where were you?">${answers.where || ''}</textarea></div>
+        <div class="input-field"><textarea id="origin_what" rows="3" class="input-field" placeholder="What happened?">${answers.what || ''}</textarea></div>
+        <div class="input-field"><textarea id="origin_felt" rows="2" class="input-field" placeholder="What did you feel?">${answers.felt || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('origin')">Continue →</button>
+      `;
+      break;
+      
+    case 'love':
+      stepContent.innerHTML = `
+        <div class="input-field"><textarea id="love_most" rows="2" class="input-field" placeholder="I feel most loved when...">${answers.most || ''}</textarea></div>
+        <div class="input-field"><textarea id="love_least" rows="2" class="input-field" placeholder="I feel least loved when...">${answers.least || ''}</textarea></div>
+        <div class="input-field"><textarea id="love_admire" rows="2" class="input-field" placeholder="What I admire most about my partner...">${answers.admire || ''}</textarea></div>
+        <div class="input-field"><textarea id="love_fear" rows="2" class="input-field" placeholder="What I fear losing most...">${answers.fear || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('love')">Continue →</button>
+      `;
+      break;
+      
+    case 'ratings':
+      stepContent.innerHTML = `
+        <p style="color: var(--text2); margin-bottom: 12px;">Rate each area 1-10:</p>
+        ${renderRating('Friendship', answers.friendship || 7)}
+        ${renderRating('Trust', answers.trust || 7)}
+        ${renderRating('Intimacy', answers.intimacy || 6)}
+        ${renderRating('Teamwork', answers.teamwork || 7)}
+        ${renderRating('Communication', answers.communication || 7)}
+        ${renderRating('Vision', answers.vision || 7)}
+        <div class="input-field"><textarea id="ratings_leak" rows="2" class="input-field" placeholder="Where does the relationship leak energy?">${answers.leak || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('ratings')">Continue →</button>
+      `;
+      break;
+      
+    case 'conflict':
+      stepContent.innerHTML = `
+        <p style="color: var(--text2); margin-bottom: 12px;">Think of your last significant disagreement:</p>
+        <div class="input-field"><textarea id="conflict_about" rows="2" class="input-field" placeholder="What was it really about?">${answers.about || ''}</textarea></div>
+        <div class="input-field"><textarea id="conflict_needed" rows="2" class="input-field" placeholder="What did you need?">${answers.needed || ''}</textarea></div>
+        <div class="input-field"><textarea id="conflict_partner" rows="2" class="input-field" placeholder="What did your partner need?">${answers.partnerNeeded || ''}</textarea></div>
+        <div class="input-field"><textarea id="conflict_unsaid" rows="2" class="input-field" placeholder="What did you not say?">${answers.unsaid || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('conflict')">Continue →</button>
+      `;
+      break;
+      
+    case 'child':
+      stepContent.innerHTML = `
+        <div class="input-field"><textarea id="child_why" rows="2" class="input-field" placeholder="Why do you want a child?">${answers.why || ''}</textarea></div>
+        <div class="input-field"><textarea id="child_why_not" rows="2" class="input-field" placeholder="Why might you NOT want a child?">${answers.whyNot || ''}</textarea></div>
+        <div class="input-field"><textarea id="child_fears" rows="2" class="input-field" placeholder="What are your fears about becoming a parent?">${answers.fears || ''}</textarea></div>
+        <div class="input-field"><textarea id="child_parent" rows="2" class="input-field" placeholder="What kind of parent do you imagine being?">${answers.parentType || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('child')">Continue →</button>
+      `;
+      break;
+      
+    case 'vision':
+      stepContent.innerHTML = `
+        <p style="color: var(--text2); margin-bottom: 12px; font-style: italic;">Imagine it's 10 years from now. You wake up together...</p>
+        <div class="input-field"><textarea id="vision_location" rows="2" class="input-field" placeholder="Where are you?">${answers.location || ''}</textarea></div>
+        <div class="input-field"><textarea id="vision_work" rows="2" class="input-field" placeholder="What work do you do?">${answers.work || ''}</textarea></div>
+        <div class="input-field"><input type="text" id="vision_children" class="input-field" placeholder="How many children?" value="${answers.children || ''}"></div>
+        <div class="input-field"><textarea id="vision_morning" rows="2" class="input-field" placeholder="What does your morning look like?">${answers.morning || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('vision')">Continue →</button>
+      `;
+      break;
+      
+    case 'soul':
+      stepContent.innerHTML = `
+        <div class="input-field"><textarea id="soul_chosen" rows="2" class="input-field" placeholder="Do you believe relationships are chosen before birth?">${answers.chosen || ''}</textarea></div>
+        <div class="input-field"><textarea id="soul_soulmates" rows="2" class="input-field" placeholder="Do you believe in soulmates?">${answers.soulmates || ''}</textarea></div>
+        <div class="input-field"><textarea id="soul_teach" rows="2" class="input-field" placeholder="What is your partner here to teach you?">${answers.teach || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('soul')">Continue →</button>
+      `;
+      break;
+      
+    case 'shadow':
+      stepContent.innerHTML = `
+        <p style="color: var(--rose); margin-bottom: 12px;">This requires courage. Your answers are private.</p>
+        <div class="input-field"><textarea id="shadow_judge_partner" rows="2" class="input-field" placeholder="The thing I secretly judge my partner for is...">${answers.judgePartner || ''}</textarea></div>
+        <div class="input-field"><textarea id="shadow_judge_self" rows="2" class="input-field" placeholder="The thing I secretly judge myself for is...">${answers.judgeSelf || ''}</textarea></div>
+        <div class="input-field"><textarea id="shadow_fear" rows="2" class="input-field" placeholder="The fear I rarely admit is...">${answers.fear || ''}</textarea></div>
+        <div class="input-field"><textarea id="shadow_truth" rows="2" class="input-field" placeholder="The truth I have not fully spoken is...">${answers.truth || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('shadow')">Continue →</button>
+      `;
+      break;
+      
+    case 'final':
+      stepContent.innerHTML = `
+        <p style="color: var(--gold); margin-bottom: 16px; font-style: italic;">"If your partner could understand one thing about you completely — with no defensiveness — what would it be?"</p>
+        <div class="input-field"><textarea id="final_answer" rows="6" class="input-field" placeholder="Your truth...">${answers.answer || ''}</textarea></div>
+        <button class="btn-primary" onclick="saveStep('final')">Complete Questionnaire →</button>
+      `;
+      break;
+  }
 }
 
-function startDemoMode() {
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('main-app').style.display = 'block';
-  document.getElementById('bottom-nav').style.display = 'flex';
-  liveData = {
-    partner_a_name: 'Ana',
-    partner_b_name: 'Marco',
-    couple_stats: { trust: 78, intimacy: 62, communication: 74, vision: 82, friendship: 85 },
-    baby_readiness: 75,
-    journal: [{ author: 'Ana', date: 'Just now', text: 'Welcome to your journey! ✨' }]
-  };
-  updateAllUI();
-  startAnimations();
+function renderRating(label, value) {
+  return `
+    <div style="margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--text2); font-size: 12px;">${label}</span>
+        <span id="${label}_val" style="color: var(--gold);">${value}</span>
+      </div>
+      <input type="range" id="${label}" min="1" max="10" value="${value}" style="width: 100%;" 
+        oninput="document.getElementById('${label}_val').innerText = this.value">
+    </div>
+  `;
 }
 
-function setupRealtimeForRelationship() {
-  if (!sbClient) return;
-  sbClient.channel(`rel_${currentRelationshipId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationshipId}` }, (payload) => {
-      if (payload.new) {
-        liveData = payload.new;
-        updateAllUI();
-      }
+function saveStep(stepId) {
+  const step = steps.find(s => s.id === stepId);
+  if (!step) return;
+  
+  const answers = {};
+  
+  switch(stepId) {
+    case 'basic':
+      answers.name = document.getElementById('basic_name')?.value;
+      answers.age = document.getElementById('basic_age')?.value;
+      answers.nationality = document.getElementById('basic_nationality')?.value;
+      answers.together = document.getElementById('basic_together')?.value;
+      break;
+    case 'origin':
+      answers.where = document.getElementById('origin_where')?.value;
+      answers.what = document.getElementById('origin_what')?.value;
+      answers.felt = document.getElementById('origin_felt')?.value;
+      break;
+    case 'love':
+      answers.most = document.getElementById('love_most')?.value;
+      answers.least = document.getElementById('love_least')?.value;
+      answers.admire = document.getElementById('love_admire')?.value;
+      answers.fear = document.getElementById('love_fear')?.value;
+      break;
+    case 'ratings':
+      answers.friendship = parseInt(document.getElementById('Friendship')?.value || 7);
+      answers.trust = parseInt(document.getElementById('Trust')?.value || 7);
+      answers.intimacy = parseInt(document.getElementById('Intimacy')?.value || 6);
+      answers.teamwork = parseInt(document.getElementById('Teamwork')?.value || 7);
+      answers.communication = parseInt(document.getElementById('Communication')?.value || 7);
+      answers.vision = parseInt(document.getElementById('Vision')?.value || 7);
+      answers.leak = document.getElementById('ratings_leak')?.value;
+      break;
+    case 'conflict':
+      answers.about = document.getElementById('conflict_about')?.value;
+      answers.needed = document.getElementById('conflict_needed')?.value;
+      answers.partnerNeeded = document.getElementById('conflict_partner')?.value;
+      answers.unsaid = document.getElementById('conflict_unsaid')?.value;
+      break;
+    case 'child':
+      answers.why = document.getElementById('child_why')?.value;
+      answers.whyNot = document.getElementById('child_why_not')?.value;
+      answers.fears = document.getElementById('child_fears')?.value;
+      answers.parentType = document.getElementById('child_parent')?.value;
+      break;
+    case 'vision':
+      answers.location = document.getElementById('vision_location')?.value;
+      answers.work = document.getElementById('vision_work')?.value;
+      answers.children = document.getElementById('vision_children')?.value;
+      answers.morning = document.getElementById('vision_morning')?.value;
+      break;
+    case 'soul':
+      answers.chosen = document.getElementById('soul_chosen')?.value;
+      answers.soulmates = document.getElementById('soul_soulmates')?.value;
+      answers.teach = document.getElementById('soul_teach')?.value;
+      break;
+    case 'shadow':
+      answers.judgePartner = document.getElementById('shadow_judge_partner')?.value;
+      answers.judgeSelf = document.getElementById('shadow_judge_self')?.value;
+      answers.fear = document.getElementById('shadow_fear')?.value;
+      answers.truth = document.getElementById('shadow_truth')?.value;
+      break;
+    case 'final':
+      answers.answer = document.getElementById('final_answer')?.value;
+      break;
+  }
+  
+  questionnaireAnswers[stepId] = answers;
+  
+  if (questionnaireStep === steps.length - 1) {
+    completeQuestionnaire();
+  } else {
+    questionnaireStep++;
+    renderQuestionnaire();
+  }
+}
+
+async function completeQuestionnaire() {
+  // Save answers to Supabase
+  const updateField = currentPartnerRole === 'a' ? 'partner_a_answers' : 'partner_b_answers';
+  const completedField = currentPartnerRole === 'a' ? 'partner_a_completed' : 'partner_b_completed';
+  
+  await supabase.from('relationships')
+    .update({ 
+      [updateField]: questionnaireAnswers,
+      [completedField]: true 
     })
-    .subscribe();
-
-    sbClient
-  .channel(
-    `messages_${currentRelationshipId}`
-  )
-  .on(
-    'postgres_changes',
-    {
-      event:'*',
-      schema:'public',
-      table:'messages',
-      filter:
-        `relationship_id=eq.${currentRelationshipId}`
-    },
-    () => {
-      renderJournal();
-    }
-  )
-  .subscribe();
+    .eq('id', currentRelationship.id);
+  
+  // Check if both partners have completed
+  const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
+  
+  if (data.partner_a_completed && data.partner_b_completed) {
+    loadMainApp();
+  } else {
+    // Show waiting for partner message
+    const container = document.getElementById('questionnaire-container');
+    container.innerHTML = `
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+        <div style="font-size: 18px; color: var(--gold2);">Waiting for Your Partner</div>
+        <p style="color: var(--text2); margin-top: 16px;">Your partner needs to complete their questionnaire. You'll be notified when they're done.</p>
+        <div class="waiting-spinner" style="margin: 20px auto;"></div>
+      </div>
+    `;
+    
+    // Listen for partner completion
+    supabase.channel(`rel_${currentRelationship.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationship.id}` }, (payload) => {
+        if (payload.new.partner_a_completed && payload.new.partner_b_completed) {
+          loadMainApp();
+        }
+      })
+      .subscribe();
+  }
 }
 
-async function pushUpdate(updates) {
-  if (!sbClient || !currentRelationshipId) return;
-  await sbClient.from('relationships').update(updates).eq('id', currentRelationshipId);
+// ==================== MAIN APP ====================
+async function loadMainApp() {
+  // Load relationship data
+  const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
+  relationshipData = data;
+  
+  // Load journal
+  journalEntries = data.journal || [];
+  
+  // Load private notes for this user
+  const privateKey = `private_${currentUser.id}`;
+  const { data: privateData } = await supabase.from('private_notes').select('*').eq('user_id', currentUser.id);
+  privateNotes = privateData || [];
+  
+  showScreen('main');
+  document.getElementById('bottom-nav').style.display = 'flex';
+  
+  document.getElementById('hdr-together').innerHTML = `❤️ ${data.partner_a_name} & ${data.partner_b_name}`;
+  
+  updateUI();
+  startRealtime();
+  startAnimations();
+  loadMoonPhase();
 }
 
-// ==================== UI FUNCTIONS ====================
-function updateAllUI() {
-  updateWeatherProgress();
-  drawTree();
-  renderGrowthBars();
-  renderPrivateEntries();
+function updateUI() {
+  const stats = relationshipData?.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80 };
+  const growth = Math.floor((stats.trust + stats.communication + stats.vision) / 3);
+  
+  document.getElementById('stat-growth').innerHTML = growth + '%';
+  document.getElementById('stat-harmony').innerHTML = stats.trust + '%';
+  document.getElementById('stat-vision').innerHTML = stats.vision + '%';
+  
+  // Update weather
+  const weatherEl = document.getElementById('weather-progress');
+  if (weatherEl) {
+    let weatherIcon = stats.trust > 80 && stats.communication > 80 ? '☀️' : stats.communication < 60 ? '⛈️' : stats.intimacy < 60 ? '☁️' : '🌤️';
+    weatherEl.innerHTML = `
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 32px;">${weatherIcon}</div>
+      </div>
+      ${Object.entries(stats).map(([k, v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('')}
+    `;
+  }
+  
+  // Render journal
   renderJournal();
-  updatePartnerDisplay();
-  document.getElementById('baby-pct').innerHTML = (liveData.baby_readiness || 70) + '%';
-  const stats = liveData.couple_stats || {};
-  document.getElementById('stat-growth').innerHTML = Math.floor((stats.trust + stats.communication + stats.vision) / 3) + '%';
-  document.getElementById('stat-harmony').innerHTML = (stats.trust || 70) + '%';
-  document.getElementById('stat-vision').innerHTML = (stats.vision || 80) + '%';
+  
+  // Render private notes
+  renderPrivateNotes();
+  
+  drawTree();
 }
 
-function updateWeatherProgress() {
-  const el = document.getElementById('weather-progress');
+function renderJournal() {
+  const el = document.getElementById('journal-entries');
   if (!el) return;
-  const stats = liveData.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 };
-  el.innerHTML = Object.entries(stats).map(([k, v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('');
+  
+  if (!journalEntries || journalEntries.length === 0) {
+    el.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2);">No entries yet. Write your first journal entry! ✨</div>';
+  } else {
+    el.innerHTML = journalEntries.slice(0, 30).map(j => `
+      <div class="journal-entry">
+        <div style="font-size: 10px; color: var(--text3);">${new Date(j.created_at).toLocaleDateString()}</div>
+        <div class="journal-text" style="margin-top: 8px;">"${escapeHtml(j.text)}"</div>
+        <div style="font-size: 11px; color: var(--gold); margin-top: 6px;">— ${j.author}</div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderPrivateNotes() {
+  const el = document.getElementById('private-entries');
+  if (!el) return;
+  
+  if (!privateNotes || privateNotes.length === 0) {
+    el.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2);">No private notes yet. 🔒</div>';
+  } else {
+    el.innerHTML = privateNotes.slice(0, 20).map(n => `
+      <div class="journal-entry" style="border-left-color: var(--rose);">
+        <div style="font-size: 10px; color: var(--text3);">${new Date(n.created_at).toLocaleDateString()} 🔒 Private</div>
+        <div class="journal-text" style="margin-top: 8px;">"${escapeHtml(n.text)}"</div>
+      </div>
+    `).join('');
+  }
 }
 
 function drawTree() {
@@ -547,149 +839,153 @@ function drawTree() {
   canvas.height = 220;
   const w = canvas.width, h = canvas.height, cx = w/2, base = h-15;
   ctx.clearRect(0, 0, w, h);
-  ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base-80); ctx.strokeStyle = '#8B5A2B'; ctx.lineWidth = 8; ctx.stroke();
-  for(let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx-15+i*5, base+12); ctx.stroke(); }
-  const stats = liveData.couple_stats || {};
-  const growth = (stats.trust + stats.communication) / 2;
-  for(let i=0;i<8+Math.floor(growth/10);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#3c9e6d'; ctx.fill(); }
-  for(let i=0;i<4+Math.floor((stats.intimacy||62)/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
-}
-
-function renderGrowthBars() {
-  const el = document.getElementById('growth-bars');
-  if(!el) return;
-  const growthData = { empathy: 75, selfAwareness: 68, communication: 72, confidence: 65 };
-  el.innerHTML = Object.entries(growthData).map(([k,v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('');
-}
-
-function renderPrivateEntries() {
-  const el = document.getElementById('private-entries-list');
-  if(el) el.innerHTML = '<div style="color:var(--text3); text-align:center; padding:20px;">Private notes appear here. Only you can see them.</div>';
-}
-
-async function renderJournal() {
-
-  const el = document.getElementById('journal-entries');
-
-  if(!el || !currentRelationshipId) return;
-
-  const { data, error } = await sbClient
-    .from('messages')
-    .select('*')
-    .eq(
-      'relationship_id',
-      currentRelationshipId
-    )
-    .order(
-      'created_at',
-      { ascending:false }
-    )
-    .limit(50);
-
-  if(error){
-    console.error(error);
-    return;
+  
+  ctx.beginPath();
+  ctx.moveTo(cx, base);
+  ctx.lineTo(cx, base-80);
+  ctx.strokeStyle = '#8B5A2B';
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  
+  for(let i=0;i<6;i++){
+    ctx.beginPath();
+    ctx.moveTo(cx, base);
+    ctx.lineTo(cx-15+i*5, base+12);
+    ctx.stroke();
   }
-
-  el.innerHTML = data.map(msg => `
-    <div class="journal-entry">
-      <div class="journal-date">
-        ${new Date(msg.created_at)
-          .toLocaleString()}
-      </div>
-
-      <div class="journal-text">
-        "${msg.body}"
-      </div>
-
-      <div class="journal-author">
-        — ${msg.author_name || 'Partner'}
-      </div>
-    </div>
-  `).join('');
-}
-
-function updatePartnerDisplay() {
-  const isPartnerA = currentPartner === 'A';
-  document.getElementById('growth-avatar').innerHTML = isPartnerA ? '🌸' : '🌿';
-  document.getElementById('growth-name').innerHTML = isPartnerA ? (liveData.partner_a_name || 'Partner A') : (liveData.partner_b_name || 'Partner B');
-}
-
-async function addJournalEntry() {
-
-  const input =
-    document.getElementById(
-      'journal-input'
-    );
-
-  if(!input.value.trim()) return;
-
-  const authorName =
-    journalPartner === 'A'
-      ? (liveData.partner_a_name || 'Partner A')
-      : (liveData.partner_b_name || 'Partner B');
-
-  const { error } =
-    await sbClient
-      .from('messages')
-      .insert({
-        relationship_id:
-          currentRelationshipId,
-
-        sender_id:
-          currentUser?.id || null,
-
-        author_name:
-          authorName,
-
-        body:
-          input.value.trim()
-      });
-
-  if(error){
-    alert(error.message);
-    return;
+  
+  const stats = relationshipData?.couple_stats || {};
+  const leafCount = 6 + Math.floor((stats.trust + stats.communication) / 20);
+  for(let i=0;i<leafCount;i++){
+    let x = cx-20 + Math.random()*40;
+    let y = base-70 + Math.random()*50;
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI*2);
+    ctx.fillStyle = '#3c9e6d';
+    ctx.fill();
   }
+  
+  const flowerCount = 2 + Math.floor(stats.intimacy / 20);
+  for(let i=0;i<flowerCount;i++){
+    let x = cx-15 + Math.random()*30;
+    let y = base-50 + Math.random()*40;
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#ffb7c5';
+    ctx.fill();
+  }
+}
 
+// ==================== ACTIONS ====================
+document.getElementById('post-journal').onclick = async () => {
+  const input = document.getElementById('journal-input');
+  if (!input.value.trim()) return;
+  
+  const partnerName = currentPartnerRole === 'a' ? relationshipData.partner_a_name : relationshipData.partner_b_name;
+  const newEntry = {
+    id: Date.now(),
+    author: partnerName,
+    text: input.value.trim(),
+    created_at: new Date().toISOString()
+  };
+  
+  const updatedJournal = [newEntry, ...(relationshipData.journal || [])].slice(0, 100);
+  await supabase.from('relationships').update({ journal: updatedJournal }).eq('id', currentRelationship.id);
+  journalEntries = updatedJournal;
   input.value = '';
-
   renderJournal();
-}
-function openPrivateModal() { document.getElementById('modal-container').style.display = 'flex'; }
-function closeModal() { document.getElementById('modal-container').style.display = 'none'; document.getElementById('modal-answer').value = ''; }
-async function submitPrivateAnswer() {
-  const text = document.getElementById('modal-answer').value;
-  const share = document.getElementById('modal-share').checked;
-  if(!text) return;
-  alert(share ? '✨ Saved! This will appear in joint insights.' : '🔒 Saved privately.');
-  closeModal();
+  updateUI();
+};
+
+document.getElementById('save-private').onclick = async () => {
+  const input = document.getElementById('private-input');
+  if (!input.value.trim()) return;
+  
+  const newNote = {
+    id: Date.now(),
+    user_id: currentUser.id,
+    text: input.value.trim(),
+    created_at: new Date().toISOString()
+  };
+  
+  const { data } = await supabase.from('private_notes').insert([newNote]).select();
+  privateNotes = [newNote, ...privateNotes];
+  input.value = '';
+  renderPrivateNotes();
+};
+
+// ==================== MOON PHASE ====================
+async function loadMoonPhase() {
+  try {
+    const daysSinceEpoch = Math.floor(Date.now() / 1000 / 86400);
+    const response = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${daysSinceEpoch}`);
+    const data = await response.json();
+    const phase = data[0]?.Phase || "Waxing Gibbous";
+    document.getElementById('hdr-moon').innerHTML = `🌙 ${phase}`;
+    document.getElementById('moon-content').innerHTML = `
+      <div style="font-size: 48px;">${phase.includes('Full') ? '🌕' : phase.includes('New') ? '🌑' : '🌔'}</div>
+      <div style="font-size: 16px; color: var(--gold2); margin-top: 8px;">${phase}</div>
+      <div style="font-size: 13px; color: var(--text2); margin-top: 8px;">${getMoonMessage(phase)}</div>
+    `;
+    document.getElementById('horoscope-content').innerHTML = `
+      <div style="font-style: italic; line-height: 1.6;">${getHoroscope()}</div>
+    `;
+  } catch(e) {
+    console.log('Moon API error');
+  }
 }
 
-function switchPartner(p, btn) {
-  currentPartner = p;
-  document.querySelectorAll('.partner-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  updatePartnerDisplay();
+function getMoonMessage(phase) {
+  const messages = {
+    "New Moon": "Set intentions for your relationship.",
+    "Waxing Crescent": "Plant seeds of growth together.",
+    "First Quarter": "Take action on your shared goals.",
+    "Waxing Gibbous": "Refine and adjust. You're almost there.",
+    "Full Moon": "Release what no longer serves your union.",
+    "Waning Gibbous": "Gratitude for what you've built.",
+    "Last Quarter": "Let go of old patterns.",
+    "Waning Crescent": "Rest and restore together."
+  };
+  return messages[phase] || "The moon guides your journey.";
 }
 
-function switchGrowthTab(tab, btn) {
-  document.getElementById('tab-radar').style.display = tab === 'radar' ? 'block' : 'none';
-  document.getElementById('tab-private').style.display = tab === 'private' ? 'block' : 'none';
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
+function getHoroscope() {
+  const horoscopes = [
+    "Trust your intuition today. Small gestures create big ripples.",
+    "The universe supports your growth. What you build now will last.",
+    "Communication is highlighted today. Speak from the heart.",
+    "Take a moment to appreciate what you've already built together.",
+    "A small act of kindness today will echo for weeks."
+  ];
+  return horoscopes[Math.floor(Math.random() * horoscopes.length)];
 }
 
-function setJournalPartner(p, btn) {
-  journalPartner = p;
-  document.querySelectorAll('.partner-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
+// ==================== REALTIME ====================
+function startRealtime() {
+  supabase.channel(`rel_${currentRelationship.id}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationship.id}` }, (payload) => {
+      if (payload.new) {
+        relationshipData = payload.new;
+        journalEntries = payload.new.journal || [];
+        updateUI();
+      }
+    })
+    .subscribe();
+}
+
+// ==================== UI HELPERS ====================
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`${screenId}-screen`).classList.add('active');
 }
 
 function switchScreen(screen, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + screen).classList.add('active');
+  document.getElementById(`screen-${screen}`).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (screen === 'journal') renderJournal();
+  if (screen === 'private') renderPrivateNotes();
 }
 
 function startAnimations() {
@@ -697,31 +993,53 @@ function startAnimations() {
   setInterval(drawTree, 5000);
   const updateDate = () => {
     const now = new Date();
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const dateEl = document.getElementById('hdr-date');
-    if(dateEl) dateEl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    document.getElementById('hdr-date').innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
   };
   updateDate();
   setInterval(updateDate, 60000);
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
 // Stars background
 function initStars() {
   const canvas = document.getElementById('stars-canvas');
-  if(!canvas) return;
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
-  const stars = Array.from({length:150}, ()=>({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
+  const stars = Array.from({length:150}, () => ({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
   function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`; ctx.fill(); s.a+=0.01; });
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`;
+      ctx.fill();
+      s.a += 0.01;
+    });
     requestAnimationFrame(draw);
   }
   draw();
 }
+
+// Make functions global
+window.nextStep = () => { questionnaireStep++; renderQuestionnaire(); };
+window.saveStep = saveStep;
+window.switchScreen = switchScreen;
+window.renderRating = renderRating;
+
 initStars();
+showScreen('setup');
 </script>
 </body>
 </html>
