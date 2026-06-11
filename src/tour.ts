@@ -40,21 +40,22 @@ const TOUR_CSS = `
   pointer-events: none;
 }
 
-/* Dark backdrop via SVG cutout technique — four rects around spotlight */
+/* Dark backdrop via SVG cutout technique — LIGHTER so you can see behind */
 #olivium-tour-backdrop {
   position: fixed; inset: 0; z-index: 99001;
-  background: rgba(5, 10, 5, 0.82);
+  background: rgba(5, 10, 5, 0.45);  /* CHANGED: from 0.82 to 0.45 - much lighter */
   transition: opacity 0.4s ease;
   pointer-events: all;
 }
 
-/* Spotlight hole punched with clip-path */
+/* Spotlight hole punched with clip-path - ENHANCED highlight */
 #olivium-tour-spotlight {
   position: fixed; z-index: 99002;
   border-radius: 14px;
   box-shadow:
-    0 0 0 4px rgba(197,160,89,0.55),
-    0 0 0 9999px rgba(5,10,5,0.82);
+    0 0 0 4px rgba(197,160,89,0.9),      /* CHANGED: brighter highlight */
+    0 0 0 8px rgba(197,160,89,0.3),
+    0 0 0 9999px rgba(5,10,5,0.45);      /* CHANGED: matches lighter backdrop */
   pointer-events: none;
   transition: all 0.45s cubic-bezier(0.4,0,0.2,1);
 }
