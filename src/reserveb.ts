@@ -631,96 +631,147 @@ function _setVerifyBtnBusy(btn: Element | null, busy: boolean, label = "Verify C
 }
 
 function _wireAuthModal() {
-  const loginTab  = document.getElementById("loginTab");
+  // Get all elements first
+  const loginTab = document.getElementById("loginTab");
   const signupTab = document.getElementById("signupTab");
-  const loginForm  = document.getElementById("loginForm")  as HTMLElement | null;
+  const loginForm = document.getElementById("loginForm") as HTMLElement | null;
   const signupForm = document.getElementById("signupForm") as HTMLElement | null;
-  const passEl    = document.getElementById("signupPassword")        as HTMLInputElement | null;
+  const passEl = document.getElementById("signupPassword") as HTMLInputElement | null;
   const confirmEl = document.getElementById("signupConfirmPassword") as HTMLInputElement | null;
-  const emailEl   = document.getElementById("signupEmail")           as HTMLInputElement | null;
-  const signupBtn = document.getElementById("signupBtn")             as HTMLButtonElement | null;
+  const emailEl = document.getElementById("signupEmail") as HTMLInputElement | null;
+  const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement | null;
 
-  dbgStep("🔧", "wiring auth modal", {
-    loginTab:  !!loginTab,  signupTab: !!signupTab,
-    loginForm: !!loginForm, signupForm: !!signupForm,
-    passEl: !!passEl, confirmEl: !!confirmEl, emailEl: !!emailEl,
-    signupBtn: !!signupBtn,
-  });
-
-  // ── tab helpers ─────────────────────────────────────────────────────────
-  function showLoginTab() {
-    if (!loginTab || !signupTab || !loginForm || !signupForm) return;
-    loginTab.style.background  = "var(--green)"; loginTab.style.color  = "white";
-    signupTab.style.background = "transparent";  signupTab.style.color = "var(--text)";
-    loginForm.style.display  = "block";
-    signupForm.style.display = "none";
-    _resetAuthModal();
+  // Helper function
+  function show(msg: string, ok = true) {
+    const el = document.getElementById("msg");
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = ok ? "#2e7d32" : "#d94d4d";
   }
 
-  function showSignupTab() {
-    if (!loginTab || !signupTab || !loginForm || !signupForm) return;
-    signupTab.style.background = "var(--green)"; signupTab.style.color = "white";
-    loginTab.style.background  = "transparent";  loginTab.style.color  = "var(--text)";
-    signupForm.style.display = "block";
-    loginForm.style.display  = "none";
-    if (emailEl)   emailEl.value   = "";
-    if (passEl)    passEl.value    = "";
-    if (confirmEl) confirmEl.value = "";
-    _resetAuthModal();
-    validateSignupForm(passEl, confirmEl, emailEl, signupBtn);
-  }
-
-  // ── open from email button ───────────────────────────────────────────────
+  // Open modal from email button
   document.getElementById("emailLoginBtn")?.addEventListener("click", () => {
-    dbgStep("📧", "emailLoginBtn clicked — opening auth modal");
     const connectModal = document.getElementById("connectModal");
     if (connectModal) connectModal.style.display = "none";
     const overlay = document.getElementById("authModalOverlay");
     if (overlay) overlay.style.display = "flex";
-    showLoginTab();
+    show("");
+    
+    // Reset to login tab
+    if (loginTab && signupTab && loginForm && signupForm) {
+      loginTab.style.background = "var(--green)";
+      loginTab.style.color = "white";
+      signupTab.style.background = "transparent";
+      signupTab.style.color = "var(--text)";
+      loginForm.style.display = "block";
+      signupForm.style.display = "none";
+    }
   });
 
-  // ── close modal ──────────────────────────────────────────────────────────
-  function closeAuthModal() {
-    dbgStep("❎", "auth modal closed");
+  // Close modal
+  document.getElementById("closeAuthModal")?.addEventListener("click", () => {
     const overlay = document.getElementById("authModalOverlay");
     if (overlay) overlay.style.display = "none";
-    delete (window as any)._pendingSignup;
-    _resetAuthModal();
-  }
-
-  document.getElementById("closeAuthModal")?.addEventListener("click", closeAuthModal);
-
-  // FIX: clicking the backdrop only closes if the QR step is NOT showing,
-  // so the user can't accidentally close mid-scan.
-  document.getElementById("authModalOverlay")?.addEventListener("click", (e) => {
-    if (e.target !== e.currentTarget) return;
-    const qrVisible = document.getElementById("signupOtpBox")?.style.display === "block";
-    if (qrVisible) {
-      dbgWarn("Backdrop click blocked — QR scan in progress");
-      return;
-    }
-    closeAuthModal();
+    const signupOtpBox = document.getElementById("signupOtpBox");
+    const qrContainer = document.getElementById("qr");
+    if (signupOtpBox) signupOtpBox.style.display = "none";
+    if (qrContainer) qrContainer.innerHTML = "";
+    const msg = document.getElementById("msg");
+    if (msg) msg.textContent = "";
   });
 
-  loginTab?.addEventListener("click",  showLoginTab);
-  signupTab?.addEventListener("click", showSignupTab);
+  // Click outside to close
+  document.getElementById("authModalOverlay")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) {
+      (e.currentTarget as HTMLElement).style.display = "none";
+      const signupOtpBox = document.getElementById("signupOtpBox");
+      const qrContainer = document.getElementById("qr");
+      if (signupOtpBox) signupOtpBox.style.display = "none";
+      if (qrContainer) qrContainer.innerHTML = "";
+    }
+  });
 
-  passEl?.addEventListener("input",    () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+  // Tab switching
+  loginTab?.addEventListener("click", () => {
+    if (!loginTab || !signupTab || !loginForm || !signupForm) return;
+    loginTab.style.background = "var(--green)";
+    loginTab.style.color = "white";
+    signupTab.style.background = "transparent";
+    signupTab.style.color = "var(--text)";
+    loginForm.style.display = "block";
+    signupForm.style.display = "none";
+    show("");
+    
+    const signupOtpBox = document.getElementById("signupOtpBox");
+    const qrContainer = document.getElementById("qr");
+    if (signupOtpBox) signupOtpBox.style.display = "none";
+    if (qrContainer) qrContainer.innerHTML = "";
+  });
+
+  signupTab?.addEventListener("click", () => {
+    if (!loginTab || !signupTab || !loginForm || !signupForm) return;
+    signupTab.style.background = "var(--green)";
+    signupTab.style.color = "white";
+    loginTab.style.background = "transparent";
+    loginTab.style.color = "var(--text)";
+    signupForm.style.display = "block";
+    loginForm.style.display = "none";
+    show("");
+    
+    if (emailEl) emailEl.value = "";
+    if (passEl) passEl.value = "";
+    if (confirmEl) confirmEl.value = "";
+    
+    const signupOtpBox = document.getElementById("signupOtpBox");
+    const qrContainer = document.getElementById("qr");
+    if (signupOtpBox) signupOtpBox.style.display = "none";
+    if (qrContainer) qrContainer.innerHTML = "";
+    
+    validateSignupForm(passEl, confirmEl, emailEl, signupBtn);
+  });
+
+  // Password validation
+  function validateSignupForm(passEl: HTMLInputElement | null, confirmEl: HTMLInputElement | null, emailEl: HTMLInputElement | null, btnEl: HTMLButtonElement | null) {
+    const pass = passEl?.value ?? "";
+    const confirm = confirmEl?.value ?? "";
+    let allPass = true;
+    
+    const metrics = {
+      len: { reg: /.{6,}/, el: document.getElementById("metric-len") },
+      cap: { reg: /[A-Z]/, el: document.getElementById("metric-cap") },
+      low: { reg: /[a-z]/, el: document.getElementById("metric-low") },
+      num: { reg: /[0-9]/, el: document.getElementById("metric-num") },
+      spe: { reg: /[^A-Za-z0-9]/, el: document.getElementById("metric-spe") }
+    };
+    
+    for (const key in metrics) {
+      const m = metrics[key as keyof typeof metrics];
+      const ok = m.reg.test(pass);
+      if (m.el) {
+        m.el.style.color = ok ? "#2e7d32" : "#d94d4d";
+        const icon = m.el.querySelector<HTMLElement>(".icon");
+        if (icon) icon.innerText = ok ? "✔" : "❌";
+      }
+      if (!ok) allPass = false;
+    }
+    
+    const matches = pass === confirm && pass.length > 0;
+    const hasEmail = (emailEl?.value.trim().length ?? 0) > 0;
+    
+    if (btnEl) {
+      btnEl.disabled = !(allPass && matches && hasEmail);
+      btnEl.style.background = btnEl.disabled ? "#cccccc" : "var(--green)";
+    }
+  }
+
+  passEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
   confirmEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
-  emailEl?.addEventListener("input",   () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
+  emailEl?.addEventListener("input", () => validateSignupForm(passEl, confirmEl, emailEl, signupBtn));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // SIGNUP FLOW
-  // ════════════════════════════════════════════════════════════════════════
-
+  // SIGNUP - Generate QR
   signupBtn?.addEventListener("click", async () => {
-    dbgStep("🔵", "SIGNUP BUTTON clicked");
-
-    const emailVal    = emailEl?.value.trim().toLowerCase() ?? "";
+    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
     const passwordVal = passEl?.value.trim() ?? "";
-
-    dbgStep("📝", "signup form values", { email: emailVal, passwordLength: passwordVal.length });
 
     if (!emailVal || !passwordVal) {
       show("Please complete both Email and Password fields.", false);
@@ -728,332 +779,257 @@ function _wireAuthModal() {
     }
 
     show("🔐 Generating secure cryptographic identity…", true);
-
-    const qrContainer  = document.getElementById("qr");
+    
+    const qrContainer = document.getElementById("qr");
     const signupOtpBox = document.getElementById("signupOtpBox");
-
-    if (qrContainer)  { qrContainer.innerHTML = ""; qrContainer.style.minHeight = "200px"; }
-    if (signupOtpBox)   signupOtpBox.style.display = "none";
+    
+    if (qrContainer) {
+      qrContainer.innerHTML = "";
+      qrContainer.style.minHeight = "200px";
+    }
+    
+    if (signupOtpBox) {
+      signupOtpBox.style.display = "none";
+    }
 
     try {
-      // ── Step 1: derive custodial wallet ──────────────────────────────
-      dbgStep("🔑", "Step 1 — deriving custodial wallet from email+password+seed");
-      const seed  = `${emailVal}:${passwordVal}:${WALLET_DERIVE_SEED}`;
-      const hash  = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
-      const kp    = Keypair.fromSeed(new Uint8Array(hash));
-      const derivedWallet = kp.publicKey.toBase58();
-      dbgStep("🔑", "Step 1 ✅ — custodial wallet derived", {
-        wallet: derivedWallet,
-        seedInput: `${emailVal}:***:${WALLET_DERIVE_SEED}`,
-      });
+      const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+      const kp = Keypair.fromSeed(new Uint8Array(hash));
+      _generatedCustodialWallet = kp.publicKey.toBase58();
 
-      // ── Step 2: build TOTP URI and render QR ────────────────────────
-      dbgStep("📱", "Step 2 — building TOTP URI and rendering QR code");
-      const totpUri =
-        `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
-        + `?secret=${TOTP_SECRET}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
-
-      dbgStep("📱", "Step 2 — TOTP URI", totpUri);
+      const totpUri = `otpauth://totp/${encodeURIComponent("Olivium DAO")}:${encodeURIComponent(emailVal)}`
+        + `?secret=${SECRET_SEED}&issuer=OliviumDAO&algorithm=SHA1&digits=6&period=30`;
 
       if (qrContainer && typeof (window as any).QRCode !== "undefined") {
         new (window as any).QRCode(qrContainer, {
-          text: totpUri, width: 200, height: 200,
+          text: totpUri, width: 180, height: 180,
           colorDark: "#1f402a", colorLight: "#ffffff",
           correctLevel: (window as any).QRCode.CorrectLevel.H,
         });
-        dbgStep("📱", "Step 2 ✅ — QR code rendered into #qr");
-      } else {
-        dbgWarn("Step 2 — QRCode library not available", {
-          qrContainerFound: !!qrContainer,
-          QRCodeAvailable: typeof (window as any).QRCode !== "undefined",
-        });
       }
 
-      // ── Step 3: expand modal and show OTP box ────────────────────────
-      dbgStep("📦", "Step 3 — expanding modal, showing OTP entry box");
-      _expandModalForQR(true);
-      if (signupOtpBox) signupOtpBox.style.display = "block";
-
-      // Store pending state
-      (window as any)._pendingSignup = { email: emailVal, password: passwordVal, wallet: derivedWallet };
-      dbgStep("📦", "Step 3 ✅ — _pendingSignup stored", (window as any)._pendingSignup);
-
-      show("📱 Scan QR with Google Authenticator — enter the 6-digit code to continue", true);
-
-      // Scroll the OTP box into view inside the modal
-      setTimeout(() => signupOtpBox?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
-
+      if (signupOtpBox) {
+        signupOtpBox.style.display = "block";
+      }
+      
+      // Store credentials for auto-login after signup
+      (window as any)._pendingSignup = {
+        email: emailVal,
+        password: passwordVal,
+        wallet: _generatedCustodialWallet
+      };
+      
+      show("📱 Scan QR code with Google Authenticator, then enter the 6-digit code below", true);
+      
     } catch (err) {
-      dbgErr("Signup key derivation failed", err);
+      console.error("Key derivation failed:", err);
       show("Failed to generate credentials.", false);
     }
   });
 
-  // ── Signup: verify OTP ────────────────────────────────────────────────
-
-  const verifySignupBtn = document.getElementById("verifySignupOtp");
-  verifySignupBtn?.addEventListener("click", async () => {
-    dbgStep("🟢", "SIGNUP VERIFY clicked");
-
-    if ((verifySignupBtn as HTMLButtonElement).disabled) {
-      dbgWarn("verifySignupOtp already disabled — ignoring double-click");
-      return;
-    }
-
-    const otpInput   = document.getElementById("signupOtp") as HTMLInputElement | null;
+  // SIGNUP - Verify OTP AND AUTO-LOGIN
+  document.getElementById("verifySignupOtp")?.addEventListener("click", async () => {
+    const emailVal = emailEl?.value.trim().toLowerCase() ?? "";
+    const otpInput = document.getElementById("signupOtp") as HTMLInputElement | null;
     const enteredOtp = otpInput?.value.trim() ?? "";
-    dbgStep("🔢", "OTP entered", { length: enteredOtp.length, value: enteredOtp });
 
     if (!enteredOtp || enteredOtp.length < 6) {
       show("Please enter your 6-digit authenticator code.", false);
       return;
     }
 
-    const pending = (window as any)._pendingSignup;
-    dbgStep("📦", "retrieved _pendingSignup", pending);
-    if (!pending) {
-      show("Session expired. Please fill in your details and click Sign Up again.", false);
-      return;
-    }
-
-    _setVerifyBtnBusy(verifySignupBtn, true);
     show("✅ Verifying code and creating your account…", true);
 
     try {
-      // ── Step 4: insert user into Supabase ────────────────────────────
-      dbgStep("💾", "Step 4 — inserting user into Supabase", {
-        Email_address: pending.email,
-        wallet:        pending.wallet,
-      });
-
-      const { data: insertData, error: insertError } = await sb.from("users").insert([{
-        Email_address: pending.email,
-        wallet:        pending.wallet,
-        token:         TOTP_SECRET,
-        credits:       0,
-      }]).select();
-
-      dbgStep("💾", "Step 4 — Supabase insert response", { data: insertData, error: insertError });
-
-      if (insertError) {
-        if (insertError.code === "23505") {
-          dbgWarn("Step 4 — duplicate email (23505)", insertError);
-          show("⚠️ Email already registered. Please login instead.", false);
-          _setVerifyBtnBusy(verifySignupBtn, false);
-          return;
-        }
-        throw insertError;
+      // Get stored pending signup data
+      const pending = (window as any)._pendingSignup;
+      if (!pending) {
+        show("Session expired. Please try signing up again.", false);
+        return;
       }
+      
+      const { error } = await sb.from("users").insert([{
+        Email_address: emailVal,
+        wallet: pending.wallet,
+        token: SECRET_SEED,
+        credits: 0,
+      }]);
 
-      dbgStep("💾", "Step 4 ✅ — user row created");
-
-      // ── Step 5: connectEmail ─────────────────────────────────────────
-      dbgStep("🔐", "Step 5 — calling connectEmail()", { email: pending.email, wallet: pending.wallet });
-      const result = await connectEmail(pending.email, pending.wallet);
-      dbgStep("🔐", "Step 5 — connectEmail() result", result);
-
-      if (!result) {
-        dbgErr("Step 5 — connectEmail() returned falsy");
-        show("Account created but login failed. Please use the Login tab.", false);
-        _setVerifyBtnBusy(verifySignupBtn, false);
-        showLoginTab();
-        const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
-        if (loginEmailInput) loginEmailInput.value = pending.email;
+      if (error && error.code !== "23505") throw error;
+      
+      if (error && error.code === "23505") {
+        show("⚠️ Email already registered. Please login instead.", false);
         return;
       }
 
-      // ── Step 6: persist session ──────────────────────────────────────
-      dbgStep("👤", "Step 6 — persisting OliviumAuth session");
-      (window as any).OliviumAuth.setUser({
-        email:  pending.email,
-        tier:   "Standard",
-        wallet: pending.wallet,
-      });
+      show("✅ Account created! Logging you in...", true);
 
-      dbgStep("🆔", "Step 6 — identity after connectEmail", getIdentity());
-
-      show("✅ Account created and logged in!", true);
-
-      // ── Step 7: close modal, refresh UI ─────────────────────────────
-      dbgStep("🖼️", "Step 7 — closing modal");
-      const overlay = document.getElementById("authModalOverlay");
-      if (overlay) overlay.style.display = "none";
-
-      dbgStep("🔄", "Step 7 — running forceRefreshUI()");
-      await forceRefreshUI();
-
-      window.dispatchEvent(new CustomEvent("olivium:connected", {
-        detail: { type: "email", email: pending.email },
-      }));
-
-      delete (window as any)._pendingSignup;
-      _resetAuthModal();
-
-      dbgStep("✅", "SIGNUP COMPLETE");
-
+      // AUTO-LOGIN: Immediately connect the email after successful signup
+      try {
+        await connectEmail(pending.email, pending.wallet);
+        
+        // Store user session
+        (window as any).OliviumAuth.setUser({ 
+          email: pending.email, 
+          tier: "Standard",
+          wallet: pending.wallet
+        });
+        
+        show("✅ Login successful! Loading your grove…", true);
+        
+        // Close modal and refresh UI
+        setTimeout(() => {
+          const overlay = document.getElementById("authModalOverlay");
+          if (overlay) overlay.style.display = "none";
+          
+          // Force UI update
+          if (typeof (window as any).updateIdentityBalanceUI === 'function') {
+            (window as any).updateIdentityBalanceUI();
+          }
+          if (typeof (window as any).updateStatsUI === 'function') {
+            (window as any).updateStatsUI();
+          }
+          if (typeof (window as any).loadTrees === 'function') {
+            (window as any).loadTrees('my');
+          }
+          
+          // Clear pending data
+          delete (window as any)._pendingSignup;
+          
+          // Clear form fields
+          const signupOtpBox = document.getElementById("signupOtpBox");
+          const qrContainer = document.getElementById("qr");
+          if (signupOtpBox) signupOtpBox.style.display = "none";
+          if (qrContainer) qrContainer.innerHTML = "";
+          if (otpInput) otpInput.value = "";
+          
+          const msg = document.getElementById("msg");
+          if (msg) msg.textContent = "";
+        }, 1500);
+        
+      } catch (loginErr) {
+        console.error("Auto-login failed:", loginErr);
+        show("Account created but auto-login failed. Please login manually.", false);
+        
+        // Switch to login tab
+        setTimeout(() => {
+          loginTab?.click();
+          const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+          if (loginEmailInput) loginEmailInput.value = emailVal;
+        }, 2000);
+      }
+      
     } catch (err: any) {
-      dbgErr("Signup error", err);
-      show(`Registration failed: ${err.message ?? "unknown error"}`, false);
-    } finally {
-      _setVerifyBtnBusy(verifySignupBtn, false);
+      console.error("Signup DB error:", err);
+      show(`Registration failed: ${err.message || "unknown error"}`, false);
     }
   });
 
-  // ════════════════════════════════════════════════════════════════════════
-  // LOGIN FLOW
-  // ════════════════════════════════════════════════════════════════════════
-
+  // LOGIN - Show OTP input
   document.getElementById("loginBtn")?.addEventListener("click", () => {
-    dbgStep("🔵", "LOGIN BUTTON clicked");
-
-    const loginEmailInput    = document.getElementById("loginEmail")    as HTMLInputElement | null;
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
     const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
-    const emailVal           = loginEmailInput?.value.trim() ?? "";
-    const passVal            = loginPasswordInput?.value.trim() ?? "";
 
-    dbgStep("📝", "login form values", { email: emailVal, hasPassword: passVal.length > 0 });
-
-    if (!emailVal || !passVal) {
+    if (!loginEmailInput?.value.trim() || !loginPasswordInput?.value.trim()) {
       show("Please fill in your credentials.", false);
       return;
     }
-
-    const loginOtpBox = document.getElementById("loginOtpBox");
-    if (loginOtpBox && loginOtpBox.style.display !== "block") {
-      loginOtpBox.style.display = "block";
-      dbgStep("📱", "loginOtpBox shown");
-    }
     show("📱 Enter your 6-digit authenticator code below.", true);
+    const loginOtpBox = document.getElementById("loginOtpBox");
+    if (loginOtpBox) loginOtpBox.style.display = "block";
   });
 
-  // ── Login: verify OTP ─────────────────────────────────────────────────
-
-  const verifyLoginBtn = document.getElementById("verifyLoginOtp");
-  verifyLoginBtn?.addEventListener("click", async () => {
-    dbgStep("🟢", "LOGIN VERIFY clicked");
-
-    if ((verifyLoginBtn as HTMLButtonElement).disabled) {
-      dbgWarn("verifyLoginOtp already disabled — ignoring double-click");
-      return;
-    }
-
-    const loginEmailInput    = document.getElementById("loginEmail")    as HTMLInputElement | null;
+  // LOGIN - Verify OTP AND CONNECT
+  document.getElementById("verifyLoginOtp")?.addEventListener("click", async () => {
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
     const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
-    const emailVal           = loginEmailInput?.value.trim().toLowerCase() ?? "";
-    const passwordVal        = loginPasswordInput?.value.trim() ?? "";
+    const emailVal = loginEmailInput?.value.trim().toLowerCase() ?? "";
+    const passwordVal = loginPasswordInput?.value.trim() ?? "";
 
     if (!emailVal || !passwordVal) {
       show("Please enter your email and password.", false);
       return;
     }
-
-    const otpInput   = document.getElementById("loginOtp") as HTMLInputElement | null;
+    
+    const otpInput = document.getElementById("loginOtp") as HTMLInputElement | null;
     const enteredOtp = otpInput?.value.trim() ?? "";
-    dbgStep("🔢", "OTP entered", { length: enteredOtp.length });
-
+    
     if (!enteredOtp || enteredOtp.length < 6) {
       show("Please enter your 6-digit authenticator code.", false);
       return;
     }
 
-    _setVerifyBtnBusy(verifyLoginBtn, true);
     show("🔐 Verifying identity…", true);
 
     try {
-      // ── Step 1: re-derive expected wallet ────────────────────────────
-      dbgStep("🔑", "Login Step 1 — re-deriving wallet from credentials");
-      const seed           = `${emailVal}:${passwordVal}:${WALLET_DERIVE_SEED}`;
-      const hash           = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+      const seed = `${emailVal}:${passwordVal}:${SECRET_SEED}`;
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
       const expectedWallet = Keypair.fromSeed(new Uint8Array(hash)).publicKey.toBase58();
-      dbgStep("🔑", "Login Step 1 ✅ — expected wallet derived", { expectedWallet });
-
-      // ── Step 2: fetch stored wallet from Supabase ────────────────────
-      dbgStep("📡", "Login Step 2 — querying Supabase for user", { email: emailVal });
+      
       const { data: profile, error } = await sb
         .from("users")
         .select("wallet")
         .eq("Email_address", emailVal)
         .maybeSingle();
 
-      dbgStep("📡", "Login Step 2 — Supabase response", { profile, error });
-
       if (error) throw error;
-
       const custodialWallet = profile?.wallet ?? null;
-
       if (!custodialWallet) {
-        dbgWarn("Login Step 2 — no user found for email", emailVal);
         show("No account found with this email. Please sign up first.", false);
         return;
       }
-
-      // ── Step 3: compare wallets (password check) ─────────────────────
-      dbgStep("🔍", "Login Step 3 — comparing wallets", {
-        expected:  expectedWallet,
-        fromDB:    custodialWallet,
-        match:     custodialWallet === expectedWallet,
-      });
-
+      
       if (custodialWallet !== expectedWallet) {
-        dbgWarn("Login Step 3 — wallet mismatch — wrong password");
         show("Invalid email or password. Please try again.", false);
         return;
       }
 
-      // ── Step 4: connectEmail ─────────────────────────────────────────
-      dbgStep("🔐", "Login Step 4 — calling connectEmail()", { email: emailVal, wallet: custodialWallet });
-      const result = await connectEmail(emailVal, custodialWallet);
-      dbgStep("🔐", "Login Step 4 — connectEmail() result", result);
-
-      if (!result) {
-        dbgErr("Login Step 4 — connectEmail() returned falsy");
-        show("Authentication error. Please try again.", false);
-        return;
-      }
-
-      // ── Step 5: persist session ──────────────────────────────────────
-      dbgStep("👤", "Login Step 5 — persisting OliviumAuth session");
-      (window as any).OliviumAuth.setUser({
-        email:  emailVal,
-        tier:   "Standard",
-        wallet: custodialWallet,
+      // Connect email - THIS IS THE CRITICAL PART
+      await connectEmail(emailVal, custodialWallet);
+      
+      // Store user session
+      (window as any).OliviumAuth.setUser({ 
+        email: emailVal, 
+        tier: "Standard",
+        wallet: custodialWallet
       });
 
-      dbgStep("🆔", "Login Step 5 — identity after connectEmail", getIdentity());
       show("✅ Login successful! Loading your grove…", true);
 
-      // ── Step 6: close modal, refresh UI ─────────────────────────────
-      dbgStep("🖼️", "Login Step 6 — closing modal");
-      const overlay = document.getElementById("authModalOverlay");
-      if (overlay) overlay.style.display = "none";
-
-      dbgStep("🔄", "Login Step 6 — running forceRefreshUI()");
-      await forceRefreshUI();
-
-      window.dispatchEvent(new CustomEvent("olivium:connected", {
-        detail: { type: "email", email: emailVal },
-      }));
-
-      const loginOtpBox = document.getElementById("loginOtpBox");
-      if (loginOtpBox)         loginOtpBox.style.display = "none";
-      if (otpInput)            otpInput.value             = "";
-      if (loginPasswordInput)  loginPasswordInput.value  = "";
-      if (loginEmailInput)     loginEmailInput.value     = "";
-
-      const msg = document.getElementById("msg");
-      if (msg) msg.textContent = "";
-
-      dbgStep("✅", "LOGIN COMPLETE");
+      // Close modal and refresh UI
+      setTimeout(() => {
+        const overlay = document.getElementById("authModalOverlay");
+        if (overlay) overlay.style.display = "none";
+        
+        // Force UI updates
+        if (typeof (window as any).updateIdentityBalanceUI === 'function') {
+          (window as any).updateIdentityBalanceUI();
+        }
+        if (typeof (window as any).updateStatsUI === 'function') {
+          (window as any).updateStatsUI();
+        }
+        if (typeof (window as any).loadTrees === 'function') {
+          (window as any).loadTrees('my');
+        }
+        
+        // Clear login form
+        const loginOtpBox = document.getElementById("loginOtpBox");
+        if (loginOtpBox) loginOtpBox.style.display = "none";
+        
+        if (otpInput) otpInput.value = "";
+        if (loginPasswordInput) loginPasswordInput.value = "";
+        
+        const msg = document.getElementById("msg");
+        if (msg) msg.textContent = "";
+      }, 1500);
 
     } catch (err: any) {
-      dbgErr("Login error", err);
-      show(`Authentication failed: ${err.message ?? "Please try again"}`, false);
-    } finally {
-      _setVerifyBtnBusy(verifyLoginBtn, false);
+      console.error("Login error:", err);
+      show(`Authentication failed: ${err.message || "Please try again"}`, false);
     }
   });
 }
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CANONICAL EVENT LISTENERS
 // ═══════════════════════════════════════════════════════════════════════════
