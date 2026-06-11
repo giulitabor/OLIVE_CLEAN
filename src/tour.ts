@@ -289,12 +289,14 @@ function buildSteps(): TourStep[] {
       showSkip:  false,
       onEnter: () => {
         _openConnectModal();
+        _liftModalsAboveTour();   // punch modals through the backdrop
         _startLoginObserver();
         _showLoginGuide(true);
       },
       onLeave: () => {
         _stopLoginObserver();
         _showLoginGuide(false);
+        _restoreModalZIndex();    // put z-indices back to normal
         // Do NOT close the connect modal here — the user may still be mid-auth.
         // It will close naturally after the auth flow completes.
       },
@@ -504,6 +506,44 @@ function _renderLoginSteps(activeIdx: number): void {
 // CONNECT MODAL HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Selectors for every modal the user might interact with during step 2
+const MODAL_SELECTORS = ['#connectModal', '#authModalOverlay', '#walletConnectCard'];
+
+// Original z-index values saved so we can restore them
+const _savedModalZIndex = new Map<HTMLElement, string>();
+
+/**
+ * Lift all relevant modals above the tour backdrop so clicks reach them.
+ * Also sets pointer-events: none on the backdrop so the modals are fully
+ * interactive — the tour tooltip remains on top at z-index 99010+.
+ */
+function _liftModalsAboveTour(): void {
+  // Backdrop becomes visually present but click-transparent so modals work
+  const backdrop = _el('olivium-tour-backdrop');
+  if (backdrop) backdrop.style.pointerEvents = 'none';
+
+  MODAL_SELECTORS.forEach(sel => {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (!el) return;
+    _savedModalZIndex.set(el, el.style.zIndex || '');
+    el.style.zIndex       = '99050'; // above backdrop (99001) and spotlight (99002)
+    el.style.pointerEvents = 'all';
+  });
+}
+
+/**
+ * Restore modal z-indices and re-enable the backdrop pointer events.
+ */
+function _restoreModalZIndex(): void {
+  const backdrop = _el('olivium-tour-backdrop');
+  if (backdrop) backdrop.style.pointerEvents = 'all';
+
+  _savedModalZIndex.forEach((original, el) => {
+    el.style.zIndex = original;
+  });
+  _savedModalZIndex.clear();
+}
+
 /**
  * Open the connect modal if it isn't already visible.
  * Prefer the app's own button click so all its own event listeners fire.
@@ -514,19 +554,14 @@ function _openConnectModal(): void {
 
   // Prefer clicking the real button so the app's own handlers run
   const btn = _el<HTMLButtonElement>('connectBtn');
-  if (btn && !_isVisible(modal)) {
+  if (btn) {
     btn.click();
     return;
   }
 
   // Fallback: force-show the modal directly
   if (modal) {
-    modal.style.zIndex   = '999999';
-    modal.style.display  = 'flex';
-    modal.style.position = 'fixed';
-    modal.style.top      = '50%';
-    modal.style.left     = '50%';
-    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.display = 'flex';
     modal.style.pointerEvents = 'all';
   }
 }
