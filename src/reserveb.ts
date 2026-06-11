@@ -543,9 +543,13 @@ function _wireConnectButton() {
       btn.textContent = "Disconnecting…";
       (btn as HTMLButtonElement).disabled = true;
       try {
+        
         await handleDisconnectWorkflow();
       } finally {
         (btn as HTMLButtonElement).disabled = false;
+              btn.textContent = "Connect Profile";
+
+        
       }
     } else {
       const modal = document.getElementById("connectModal");
