@@ -767,3 +767,140 @@ document.addEventListener("click", (e) => {
     text:  el.innerText?.trim()?.slice(0, 40) || null,
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEBUG UTILITIES  (only active when ?debug=1 or localStorage.olivium_debug)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const _debugEnabled =
+  new URLSearchParams(window.location.search).get("debug") === "1" ||
+  localStorage.getItem("olivium_debug") === "1";
+
+// ── Supabase snapshot ────────────────────────────────────────────────────
+
+async function dbgSupabase() {
+  console.group("%c[DBG] Supabase tables", "color:#9B59B6;font-weight:bold;");
+  try {
+    const { data: users, error: ue } = await sb.from("users").select("*").limit(20);
+    if (ue) console.error("users →", ue);
+    else    console.table(users);
+  } catch (e) { console.error("users fetch failed", e); }
+  console.groupEnd();
+}
+
+// ── Onchain / program snapshot ───────────────────────────────────────────
+
+async function dbgOnchain() {
+  console.group("%c[DBG] Onchain state", "color:#27AE60;font-weight:bold;");
+
+  // RPC endpoint
+  const endpoint: string = (connection as any)._rpcEndpoint
+    ?? (connection as any).rpcEndpoint
+    ?? "unknown";
+  console.log("RPC endpoint:", endpoint);
+
+  // Slot / block height
+  try {
+    const slot = await connection.getSlot();
+    console.log("Current slot:", slot);
+  } catch (e) { console.warn("getSlot failed:", e); }
+
+  // Identity balance
+  const identity = getIdentity();
+  console.log("Identity:", identity);
+  if (identity.type !== "guest" && identity.wallet) {
+    try {
+      const lamports = await connection.getBalance(new PublicKey(identity.wallet));
+      console.log(`Balance (${identity.wallet}): ${(lamports / 1e9).toFixed(6)} SOL`);
+    } catch (e) { console.warn("getBalance failed:", e); }
+  }
+
+  // Program
+  const program = (window as any)._program;
+  if (!program) {
+    console.warn("_program not yet registered");
+  } else {
+    console.log("Program ID:", program.programId?.toBase58?.() ?? program.programId);
+
+    // Dump every account type the IDL exposes
+    const accountTypes: string[] = Object.keys(program.account ?? {});
+    console.log("IDL account types:", accountTypes);
+
+    for (const accountType of accountTypes) {
+      try {
+        const accounts = await program.account[accountType].all();
+        console.groupCollapsed(`  ${accountType} (${accounts.length} records)`);
+        accounts.forEach((a: any, i: number) => {
+          console.log(`  [${i}] pubkey: ${a.publicKey.toBase58()}`);
+          console.log("       account:", a.account);
+        });
+        console.groupEnd();
+      } catch (e) {
+        console.warn(`  ${accountType}: fetch failed →`, e);
+      }
+    }
+  }
+
+  console.groupEnd();
+}
+
+// ── Identity snapshot ────────────────────────────────────────────────────
+
+function dbgIdentity() {
+  const identity = getIdentity();
+  const stored   = (window as any).OliviumAuth?.getUser?.() ?? null;
+  console.group("%c[DBG] Identity", "color:#E67E22;font-weight:bold;");
+  console.log("getIdentity():", identity);
+  console.log("OliviumAuth.getUser():", stored);
+  console.log("isConnected():", isConnected());
+  console.log("_pendingSignup:", (window as any)._pendingSignup ?? "(none)");
+  console.groupEnd();
+}
+
+// ── Full snapshot ────────────────────────────────────────────────────────
+
+async function dbgAll() {
+  console.group(
+    "%c[DBG] ══ Olivium full snapshot ══",
+    "color:#1ABC9C;font-size:14px;font-weight:bold;"
+  );
+  dbgIdentity();
+  await dbgSupabase();
+  await dbgOnchain();
+  console.groupEnd();
+}
+
+// ── Expose on window ─────────────────────────────────────────────────────
+
+(window as any).dbg = {
+  all:      dbgAll,
+  sb:       dbgSupabase,
+  onchain:  dbgOnchain,
+  identity: dbgIdentity,
+  /** Toggle persistent debug mode: dbg.persist(true/false) */
+  persist(on: boolean) {
+    if (on) localStorage.setItem("olivium_debug", "1");
+    else    localStorage.removeItem("olivium_debug");
+    console.log(`[DBG] Persistent debug ${on ? "enabled" : "disabled"}. Reload to apply.`);
+  },
+};
+
+// ── Auto-run on ?debug=1 / localStorage flag ─────────────────────────────
+
+if (_debugEnabled) {
+  console.log(
+    "%c[DBG] Debug mode active — use window.dbg.all() / dbg.sb() / dbg.onchain() / dbg.identity()",
+    "background:#1ABC9C;color:#fff;padding:2px 6px;border-radius:3px;"
+  );
+
+  // Run full snapshot once DOM + program are ready
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Brief wait to let reserve_board.ts register _program
+    await new Promise(r => setTimeout(r, 800));
+    await dbgAll();
+  });
+
+  // Re-run whenever connection state changes
+  window.addEventListener("olivium:connected",    dbgAll);
+  window.addEventListener("olivium:disconnected", dbgAll);
+}
