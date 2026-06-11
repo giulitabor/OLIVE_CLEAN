@@ -34,6 +34,7 @@ export default defineConfig({
         adopt: resolve(__dirname, "ADOPT_v2.html"),
 
 
+        grow: resolve(__dirname, "grow.html"),
 
         partner: resolve(__dirname, "partner.html"),
 
