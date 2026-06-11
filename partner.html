@@ -140,33 +140,35 @@
   .tree-stat { text-align: center; background: var(--glass2); border-radius: 12px; padding: 8px 16px; }
   .tree-stat-val { font-size: 20px; font-weight: 600; color: var(--gold2); }
   .journal-entry { padding: 12px; background: var(--glass); border-left: 2px solid var(--gold); border-radius: 0 12px 12px 0; margin-bottom: 8px; }
-  textarea { width: 100%; background: var(--glass2); border: 0.5px solid var(--border); border-radius: 16px; padding: 12px; color: var(--text1); resize: none; margin: 8px 0; }
+  textarea { width: 100%; background: var(--glass2); border: 0.5px solid var(--border); border-radius: 16px; padding: 12px; color: var(--text1); resize: none; margin: 8px 0; font-family: inherit; }
   .loading { text-align: center; padding: 40px; color: var(--gold2); }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Screen 1: Supabase Setup -->
-  <div id="setup-screen" class="screen active">
-    <div style="text-align: center; margin-bottom: 32px;">
-      <div style="font-size: 48px; margin-bottom: 8px;">🌿</div>
-      <div style="font-size: 24px; font-family: Georgia; color: var(--gold2);">Two Paths, One Journey</div>
-      <button class="btn" id="connect-btn">Connect ✨</button>
-      <button class="btn btn-secondary" id="demo-btn">Try Demo Mode</button>
-      <div id="setup-error" class="error"></div>
+  <!-- Screen 1: Welcome -->
+  <div id="welcome-screen" class="screen active">
+    <div style="text-align: center; margin: 60px 0 40px;">
+      <div style="font-size: 64px; margin-bottom: 16px;">🌿</div>
+      <div style="font-size: 28px; font-family: Georgia; color: var(--gold2);">Two Paths,<br>One Journey</div>
+      <div style="font-size: 14px; color: var(--text2); margin-top: 12px;">A sacred space for couples to grow together</div>
+    </div>
+    <div class="card">
+      <button class="btn" id="start-with-supabase">Start with Supabase ✨</button>
+      <button class="btn btn-secondary" id="demo-mode-btn">Try Demo Mode</button>
     </div>
   </div>
 
-  <!-- Screen 2: Auth (Login/Signup) -->
+  <!-- Screen 2: Auth -->
   <div id="auth-screen" class="screen">
     <div style="text-align: center; margin-bottom: 24px;">
       <div style="font-size: 48px;">💑</div>
-      <div style="font-size: 20px; font-family: Georgia; color: var(--gold2);">Welcome</div>
+      <div style="font-size: 20px; font-family: Georgia; color: var(--gold2);">Welcome Back</div>
     </div>
     <div class="card">
-      <input type="email" id="auth-email" class="input-field" placeholder="Email">
-      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6)">
+      <input type="email" id="auth-email" class="input-field" placeholder="Email" value="iamkyngrick@gmail.com">
+      <input type="password" id="auth-password" class="input-field" placeholder="Password">
       <button class="btn" id="login-btn">Sign In</button>
       <button class="btn btn-secondary" id="signup-btn">Create Account</button>
       <div id="auth-error" class="error"></div>
@@ -189,17 +191,16 @@
     </div>
   </div>
 
-  <!-- Screen 4: Waiting for Partner -->
+  <!-- Screen 4: Waiting -->
   <div id="waiting-screen" class="screen">
     <div class="card" style="text-align: center;">
       <div style="font-size: 48px;">⏳</div>
-      <div style="font-size: 18px; color: var(--gold2); margin: 8px 0;">Waiting for Partner</div>
-      <div style="font-size: 13px; color: var(--text2);">Share this code with your partner:</div>
+      <div style="font-size: 18px; color: var(--gold2);">Waiting for Partner</div>
       <div class="invite-box">
         <div class="code" id="invite-code-display">------</div>
-        <button class="btn btn-secondary" id="copy-code-btn" style="margin-top: 8px; padding: 8px;">📋 Copy Code</button>
+        <button class="btn btn-secondary" id="copy-code-btn">📋 Copy Code</button>
       </div>
-      <div class="loading">Waiting for partner to join...</div>
+      <div class="loading">Share this code with your partner...</div>
     </div>
   </div>
 
@@ -219,9 +220,9 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Today's Energy</div>
-      <div class="progress-row"><div>✨ Ask a deeper question</div></div>
-      <div class="progress-row"><div>💬 Share one hidden feeling</div></div>
+      <div class="card-title">✨ Today's Energy</div>
+      <div class="progress-row"><div>💬 Ask a deeper question</div></div>
+      <div class="progress-row"><div>🌙 Share one hidden feeling</div></div>
       <div class="progress-row"><div>🙏 10-min gratitude ritual</div></div>
     </div>
 
@@ -231,129 +232,267 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Shared Journal</div>
+      <div class="card-title">📖 Shared Journal</div>
       <textarea id="journal-text" placeholder="Write something your partner will see..." rows="3"></textarea>
-      <button class="btn" id="post-journal-btn" style="margin-top: 0;">Post to Journal</button>
-      <div id="journal-list"></div>
+      <button class="btn" id="post-journal-btn">Post to Journal</button>
+      <div id="journal-list" style="margin-top: 12px;"></div>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
+  <!-- Bottom Nav -->
   <div class="bottom-nav" id="bottom-nav" style="display: none;">
     <button class="nav-item active" onclick="showMainTab('home')"><span class="nav-icon">🌳</span><span>Home</span></button>
     <button class="nav-item" onclick="showMainTab('journal')"><span class="nav-icon">📖</span><span>Journal</span></button>
   </div>
-
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ========== GLOBALS ==========
+// Supabase credentials
+const SUPABASE_URL = "https://eohdfgvebqdxstwdildk.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
+
 let supabase = null;
 let currentUser = null;
 let currentRelation = null;
-let currentScreen = 'setup';
+let realtimeChannel = null;
 
-// ========== HELPER FUNCTIONS ==========
+// Helper functions
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId + '-screen').classList.add('active');
-  currentScreen = screenId;
+  const target = document.getElementById(screenId + '-screen');
+  if (target) target.classList.add('active');
 }
 
-function showError(elementId, message) {
+function showError(elementId, msg) {
   const el = document.getElementById(elementId);
-  if (el) { el.textContent = message; setTimeout(() => { el.textContent = ''; }, 5000); }
+  if (el) { el.textContent = msg; setTimeout(() => { el.textContent = ''; }, 5000); }
 }
 
-// ========== SETUP ==========
-document.getElementById('connect-btn').onclick = async () => {
-  const url = "https://eohdfgvebqdxstwdildk.supabase.co";
-  const key = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
-  if (!url || !key) { showError('setup-error', 'Please enter both URL and Anon Key'); return; }
+function updateDate() {
+  const now = new Date();
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dateEl = document.getElementById('main-date');
+  if (dateEl) dateEl.innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+}
+
+function drawTree() {
+  const canvas = document.getElementById('tree-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.clientWidth;
+  const h = 200;
+  canvas.width = w;
+  canvas.height = h;
   
+  const cx = w / 2;
+  const base = h - 15;
+  
+  ctx.clearRect(0, 0, w, h);
+  
+  // Trunk
+  ctx.beginPath();
+  ctx.moveTo(cx, base);
+  ctx.lineTo(cx, base - 70);
+  ctx.strokeStyle = '#8B5A2B';
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  
+  // Roots
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx, base);
+    ctx.lineTo(cx - 12 + i * 5, base + 10);
+    ctx.stroke();
+  }
+  
+  const stats = currentRelation?.couple_stats || { trust: 70, intimacy: 65 };
+  const leafCount = 5 + Math.floor((stats.trust || 70) / 15);
+  for (let i = 0; i < leafCount; i++) {
+    let x = cx - 20 + Math.random() * 40;
+    let y = base - 60 + Math.random() * 50;
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#3c9e6d';
+    ctx.fill();
+  }
+  
+  const flowerCount = 2 + Math.floor((stats.intimacy || 65) / 20);
+  for (let i = 0; i < flowerCount; i++) {
+    let x = cx - 15 + Math.random() * 30;
+    let y = base - 50 + Math.random() * 40;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffb7c5';
+    ctx.fill();
+  }
+}
+
+function updateMainUI() {
+  if (!currentRelation) return;
+  
+  updateDate();
+  
+  const names = `${currentRelation.partner_a_name || 'Partner A'} & ${currentRelation.partner_b_name || 'Partner B'}`;
+  const partnerEl = document.getElementById('main-partner');
+  if (partnerEl) partnerEl.innerHTML = `❤️ ${names}`;
+  
+  const stats = currentRelation.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 };
+  
+  const growthEl = document.getElementById('stat-growth');
+  const trustEl = document.getElementById('stat-trust');
+  const visionEl = document.getElementById('stat-vision');
+  
+  if (growthEl) growthEl.innerHTML = Math.floor((stats.trust + stats.communication + stats.vision) / 3) + '%';
+  if (trustEl) trustEl.innerHTML = stats.trust + '%';
+  if (visionEl) visionEl.innerHTML = stats.vision + '%';
+  
+  const healthEl = document.getElementById('health-stats');
+  if (healthEl) {
+    healthEl.innerHTML = Object.entries(stats).map(([k, v]) => 
+      `<div class="progress-row">
+        <div class="progress-label">${k.charAt(0).toUpperCase() + k.slice(1)}</div>
+        <div class="progress-track"><div class="progress-fill" style="width: ${v}%"></div></div>
+        <div>${v}%</div>
+      </div>`
+    ).join('');
+  }
+  
+  const journal = currentRelation.journal || [];
+  const journalEl = document.getElementById('journal-list');
+  if (journalEl) {
+    journalEl.innerHTML = journal.slice(0, 10).map(j => 
+      `<div class="journal-entry"><strong>${j.author}</strong> · ${j.date}<br>"${j.text}"</div>`
+    ).join('');
+  }
+  
+  drawTree();
+}
+
+// Supabase functions
+async function initSupabase() {
   try {
-    supabase = window.supabase.createClient(url, key);
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // Test connection
     const { error } = await supabase.from('relationships').select('count', { count: 'exact', head: true });
     if (error) throw new Error(error.message);
-    
     showScreen('auth');
   } catch(e) {
-    showError('setup-error', 'Connection failed: ' + e.message + '. Make sure you created the tables first.');
+    alert('Connection error: ' + e.message + '\n\nMake sure you run the SQL in Supabase first.');
+    console.error(e);
   }
-};
+}
 
-document.getElementById('demo-btn').onclick = () => {
-  startDemoMode();
-};
-
-// ========== AUTH ==========
-document.getElementById('signup-btn').onclick = async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password) { showError('auth-error', 'Enter email and password'); return; }
-  if (password.length < 6) { showError('auth-error', 'Password must be at least 6 characters'); return; }
-  
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) { showError('auth-error', error.message); return; }
-  
-  currentUser = data.user;
-  showError('auth-error', '✅ Account created! Now create your relationship.');
-  showScreen('relation');
-};
-
-document.getElementById('login-btn').onclick = async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password) { showError('auth-error', 'Enter email and password'); return; }
-  
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) { showError('auth-error', error.message); return; }
-  
-  currentUser = data.user;
-  await loadUserRelationship();
-};
-
-// ========== RELATIONSHIP MANAGEMENT ==========
 async function loadUserRelationship() {
   const { data, error } = await supabase
     .from('relationships')
     .select('*')
     .or(`partner_a_id.eq.${currentUser.id},partner_b_id.eq.${currentUser.id}`);
   
-  if (error) { console.error(error); showScreen('relation'); return; }
+  if (error) {
+    console.error(error);
+    showScreen('relation');
+    return;
+  }
   
   if (!data || data.length === 0) {
     showScreen('relation');
   } else {
-    const relation = data[0];
-    currentRelation = relation;
+    currentRelation = data[0];
     
-    if (relation.partner_b_joined || relation.partner_b_id) {
-      startMainApp();
-    } else if (relation.partner_a_id === currentUser.id && !relation.partner_b_joined) {
-      document.getElementById('invite-code-display').innerText = relation.invite_code;
+    if (currentRelation.partner_b_joined || currentRelation.partner_b_id) {
+      showScreen('main');
+      const bottomNav = document.getElementById('bottom-nav');
+      if (bottomNav) bottomNav.style.display = 'flex';
+      updateMainUI();
+      setupRealtime();
+    } else if (currentRelation.partner_a_id === currentUser.id && !currentRelation.partner_b_joined) {
+      const codeEl = document.getElementById('invite-code-display');
+      if (codeEl) codeEl.innerText = currentRelation.invite_code;
       showScreen('waiting');
-      
-      // Listen for partner joining
-      supabase.channel(`relation_${relation.id}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relation.id}` }, (payload) => {
-          if (payload.new.partner_b_joined) {
-            currentRelation = payload.new;
-            startMainApp();
-          }
-        })
-        .subscribe();
+      setupRealtime();
     } else {
-      startMainApp();
+      showScreen('main');
+      const bottomNav = document.getElementById('bottom-nav');
+      if (bottomNav) bottomNav.style.display = 'flex';
+      updateMainUI();
+      setupRealtime();
     }
   }
 }
 
+function setupRealtime() {
+  if (!currentRelation) return;
+  
+  if (realtimeChannel) realtimeChannel.unsubscribe();
+  
+  realtimeChannel = supabase.channel(`rel_${currentRelation.id}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'relationships',
+      filter: `id=eq.${currentRelation.id}`
+    }, (payload) => {
+      if (payload.new) {
+        currentRelation = payload.new;
+        updateMainUI();
+      }
+    })
+    .subscribe();
+}
+
+// Event handlers
+document.getElementById('start-with-supabase').onclick = async () => {
+  await initSupabase();
+};
+
+document.getElementById('demo-mode-btn').onclick = () => {
+  startDemoMode();
+};
+
+document.getElementById('login-btn').onclick = async () => {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    showError('auth-error', error.message);
+    return;
+  }
+  
+  currentUser = data.user;
+  await loadUserRelationship();
+};
+
+document.getElementById('signup-btn').onclick = async () => {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  
+  if (password.length < 6) {
+    showError('auth-error', 'Password must be at least 6 characters');
+    return;
+  }
+  
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) {
+    showError('auth-error', error.message);
+    return;
+  }
+  
+  currentUser = data.user;
+  showError('auth-error', '✅ Account created! Now create your relationship.');
+  showScreen('relation');
+};
+
 document.getElementById('create-btn').onclick = async () => {
   const myName = document.getElementById('my-name').value;
   const partnerName = document.getElementById('partner-name').value;
-  if (!myName || !partnerName) { showError('relation-error', 'Enter both names'); return; }
+  
+  if (!myName || !partnerName) {
+    showError('relation-error', 'Enter both names');
+    return;
+  }
   
   const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const relationId = 'rel_' + Date.now();
@@ -365,212 +504,123 @@ document.getElementById('create-btn').onclick = async () => {
     partner_a_name: myName,
     partner_b_name: partnerName,
     partner_b_joined: false,
-    couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 },
+    couple_stats: { trust: 75, intimacy: 70, communication: 72, vision: 80, friendship: 78 },
     baby_readiness: 70,
     journal: []
   }]);
   
-  if (error) { showError('relation-error', error.message); return; }
+  if (error) {
+    showError('relation-error', error.message);
+    return;
+  }
   
   currentRelation = { id: relationId, invite_code: inviteCode, partner_a_name: myName, partner_b_name: partnerName };
-  document.getElementById('invite-code-display').innerText = inviteCode;
+  const codeEl = document.getElementById('invite-code-display');
+  if (codeEl) codeEl.innerText = inviteCode;
   showScreen('waiting');
-  
-  // Listen for partner
-  supabase.channel(`relation_${relationId}`)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relationId}` }, (payload) => {
-      if (payload.new.partner_b_joined) {
-        currentRelation = payload.new;
-        startMainApp();
-      }
-    })
-    .subscribe();
+  setupRealtime();
 };
 
 document.getElementById('join-btn').onclick = async () => {
   const code = document.getElementById('join-code-input').value.toUpperCase();
-  if (!code || code.length !== 6) { showError('relation-error', 'Enter a valid 6-digit code'); return; }
   
   const { data, error } = await supabase.from('relationships').select('*').eq('invite_code', code).single();
-  if (error || !data) { showError('relation-error', 'Invalid invite code. Check with your partner.'); return; }
+  if (error || !data) {
+    showError('relation-error', 'Invalid invite code');
+    return;
+  }
   
   const { error: updateError } = await supabase
     .from('relationships')
     .update({ partner_b_id: currentUser.id, partner_b_joined: true })
     .eq('id', data.id);
   
-  if (updateError) { showError('relation-error', updateError.message); return; }
+  if (updateError) {
+    showError('relation-error', updateError.message);
+    return;
+  }
   
   currentRelation = { ...data, partner_b_id: currentUser.id, partner_b_joined: true };
-  startMainApp();
+  showScreen('main');
+  const bottomNav = document.getElementById('bottom-nav');
+  if (bottomNav) bottomNav.style.display = 'flex';
+  updateMainUI();
+  setupRealtime();
 };
 
 document.getElementById('copy-code-btn').onclick = () => {
   const code = document.getElementById('invite-code-display').innerText;
   navigator.clipboard.writeText(code);
-  alert('Code copied! Send this to your partner.');
+  alert('Code copied! Share with your partner.');
 };
 
-// ========== MAIN APP ==========
-function startMainApp() {
-  showScreen('main');
-  document.getElementById('bottom-nav').style.display = 'flex';
-  updateMainUI();
-  setupRealtime();
-  startAnimations();
-}
-
-function setupRealtime() {
-  if (!currentRelation) return;
-  supabase.channel(`rel_${currentRelation.id}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelation.id}` }, (payload) => {
-      if (payload.new) {
-        currentRelation = payload.new;
-        updateMainUI();
-      }
-    })
-    .subscribe();
-}
-
-function updateMainUI() {
-  // Update date
-  const now = new Date();
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  document.getElementById('main-date').innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-  document.getElementById('main-partner').innerHTML = `❤️ ${currentRelation?.partner_a_name || 'Partner A'} & ${currentRelation?.partner_b_name || 'Partner B'}`;
-  
-  // Update stats
-  const stats = currentRelation?.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80 };
-  document.getElementById('stat-growth').innerHTML = Math.floor((stats.trust + stats.communication + stats.vision) / 3) + '%';
-  document.getElementById('stat-trust').innerHTML = stats.trust + '%';
-  document.getElementById('stat-vision').innerHTML = stats.vision + '%';
-  
-  // Health stats
-  const healthEl = document.getElementById('health-stats');
-  if (healthEl) {
-    healthEl.innerHTML = Object.entries(stats).map(([k, v]) => 
-      `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`
-    ).join('');
-  }
-  
-  // Journal
-  const journal = currentRelation?.journal || [];
-  const journalEl = document.getElementById('journal-list');
-  if (journalEl) {
-    journalEl.innerHTML = journal.slice(0, 10).map(j => 
-      `<div class="journal-entry"><strong>${j.author}</strong> · ${j.date}<br>"${j.text}"</div>`
-    ).join('');
-  }
-  
-  drawTree();
-}
-
-async function postJournal() {
+document.getElementById('post-journal-btn').onclick = async () => {
   const text = document.getElementById('journal-text').value;
   if (!text.trim()) return;
   
   const now = new Date();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const newEntry = {
-    author: currentRelation?.partner_a_id === currentUser?.id ? currentRelation.partner_a_name : currentRelation.partner_b_name,
+    author: currentRelation.partner_a_id === currentUser.id ? currentRelation.partner_a_name : currentRelation.partner_b_name,
     date: `${months[now.getMonth()]} ${now.getDate()}`,
     text: text.trim()
   };
   
-  const updatedJournal = [newEntry, ...(currentRelation?.journal || [])].slice(0, 50);
-  const { error } = await supabase.from('relationships').update({ journal: updatedJournal }).eq('id', currentRelation.id);
+  const updatedJournal = [newEntry, ...(currentRelation.journal || [])].slice(0, 50);
+  const { error } = await supabase
+    .from('relationships')
+    .update({ journal: updatedJournal })
+    .eq('id', currentRelation.id);
+  
   if (!error) {
     document.getElementById('journal-text').value = '';
+    currentRelation.journal = updatedJournal;
+    updateMainUI();
   }
-}
+};
 
-document.getElementById('post-journal-btn').onclick = postJournal;
-
-function drawTree() {
-  const canvas = document.getElementById('tree-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  canvas.width = canvas.offsetWidth;
-  canvas.height = 200;
-  const w = canvas.width, h = canvas.height, cx = w/2, base = h-15;
-  ctx.clearRect(0, 0, w, h);
-  ctx.beginPath();
-  ctx.moveTo(cx, base);
-  ctx.lineTo(cx, base-70);
-  ctx.strokeStyle = '#8B5A2B';
-  ctx.lineWidth = 8;
-  ctx.stroke();
-  for (let i = 0; i < 6; i++) {
-    ctx.beginPath();
-    ctx.moveTo(cx, base);
-    ctx.lineTo(cx - 12 + i * 5, base + 10);
-    ctx.stroke();
-  }
-  const stats = currentRelation?.couple_stats || {};
-  const growth = (stats.trust || 70) / 10;
-  for (let i = 0; i < 5 + Math.floor(growth); i++) {
-    let x = cx - 20 + Math.random() * 40;
-    let y = base - 60 + Math.random() * 50;
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#3c9e6d';
-    ctx.fill();
-  }
-  for (let i = 0; i < 3 + Math.floor((stats.intimacy || 65) / 20); i++) {
-    let x = cx - 15 + Math.random() * 30;
-    let y = base - 50 + Math.random() * 40;
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffb7c5';
-    ctx.fill();
-  }
-}
-
-function startAnimations() {
-  drawTree();
-  setInterval(drawTree, 5000);
-  setInterval(() => {
-    const now = new Date();
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const dateEl = document.getElementById('main-date');
-    if (dateEl) dateEl.innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-  }, 60000);
-}
-
-function showMainTab(tab) {
-  const homeCard = document.querySelector('#main-screen .card:first-child');
-  const journalCard = document.querySelector('#main-screen .card:nth-child(3)');
-  const healthCard = document.querySelector('#main-screen .card:nth-child(2)');
+// Tab switching
+window.showMainTab = function(tab) {
+  const cards = document.querySelectorAll('#main-screen .card');
+  const healthCard = cards[1];
+  const journalCard = cards[3];
+  
   if (tab === 'home') {
-    if (homeCard) homeCard.style.display = 'block';
+    if (cards[0]) cards[0].style.display = 'block';
     if (healthCard) healthCard.style.display = 'block';
     if (journalCard) journalCard.style.display = 'none';
   } else {
-    if (homeCard) homeCard.style.display = 'none';
+    if (cards[0]) cards[0].style.display = 'none';
     if (healthCard) healthCard.style.display = 'none';
     if (journalCard) journalCard.style.display = 'block';
   }
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  event.target.closest('.nav-item').classList.add('active');
-}
+  
+  const btns = document.querySelectorAll('.nav-item');
+  btns.forEach(b => b.classList.remove('active'));
+  if (event && event.target) {
+    const btn = event.target.closest('.nav-item');
+    if (btn) btn.classList.add('active');
+  }
+};
 
-// ========== DEMO MODE (No Supabase needed) ==========
+// Demo mode
 function startDemoMode() {
   currentRelation = {
-    partner_a_name: 'Ana',
-    partner_b_name: 'Marco',
-    couple_stats: { trust: 78, intimacy: 65, communication: 74, vision: 82, friendship: 85 },
-    journal: [{ author: 'Ana', date: 'Today', text: 'Welcome to your journey! ✨' }]
+    partner_a_name: 'You',
+    partner_b_name: 'Partner',
+    couple_stats: { trust: 78, intimacy: 70, communication: 75, vision: 82, friendship: 80 },
+    journal: [{ author: 'System', date: 'Today', text: 'Welcome to your journey! ✨ Post your first journal entry.' }]
   };
   showScreen('main');
-  document.getElementById('bottom-nav').style.display = 'flex';
+  const bottomNav = document.getElementById('bottom-nav');
+  if (bottomNav) bottomNav.style.display = 'flex';
   updateMainUI();
-  startAnimations();
+  setInterval(drawTree, 5000);
+  setInterval(updateDate, 60000);
   
   // Override post for demo
-  window.postJournal = function() {
+  const postBtn = document.getElementById('post-journal-btn');
+  postBtn.onclick = () => {
     const text = document.getElementById('journal-text').value;
     if (!text.trim()) return;
     const now = new Date();
@@ -579,11 +629,10 @@ function startDemoMode() {
     updateMainUI();
     document.getElementById('journal-text').value = '';
   };
-  document.getElementById('post-journal-btn').onclick = () => window.postJournal();
 }
 
-// Initial setup
-showScreen('setup');
+// Start
+showScreen('welcome');
 </script>
 </body>
 </html>
