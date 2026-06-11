@@ -232,6 +232,183 @@ const TOUR_CSS = `
 
 // ─── Tour step definitions ─────────────────────────────────────────────────────
 
+
+// Helpers 
+// Fix 3: Add this new helper function to bring modal forward
+function bringModalForwardAndOpen(): void {
+  const modal = document.querySelector('#connectModal') as HTMLElement;
+  if (modal) {
+    // Bring to front with highest z-index
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    
+    // Open the modal if it has an active class or display property
+    if (modal.classList) {
+      modal.classList.add('active');
+    }
+    if (modal.style.display === 'none' || !modal.style.display) {
+      modal.style.display = 'flex';
+    }
+    
+    // Ensure it's interactive
+    modal.style.pointerEvents = 'all';
+    
+    // Add a one-time click listener to detect when modal is closed
+    const closeHandler = () => {
+      // After modal is closed, wait a moment then continue tour
+      setTimeout(() => {
+        if (tourActive && currentStep === 2) {
+          // User closed modal, move to next step
+          goToStep(3);
+        }
+      }, 300);
+      modal.removeEventListener('modalClosed', closeHandler);
+    };
+    
+    // Watch for modal being closed
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+          const isNowHidden = !modal.classList?.contains('active') && 
+                              (modal.style.display === 'none' || getComputedStyle(modal).display === 'none');
+          if (isNowHidden) {
+            observer.disconnect();
+            closeHandler();
+          }
+        }
+      }
+    });
+    observer.observe(modal, { attributes: true });
+  }
+}
+
+// Fix 4: Update openConnectModalIfClosed function to actually open the modal
+function openConnectModalIfClosed(): void {
+  const modal = document.querySelector('#connectModal') as HTMLElement;
+  const btn = document.querySelector('#connectBtn') as HTMLElement;
+  
+  // Check if modal is actually visible
+  const isModalVisible = modal && 
+    (modal.classList?.contains('active') || 
+     modal.style.display === 'flex' || 
+     getComputedStyle(modal).display === 'flex');
+  
+  if (!isModalVisible) {
+    // Try to click the connect button first (most apps handle this)
+    if (btn && typeof btn.click === 'function') {
+      btn.click();
+    }
+    // Also directly show modal if possible
+    if (modal) {
+      if (modal.classList) modal.classList.add('active');
+      modal.style.display = 'flex';
+    }
+  }
+}
+
+// Fix 5: Update startLoginObserver to properly track authentication
+function startLoginObserver(): void {
+  stopLoginObserver();
+  
+  const identityEl = document.querySelector('#nav-identity-display');
+  const connectModal = document.querySelector('#connectModal');
+  
+  // Track authentication state
+  let authCompleted = false;
+  
+  const checkState = () => {
+    if (authCompleted) return;
+    
+    const isAuthenticated = identityEl && 
+      identityEl.textContent !== 'NOT CONNECTED' && 
+      identityEl.textContent?.trim() !== '' &&
+      !identityEl.textContent?.includes('NOT CONNECTED');
+    
+    if (isAuthenticated) {
+      authCompleted = true;
+      renderLoginSteps(4);
+      // Auto-advance tour after connection
+      setTimeout(() => { 
+        if (tourActive && currentStep === 2) {
+          goToStep(3);
+        }
+      }, 1200);
+    } else {
+      // Check if modal is visible
+      const isModalVisible = connectModal &&
+        (connectModal.classList?.contains('active') || 
+         getComputedStyle(connectModal).display === 'flex');
+      
+      if (isModalVisible) {
+        renderLoginSteps(2);
+      } else if (!isModalVisible && currentStep === 2) {
+        // Modal was closed but not authenticated - reopen it
+        bringModalForwardAndOpen();
+      }
+    }
+  };
+  
+  loginObserver = new MutationObserver(checkState);
+  if (identityEl) loginObserver.observe(identityEl, { 
+    childList: true, 
+    characterData: true, 
+    subtree: true 
+  });
+  if (connectModal) loginObserver.observe(connectModal, { 
+    attributes: true, 
+    attributeFilter: ['class', 'style'] 
+  });
+  
+  // Initial check
+  checkState();
+}
+
+// Fix 6: Update closeConnectModalIfOpen to be optional (don't force close)
+function closeConnectModalIfOpen(): void {
+  // Only close if we're ending the tour completely
+  if (!tourActive) {
+    if (typeof (window as any).closeConnectModal === 'function') {
+      (window as any).closeConnectModal();
+    } else {
+      const modal = document.querySelector('#connectModal') as HTMLElement;
+      if (modal) {
+        if (modal.classList) modal.classList.remove('active');
+        modal.style.display = 'none';
+      }
+    }
+  }
+}
+
+// Fix 7: Update endTour to properly clean up without forcing modal close prematurely
+export function endTour(): void {
+  tourActive = false;
+  stopLoginObserver();
+  hideLoginGuide();
+  hideMignolePopup();
+
+  const backdrop = document.querySelector('#olivium-tour-backdrop') as HTMLElement;
+  if (backdrop) { 
+    backdrop.style.opacity = '0'; 
+    setTimeout(() => backdrop.remove(), 400); 
+  }
+
+  const spot = document.querySelector('#olivium-tour-spotlight') as HTMLElement;
+  if (spot) spot.remove();
+
+  const tooltip = document.querySelector('#olivium-tour-tooltip') as HTMLElement;
+  if (tooltip) { tooltip.style.display = 'none'; }
+
+  window.removeEventListener('resize', handleResize);
+
+  // Only close modal if tour is ending completely
+  if (typeof (window as any).closeConnectModal === 'function') {
+    (window as any).closeConnectModal();
+  }
+}
+
 function buildSteps(): TourStep[] {
   return [
     // ── PART 1 ─────────────────────────────────────────────────────────────────
@@ -272,14 +449,15 @@ function buildSteps(): TourStep[] {
       next: "I'm connected / Skip",
       showSkip: false,
       onEnter: () => {
-        openConnectModalIfClosed();
+        bringModalForwardAndOpen();
         startLoginObserver();
         highlightLoginGuide(true);
       },
+
       onLeave: () => {
         stopLoginObserver();
         hideLoginGuide();
-        closeConnectModalIfOpen();
+      //  closeConnectModalIfOpen();
       },
     },
 
