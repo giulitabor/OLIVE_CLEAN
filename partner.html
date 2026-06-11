@@ -2,21 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Two Paths, One Journey — Couple's Sanctuary</title>
 <style>
   :root {
     --navy: #0a0e1a;
     --navy2: #0f1525;
+    --navy3: #141c30;
     --gold: #c9a84c;
     --gold2: #e8c96a;
-    --teal: #4ecdc4;
     --rose: #e87070;
+    --teal: #4ecdc4;
+    --purple: #9b6dff;
     --glass: rgba(255,255,255,0.05);
     --glass2: rgba(255,255,255,0.08);
     --border: rgba(201,168,76,0.2);
     --text1: #f0e8d0;
     --text2: #a89880;
+    --font: 'Georgia', serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,18 +28,28 @@
     color: var(--text1);
     font-family: var(--sans);
     min-height: 100vh;
+    overflow-x: hidden;
+  }
+  #stars-canvas {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    pointer-events: none;
+    z-index: 0;
   }
   #app {
+    position: relative;
+    z-index: 1;
     max-width: 480px;
     margin: 0 auto;
-    padding: 16px 16px 80px;
+    padding-bottom: 80px;
   }
   .card {
     background: var(--glass);
     border: 0.5px solid var(--border);
     border-radius: 24px;
     padding: 20px;
-    margin-bottom: 16px;
+    margin: 12px 16px;
   }
   .card-title {
     font-size: 11px;
@@ -44,78 +57,31 @@
     text-transform: uppercase;
     color: var(--gold);
     margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  .input-field {
-    width: 100%;
-    background: var(--glass2);
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
-    padding: 14px;
-    color: var(--text1);
-    font-size: 14px;
-    margin-bottom: 12px;
-    outline: none;
-  }
-  .btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: 40px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15));
-    border: 0.5px solid var(--gold);
-    color: var(--gold);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-    text-align: center;
-  }
-  .btn-secondary {
-    background: var(--glass);
-    color: var(--text2);
-  }
-  .invite-box {
-    background: rgba(78,205,196,0.1);
-    border: 1px dashed var(--teal);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    margin: 16px 0;
-  }
-  .code {
-    font-size: 28px;
-    letter-spacing: 4px;
-    font-family: monospace;
-    color: var(--teal);
-    margin: 8px 0;
-  }
-  .error {
-    color: var(--rose);
-    font-size: 12px;
-    margin-top: 8px;
-    text-align: center;
-  }
-  .success {
-    color: var(--teal);
-    font-size: 12px;
-    margin-top: 8px;
-    text-align: center;
+  .card-title::after {
+    content:'';
+    flex:1;
+    height: 0.5px;
+    background: var(--border);
   }
   .bottom-nav {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0; left:50%;
+    transform: translateX(-50%);
+    width: 100%;
     max-width: 480px;
-    margin: 0 auto;
     background: rgba(10,14,26,0.95);
     backdrop-filter: blur(20px);
     border-top: 0.5px solid var(--border);
     display: flex;
     z-index: 100;
-    padding: 8px 0;
+    padding: 8px 0 6px;
   }
   .nav-item {
-    flex: 1;
+    flex:1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -126,513 +92,524 @@
     border: none;
     color: var(--text2);
     font-size: 9px;
+    text-transform: uppercase;
   }
   .nav-item.active { color: var(--gold); }
   .nav-icon { font-size: 20px; }
-  .screen { display: none; }
+  .nav-dot { width: 4px; height:4px; border-radius:50%; background:var(--gold); opacity:0; }
+  .nav-item.active .nav-dot { opacity:1; }
+  .screen { display: none; animation: fadeIn 0.3s ease; }
   .screen.active { display: block; }
-  .progress-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-  .progress-label { font-size: 12px; color: var(--text2); width: 100px; }
-  .progress-track { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); transition: width 0.5s; }
-  #tree-canvas { width: 100%; height: 200px; display: block; margin-bottom: 12px; }
-  .tree-stats { display: flex; gap: 12px; justify-content: center; }
-  .tree-stat { text-align: center; background: var(--glass2); border-radius: 12px; padding: 8px 16px; }
-  .tree-stat-val { font-size: 20px; font-weight: 600; color: var(--gold2); }
-  .journal-entry { padding: 12px; background: var(--glass); border-left: 2px solid var(--gold); border-radius: 0 12px 12px 0; margin-bottom: 8px; }
-  textarea { width: 100%; background: var(--glass2); border: 0.5px solid var(--border); border-radius: 16px; padding: 12px; color: var(--text1); resize: none; margin: 8px 0; font-family: inherit; }
-  .loading { text-align: center; padding: 40px; color: var(--gold2); }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .header-strip {
+    background: linear-gradient(135deg, var(--navy2), var(--navy3));
+    border-bottom: 0.5px solid var(--border);
+    padding: 16px 20px 12px;
+  }
+  .header-date { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; }
+  .header-moon { font-size: 13px; color: var(--gold2); }
+  .progress-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
+  .progress-label { font-size:12px; color:var(--text2); width:100px; }
+  .progress-track { flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--gold), var(--gold2)); transition:width 0.5s ease; }
+  .tree-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .tree-stat { text-align:center; background:var(--glass2); border-radius:12px; padding:8px; }
+  .tree-stat-val { font-size:20px; font-weight:600; color:var(--gold2); }
+  #tree-canvas { width:100%; height:220px; display:block; }
+  .journal-entry { padding: 14px; background: var(--glass); border-left: 2px solid var(--gold); border-radius: 0 16px 16px 0; margin-bottom: 10px; }
+  .journal-textarea { width:100%; background: var(--glass2); border:0.5px solid var(--border); border-radius:20px; padding:12px; color:var(--text1); font-size:14px; resize:none; height:80px; }
+  .journal-btn { width:100%; padding:12px; background:linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1)); border:0.5px solid var(--gold); border-radius:40px; color:var(--gold); margin-top:8px; cursor:pointer; }
+  .exercise-card { background: var(--glass2); border-radius: 16px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+  .exercise-card:hover { background: var(--glass); border: 0.5px solid var(--gold); }
+  .exercise-title { font-size: 14px; font-weight: 600; color: var(--gold2); margin-bottom: 4px; }
+  .exercise-desc { font-size: 12px; color: var(--text2); }
+  .exercise-done { text-decoration: line-through; opacity: 0.6; }
+  .achievement-badge { display: inline-block; background: rgba(78,205,196,0.15); border: 0.5px solid var(--teal); border-radius: 20px; padding: 4px 12px; font-size: 10px; margin: 4px; }
+  .achievement-unlocked { background: rgba(78,205,196,0.3); color: var(--teal); }
+  .weather-icon { font-size: 32px; margin-bottom: 8px; }
+  .weather-text { font-size: 18px; font-weight: 600; color: var(--gold2); }
 </style>
 </head>
 <body>
+<canvas id="stars-canvas"></canvas>
 <div id="app">
 
-  <!-- Screen 1: Welcome -->
+  <!-- Welcome Screen -->
   <div id="welcome-screen" class="screen active">
     <div style="text-align: center; margin: 60px 0 40px;">
       <div style="font-size: 64px; margin-bottom: 16px;">🌿</div>
-      <div style="font-size: 28px; font-family: Georgia; color: var(--gold2);">Two Paths,<br>One Journey</div>
+      <div style="font-size: 28px; font-family: Georgia, serif; color: var(--gold2);">Two Paths,<br>One Journey</div>
       <div style="font-size: 14px; color: var(--text2); margin-top: 12px;">A sacred space for couples to grow together</div>
     </div>
     <div class="card">
-      <button class="btn" id="start-with-supabase">Start with Supabase ✨</button>
-      <button class="btn btn-secondary" id="demo-mode-btn">Try Demo Mode</button>
+      <button class="btn-primary" id="start-btn" style="width:100%; padding:14px; border-radius:40px; background:linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15)); border:0.5px solid var(--gold); color:var(--gold); font-weight:600; cursor:pointer;">Begin Your Journey ✨</button>
     </div>
   </div>
 
-  <!-- Screen 2: Auth -->
-  <div id="auth-screen" class="screen">
-    <div style="text-align: center; margin-bottom: 24px;">
-      <div style="font-size: 48px;">💑</div>
-      <div style="font-size: 20px; font-family: Georgia; color: var(--gold2);">Welcome Back</div>
-    </div>
-    <div class="card">
-      <input type="email" id="auth-email" class="input-field" placeholder="Email" value="iamkyngrick@gmail.com">
-      <input type="password" id="auth-password" class="input-field" placeholder="Password">
-      <button class="btn" id="login-btn">Sign In</button>
-      <button class="btn btn-secondary" id="signup-btn">Create Account</button>
-      <div id="auth-error" class="error"></div>
-    </div>
-  </div>
-
-  <!-- Screen 3: Create or Join Relationship -->
-  <div id="relation-screen" class="screen">
-    <div class="card">
-      <div class="card-title">✨ Create New Relationship</div>
-      <input type="text" id="my-name" class="input-field" placeholder="Your name">
-      <input type="text" id="partner-name" class="input-field" placeholder="Partner's name">
-      <button class="btn" id="create-btn">Create Relationship</button>
-    </div>
-    <div class="card">
-      <div class="card-title">🔗 Join Existing Relationship</div>
-      <input type="text" id="join-code-input" class="input-field" placeholder="Enter 6-digit invite code" maxlength="6">
-      <button class="btn btn-secondary" id="join-btn">Join Relationship</button>
-      <div id="relation-error" class="error"></div>
-    </div>
-  </div>
-
-  <!-- Screen 4: Waiting -->
-  <div id="waiting-screen" class="screen">
-    <div class="card" style="text-align: center;">
-      <div style="font-size: 48px;">⏳</div>
-      <div style="font-size: 18px; color: var(--gold2);">Waiting for Partner</div>
-      <div class="invite-box">
-        <div class="code" id="invite-code-display">------</div>
-        <button class="btn btn-secondary" id="copy-code-btn">📋 Copy Code</button>
+  <!-- Main App -->
+  <div id="main-app" style="display:none;">
+    <!-- Home Screen -->
+    <div id="screen-home" class="screen active">
+      <div class="header-strip">
+        <div class="header-date" id="hdr-date"></div>
+        <div class="header-row">
+          <div class="header-moon" id="hdr-moon">🌙 Loading...</div>
+          <div class="header-together" id="hdr-together">❤️ You & Your Love</div>
+        </div>
       </div>
-      <div class="loading">Share this code with your partner...</div>
-    </div>
-  </div>
-
-  <!-- Screen 5: Main App -->
-  <div id="main-screen" class="screen">
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-        <span id="main-date"></span>
-        <span id="main-partner" style="color: var(--gold);">❤️</span>
+      
+      <div class="card">
+        <div class="card-title">Relationship Tree</div>
+        <canvas id="tree-canvas"></canvas>
+        <div class="tree-stats">
+          <div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div>Growth</div></div>
+          <div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div>Harmony</div></div>
+          <div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div>Vision</div></div>
+        </div>
       </div>
-      <canvas id="tree-canvas"></canvas>
-      <div class="tree-stats">
-        <div class="tree-stat"><div class="tree-stat-val" id="stat-growth">70%</div><div>Growth</div></div>
-        <div class="tree-stat"><div class="tree-stat-val" id="stat-trust">70%</div><div>Trust</div></div>
-        <div class="tree-stat"><div class="tree-stat-val" id="stat-vision">70%</div><div>Vision</div></div>
+
+      <div class="card" id="weather-card">
+        <div class="card-title">Relationship Weather</div>
+        <div style="text-align: center; padding: 10px;">
+          <div class="weather-icon" id="weather-icon">🌤️</div>
+          <div class="weather-text" id="weather-text">Partly Sunny</div>
+          <div style="font-size: 12px; color: var(--text2); margin-top: 8px;" id="weather-desc">Communication is flowing well today</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Today's Exercises</div>
+        <div id="exercises-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Achievements</div>
+        <div id="achievements-list"></div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">✨ Today's Energy</div>
-      <div class="progress-row"><div>💬 Ask a deeper question</div></div>
-      <div class="progress-row"><div>🌙 Share one hidden feeling</div></div>
-      <div class="progress-row"><div>🙏 10-min gratitude ritual</div></div>
+    <!-- Journal Screen -->
+    <div id="screen-journal" class="screen">
+      <div class="header-strip">
+        <div class="header-date">Shared Journal</div>
+      </div>
+      <div class="journal-input-area" style="margin:12px 16px;">
+        <textarea class="journal-textarea" id="journal-input" placeholder="Write something for your partner..."></textarea>
+        <button class="journal-btn" id="post-journal-btn">Post to Journal ✨</button>
+      </div>
+      <div id="journal-entries" style="padding:0 16px;"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Relationship Health</div>
-      <div id="health-stats"></div>
+    <!-- Private Screen -->
+    <div id="screen-private" class="screen">
+      <div class="header-strip">
+        <div class="header-date">Private Space</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔒 Private Notes</div>
+        <textarea id="private-input" class="journal-textarea" placeholder="Write your private thoughts here... Only you can see this." rows="4"></textarea>
+        <button class="journal-btn" id="save-private-btn">Save Private Note 🔒</button>
+        <div id="private-entries-list" style="margin-top: 16px;"></div>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">📖 Shared Journal</div>
-      <textarea id="journal-text" placeholder="Write something your partner will see..." rows="3"></textarea>
-      <button class="btn" id="post-journal-btn">Post to Journal</button>
-      <div id="journal-list" style="margin-top: 12px;"></div>
+    <!-- Cosmic Screen -->
+    <div id="screen-cosmic" class="screen">
+      <div class="header-strip">
+        <div class="header-date">Cosmic Context</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌙 Moon Wisdom</div>
+        <div style="text-align: center; padding: 20px;">
+          <div style="font-size: 48px;" id="moon-icon">🌔</div>
+          <div style="font-size: 18px; color: var(--gold2); margin-top: 8px;" id="moon-phase">Waxing Gibbous</div>
+          <div style="font-size: 13px; color: var(--text2); margin-top: 12px;" id="moon-message">The moon is building toward fullness — as are you.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">✨ Daily Horoscope</div>
+        <div id="horoscope-text" style="font-style: italic; line-height: 1.6;">"The universe is supporting your growth. Trust the journey you're on together."</div>
+      </div>
     </div>
   </div>
 
-  <!-- Bottom Nav -->
-  <div class="bottom-nav" id="bottom-nav" style="display: none;">
-    <button class="nav-item active" onclick="showMainTab('home')"><span class="nav-icon">🌳</span><span>Home</span></button>
-    <button class="nav-item" onclick="showMainTab('journal')"><span class="nav-icon">📖</span><span>Journal</span></button>
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav" id="bottom-nav" style="display:none;">
+    <button class="nav-item active" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('private',this)"><span class="nav-icon">🔒</span><span>Private</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmic</span><div class="nav-dot"></div></button>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 40px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15));
+  border: 0.5px solid var(--gold);
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+</style>
+
 <script>
-// Supabase credentials
-const SUPABASE_URL = "https://eohdfgvebqdxstwdildk.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
+// ========== APP STATE ==========
+let journalEntries = [];
+let privateNotes = [];
+let exercisesCompleted = [];
+let achievementsUnlocked = [];
+let relationshipStats = {
+  trust: 72,
+  intimacy: 65,
+  communication: 70,
+  vision: 75,
+  friendship: 80
+};
 
-let supabase = null;
-let currentUser = null;
-let currentRelation = null;
-let realtimeChannel = null;
+// Daily exercises
+const exercises = [
+  { title: "Deep Question", task: "What part of yourself are you hiding?", completed: false },
+  { title: "Touch", task: "Hold hands for 2 minutes silently.", completed: false },
+  { title: "Dream", task: "Describe your life in 10 years.", completed: false }
+];
 
-// Helper functions
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(screenId + '-screen');
-  if (target) target.classList.add('active');
-}
+// Achievements list
+const allAchievements = [
+  "First Journal Entry", "7 Day Streak", "100 Messages", 
+  "Completed Shadow Work", "Vision Alignment", "Trust Builder", "Future Parents"
+];
 
-function showError(elementId, msg) {
-  const el = document.getElementById(elementId);
-  if (el) { el.textContent = msg; setTimeout(() => { el.textContent = ''; }, 5000); }
-}
-
+// ========== HELPER FUNCTIONS ==========
 function updateDate() {
   const now = new Date();
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const dateEl = document.getElementById('main-date');
-  if (dateEl) dateEl.innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+  document.getElementById('hdr-date').innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
 }
 
+// Moon Phase API
+async function loadMoonPhase() {
+  try {
+    const res = await fetch(
+      'https://api.farmsense.net/v1/moonphases/?d=' + Math.floor(Date.now() / 1000 / 86400)
+    );
+    const data = await res.json();
+    const phase = data[0]?.Phase || "Waxing Gibbous";
+    document.getElementById('hdr-moon').innerHTML = '🌙 ' + phase;
+    document.getElementById('moon-phase').innerHTML = phase;
+    
+    const moonMessages = {
+      "New Moon": "New beginnings. Set intentions for your relationship.",
+      "Waxing Crescent": "Plant seeds of growth together.",
+      "First Quarter": "Take action on your shared goals.",
+      "Waxing Gibbous": "Refine and adjust. You're almost there.",
+      "Full Moon": "Release what no longer serves your union.",
+      "Waning Gibbous": "Gratitude for what you've built.",
+      "Last Quarter": "Let go of old patterns.",
+      "Waning Crescent": "Rest and restore together."
+    };
+    document.getElementById('moon-message').innerHTML = moonMessages[phase] || "The moon guides your journey.";
+  } catch(e) {
+    console.log('Moon API error:', e);
+    document.getElementById('hdr-moon').innerHTML = '🌙 Waxing Gibbous';
+  }
+}
+
+// Relationship Weather
+function relationshipWeather(stats) {
+  if (stats.trust > 80 && stats.communication > 80)
+    return { icon: "☀️", text: "Sunny", desc: "Your connection is radiant! Keep nurturing it." };
+  if (stats.communication < 60)
+    return { icon: "⛈️", text: "Storm", desc: "Time for an honest conversation. Start gently." };
+  if (stats.intimacy < 60)
+    return { icon: "☁️", text: "Cloudy", desc: "Some emotional clouds. A little vulnerability will help." };
+  return { icon: "🌤️", text: "Partly Sunny", desc: "Good foundation. Keep building." };
+}
+
+function updateWeather() {
+  const weather = relationshipWeather(relationshipStats);
+  document.getElementById('weather-icon').innerHTML = weather.icon;
+  document.getElementById('weather-text').innerHTML = weather.text;
+  document.getElementById('weather-desc').innerHTML = weather.desc;
+}
+
+// Draw Tree (grows based on relationship stats)
 function drawTree() {
   const canvas = document.getElementById('tree-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const w = canvas.clientWidth;
-  const h = 200;
-  canvas.width = w;
-  canvas.height = h;
-  
-  const cx = w / 2;
-  const base = h - 15;
-  
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 220;
+  const w = canvas.width, h = canvas.height, cx = w/2, base = h-15;
   ctx.clearRect(0, 0, w, h);
   
   // Trunk
   ctx.beginPath();
   ctx.moveTo(cx, base);
-  ctx.lineTo(cx, base - 70);
+  ctx.lineTo(cx, base-80);
   ctx.strokeStyle = '#8B5A2B';
   ctx.lineWidth = 8;
   ctx.stroke();
   
-  // Roots
-  for (let i = 0; i < 6; i++) {
+  // Roots (trust)
+  for(let i=0;i<6;i++){
     ctx.beginPath();
     ctx.moveTo(cx, base);
-    ctx.lineTo(cx - 12 + i * 5, base + 10);
+    ctx.lineTo(cx-15+i*5, base+12);
     ctx.stroke();
   }
   
-  const stats = currentRelation?.couple_stats || { trust: 70, intimacy: 65 };
-  const leafCount = 5 + Math.floor((stats.trust || 70) / 15);
-  for (let i = 0; i < leafCount; i++) {
-    let x = cx - 20 + Math.random() * 40;
-    let y = base - 60 + Math.random() * 50;
+  // Branches & Leaves (communication + trust)
+  const avgHealth = (relationshipStats.trust + relationshipStats.communication) / 2;
+  const leafCount = 6 + Math.floor(avgHealth / 12);
+  for(let i=0;i<leafCount;i++){
+    let x = cx-20 + Math.random()*40;
+    let y = base-70 + Math.random()*50;
     ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.arc(x, y, 6, 0, Math.PI*2);
     ctx.fillStyle = '#3c9e6d';
     ctx.fill();
   }
   
-  const flowerCount = 2 + Math.floor((stats.intimacy || 65) / 20);
-  for (let i = 0; i < flowerCount; i++) {
-    let x = cx - 15 + Math.random() * 30;
-    let y = base - 50 + Math.random() * 40;
+  // Flowers (intimacy)
+  const flowerCount = 2 + Math.floor(relationshipStats.intimacy / 15);
+  for(let i=0;i<flowerCount;i++){
+    let x = cx-15 + Math.random()*30;
+    let y = base-50 + Math.random()*40;
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 5, 0, Math.PI*2);
     ctx.fillStyle = '#ffb7c5';
+    ctx.fill();
+  }
+  
+  // Fruit (vision)
+  const fruitCount = Math.floor(relationshipStats.vision / 20);
+  for(let i=0;i<fruitCount;i++){
+    let x = cx-10 + Math.random()*20;
+    let y = base-60 + Math.random()*40;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#e8c96a';
     ctx.fill();
   }
 }
 
-function updateMainUI() {
-  if (!currentRelation) return;
+function updateStats() {
+  // Calculate stats based on journal entries and exercises
+  const journalCount = journalEntries.length;
+  const exerciseProgress = exercises.filter(e => e.completed).length / exercises.length;
   
-  updateDate();
+  relationshipStats.communication = Math.min(95, 65 + Math.floor(journalCount / 3) + Math.floor(exerciseProgress * 15));
+  relationshipStats.intimacy = Math.min(95, 60 + Math.floor(privateNotes.length / 2) + Math.floor(exerciseProgress * 10));
+  relationshipStats.trust = Math.min(95, 70 + Math.floor(journalCount / 4) + Math.floor(exerciseProgress * 10));
+  relationshipStats.vision = Math.min(95, 70 + Math.floor((journalCount + privateNotes.length) / 5));
   
-  const names = `${currentRelation.partner_a_name || 'Partner A'} & ${currentRelation.partner_b_name || 'Partner B'}`;
-  const partnerEl = document.getElementById('main-partner');
-  if (partnerEl) partnerEl.innerHTML = `❤️ ${names}`;
+  document.getElementById('stat-growth').innerHTML = Math.floor((relationshipStats.trust + relationshipStats.communication + relationshipStats.vision) / 3) + '%';
+  document.getElementById('stat-harmony').innerHTML = relationshipStats.trust + '%';
+  document.getElementById('stat-vision').innerHTML = relationshipStats.vision + '%';
   
-  const stats = currentRelation.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 };
-  
-  const growthEl = document.getElementById('stat-growth');
-  const trustEl = document.getElementById('stat-trust');
-  const visionEl = document.getElementById('stat-vision');
-  
-  if (growthEl) growthEl.innerHTML = Math.floor((stats.trust + stats.communication + stats.vision) / 3) + '%';
-  if (trustEl) trustEl.innerHTML = stats.trust + '%';
-  if (visionEl) visionEl.innerHTML = stats.vision + '%';
-  
-  const healthEl = document.getElementById('health-stats');
-  if (healthEl) {
-    healthEl.innerHTML = Object.entries(stats).map(([k, v]) => 
-      `<div class="progress-row">
-        <div class="progress-label">${k.charAt(0).toUpperCase() + k.slice(1)}</div>
-        <div class="progress-track"><div class="progress-fill" style="width: ${v}%"></div></div>
-        <div>${v}%</div>
-      </div>`
-    ).join('');
-  }
-  
-  const journal = currentRelation.journal || [];
-  const journalEl = document.getElementById('journal-list');
-  if (journalEl) {
-    journalEl.innerHTML = journal.slice(0, 10).map(j => 
-      `<div class="journal-entry"><strong>${j.author}</strong> · ${j.date}<br>"${j.text}"</div>`
-    ).join('');
-  }
-  
+  updateWeather();
   drawTree();
+  checkAchievements();
 }
 
-// Supabase functions
-async function initSupabase() {
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    // Test connection
-    const { error } = await supabase.from('relationships').select('count', { count: 'exact', head: true });
-    if (error) throw new Error(error.message);
-    showScreen('auth');
-  } catch(e) {
-    alert('Connection error: ' + e.message + '\n\nMake sure you run the SQL in Supabase first.');
-    console.error(e);
-  }
+function renderExercises() {
+  const el = document.getElementById('exercises-list');
+  if (!el) return;
+  el.innerHTML = exercises.map((ex, i) => `
+    <div class="exercise-card ${ex.completed ? 'exercise-done' : ''}" onclick="toggleExercise(${i})">
+      <div class="exercise-title">${ex.title}</div>
+      <div class="exercise-desc">${ex.task}</div>
+      ${ex.completed ? '<span style="color:var(--teal); font-size:10px;">✓ Completed</span>' : '<span style="color:var(--text3); font-size:10px;">Tap to complete</span>'}
+    </div>
+  `).join('');
 }
 
-async function loadUserRelationship() {
-  const { data, error } = await supabase
-    .from('relationships')
-    .select('*')
-    .or(`partner_a_id.eq.${currentUser.id},partner_b_id.eq.${currentUser.id}`);
-  
-  if (error) {
-    console.error(error);
-    showScreen('relation');
-    return;
+function toggleExercise(index) {
+  exercises[index].completed = !exercises[index].completed;
+  localStorage.setItem('two_paths_exercises', JSON.stringify(exercises));
+  renderExercises();
+  updateStats();
+}
+
+function renderAchievements() {
+  const el = document.getElementById('achievements-list');
+  if (!el) return;
+  el.innerHTML = allAchievements.map(ach => `
+    <span class="achievement-badge ${achievementsUnlocked.includes(ach) ? 'achievement-unlocked' : ''}">
+      ${achievementsUnlocked.includes(ach) ? '✓' : '🔒'} ${ach}
+    </span>
+  `).join('');
+}
+
+function checkAchievements() {
+  if (journalEntries.length >= 1 && !achievementsUnlocked.includes("First Journal Entry")) {
+    achievementsUnlocked.push("First Journal Entry");
+    alert("🎉 Achievement Unlocked: First Journal Entry!");
   }
-  
-  if (!data || data.length === 0) {
-    showScreen('relation');
+  if (relationshipStats.trust > 80 && !achievementsUnlocked.includes("Trust Builder")) {
+    achievementsUnlocked.push("Trust Builder");
+    alert("🎉 Achievement Unlocked: Trust Builder!");
+  }
+  if (relationshipStats.vision > 85 && !achievementsUnlocked.includes("Vision Alignment")) {
+    achievementsUnlocked.push("Vision Alignment");
+    alert("🎉 Achievement Unlocked: Vision Alignment!");
+  }
+  localStorage.setItem('two_paths_achievements', JSON.stringify(achievementsUnlocked));
+  renderAchievements();
+}
+
+function renderJournal() {
+  const el = document.getElementById('journal-entries');
+  if (!el) return;
+  if (journalEntries.length === 0) {
+    el.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2);">No entries yet. Write your first journal entry above! ✨</div>';
   } else {
-    currentRelation = data[0];
-    
-    if (currentRelation.partner_b_joined || currentRelation.partner_b_id) {
-      showScreen('main');
-      const bottomNav = document.getElementById('bottom-nav');
-      if (bottomNav) bottomNav.style.display = 'flex';
-      updateMainUI();
-      setupRealtime();
-    } else if (currentRelation.partner_a_id === currentUser.id && !currentRelation.partner_b_joined) {
-      const codeEl = document.getElementById('invite-code-display');
-      if (codeEl) codeEl.innerText = currentRelation.invite_code;
-      showScreen('waiting');
-      setupRealtime();
-    } else {
-      showScreen('main');
-      const bottomNav = document.getElementById('bottom-nav');
-      if (bottomNav) bottomNav.style.display = 'flex';
-      updateMainUI();
-      setupRealtime();
-    }
+    el.innerHTML = journalEntries.slice(0, 20).map(j => `
+      <div class="journal-entry">
+        <div class="journal-date" style="font-size:10px; color:var(--text3); margin-bottom:4px;">${j.date}</div>
+        <div class="journal-text">"${j.text}"</div>
+        <div class="journal-author" style="font-size:11px; color:var(--gold); margin-top:6px;">— ${j.author}</div>
+      </div>
+    `).join('');
   }
 }
 
-function setupRealtime() {
-  if (!currentRelation) return;
-  
-  if (realtimeChannel) realtimeChannel.unsubscribe();
-  
-  realtimeChannel = supabase.channel(`rel_${currentRelation.id}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'relationships',
-      filter: `id=eq.${currentRelation.id}`
-    }, (payload) => {
-      if (payload.new) {
-        currentRelation = payload.new;
-        updateMainUI();
-      }
-    })
-    .subscribe();
+function renderPrivate() {
+  const el = document.getElementById('private-entries-list');
+  if (!el) return;
+  if (privateNotes.length === 0) {
+    el.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2);">No private notes yet. Your safe space is waiting. 🔒</div>';
+  } else {
+    el.innerHTML = privateNotes.slice(0, 20).map(n => `
+      <div class="journal-entry" style="border-left-color: var(--rose);">
+        <div class="journal-date" style="font-size:10px; color:var(--text3);">${n.date} 🔒 Private</div>
+        <div class="journal-text">"${n.text}"</div>
+      </div>
+    `).join('');
+  }
 }
 
-// Event handlers
-document.getElementById('start-with-supabase').onclick = async () => {
-  await initSupabase();
-};
-
-document.getElementById('demo-mode-btn').onclick = () => {
-  startDemoMode();
-};
-
-document.getElementById('login-btn').onclick = async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    showError('auth-error', error.message);
-    return;
-  }
-  
-  currentUser = data.user;
-  await loadUserRelationship();
-};
-
-document.getElementById('signup-btn').onclick = async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  
-  if (password.length < 6) {
-    showError('auth-error', 'Password must be at least 6 characters');
-    return;
-  }
-  
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) {
-    showError('auth-error', error.message);
-    return;
-  }
-  
-  currentUser = data.user;
-  showError('auth-error', '✅ Account created! Now create your relationship.');
-  showScreen('relation');
-};
-
-document.getElementById('create-btn').onclick = async () => {
-  const myName = document.getElementById('my-name').value;
-  const partnerName = document.getElementById('partner-name').value;
-  
-  if (!myName || !partnerName) {
-    showError('relation-error', 'Enter both names');
-    return;
-  }
-  
-  const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const relationId = 'rel_' + Date.now();
-  
-  const { error } = await supabase.from('relationships').insert([{
-    id: relationId,
-    invite_code: inviteCode,
-    partner_a_id: currentUser.id,
-    partner_a_name: myName,
-    partner_b_name: partnerName,
-    partner_b_joined: false,
-    couple_stats: { trust: 75, intimacy: 70, communication: 72, vision: 80, friendship: 78 },
-    baby_readiness: 70,
-    journal: []
-  }]);
-  
-  if (error) {
-    showError('relation-error', error.message);
-    return;
-  }
-  
-  currentRelation = { id: relationId, invite_code: inviteCode, partner_a_name: myName, partner_b_name: partnerName };
-  const codeEl = document.getElementById('invite-code-display');
-  if (codeEl) codeEl.innerText = inviteCode;
-  showScreen('waiting');
-  setupRealtime();
-};
-
-document.getElementById('join-btn').onclick = async () => {
-  const code = document.getElementById('join-code-input').value.toUpperCase();
-  
-  const { data, error } = await supabase.from('relationships').select('*').eq('invite_code', code).single();
-  if (error || !data) {
-    showError('relation-error', 'Invalid invite code');
-    return;
-  }
-  
-  const { error: updateError } = await supabase
-    .from('relationships')
-    .update({ partner_b_id: currentUser.id, partner_b_joined: true })
-    .eq('id', data.id);
-  
-  if (updateError) {
-    showError('relation-error', updateError.message);
-    return;
-  }
-  
-  currentRelation = { ...data, partner_b_id: currentUser.id, partner_b_joined: true };
-  showScreen('main');
-  const bottomNav = document.getElementById('bottom-nav');
-  if (bottomNav) bottomNav.style.display = 'flex';
-  updateMainUI();
-  setupRealtime();
-};
-
-document.getElementById('copy-code-btn').onclick = () => {
-  const code = document.getElementById('invite-code-display').innerText;
-  navigator.clipboard.writeText(code);
-  alert('Code copied! Share with your partner.');
-};
-
-document.getElementById('post-journal-btn').onclick = async () => {
-  const text = document.getElementById('journal-text').value;
-  if (!text.trim()) return;
-  
+function addJournalEntry() {
+  const input = document.getElementById('journal-input');
+  if (!input.value.trim()) return;
   const now = new Date();
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const newEntry = {
-    author: currentRelation.partner_a_id === currentUser.id ? currentRelation.partner_a_name : currentRelation.partner_b_name,
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  journalEntries.unshift({
+    author: 'You',
     date: `${months[now.getMonth()]} ${now.getDate()}`,
-    text: text.trim()
-  };
-  
-  const updatedJournal = [newEntry, ...(currentRelation.journal || [])].slice(0, 50);
-  const { error } = await supabase
-    .from('relationships')
-    .update({ journal: updatedJournal })
-    .eq('id', currentRelation.id);
-  
-  if (!error) {
-    document.getElementById('journal-text').value = '';
-    currentRelation.journal = updatedJournal;
-    updateMainUI();
-  }
-};
-
-// Tab switching
-window.showMainTab = function(tab) {
-  const cards = document.querySelectorAll('#main-screen .card');
-  const healthCard = cards[1];
-  const journalCard = cards[3];
-  
-  if (tab === 'home') {
-    if (cards[0]) cards[0].style.display = 'block';
-    if (healthCard) healthCard.style.display = 'block';
-    if (journalCard) journalCard.style.display = 'none';
-  } else {
-    if (cards[0]) cards[0].style.display = 'none';
-    if (healthCard) healthCard.style.display = 'none';
-    if (journalCard) journalCard.style.display = 'block';
-  }
-  
-  const btns = document.querySelectorAll('.nav-item');
-  btns.forEach(b => b.classList.remove('active'));
-  if (event && event.target) {
-    const btn = event.target.closest('.nav-item');
-    if (btn) btn.classList.add('active');
-  }
-};
-
-// Demo mode
-function startDemoMode() {
-  currentRelation = {
-    partner_a_name: 'You',
-    partner_b_name: 'Partner',
-    couple_stats: { trust: 78, intimacy: 70, communication: 75, vision: 82, friendship: 80 },
-    journal: [{ author: 'System', date: 'Today', text: 'Welcome to your journey! ✨ Post your first journal entry.' }]
-  };
-  showScreen('main');
-  const bottomNav = document.getElementById('bottom-nav');
-  if (bottomNav) bottomNav.style.display = 'flex';
-  updateMainUI();
-  setInterval(drawTree, 5000);
-  setInterval(updateDate, 60000);
-  
-  // Override post for demo
-  const postBtn = document.getElementById('post-journal-btn');
-  postBtn.onclick = () => {
-    const text = document.getElementById('journal-text').value;
-    if (!text.trim()) return;
-    const now = new Date();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    currentRelation.journal = [{ author: 'You', date: `${months[now.getMonth()]} ${now.getDate()}`, text: text.trim() }, ...(currentRelation.journal || [])].slice(0, 50);
-    updateMainUI();
-    document.getElementById('journal-text').value = '';
-  };
+    text: input.value.trim()
+  });
+  localStorage.setItem('two_paths_journal', JSON.stringify(journalEntries.slice(0, 50)));
+  input.value = '';
+  renderJournal();
+  updateStats();
 }
 
-// Start
-showScreen('welcome');
+function savePrivateNote() {
+  const input = document.getElementById('private-input');
+  if (!input.value.trim()) return;
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  privateNotes.unshift({
+    date: `${months[now.getMonth()]} ${now.getDate()}`,
+    text: input.value.trim()
+  });
+  localStorage.setItem('two_paths_private', JSON.stringify(privateNotes.slice(0, 50)));
+  input.value = '';
+  renderPrivate();
+  updateStats();
+}
+
+// Load saved data
+function loadSavedData() {
+  const savedJournal = localStorage.getItem('two_paths_journal');
+  if (savedJournal) journalEntries = JSON.parse(savedJournal);
+  
+  const savedPrivate = localStorage.getItem('two_paths_private');
+  if (savedPrivate) privateNotes = JSON.parse(savedPrivate);
+  
+  const savedExercises = localStorage.getItem('two_paths_exercises');
+  if (savedExercises) {
+    const loaded = JSON.parse(savedExercises);
+    loaded.forEach((ex, i) => { if (i < exercises.length) exercises[i].completed = ex.completed; });
+  }
+  
+  const savedAchievements = localStorage.getItem('two_paths_achievements');
+  if (savedAchievements) achievementsUnlocked = JSON.parse(savedAchievements);
+}
+
+// Screen switching
+function switchScreen(screen, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (screen === 'home') {
+    updateStats();
+    renderExercises();
+  }
+  if (screen === 'journal') renderJournal();
+  if (screen === 'private') renderPrivate();
+}
+
+// Initialize app
+function startApp() {
+  document.getElementById('welcome-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('bottom-nav').style.display = 'flex';
+  
+  loadSavedData();
+  updateDate();
+  loadMoonPhase();
+  renderJournal();
+  renderPrivate();
+  renderExercises();
+  renderAchievements();
+  updateStats();
+  
+  setInterval(() => {
+    updateDate();
+    loadMoonPhase();
+  }, 3600000);
+  setInterval(drawTree, 5000);
+}
+
+// Event listeners
+document.getElementById('start-btn').onclick = startApp;
+document.getElementById('post-journal-btn').onclick = addJournalEntry;
+document.getElementById('save-private-btn').onclick = savePrivateNote;
+
+// Stars background
+function initStars() {
+  const canvas = document.getElementById('stars-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const stars = Array.from({length:150}, () => ({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`;
+      ctx.fill();
+      s.a += 0.01;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+initStars();
+
+// Make functions global for onclick
+window.switchScreen = switchScreen;
+window.toggleExercise = toggleExercise;
 </script>
 </body>
 </html>
