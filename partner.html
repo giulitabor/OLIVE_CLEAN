@@ -416,7 +416,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==================== GLOBALS ====================
-let supabase = null;
+//let supabase = null;
 let currentUser = null;
 let currentRelationship = null;
 let currentPartnerRole = null;
@@ -456,8 +456,8 @@ const steps = [
 
 // ==================== SUPABASE SETUP ====================
 document.getElementById('connect-btn').onclick = async () => {
-  const url = document.getElementById('sb-url').value.trim();
-  const key = document.getElementById('sb-key').value.trim();
+  const url = "https://eohdfgvebqdxstwdildk.supabase.co" ;
+  const key = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
   if (!url || !key) { alert('Enter Supabase URL and Anon Key'); return; }
   supabase = window.supabase.createClient(url, key);
   showScreen('auth');
