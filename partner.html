@@ -135,7 +135,7 @@
   .header-date { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .header-row { display: flex; align-items: center; justify-content: space-between; }
   .progress-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
-  .progress-label { font-size:12px; color:var(--text2); width:110px; }
+  .progress-label { font-size:12px; color:var(--text2); width:100px; }
   .progress-track { flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
   .progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--gold), var(--gold2)); transition:width 0.5s ease; }
   .tree-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
@@ -145,11 +145,6 @@
   .journal-textarea { width:100%; background: var(--glass2); border:0.5px solid var(--border); border-radius:20px; padding:12px; color:var(--text1); font-size:14px; resize:none; height:80px; }
   .journal-btn { width:100%; padding:12px; background:linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1)); border:0.5px solid var(--gold); border-radius:40px; color:var(--gold); margin-top:8px; cursor:pointer; }
   #tree-canvas { width:100%; height:220px; display:block; }
-  .questionnaire-step { margin-bottom: 20px; }
-  .progress-steps { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
-  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--glass2); transition: all 0.3s; }
-  .step-dot.active { background: var(--gold); width: 20px; border-radius: 4px; }
-  .step-dot.completed { background: var(--teal); }
   .invite-box {
     background: rgba(78,205,196,0.1);
     border: 1px dashed var(--teal);
@@ -175,6 +170,39 @@
     animation: spin 1s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .exercise-card {
+    background: var(--glass2);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .exercise-card:hover { background: var(--glass); border: 0.5px solid var(--gold); }
+  .exercise-title { font-size: 14px; font-weight: 600; color: var(--gold2); margin-bottom: 4px; }
+  .exercise-desc { font-size: 12px; color: var(--text2); }
+  .exercise-completed { text-decoration: line-through; opacity: 0.6; }
+  .exercise-badge { font-size: 10px; color: var(--teal); margin-top: 4px; display: inline-block; }
+  .session-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 16px; }
+  .session-card {
+    background: var(--glass2);
+    border-radius: 20px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 0.5px solid var(--border);
+  }
+  .session-card:hover { border-color: var(--gold); background: var(--glass); }
+  .session-icon { font-size: 32px; margin-bottom: 8px; }
+  .session-name { font-size: 13px; font-weight: 600; color: var(--gold); }
+  .dream-entry {
+    background: var(--glass);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-left: 2px solid var(--purple);
+  }
 </style>
 </head>
 <body>
@@ -237,7 +265,6 @@
         <button class="btn-primary btn-secondary" id="copy-code">📋 Copy Code</button>
       </div>
       <div class="waiting-spinner" style="margin: 20px auto;"></div>
-      <div style="font-size: 13px; color: var(--text2);">Share this code with your partner to begin your journey together</div>
     </div>
   </div>
 
@@ -250,6 +277,7 @@
   <div id="main-app" class="screen">
     <div class="sync-status" id="sync-status" style="font-size: 10px; color: var(--teal); text-align: right; padding: 8px 16px;">🟢 Connected</div>
     
+    <!-- HOME SCREEN -->
     <div id="screen-home" class="screen active">
       <div class="header-strip">
         <div class="header-date" id="hdr-date"></div>
@@ -258,10 +286,74 @@
           <div class="header-together" id="hdr-together">❤️ Loading...</div>
         </div>
       </div>
-      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div>Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div>Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div>Vision</div></div></div></div>
-      <div class="card"><div class="card-title">Relationship Weather</div><div id="weather-progress"></div></div>
+      <div class="card">
+        <div class="card-title">Relationship Tree</div>
+        <canvas id="tree-canvas"></canvas>
+        <div class="tree-stats">
+          <div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div>Growth</div></div>
+          <div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div>Harmony</div></div>
+          <div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div>Vision</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Relationship Weather</div>
+        <div id="weather-progress"></div>
+      </div>
     </div>
 
+    <!-- OUR JOURNEY SCREEN -->
+    <div id="screen-couple" class="screen">
+      <div class="header-strip">
+        <div class="header-date">Our Journey</div>
+        <div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div>
+      </div>
+      <div class="session-grid">
+        <div class="session-card" onclick="startJointSession()">
+          <div class="session-icon">🤝</div>
+          <div class="session-name">Joint Session</div>
+          <div style="font-size: 10px; color: var(--text2);">Both see everything</div>
+        </div>
+        <div class="session-card" onclick="openPrivateModal()">
+          <div class="session-icon">🔒</div>
+          <div class="session-name">Private Session</div>
+          <div style="font-size: 10px; color: var(--text2);">Your private space</div>
+        </div>
+        <div class="session-card" onclick="showRelationshipMap()">
+          <div class="session-icon">🗺️</div>
+          <div class="session-name">Relationship Map</div>
+          <div style="font-size: 10px; color: var(--text2);">See your patterns</div>
+        </div>
+        <div class="session-card" onclick="showFutureVision()">
+          <div class="session-icon">🌅</div>
+          <div class="session-name">Future Vision</div>
+          <div style="font-size: 10px; color: var(--text2);">10 year plan</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Baby Readiness</div>
+        <div id="baby-readiness-stats"></div>
+        <div style="text-align:center;margin-top:16px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">0%</div></div>
+      </div>
+    </div>
+
+    <!-- MY GROWTH SCREEN -->
+    <div id="screen-growth" class="screen">
+      <div class="header-strip">
+        <div class="header-date">My Growth</div>
+        <div class="header-row"><div id="user-xp" style="color: var(--gold);">✨ 0 XP</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌱 Daily Practices</div>
+        <div id="exercises-list"></div>
+        <div style="margin-top: 12px; text-align: center; font-size: 11px; color: var(--text3);">Complete practices to earn XP</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 My Growth Metrics</div>
+        <div id="growth-metrics"></div>
+      </div>
+    </div>
+
+    <!-- SHARED JOURNAL SCREEN -->
     <div id="screen-journal" class="screen">
       <div class="header-strip"><div class="header-date">Shared Journal</div></div>
       <div class="journal-input-area" style="margin:12px 16px;">
@@ -271,6 +363,7 @@
       <div id="journal-entries" style="padding:0 16px;"></div>
     </div>
 
+    <!-- PRIVATE NOTES SCREEN -->
     <div id="screen-private" class="screen">
       <div class="header-strip"><div class="header-date">My Private Space</div></div>
       <div class="card">
@@ -281,19 +374,43 @@
       </div>
     </div>
 
+    <!-- COSMIC SCREEN -->
     <div id="screen-cosmic" class="screen">
       <div class="header-strip"><div class="header-date">Cosmic Guidance</div></div>
-      <div class="card"><div class="card-title">🌙 Moon Wisdom</div><div id="moon-content" style="text-align:center; padding:20px;"></div></div>
-      <div class="card"><div class="card-title">✨ Today's Insight</div><div id="horoscope-content" style="padding:20px;"></div></div>
+      <div class="card">
+        <div class="card-title">🌙 Moon Wisdom</div>
+        <div id="moon-content" style="text-align:center; padding:20px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">✨ Today's Insight</div>
+        <div id="horoscope-content" style="padding:20px; font-style: italic; line-height: 1.6;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 Dream Journal</div>
+        <textarea id="dream-input" class="journal-textarea" placeholder="Record your dreams here..." rows="3"></textarea>
+        <button class="journal-btn" id="save-dream">Save Dream ✨</button>
+        <div id="dream-entries" style="margin-top: 16px;"></div>
+      </div>
     </div>
   </div>
 
   <nav class="bottom-nav" id="bottom-nav" style="display:none;">
-    <button class="nav-item active" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span></button>
-    <button class="nav-item" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span></button>
-    <button class="nav-item" onclick="switchScreen('private',this)"><span class="nav-icon">🔒</span><span>Private</span></button>
-    <button class="nav-item" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmic</span></button>
+    <button class="nav-item" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span>Our Journey</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span>My Growth</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
+    <button class="nav-item" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmic</span><div class="nav-dot"></div></button>
   </nav>
+</div>
+
+<!-- Private Session Modal -->
+<div id="private-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#11151f; border-radius:32px; max-width:340px; width:85%; padding:24px; border:1px solid var(--gold);">
+    <h3 style="color:var(--gold); margin-bottom:12px;">Private Reflection</h3>
+    <textarea id="private-reflection" rows="4" placeholder="Your private thoughts..." style="width:100%; background:#1a1f2e; border:0.5px solid var(--border); border-radius:16px; padding:12px; color:white;"></textarea>
+    <button class="btn-primary" onclick="savePrivateReflection()">Save</button>
+    <button class="btn-primary btn-secondary" onclick="closePrivateModal()" style="margin-top:8px;">Cancel</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -302,12 +419,25 @@
 let supabase = null;
 let currentUser = null;
 let currentRelationship = null;
-let currentPartnerRole = null; // 'a' or 'b'
-let questionnaireAnswers = {};
+let currentPartnerRole = null;
 let questionnaireStep = 0;
 let relationshipData = null;
 let journalEntries = [];
 let privateNotes = [];
+let dreamEntries = [];
+let userXP = 0;
+let completedExercises = [];
+
+// Daily practices/exercises
+const dailyExercises = [
+  { id: 1, title: "💨 5-Minute Breath Together", desc: "Sit facing each other. Breathe in sync for 5 minutes.", xp: 10 },
+  { id: 2, title: "🤝 Hold Hands in Silence", desc: "Hold hands for 3 minutes without speaking.", xp: 10 },
+  { id: 3, title: "👁️ Eye Gazing", desc: "Look into each other's eyes for 2 minutes without looking away.", xp: 15 },
+  { id: 4, title: "💬 One Deep Question", desc: "Ask: 'What's something you've never told me?'", xp: 15 },
+  { id: 5, title: "🙏 Gratitude Share", desc: "Each share 3 things you're grateful for about your partner.", xp: 10 },
+  { id: 6, title: "🎵 One Song Together", desc: "Listen to a meaningful song together without distractions.", xp: 10 },
+  { id: 7, title: "📝 Love Letter", desc: "Write a short love note and leave it for your partner.", xp: 20 }
+];
 
 // Questionnaire steps
 const steps = [
@@ -329,12 +459,10 @@ document.getElementById('connect-btn').onclick = async () => {
   const url = document.getElementById('sb-url').value.trim();
   const key = document.getElementById('sb-key').value.trim();
   if (!url || !key) { alert('Enter Supabase URL and Anon Key'); return; }
-  
   supabase = window.supabase.createClient(url, key);
   showScreen('auth');
 };
 
-// ==================== AUTH ====================
 document.getElementById('signup-btn').onclick = async () => {
   const email = document.getElementById('auth-email').value;
   const password = document.getElementById('auth-password').value;
@@ -342,7 +470,6 @@ document.getElementById('signup-btn').onclick = async () => {
     document.getElementById('auth-error').innerText = 'Email and password (min 6 chars) required';
     return;
   }
-  
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) { document.getElementById('auth-error').innerText = error.message; return; }
   currentUser = data.user;
@@ -354,52 +481,42 @@ document.getElementById('login-btn').onclick = async () => {
   const email = document.getElementById('auth-email').value;
   const password = document.getElementById('auth-password').value;
   if (!email || !password) { document.getElementById('auth-error').innerText = 'Enter email and password'; return; }
-  
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) { document.getElementById('auth-error').innerText = error.message; return; }
   currentUser = data.user;
   await loadUserRelationship();
 };
 
-// ==================== RELATIONSHIP MANAGEMENT ====================
 document.getElementById('create-btn').onclick = async () => {
   const myName = document.getElementById('my-name').value;
   const partnerName = document.getElementById('partner-name').value;
   if (!myName || !partnerName) { document.getElementById('relation-error').innerText = 'Enter both names'; return; }
-  
   const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const relationId = 'rel_' + Date.now();
   
   const { error } = await supabase.from('relationships').insert([{
-    id: relationId,
+    id: relationId, 
     invite_code: inviteCode,
-    partner_a_id: currentUser.id,
-    partner_a_name: myName,
+    partner_a_id: currentUser.id, 
+    partner_a_name: myName, 
     partner_a_completed: false,
-    partner_b_name: partnerName,
-    partner_b_id: null,
-    partner_b_completed: false,
+    partner_b_name: partnerName, 
+    partner_b_id: null, 
+    partner_b_completed: false, 
     partner_b_joined: false,
     couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80 },
-    journal: [],
+    journal: [], 
     created_at: new Date().toISOString()
   }]);
   
   if (error) { document.getElementById('relation-error').innerText = error.message; return; }
-  
   currentRelationship = { id: relationId, invite_code: inviteCode };
   document.getElementById('invite-code').innerText = inviteCode;
   showScreen('waiting');
   
-  // Wait for partner to join
-  supabase.channel(`rel_${relationId}`)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relationId}` }, (payload) => {
-      if (payload.new.partner_b_joined) {
-        currentRelationship = payload.new;
-        startQuestionnaire('a');
-      }
-    })
-    .subscribe();
+  supabase.channel(`rel_${relationId}`).on('postgres_changes', 
+    { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relationId}` }, 
+    (payload) => { if (payload.new.partner_b_joined) { currentRelationship = payload.new; startQuestionnaire('a'); } }).subscribe();
 };
 
 document.getElementById('join-btn').onclick = async () => {
@@ -407,21 +524,18 @@ document.getElementById('join-btn').onclick = async () => {
   const { data, error } = await supabase.from('relationships').select('*').eq('invite_code', code).single();
   if (error || !data) { document.getElementById('relation-error').innerText = 'Invalid invite code'; return; }
   
-  const { error: updateError } = await supabase
-    .from('relationships')
+  const { error: updateError } = await supabase.from('relationships')
     .update({ partner_b_id: currentUser.id, partner_b_joined: true })
     .eq('id', data.id);
-  
   if (updateError) { document.getElementById('relation-error').innerText = updateError.message; return; }
   
   currentRelationship = { ...data, partner_b_id: currentUser.id, partner_b_joined: true };
   startQuestionnaire('b');
 };
 
-document.getElementById('copy-code').onclick = () => {
-  const code = document.getElementById('invite-code').innerText;
-  navigator.clipboard.writeText(code);
-  alert('Code copied! Share with your partner.');
+document.getElementById('copy-code').onclick = () => { 
+  navigator.clipboard.writeText(document.getElementById('invite-code').innerText); 
+  alert('Code copied!'); 
 };
 
 async function loadUserRelationship() {
@@ -429,36 +543,24 @@ async function loadUserRelationship() {
     .select('*')
     .or(`partner_a_id.eq.${currentUser.id},partner_b_id.eq.${currentUser.id}`);
   
-  if (error || !data || data.length === 0) {
-    showScreen('relation');
-    return;
-  }
+  if (error || !data || data.length === 0) { showScreen('relation'); return; }
   
   currentRelationship = data[0];
-  
-  // Determine if user is partner A or B
   if (currentRelationship.partner_a_id === currentUser.id) {
     currentPartnerRole = 'a';
-    if (currentRelationship.partner_a_completed) {
-      loadMainApp();
-    } else {
-      startQuestionnaire('a');
-    }
+    if (currentRelationship.partner_a_completed) loadMainApp();
+    else startQuestionnaire('a');
   } else {
     currentPartnerRole = 'b';
-    if (currentRelationship.partner_b_completed) {
-      loadMainApp();
-    } else {
-      startQuestionnaire('b');
-    }
+    if (currentRelationship.partner_b_completed) loadMainApp();
+    else startQuestionnaire('b');
   }
 }
 
 // ==================== QUESTIONNAIRE ====================
-async function startQuestionnaire(role) {
+function startQuestionnaire(role) {
   currentPartnerRole = role;
   questionnaireStep = 0;
-  questionnaireAnswers = {};
   showScreen('questionnaire');
   renderQuestionnaire();
 }
@@ -466,303 +568,98 @@ async function startQuestionnaire(role) {
 function renderQuestionnaire() {
   const container = document.getElementById('questionnaire-container');
   if (!container) return;
-  
   const step = steps[questionnaireStep];
   const stepNum = questionnaireStep + 1;
-  const partnerName = currentPartnerRole === 'a' ? 
-    (currentRelationship?.partner_a_name || 'You') : 
-    (currentRelationship?.partner_b_name || 'You');
-  
-  container.innerHTML = `
-    <div class="card">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <div style="font-size: 48px; margin-bottom: 8px;">${currentPartnerRole === 'a' ? '🌸' : '🌿'}</div>
-        <div style="font-size: 20px; color: var(--gold2);">${partnerName}</div>
-        <div style="font-size: 12px; color: var(--text2);">Step ${stepNum} of ${steps.length}: ${step.title}</div>
-        <div class="progress-track" style="margin-top: 12px;"><div class="progress-fill" style="width: ${(stepNum / steps.length) * 100}%"></div></div>
-      </div>
-      <div id="step-content"></div>
-    </div>
-  `;
-  
+  container.innerHTML = `<div class="card"><div style="text-align:center;margin-bottom:20px;"><div style="font-size:48px;">${currentPartnerRole === 'a' ? '🌸' : '🌿'}</div><div style="font-size:20px;color:var(--gold2);">Step ${stepNum} of ${steps.length}: ${step.title}</div><div class="progress-track" style="margin-top:12px;"><div class="progress-fill" style="width:${(stepNum/steps.length)*100}%"></div></div></div><div id="step-content"></div></div>`;
   renderStepContent();
 }
 
 function renderStepContent() {
   const stepContent = document.getElementById('step-content');
   if (!stepContent) return;
-  
   const step = steps[questionnaireStep];
-  const answers = questionnaireAnswers[step.id] || {};
+  const answers = (currentPartnerRole === 'a' ? (currentRelationship?.partner_a_answers || {}) : (currentRelationship?.partner_b_answers || {}))[step.id] || {};
   
-  switch(step.id) {
-    case 'welcome':
-      stepContent.innerHTML = `
-        <p style="color: var(--text2); line-height: 1.6; margin-bottom: 20px;">
-          Welcome! This questionnaire helps build your relationship map. Answer honestly — this is for your eyes only until you're ready to share.
-        </p>
-        <p style="color: var(--teal); font-size: 13px; margin-bottom: 20px;">
-          After you complete this, your partner will answer the same questions. Then you'll see your relationship map together.
-        </p>
-        <button class="btn-primary" onclick="nextStep()">Begin →</button>
-      `;
-      break;
-      
-    case 'basic':
-      stepContent.innerHTML = `
-        <div class="input-field"><input type="text" id="basic_name" class="input-field" placeholder="Your name" value="${answers.name || ''}"></div>
-        <div class="input-field"><input type="number" id="basic_age" class="input-field" placeholder="Age" value="${answers.age || ''}"></div>
-        <div class="input-field"><input type="text" id="basic_nationality" class="input-field" placeholder="Nationality / Heritage" value="${answers.nationality || ''}"></div>
-        <div class="input-field"><input type="text" id="basic_together" class="input-field" placeholder="How long have you been together?" value="${answers.together || ''}"></div>
-        <button class="btn-primary" onclick="saveStep('basic')">Continue →</button>
-      `;
-      break;
-      
-    case 'origin':
-      stepContent.innerHTML = `
-        <p style="color: var(--text2); margin-bottom: 16px; font-style: italic;">"What was the moment you knew this relationship was different?"</p>
-        <div class="input-field"><textarea id="origin_where" rows="2" class="input-field" placeholder="Where were you?">${answers.where || ''}</textarea></div>
-        <div class="input-field"><textarea id="origin_what" rows="3" class="input-field" placeholder="What happened?">${answers.what || ''}</textarea></div>
-        <div class="input-field"><textarea id="origin_felt" rows="2" class="input-field" placeholder="What did you feel?">${answers.felt || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('origin')">Continue →</button>
-      `;
-      break;
-      
-    case 'love':
-      stepContent.innerHTML = `
-        <div class="input-field"><textarea id="love_most" rows="2" class="input-field" placeholder="I feel most loved when...">${answers.most || ''}</textarea></div>
-        <div class="input-field"><textarea id="love_least" rows="2" class="input-field" placeholder="I feel least loved when...">${answers.least || ''}</textarea></div>
-        <div class="input-field"><textarea id="love_admire" rows="2" class="input-field" placeholder="What I admire most about my partner...">${answers.admire || ''}</textarea></div>
-        <div class="input-field"><textarea id="love_fear" rows="2" class="input-field" placeholder="What I fear losing most...">${answers.fear || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('love')">Continue →</button>
-      `;
-      break;
-      
-    case 'ratings':
-      stepContent.innerHTML = `
-        <p style="color: var(--text2); margin-bottom: 12px;">Rate each area 1-10:</p>
-        ${renderRating('Friendship', answers.friendship || 7)}
-        ${renderRating('Trust', answers.trust || 7)}
-        ${renderRating('Intimacy', answers.intimacy || 6)}
-        ${renderRating('Teamwork', answers.teamwork || 7)}
-        ${renderRating('Communication', answers.communication || 7)}
-        ${renderRating('Vision', answers.vision || 7)}
-        <div class="input-field"><textarea id="ratings_leak" rows="2" class="input-field" placeholder="Where does the relationship leak energy?">${answers.leak || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('ratings')">Continue →</button>
-      `;
-      break;
-      
-    case 'conflict':
-      stepContent.innerHTML = `
-        <p style="color: var(--text2); margin-bottom: 12px;">Think of your last significant disagreement:</p>
-        <div class="input-field"><textarea id="conflict_about" rows="2" class="input-field" placeholder="What was it really about?">${answers.about || ''}</textarea></div>
-        <div class="input-field"><textarea id="conflict_needed" rows="2" class="input-field" placeholder="What did you need?">${answers.needed || ''}</textarea></div>
-        <div class="input-field"><textarea id="conflict_partner" rows="2" class="input-field" placeholder="What did your partner need?">${answers.partnerNeeded || ''}</textarea></div>
-        <div class="input-field"><textarea id="conflict_unsaid" rows="2" class="input-field" placeholder="What did you not say?">${answers.unsaid || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('conflict')">Continue →</button>
-      `;
-      break;
-      
-    case 'child':
-      stepContent.innerHTML = `
-        <div class="input-field"><textarea id="child_why" rows="2" class="input-field" placeholder="Why do you want a child?">${answers.why || ''}</textarea></div>
-        <div class="input-field"><textarea id="child_why_not" rows="2" class="input-field" placeholder="Why might you NOT want a child?">${answers.whyNot || ''}</textarea></div>
-        <div class="input-field"><textarea id="child_fears" rows="2" class="input-field" placeholder="What are your fears about becoming a parent?">${answers.fears || ''}</textarea></div>
-        <div class="input-field"><textarea id="child_parent" rows="2" class="input-field" placeholder="What kind of parent do you imagine being?">${answers.parentType || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('child')">Continue →</button>
-      `;
-      break;
-      
-    case 'vision':
-      stepContent.innerHTML = `
-        <p style="color: var(--text2); margin-bottom: 12px; font-style: italic;">Imagine it's 10 years from now. You wake up together...</p>
-        <div class="input-field"><textarea id="vision_location" rows="2" class="input-field" placeholder="Where are you?">${answers.location || ''}</textarea></div>
-        <div class="input-field"><textarea id="vision_work" rows="2" class="input-field" placeholder="What work do you do?">${answers.work || ''}</textarea></div>
-        <div class="input-field"><input type="text" id="vision_children" class="input-field" placeholder="How many children?" value="${answers.children || ''}"></div>
-        <div class="input-field"><textarea id="vision_morning" rows="2" class="input-field" placeholder="What does your morning look like?">${answers.morning || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('vision')">Continue →</button>
-      `;
-      break;
-      
-    case 'soul':
-      stepContent.innerHTML = `
-        <div class="input-field"><textarea id="soul_chosen" rows="2" class="input-field" placeholder="Do you believe relationships are chosen before birth?">${answers.chosen || ''}</textarea></div>
-        <div class="input-field"><textarea id="soul_soulmates" rows="2" class="input-field" placeholder="Do you believe in soulmates?">${answers.soulmates || ''}</textarea></div>
-        <div class="input-field"><textarea id="soul_teach" rows="2" class="input-field" placeholder="What is your partner here to teach you?">${answers.teach || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('soul')">Continue →</button>
-      `;
-      break;
-      
-    case 'shadow':
-      stepContent.innerHTML = `
-        <p style="color: var(--rose); margin-bottom: 12px;">This requires courage. Your answers are private.</p>
-        <div class="input-field"><textarea id="shadow_judge_partner" rows="2" class="input-field" placeholder="The thing I secretly judge my partner for is...">${answers.judgePartner || ''}</textarea></div>
-        <div class="input-field"><textarea id="shadow_judge_self" rows="2" class="input-field" placeholder="The thing I secretly judge myself for is...">${answers.judgeSelf || ''}</textarea></div>
-        <div class="input-field"><textarea id="shadow_fear" rows="2" class="input-field" placeholder="The fear I rarely admit is...">${answers.fear || ''}</textarea></div>
-        <div class="input-field"><textarea id="shadow_truth" rows="2" class="input-field" placeholder="The truth I have not fully spoken is...">${answers.truth || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('shadow')">Continue →</button>
-      `;
-      break;
-      
-    case 'final':
-      stepContent.innerHTML = `
-        <p style="color: var(--gold); margin-bottom: 16px; font-style: italic;">"If your partner could understand one thing about you completely — with no defensiveness — what would it be?"</p>
-        <div class="input-field"><textarea id="final_answer" rows="6" class="input-field" placeholder="Your truth...">${answers.answer || ''}</textarea></div>
-        <button class="btn-primary" onclick="saveStep('final')">Complete Questionnaire →</button>
-      `;
-      break;
-  }
+  const templates = {
+    welcome: `<p style="color:var(--text2);line-height:1.6;">Welcome! This questionnaire builds your relationship map.</p><button class="btn-primary" onclick="saveQuestionnaireStep('welcome')">Begin →</button>`,
+    basic: `<input type="text" id="basic_name" class="input-field" placeholder="Your name" value="${answers.name || ''}"><input type="number" id="basic_age" class="input-field" placeholder="Age" value="${answers.age || ''}"><input type="text" id="basic_nationality" class="input-field" placeholder="Nationality" value="${answers.nationality || ''}"><button class="btn-primary" onclick="saveQuestionnaireStep('basic')">Continue →</button>`,
+    origin: `<textarea id="origin_what" rows="3" class="input-field" placeholder="The moment you knew this was different...">${answers.what || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('origin')">Continue →</button>`,
+    love: `<textarea id="love_most" rows="2" class="input-field" placeholder="I feel most loved when...">${answers.most || ''}</textarea><textarea id="love_admire" rows="2" class="input-field" placeholder="I admire most about my partner...">${answers.admire || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('love')">Continue →</button>`,
+    ratings: `${renderRatingSlider('Trust', answers.trust || 7)}${renderRatingSlider('Intimacy', answers.intimacy || 6)}${renderRatingSlider('Communication', answers.communication || 7)}<button class="btn-primary" onclick="saveQuestionnaireStep('ratings')">Continue →</button>`,
+    conflict: `<textarea id="conflict_about" rows="2" class="input-field" placeholder="Last disagreement was about...">${answers.about || ''}</textarea><textarea id="conflict_needed" rows="2" class="input-field" placeholder="What I needed...">${answers.needed || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('conflict')">Continue →</button>`,
+    child: `<textarea id="child_why" rows="2" class="input-field" placeholder="Why I want a child...">${answers.why || ''}</textarea><textarea id="child_fears" rows="2" class="input-field" placeholder="My fears about parenthood...">${answers.fears || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('child')">Continue →</button>`,
+    vision: `<textarea id="vision_10year" rows="3" class="input-field" placeholder="In 10 years, we are...">${answers.vision || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('vision')">Continue →</button>`,
+    soul: `<textarea id="soul_belief" rows="2" class="input-field" placeholder="Do you believe in soulmates?">${answers.belief || ''}</textarea><textarea id="soul_lesson" rows="2" class="input-field" placeholder="What is your partner here to teach you?">${answers.lesson || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('soul')">Continue →</button>`,
+    shadow: `<textarea id="shadow_judge" rows="2" class="input-field" placeholder="Something I secretly judge...">${answers.judge || ''}</textarea><textarea id="shadow_fear" rows="2" class="input-field" placeholder="A fear I rarely admit...">${answers.fear || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('shadow')">Continue →</button>`,
+    final: `<textarea id="final_truth" rows="4" class="input-field" placeholder="If my partner could understand one thing...">${answers.truth || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('final')">Complete →</button>`
+  };
+  stepContent.innerHTML = templates[step.id] || templates.welcome;
 }
 
-function renderRating(label, value) {
-  return `
-    <div style="margin-bottom: 12px;">
-      <div style="display: flex; justify-content: space-between;">
-        <span style="color: var(--text2); font-size: 12px;">${label}</span>
-        <span id="${label}_val" style="color: var(--gold);">${value}</span>
-      </div>
-      <input type="range" id="${label}" min="1" max="10" value="${value}" style="width: 100%;" 
-        oninput="document.getElementById('${label}_val').innerText = this.value">
-    </div>
-  `;
+function renderRatingSlider(label, value) {
+  return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">${label}</span><span id="${label}_val" style="color:var(--gold);">${value}</span></div><input type="range" id="${label}" min="1" max="10" value="${value}" style="width:100%;" oninput="document.getElementById('${label}_val').innerText=this.value"></div>`;
 }
 
-function saveStep(stepId) {
-  const step = steps.find(s => s.id === stepId);
-  if (!step) return;
-  
+async function saveQuestionnaireStep(stepId) {
   const answers = {};
+  const fieldMaps = {
+    basic: ['basic_name','basic_age','basic_nationality'],
+    origin: ['origin_what'],
+    love: ['love_most','love_admire'],
+    ratings: ['Trust','Intimacy','Communication'],
+    conflict: ['conflict_about','conflict_needed'],
+    child: ['child_why','child_fears'],
+    vision: ['vision_10year'],
+    soul: ['soul_belief','soul_lesson'],
+    shadow: ['shadow_judge','shadow_fear'],
+    final: ['final_truth']
+  };
   
-  switch(stepId) {
-    case 'basic':
-      answers.name = document.getElementById('basic_name')?.value;
-      answers.age = document.getElementById('basic_age')?.value;
-      answers.nationality = document.getElementById('basic_nationality')?.value;
-      answers.together = document.getElementById('basic_together')?.value;
-      break;
-    case 'origin':
-      answers.where = document.getElementById('origin_where')?.value;
-      answers.what = document.getElementById('origin_what')?.value;
-      answers.felt = document.getElementById('origin_felt')?.value;
-      break;
-    case 'love':
-      answers.most = document.getElementById('love_most')?.value;
-      answers.least = document.getElementById('love_least')?.value;
-      answers.admire = document.getElementById('love_admire')?.value;
-      answers.fear = document.getElementById('love_fear')?.value;
-      break;
-    case 'ratings':
-      answers.friendship = parseInt(document.getElementById('Friendship')?.value || 7);
-      answers.trust = parseInt(document.getElementById('Trust')?.value || 7);
-      answers.intimacy = parseInt(document.getElementById('Intimacy')?.value || 6);
-      answers.teamwork = parseInt(document.getElementById('Teamwork')?.value || 7);
-      answers.communication = parseInt(document.getElementById('Communication')?.value || 7);
-      answers.vision = parseInt(document.getElementById('Vision')?.value || 7);
-      answers.leak = document.getElementById('ratings_leak')?.value;
-      break;
-    case 'conflict':
-      answers.about = document.getElementById('conflict_about')?.value;
-      answers.needed = document.getElementById('conflict_needed')?.value;
-      answers.partnerNeeded = document.getElementById('conflict_partner')?.value;
-      answers.unsaid = document.getElementById('conflict_unsaid')?.value;
-      break;
-    case 'child':
-      answers.why = document.getElementById('child_why')?.value;
-      answers.whyNot = document.getElementById('child_why_not')?.value;
-      answers.fears = document.getElementById('child_fears')?.value;
-      answers.parentType = document.getElementById('child_parent')?.value;
-      break;
-    case 'vision':
-      answers.location = document.getElementById('vision_location')?.value;
-      answers.work = document.getElementById('vision_work')?.value;
-      answers.children = document.getElementById('vision_children')?.value;
-      answers.morning = document.getElementById('vision_morning')?.value;
-      break;
-    case 'soul':
-      answers.chosen = document.getElementById('soul_chosen')?.value;
-      answers.soulmates = document.getElementById('soul_soulmates')?.value;
-      answers.teach = document.getElementById('soul_teach')?.value;
-      break;
-    case 'shadow':
-      answers.judgePartner = document.getElementById('shadow_judge_partner')?.value;
-      answers.judgeSelf = document.getElementById('shadow_judge_self')?.value;
-      answers.fear = document.getElementById('shadow_fear')?.value;
-      answers.truth = document.getElementById('shadow_truth')?.value;
-      break;
-    case 'final':
-      answers.answer = document.getElementById('final_answer')?.value;
-      break;
+  for (let f of (fieldMaps[stepId] || [])) { 
+    let el = document.getElementById(f); 
+    if (el) { 
+      if (el.type === 'range') answers[f.toLowerCase()] = parseInt(el.value);
+      else answers[f.replace(/_/g, '')] = el.value;
+    }
   }
   
-  questionnaireAnswers[stepId] = answers;
+  const currentAnswers = currentPartnerRole === 'a' ? (currentRelationship?.partner_a_answers || {}) : (currentRelationship?.partner_b_answers || {});
+  currentAnswers[stepId] = answers;
   
-  if (questionnaireStep === steps.length - 1) {
-    completeQuestionnaire();
+  const updateField = currentPartnerRole === 'a' ? 'partner_a_answers' : 'partner_b_answers';
+  await supabase.from('relationships').update({ [updateField]: currentAnswers }).eq('id', currentRelationship.id);
+  
+  if (stepId === 'final') {
+    const completedField = currentPartnerRole === 'a' ? 'partner_a_completed' : 'partner_b_completed';
+    await supabase.from('relationships').update({ [completedField]: true }).eq('id', currentRelationship.id);
+    const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
+    if (data.partner_a_completed && data.partner_b_completed) loadMainApp();
+    else { document.getElementById('questionnaire-container').innerHTML = `<div class="card" style="text-align:center;"><div style="font-size:48px;">⏳</div><div style="font-size:18px;color:var(--gold2);">Waiting for Partner</div><div class="waiting-spinner" style="margin:20px auto;"></div></div>`; }
   } else {
     questionnaireStep++;
     renderQuestionnaire();
   }
 }
 
-async function completeQuestionnaire() {
-  // Save answers to Supabase
-  const updateField = currentPartnerRole === 'a' ? 'partner_a_answers' : 'partner_b_answers';
-  const completedField = currentPartnerRole === 'a' ? 'partner_a_completed' : 'partner_b_completed';
-  
-  await supabase.from('relationships')
-    .update({ 
-      [updateField]: questionnaireAnswers,
-      [completedField]: true 
-    })
-    .eq('id', currentRelationship.id);
-  
-  // Check if both partners have completed
-  const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
-  
-  if (data.partner_a_completed && data.partner_b_completed) {
-    loadMainApp();
-  } else {
-    // Show waiting for partner message
-    const container = document.getElementById('questionnaire-container');
-    container.innerHTML = `
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
-        <div style="font-size: 18px; color: var(--gold2);">Waiting for Your Partner</div>
-        <p style="color: var(--text2); margin-top: 16px;">Your partner needs to complete their questionnaire. You'll be notified when they're done.</p>
-        <div class="waiting-spinner" style="margin: 20px auto;"></div>
-      </div>
-    `;
-    
-    // Listen for partner completion
-    supabase.channel(`rel_${currentRelationship.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationship.id}` }, (payload) => {
-        if (payload.new.partner_a_completed && payload.new.partner_b_completed) {
-          loadMainApp();
-        }
-      })
-      .subscribe();
-  }
-}
-
 // ==================== MAIN APP ====================
 async function loadMainApp() {
-  // Load relationship data
   const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
   relationshipData = data;
-  
-  // Load journal
   journalEntries = data.journal || [];
   
-  // Load private notes for this user
-  const privateKey = `private_${currentUser.id}`;
   const { data: privateData } = await supabase.from('private_notes').select('*').eq('user_id', currentUser.id);
   privateNotes = privateData || [];
   
+  const { data: dreamData } = await supabase.from('dream_journal').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  dreamEntries = dreamData || [];
+  
+  const { data: xpData } = await supabase.from('user_xp').select('xp, completed_exercises').eq('user_id', currentUser.id).single();
+  if (xpData) { userXP = xpData.xp; completedExercises = xpData.completed_exercises || []; }
+  
   showScreen('main');
   document.getElementById('bottom-nav').style.display = 'flex';
-  
   document.getElementById('hdr-together').innerHTML = `❤️ ${data.partner_a_name} & ${data.partner_b_name}`;
-  
+  document.getElementById('couple-names').innerHTML = `${data.partner_a_name} & ${data.partner_b_name}`;
   updateUI();
   startRealtime();
   startAnimations();
@@ -772,63 +669,84 @@ async function loadMainApp() {
 function updateUI() {
   const stats = relationshipData?.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80 };
   const growth = Math.floor((stats.trust + stats.communication + stats.vision) / 3);
-  
   document.getElementById('stat-growth').innerHTML = growth + '%';
   document.getElementById('stat-harmony').innerHTML = stats.trust + '%';
   document.getElementById('stat-vision').innerHTML = stats.vision + '%';
+  document.getElementById('user-xp').innerHTML = `✨ ${userXP} XP`;
   
-  // Update weather
   const weatherEl = document.getElementById('weather-progress');
   if (weatherEl) {
     let weatherIcon = stats.trust > 80 && stats.communication > 80 ? '☀️' : stats.communication < 60 ? '⛈️' : stats.intimacy < 60 ? '☁️' : '🌤️';
-    weatherEl.innerHTML = `
-      <div style="text-align: center; margin-bottom: 16px;">
-        <div style="font-size: 32px;">${weatherIcon}</div>
-      </div>
-      ${Object.entries(stats).map(([k, v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('')}
-    `;
+    weatherEl.innerHTML = `<div style="text-align:center;margin-bottom:16px;"><div style="font-size:32px;">${weatherIcon}</div></div>${Object.entries(stats).map(([k,v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('')}`;
   }
   
-  // Render journal
+  const babyReadiness = Math.floor((stats.trust + stats.intimacy + 50) / 2);
+  document.getElementById('baby-pct').innerHTML = babyReadiness + '%';
+  document.getElementById('baby-readiness-stats').innerHTML = `
+    <div class="progress-row"><div class="progress-label">Emotional</div><div class="progress-track"><div class="progress-fill" style="width:${stats.trust}%"></div></div><div>${stats.trust}%</div></div>
+    <div class="progress-row"><div class="progress-label">Partnership</div><div class="progress-track"><div class="progress-fill" style="width:${stats.intimacy}%"></div></div><div>${stats.intimacy}%</div></div>`;
+  
   renderJournal();
-  
-  // Render private notes
   renderPrivateNotes();
-  
+  renderDreams();
+  renderExercises();
+  renderGrowthMetrics();
   drawTree();
+}
+
+function renderExercises() {
+  const el = document.getElementById('exercises-list');
+  if (!el) return;
+  el.innerHTML = dailyExercises.map(ex => `
+    <div class="exercise-card ${completedExercises.includes(ex.id) ? 'exercise-completed' : ''}" onclick="completeExercise(${ex.id})">
+      <div class="exercise-title">${ex.title}</div>
+      <div class="exercise-desc">${ex.desc}</div>
+      ${completedExercises.includes(ex.id) ? '<span class="exercise-badge">✓ Completed +' + ex.xp + ' XP</span>' : '<span class="exercise-badge">+ ' + ex.xp + ' XP</span>'}
+    </div>
+  `).join('');
+}
+
+function renderGrowthMetrics() {
+  const el = document.getElementById('growth-metrics');
+  if (!el) return;
+  const stats = relationshipData?.couple_stats || {};
+  el.innerHTML = `
+    <div class="progress-row"><div class="progress-label">Self-Awareness</div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, userXP / 10)}%"></div></div><div>${Math.min(100, Math.floor(userXP / 10))}%</div></div>
+    <div class="progress-row"><div class="progress-label">Empathy</div><div class="progress-track"><div class="progress-fill" style="width:${stats.trust}%"></div></div><div>${stats.trust}%</div></div>
+    <div class="progress-row"><div class="progress-label">Communication</div><div class="progress-track"><div class="progress-fill" style="width:${stats.communication}%"></div></div><div>${stats.communication}%</div></div>
+  `;
+}
+
+async function completeExercise(exerciseId) {
+  if (completedExercises.includes(exerciseId)) return;
+  const exercise = dailyExercises.find(e => e.id === exerciseId);
+  completedExercises.push(exerciseId);
+  userXP += exercise.xp;
+  await supabase.from('user_xp').upsert({ user_id: currentUser.id, xp: userXP, completed_exercises: completedExercises });
+  renderExercises();
+  renderGrowthMetrics();
+  document.getElementById('user-xp').innerHTML = `✨ ${userXP} XP`;
 }
 
 function renderJournal() {
   const el = document.getElementById('journal-entries');
   if (!el) return;
-  
-  if (!journalEntries || journalEntries.length === 0) {
-    el.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2);">No entries yet. Write your first journal entry! ✨</div>';
-  } else {
-    el.innerHTML = journalEntries.slice(0, 30).map(j => `
-      <div class="journal-entry">
-        <div style="font-size: 10px; color: var(--text3);">${new Date(j.created_at).toLocaleDateString()}</div>
-        <div class="journal-text" style="margin-top: 8px;">"${escapeHtml(j.text)}"</div>
-        <div style="font-size: 11px; color: var(--gold); margin-top: 6px;">— ${j.author}</div>
-      </div>
-    `).join('');
-  }
+  if (!journalEntries || journalEntries.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">No entries yet. Write your first journal entry! ✨</div>';
+  else el.innerHTML = journalEntries.slice(0, 30).map(j => `<div class="journal-entry"><div style="font-size:10px;color:var(--text3);">${new Date(j.created_at).toLocaleDateString()}</div><div class="journal-text" style="margin-top:8px;">"${escapeHtml(j.text)}"</div><div style="font-size:11px;color:var(--gold);margin-top:6px;">— ${j.author}</div></div>`).join('');
 }
 
 function renderPrivateNotes() {
   const el = document.getElementById('private-entries');
   if (!el) return;
-  
-  if (!privateNotes || privateNotes.length === 0) {
-    el.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2);">No private notes yet. 🔒</div>';
-  } else {
-    el.innerHTML = privateNotes.slice(0, 20).map(n => `
-      <div class="journal-entry" style="border-left-color: var(--rose);">
-        <div style="font-size: 10px; color: var(--text3);">${new Date(n.created_at).toLocaleDateString()} 🔒 Private</div>
-        <div class="journal-text" style="margin-top: 8px;">"${escapeHtml(n.text)}"</div>
-      </div>
-    `).join('');
-  }
+  if (!privateNotes || privateNotes.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">No private notes yet. 🔒</div>';
+  else el.innerHTML = privateNotes.slice(0, 20).map(n => `<div class="journal-entry" style="border-left-color:var(--rose);"><div style="font-size:10px;color:var(--text3);">${new Date(n.created_at).toLocaleDateString()} 🔒</div><div class="journal-text" style="margin-top:8px;">"${escapeHtml(n.text)}"</div></div>`).join('');
+}
+
+function renderDreams() {
+  const el = document.getElementById('dream-entries');
+  if (!el) return;
+  if (!dreamEntries || dreamEntries.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">No dreams recorded yet. ✨</div>';
+  else el.innerHTML = dreamEntries.slice(0, 20).map(d => `<div class="dream-entry"><div style="font-size:10px;color:var(--text3);">${new Date(d.created_at).toLocaleDateString()}</div><div class="journal-text" style="margin-top:8px;">"${escapeHtml(d.text)}"</div></div>`).join('');
 }
 
 function drawTree() {
@@ -839,56 +757,19 @@ function drawTree() {
   canvas.height = 220;
   const w = canvas.width, h = canvas.height, cx = w/2, base = h-15;
   ctx.clearRect(0, 0, w, h);
-  
-  ctx.beginPath();
-  ctx.moveTo(cx, base);
-  ctx.lineTo(cx, base-80);
-  ctx.strokeStyle = '#8B5A2B';
-  ctx.lineWidth = 8;
-  ctx.stroke();
-  
-  for(let i=0;i<6;i++){
-    ctx.beginPath();
-    ctx.moveTo(cx, base);
-    ctx.lineTo(cx-15+i*5, base+12);
-    ctx.stroke();
-  }
-  
+  ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base-80); ctx.strokeStyle = '#8B5A2B'; ctx.lineWidth = 8; ctx.stroke();
+  for(let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx-15+i*5, base+12); ctx.stroke(); }
   const stats = relationshipData?.couple_stats || {};
-  const leafCount = 6 + Math.floor((stats.trust + stats.communication) / 20);
-  for(let i=0;i<leafCount;i++){
-    let x = cx-20 + Math.random()*40;
-    let y = base-70 + Math.random()*50;
-    ctx.beginPath();
-    ctx.arc(x, y, 6, 0, Math.PI*2);
-    ctx.fillStyle = '#3c9e6d';
-    ctx.fill();
-  }
-  
-  const flowerCount = 2 + Math.floor(stats.intimacy / 20);
-  for(let i=0;i<flowerCount;i++){
-    let x = cx-15 + Math.random()*30;
-    let y = base-50 + Math.random()*40;
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI*2);
-    ctx.fillStyle = '#ffb7c5';
-    ctx.fill();
-  }
+  for(let i=0;i<6+Math.floor((stats.trust+stats.communication)/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#3c9e6d'; ctx.fill(); }
+  for(let i=0;i<2+Math.floor(stats.intimacy/20);i++){ let x=cx-15+Math.random()*30, y=base-50+Math.random()*40; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
 }
 
 // ==================== ACTIONS ====================
 document.getElementById('post-journal').onclick = async () => {
   const input = document.getElementById('journal-input');
   if (!input.value.trim()) return;
-  
   const partnerName = currentPartnerRole === 'a' ? relationshipData.partner_a_name : relationshipData.partner_b_name;
-  const newEntry = {
-    id: Date.now(),
-    author: partnerName,
-    text: input.value.trim(),
-    created_at: new Date().toISOString()
-  };
-  
+  const newEntry = { id: Date.now(), author: partnerName, text: input.value.trim(), created_at: new Date().toISOString() };
   const updatedJournal = [newEntry, ...(relationshipData.journal || [])].slice(0, 100);
   await supabase.from('relationships').update({ journal: updatedJournal }).eq('id', currentRelationship.id);
   journalEntries = updatedJournal;
@@ -900,19 +781,50 @@ document.getElementById('post-journal').onclick = async () => {
 document.getElementById('save-private').onclick = async () => {
   const input = document.getElementById('private-input');
   if (!input.value.trim()) return;
-  
-  const newNote = {
-    id: Date.now(),
-    user_id: currentUser.id,
-    text: input.value.trim(),
-    created_at: new Date().toISOString()
-  };
-  
+  const newNote = { id: Date.now(), user_id: currentUser.id, text: input.value.trim(), created_at: new Date().toISOString() };
   const { data } = await supabase.from('private_notes').insert([newNote]).select();
   privateNotes = [newNote, ...privateNotes];
   input.value = '';
   renderPrivateNotes();
 };
+
+document.getElementById('save-dream').onclick = async () => {
+  const input = document.getElementById('dream-input');
+  if (!input.value.trim()) return;
+  const newDream = { id: Date.now(), user_id: currentUser.id, text: input.value.trim(), created_at: new Date().toISOString() };
+  await supabase.from('dream_journal').insert([newDream]);
+  dreamEntries = [newDream, ...dreamEntries];
+  input.value = '';
+  renderDreams();
+  userXP += 5;
+  await supabase.from('user_xp').upsert({ user_id: currentUser.id, xp: userXP, completed_exercises: completedExercises });
+  document.getElementById('user-xp').innerHTML = `✨ ${userXP} XP`;
+};
+
+function openPrivateModal() { document.getElementById('private-modal').style.display = 'flex'; }
+function closePrivateModal() { document.getElementById('private-modal').style.display = 'none'; }
+async function savePrivateReflection() {
+  const text = document.getElementById('private-reflection').value;
+  if (!text.trim()) return;
+  const newNote = { id: Date.now(), user_id: currentUser.id, text: text.trim(), created_at: new Date().toISOString() };
+  await supabase.from('private_notes').insert([newNote]);
+  privateNotes = [newNote, ...privateNotes];
+  document.getElementById('private-reflection').value = '';
+  closePrivateModal();
+  renderPrivateNotes();
+  alert('✨ Private reflection saved');
+}
+
+function startJointSession() { alert('🤝 Joint Session: Open the shared journal to begin a joint reflection. Both partners can see and respond.'); }
+function showRelationshipMap() { alert('🗺️ Your Relationship Map:\nStrengths: High vision alignment\nGrowth Area: Intimacy needs attention\nRisk: Work stress affecting availability'); }
+function showFutureVision() { alert('🌅 Future Vision: Your 10-year alignment is strong. Baby readiness shows emotional foundation is solid.'); }
+
+// ==================== REALTIME ====================
+function startRealtime() {
+  supabase.channel(`rel_${currentRelationship.id}`).on('postgres_changes', 
+    { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationship.id}` }, 
+    (payload) => { if (payload.new) { relationshipData = payload.new; journalEntries = payload.new.journal || []; updateUI(); } }).subscribe();
+}
 
 // ==================== MOON PHASE ====================
 async function loadMoonPhase() {
@@ -922,122 +834,55 @@ async function loadMoonPhase() {
     const data = await response.json();
     const phase = data[0]?.Phase || "Waxing Gibbous";
     document.getElementById('hdr-moon').innerHTML = `🌙 ${phase}`;
-    document.getElementById('moon-content').innerHTML = `
-      <div style="font-size: 48px;">${phase.includes('Full') ? '🌕' : phase.includes('New') ? '🌑' : '🌔'}</div>
-      <div style="font-size: 16px; color: var(--gold2); margin-top: 8px;">${phase}</div>
-      <div style="font-size: 13px; color: var(--text2); margin-top: 8px;">${getMoonMessage(phase)}</div>
-    `;
-    document.getElementById('horoscope-content').innerHTML = `
-      <div style="font-style: italic; line-height: 1.6;">${getHoroscope()}</div>
-    `;
-  } catch(e) {
-    console.log('Moon API error');
-  }
+    document.getElementById('moon-content').innerHTML = `<div style="font-size:48px;">${phase.includes('Full') ? '🌕' : phase.includes('New') ? '🌑' : '🌔'}</div><div style="font-size:16px;color:var(--gold2);margin-top:8px;">${phase}</div><div style="font-size:13px;color:var(--text2);margin-top:8px;">${getMoonMessage(phase)}</div>`;
+    document.getElementById('horoscope-content').innerHTML = getHoroscope();
+  } catch(e) { console.log('Moon API error'); }
 }
-
-function getMoonMessage(phase) {
-  const messages = {
-    "New Moon": "Set intentions for your relationship.",
-    "Waxing Crescent": "Plant seeds of growth together.",
-    "First Quarter": "Take action on your shared goals.",
-    "Waxing Gibbous": "Refine and adjust. You're almost there.",
-    "Full Moon": "Release what no longer serves your union.",
-    "Waning Gibbous": "Gratitude for what you've built.",
-    "Last Quarter": "Let go of old patterns.",
-    "Waning Crescent": "Rest and restore together."
-  };
-  return messages[phase] || "The moon guides your journey.";
-}
-
-function getHoroscope() {
-  const horoscopes = [
-    "Trust your intuition today. Small gestures create big ripples.",
-    "The universe supports your growth. What you build now will last.",
-    "Communication is highlighted today. Speak from the heart.",
-    "Take a moment to appreciate what you've already built together.",
-    "A small act of kindness today will echo for weeks."
-  ];
-  return horoscopes[Math.floor(Math.random() * horoscopes.length)];
-}
-
-// ==================== REALTIME ====================
-function startRealtime() {
-  supabase.channel(`rel_${currentRelationship.id}`)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationship.id}` }, (payload) => {
-      if (payload.new) {
-        relationshipData = payload.new;
-        journalEntries = payload.new.journal || [];
-        updateUI();
-      }
-    })
-    .subscribe();
-}
+function getMoonMessage(phase) { const m = { "New Moon":"Set intentions for your relationship.","Full Moon":"Release what no longer serves your union.","Waxing Gibbous":"Refine and adjust." }; return m[phase] || "The moon guides your journey."; }
+function getHoroscope() { const h = ["Trust your intuition today. Small gestures create big ripples.","The universe supports your growth.","Communication is highlighted today."]; return h[Math.floor(Math.random() * h.length)]; }
 
 // ==================== UI HELPERS ====================
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(`${screenId}-screen`).classList.add('active');
+function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(`${screenId}-screen`).classList.add('active'); }
+function switchScreen(screen, btn) { 
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+  document.getElementById(`screen-${screen}`).classList.add('active'); 
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); 
+  if (btn) btn.classList.add('active'); 
+  if (screen === 'journal') renderJournal(); 
+  if (screen === 'private') renderPrivateNotes(); 
+  if (screen === 'cosmic') { loadMoonPhase(); renderDreams(); } 
 }
-
-function switchScreen(screen, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(`screen-${screen}`).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  if (screen === 'journal') renderJournal();
-  if (screen === 'private') renderPrivateNotes();
+function startAnimations() { 
+  drawTree(); 
+  setInterval(drawTree, 5000); 
+  const updateDate = () => { 
+    const now = new Date(); 
+    document.getElementById('hdr-date').innerHTML = `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()]}, ${now.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]}`; 
+  }; 
+  updateDate(); 
+  setInterval(updateDate, 60000); 
 }
-
-function startAnimations() {
-  drawTree();
-  setInterval(drawTree, 5000);
-  const updateDate = () => {
-    const now = new Date();
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    document.getElementById('hdr-date').innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-  };
-  updateDate();
-  setInterval(updateDate, 60000);
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
-// Stars background
-function initStars() {
-  const canvas = document.getElementById('stars-canvas');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const ctx = canvas.getContext('2d');
-  const stars = Array.from({length:150}, () => ({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
-  function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    stars.forEach(s => {
-      ctx.beginPath();
-      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fillStyle = `rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`;
-      ctx.fill();
-      s.a += 0.01;
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
 // Make functions global
-window.nextStep = () => { questionnaireStep++; renderQuestionnaire(); };
-window.saveStep = saveStep;
+window.saveQuestionnaireStep = saveQuestionnaireStep;
+window.completeExercise = completeExercise;
 window.switchScreen = switchScreen;
-window.renderRating = renderRating;
+window.startJointSession = startJointSession;
+window.showRelationshipMap = showRelationshipMap;
+window.showFutureVision = showFutureVision;
+window.openPrivateModal = openPrivateModal;
+window.closePrivateModal = closePrivateModal;
+window.savePrivateReflection = savePrivateReflection;
 
+function initStars() {
+  const canvas = document.getElementById('stars-canvas');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const stars = Array.from({length:150}, () => ({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
+  function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`; ctx.fill(); s.a+=0.01; }); requestAnimationFrame(draw); }
+  draw();
+}
 initStars();
 showScreen('setup');
 </script>
