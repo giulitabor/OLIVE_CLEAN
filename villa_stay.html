@@ -22,7 +22,7 @@
             --card-bg: #141414;
             --border-gold: rgba(197,160,89,0.2);
         }
-
+        
         .tech-card {
             background: rgba(18, 22, 18, 0.6);
             backdrop-filter: blur(16px);
@@ -38,25 +38,24 @@
             transition: opacity 0.5s ease, border-color 0.3s ease;
         }
 
-        /* ========== CINEMATIC OVERLAY STYLES ========== */
+        /* ========== CINEMATIC OVERLAY STYLES - MOVED TO TOP ========== */
         .cinematic-overlay-container {
             position: fixed;
-            top: 0;
+            top: 80px;
             left: 0;
             width: 100%;
-            height: 100vh;
             z-index: 100;
             pointer-events: none;
         }
 
         .cinematic-line {
-            position: absolute;
-            bottom: 30%;
+            position: relative;
+            top: 0;
             left: 0;
             right: 0;
             text-align: center;
             color: #fff;
-            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-size: clamp(1.2rem, 4vw, 2rem);
             font-weight: 400;
             letter-spacing: 0.08em;
             line-height: 1.3;
@@ -65,11 +64,20 @@
             transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: 'Playfair Display', 'Georgia', serif;
             padding: 0 20px;
+            max-width: 90%;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 0 0 20px 20px;
+            padding-bottom: 15px;
+            padding-top: 15px;
+            display: inline-block;
+            width: auto;
         }
 
         .cinematic-line.active { opacity: 1; }
         .cinematic-line.fade-out { opacity: 0; }
-        .cinematic-line.small { font-size: clamp(1rem, 3vw, 1.8rem); letter-spacing: 0.15em; font-weight: 300; }
+        .cinematic-line.small { font-size: clamp(1rem, 3vw, 1.5rem); letter-spacing: 0.1em; font-weight: 300; }
 
         .cinematic-progress {
             position: fixed;
@@ -136,52 +144,52 @@
             pointer-events: none;
         }
 
-        .main-content-wrapper { position: relative; z-index: 10; background: transparent; }
+        .main-content-wrapper { position: relative; z-index: 10; background: transparent; margin-top: 140px; }
         nav { background: rgba(0, 0, 0, 0.5) !important; backdrop-filter: blur(8px); }
         .modal-overlay { z-index: 200; }
-
+        
         /* Mobile-first overrides */
         button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
         input, select, textarea { font-size: 16px !important; color: #fff; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
         html, body { overflow-x: hidden; }
         @media (max-width: 767px) { main.pt-32 { padding-top: 6rem !important; } }
-
+        
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-
+        
         @media (max-width: 767px) {
             .tier-cards-wrap { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 8px; scrollbar-width: none; scroll-snap-type: x mandatory; }
             .tier-cards-wrap::-webkit-scrollbar { display: none; }
             .tier-cards-wrap > div { min-width: 240px; scroll-snap-align: start; flex-shrink: 0; }
         }
-
+        
         .activities-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
         @media (min-width: 768px) { .activities-grid { grid-template-columns: repeat(3, 1fr); gap: 32px; } }
         .activity-img { height: 200px; }
         @media (min-width: 768px) { .activity-img { height: 256px; } }
-
+        
         .form-grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
         @media (min-width: 640px) { .form-grid-2 { grid-template-columns: 1fr 1fr; } }
-
+        
         @media (max-width: 639px) { .booking-btn { width: 100% !important; } }
         @media (max-width: 639px) { .card-pad { padding: 20px !important; } }
         @media (max-width: 639px) { h1.hero-title { font-size: clamp(2.2rem, 9vw, 3.5rem) !important; } }
-
+        
         .alloc-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
-
+        
         @media (max-width: 479px) {
             .modal-overlay > div { width: 100% !important; max-width: 100% !important; margin: 0 !important; border-radius: 0 !important; min-height: 100dvh; }
         }
-
+        
         .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 20px; }
-
+        
         /* Mobile menu styles */
         #mobileMenuOverlay {
             position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.97); backdrop-filter: blur(20px);
             display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1);
         }
         #mobileMenuOverlay.open { opacity: 1; pointer-events: all; }
-
+        
         .mob-nav-header { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 72px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
         .mob-nav-links { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 28px; }
         .mob-nav-link { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); text-decoration: none; font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 7vw, 2rem); font-weight: 600; transform: translateY(14px); opacity: 0; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease, color 0.2s; }
@@ -191,25 +199,25 @@
         .mob-nav-link:hover, .mob-nav-link.active-link { color: #C5A059; }
         .mob-arrow { font-size:1rem; opacity:0.25; transition:opacity 0.2s,transform 0.2s; }
         .mob-nav-link:hover .mob-arrow { opacity:1; transform:translateX(4px); }
-
+        
         .mob-nav-footer { padding: 24px 28px max(28px, env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; transform: translateY(14px); opacity: 0; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1) 0.18s, opacity 0.38s ease 0.18s; }
         #mobileMenuOverlay.open .mob-nav-footer { transform:translateY(0); opacity:1; }
-
+        
         .mob-status-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; }
         .mob-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #5a7a2b; flex-shrink: 0; }
         .mob-connect-cta { width: 100%; background: #5a7a2b; color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 16px 0; border-radius: 16px; border: none; cursor: pointer; transition: background 0.2s, transform 0.15s; }
         .mob-connect-cta:hover { background: #6b8e36; }
         .mob-connect-cta:active { transform: scale(0.98); }
-
+        
         #mobileMenuBtn { width: 44px; height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; padding: 0; }
         #mobileMenuBtn span { display: block; width: 22px; height: 1.5px; background: #fff; border-radius: 2px; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; transform-origin: center; }
         #mobileMenuBtn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
         #mobileMenuBtn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
-
+        
         .progress-container { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #5a7a2b, #C5A059); border-radius: 2px; transition: width 0.5s ease; }
-
+        
         @media (min-width: 768px) {
             #nav-desktop-links { display: flex !important; }
             #nav-desktop-right { display: flex !important; }
@@ -220,13 +228,20 @@
             #nav-desktop-right { display: none  !important; }
             #nav-mobile-btn    { display: flex  !important; }
         }
-
+        
         .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
         .status-badge.locked { background: rgba(255,68,68,0.2); color: #ff4444; }
         .status-badge.unlocked { background: rgba(76,175,80,0.2); color: #4caf50; }
         #toastMsg {
             position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; color: white; padding: 12px 24px;
             border-radius: 8px; border-left: 4px solid var(--gold); z-index: 9999; transition: opacity 0.3s; pointer-events: none; font-size: 14px;
+        }
+        
+        /* Center wrapper for cinematic text */
+        .cinematic-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
         }
     </style>
 </head>
@@ -242,9 +257,11 @@
         <div class="video-overlay"></div>
     </div>
 
-    <!-- CINEMATIC TEXT OVERLAY -->
+    <!-- CINEMATIC TEXT OVERLAY - TOP CENTERED -->
     <div class="cinematic-overlay-container">
-        <div id="cinematicLine" class="cinematic-line"></div>
+        <div class="cinematic-wrapper">
+            <div id="cinematicLine" class="cinematic-line"></div>
+        </div>
         <div class="cinematic-progress">
             <div id="cinematicProgressFill" class="cinematic-progress-fill"></div>
         </div>
@@ -383,7 +400,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- RESIDENCY REQUEST -->
                     <div class="tech-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl">
                         <div class="activity-img rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-white/5">
@@ -459,12 +476,12 @@
         // ========== SOLANA CONNECTION (from pro.ts) ==========
         const connection = new solanaWeb3.Connection("https://api.devnet.solana.com", "confirmed");
         const OLVM_TOKEN_MINT = new solanaWeb3.PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
-
+        
         let wallet = null;
         let walletPubKey = null;
         let currentSolBalance = 0;
         let currentOlvmBalance = 0;
-
+        
         // Tier thresholds based on OLVM
         const TIERS = [
             { name: "Visitor", minOlvm: 0, oilLiters: 0, nights: 0, icon: "🔒" },
@@ -473,27 +490,27 @@
             { name: "Estate", minOlvm: 2500000, oilLiters: 15, nights: 21, icon: "👑" },
             { name: "Founder", minOlvm: 10000000, oilLiters: 30, nights: 45, icon: "🌲" }
         ];
-
+        
         function getCurrentTier(olvmBalance) {
             for (let i = TIERS.length - 1; i >= 0; i--) {
                 if (olvmBalance >= TIERS[i].minOlvm) return TIERS[i];
             }
             return TIERS[0];
         }
-
+        
         function getNextTier(olvmBalance) {
             for (let i = 0; i < TIERS.length; i++) {
                 if (olvmBalance < TIERS[i].minOlvm) return TIERS[i];
             }
             return null;
         }
-
+        
         function formatNumber(num) {
             if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num.toFixed(0);
         }
-
+        
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toastMsg');
             if (!toast) return;
@@ -502,11 +519,11 @@
             toast.style.borderLeftColor = isError ? '#d94d4d' : '#C5A059';
             setTimeout(() => { toast.style.opacity = '0'; }, 3000);
         }
-
+        
         async function fetchSolBalance(pubkey) {
             try { const balance = await connection.getBalance(pubkey); return balance / 1e9; } catch(e) { return 0; }
         }
-
+        
         async function fetchOlvmBalance(pubkey) {
             try {
                 const tokenAccounts = await connection.getParsedTokenAccountsByOwner(pubkey, { mint: OLVM_TOKEN_MINT });
@@ -516,16 +533,16 @@
                 return 0;
             } catch(e) { return 0; }
         }
-
+        
         async function updateUI() {
             if (walletPubKey) {
                 const short = walletPubKey.toBase58().slice(0,4) + "..." + walletPubKey.toBase58().slice(-4);
                 currentSolBalance = await fetchSolBalance(walletPubKey);
                 currentOlvmBalance = await fetchOlvmBalance(walletPubKey);
-
+                
                 const currentTier = getCurrentTier(currentOlvmBalance);
                 const nextTier = getNextTier(currentOlvmBalance);
-
+                
                 // Update displays
                 document.getElementById('shares-count-display').innerHTML = `${formatNumber(currentOlvmBalance)} <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
                 document.getElementById('credits-count-display').innerHTML = `${currentTier.nights} <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
@@ -537,7 +554,7 @@
                 document.getElementById('nav-tier-label').innerHTML = currentTier.name;
                 document.getElementById('nav-tier-label-mob').innerHTML = currentTier.name;
                 document.getElementById('mobile-tier-label').innerHTML = currentTier.name;
-
+                
                 // Progress to next tier
                 if (nextTier) {
                     const needed = nextTier.minOlvm - currentOlvmBalance;
@@ -552,13 +569,13 @@
                     document.getElementById('tier-progress-bar').style.width = "100%";
                     document.getElementById('tier-progress-text').innerHTML = "Maximum tier achieved";
                 }
-
+                
                 // Update oil delivery unlock
                 const isUnlocked = currentOlvmBalance >= 50000;
                 const oilCard = document.getElementById('oilDeliveryCard');
                 const oilNotice = document.getElementById('oilDeliveryLockNotice');
                 const allocationAmount = document.getElementById('allocationAmount');
-
+                
                 if (isUnlocked) {
                     oilCard.classList.remove('opacity-40', 'pointer-events-none');
                     oilNotice.innerHTML = '<p class="text-emerald-400 text-sm font-semibold">✓ Olive Oil Deliveries Unlocked</p><p class="text-stone-400 text-xs mt-1">Your allocation is based on your tier.</p>';
@@ -568,21 +585,27 @@
                     oilNotice.innerHTML = '<p class="text-amber-400 text-sm font-semibold">🔒 Olive Oil Deliveries unlock at 50K+ OLVM</p><p class="text-stone-400 text-xs mt-1">Connect your wallet to determine eligibility.</p>';
                     if (allocationAmount) allocationAmount.innerHTML = 'Locked';
                 }
-
+                
                 // Update tier card highlights
-                for (let i = 1; i <= 4; i++) {
-                    const card = document.getElementById(`card-tier-${i}`);
-                    if (card) {
-                        if (currentOlvmBalance >= TIERS[i]?.minOlvm) {
-                            card.style.borderColor = '#C5A059';
-                            card.style.opacity = '1';
+                const tierCards = [
+                    { card: document.getElementById('card-tier-1'), minOlvm: 50000 },
+                    { card: document.getElementById('card-tier-2'), minOlvm: 500000 },
+                    { card: document.getElementById('card-tier-3'), minOlvm: 2500000 },
+                    { card: document.getElementById('card-tier-4'), minOlvm: 10000000 }
+                ];
+                
+                tierCards.forEach(tc => {
+                    if (tc.card) {
+                        if (currentOlvmBalance >= tc.minOlvm) {
+                            tc.card.style.borderColor = '#C5A059';
+                            tc.card.style.opacity = '1';
                         } else {
-                            card.style.borderColor = 'rgba(255,255,255,0.1)';
-                            card.style.opacity = '0.6';
+                            tc.card.style.borderColor = 'rgba(255,255,255,0.1)';
+                            tc.card.style.opacity = '0.6';
                         }
                     }
-                }
-
+                });
+                
                 showToast(`Connected: ${short} | ${currentOlvmBalance.toLocaleString()} OLVM - Tier: ${currentTier.name}`);
             } else {
                 document.getElementById('shares-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
@@ -593,7 +616,7 @@
                 document.getElementById('mobile-identity-display').innerHTML = "NOT CONNECTED";
             }
         }
-
+        
         async function connectWallet() {
             if (window.solana && window.solana.isPhantom) {
                 try {
@@ -611,7 +634,7 @@
                 } catch(err) { showToast("Connection rejected", true); }
             } else { showToast("Please install Phantom wallet", true); window.open("https://phantom.app/", "_blank"); }
         }
-
+        
         async function disconnectWallet() {
             if (wallet && wallet.disconnect) await wallet.disconnect();
             wallet = null; walletPubKey = null;
@@ -625,10 +648,10 @@
             }
             showToast("Disconnected");
         }
-
+        
         const connectBtn = document.getElementById('connectWalletBtn');
         const mobileConnectBtn = document.getElementById('mobileConnectBtn');
-
+        
         if (connectBtn) {
             connectBtn.addEventListener('click', async () => {
                 if (walletPubKey) await disconnectWallet();
@@ -643,7 +666,7 @@
                 else await connectWallet();
             });
         }
-
+        
         async function restoreSession() {
             if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
                 try {
@@ -661,7 +684,7 @@
             }
             await updateUI();
         }
-
+        
         // Save Delivery Details
         document.getElementById('saveDeliveryBtn')?.addEventListener('click', () => {
             const name = document.getElementById('deliveryName')?.value;
@@ -672,7 +695,7 @@
                 showToast("✅ Delivery details saved!", false);
             } else { showToast("Please fill all fields", true); }
         });
-
+        
         // Submit Booking
         document.getElementById('submitBookingBtn')?.addEventListener('click', () => {
             const dates = document.getElementById('dateRangePicker')?.value;
@@ -682,15 +705,15 @@
                 showToast(`🏡 Residency request submitted! ${nights} nights requested. Concierge will contact you.`, false);
             } else { showToast("Please fill all required fields", true); }
         });
-
+        
         // Mobile menu
         const menuBtn = document.getElementById('mobileMenuBtn');
         const closeBtn = document.getElementById('mobileMenuCloseBtn');
         const overlay = document.getElementById('mobileMenuOverlay');
         if (menuBtn) menuBtn.addEventListener('click', () => overlay.classList.add('open'));
         if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
-
-        // Cinematic script
+        
+        // Cinematic script - MODIFIED FOR TOP POSITION
         const narrative = [
             { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 2500 },
             { text: "Rooted in nature.<br>Growing for generations.", duration: 2500 },
@@ -702,7 +725,7 @@
         const textDisplay = document.getElementById('cinematicLine');
         const progressFill = document.getElementById('cinematicProgressFill');
         const skipBtn = document.getElementById('cinematicSkipBtn');
-
+        
         function showText(index) {
             if (!isPlaying) return;
             if (index >= narrative.length) {
@@ -713,9 +736,12 @@
             }
             const item = narrative[index];
             textDisplay.innerHTML = item.text;
+            textDisplay.classList.remove('small');
             if (index >= 3) textDisplay.classList.add('small');
+            
             setTimeout(() => { if (isPlaying) textDisplay.classList.add('active'); }, 100);
             startProgress(item.duration);
+            
             currentTimeout = setTimeout(() => {
                 textDisplay.classList.remove('active');
                 textDisplay.classList.add('fade-out');
@@ -727,7 +753,7 @@
                 }, 300);
             }, item.duration);
         }
-
+        
         function startProgress(duration) {
             if (progressInterval) clearInterval(progressInterval);
             progressFill.style.width = '0%';
@@ -739,7 +765,7 @@
                 else { progressFill.style.width = `${percent}%`; }
             }, 16);
         }
-
+        
         function skipCinematic() {
             isPlaying = false;
             if (currentTimeout) clearTimeout(currentTimeout);
@@ -748,10 +774,10 @@
             if (progressFill) progressFill.parentElement.style.display = 'none';
             if (skipBtn) skipBtn.style.display = 'none';
         }
-
+        
         if (skipBtn) skipBtn.addEventListener('click', skipCinematic);
         setTimeout(() => { showText(0); }, 800);
-
+        
         // Load saved delivery data
         const savedDelivery = localStorage.getItem('olivium_delivery');
         if (savedDelivery) {
@@ -760,7 +786,7 @@
             if (document.getElementById('deliveryEmail')) document.getElementById('deliveryEmail').value = email;
             if (document.getElementById('deliveryAddress')) document.getElementById('deliveryAddress').value = address;
         }
-
+        
         restoreSession();
     </script>
 </body>
