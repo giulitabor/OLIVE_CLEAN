@@ -104,65 +104,7 @@ async function fetchWalletBalances(walletAddress) {
     }
 }
 
-async function spendOlvTokens(amount, reason) {
-    if (!currentUser || !currentUser.wallet) {
-        showToast("Connect wallet first!", true);
-        return false;
-    }
-    
-    if (walletOlvBalance < amount) {
-        showToast(`Need ${amount} OLV! You have ${walletOlvBalance}`, true);
-        return false;
-    }
-    
-    try {
-        const provider = window.phantom?.solana || window.solana;
-        if (!provider) {
-            showToast("Phantom wallet not found!", true);
-            return false;
-        }
-        
-        const fromWallet = new PublicKey(currentUser.wallet);
-        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
-        const fromTokenAccount = await getAssociatedTokenAddress(olvMint, fromWallet);
-        
-        const activeProgram = window._program;
-        const [treasuryPDA] = PublicKey.findProgramAddressSync(
-            [Buffer.from("treasury")],
-            activeProgram.programId
-        );
-        const treasuryTokenAccount = await getAssociatedTokenAddress(olvMint, treasuryPDA);
-        
-        const transaction = new Transaction().add(
-            createTransferInstruction(
-                fromTokenAccount,
-                treasuryTokenAccount,
-                fromWallet,
-                amount * Math.pow(10, 6)
-            )
-        );
-        
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = fromWallet;
-        
-        const signed = await provider.signTransaction(transaction);
-        const signature = await connection.sendRawTransaction(signed.serialize());
-        await connection.confirmTransaction(signature);
-        
-        walletOlvBalance -= amount;
-        updateWalletBalancesUI();
-        
-        showToast(`✅ Spent ${amount} OLV on ${reason}!`);
-        log(`💸 Spent ${amount} OLV on ${reason}`);
-        return true;
-        
-    } catch (err) {
-        console.error("OLV spend error:", err);
-        showToast("Transaction failed!", true);
-        return false;
-    }
-}
+atreasuryPDA
 
 function createTransferInstruction(source, destination, owner, amount) {
     return new TransactionInstruction({
