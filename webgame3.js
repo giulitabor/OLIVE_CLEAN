@@ -9,7 +9,7 @@ import { Transaction, TransactionInstruction } from "@solana/web3.js";
 import BN from 'bn.js';
 
 // OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
-const OLV_MINT_ADDRESS = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa");
+const OLV_MINT_ADDRESS = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
 let currentUser = null;
 let walletSolBalance = 0;
