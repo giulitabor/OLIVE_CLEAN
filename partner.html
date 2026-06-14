@@ -19,6 +19,7 @@
     --border: rgba(201,168,76,0.2);
     --text1: #f0e8d0;
     --text2: #a89880;
+    --font: 'Georgia', serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -77,6 +78,7 @@
     margin-bottom: 12px;
     outline: none;
   }
+  .input-field:focus { border-color: var(--gold); }
   .btn-primary {
     width: 100%;
     padding: 14px;
@@ -89,9 +91,25 @@
     cursor: pointer;
     margin-top: 8px;
   }
+  .btn-primary:hover { background: rgba(201,168,76,0.3); }
   .btn-secondary {
     background: var(--glass);
     color: var(--text2);
+  }
+  .invite-code {
+    background: rgba(78,205,196,0.1);
+    border: 1px dashed var(--teal);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .code-display {
+    font-size: 28px;
+    letter-spacing: 4px;
+    font-family: monospace;
+    color: var(--teal);
+    margin: 8px 0;
   }
   .bottom-nav {
     position: fixed;
@@ -135,618 +153,492 @@
   .header-date { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .header-row { display: flex; align-items: center; justify-content: space-between; }
   .progress-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
-  .progress-label { font-size:12px; color:var(--text2); width:100px; }
+  .progress-label { font-size:12px; color:var(--text2); width:110px; }
   .progress-track { flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
   .progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--gold), var(--gold2)); transition:width 0.5s ease; }
+  .progress-fill.teal { background:linear-gradient(90deg, var(--teal), #80e8e2); }
   .tree-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
   .tree-stat { text-align:center; background:var(--glass2); border-radius:12px; padding:8px; }
   .tree-stat-val { font-size:20px; font-weight:600; color:var(--gold2); }
+  .sync-status { font-size: 10px; color: var(--teal); text-align: right; padding: 4px 16px; }
+  .partner-toggle { display: flex; gap: 8px; margin: 12px 16px 0; }
+  .partner-btn { flex:1; padding: 10px; border-radius: 40px; border: 0.5px solid var(--border); background: var(--glass); color: var(--text2); font-size: 13px; cursor: pointer; text-align: center; }
+  .partner-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.15); color: var(--gold); }
+  .tab-row { display: flex; background: var(--navy2); margin: 8px 16px 0; border-radius: 40px; padding: 4px; }
+  .tab { flex:1; padding: 8px; font-size: 12px; color: var(--text2); text-align: center; cursor: pointer; border-radius: 32px; }
+  .tab.active { background: rgba(201,168,76,0.2); color: var(--gold); }
   .journal-entry { padding: 14px; background: var(--glass); border-left: 2px solid var(--gold); border-radius: 0 16px 16px 0; margin-bottom: 10px; }
   .journal-textarea { width:100%; background: var(--glass2); border:0.5px solid var(--border); border-radius:20px; padding:12px; color:var(--text1); font-size:14px; resize:none; height:80px; }
   .journal-btn { width:100%; padding:12px; background:linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1)); border:0.5px solid var(--gold); border-radius:40px; color:var(--gold); margin-top:8px; cursor:pointer; }
   #tree-canvas { width:100%; height:220px; display:block; }
-  .invite-box {
-    background: rgba(78,205,196,0.1);
-    border: 1px dashed var(--teal);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    margin: 16px 0;
-  }
-  .code-display {
-    font-size: 28px;
-    letter-spacing: 4px;
-    font-family: monospace;
-    color: var(--teal);
-    margin: 8px 0;
-  }
-  .waiting-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--glass2);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .exercise-card {
-    background: var(--glass2);
-    border-radius: 16px;
-    padding: 14px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .exercise-card:hover { background: var(--glass); border: 0.5px solid var(--gold); }
-  .exercise-title { font-size: 14px; font-weight: 600; color: var(--gold2); margin-bottom: 4px; }
-  .exercise-desc { font-size: 12px; color: var(--text2); }
-  .exercise-completed { text-decoration: line-through; opacity: 0.6; }
-  .exercise-badge { font-size: 10px; color: var(--teal); margin-top: 4px; display: inline-block; }
-  .session-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 16px; }
-  .session-card {
-    background: var(--glass2);
-    border-radius: 20px;
-    padding: 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 0.5px solid var(--border);
-  }
-  .session-card:hover { border-color: var(--gold); background: var(--glass); }
-  .session-icon { font-size: 32px; margin-bottom: 8px; }
-  .session-name { font-size: 13px; font-weight: 600; color: var(--gold); }
-  .dream-entry {
-    background: var(--glass);
-    border-radius: 16px;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-left: 2px solid var(--purple);
-  }
+  .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); backdrop-filter:blur(12px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-content { max-width: 340px; width: 85%; background: #11151f; border: 1px solid var(--gold); border-radius: 32px; padding: 24px; }
+  textarea { width:100%; background: #1a1f2e; border: 0.5px solid var(--border); border-radius: 20px; padding: 12px; color: white; font-family: inherit; margin: 12px 0; resize: vertical; }
+
+  /* ── INTAKE QUESTIONNAIRE ── */
+  .intake-screen{min-height:100vh;padding:0 0 40px}
+  .intake-hero{padding:40px 24px 24px;text-align:center}
+  .intake-hero-icon{font-size:52px;margin-bottom:12px}
+  .intake-hero-title{font-size:26px;font-family:var(--font);color:var(--gold2);margin-bottom:6px}
+  .intake-hero-sub{font-size:13px;color:var(--text2);line-height:1.6}
+  .intake-progress{display:flex;gap:5px;margin:0 24px 20px}
+  .intake-pip{flex:1;height:3px;border-radius:2px;background:var(--glass3,rgba(255,255,255,0.12));transition:background 0.4s}
+  .intake-pip.done{background:var(--gold)}
+  .intake-pip.current{background:var(--gold2)}
+  .intake-section-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);padding:12px 24px 8px}
+  .intake-field{padding:0 24px 14px}
+  .intake-label{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:8px;display:block;font-style:italic}
+  .intake-input{width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;outline:none;-webkit-appearance:none}
+  .intake-input:focus{border-color:var(--gold)}
+  textarea.intake-input{resize:none;height:90px;font-family:inherit;line-height:1.5}
+  .intake-scale{display:flex;gap:4px}
+  .intake-scale-dot{flex:1;height:36px;border-radius:8px;background:var(--glass);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);cursor:pointer;transition:all 0.15s;touch-action:manipulation}
+  .intake-scale-dot.sel{background:rgba(201,168,76,0.25);border-color:var(--gold);color:var(--gold);font-weight:600}
+  .intake-yesno{display:flex;gap:8px}
+  .intake-yn-btn{flex:1;padding:12px;border-radius:40px;border:0.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:14px;cursor:pointer;text-align:center;touch-action:manipulation;transition:all 0.2s}
+  .intake-yn-btn.sel{border-color:var(--gold);background:rgba(201,168,76,0.15);color:var(--gold)}
+  .intake-nav{display:flex;gap:10px;padding:20px 24px 0}
+  .intake-next{flex:1;padding:14px;border-radius:40px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15));border:0.5px solid var(--gold);color:var(--gold);font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation}
+  .intake-back{padding:14px 20px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer;touch-action:manipulation}
+  .intake-courage-note{margin:0 24px 16px;padding:12px 16px;background:rgba(155,109,255,0.08);border:0.5px solid rgba(155,109,255,0.25);border-radius:14px;font-size:12px;color:var(--text2);line-height:1.6;font-style:italic}
 </style>
 </head>
 <body>
 <canvas id="stars-canvas"></canvas>
 <div id="app">
 
-  <!-- SETUP SCREEN -->
-  <div id="setup-screen" class="screen active">
-    <div style="text-align: center; margin: 60px 0 40px;">
-      <div style="font-size: 64px; margin-bottom: 16px;">🌿</div>
-      <div style="font-size: 28px; font-family: Georgia, serif; color: var(--gold2);">Two Paths,<br>One Journey</div>
-    </div>
-    <div class="card">
+  <!-- SUPABASE SETUP SCREEN (first time) -->
+  <div id="setup-screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:40px 24px; text-align:center;">
+    <div style="font-size:60px; margin-bottom:16px;">🌿</div>
+    <div style="font-size:28px; font-family:Georgia, serif; color:var(--gold2); margin-bottom:8px;">Two Paths,<br>One Journey</div>
+    <div class="card" style="width:100%; text-align:left; margin-top:20px;">
       <div class="card-title">Connect to Supabase</div>
-      <input type="text" id="sb-url" class="input-field" placeholder="https://your-project.supabase.co">
-      <input type="text" id="sb-key" class="input-field" placeholder="your-anon-public-key">
-      <button class="btn-primary" id="connect-btn">Connect ✨</button>
+      <input type="text" id="sb-url" class="intake-input" placeholder="https://eohdfgvebqdxstwdildk.supabase.co" style="margin-bottom:8px;">
+      <input type="text" id="sb-key" class="intake-input" placeholder="sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY" style="margin-bottom:16px;">
+  <button class="btn-primary" id="connect-btn">Connect ✨</button>
+      <button class="btn-primary btn-secondary" id="demo-btn" style="margin-top:8px;">Demo Mode</button>
     </div>
+    <div style="font-size:11px; color:var(--text3); margin-top:24px;">🔒 Your data is private. Create an account to save your journey.</div>
   </div>
 
-  <!-- AUTH SCREEN -->
-  <div id="auth-screen" class="screen">
-    <div style="text-align: center; margin-bottom: 32px;">
-      <div style="font-size: 48px;">💑</div>
-      <div style="font-size: 24px; font-family: Georgia; color: var(--gold2);">Welcome</div>
+  <!-- AUTH SCREEN (login/signup after Supabase) -->
+  <div id="auth-screen" style="display:none; min-height:100vh; padding:40px 20px;">
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="font-size:48px;">💑</div>
+      <div style="font-size:24px; font-family:Georgia; color:var(--gold2); margin-top:8px;">Welcome Back</div>
+      <div style="font-size:13px; color:var(--text2); margin-top:4px;">Sign in to continue your journey</div>
     </div>
     <div class="card">
-      <div class="card-title">Sign In / Sign Up</div>
+      <div class="card-title">Authentication</div>
       <input type="email" id="auth-email" class="input-field" placeholder="Email">
-      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6)">
+      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6 characters)">
+      <div id="auth-error-msg" style="color:var(--rose);font-size:12px;min-height:18px;margin-bottom:4px"></div>
       <button class="btn-primary" id="login-btn">Sign In</button>
-      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;">Create Account</button>
-      <div id="auth-error" style="color: var(--rose); font-size: 12px; text-align: center; margin-top: 12px;"></div>
-    </div>
-  </div>
-
-  <!-- RELATIONSHIP SETUP -->
-  <div id="relation-screen" class="screen">
-    <div class="card">
-      <div class="card-title">✨ Create New Relationship</div>
-      <input type="text" id="my-name" class="input-field" placeholder="Your name">
-      <input type="text" id="partner-name" class="input-field" placeholder="Partner's name">
-      <button class="btn-primary" id="create-btn">Create Relationship</button>
-    </div>
-    <div class="card">
-      <div class="card-title">🔗 Join Existing</div>
-      <input type="text" id="join-code" class="input-field" placeholder="6-digit invite code" maxlength="6">
-      <button class="btn-primary btn-secondary" id="join-btn">Join Relationship</button>
-    </div>
-    <div id="relation-error" style="color: var(--rose); font-size: 12px; text-align: center; margin-top: 12px;"></div>
-  </div>
-
-  <!-- WAITING SCREEN -->
-  <div id="waiting-screen" class="screen">
-    <div class="card" style="text-align: center;">
-      <div style="font-size: 48px;">⏳</div>
-      <div style="font-size: 18px; color: var(--gold2);">Waiting for Partner</div>
-      <div class="invite-box">
-        <div class="code-display" id="invite-code">------</div>
-        <button class="btn-primary btn-secondary" id="copy-code">📋 Copy Code</button>
+      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;">Create New Account</button>
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Forgot password?</button>
       </div>
-      <div class="waiting-spinner" style="margin: 20px auto;"></div>
+    </div>
+    <div id="relationship-status" style="text-align:center; margin-top:16px; font-size:12px; color:var(--text3);"></div>
+  </div>
+
+
+  <!-- INTAKE QUESTIONNAIRE -->
+  <div id="intake-screen" style="display:none"><div class="intake-screen" id="intake-inner"></div></div>
+  <!-- FORGOT PASSWORD PANEL -->
+  <div id="forgot-password-screen" style="display:none;min-height:100vh;padding:40px 20px;">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:48px">🔑</div>
+      <div style="font-size:24px;font-family:Georgia;color:var(--gold2);margin-top:8px">Reset Password</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px;line-height:1.5">Enter your email and we'll send a reset link.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Password Reset</div>
+      <input type="email" id="reset-email" style="width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;margin-bottom:12px;outline:none;-webkit-appearance:none" placeholder="Your email address" autocomplete="email">
+      <div id="reset-error" style="color:var(--rose);font-size:12px;min-height:18px;margin-bottom:4px"></div>
+      <div id="reset-success" style="color:var(--teal);font-size:13px;min-height:18px;margin-bottom:8px;font-style:italic;line-height:1.5"></div>
+      <button id="reset-btn" onclick="sendPasswordReset()" style="width:100%;padding:14px;border-radius:40px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15));border:0.5px solid var(--gold);color:var(--gold);font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation">Send Reset Link ✉️</button>
+      <button onclick="showSignIn()" style="width:100%;padding:14px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:15px;cursor:pointer;margin-top:8px;touch-action:manipulation">← Back to Sign In</button>
     </div>
   </div>
 
-  <!-- QUESTIONNAIRE SCREEN -->
-  <div id="questionnaire-screen" class="screen">
-    <div id="questionnaire-container"></div>
+  <!-- RELATIONSHIP SETUP (first time user - no relationship yet) -->
+  <div id="relationship-setup-screen" style="display:none; min-height:100vh; padding:40px 20px;">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:48px;">🏠</div>
+      <div style="font-size:22px; font-family:Georgia; color:var(--gold2);">Start Your Journey</div>
+      <div style="font-size:13px; color:var(--text2); margin-top:8px;">Create a new relationship or join an existing one</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Create New Relationship</div>
+      <input type="text" id="rel-name-a" class="input-field" placeholder="Your name">
+      <input type="text" id="rel-name-b" class="input-field" placeholder="Partner's name">
+      <button class="btn-primary" id="create-relation-btn">Create Relationship ✨</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Join Existing Relationship</div>
+      <input type="text" id="join-code" class="input-field" placeholder="Enter 6-digit invite code">
+      <button class="btn-primary btn-secondary" id="join-relation-btn">Join Relationship</button>
+    </div>
   </div>
 
-  <!-- MAIN APP -->
-  <div id="main-app" class="screen">
-    <div class="sync-status" id="sync-status" style="font-size: 10px; color: var(--teal); text-align: right; padding: 8px 16px;">🟢 Connected</div>
-    
-    <!-- HOME SCREEN -->
+  <!-- WAITING FOR PARTNER SCREEN -->
+  <div id="waiting-screen" style="display:none; min-height:100vh; padding:40px 20px; text-align:center;">
+    <div style="font-size:60px; margin-bottom:20px;">⏳</div>
+    <div style="font-size:20px; font-family:Georgia; color:var(--gold2);">Waiting for Partner</div>
+    <div style="font-size:14px; color:var(--text2); margin:16px 0;">Share this code with your partner:</div>
+    <div class="invite-code">
+      <div style="font-size:12px; color:var(--teal);">Your Invite Code</div>
+      <div class="code-display" id="invite-code-display">------</div>
+      <button class="btn-primary btn-secondary" id="copy-code-btn" style="margin-top:8px; padding:8px;">📋 Copy Code</button>
+    </div>
+    <div style="font-size:13px; color:var(--text3);">Once your partner joins, your journey begins together ✨</div>
+  </div>
+
+  <!-- MAIN APP (after relationship is established) -->
+  <div id="main-app" style="display:none;">
+    <div class="sync-status" id="sync-status">🟢 Live Synced</div>
+
     <div id="screen-home" class="screen active">
       <div class="header-strip">
         <div class="header-date" id="hdr-date"></div>
-        <div class="header-row">
-          <div class="header-moon" id="hdr-moon">🌙 Loading...</div>
-          <div class="header-together" id="hdr-together">❤️ Loading...</div>
-        </div>
+        <div class="header-row"><div class="header-moon">🌔 Waxing Gibbous</div><div class="header-together" id="hdr-together">❤️ Growing Together</div></div>
       </div>
-      <div class="card">
-        <div class="card-title">Relationship Tree</div>
-        <canvas id="tree-canvas"></canvas>
-        <div class="tree-stats">
-          <div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div>Growth</div></div>
-          <div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div>Harmony</div></div>
-          <div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div>Vision</div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Relationship Weather</div>
-        <div id="weather-progress"></div>
-      </div>
+      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">78%</div><div class="tree-stat-lbl">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">76%</div><div class="tree-stat-lbl">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">82%</div><div class="tree-stat-lbl">Vision</div></div></div></div>
+      <div class="card"><div class="card-title">Relationship Weather</div><div id="weather-progress"></div></div>
     </div>
 
-    <!-- OUR JOURNEY SCREEN -->
     <div id="screen-couple" class="screen">
-      <div class="header-strip">
-        <div class="header-date">Our Journey</div>
-        <div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div>
-      </div>
-      <div class="session-grid">
-        <div class="session-card" onclick="startJointSession()">
-          <div class="session-icon">🤝</div>
-          <div class="session-name">Joint Session</div>
-          <div style="font-size: 10px; color: var(--text2);">Both see everything</div>
-        </div>
-        <div class="session-card" onclick="openPrivateModal()">
-          <div class="session-icon">🔒</div>
-          <div class="session-name">Private Session</div>
-          <div style="font-size: 10px; color: var(--text2);">Your private space</div>
-        </div>
-        <div class="session-card" onclick="showRelationshipMap()">
-          <div class="session-icon">🗺️</div>
-          <div class="session-name">Relationship Map</div>
-          <div style="font-size: 10px; color: var(--text2);">See your patterns</div>
-        </div>
-        <div class="session-card" onclick="showFutureVision()">
-          <div class="session-icon">🌅</div>
-          <div class="session-name">Future Vision</div>
-          <div style="font-size: 10px; color: var(--text2);">10 year plan</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Baby Readiness</div>
-        <div id="baby-readiness-stats"></div>
-        <div style="text-align:center;margin-top:16px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">0%</div></div>
-      </div>
+      <div class="header-strip"><div class="header-date">Our Journey</div><div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div></div>
+      <div class="card"><div class="card-title">Baby Readiness</div><div id="baby-readiness"></div><div style="text-align:center;margin-top:16px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">75%</div></div></div>
+      <div class="session-type-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 16px;"><div class="session-type" onclick="switchScreen('journal',document.querySelector('[data-nav=journal]'))"><div class="st-icon">🤝</div><div class="st-name">Joint Session</div></div><div class="session-type" onclick="openPrivateModal()"><div class="st-icon">🔒</div><div class="st-name">Private Session</div><div class="st-desc">Only you see this</div></div><div class="session-type" onclick="switchScreen('journal',document.querySelector('[data-nav=journal]'))"><div class="st-icon">📖</div><div class="st-name">Shared Journal</div><div class="st-desc">Write together</div></div><div class="session-type" onclick="switchScreen('growth',document.querySelector('[data-nav=growth]'))"><div class="st-icon">🌸</div><div class="st-name">Growth Work</div><div class="st-desc">Practices & tasks</div></div><div class="session-type" onclick="openShadowWork()"><div class="st-icon">🌑</div><div class="st-name">Shadow Work</div><div class="st-desc">Fears & truth</div></div></div>
     </div>
 
-    <!-- MY GROWTH SCREEN -->
     <div id="screen-growth" class="screen">
-      <div class="header-strip">
-        <div class="header-date">My Growth</div>
-        <div class="header-row"><div id="user-xp" style="color: var(--gold);">✨ 0 XP</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">🌱 Daily Practices</div>
-        <div id="exercises-list"></div>
-        <div style="margin-top: 12px; text-align: center; font-size: 11px; color: var(--text3);">Complete practices to earn XP</div>
-      </div>
-      <div class="card">
-        <div class="card-title">📈 My Growth Metrics</div>
-        <div id="growth-metrics"></div>
-      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; padding:16px; background:var(--glass); margin:12px 16px; border-radius:32px;"><div style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;" id="growth-avatar">🌸</div><div><div id="growth-name" style="font-weight:600;">Loading</div><div style="font-size:11px;color:var(--text2);">Your journey</div></div><div id="growth-xp" style="margin-left:auto;background:rgba(201,168,76,0.15);border-radius:20px;padding:4px 12px;">✨ 0 XP</div></div>
+      <div class="tab-row" id="growth-tab-row" style="overflow-x:auto;scrollbar-width:none"><div class="tab active" onclick="switchGrowthTab('radar',this)">Growth</div><div class="tab" onclick="switchGrowthTab('practices',this)">Daily</div><div class="tab" onclick="switchGrowthTab('couples',this)">Together</div><div class="tab" onclick="switchGrowthTab('wheel',this)">Soul</div><div class="tab" onclick="switchGrowthTab('private',this)">Private</div></div>
+      <div id="tab-radar"><div class="card"><div id="growth-bars"></div></div></div>
+<div id="tab-practices" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase">Individual Practices</div><div id="practices-list" style="padding:0 16px"></div></div><div id="tab-couples" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase">Together Exercises</div><div id="couples-list" style="padding:0 16px"></div></div><div id="tab-wheel" style="display:none;"><div class="card"><div class="card-title">Soul Journey Wheel</div><canvas id="wheel-canvas" width="180" height="180" style="display:block;margin:0 auto;max-width:100%"></canvas><div id="wheel-labels" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"></div></div></div><div id="tab-private" style="display:none;"><div style="padding:12px 16px 0"><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">🔒 Only you can see these. Saved to your account.</div><div id="private-note-error" style="display:none;color:var(--rose);font-size:12px;padding:8px 12px;background:rgba(232,112,112,0.1);border:0.5px solid rgba(232,112,112,0.3);border-radius:10px;margin-bottom:8px;line-height:1.5"></div><textarea class="journal-textarea" id="private-input" placeholder="Your private truth…" style="margin-bottom:8px"></textarea><label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;margin-bottom:12px"><input type="checkbox" id="private-share-toggle" style="accent-color:var(--gold)"> 🌟 Share with partner</label><button onclick="savePrivateNote()" style="width:100%;padding:12px;border-radius:40px;background:rgba(78,205,196,0.15);border:0.5px solid var(--teal);color:var(--teal);cursor:pointer;font-size:14px">Save Private Note 🔒</button></div><div id="private-entries" style="padding:0 16px;margin-top:12px"></div></div>
     </div>
 
-    <!-- SHARED JOURNAL SCREEN -->
     <div id="screen-journal" class="screen">
       <div class="header-strip"><div class="header-date">Shared Journal</div></div>
-      <div class="journal-input-area" style="margin:12px 16px;">
-        <textarea class="journal-textarea" id="journal-input" placeholder="Write something for your partner..."></textarea>
-        <button class="journal-btn" id="post-journal">Post to Journal ✨</button>
-      </div>
+      <div class="journal-input-area" style="margin:12px 16px;"><textarea class="journal-textarea" id="journal-input" placeholder="Write freely... Partner sees instantly ✨"></textarea><button class="journal-btn" onclick="addJournalEntry()">Add Entry ✦</button></div>
       <div id="journal-entries" style="padding:0 16px;"></div>
     </div>
 
-    <!-- PRIVATE NOTES SCREEN -->
-    <div id="screen-private" class="screen">
-      <div class="header-strip"><div class="header-date">My Private Space</div></div>
-      <div class="card">
-        <div class="card-title">🔒 Private Notes</div>
-        <textarea id="private-input" class="journal-textarea" placeholder="Only you can see this..." rows="4"></textarea>
-        <button class="journal-btn" id="save-private">Save Private Note</button>
-        <div id="private-entries" style="margin-top: 16px;"></div>
-      </div>
-    </div>
-
-    <!-- COSMIC SCREEN -->
     <div id="screen-cosmic" class="screen">
-      <div class="header-strip"><div class="header-date">Cosmic Guidance</div></div>
-      <div class="card">
-        <div class="card-title">🌙 Moon Wisdom</div>
-        <div id="moon-content" style="text-align:center; padding:20px;"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">✨ Today's Insight</div>
-        <div id="horoscope-content" style="padding:20px; font-style: italic; line-height: 1.6;"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">📖 Dream Journal</div>
-        <textarea id="dream-input" class="journal-textarea" placeholder="Record your dreams here..." rows="3"></textarea>
-        <button class="journal-btn" id="save-dream">Save Dream ✨</button>
-        <div id="dream-entries" style="margin-top: 16px;"></div>
-      </div>
-    </div>
+<div class="header-strip"><div class="header-date">Cosmic Context</div><div class="header-row"><div style="font-size:12px;color:var(--text2);font-style:italic">The universe holds you both</div></div></div><div class="card"><div class="card-title">Moon Wisdom</div><div style="background:linear-gradient(135deg,rgba(15,21,37,0.9),rgba(20,28,48,0.9));border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center"><div style="font-size:48px" id="moon-big-icon">🌔</div><div style="margin-top:8px;color:var(--gold2);font-family:var(--font);font-size:16px" id="moon-big-phase">Moon</div><div style="font-size:13px;color:var(--text2);margin-top:6px" id="moon-release-txt"></div><div style="font-size:13px;color:var(--teal);margin-top:4px;font-style:italic" id="moon-invite-txt"></div><div style="font-size:12px;color:var(--text2);margin-top:10px;padding:8px;background:rgba(255,255,255,0.04);border-radius:10px" id="moon-energy-txt"></div></div></div><div class="card"><div class="card-title">Daily Horoscope</div><div id="horoscope-content"></div></div><div class="card"><div class="card-title">Dream Journal ✨</div><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">Dreams carry messages. Record them before they fade.</div><input type="text" id="dream-title" style="width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;margin-bottom:12px;outline:none" placeholder="Dream title…"><textarea class="journal-textarea" id="dream-input" placeholder="What did you dream? What stayed with you?" style="height:90px;margin-bottom:8px"></textarea><div style="margin:0 0 12px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">Tag this dream:</div><div id="dream-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div></div><button id="dream-submit-btn" onclick="saveDreamEntry()" style="width:100%;padding:12px;border-radius:40px;background:rgba(155,109,255,0.15);border:0.5px solid var(--purple);color:var(--purple);cursor:pointer;font-size:14px">Record Dream 🌙</button></div><div style="font-size:11px;color:var(--text3);padding:8px 16px;letter-spacing:1px;text-transform:uppercase">Dream Archive</div><div id="dream-entries" style="padding:0 16px 20px"></div></div>
   </div>
 
   <nav class="bottom-nav" id="bottom-nav" style="display:none;">
-    <button class="nav-item" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span>Our Journey</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span>My Growth</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
-    <button class="nav-item" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmic</span><div class="nav-dot"></div></button>
+    <button class="nav-item active" data-nav="home" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="couple" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span>Our Journey</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="growth" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span>My Growth</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="journal" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="cosmic" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmos</span><div class="nav-dot"></div></button>
   </nav>
 </div>
 
-<!-- Private Session Modal -->
-<div id="private-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center;">
+<!-- Modal -->
+<div id="modal-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:#11151f; border-radius:32px; max-width:340px; width:85%; padding:24px; border:1px solid var(--gold);">
-    <h3 style="color:var(--gold); margin-bottom:12px;">Private Reflection</h3>
-    <textarea id="private-reflection" rows="4" placeholder="Your private thoughts..." style="width:100%; background:#1a1f2e; border:0.5px solid var(--border); border-radius:16px; padding:12px; color:white;"></textarea>
-    <button class="btn-primary" onclick="savePrivateReflection()">Save</button>
-    <button class="btn-primary btn-secondary" onclick="closePrivateModal()" style="margin-top:8px;">Cancel</button>
+    <h3 style="color:var(--gold); margin-bottom:12px;">Private Session</h3>
+    <textarea id="modal-answer" rows="4" placeholder="Your truth..." style="width:100%; background:#1a1f2e; border:0.5px solid var(--border); border-radius:16px; padding:12px; color:white;"></textarea>
+    <label style="display:flex; gap:8px; margin:12px 0;"><input type="checkbox" id="modal-share"> 🌟 Share with partner</label>
+    <button class="btn-primary" onclick="submitPrivateAnswer()">Save & Grow</button>
+    <button class="btn-primary btn-secondary" onclick="closeModal()" style="margin-top:8px;">Cancel</button>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==================== GLOBALS ====================
-//let supabase = null;
+let sbClient = null;
 let currentUser = null;
-let currentRelationship = null;
-let currentPartnerRole = null;
-let questionnaireStep = 0;
-let relationshipData = null;
-let journalEntries = [];
-let privateNotes = [];
-let dreamEntries = [];
-let userXP = 0;
-let completedExercises = [];
+let currentRelationshipId = null;
+let currentPartner = 'A';
+let journalPartner = 'A';
+let liveData = {};
+let realtimeChannels = [];
 
-// Daily practices/exercises
-const dailyExercises = [
-  { id: 1, title: "💨 5-Minute Breath Together", desc: "Sit facing each other. Breathe in sync for 5 minutes.", xp: 10 },
-  { id: 2, title: "🤝 Hold Hands in Silence", desc: "Hold hands for 3 minutes without speaking.", xp: 10 },
-  { id: 3, title: "👁️ Eye Gazing", desc: "Look into each other's eyes for 2 minutes without looking away.", xp: 15 },
-  { id: 4, title: "💬 One Deep Question", desc: "Ask: 'What's something you've never told me?'", xp: 15 },
-  { id: 5, title: "🙏 Gratitude Share", desc: "Each share 3 things you're grateful for about your partner.", xp: 10 },
-  { id: 6, title: "🎵 One Song Together", desc: "Listen to a meaningful song together without distractions.", xp: 10 },
-  { id: 7, title: "📝 Love Letter", desc: "Write a short love note and leave it for your partner.", xp: 20 }
-];
+function safeSubscribe(channel) {
+  realtimeChannels.push(channel);
+  return channel;
+}
 
-// Questionnaire steps
-const steps = [
-  { id: 'welcome', title: 'Welcome' },
-  { id: 'basic', title: 'About You' },
-  { id: 'origin', title: 'Your Origin Story' },
-  { id: 'love', title: 'Love Language' },
-  { id: 'ratings', title: 'Daily Life' },
-  { id: 'conflict', title: 'Conflict' },
-  { id: 'child', title: 'The Child Question' },
-  { id: 'vision', title: '10 Year Vision' },
-  { id: 'soul', title: 'Soul & Mystery' },
-  { id: 'shadow', title: 'Shadow Work' },
-  { id: 'final', title: 'Your Truth' }
-];
-
-// ==================== SUPABASE SETUP ====================
-document.getElementById('connect-btn').onclick = async () => {
-  const url = "https://eohdfgvebqdxstwdildk.supabase.co" ;
-  const key = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
+// ==================== INITIALIZATION ====================
+document.getElementById('connect-btn').onclick = () => {
+  const url = "https://eohdfgvebqdxstwdildk.supabase.co"
+  const key = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY"
   if (!url || !key) { alert('Enter Supabase URL and Anon Key'); return; }
-  supabase = window.supabase.createClient(url, key);
-  showScreen('auth');
+  sbClient = window.supabase.createClient(url, key);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'block';
+};
+
+document.getElementById('demo-btn').onclick = () => {
+  startDemoMode();
+};
+
+document.getElementById('login-btn').onclick = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error-msg');
+  if (errEl) errEl.textContent = '';
+  if (!email || !password) {
+    if (errEl) errEl.textContent = 'Enter your email and password.';
+    return;
+  }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Signing in…';
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.innerHTML = 'Sign In';
+  if (error) {
+    var msg = error.message || 'Sign in failed.';
+    if (msg.toLowerCase().includes('invalid login') || msg.toLowerCase().includes('invalid credentials') || error.status === 400)
+      msg = 'Incorrect email or password. Try again, or use "Forgot password?" below.';
+    if (msg.toLowerCase().includes('email not confirmed'))
+      msg = 'Please confirm your email address first — check your inbox.';
+    if (errEl) errEl.textContent = msg;
+    return;
+  }
+  currentUser = data.user;
+  setTimeout(loadUserRelationship, 0);
 };
 
 document.getElementById('signup-btn').onclick = async () => {
   const email = document.getElementById('auth-email').value;
   const password = document.getElementById('auth-password').value;
-  if (!email || !password || password.length < 6) {
-    document.getElementById('auth-error').innerText = 'Email and password (min 6 chars) required';
-    return;
-  }
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) { document.getElementById('auth-error').innerText = error.message; return; }
+  if (!email || !password || password.length < 6) { alert('Password must be at least 6 characters'); return; }
+  const { data, error } = await sbClient.auth.signUp({ email, password });
+  if (error) { alert('Signup error: ' + error.message); return; }
   currentUser = data.user;
-  document.getElementById('auth-error').innerText = '✅ Account created! Now create a relationship.';
-  showScreen('relation');
+  document.getElementById('relationship-status').innerHTML = '✅ Account created! Now create your relationship.';
+  showRelationshipSetup();
 };
 
-document.getElementById('login-btn').onclick = async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password) { document.getElementById('auth-error').innerText = 'Enter email and password'; return; }
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) { document.getElementById('auth-error').innerText = error.message; return; }
-  currentUser = data.user;
-  await loadUserRelationship();
-};
+document.getElementById('create-relation-btn').onclick = async () => {
+  const nameA = document.getElementById('rel-name-a').value;
+  const nameB = document.getElementById('rel-name-b').value;
+  if (!nameA || !nameB) { alert('Enter both names'); return; }
 
-document.getElementById('create-btn').onclick = async () => {
-  const myName = document.getElementById('my-name').value;
-  const partnerName = document.getElementById('partner-name').value;
-  if (!myName || !partnerName) { document.getElementById('relation-error').innerText = 'Enter both names'; return; }
   const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const relationId = 'rel_' + Date.now();
-  
-  const { error } = await supabase.from('relationships').insert([{
-    id: relationId, 
+
+  const relationData = {
+    id: relationId,
     invite_code: inviteCode,
-    partner_a_id: currentUser.id, 
-    partner_a_name: myName, 
-    partner_a_completed: false,
-    partner_b_name: partnerName, 
-    partner_b_id: null, 
-    partner_b_completed: false, 
+    partner_a_id: currentUser.id,
+    partner_a_name: nameA,
+    partner_b_id: null,
+    partner_b_name: nameB,
     partner_b_joined: false,
-    couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80 },
-    journal: [], 
+    couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 },
+    baby_readiness: 70,
+    journal: [],
     created_at: new Date().toISOString()
-  }]);
-  
-  if (error) { document.getElementById('relation-error').innerText = error.message; return; }
-  currentRelationship = { id: relationId, invite_code: inviteCode };
-  document.getElementById('invite-code').innerText = inviteCode;
-  showScreen('waiting');
-  
-  supabase.channel(`rel_${relationId}`).on('postgres_changes', 
-    { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relationId}` }, 
-    (payload) => { if (payload.new.partner_b_joined) { currentRelationship = payload.new; startQuestionnaire('a'); } }).subscribe();
+  };
+
+  const { error } = await sbClient.from('relationships').insert([relationData]);
+  if (error) { alert('Error: ' + error.message); return; }
+
+  currentRelationshipId = relationId;
+  document.getElementById('invite-code-display').innerText = inviteCode;
+  showWaitingScreen();
+
+  // Listen for partner joining
+  sbClient.channel(`relation_${relationId}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relationId}` }, (payload) => {
+      if (payload.new.partner_b_joined) {
+        startMainApp(payload.new);
+      }
+    })
+    .subscribe();
 };
 
-document.getElementById('join-btn').onclick = async () => {
+document.getElementById('join-relation-btn').onclick = async () => {
   const code = document.getElementById('join-code').value.toUpperCase();
-  const { data, error } = await supabase.from('relationships').select('*').eq('invite_code', code).single();
-  if (error || !data) { document.getElementById('relation-error').innerText = 'Invalid invite code'; return; }
-  
-  const { error: updateError } = await supabase.from('relationships')
-    .update({ partner_b_id: currentUser.id, partner_b_joined: true })
-    .eq('id', data.id);
-  if (updateError) { document.getElementById('relation-error').innerText = updateError.message; return; }
-  
-  currentRelationship = { ...data, partner_b_id: currentUser.id, partner_b_joined: true };
-  startQuestionnaire('b');
+  const { data, error } = await sbClient.from('relationships').select('*').eq('invite_code', code).single();
+  if (error || !data) { alert('Invalid invite code'); return; }
+
+  const updateData = {
+    partner_b_id: currentUser.id,
+    partner_b_joined: true
+  };
+  const { error: updateError } = await sbClient.from('relationships').update(updateData).eq('id', data.id);
+  if (updateError) { alert('Error joining: ' + updateError.message); return; }
+
+  currentRelationshipId = data.id;
+  startMainApp({ ...data, ...updateData });
 };
 
-document.getElementById('copy-code').onclick = () => { 
-  navigator.clipboard.writeText(document.getElementById('invite-code').innerText); 
-  alert('Code copied!'); 
+document.getElementById('copy-code-btn').onclick = () => {
+  const code = document.getElementById('invite-code-display').innerText;
+  navigator.clipboard.writeText(code);
+  alert('Code copied! Share with your partner.');
 };
 
+// ==================== CORE FUNCTIONS ====================
 async function loadUserRelationship() {
-  const { data, error } = await supabase.from('relationships')
+  const { data, error } = await sbClient.from('relationships')
     .select('*')
     .or(`partner_a_id.eq.${currentUser.id},partner_b_id.eq.${currentUser.id}`);
-  
-  if (error || !data || data.length === 0) { showScreen('relation'); return; }
-  
-  currentRelationship = data[0];
-  if (currentRelationship.partner_a_id === currentUser.id) {
-    currentPartnerRole = 'a';
-    if (currentRelationship.partner_a_completed) loadMainApp();
-    else startQuestionnaire('a');
+
+  if (error) { console.error(error); return; }
+
+  if (!data || data.length === 0) {
+    showRelationshipSetup();
   } else {
-    currentPartnerRole = 'b';
-    if (currentRelationship.partner_b_completed) loadMainApp();
-    else startQuestionnaire('b');
-  }
-}
+    const relation = data[0];
+    currentRelationshipId = relation.id;
 
-// ==================== QUESTIONNAIRE ====================
-function startQuestionnaire(role) {
-  currentPartnerRole = role;
-  questionnaireStep = 0;
-  showScreen('questionnaire');
-  renderQuestionnaire();
-}
+    if (relation.partner_b_joined || relation.partner_b_id) {
+      startMainApp(relation);
+    } else if (relation.partner_a_id === currentUser.id && !relation.partner_b_joined) {
+      document.getElementById('invite-code-display').innerText = relation.invite_code;
+      showWaitingScreen();
 
-function renderQuestionnaire() {
-  const container = document.getElementById('questionnaire-container');
-  if (!container) return;
-  const step = steps[questionnaireStep];
-  const stepNum = questionnaireStep + 1;
-  container.innerHTML = `<div class="card"><div style="text-align:center;margin-bottom:20px;"><div style="font-size:48px;">${currentPartnerRole === 'a' ? '🌸' : '🌿'}</div><div style="font-size:20px;color:var(--gold2);">Step ${stepNum} of ${steps.length}: ${step.title}</div><div class="progress-track" style="margin-top:12px;"><div class="progress-fill" style="width:${(stepNum/steps.length)*100}%"></div></div></div><div id="step-content"></div></div>`;
-  renderStepContent();
-}
-
-function renderStepContent() {
-  const stepContent = document.getElementById('step-content');
-  if (!stepContent) return;
-  const step = steps[questionnaireStep];
-  const answers = (currentPartnerRole === 'a' ? (currentRelationship?.partner_a_answers || {}) : (currentRelationship?.partner_b_answers || {}))[step.id] || {};
-  
-  const templates = {
-    welcome: `<p style="color:var(--text2);line-height:1.6;">Welcome! This questionnaire builds your relationship map.</p><button class="btn-primary" onclick="saveQuestionnaireStep('welcome')">Begin →</button>`,
-    basic: `<input type="text" id="basic_name" class="input-field" placeholder="Your name" value="${answers.name || ''}"><input type="number" id="basic_age" class="input-field" placeholder="Age" value="${answers.age || ''}"><input type="text" id="basic_nationality" class="input-field" placeholder="Nationality" value="${answers.nationality || ''}"><button class="btn-primary" onclick="saveQuestionnaireStep('basic')">Continue →</button>`,
-    origin: `<textarea id="origin_what" rows="3" class="input-field" placeholder="The moment you knew this was different...">${answers.what || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('origin')">Continue →</button>`,
-    love: `<textarea id="love_most" rows="2" class="input-field" placeholder="I feel most loved when...">${answers.most || ''}</textarea><textarea id="love_admire" rows="2" class="input-field" placeholder="I admire most about my partner...">${answers.admire || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('love')">Continue →</button>`,
-    ratings: `${renderRatingSlider('Trust', answers.trust || 7)}${renderRatingSlider('Intimacy', answers.intimacy || 6)}${renderRatingSlider('Communication', answers.communication || 7)}<button class="btn-primary" onclick="saveQuestionnaireStep('ratings')">Continue →</button>`,
-    conflict: `<textarea id="conflict_about" rows="2" class="input-field" placeholder="Last disagreement was about...">${answers.about || ''}</textarea><textarea id="conflict_needed" rows="2" class="input-field" placeholder="What I needed...">${answers.needed || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('conflict')">Continue →</button>`,
-    child: `<textarea id="child_why" rows="2" class="input-field" placeholder="Why I want a child...">${answers.why || ''}</textarea><textarea id="child_fears" rows="2" class="input-field" placeholder="My fears about parenthood...">${answers.fears || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('child')">Continue →</button>`,
-    vision: `<textarea id="vision_10year" rows="3" class="input-field" placeholder="In 10 years, we are...">${answers.vision || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('vision')">Continue →</button>`,
-    soul: `<textarea id="soul_belief" rows="2" class="input-field" placeholder="Do you believe in soulmates?">${answers.belief || ''}</textarea><textarea id="soul_lesson" rows="2" class="input-field" placeholder="What is your partner here to teach you?">${answers.lesson || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('soul')">Continue →</button>`,
-    shadow: `<textarea id="shadow_judge" rows="2" class="input-field" placeholder="Something I secretly judge...">${answers.judge || ''}</textarea><textarea id="shadow_fear" rows="2" class="input-field" placeholder="A fear I rarely admit...">${answers.fear || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('shadow')">Continue →</button>`,
-    final: `<textarea id="final_truth" rows="4" class="input-field" placeholder="If my partner could understand one thing...">${answers.truth || ''}</textarea><button class="btn-primary" onclick="saveQuestionnaireStep('final')">Complete →</button>`
-  };
-  stepContent.innerHTML = templates[step.id] || templates.welcome;
-}
-
-function renderRatingSlider(label, value) {
-  return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">${label}</span><span id="${label}_val" style="color:var(--gold);">${value}</span></div><input type="range" id="${label}" min="1" max="10" value="${value}" style="width:100%;" oninput="document.getElementById('${label}_val').innerText=this.value"></div>`;
-}
-
-async function saveQuestionnaireStep(stepId) {
-  const answers = {};
-  const fieldMaps = {
-    basic: ['basic_name','basic_age','basic_nationality'],
-    origin: ['origin_what'],
-    love: ['love_most','love_admire'],
-    ratings: ['Trust','Intimacy','Communication'],
-    conflict: ['conflict_about','conflict_needed'],
-    child: ['child_why','child_fears'],
-    vision: ['vision_10year'],
-    soul: ['soul_belief','soul_lesson'],
-    shadow: ['shadow_judge','shadow_fear'],
-    final: ['final_truth']
-  };
-  
-  for (let f of (fieldMaps[stepId] || [])) { 
-    let el = document.getElementById(f); 
-    if (el) { 
-      if (el.type === 'range') answers[f.toLowerCase()] = parseInt(el.value);
-      else answers[f.replace(/_/g, '')] = el.value;
+      sbClient.channel(`relation_${relation.id}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${relation.id}` }, (payload) => {
+          if (payload.new.partner_b_joined) startMainApp(payload.new);
+        })
+        .subscribe();
+    } else {
+      startMainApp(relation);
     }
   }
-  
-  const currentAnswers = currentPartnerRole === 'a' ? (currentRelationship?.partner_a_answers || {}) : (currentRelationship?.partner_b_answers || {});
-  currentAnswers[stepId] = answers;
-  
-  const updateField = currentPartnerRole === 'a' ? 'partner_a_answers' : 'partner_b_answers';
-  await supabase.from('relationships').update({ [updateField]: currentAnswers }).eq('id', currentRelationship.id);
-  
-  if (stepId === 'final') {
-    const completedField = currentPartnerRole === 'a' ? 'partner_a_completed' : 'partner_b_completed';
-    await supabase.from('relationships').update({ [completedField]: true }).eq('id', currentRelationship.id);
-    const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
-    if (data.partner_a_completed && data.partner_b_completed) loadMainApp();
-    else { document.getElementById('questionnaire-container').innerHTML = `<div class="card" style="text-align:center;"><div style="font-size:48px;">⏳</div><div style="font-size:18px;color:var(--gold2);">Waiting for Partner</div><div class="waiting-spinner" style="margin:20px auto;"></div></div>`; }
-  } else {
-    questionnaireStep++;
-    renderQuestionnaire();
-  }
 }
 
-// ==================== MAIN APP ====================
-async function loadMainApp() {
-  const { data } = await supabase.from('relationships').select('*').eq('id', currentRelationship.id).single();
-  relationshipData = data;
-  journalEntries = data.journal || [];
-  
-  const { data: privateData } = await supabase.from('private_notes').select('*').eq('user_id', currentUser.id);
-  privateNotes = privateData || [];
-  
-  const { data: dreamData } = await supabase.from('dream_journal').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-  dreamEntries = dreamData || [];
-  
-  const { data: xpData } = await supabase.from('user_xp').select('xp, completed_exercises').eq('user_id', currentUser.id).single();
-  if (xpData) { userXP = xpData.xp; completedExercises = xpData.completed_exercises || []; }
-  
-  showScreen('main');
+function showRelationshipSetup() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('relationship-setup-screen').style.display = 'block';
+}
+
+function showWaitingScreen() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('relationship-setup-screen').style.display = 'none';
+  document.getElementById('waiting-screen').style.display = 'block';
+}
+
+async function startMainApp(relation) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('relationship-setup-screen').style.display = 'none';
+  document.getElementById('waiting-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
   document.getElementById('bottom-nav').style.display = 'flex';
-  document.getElementById('hdr-together').innerHTML = `❤️ ${data.partner_a_name} & ${data.partner_b_name}`;
-  document.getElementById('couple-names').innerHTML = `${data.partner_a_name} & ${data.partner_b_name}`;
-  updateUI();
-  startRealtime();
+
+  liveData = relation;
+  document.getElementById('couple-names').innerHTML = `${relation.partner_a_name} & ${relation.partner_b_name || '...'}`;
+
+  setupRealtimeForRelationship();
+  updateAllUI();
   startAnimations();
-  loadMoonPhase();
 }
 
-function updateUI() {
-  const stats = relationshipData?.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80 };
-  const growth = Math.floor((stats.trust + stats.communication + stats.vision) / 3);
-  document.getElementById('stat-growth').innerHTML = growth + '%';
-  document.getElementById('stat-harmony').innerHTML = stats.trust + '%';
-  document.getElementById('stat-vision').innerHTML = stats.vision + '%';
-  document.getElementById('user-xp').innerHTML = `✨ ${userXP} XP`;
-  
-  const weatherEl = document.getElementById('weather-progress');
-  if (weatherEl) {
-    let weatherIcon = stats.trust > 80 && stats.communication > 80 ? '☀️' : stats.communication < 60 ? '⛈️' : stats.intimacy < 60 ? '☁️' : '🌤️';
-    weatherEl.innerHTML = `<div style="text-align:center;margin-bottom:16px;"><div style="font-size:32px;">${weatherIcon}</div></div>${Object.entries(stats).map(([k,v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('')}`;
-  }
-  
-  const babyReadiness = Math.floor((stats.trust + stats.intimacy + 50) / 2);
-  document.getElementById('baby-pct').innerHTML = babyReadiness + '%';
-  document.getElementById('baby-readiness-stats').innerHTML = `
-    <div class="progress-row"><div class="progress-label">Emotional</div><div class="progress-track"><div class="progress-fill" style="width:${stats.trust}%"></div></div><div>${stats.trust}%</div></div>
-    <div class="progress-row"><div class="progress-label">Partnership</div><div class="progress-track"><div class="progress-fill" style="width:${stats.intimacy}%"></div></div><div>${stats.intimacy}%</div></div>`;
-  
-  renderJournal();
-  renderPrivateNotes();
-  renderDreams();
-  renderExercises();
-  renderGrowthMetrics();
+function startDemoMode() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('bottom-nav').style.display = 'flex';
+  liveData = {
+    partner_a_name: 'Ana',
+    partner_b_name: 'Marco',
+    couple_stats: { trust: 78, intimacy: 62, communication: 74, vision: 82, friendship: 85 },
+    baby_readiness: 75,
+    journal: [{ author: 'Ana', date: 'Just now', text: 'Welcome to your journey! ✨' }]
+  };
+  updateAllUI();
+  startAnimations();
+}
+
+function setupRealtimeForRelationship() {
+  if (!sbClient) return;
+
+  // clean old subscriptions first
+  realtimeChannels.forEach(ch => sbClient.removeChannel(ch));
+  realtimeChannels = [];
+
+  const relChannel = safeSubscribe(
+    sbClient.channel(`rel_${currentRelationshipId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'relationships',
+        filter: `id=eq.${currentRelationshipId}`
+      }, (payload) => {
+        if (payload?.new) {
+          liveData = payload.new;
+          updateAllUI();
+        }
+      })
+      .subscribe()
+  );
+
+  const msgChannel = safeSubscribe(
+    sbClient.channel(`messages_${currentRelationshipId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'messages',
+        filter: `relationship_id=eq.${currentRelationshipId}`
+      }, () => {
+        renderJournal();
+      })
+      .subscribe()
+  );
+}
+
+async function pushUpdate(updates) {
+  if (!sbClient || !currentRelationshipId || !currentUser) return;
+  await safeRelUpdate(updates);
+}
+
+async function safeRelUpdate(updates) {
+  if (!sbClient || !currentRelationshipId || !currentUser) return false;
+  try {
+    var res = await sbClient.from('relationships').update(updates)
+      .eq('id', currentRelationshipId)
+      .or('partner_a_id.eq.' + currentUser.id + ',partner_b_id.eq.' + currentUser.id);
+    if (res.error) {
+      var code = res.error.code || '', msg = res.error.message || '';
+      if (code === '42703' || code === '42P01' || msg.includes('column') || msg.includes('does not exist')) {
+        console.warn('DB column missing:', msg);
+        if (typeof showDbSetupBanner === 'function') showDbSetupBanner(['relationships (missing columns — run ALTER TABLE migration)']);
+        return false;
+      }
+      if (code === '42501' || res.error.status === 403 || res.error.status === 400) {
+        console.warn('safeRelUpdate 400/403:', msg);
+        if (typeof showDbSetupBanner === 'function') showDbSetupBanner(['relationships (RLS or missing column — run migration)']);
+        return false;
+      }
+      console.error('safeRelUpdate error:', res.error);
+      return false;
+    }
+    return true;
+  } catch(e) { console.error('safeRelUpdate exception:', e); return false; }
+}
+
+// ==================== UI FUNCTIONS ====================
+function updateAllUI() {
+  updateWeatherProgress();
   drawTree();
+  renderGrowthBars();
+  renderPrivateEntries();
+  renderJournal();
+  updatePartnerDisplay();
+  document.getElementById('baby-pct').innerHTML = (liveData.baby_readiness || 70) + '%';
+  const stats = liveData.couple_stats || {};
+  document.getElementById('stat-growth').innerHTML = Math.floor((stats.trust + stats.communication + stats.vision) / 3) + '%';
+  document.getElementById('stat-harmony').innerHTML = (stats.trust || 70) + '%';
+  document.getElementById('stat-vision').innerHTML = (stats.vision || 80) + '%';
 }
 
-function renderExercises() {
-  const el = document.getElementById('exercises-list');
+function updateWeatherProgress() {
+  const el = document.getElementById('weather-progress');
   if (!el) return;
-  el.innerHTML = dailyExercises.map(ex => `
-    <div class="exercise-card ${completedExercises.includes(ex.id) ? 'exercise-completed' : ''}" onclick="completeExercise(${ex.id})">
-      <div class="exercise-title">${ex.title}</div>
-      <div class="exercise-desc">${ex.desc}</div>
-      ${completedExercises.includes(ex.id) ? '<span class="exercise-badge">✓ Completed +' + ex.xp + ' XP</span>' : '<span class="exercise-badge">+ ' + ex.xp + ' XP</span>'}
-    </div>
-  `).join('');
-}
-
-function renderGrowthMetrics() {
-  const el = document.getElementById('growth-metrics');
-  if (!el) return;
-  const stats = relationshipData?.couple_stats || {};
-  el.innerHTML = `
-    <div class="progress-row"><div class="progress-label">Self-Awareness</div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, userXP / 10)}%"></div></div><div>${Math.min(100, Math.floor(userXP / 10))}%</div></div>
-    <div class="progress-row"><div class="progress-label">Empathy</div><div class="progress-track"><div class="progress-fill" style="width:${stats.trust}%"></div></div><div>${stats.trust}%</div></div>
-    <div class="progress-row"><div class="progress-label">Communication</div><div class="progress-track"><div class="progress-fill" style="width:${stats.communication}%"></div></div><div>${stats.communication}%</div></div>
-  `;
-}
-
-async function completeExercise(exerciseId) {
-  if (completedExercises.includes(exerciseId)) return;
-  const exercise = dailyExercises.find(e => e.id === exerciseId);
-  completedExercises.push(exerciseId);
-  userXP += exercise.xp;
-  await supabase.from('user_xp').upsert({ user_id: currentUser.id, xp: userXP, completed_exercises: completedExercises });
-  renderExercises();
-  renderGrowthMetrics();
-  document.getElementById('user-xp').innerHTML = `✨ ${userXP} XP`;
-}
-
-function renderJournal() {
-  const el = document.getElementById('journal-entries');
-  if (!el) return;
-  if (!journalEntries || journalEntries.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">No entries yet. Write your first journal entry! ✨</div>';
-  else el.innerHTML = journalEntries.slice(0, 30).map(j => `<div class="journal-entry"><div style="font-size:10px;color:var(--text3);">${new Date(j.created_at).toLocaleDateString()}</div><div class="journal-text" style="margin-top:8px;">"${escapeHtml(j.text)}"</div><div style="font-size:11px;color:var(--gold);margin-top:6px;">— ${j.author}</div></div>`).join('');
-}
-
-function renderPrivateNotes() {
-  const el = document.getElementById('private-entries');
-  if (!el) return;
-  if (!privateNotes || privateNotes.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">No private notes yet. 🔒</div>';
-  else el.innerHTML = privateNotes.slice(0, 20).map(n => `<div class="journal-entry" style="border-left-color:var(--rose);"><div style="font-size:10px;color:var(--text3);">${new Date(n.created_at).toLocaleDateString()} 🔒</div><div class="journal-text" style="margin-top:8px;">"${escapeHtml(n.text)}"</div></div>`).join('');
-}
-
-function renderDreams() {
-  const el = document.getElementById('dream-entries');
-  if (!el) return;
-  if (!dreamEntries || dreamEntries.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">No dreams recorded yet. ✨</div>';
-  else el.innerHTML = dreamEntries.slice(0, 20).map(d => `<div class="dream-entry"><div style="font-size:10px;color:var(--text3);">${new Date(d.created_at).toLocaleDateString()}</div><div class="journal-text" style="margin-top:8px;">"${escapeHtml(d.text)}"</div></div>`).join('');
+  const stats = liveData.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 };
+  el.innerHTML = Object.entries(stats).map(([k, v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('');
 }
 
 function drawTree() {
@@ -759,132 +651,1328 @@ function drawTree() {
   ctx.clearRect(0, 0, w, h);
   ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base-80); ctx.strokeStyle = '#8B5A2B'; ctx.lineWidth = 8; ctx.stroke();
   for(let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx-15+i*5, base+12); ctx.stroke(); }
-  const stats = relationshipData?.couple_stats || {};
-  for(let i=0;i<6+Math.floor((stats.trust+stats.communication)/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#3c9e6d'; ctx.fill(); }
-  for(let i=0;i<2+Math.floor(stats.intimacy/20);i++){ let x=cx-15+Math.random()*30, y=base-50+Math.random()*40; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
+  const stats = liveData.couple_stats || {};
+  const growth = (stats.trust + stats.communication) / 2;
+  for(let i=0;i<8+Math.floor(growth/10);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#3c9e6d'; ctx.fill(); }
+  for(let i=0;i<4+Math.floor((stats.intimacy||62)/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
 }
 
-// ==================== ACTIONS ====================
-document.getElementById('post-journal').onclick = async () => {
-  const input = document.getElementById('journal-input');
-  if (!input.value.trim()) return;
-  const partnerName = currentPartnerRole === 'a' ? relationshipData.partner_a_name : relationshipData.partner_b_name;
-  const newEntry = { id: Date.now(), author: partnerName, text: input.value.trim(), created_at: new Date().toISOString() };
-  const updatedJournal = [newEntry, ...(relationshipData.journal || [])].slice(0, 100);
-  await supabase.from('relationships').update({ journal: updatedJournal }).eq('id', currentRelationship.id);
-  journalEntries = updatedJournal;
+function renderGrowthBars() {
+  const el = document.getElementById('growth-bars');
+  if(!el) return;
+  const growthData = { empathy: 75, selfAwareness: 68, communication: 72, confidence: 65 };
+  el.innerHTML = Object.entries(growthData).map(([k,v]) => `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`).join('');
+}
+
+function renderPrivateEntries() {
+  const el = document.getElementById('private-entries-list');
+  if(el) el.innerHTML = '<div style="color:var(--text3); text-align:center; padding:20px;">Private notes appear here. Only you can see them.</div>';
+}
+
+async function renderJournal() {
+
+  const el = document.getElementById('journal-entries');
+
+  if(!el || !currentRelationshipId) return;
+
+  const { data, error } = await sbClient
+    .from('messages')
+    .select('*')
+    .eq(
+      'relationship_id',
+      currentRelationshipId
+    )
+    .order(
+      'created_at',
+      { ascending:false }
+    )
+    .limit(50);
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  el.innerHTML = data.map(msg => `
+    <div class="journal-entry">
+      <div class="journal-date">
+        ${new Date(msg.created_at)
+          .toLocaleString()}
+      </div>
+
+      <div class="journal-text">
+        "${msg.body}"
+      </div>
+
+      <div class="journal-author">
+        — ${msg.author_name || 'Partner'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function updatePartnerDisplay() {
+  var slot = currentMySlot || 'A';
+  var av = document.getElementById('growth-avatar');
+  var nm = document.getElementById('growth-name');
+  if(av) av.textContent = slot === 'A' ? '🌸' : '🌿';
+  if(nm) nm.textContent = slot === 'A' ? (liveData.partner_a_name || 'You') : (liveData.partner_b_name || 'You');
+  updateXpDisplay();
+}
+
+async function addJournalEntry() {
+
+  const input =
+    document.getElementById(
+      'journal-input'
+    );
+
+  if(!input.value.trim()) return;
+
+  var slot = currentMySlot || 'A';
+  const authorName = slot === 'A'
+    ? (liveData.partner_a_name || 'Partner A')
+    : (liveData.partner_b_name || 'Partner B');
+
+  const { error } =
+    await sbClient
+      .from('messages')
+      .insert({
+        relationship_id:
+          currentRelationshipId,
+
+        sender_id:
+          currentUser?.id || null,
+
+        author_name:
+          authorName,
+
+        body:
+          input.value.trim()
+      });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
   input.value = '';
+
   renderJournal();
-  updateUI();
-};
-
-document.getElementById('save-private').onclick = async () => {
-  const input = document.getElementById('private-input');
-  if (!input.value.trim()) return;
-  const newNote = { id: Date.now(), user_id: currentUser.id, text: input.value.trim(), created_at: new Date().toISOString() };
-  const { data } = await supabase.from('private_notes').insert([newNote]).select();
-  privateNotes = [newNote, ...privateNotes];
-  input.value = '';
-  renderPrivateNotes();
-};
-
-document.getElementById('save-dream').onclick = async () => {
-  const input = document.getElementById('dream-input');
-  if (!input.value.trim()) return;
-  const newDream = { id: Date.now(), user_id: currentUser.id, text: input.value.trim(), created_at: new Date().toISOString() };
-  await supabase.from('dream_journal').insert([newDream]);
-  dreamEntries = [newDream, ...dreamEntries];
-  input.value = '';
-  renderDreams();
-  userXP += 5;
-  await supabase.from('user_xp').upsert({ user_id: currentUser.id, xp: userXP, completed_exercises: completedExercises });
-  document.getElementById('user-xp').innerHTML = `✨ ${userXP} XP`;
-};
-
-function openPrivateModal() { document.getElementById('private-modal').style.display = 'flex'; }
-function closePrivateModal() { document.getElementById('private-modal').style.display = 'none'; }
-async function savePrivateReflection() {
-  const text = document.getElementById('private-reflection').value;
-  if (!text.trim()) return;
-  const newNote = { id: Date.now(), user_id: currentUser.id, text: text.trim(), created_at: new Date().toISOString() };
-  await supabase.from('private_notes').insert([newNote]);
-  privateNotes = [newNote, ...privateNotes];
-  document.getElementById('private-reflection').value = '';
-  closePrivateModal();
-  renderPrivateNotes();
-  alert('✨ Private reflection saved');
+}
+function openPrivateModal() { document.getElementById('modal-container').style.display = 'flex'; }
+function closeModal() { document.getElementById('modal-container').style.display = 'none'; document.getElementById('modal-answer').value = ''; }
+async function submitPrivateAnswer() {
+  const text = document.getElementById('modal-answer').value;
+  const share = document.getElementById('modal-share').checked;
+  if(!text) return;
+  alert(share ? '✨ Saved! This will appear in joint insights.' : '🔒 Saved privately.');
+  closeModal();
 }
 
-function startJointSession() { alert('🤝 Joint Session: Open the shared journal to begin a joint reflection. Both partners can see and respond.'); }
-function showRelationshipMap() { alert('🗺️ Your Relationship Map:\nStrengths: High vision alignment\nGrowth Area: Intimacy needs attention\nRisk: Work stress affecting availability'); }
-function showFutureVision() { alert('🌅 Future Vision: Your 10-year alignment is strong. Baby readiness shows emotional foundation is solid.'); }
-
-// ==================== REALTIME ====================
-function startRealtime() {
-  supabase.channel(`rel_${currentRelationship.id}`).on('postgres_changes', 
-    { event: 'UPDATE', schema: 'public', table: 'relationships', filter: `id=eq.${currentRelationship.id}` }, 
-    (payload) => { if (payload.new) { relationshipData = payload.new; journalEntries = payload.new.journal || []; updateUI(); } }).subscribe();
+function switchPartner(p, btn) {
+  // Partner switching removed — each user uses their own device
+  document.querySelectorAll('.partner-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  updatePartnerDisplay();
 }
 
-// ==================== MOON PHASE ====================
-async function loadMoonPhase() {
-  try {
-    const daysSinceEpoch = Math.floor(Date.now() / 1000 / 86400);
-    const response = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${daysSinceEpoch}`);
-    const data = await response.json();
-    const phase = data[0]?.Phase || "Waxing Gibbous";
-    document.getElementById('hdr-moon').innerHTML = `🌙 ${phase}`;
-    document.getElementById('moon-content').innerHTML = `<div style="font-size:48px;">${phase.includes('Full') ? '🌕' : phase.includes('New') ? '🌑' : '🌔'}</div><div style="font-size:16px;color:var(--gold2);margin-top:8px;">${phase}</div><div style="font-size:13px;color:var(--text2);margin-top:8px;">${getMoonMessage(phase)}</div>`;
-    document.getElementById('horoscope-content').innerHTML = getHoroscope();
-  } catch(e) { console.log('Moon API error'); }
+function switchGrowthTab(tab, btn) {
+  ['radar','practices','couples','wheel','private'].forEach(function(t){
+    var el=document.getElementById('tab-'+t); if(el) el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
 }
-function getMoonMessage(phase) { const m = { "New Moon":"Set intentions for your relationship.","Full Moon":"Release what no longer serves your union.","Waxing Gibbous":"Refine and adjust." }; return m[phase] || "The moon guides your journey."; }
-function getHoroscope() { const h = ["Trust your intuition today. Small gestures create big ripples.","The universe supports your growth.","Communication is highlighted today."]; return h[Math.floor(Math.random() * h.length)]; }
 
-// ==================== UI HELPERS ====================
-function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(`${screenId}-screen`).classList.add('active'); }
-function switchScreen(screen, btn) { 
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-  document.getElementById(`screen-${screen}`).classList.add('active'); 
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); 
-  if (btn) btn.classList.add('active'); 
-  if (screen === 'journal') renderJournal(); 
-  if (screen === 'private') renderPrivateNotes(); 
-  if (screen === 'cosmic') { loadMoonPhase(); renderDreams(); } 
+function setJournalPartner(p, btn) {
+  // Journal partner derived from auth — no toggle needed
+  document.querySelectorAll('.partner-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
 }
-function startAnimations() { 
-  drawTree(); 
-  setInterval(drawTree, 5000); 
-  const updateDate = () => { 
-    const now = new Date(); 
-    document.getElementById('hdr-date').innerHTML = `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()]}, ${now.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]}`; 
-  }; 
-  updateDate(); 
-  setInterval(updateDate, 60000); 
+
+function switchScreen(screen, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const _t = document.getElementById('screen-' + screen);
+  if (_t) _t.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if (screen === 'journal')  renderJournal();
+  if (screen === 'couple')   setTimeout(renderCoupleExtras, 60);
+  if (screen === 'growth')   { renderGrowthBars(); renderPractices(); renderCouplesTasks(); }
+  if (screen === 'cosmic')   updateCosmicScreen();
+  if (screen === 'home')     updateHomeScreen();
 }
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-// Make functions global
-window.saveQuestionnaireStep = saveQuestionnaireStep;
-window.completeExercise = completeExercise;
-window.switchScreen = switchScreen;
-window.startJointSession = startJointSession;
-window.showRelationshipMap = showRelationshipMap;
-window.showFutureVision = showFutureVision;
-window.openPrivateModal = openPrivateModal;
-window.closePrivateModal = closePrivateModal;
-window.savePrivateReflection = savePrivateReflection;
+function startAnimations() {
+  drawTree();
+  setInterval(drawTree, 5000);
+  const updateDate = () => {
+    const now = new Date();
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dateEl = document.getElementById('hdr-date');
+    if(dateEl) dateEl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+  };
+  updateDate();
+  setInterval(updateDate, 60000);
+}
 
+// Stars background
 function initStars() {
   const canvas = document.getElementById('stars-canvas');
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  if(!canvas) return;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
-  const stars = Array.from({length:150}, () => ({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
-  function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`; ctx.fill(); s.a+=0.01; }); requestAnimationFrame(draw); }
+  const stars = Array.from({length:150}, ()=>({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.5, a:Math.random() }));
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`; ctx.fill(); s.a+=0.01; });
+    requestAnimationFrame(draw);
+  }
   draw();
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  TASK DATA
+// ══════════════════════════════════════════════════════════════════════
+const PRACTICES=[
+  {id:'p1',icon:'🌬️',title:'Box Breathing',        dur:'4 min',  xp:20,desc:'Inhale 4s → hold 4s → exhale 4s → hold 4s. Repeat 8 times. Resets your nervous system.',timerSec:240},
+  {id:'p2',icon:'🙏', title:'Gratitude Scan',        dur:'5 min',  xp:20,desc:'Speak or write 5 specific things you are grateful for today — not concepts, but moments.',timerSec:300},
+  {id:'p3',icon:'🧘', title:'Body Check-In',          dur:'3 min',  xp:15,desc:'Scan from feet to crown. Where are you holding tension? Name it without changing it.',timerSec:180},
+  {id:'p4',icon:'✍️', title:'Morning Pages',          dur:'10 min', xp:30,desc:'10 minutes of unfiltered stream of consciousness. No editing, no re-reading. Just pour.',timerSec:600},
+  {id:'p5',icon:'🌿', title:'Intention Setting',      dur:'2 min',  xp:15,desc:'One sentence: what do you want to bring to your relationship today? Say it aloud.',timerSec:120},
+  {id:'p6',icon:'🔥', title:'Inner Child Check-In',   dur:'7 min',  xp:25,desc:'Ask: "What did I need as a child that I still look for from my partner?" Write freely.',timerSec:420},
+  {id:'p7',icon:'💧', title:'Emotion Naming',          dur:'3 min',  xp:20,desc:'Right now: what are you feeling? Name it precisely. Not "fine" — underneath fine.',timerSec:180},
+];
+const COUPLE_TASKS=[
+  {id:'c1',icon:'👁️',title:'Eye Gazing',              dur:'3 min',  xp:50,desc:'Sit facing each other. Breathe. No words. Let your eyes say what language cannot.',timerSec:180},
+  {id:'c2',icon:'🤲',title:'Hand Holding Stillness',  dur:'5 min',  xp:40,desc:'Hold hands in silence. Focus only on the warmth and weight of their hand. No phones.',timerSec:300},
+  {id:'c3',icon:'💬',title:'Two Truths, One Feeling', dur:'10 min', xp:60,desc:'Each shares two things true right now and one feeling underneath. No advice — just receive.',timerSec:600},
+  {id:'c4',icon:'🙏',title:'Gratitude Out Loud',      dur:'5 min',  xp:50,desc:'"I love how you…" — three specific, sensory moments of appreciation. Not general — real.',timerSec:300},
+  {id:'c5',icon:'🕯️',title:'Candlelight Check-In',   dur:'15 min', xp:70,desc:'No screens. One candle. High, low, and one thing you want to try together this week.',timerSec:900},
+  {id:'c6',icon:'💆',title:'5-Minute Shoulder Ritual',dur:'10 min', xp:60,desc:'Five minutes giving, five receiving. Massage shoulders and neck. Touch without agenda.',timerSec:600},
+  {id:'c7',icon:'📸',title:'Memory Archaeology',      dur:'20 min', xp:80,desc:'Look through old photos. For each one: what did you FEEL? Not what happened — what you felt.',timerSec:1200},
+];
+const DREAM_TAGS=['💞 Love','🌊 Water','✈️ Flight','👶 Child','🏠 Home','🌑 Shadow','💡 Clarity','⚡ Anxiety','🌈 Joy','🌀 Transform'];
+const SHADOW_QS=[
+  {id:'judge_partner',label:'The thing I secretly judge my partner for is…'},
+  {id:'judge_self',   label:'The thing I secretly judge myself for is…'},
+  {id:'fear',         label:'The fear I rarely admit is…'},
+  {id:'truth',        label:'The truth I have not fully spoken is…'},
+];
+const PULSE_THEMES=[
+  {theme:'"Build rather than fix. What exists is the foundation."',     him:"Ask one deeper question — not about logistics, about her inner world.",         her:"Share one thing you've been keeping quietly to yourself.",     together:"10-minute gratitude ritual before sleep — three things, specific, out loud."},
+  {theme:'"The space between two people is sacred."',                   him:"Put the phone away for one full hour and be fully present.",                   her:"Tell him one thing you've been afraid to want.",               together:"Cook one meal together in silence. Let the food be the conversation."},
+  {theme:'"Love is not a feeling. It is a practice."',                  him:"Write three things you love about her that you've stopped saying.",              her:"Initiate one act of tenderness you've been withholding.",      together:"Sit outside for 15 minutes and look at the same sky."},
+  {theme:'"What you cannot say becomes the wall."',                     him:"Start one sentence with 'I need' instead of 'you always.'",                   her:"Finish out loud: 'Something I carry alone is…'",              together:"10 minutes of intentional eye contact. No words."},
+  {theme:'"A relationship grows where attention goes."',                him:"Name one way you can make her feel more seen today.",                          her:"Ask him what he needs that he hasn't asked for.",              together:"An honest 5-minute check-in: one high, one low, one hope."},
+];
+
+// ══ ADDED GLOBALS ══════════════════════════════════════════════════════════
+let completedTasks = (typeof liveData !== 'undefined' && liveData.completed_tasks) ? liveData.completed_tasks : {};
+let xpData = {A:0, B:0};
+let dreamPartner = 'A';
+let selectedDreamTags = [];
+let timerIval = null, timerRunning = false, timerTarget = 0, timerSec = 0;
+let galaxyRAF = null;
+
+// ══ MOON ENGINE ══════════════════════════════════════════════════════════
+function getMoonPhase(date) {
+  var d = date || new Date();
+  var known = new Date('2000-01-06T18:14:00Z');
+  var synodic = 29.53058867;
+  var phase = (((d - known) / 86400000 % synodic) + synodic) % synodic;
+  if (phase < 1.85)  return {name:'New Moon',        icon:'🌑',release:'old patterns',   invite:'fresh intentions', energy:'Plant seeds. Begin.'};
+  if (phase < 7.38)  return {name:'Waxing Crescent', icon:'🌒',release:'doubt',           invite:'momentum',         energy:'Build. Take first steps.'};
+  if (phase < 11.08) return {name:'First Quarter',   icon:'🌓',release:'hesitation',      invite:'action',           energy:'Overcome resistance. Commit.'};
+  if (phase < 14.77) return {name:'Waxing Gibbous',  icon:'🌔',release:'control',         invite:'trust',            energy:'Build rather than fix.'};
+  if (phase < 18.46) return {name:'Full Moon',        icon:'🌕',release:'what no longer serves', invite:'completion', energy:'Illuminate. Celebrate. Release.'};
+  if (phase < 22.15) return {name:'Waning Gibbous',  icon:'🌖',release:'ego',             invite:'gratitude',        energy:'Give back. Share what you learned.'};
+  if (phase < 25.84) return {name:'Last Quarter',    icon:'🌗',release:'resentment',      invite:'forgiveness',      energy:'Clear. Make space.'};
+  return                {name:'Waning Crescent', icon:'🌘',release:'exhaustion',      invite:'rest',             energy:'Surrender. Restore. Prepare.'};
+}
+
+// ══ HELPER ══════════════════════════════════════════════════════════════
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function fmtTime(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+
+// ══ MODAL HELPERS ═════════════════════════════════════════════════════════
+function openModal(id){var el=document.getElementById(id);if(el)el.classList.add('open');}
+function openPrivateModal(){openModal('modal-private');}
+function openShadowWork(){
+  var el=document.getElementById('shadow-questions');if(!el)return;
+  el.innerHTML=SHADOW_QS.map(function(q){return'<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:6px">"'+escHtml(q.label)+'"</div><textarea class="journal-textarea" id="shadow-'+q.id+'" placeholder="Courage required…" style="height:70px"></textarea></div>';}).join('');
+  openModal('modal-shadow');
+}
+['modal-private','modal-shadow','modal-timer'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el)el.addEventListener('click',function(e){if(e.target===el)closeModal(id);});
+});
+
+// ══ XP ENGINE ═════════════════════════════════════════════════════════════
+function updateXpDisplay(){
+  var el=document.getElementById('growth-xp');
+  if(!el)return;
+  var xp=currentPartner==='A'?(xpData.A||0):(xpData.B||0);
+  el.textContent='✨ '+xp+' XP';
+  if(typeof liveData!=='undefined'){el.textContent='✨ '+(currentPartner==='A'?(liveData.xp_a||xpData.A||0):(liveData.xp_b||xpData.B||0))+' XP';}
+}
+async function awardXP(amount, partner) {
+  var p = partner || currentPartner;
+  xpData[p] = (xpData[p]||0) + amount;
+  updateXpDisplay();
+  var el=document.getElementById('growth-xp');
+  if(el){el.classList.remove('xp-pop');void el.offsetWidth;el.classList.add('xp-pop');}
+  showToast('+'+amount+' XP ✨');
+  if(typeof sbClient!=='undefined'&&sbClient&&typeof currentRelationshipId!=='undefined'&&currentRelationshipId&&typeof currentUser!=='undefined'&&currentUser){
+    var field=p==='A'?'xp_a':'xp_b';
+    var upd={}; upd[field]=xpData[p];
+    await safeRelUpdate(upd);
+  }
+}
+function showInlineError(elId, msg) {
+  var el = document.getElementById(elId);
+  if (!el) {
+    // fallback: create error div before private-input
+    var pi = document.getElementById('private-input');
+    if (pi) {
+      var d = document.createElement('div');
+      d.id = elId;
+      d.style.cssText = 'color:var(--rose);font-size:12px;padding:8px 12px;background:rgba(232,112,112,0.1);border:0.5px solid rgba(232,112,112,0.3);border-radius:10px;margin-bottom:8px;line-height:1.5';
+      pi.parentNode.insertBefore(d, pi);
+      el = d;
+    }
+  }
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function clearInlineError(elId) {
+  var el = document.getElementById(elId);
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+function showToast(msg){
+  var el=document.getElementById('toast');if(!el)return;
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(window._toastT);window._toastT=setTimeout(function(){el.classList.remove('show');},2800);
+}
+
+async function markTaskComplete(taskId, xp, btnEl) {
+  if(!completedTasks)completedTasks={};
+  var slot = currentMySlot||'A';
+  var key = slot+'_'+taskId;
+  if(completedTasks[key]){showToast('Already completed today ✓');return;}
+  completedTasks[key]=true;
+  if(btnEl){btnEl.classList.add('done');btnEl.innerHTML='✓ Completed';}
+  await awardXP(xp);
+  if(typeof sbClient!=='undefined'&&sbClient&&typeof currentRelationshipId!=='undefined'&&currentRelationshipId&&typeof currentUser!=='undefined'&&currentUser){
+    await safeRelUpdate({completed_tasks:completedTasks});
+  }
+}
+
+// ══ TASK CARD RENDERER ═════════════════════════════════════════════════════
+function taskCardHTML(t){
+  var slot=currentMySlot||'A'; var key=slot+'_'+t.id; var done=completedTasks&&completedTasks[key];
+  return '<div style="background:var(--glass);border:0.5px solid var(--border);border-radius:20px;padding:16px;margin-bottom:10px">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+    +'<div style="font-size:24px;flex-shrink:0">'+t.icon+'</div>'
+    +'<div style="font-size:14px;font-weight:600;color:var(--text1)">'+t.title+'</div>'
+    +'<div style="font-size:11px;color:var(--gold);margin-left:auto;white-space:nowrap">'+t.dur+'</div></div>'
+    +'<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px">'+t.desc+'</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+    +'<div id="cbtn-'+t.id+'" onclick="markTaskComplete(\''+t.id+'\','+t.xp+',this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:'+(done?'rgba(78,205,196,0.2)':'rgba(78,205,196,0.1)')+';border:0.5px solid var(--teal);border-radius:8px;color:var(--teal);font-size:12px;cursor:pointer;opacity:'+(done?'0.7':'1')+'">'+(done?'✓ Completed':'Complete (+'+t.xp+' XP)')+'</div>'
+    +(t.timerSec?'<div onclick="openTimer(\''+t.id+'\',\''+t.icon+'\',\''+t.title+'\','+t.timerSec+')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(201,168,76,0.1);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:12px;cursor:pointer">⏱ Timer</div>':'')
+    +'</div></div>';
+}
+function renderPractices(){var el=document.getElementById('practices-list');if(el)el.innerHTML=PRACTICES.map(taskCardHTML).join('');}
+function renderCouplesTasks(){var el=document.getElementById('couples-list');if(el)el.innerHTML=COUPLE_TASKS.map(taskCardHTML).join('');}
+
+// ══ TIMER ══════════════════════════════════════════════════════════════════
+function openTimer(taskId, icon, name, seconds) {
+  timerTarget=seconds;timerSec=0;timerRunning=false;clearInterval(timerIval);
+  var ic=document.getElementById('timer-icon'),nm=document.getElementById('timer-task-name'),dp=document.getElementById('timer-display'),btn=document.getElementById('timer-start-btn');
+  if(ic)ic.textContent=icon;if(nm)nm.textContent=name;if(dp)dp.textContent=fmtTime(seconds);
+  if(btn){btn.textContent='▶ Start';btn.style.background='linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15))';}
+  openModal('modal-timer');
+}
+function toggleTimer(){
+  var btn=document.getElementById('timer-start-btn'),dp=document.getElementById('timer-display');
+  if(!timerRunning){
+    timerRunning=true;if(btn){btn.textContent='⏸ Pause';btn.style.background='rgba(232,112,112,0.2)';}
+    timerIval=setInterval(function(){
+      timerSec++;var rem=Math.max(0,timerTarget-timerSec);
+      if(dp)dp.textContent=fmtTime(rem);
+      if(rem===0){clearInterval(timerIval);timerRunning=false;if(dp)dp.textContent='🎉';if(btn)btn.textContent='✓ Done';}
+    },1000);
+  }else{clearInterval(timerIval);timerRunning=false;if(btn){btn.textContent='▶ Resume';btn.style.background='';}}
+}
+function closeTimer(){clearInterval(timerIval);timerRunning=false;closeModal('modal-timer');}
+
+// ══ HOME SCREEN ════════════════════════════════════════════════════════════
+function updateHomeScreen(){
+  var now=new Date();
+  var D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var hd=document.getElementById('hdr-date');if(hd)hd.textContent=D[now.getDay()]+', '+now.getDate()+' '+M[now.getMonth()]+' '+now.getFullYear();
+  var moon=getMoonPhase(now);
+  var hm=document.getElementById('hdr-moon');if(hm)hm.textContent=moon.icon+' '+moon.name;
+  renderDailyPulse(now,moon);renderArchetype();
+}
+function renderDailyPulse(now,moon){
+  var idx=(now.getFullYear()*365+now.getMonth()*31+now.getDate())%PULSE_THEMES.length;
+  var p=PULSE_THEMES[idx];
+  var ld=typeof liveData!=='undefined'?liveData:{};
+  var em=document.getElementById('pulse-moon');if(em)em.textContent=moon.icon+' '+moon.name+' — '+moon.energy;
+  var et=document.getElementById('pulse-theme');if(et)et.textContent=p.theme;
+  var ep=document.getElementById('pulse-tasks');
+  if(ep)ep.innerHTML=[
+    {who:ld.partner_a_name||'Him',what:p.him},
+    {who:ld.partner_b_name||'Her',what:p.her},
+    {who:'Together',what:p.together}
+  ].map(function(t){return'<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--glass);border-radius:10px;border:0.5px solid var(--border);margin-bottom:8px"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);min-width:36px;flex-shrink:0;margin-top:1px">'+escHtml(t.who)+'</div><div style="font-size:13px;color:var(--text1);line-height:1.4">'+escHtml(t.what)+'</div></div>';}).join('');
+}
+function renderArchetype(){
+  var AT=[{n:'Builders',s:'⚒',l:'Create foundations before expansion.'},{n:'Healers',s:'🌿',l:'Your wounds are portals. Heal together.'},{n:'Explorers',s:'🧭',l:'Keep moving — but build a home base.'},{n:'Lovers',s:'❤️',l:'Passion without depth becomes habit.'},{n:'Alchemists',s:'🔥',l:'You are here to transform each other.'}];
+  var cs=typeof liveData!=='undefined'&&liveData.couple_stats?liveData.couple_stats:{};
+  var scores=[(cs.vision||70)/10+(cs.teamwork||70)/10,(cs.trust||70)/10+(cs.communication||70)/10,(cs.friendship||70)/10,(cs.intimacy||70)/10,0];
+  var bi=0;scores.forEach(function(v,i){if(v>scores[bi])bi=i;});
+  var a=AT[bi];
+  var sym=document.getElementById('arch-symbol'),nm=document.getElementById('arch-name'),ls=document.getElementById('arch-lesson');
+  if(sym)sym.textContent=a.s;if(nm)nm.textContent=a.n;if(ls)ls.textContent=a.l;
+}
+
+// ══ COUPLE EXTRAS ══════════════════════════════════════════════════════════
+function renderCoupleExtras(){
+  drawMountain();startGalaxy();renderInsights();
+  var s=typeof liveData!=='undefined'&&liveData.couple_stats?liveData.couple_stats:{};
+  var el=document.getElementById('couple-progress');
+  if(el){
+    var bars=[['Shared Vision',s.vision||80,'purple'],['Friendship',s.friendship||78,'teal'],['Trust',s.trust||70,''],['Teamwork',s.teamwork||75,'teal'],['Communication',s.communication||72,''],['Intimacy',s.intimacy||65,'rose']];
+    el.innerHTML=bars.map(function(b){return'<div style="display:flex;align-items:center;gap:10px;margin:8px 0"><div style="font-size:12px;color:var(--text2);width:110px;flex-shrink:0">'+b[0]+'</div><div style="flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));width:'+b[1]+'%"></div></div><div style="font-size:12px;color:var(--gold);min-width:32px;text-align:right">'+b[1]+'%</div></div>';}).join('');
+  }
+}
+function renderInsights(){
+  var el=document.getElementById('insights-content');if(!el)return;
+  var s=typeof liveData!=='undefined'&&liveData.couple_stats?liveData.couple_stats:{};
+  var items=[];
+  if((s.vision||80)>=78)items.push({c:'teal',icon:'🌅',t:'Vision Alignment',txt:'Both of you want the same life. The gap is not in the destination but in how you navigate the daily distance.'});
+  if((s.trust||70)>=76)items.push({c:'teal',icon:'🔐',t:'Deep Trust',txt:'Trust is the soil. Everything else grows from this. Protect it with honesty, not comfort.'});
+  if((s.communication||72)<72)items.push({c:'rose',icon:'⚠️',t:'Communication Pressure',txt:'Hard conversations may be accumulating. The unsaid builds walls without either partner choosing to.'});
+  if((s.intimacy||65)<70)items.push({c:'rose',icon:'⚠️',t:'Intimacy Attention',txt:'Emotional and physical closeness needs intentional care. Proximity is not the same as intimacy.'});
+  items.push({c:'purple',icon:'🌿',t:'Next Edge',txt:"Your next level requires one conversation you've both been avoiding — about what you each secretly fear the other cannot give you."});
+  el.innerHTML=items.map(function(i){return'<div style="padding:14px;background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;margin-bottom:10px"><div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--'+i.c+');margin-bottom:8px">'+i.icon+' '+i.t+'</div><div style="font-size:13px;color:var(--text1);line-height:1.7;font-family:var(--font);font-style:italic">'+i.txt+'</div></div>';}).join('');
+}
+
+// ══ MOUNTAIN ═══════════════════════════════════════════════════════════════
+function drawMountain(){
+  var canvas=document.getElementById('mountain-canvas');if(!canvas)return;
+  var dpr=window.devicePixelRatio||1,W=canvas.offsetWidth,H=200;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  var cx=W/2,top=20;
+  ctx.beginPath();ctx.moveTo(W*0.05,H-10);ctx.lineTo(cx-18,top+30);ctx.lineTo(cx,top);ctx.lineTo(cx+18,top+30);ctx.lineTo(W*0.95,H-10);ctx.closePath();
+  var mg=ctx.createLinearGradient(0,top,0,H);mg.addColorStop(0,'rgba(30,40,70,0.9)');mg.addColorStop(1,'rgba(15,21,37,0.4)');ctx.fillStyle=mg;ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx,top);ctx.lineTo(cx-18,top+28);ctx.lineTo(cx+18,top+28);ctx.closePath();ctx.fillStyle='rgba(245,245,255,0.85)';ctx.fill();
+  ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(cx,H-15);ctx.bezierCurveTo(cx+15,H*0.6,cx-10,H*0.3,cx,top+10);ctx.strokeStyle='rgba(201,168,76,0.2)';ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);
+  var s=typeof liveData!=='undefined'&&liveData.couple_stats?liveData.couple_stats:{};
+  var stages=[{l:'Friendship',v:s.friendship||78},{l:'Trust',v:s.trust||70},{l:'Intimacy',v:s.intimacy||65},{l:'Vision',v:s.vision||80}];
+  var climbPct=stages.reduce(function(a,b){return a+b.v;},0)/4/100;
+  var coupleY=top+(H-30)*(1-climbPct*0.88);
+  stages.forEach(function(sg,i){var frac=i/(stages.length-1),y=H-15-(H-40)*frac;ctx.beginPath();ctx.arc(cx,y,4,0,Math.PI*2);ctx.fillStyle='rgba(201,168,76,0.7)';ctx.fill();ctx.font='10px sans-serif';ctx.fillStyle='rgba(240,232,208,0.6)';ctx.textAlign=i%2===0?'right':'left';ctx.fillText(sg.l+' '+sg.v+'%',i%2===0?cx-12:cx+12,y+4);});
+  ctx.font='18px sans-serif';ctx.textAlign='center';ctx.fillText('💑',cx,coupleY);
+  ctx.fillStyle='rgba(245,223,160,0.8)';ctx.font='10px sans-serif';ctx.fillText('🏔 Summit',cx,top-6);
+}
+
+// ══ GALAXY ═════════════════════════════════════════════════════════════════
+function startGalaxy(){if(galaxyRAF)cancelAnimationFrame(galaxyRAF);drawGalaxyFrame();}
+function drawGalaxyFrame(){
+  var canvas=document.getElementById('galaxy-canvas');if(!canvas)return;
+  var dpr=window.devicePixelRatio||1,W=canvas.offsetWidth,H=240;
+  if(canvas.width!==W*dpr){canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';}
+  var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  var t=Date.now()*0.001,aX=W*0.25,aY=H*0.45,bX=W*0.75,bY=H*0.55,cX=W/2,cY=H/2;
+  [30,50,70].forEach(function(r,i){ctx.beginPath();ctx.arc(aX,aY,r,0,Math.PI*2);ctx.strokeStyle='rgba(78,205,196,'+(0.07-i*0.02)+')';ctx.lineWidth=0.5;ctx.stroke();});
+  [25,45,65].forEach(function(r,i){ctx.beginPath();ctx.arc(bX,bY,r,0,Math.PI*2);ctx.strokeStyle='rgba(155,109,255,'+(0.07-i*0.02)+')';ctx.lineWidth=0.5;ctx.stroke();});
+  for(var i=0;i<8;i++){var a=t*0.5+(i/8)*Math.PI*2,px=aX+Math.cos(a)*(35+i*4)*0.6,py=aY+Math.sin(a)*(35+i*4)*0.3;ctx.beginPath();ctx.arc(px,py,1,0,Math.PI*2);ctx.fillStyle='rgba(78,205,196,'+(0.3+i*0.04)+')';ctx.fill();}
+  for(var i=0;i<8;i++){var a=-t*0.4+(i/8)*Math.PI*2,px=bX+Math.cos(a)*(30+i*4)*0.6,py=bY+Math.sin(a)*(30+i*4)*0.3;ctx.beginPath();ctx.arc(px,py,1,0,Math.PI*2);ctx.fillStyle='rgba(155,109,255,'+(0.3+i*0.04)+')';ctx.fill();}
+  var s=typeof liveData!=='undefined'&&liveData.couple_stats?liveData.couple_stats:{};
+  var vals=Object.values(s);var align=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length/100:0.7;
+  if(align>0.7){var cs=[[cX-20,cY-30],[cX+10,cY-15],[cX,cY+20],[cX-15,cY+5]];ctx.strokeStyle='rgba(201,168,76,0.2)';ctx.lineWidth=0.5;for(var i=0;i<cs.length-1;i++){ctx.beginPath();ctx.moveTo(cs[i][0],cs[i][1]);ctx.lineTo(cs[i+1][0],cs[i+1][1]);ctx.stroke();}cs.forEach(function(p){ctx.beginPath();ctx.arc(p[0],p[1],1.5,0,Math.PI*2);ctx.fillStyle='rgba(201,168,76,0.6)';ctx.fill();});}
+  var bg=ctx.createLinearGradient(aX,aY,bX,bY);bg.addColorStop(0,'rgba(78,205,196,0.15)');bg.addColorStop(0.5,'rgba(201,168,76,0.2)');bg.addColorStop(1,'rgba(155,109,255,0.15)');ctx.beginPath();ctx.moveTo(aX,aY);ctx.lineTo(bX,bY);ctx.strokeStyle=bg;ctx.lineWidth=2;ctx.stroke();
+  var pulse=(Math.sin(t*2)+1)*3;ctx.beginPath();ctx.arc(cX,cY,8+pulse,0,Math.PI*2);ctx.fillStyle='rgba(232,112,112,'+(0.1+pulse*0.02)+')';ctx.fill();ctx.beginPath();ctx.arc(cX,cY,5,0,Math.PI*2);ctx.fillStyle='rgba(232,112,112,0.8)';ctx.fill();
+  var ld=typeof liveData!=='undefined'?liveData:{};
+  var pull=(1-align)*0.15,axF=aX+(cX-aX)*pull,bxF=bX+(cX-bX)*pull;
+  function drawStar(x,y,emoji,lbl,glow){var sg=ctx.createRadialGradient(x,y,0,x,y,28);sg.addColorStop(0,glow.replace('1)','0.3)'));sg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sg;ctx.beginPath();ctx.arc(x,y,28,0,Math.PI*2);ctx.fill();ctx.font='22px sans-serif';ctx.textAlign='center';ctx.fillText(emoji,x,y+8);ctx.font='11px sans-serif';ctx.fillStyle='rgba(240,232,208,0.6)';ctx.fillText(lbl,x,y+26);}
+  drawStar(axF,aY,'🌸',ld.partner_a_name||'Partner A','rgba(78,205,196,1)');
+  drawStar(bxF,bY,'🌿',ld.partner_b_name||'Partner B','rgba(155,109,255,1)');
+  galaxyRAF=requestAnimationFrame(drawGalaxyFrame);
+}
+
+// ══ SOUL WHEEL ═════════════════════════════════════════════════════════════
+function drawWheel(){
+  var canvas=document.getElementById('wheel-canvas');if(!canvas)return;
+  var S=180,cx=S/2,cy=S/2,r=68,dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.height=S*dpr;canvas.style.width=canvas.style.height=S+'px';
+  var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,S,S);
+  var s=typeof liveData!=='undefined'&&liveData.couple_stats?liveData.couple_stats:{};
+  var sl=[{l:'Purpose',v:Math.min(1,(s.vision||80)/100),c:'rgba(201,168,76,0.8)'},{l:'Trust',v:Math.min(1,(s.trust||70)/100),c:'rgba(78,205,196,0.8)'},{l:'Courage',v:0.58,c:'rgba(232,112,112,0.8)'},{l:'Vulnerability',v:0.64,c:'rgba(155,109,255,0.8)'}];
+  var n=sl.length;
+  sl.forEach(function(sl,i){var a0=(i/n)*Math.PI*2-Math.PI/2,a1=((i+1)/n)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r*sl.v,a0,a1);ctx.closePath();ctx.fillStyle=sl.c;ctx.fill();ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a0,a1);ctx.closePath();ctx.strokeStyle='rgba(240,232,208,0.08)';ctx.lineWidth=0.5;ctx.stroke();});
+  [0.25,0.5,0.75,1].forEach(function(f){ctx.beginPath();ctx.arc(cx,cy,r*f,0,Math.PI*2);ctx.strokeStyle='rgba(240,232,208,0.06)';ctx.lineWidth=0.5;ctx.stroke();});
+  sl.forEach(function(_,i){var a=(i/n)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.strokeStyle='rgba(240,232,208,0.1)';ctx.lineWidth=0.5;ctx.stroke();});
+  var lb=document.getElementById('wheel-labels');
+  if(lb)lb.innerHTML=sl.map(function(s){return'<div style="background:var(--glass2);border-radius:8px;padding:8px;border:0.5px solid var(--border)"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">'+s.l+'</div><div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden"><div style="width:'+Math.round(s.v*100)+'%;height:100%;background:'+s.c+';border-radius:2px"></div></div><div style="font-size:12px;font-weight:600;color:var(--gold);margin-top:4px">'+Math.round(s.v*100)+'%</div></div>';}).join('');
+}
+
+// ══ PRIVATE NOTES (SB) ════════════════════════════════════════════════════
+async function loadPrivateNotes(){
+  var el=document.getElementById('private-entries');if(!el)return;
+  if(typeof sbClient==='undefined'||!sbClient||typeof currentUser==='undefined'||!currentUser){
+    el.innerHTML='<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic">Sign in to load private notes.</div>';return;
+  }
+  el.innerHTML='<div style="text-align:center;color:var(--text3);padding:20px"><span style="display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite"></span></div>';
+  var res=await sbClient.from('private_notes').select('id,created_at,body,shared').eq('user_id',currentUser.id).eq('relationship_id',currentRelationshipId).order('created_at',{ascending:false}).limit(30);
+  if(res.error){el.innerHTML='<div style="color:var(--rose);padding:16px">'+escHtml(res.error.message)+'</div>';return;}
+  el.innerHTML='';
+  if(!res.data||res.data.length===0){el.innerHTML='<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic">No private notes yet. Your sanctuary awaits.</div>';return;}
+  res.data.forEach(function(n){el.insertAdjacentHTML('beforeend',buildPrivateRow(n));});
+}
+function buildPrivateRow(n){return'<div style="padding:14px;background:rgba(155,109,255,0.06);border-left:2px solid var(--purple);border-radius:0 16px 16px 0;margin-bottom:10px" data-note-id="'+n.id+'"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">'+new Date(n.created_at).toLocaleString()+'</div><div style="font-size:13px;color:var(--text1);line-height:1.6;font-style:italic;font-family:var(--font)">'+escHtml(n.body)+'</div><div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--rose);background:rgba(232,112,112,0.1);border:0.5px solid rgba(232,112,112,0.3);border-radius:20px;padding:2px 8px;margin-top:6px">'+(n.shared?'👁 Shared':'🔒 Private')+'</div></div>';}
+async function savePrivateNote(){
+  var input=document.getElementById('private-input'),shared=(document.getElementById('private-share-toggle')||{}).checked||false,body=input?input.value.trim():'';
+  if(!body){showToast('Write something first');return;}
+  // ── not connected / not signed in → local demo mode ──────────────────────
+  if(typeof sbClient==='undefined'||!sbClient){
+    showInlineError('private-note-error','Not connected to Supabase. Use Setup screen first.');return;
+  }
+  if(typeof currentUser==='undefined'||!currentUser){
+    // Try to recover session silently before giving up
+    var sess=await sbClient.auth.getSession();
+    if(sess.data&&sess.data.session&&sess.data.session.user){
+      currentUser=sess.data.session.user;
+    } else {
+      showInlineError('private-note-error','You are not signed in. Please sign in first.');return;
+    }
+  }
+  if(!currentRelationshipId){
+    showInlineError('private-note-error','No relationship found. Complete setup first.');return;
+  }
+  clearInlineError('private-note-error');
+  var saveBtn=document.querySelector('[onclick="savePrivateNote()"]');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
+  var res=await sbClient.from('private_notes')
+    .insert({user_id:currentUser.id,relationship_id:currentRelationshipId,body:body,shared:shared})
+    .select('id,created_at,body,shared').single();
+  if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Private Note 🔒';}
+  if(res.error){
+    var msg=res.error.message||'Unknown error';
+    var hint='';
+    if(res.error.code==='42P01'||msg.toLowerCase().includes('does not exist'))
+      hint=' — Table missing. Run the SQL setup below.';
+    else if(res.error.code==='42501'||msg.toLowerCase().includes('permission'))
+      hint=' — RLS blocked. Check your Supabase policies.';
+    else if(msg.includes('400')||msg.includes('Bad Request'))
+      hint=' — Check your Supabase URL/key and table name.';
+    showInlineError('private-note-error', '⚠️ '+msg+hint);
+    return;
+  }
+  if(input)input.value='';
+  var el=document.getElementById('private-entries');
+  if(el&&res.data)el.insertAdjacentHTML('afterbegin',buildPrivateRow(res.data));
+  showToast(shared?'✨ Saved! Partner can see this.':'🔒 Saved privately.');
+  await awardXP(10);
+}
+async function submitPrivateAnswer(){
+  var text=(document.getElementById('modal-private-text')||{}).value||'';
+  var shared=(document.getElementById('modal-private-share')||{}).checked||false;
+  text=text.trim();
+  if(!text){var e=document.getElementById('modal-private-error');if(e)e.textContent='Write something first.';return;}
+  var pi=document.getElementById('private-input');if(pi)pi.value=text;
+  var st=document.getElementById('private-share-toggle');if(st)st.checked=shared;
+  await savePrivateNote();
+  closeModal('modal-private');
+}
+
+// ══ SHADOW WORK ═══════════════════════════════════════════════════════════
+async function saveShadowWork(){
+  var answers={};
+  SHADOW_QS.forEach(function(q){var el=document.getElementById('shadow-'+q.id);answers[q.id]=el?el.value.trim():'';});
+  if(!Object.values(answers).some(function(v){return v.length>0;})){showToast('Write something in at least one field');return;}
+  if(typeof sbClient!=='undefined'&&sbClient&&typeof currentUser!=='undefined'&&currentUser&&typeof currentRelationshipId!=='undefined'&&currentRelationshipId){
+    await sbClient.from('private_notes').insert({user_id:currentUser.id,relationship_id:currentRelationshipId,body:JSON.stringify(answers),shared:false,note_type:'shadow'});
+  }
+  closeModal('modal-shadow');showToast('🌑 Shadow work saved privately.');await awardXP(30);
+}
+
+// ══ COSMIC / MOON ══════════════════════════════════════════════════════════
+function updateCosmicScreen(){
+  var moon=getMoonPhase(new Date());
+  var mi=document.getElementById('moon-big-icon'),mp=document.getElementById('moon-big-phase'),mr=document.getElementById('moon-release-txt'),minv=document.getElementById('moon-invite-txt'),me=document.getElementById('moon-energy-txt');
+  if(mi)mi.textContent=moon.icon;if(mp)mp.textContent=moon.name;if(mr)mr.textContent='Release: '+moon.release;if(minv)minv.textContent='Invite: '+moon.invite;if(me)me.textContent=moon.energy;
+  var hc=document.getElementById('horoscope-content');
+  if(hc){var now=new Date(),idx=(now.getMonth()*31+now.getDate())%3;var msgs=[{sign:'♋ Cancer Season',txt:'Home is not a place but a feeling you create between you. This week: ask what home means to each of you.'},{sign:'♑ For the Builder',txt:'Mercury asks: are you communicating what you feel, or what you think they want to hear?'},{sign:'♉ For the Nurturer',txt:'Notice where you mistake stillness for safety. Some things worth building require motion first.'}];hc.innerHTML=msgs.map(function(m){return'<div style="padding:14px;background:rgba(155,109,255,0.06);border:0.5px solid rgba(155,109,255,0.2);border-radius:14px;margin-bottom:10px"><div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);margin-bottom:6px">'+m.sign+'</div><div style="font-size:13px;color:var(--text1);line-height:1.7;font-family:var(--font);font-style:italic">'+m.txt+'</div></div>';}).join('');}
+  var ld=typeof liveData!=='undefined'?liveData:{};
+  var dt=document.getElementById('dream-tags');
+  if(dt)dt.innerHTML=DREAM_TAGS.map(function(tag){return'<div onclick="toggleDreamTag(this,\''+escHtml(tag)+'\')" style="padding:6px 12px;border-radius:40px;border:0.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:12px;cursor:pointer;flex-shrink:0" data-tag="'+escHtml(tag)+'">'+tag+'</div>';}).join('');
+  var da=document.getElementById('dbtn-a'),db=document.getElementById('dbtn-b');
+  // Dream partner buttons removed
+  loadDreams();
+}
+function toggleDreamTag(el,tag){
+  var idx=selectedDreamTags.indexOf(tag);
+  if(idx>=0){selectedDreamTags.splice(idx,1);el.style.borderColor='var(--border)';el.style.color='var(--text2)';}
+  else{selectedDreamTags.push(tag);el.style.borderColor='var(--purple)';el.style.color='var(--purple)';}
+}
+function setDreamPartner(p,btn){
+  dreamPartner=p;
+  document.querySelectorAll('[id^="dbtn"]').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+}
+
+// ══ DREAMS ════════════════════════════════════════════════════════════════
+async function saveDreamEntry(){
+  var title=(document.getElementById('dream-title')||{}).value||'',body=(document.getElementById('dream-input')||{}).value||'';
+  title=title.trim();body=body.trim();if(!body){showToast('Describe the dream first');return;}
+  var ld=typeof liveData!=='undefined'?liveData:{};
+  var _dSlot=currentMySlot||'A'; var authorName=_dSlot==='A'?(ld.partner_a_name||'Partner A'):(ld.partner_b_name||'Partner B');
+  var entry={id:Date.now(),created_at:new Date().toISOString(),title:title||'Untitled Dream',body:body,tags:selectedDreamTags.slice(),author_name:authorName};
+  if(typeof sbClient==='undefined'||!sbClient||typeof currentRelationshipId==='undefined'||!currentRelationshipId){
+    prependDreamRow(entry);
+  }else{
+    var btn=document.getElementById('dream-submit-btn');if(btn)btn.disabled=true;
+    var res=await sbClient.from('dreams').insert({relationship_id:currentRelationshipId,sender_id:typeof currentUser!=='undefined'&&currentUser?currentUser.id:null,author_name:authorName,title:title||'Untitled Dream',body:body,tags:selectedDreamTags}).select('id,created_at,author_name,title,body,tags').single();
+    if(btn)btn.disabled=false;
+    if(res.error){showToast('⚠️ '+res.error.message);return;}
+    if(res.data)prependDreamRow(res.data);
+  }
+  var dtEl=document.getElementById('dream-title'),diEl=document.getElementById('dream-input');
+  if(dtEl)dtEl.value='';if(diEl)diEl.value='';
+  selectedDreamTags=[];
+  document.querySelectorAll('#dream-tags [data-tag]').forEach(function(el){el.style.borderColor='var(--border)';el.style.color='var(--text2)';});
+  showToast('Dream recorded ✨');await awardXP(20);
+}
+async function loadDreams(){
+  var el=document.getElementById('dream-entries');if(!el)return;
+  if(typeof sbClient==='undefined'||!sbClient||typeof currentRelationshipId==='undefined'||!currentRelationshipId){el.innerHTML='<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic">No dreams yet. Record yours above.</div>';return;}
+  el.innerHTML='<div style="text-align:center;color:var(--text3);padding:20px">Loading…</div>';
+  var res=await sbClient.from('dreams').select('id,created_at,author_name,title,body,tags').eq('relationship_id',currentRelationshipId).order('created_at',{ascending:false}).limit(40);
+  if(res.error){el.innerHTML='<div style="color:var(--rose);padding:16px">'+escHtml(res.error.message)+'</div>';return;}
+  el.innerHTML='';
+  if(!res.data||res.data.length===0){el.innerHTML='<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic">No dreams recorded yet ✨</div>';return;}
+  res.data.forEach(function(d){el.insertAdjacentHTML('beforeend',buildDreamRow(d));});
+}
+function buildDreamRow(d){
+  var tags=(d.tags||[]).map(function(t){return'<span style="font-size:10px;padding:2px 8px;background:rgba(155,109,255,0.12);border-radius:20px;border:0.5px solid rgba(155,109,255,0.25);color:var(--purple)">'+escHtml(t)+'</span>';}).join(' ');
+  return'<div style="padding:14px;background:linear-gradient(135deg,rgba(155,109,255,0.06),rgba(78,205,196,0.04));border-left:2px solid var(--purple);border-radius:0 16px 16px 0;margin-bottom:10px" data-dream-id="'+d.id+'">'
+    +'<div style="font-size:10px;color:var(--text3);margin-bottom:4px">'+new Date(d.created_at).toLocaleString()+' · '+escHtml(d.author_name||'Partner')+'</div>'
+    +'<div style="font-size:14px;font-weight:600;color:var(--gold2);margin-bottom:6px">'+escHtml(d.title||'Dream')+'</div>'
+    +'<div style="font-size:13px;color:var(--text1);line-height:1.6;font-style:italic;font-family:var(--font);word-break:break-word">'+escHtml(d.body)+'</div>'
+    +(tags?'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px">'+tags+'</div>':'')
+    +'</div>';
+}
+function prependDreamRow(d){
+  var el=document.getElementById('dream-entries');if(!el)return;
+  if(el.querySelector('[data-dream-id="'+d.id+'"]'))return;
+  el.insertAdjacentHTML('afterbegin',buildDreamRow(d));
+}
+
+// ══ SYNC NAMES ══════════════════════════════════════════════════════════════
+function syncNames(){
+  var ld=typeof liveData!=='undefined'?liveData:{};
+  var cn=document.getElementById('couple-names');
+  if(cn) cn.textContent=(ld.partner_a_name||'Partner A')+' & '+(ld.partner_b_name||'Partner B');
+}
+
+// ══ OVERRIDE startMainApp to call new sync + xp init ═══════════════════════
+var _origStartMainApp = typeof startMainApp !== 'undefined' ? startMainApp : null;
+startMainApp = function(rel) {
+  if (_origStartMainApp) _origStartMainApp(rel);
+  xpData = {A: rel.xp_a||0, B: rel.xp_b||0};
+  completedTasks = rel.completed_tasks || {};
+  syncNames();
+  updateXpDisplay();
+  updateHomeScreen();
+};
+
+// ══ OVERRIDE startDemoMode ══════════════════════════════════════════════════
+var _origDemoMode = typeof startDemoMode !== 'undefined' ? startDemoMode : null;
+startDemoMode = function() {
+  if (_origDemoMode) _origDemoMode();
+  xpData = {A:340, B:280};
+  completedTasks = {p1:true, c1:true};
+  syncNames();
+  updateXpDisplay();
+  updateHomeScreen();
+};
+
+// ══ OVERRIDE updateAllUI to also call new functions ═════════════════════════
+var _origUpdateAllUI = typeof updateAllUI !== 'undefined' ? updateAllUI : null;
+updateAllUI = function() {
+  if (_origUpdateAllUI) _origUpdateAllUI();
+  xpData = {A: (typeof liveData!=='undefined'?liveData.xp_a:0)||xpData.A||0, B: (typeof liveData!=='undefined'?liveData.xp_b:0)||xpData.B||0};
+  completedTasks = (typeof liveData!=='undefined'&&liveData.completed_tasks) ? liveData.completed_tasks : completedTasks||{};
+  updateXpDisplay();
+  updateHomeScreen();
+};
+
+// ══ MODAL TIMER HTML (inject if missing) ════════════════════════════════════
+(function injectTimerModal(){
+  if(document.getElementById('modal-timer'))return;
+  var div=document.createElement('div');
+  div.id='modal-timer';
+  div.setAttribute('role','dialog');div.setAttribute('aria-modal','true');
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:none;align-items:flex-end;justify-content:center;z-index:1000;padding-bottom:var(--safe-bottom,0px)';
+  div.innerHTML='<div style="width:100%;max-width:480px;background:#11151f;border:0.5px solid var(--border2,rgba(201,168,76,0.35));border-radius:32px 32px 0 0;padding:24px;text-align:center">'
+    +'<div style="width:40px;height:4px;background:rgba(201,168,76,0.35);border-radius:2px;margin:0 auto 20px"></div>'
+    +'<div style="font-size:48px" id="timer-icon">⏱</div>'
+    +'<div style="font-size:20px;color:var(--gold2);font-family:var(--font);margin:8px 0" id="timer-task-name">Practice</div>'
+    +'<div style="font-size:64px;font-weight:700;color:var(--text1);font-variant-numeric:tabular-nums;margin:20px 0;letter-spacing:2px" id="timer-display">00:00</div>'
+    +'<button id="timer-start-btn" onclick="toggleTimer()" style="width:100%;padding:14px;border-radius:40px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15));border:0.5px solid var(--gold);color:var(--gold);font-size:15px;font-weight:600;cursor:pointer">▶ Start</button>'
+    +'<button onclick="closeTimer()" style="width:100%;padding:14px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:15px;cursor:pointer;margin-top:8px">Done</button>'
+    +'</div>';
+  document.body.appendChild(div);
+  div.addEventListener('click',function(e){if(e.target===div)closeTimer();});
+})();
+
+// ══ MODAL SHADOW HTML (inject if missing) ═══════════════════════════════════
+(function injectShadowModal(){
+  if(document.getElementById('modal-shadow'))return;
+  var div=document.createElement('div');
+  div.id='modal-shadow';div.setAttribute('role','dialog');div.setAttribute('aria-modal','true');
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:none;align-items:flex-end;justify-content:center;z-index:1000;padding-bottom:var(--safe-bottom,0px)';
+  div.innerHTML='<div style="width:100%;max-width:480px;background:#11151f;border:0.5px solid var(--border2,rgba(201,168,76,0.35));border-radius:32px 32px 0 0;padding:24px;max-height:88vh;overflow-y:auto">'
+    +'<div style="width:40px;height:4px;background:rgba(201,168,76,0.35);border-radius:2px;margin:0 auto 20px"></div>'
+    +'<h3 style="color:var(--rose);margin-bottom:4px">Shadow Work 🌑</h3>'
+    +'<p style="font-size:12px;color:var(--text2);margin-bottom:14px;font-style:italic">What you cannot say becomes the wall between you.</p>'
+    +'<div id="shadow-questions"></div>'
+    +'<button onclick="saveShadowWork()" style="width:100%;padding:14px;border-radius:40px;background:rgba(232,112,112,0.12);border:0.5px solid var(--rose);color:var(--rose);font-size:15px;cursor:pointer">Save Shadow Work</button>'
+    +'<button onclick="closeModal(\'modal-shadow\')" style="width:100%;padding:14px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:15px;cursor:pointer;margin-top:8px">Close</button>'
+    +'</div>';
+  document.body.appendChild(div);
+  div.addEventListener('click',function(e){if(e.target===div)closeModal('modal-shadow');});
+})();
+
+
+// ══ FORGOT PASSWORD FLOW ══════════════════════════════════════════════════
+function showForgotPassword() {
+  var screens = ['setup-screen','auth-screen','relationship-setup-screen','waiting-screen','forgot-password-screen','main-app'];
+  screens.forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+  var fp = document.getElementById('forgot-password-screen');
+  if (fp) fp.style.display = 'flex';
+  // pre-fill email if already typed
+  var authEmail = document.getElementById('auth-email');
+  var resetEmail = document.getElementById('reset-email');
+  if (authEmail && resetEmail && authEmail.value) resetEmail.value = authEmail.value;
+  var errEl = document.getElementById('reset-error');
+  var sucEl = document.getElementById('reset-success');
+  if (errEl) errEl.textContent = '';
+  if (sucEl) sucEl.textContent = '';
+}
+
+function showSignIn() {
+  var screens = ['setup-screen','auth-screen','relationship-setup-screen','waiting-screen','forgot-password-screen','main-app'];
+  screens.forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+  var as = document.getElementById('auth-screen');
+  if (as) as.style.display = 'flex';
+  var errEl = document.getElementById('auth-error-msg');
+  if (errEl) errEl.textContent = '';
+}
+
+async function sendPasswordReset() {
+  var emailEl = document.getElementById('reset-email');
+  var errEl   = document.getElementById('reset-error');
+  var sucEl   = document.getElementById('reset-success');
+  var btn     = document.getElementById('reset-btn');
+
+  if (errEl) errEl.textContent = '';
+  if (sucEl) sucEl.textContent = '';
+
+  var email = emailEl ? emailEl.value.trim() : '';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (errEl) errEl.textContent = 'Enter a valid email address.';
+    return;
+  }
+
+  if (typeof sbClient === 'undefined' || !sbClient) {
+    if (errEl) errEl.textContent = 'Not connected to Supabase. Return to setup.';
+    return;
+  }
+
+  // Loading state
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Sending…';
+  }
+
+  var redirectUrl = window.location.origin + window.location.pathname;
+  var res = await sbClient.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl + '?mode=reset'
+  });
+
+  if (btn) { btn.disabled = false; btn.innerHTML = 'Send Reset Link ✉️'; }
+
+  if (res.error) {
+    if (errEl) errEl.textContent = res.error.message;
+    return;
+  }
+
+  if (sucEl) sucEl.textContent = '✉️ Reset link sent to ' + email + '. Check your inbox (and spam folder).';
+  if (emailEl) emailEl.value = '';
+  if (btn) {
+    btn.style.background = 'rgba(78,205,196,0.15)';
+    btn.style.borderColor = 'var(--teal)';
+    btn.style.color = 'var(--teal)';
+    btn.innerHTML = '✓ Email sent';
+  }
+}
+
+// ── Handle ?mode=reset deep link (user clicks email link and lands back here)
+(function handleResetDeepLink() {
+  var params = new URLSearchParams(window.location.search);
+  var hash   = new URLSearchParams(window.location.hash.replace('#',''));
+  var isReset = params.get('mode') === 'reset' || hash.get('type') === 'recovery';
+  if (!isReset) return;
+
+  // Supabase puts the session tokens in the hash after redirect
+  // We need to listen for the PASSWORD_RECOVERY auth event
+  window._awaitingReset = true;
+})();
+
+// Listen for Supabase PASSWORD_RECOVERY event — fires when user lands from email link
+window.addEventListener('load', function() {
+  if (typeof sbClient === 'undefined' || !sbClient) return;
+  sbClient.auth.onAuthStateChange(function(event, session) {
+    if (event === 'PASSWORD_RECOVERY') {
+      showPasswordUpdatePanel(session);
+    }
+    if (event === 'SIGNED_IN' && window._awaitingReset) {
+      window._awaitingReset = false;
+      showPasswordUpdatePanel(session);
+    }
+  });
+});
+
+function showPasswordUpdatePanel(session) {
+  // Build an update-password panel dynamically
+  var existing = document.getElementById('update-password-screen');
+  if (existing) { existing.style.display = 'flex'; return; }
+
+  var div = document.createElement('div');
+  div.id = 'update-password-screen';
+  div.style.cssText = 'min-height:100vh;padding:40px 20px;flex-direction:column;align-items:stretch';
+  div.innerHTML = ''
+    + '<div style="text-align:center;margin-bottom:32px">'
+    +   '<div style="font-size:48px">🔓</div>'
+    +   '<div style="font-size:24px;font-family:Georgia;color:var(--gold2);margin-top:8px">Set New Password</div>'
+    +   '<div style="font-size:13px;color:var(--text2);margin-top:6px">Choose a strong password for your account.</div>'
+    + '</div>'
+    + '<div class="card">'
+    +   '<div class="card-title">New Password</div>'
+    +   '<input type="password" id="new-password" style="width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;margin-bottom:12px;outline:none;-webkit-appearance:none" placeholder="New password (min 8 characters)" autocomplete="new-password">'
+    +   '<input type="password" id="new-password-confirm" style="width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;margin-bottom:12px;outline:none;-webkit-appearance:none" placeholder="Confirm new password" autocomplete="new-password">'
+    +   '<div id="update-pw-error" style="color:var(--rose);font-size:12px;min-height:18px;margin-bottom:4px"></div>'
+    +   '<div id="update-pw-success" style="color:var(--teal);font-size:13px;min-height:18px;margin-bottom:8px;font-style:italic"></div>'
+    +   '<button onclick="updatePassword()" id="update-pw-btn" style="width:100%;padding:14px;border-radius:40px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15));border:0.5px solid var(--gold);color:var(--gold);font-size:15px;font-weight:600;cursor:pointer">Update Password</button>'
+    + '</div>';
+
+  document.getElementById('app').appendChild(div);
+
+  // Hide all other screens
+  ['setup-screen','auth-screen','relationship-setup-screen','waiting-screen','forgot-password-screen','main-app']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+
+  div.style.display = 'flex';
+}
+
+async function updatePassword() {
+  var pwEl  = document.getElementById('new-password');
+  var cfEl  = document.getElementById('new-password-confirm');
+  var errEl = document.getElementById('update-pw-error');
+  var sucEl = document.getElementById('update-pw-success');
+  var btn   = document.getElementById('update-pw-btn');
+
+  if (errEl) errEl.textContent = '';
+  if (sucEl) sucEl.textContent = '';
+
+  var pw  = pwEl  ? pwEl.value  : '';
+  var cf  = cfEl  ? cfEl.value  : '';
+
+  if (!pw || pw.length < 8) {
+    if (errEl) errEl.textContent = 'Password must be at least 8 characters.';
+    return;
+  }
+  if (pw !== cf) {
+    if (errEl) errEl.textContent = 'Passwords do not match.';
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Updating…'; }
+
+  var res = await sbClient.auth.updateUser({ password: pw });
+
+  if (btn) { btn.disabled = false; btn.innerHTML = 'Update Password'; }
+
+  if (res.error) {
+    if (errEl) errEl.textContent = res.error.message;
+    return;
+  }
+
+  if (sucEl) sucEl.textContent = '✓ Password updated! Signing you in…';
+  if (pwEl)  pwEl.value  = '';
+  if (cfEl)  cfEl.value  = '';
+
+  // Password updated — user is already signed in by Supabase at this point
+  // Clean the URL and proceed to app
+  window.history.replaceState({}, document.title, window.location.pathname);
+  setTimeout(function() {
+    currentUser = res.data.user;
+    loadUserRelationship();
+    var upScreen = document.getElementById('update-password-screen');
+    if (upScreen) upScreen.style.display = 'none';
+  }, 1200);
+}
+
+
+// ══ DB SETUP CHECKER ══════════════════════════════════════════════════════
+// Runs once after app loads — probes required tables and shows a setup panel
+// if any are missing, so devs never face a silent 400.
+async function checkDatabaseSetup() {
+  if (typeof sbClient === 'undefined' || !sbClient) return;
+  var missing = [];
+  var tables = ['relationships','messages','private_notes','dreams'];
+  for (var i = 0; i < tables.length; i++) {
+    var t = tables[i];
+    var res = await sbClient.from(t).select('id').limit(1);
+    if (res.error && (res.error.code === '42P01' || (res.error.message && res.error.message.includes('does not exist')))) {
+      missing.push(t);
+    }
+  }
+  // Also probe for missing columns on relationships
+  if (!missing.some(function(m){return m.startsWith('relationships');})) {
+    var colRes = await sbClient.from('relationships').select('intake_a_done, xp_a, completed_tasks').limit(1);
+    if (colRes.error && colRes.error.code === '42703') {
+      missing.push('relationships (missing columns — run ALTER TABLE migration below)');
+    }
+  }
+  if (missing.length === 0) return;
+  showDbSetupBanner(missing);
+}
+
+function showDbSetupBanner(missing) {
+  var existing = document.getElementById('db-setup-banner');
+  if (existing) { existing.style.display = 'block'; return; }
+
+  var sql = [
+    '-- Run this in Supabase → SQL Editor',
+    '',
+    '-- ═══════════════════════════════════════════════════════════════════',
+    '-- Two Paths — Full corrective migration v4',
+    '-- Run in: Supabase → SQL Editor → Run',
+    '-- ═══════════════════════════════════════════════════════════════════',
+    '',
+    '-- 1. RELATIONSHIPS',
+    'create table if not exists relationships (',
+    '  id text primary key,',
+    '  invite_code text unique not null,',
+    '  partner_a_id uuid references auth.users(id),',
+    '  partner_a_name text,',
+    '  partner_b_id uuid references auth.users(id),',
+    '  partner_b_name text,',
+    '  partner_b_joined boolean default false,',
+    '  couple_stats jsonb default \'{}\'::jsonb,',
+    '  baby_readiness int default 70,',
+    '  xp_a int default 0, xp_b int default 0,',
+    '  completed_tasks jsonb default \'{}\'::jsonb,',
+    '  intake_a jsonb default \'{}\'::jsonb,',
+    '  intake_b jsonb default \'{}\'::jsonb,',
+    '  intake_a_done boolean default false,',
+    '  intake_b_done boolean default false,',
+    '  journal jsonb default \'[]\'::jsonb,',
+    '  created_at timestamptz default now()',
+    ');',
+    '-- Add ALL missing columns to existing relationships table:',
+    'alter table relationships add column if not exists intake_a jsonb default \'{}\'::jsonb;',
+    'alter table relationships add column if not exists intake_b jsonb default \'{}\'::jsonb;',
+    'alter table relationships add column if not exists intake_a_done boolean default false;',
+    'alter table relationships add column if not exists intake_b_done boolean default false;',
+    'alter table relationships add column if not exists xp_a int default 0;',
+    'alter table relationships add column if not exists xp_b int default 0;',
+    'alter table relationships add column if not exists completed_tasks jsonb default \'{}\'::jsonb;',
+    'alter table relationships add column if not exists baby_readiness int default 70;',
+    'alter table relationships add column if not exists couple_stats jsonb default \'{}\'::jsonb;',
+    'alter table relationships add column if not exists journal jsonb default \'[]\'::jsonb;',
+    'alter table relationships add column if not exists invite_code text;',
+    'alter table relationships add column if not exists partner_b_joined boolean default false;',
+        'alter table relationships enable row level security;',
+    'drop policy if exists "partners_access_relationship" on relationships;',
+    'create policy "partners_access_relationship" on relationships',
+    '  for all using (auth.uid()=partner_a_id or auth.uid()=partner_b_id);',
+    '',
+    '-- 2. MESSAGES',
+    'create table if not exists messages (',
+    '  id uuid primary key default gen_random_uuid(),',
+    '  relationship_id text references relationships(id) on delete cascade,',
+    '  sender_id uuid references auth.users(id),',
+    '  author_name text, body text not null,',
+    '  created_at timestamptz default now()',
+    ');',
+    'alter table messages enable row level security;',
+    'drop policy if exists "partners_access_messages" on messages;',
+    'create policy "partners_access_messages" on messages for all using (',
+    '  relationship_id in (select id from relationships where auth.uid()=partner_a_id or auth.uid()=partner_b_id)',
+    ');',
+    '',
+    '-- 3. PRIVATE NOTES — drop/recreate fixes column mismatch',
+    'drop table if exists private_notes cascade;',
+    'create table private_notes (',
+    '  id uuid primary key default gen_random_uuid(),',
+    '  relationship_id text references relationships(id) on delete cascade,',
+    '  user_id uuid references auth.users(id) not null,',
+    '  body text not null,',
+    '  shared boolean default false,',
+    '  note_type text default \'note\',',
+    '  created_at timestamptz default now()',
+    ');',
+    'alter table private_notes enable row level security;',
+    '-- Owner can do all; partner sees only shared notes',
+    'create policy "owner_all_private_notes" on private_notes',
+    '  for all using (auth.uid() = user_id);',
+    'create policy "partner_sees_shared_notes" on private_notes',
+    '  for select using (',
+    '    shared = true and relationship_id in (',
+    '      select id from relationships where auth.uid()=partner_a_id or auth.uid()=partner_b_id',
+    '    )',
+    '  );',
+    '',
+    '-- 4. DREAMS — drop/recreate fixes 403',
+    'drop table if exists dreams cascade;',
+    'create table dreams (',
+    '  id uuid primary key default gen_random_uuid(),',
+    '  relationship_id text references relationships(id) on delete cascade,',
+    '  sender_id uuid references auth.users(id),',
+    '  author_name text, title text,',
+    '  body text not null,',
+    '  tags jsonb default \'[]\'::jsonb,',
+    '  created_at timestamptz default now()',
+    ');',
+    'alter table dreams enable row level security;',
+    'drop policy if exists "partners_access_dreams" on dreams;',
+    'create policy "partners_access_dreams" on dreams for all using (',
+    '  relationship_id in (select id from relationships where auth.uid()=partner_a_id or auth.uid()=partner_b_id)',
+    ');',
+    '',
+    '-- 5. Flush PostgREST schema cache',
+    'notify pgrst, \'reload schema\';',
+  ].join('\n');
+
+  var banner = document.createElement('div');
+  banner.id = 'db-setup-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#11151f;border-bottom:2px solid var(--rose);padding:16px 20px;max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch';
+  banner.innerHTML = ''
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">'
+    +   '<div>'
+    +     '<div style="font-size:14px;font-weight:600;color:var(--rose);margin-bottom:4px">⚠️ Missing Supabase Tables</div>'
+    +     '<div style="font-size:12px;color:var(--text2)">Missing: <strong style="color:var(--rose)">' + missing.join(', ') + '</strong>. Run the SQL below in Supabase → SQL Editor.</div>'
+    +   '</div>'
+    +   '<button onclick="document.getElementById(\'db-setup-banner\').style.display=\'none\'" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;flex-shrink:0;line-height:1">✕</button>'
+    + '</div>'
+    + '<pre id="db-setup-sql" style="background:rgba(255,255,255,0.04);border:0.5px solid var(--border);border-radius:12px;padding:12px;font-size:11px;color:var(--text2);overflow-x:auto;white-space:pre;line-height:1.6;max-height:260px;overflow-y:auto">' + sql + '</pre>'
+    + '<div style="display:flex;gap:8px;margin-top:10px">'
+    +   '<button onclick="copySqlSetup()" style="padding:8px 16px;border-radius:20px;background:rgba(78,205,196,0.15);border:0.5px solid var(--teal);color:var(--teal);font-size:12px;cursor:pointer">📋 Copy SQL</button>'
+    +   '<button onclick="document.getElementById(\'db-setup-banner\').style.display=\'none\'" style="padding:8px 16px;border-radius:20px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer">Dismiss</button>'
+    + '</div>';
+
+  document.body.appendChild(banner);
+}
+
+async function copySqlSetup() {
+  var el = document.getElementById('db-setup-sql');
+  if (!el) return;
+  var text = el.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('SQL copied! Paste into Supabase → SQL Editor');
+  } catch(e) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('SQL copied!');
+  }
+}
+
+// Run the DB check shortly after the app boots
+var _origStartMainAppDbCheck = startMainApp;
+startMainApp = function(rel) {
+  _origStartMainAppDbCheck(rel);
+  setTimeout(checkDatabaseSetup, 2000);
+};
+var _origDemoDbCheck = startDemoMode;
+startDemoMode = function() {
+  _origDemoDbCheck();
+  // skip DB check in demo mode
+};
+
+
+// ══════════════════════════════════════════════════════════════════════
+//  PER-USER GLOBALS (no toggles — derived from auth)
+// ══════════════════════════════════════════════════════════════════════
+var currentMySlot  = 'A';   // set from auth.uid() vs partner_a_id
+var intakeAnswers  = {};
+var intakePage     = 0;
+var INTAKE_PAGES   = [
+  { title:'About You', icon:'🌱',
+    subtitle:'This builds your personal baseline. Answer honestly — this is a mirror, not a test.',
+    fields:[
+      {id:'age',         label:'Your age',                                    type:'text',     placeholder:'e.g. 32'},
+      {id:'nationality', label:'Nationality / cultural heritage',              type:'text',     placeholder:'e.g. Italian-Brazilian'},
+      {id:'prev_rel',    label:'Previous long-term relationships or marriages',type:'textarea', placeholder:'No judgement here'},
+      {id:'children',    label:'Do you already have children?',                type:'yesno'},
+      {id:'together',    label:'How long have you been together?',             type:'text',     placeholder:'e.g. 4 years, 3 months'},
+    ]
+  },
+  { title:'Love Language', icon:'❤️',
+    subtitle:'Complete these sentences. Write what comes first.',
+    fields:[
+      {id:'origin',      label:'The moment you knew this was different — where, what happened, what you felt?', type:'textarea', placeholder:'Tell the story…'},
+      {id:'loved_when',  label:'I feel most loved when…',                      type:'textarea', placeholder:'Be specific'},
+      {id:'unloved',     label:'I feel least loved when…',                     type:'textarea', placeholder:'This is important'},
+      {id:'admire',      label:'The thing I admire most about my partner is…', type:'textarea'},
+      {id:'wish_change', label:'Completely honestly, one thing I wish would change is…', type:'textarea', placeholder:'Courage required'},
+    ]
+  },
+  { title:'Rate Your Relationship', icon:'📊',
+    subtitle:'Score 1–10. These numbers directly feed the relationship tree, mountain, and galaxy.',
+    fields:[
+      {id:'rate_friendship',    label:'Friendship',         type:'scale'},
+      {id:'rate_trust',         label:'Trust',               type:'scale'},
+      {id:'rate_sexual',        label:'Sexual connection',   type:'scale'},
+      {id:'rate_emotional',     label:'Emotional intimacy',  type:'scale'},
+      {id:'rate_teamwork',      label:'Teamwork',            type:'scale'},
+      {id:'rate_communication', label:'Communication',       type:'scale'},
+      {id:'rate_vision',        label:'Shared vision',       type:'scale'},
+      {id:'energy_leak',        label:'Where does the relationship currently leak energy?', type:'textarea', placeholder:'Be honest'},
+    ]
+  },
+  { title:'The Future', icon:'🌅',
+    subtitle:'One of the most important sections. Take your time.',
+    courage:true,
+    fields:[
+      {id:'child_why',     label:'Why do you want a child?',                    type:'textarea', placeholder:'The real reason'},
+      {id:'child_fear',    label:'Your fears about becoming a parent?',         type:'textarea'},
+      {id:'child_imagine', label:'What kind of parent do you imagine being?',   type:'textarea'},
+      {id:'vision_10yr',   label:'10 years from now — you wake up together. Describe everything.', type:'textarea', placeholder:'Write freely. This is your future.'},
+    ]
+  },
+  { title:'Shadow & Soul', icon:'🌑',
+    subtitle:'This requires courage. What you cannot say becomes the wall between you.',
+    courage:true,
+    fields:[
+      {id:'soul_lesson',    label:'What lesson do you believe your partner arrived to teach you?', type:'textarea', placeholder:'Go deep'},
+      {id:'shadow_judge_p', label:'The thing I secretly judge my partner for is…',  type:'textarea', placeholder:'Private unless you choose to share'},
+      {id:'shadow_fear',    label:'The fear I rarely admit is…',                    type:'textarea'},
+      {id:'shadow_truth',   label:'The truth I have not fully spoken is…',          type:'textarea', placeholder:'The hardest one'},
+      {id:'final',          label:'If your partner could understand one thing about you completely — what would it be?', type:'textarea', placeholder:'Take your time. This is the heart of everything.'},
+    ]
+  },
+];
+
+// ══ INTAKE FLOW ═══════════════════════════════════════════════════════════
+function startIntake(relation, slot) {
+  liveData          = relation;
+  currentMySlot     = slot;
+  currentRelationshipId = relation.id;
+  intakeAnswers     = Object.assign({}, slot==='A' ? (relation.intake_a||{}) : (relation.intake_b||{}));
+  intakePage        = 0;
+  ['auth-screen','relationship-setup-screen','waiting-screen','main-app','forgot-password-screen'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  var is = document.getElementById('intake-screen');
+  if(is) is.style.display='block';
+  renderIntakePage();
+}
+
+function renderIntakePage() {
+  var page  = INTAKE_PAGES[intakePage];
+  var inner = document.getElementById('intake-inner');
+  if(!inner) return;
+  var pips  = INTAKE_PAGES.map(function(_,i){
+    return '<div class="intake-pip '+(i<intakePage?'done':i===intakePage?'current':'')+'""></div>';
+  }).join('');
+  var fieldsHtml = page.fields.map(function(f){
+    var saved = intakeAnswers[f.id]||'';
+    var el='';
+    if(f.type==='text'){
+      el='<input type="text" class="intake-input" id="if_'+f.id+'" placeholder="'+(f.placeholder||'')+'" value="'+escHtml(saved)+'" autocomplete="off">';
+    } else if(f.type==='textarea'){
+      el='<textarea class="intake-input" id="if_'+f.id+'" placeholder="'+(f.placeholder||'')+'" rows="3">'+escHtml(saved)+'</textarea>';
+    } else if(f.type==='scale'){
+      var dots='';
+      for(var n=1;n<=10;n++){
+        var sel=String(saved)===String(n)?' sel':'';
+        dots+='<div class="intake-scale-dot'+sel+'" onclick="selectIntakeScale(this,\''+f.id+'\','+n+')">'+n+'</div>';
+      }
+      el='<div class="intake-scale">'+dots+'</div>';
+    } else if(f.type==='yesno'){
+      el='<div class="intake-yesno">'
+        +'<div class="intake-yn-btn'+(saved==='yes'?' sel':'')+'" onclick="selectIntakeYN(this,\''+f.id+'\',\'yes\')">Yes</div>'
+        +'<div class="intake-yn-btn'+(saved==='no'?' sel':'')+'" onclick="selectIntakeYN(this,\''+f.id+'\',\'no\')">No</div>'
+        +'</div>';
+    }
+    return '<div class="intake-field"><label class="intake-label">'+f.label+'</label>'+el+'</div>';
+  }).join('');
+  inner.innerHTML=
+    '<div class="intake-hero">'
+    +'<div class="intake-hero-icon">'+page.icon+'</div>'
+    +'<div class="intake-hero-title">'+page.title+'</div>'
+    +'<div class="intake-hero-sub">'+page.subtitle+'</div>'
+    +'</div>'
+    +'<div class="intake-progress">'+pips+'</div>'
+    +(page.courage?'<div class="intake-courage-note">🌑 Shadow section — answers stored privately unless you choose to share.</div>':'')
+    +fieldsHtml
+    +'<div class="intake-nav">'
+    +(intakePage>0?'<button class="intake-back" onclick="intakeBack()">← Back</button>':'')
+    +'<button class="intake-next" onclick="intakeNext()">'
+    +(intakePage===INTAKE_PAGES.length-1?'Complete My Profile ✨':'Continue →')
+    +'</button></div>';
+}
+
+function selectIntakeScale(el,fieldId,val){
+  intakeAnswers[fieldId]=val;
+  el.parentNode.querySelectorAll('.intake-scale-dot').forEach(function(d){d.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function selectIntakeYN(el,fieldId,val){
+  intakeAnswers[fieldId]=val;
+  el.parentNode.querySelectorAll('.intake-yn-btn').forEach(function(d){d.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function collectIntakePage(){
+  INTAKE_PAGES[intakePage].fields.forEach(function(f){
+    if(f.type==='scale'||f.type==='yesno') return;
+    var el=document.getElementById('if_'+f.id);
+    if(el) intakeAnswers[f.id]=el.value.trim();
+  });
+}
+function intakeBack(){collectIntakePage();if(intakePage>0){intakePage--;renderIntakePage();}}
+async function intakeNext(){
+  collectIntakePage();
+  await saveIntakeProgress(false);
+  if(intakePage<INTAKE_PAGES.length-1){
+    intakePage++;renderIntakePage();window.scrollTo(0,0);
+  } else {
+    await completeIntake();
+  }
+}
+async function saveIntakeProgress(done){
+  if(!sbClient||!currentRelationshipId||!currentUser) return;
+  var slot=currentMySlot;
+  var updates={};
+  updates['intake_'+slot.toLowerCase()]=intakeAnswers;
+  if(done){
+    updates['intake_'+slot.toLowerCase()+'_done']=true;
+    var derived=deriveProfileFromIntake(intakeAnswers);
+    var existing=(liveData&&liveData.couple_stats)||{};
+    updates.couple_stats=mergeStats(existing,derived.couple_stats,slot);
+    updates.baby_readiness=derived.baby_readiness;
+  }
+  var ok = await safeRelUpdate(updates);
+  if (!ok) {
+    var minimal = {};
+    if (updates.couple_stats)   minimal.couple_stats   = updates.couple_stats;
+    if (updates.baby_readiness) minimal.baby_readiness = updates.baby_readiness;
+    if (Object.keys(minimal).length > 0) await safeRelUpdate(minimal);
+  }
+}
+async function completeIntake(){
+  await saveIntakeProgress(true);
+  showToast('Profile complete! Welcome to your journey ✨');
+  if(sbClient&&currentRelationshipId){
+    var res=await sbClient.from('relationships').select('*').eq('id',currentRelationshipId).single();
+    if(res.data) startMainApp(res.data);
+  }
+}
+
+// ══ STATS CALCULATORS ═════════════════════════════════════════════════════
+function deriveProfileFromIntake(answers){
+  function rating(id,fallback){var v=Number(answers[id]);return isNaN(v)?(fallback||7)*10:Math.round(v*10);}
+  var trust=rating('rate_trust',7),intimacy=Math.round((rating('rate_emotional',7)+rating('rate_sexual',6))/2),
+      communication=rating('rate_communication',7),vision=rating('rate_vision',8),
+      friendship=rating('rate_friendship',8),teamwork=rating('rate_teamwork',7);
+  var couple_stats={trust:trust,intimacy:intimacy,communication:communication,vision:vision,friendship:friendship,teamwork:teamwork};
+  var baby_readiness=Math.min(100,Math.round(
+    (trust*0.4+intimacy*0.3+communication*0.3)*0.3+
+    (teamwork*0.5+trust*0.5)*0.3+
+    (friendship*0.4+vision*0.6)*0.2+65*0.2));
+  return{couple_stats:couple_stats,baby_readiness:baby_readiness};
+}
+
+function mergeStats(existing,newStats,slot){
+  var merged={};
+  Object.keys(newStats).forEach(function(k){
+    var ex=existing[k]!=null?existing[k]:70;
+    merged[k]=(ex===70||ex==null)?newStats[k]:Math.round((ex+newStats[k])/2);
+  });
+  return merged;
+}
+
+function computeMyGrowthStats(){
+  var slot=currentMySlot||'A';
+  var myIntake=(liveData&&(slot==='A'?liveData.intake_a:liveData.intake_b))||intakeAnswers||{};
+  var cs=(liveData&&liveData.couple_stats)||{};
+  function r(id,fallback){var v=Number(myIntake[id]);return isNaN(v)?fallback:Math.round(v*10);}
+  function has(id){return myIntake[id]&&myIntake[id].length>20;}
+  function cap(v){return Math.min(95,Math.max(10,Math.round(v)));}
+  return{
+    empathy:      cap(r('rate_emotional',7)*0.4+(has('shadow_judge_p')?80:50)*0.2+(has('admire')?90:60)*0.2+(cs.trust||70)*0.2),
+    selfAwareness:cap((has('shadow_fear')?90:50)*0.25+(has('shadow_truth')?90:50)*0.25+(has('final')?90:60)*0.25+r('rate_emotional',6)*0.25),
+    communication:cap(r('rate_communication',7)*0.6+(has('energy_leak')?80:50)*0.2+(has('unloved')?80:50)*0.2),
+    confidence:   cap(r('rate_vision',7)*0.4+(has('child_imagine')?80:50)*0.3+(has('vision_10yr')?90:50)*0.3),
+    vulnerability:cap((has('shadow_truth')?90:40)*0.35+(has('final')?90:50)*0.35+(has('unloved')?80:50)*0.3),
+  };
+}
+
+function computeCoupleStats(){
+  if(!liveData) return null;
+  var ia=liveData.intake_a||{},ib=liveData.intake_b||{};
+  var hasA=Object.keys(ia).length>3,hasB=Object.keys(ib).length>3;
+  if(!hasA&&!hasB) return liveData.couple_stats||{trust:70,intimacy:65,communication:72,vision:80,friendship:78,teamwork:75};
+  function avg(id,fa,fb){
+    var va=Number(ia[id]),vb=Number(ib[id]);
+    var a=isNaN(va)?fa*10:va*10, b=isNaN(vb)?fb*10:vb*10;
+    return Math.round((a+b)/2);
+  }
+  return{trust:avg('rate_trust',7,7),intimacy:avg('rate_emotional',7,6),communication:avg('rate_communication',7,7),vision:avg('rate_vision',8,8),friendship:avg('rate_friendship',8,8),teamwork:avg('rate_teamwork',7,7)};
+}
+
+// ── Patch updateAllUI to inject computed stats before render ───────────────
+var _origUAU = typeof updateAllUI==='function' ? updateAllUI : null;
+updateAllUI = function(){
+  var real=computeCoupleStats();
+  if(real&&liveData) liveData.couple_stats=real;
+  if(_origUAU) _origUAU();
+};
+
+// ── Patch loadUserRelationship return value to gate on intake ──────────────
+// We wrap startMainApp instead to check intake on every boot
+var _origSMA = typeof startMainApp==='function' ? startMainApp : null;
+startMainApp = function(relation){
+  if(!relation) return;
+  // Determine slot from auth
+  var slot = currentUser && relation.partner_a_id===currentUser.id ? 'A' : 'B';
+  currentMySlot = slot;
+  var intakeDone = slot==='A' ? relation.intake_a_done : relation.intake_b_done;
+  if(!intakeDone){
+    startIntake(relation, slot);
+    return;
+  }
+  if(_origSMA) _origSMA(relation);
+  // Sync XP
+  xpData={A:relation.xp_a||0,B:relation.xp_b||0};
+  completedTasks=relation.completed_tasks||{};
+  updateXpDisplay();
+};
+
 initStars();
-showScreen('setup');
 </script>
 </body>
 </html>
