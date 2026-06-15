@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>OLIVIUM | Token Membership · Grove Stewardship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+
+<style>
+
+</style>
+</head>
+<body>
+
+<div class="toast" id="toastMsg">🌿 Welcome to Olivium</div>
+
+<!-- simple nav with working connect button -->
+<nav style="position: fixed; top:0; left:0; width:100%; z-index: 1000; padding: 1rem 2rem; background: rgba(8,12,8,0.85); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(197,160,89,0.15);">
+  <div style="max-width:1320px; margin:0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 500; letter-spacing: 1px;">OLIVIUM <span style="font-size:0.8rem; color:var(--gold);">· token membership</span></div>
+    <div style="display: flex; gap: 1.6rem; align-items: center; flex-wrap: wrap;">
+      <a href="#tiers" style="color: #e6e6dc; text-decoration: none; font-size:0.75rem; letter-spacing: 1.5px;">Membership</a>
+      <a href="#trees" style="color: #e6e6dc; text-decoration: none; font-size:0.75rem; letter-spacing: 1.5px;">Tree Stewardship</a>
+      <a href="#vision" style="color: #e6e6dc; text-decoration: none; font-size:0.75rem; letter-spacing: 1.5px;">Vision</a>
+      <!-- Wallet Info & Connect Button -->
+      <div id="walletInfo" class="flex items-center gap-2">
+        <div id="walletDisplay" class="wallet-pill hidden md:flex">
+          <span class="w-2 h-2 rounded-full bg-[var(--gold)] status-pulse"></span>
+          <span id="walletShort">Not connected</span>
+        </div>
+<div id="balanceDisplay" class="wallet-pill hidden md:flex gap-2">◎ <span id="solBalance">0.00</span> SOL 🌿 <span id="olvBalance">0</span> OLV</div>
+      </div>
+      <button id="connectWalletBtn" class="btn-primary px-5 py-2 rounded-full text-xs">CONNECT WALLET</button>
+    </div>
+  </div>
+</nav>
+
+<!-- hero -->
+<section style="padding-top: 7rem; min-height: 85vh; display: flex; align-items: center;">
+  <div class="container">
+    <div class="reveal">
+      <p class="eyebrow">OLVM TOKEN · GROVE RESIDENCY</p>
+      <h1 class="display-font" style="font-size: clamp(2.8rem, 8vw, 5.2rem); font-weight: 400; line-height: 1.1;">Hold OLVM.<br>Become a guardian of <em style="color: var(--gold);">Mediterranean olive trees</em>.</h1>
+      <div class="rule"></div>
+      <p class="section-sub">Unlock olive oil allocations, exclusive Tuscan estate stays, harvest participation, and carbon-impact membership. Stewardship reimagined.</p>
+      <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+        <button class="btn-primary" onclick="document.getElementById('tiers').scrollIntoView({behavior:'smooth'})">Explore membership tiers</button>
+        <button class="btn-outline-gold" onclick="document.getElementById('vision').scrollIntoView({behavior:'smooth'})">Long-term vision →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- token stats + flow -->
+<div class="container">
+  <div class="glass-panel token-stats reveal">
+    <div class="stat-cell"><div class="stat-number">240</div><div style="font-size:0.7rem; letter-spacing: 2px;">Heritage Olive Trees</div></div>
+    <div class="stat-cell"><div class="stat-number">240M</div><div style="font-size:0.7rem; letter-spacing: 2px;">OLVM (Mignole) Supply</div></div>
+    <div class="stat-cell"><div class="stat-number" id="co2Estimate">🌱 +12t</div><div style="font-size:0.7rem; letter-spacing: 2px;">Estimated CO₂ / year</div></div>
+  </div>
+</div>
+
+<div class="container reveal">
+  <div class="flow-diagram">
+    <div class="flow-step">🪙 Buy / Stake OLVM</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">🔓 Unlock Membership Tier</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">🏡 Estate Stays · Olive Oil · Harvest · Carbon Reports</div>
+  </div>
+</div>
+
+<!-- Membership Tiers Section (core) -->
+<section id="tiers">
+  <div class="container">
+    <div class="reveal" style="text-align: center;">
+      <p class="eyebrow">Membership levels</p>
+      <h2 class="section-title">Stake OLVM. Rise through tiers.</h2>
+      <div class="rule" style="margin: 1rem auto;"></div>
+      <p class="section-sub" style="margin: 0 auto;">OLVM holdings unlock escalating benefits — from olive oil allocations to full estate residency and governance participation.</p>
+    </div>
+
+    <div class="tiers-grid">
+      <!-- Guardian 50k -->
+      <div class="tier-card reveal">
+        <div class="tier-stake">50,000 <span>OLVM</span></div>
+        <div class="tier-name">Guardian</div>
+        <div class="tier-desc">Entry-level stewardship, ideal for olive enthusiasts.</div>
+        <ul class="benefit-list">
+          <li>2L annual extra virgin olive oil</li>
+          <li>3 nights / year estate stay (off-peak)</li>
+          <li>Harvest participation (invite)</li>
+          <li>Tree & carbon report (digital)</li>
+          <li>Community access</li>
+        </ul>
+        <div style="font-size:0.7rem; color: var(--gold);">✦ 50K OLVM staked minimum</div>
+      </div>
+
+      <!-- Heritage 500k -->
+      <div class="tier-card reveal">
+        <div class="tier-stake">500,000 <span>OLVM</span></div>
+        <div class="tier-name">Heritage</div>
+        <div class="tier-desc">Deeper connection · named tree adoption.</div>
+        <ul class="benefit-list">
+          <li>6L premium EVOO</li>
+          <li>7 nights / year (flexible dates)</li>
+          <li>Named olive tree (GPS + profile)</li>
+          <li>Annual harvest weekend invitation</li>
+          <li>Priority booking + carbon offset certificate</li>
+        </ul>
+        <div style="font-size:0.7rem; color: var(--gold);">⭐ adopted tree with live metrics</div>
+      </div>
+
+      <!-- Estate 2.5M (featured)-->
+      <div class="tier-card featured reveal">
+        <div class="tag">MOST POPULAR</div>
+        <div class="tier-stake">2,500,000 <span>OLVM</span></div>
+        <div class="tier-name">Estate</div>
+        <div class="tier-desc">Full residency & grove partnership.</div>
+        <ul class="benefit-list">
+          <li>15L reserve olive oil + early harvest</li>
+          <li>21 nights / year (any season)</li>
+          <li>3 adopted trees (individual dashboards)</li>
+          <li>Private harvest experience + dinner</li>
+          <li>Full tree & CO₂ capture breakdown</li>
+          <li>Founders council eligibility</li>
+        </ul>
+        <div style="font-size:0.7rem; margin-top: 0.5rem;">🏅 Estate-level members receive legacy grove plaque</div>
+      </div>
+
+      <!-- Founder 10M -->
+      <div class="tier-card reveal">
+        <div class="tier-stake">10,000,000 <span>OLVM</span></div>
+        <div class="tier-name">Founder</div>
+        <div class="tier-desc">Cornerstone of the ecosystem. DAO leadership.</div>
+        <ul class="benefit-list">
+          <li>30L limited reserve + custom label</li>
+          <li>45 nights annual stay + guest privileges</li>
+          <li>12 tree cluster (personal grove section)</li>
+          <li>Governance rights / Agricultural DAO seat</li>
+          <li>Lifetime founding member status</li>
+          <li>Carbon-negative impact report + media feature</li>
+        </ul>
+        <div class="co2-badge" style="margin-top: 1rem;">🌍 Carbon-impact community stake</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 2rem;">
+      <p style="font-size:0.8rem; color: var(--text-muted);">* OLVM staking requirements align with active wallet. Memberships are non-transferable but benefits may be shared with immediate family.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Interactive Tree Stewardship - each tree page concept -->
+<section id="trees" style="background: linear-gradient(180deg, #0c110c, #080c08);">
+  <div class="container">
+    <div class="reveal" style="text-align: left;">
+      <p class="eyebrow">Living assets · each tree tells a story</p>
+      <h2 class="section-title">Every adopted olive tree <br>has its own page.</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="tree-spotlight">
+      <div class="glass-panel tree-card-detail reveal">
+        <div style="font-size: 0.7rem; letter-spacing: 2px; color: var(--gold);">TREE ID: TUSC/023</div>
+        <div style="font-family: var(--font-serif); font-size: 1.4rem; margin: 0.2rem 0;">"Leccino Millenaria"</div>
+        <div class="tree-meta"><span>🌍 GPS: 43.124°N, 10.618°E</span><span>📏 Age: ~85 years</span></div>
+        <div class="tree-meta"><span>🌿 Variety: Leccino</span><span>🍈 Annual harvest: 32 kg</span></div>
+        <div class="co2-badge">🌳 CO₂ captured (est.) 108 kg/year</div>
+        <div style="margin-top: 1rem; font-size:0.7rem; color: var(--text-muted); background: rgba(0,0,0,0.3); border-radius: 24px; padding: 0.5rem 1rem;">📸 <span>Spring canopy, full blossom mignole stage</span> — view live gallery via app</div>
+        <button class="btn-outline-gold" style="margin-top: 1.2rem; width: 100%; justify-content: center;" onclick="showTreeDashboard()">View full tree dashboard →</button>
+      </div>
+      <div class="reveal">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">🔍 Each tree page shows:</p>
+        <ul style="list-style: none;">
+          <li style="margin-bottom:0.6rem;">📍 <strong style="color:var(--gold);">GPS position</strong> — exact grove location</li>
+          <li style="margin-bottom:0.6rem;">📅 <strong style="color:var(--gold);">Age & Variety</strong> — Moraiolo, Leccino, Frantoio</li>
+          <li style="margin-bottom:0.6rem;">📸 <strong style="color:var(--gold);">Seasonal Photos</strong> — from mignole to harvest</li>
+          <li style="margin-bottom:0.6rem;">🍈 <strong style="color:var(--gold);">Annual harvest yield & oil conversion</strong></li>
+          <li style="margin-bottom:0.6rem;">🌬️ <strong style="color:var(--gold);">Estimated CO₂ capture</strong> — verifiable carbon report</li>
+        </ul>
+        <div class="glass-panel" style="padding:1rem; margin-top: 1rem;">
+          <span style="font-size:0.7rem;">OLVM holders with <strong style="color:var(--gold);">Heritage tier+</strong> receive personal tree dashboard access, real-time updates on tree health, blossom count, and harvest progress.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What members unlock + Carbon/Eco -->
+<section>
+  <div class="container">
+    <div class="reveal" style="text-align: center; max-width: 800px; margin: 0 auto;">
+      <p class="eyebrow">Why people hold OLVM</p>
+      <h2 class="section-title">Olive groves · Sustainability · Mediterranean soul</h2>
+      <div class="rule" style="margin: 1rem auto;"></div>
+      <p style="color: var(--text-muted);">Membership isn't just about perks — it's a stake in regenerative agriculture, carbon-positive land stewardship, and the revival of Tuscan traditions. Every OLVM holder contributes to preserving 240 heritage trees and expanding low-impact tourism.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; margin-top: 3rem;">
+      <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
+        <div style="font-size: 2rem;">🫒</div>
+        <h3 style="font-family: var(--font-serif); margin: 0.8rem 0;">Olive oil allocation</h3>
+        <p style="font-size:0.8rem;">Cold-pressed, high polyphenol EVOO from your adopted trees.</p>
+      </div>
+      <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
+        <div style="font-size: 2rem;">🏡</div>
+        <h3 style="font-family: var(--font-serif); margin: 0.8rem 0;">Estate stays</h3>
+        <p style="font-size:0.8rem;">Villa residencies, pool, dining terrace — members-only rates from €450/night.</p>
+      </div>
+      <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
+        <div style="font-size: 2rem;">🤝</div>
+        <h3 style="font-family: var(--font-serif); margin: 0.8rem 0;">Harvest participation</h3>
+        <p style="font-size:0.8rem;">Join the annual harvest, from hand-picking to the mill.</p>
+      </div>
+      <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
+        <div style="font-size: 2rem;">📊</div>
+        <h3 style="font-family: var(--font-serif); margin: 0.8rem 0;">Carbon & tree reports</h3>
+        <p style="font-size:0.8rem;">Track captured CO₂, tree phenology, and impact metrics via dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- long-term vision -->
+<section id="vision" style="background: radial-gradient(ellipse at 30% 40%, rgba(74,107,30,0.12), transparent);">
+  <div class="container">
+    <div class="reveal" style="max-width: 780px; margin: 0 auto; text-align: center;">
+      <p class="eyebrow">Long-term horizon</p>
+      <h2 class="section-title">Evolving into a hybrid ecosystem</h2>
+      <div class="rule" style="margin: 1rem auto;"></div>
+      <p style="color: var(--text-muted); line-height: 1.7;">Over 3–5 years, OLVM becomes the centre of an <strong>Agricultural DAO · Eco-tourism club · Carbon-impact community · Mediterranean lifestyle membership</strong>. Token holders collectively shape grove expansion, sustainability protocols, and cultural programming.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 2.5rem;">
+      <div class="glass-panel" style="padding: 0.8rem 1.6rem; font-size: 0.8rem;">🌿 Grove Stewardship DAO</div>
+      <div class="glass-panel" style="padding: 0.8rem 1.6rem; font-size: 0.8rem;">✈️ Eco-tourism Club</div>
+      <div class="glass-panel" style="padding: 0.8rem 1.6rem; font-size: 0.8rem;">🌍 Carbon-impact Registry</div>
+      <div class="glass-panel" style="padding: 0.8rem 1.6rem; font-size: 0.8rem;">🏛️ Mediterranean Cultural Hub</div>
+    </div>
+    <div class="reveal" style="margin-top: 3rem; text-align: center;">
+      <div style="background: rgba(197,160,89,0.08); border-radius: 36px; padding: 2rem 1.5rem;">
+        <p style="font-family: var(--font-serif); font-size: 1.35rem; font-style: italic; ">“Hold OLVM. Become a guardian of Mediterranean olive trees. Receive olive oil, sustainability benefits, estate experiences, and participate in growing the OLIVIUM ecosystem.”</p>
+        <div class="rule" style="margin: 1.2rem auto;"></div>
+        <p style="font-size: 0.7rem; letter-spacing: 2px;">— The Mignole Pact</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / JOIN community -->
+<section style="border-top: 1px solid rgba(197,160,89,0.12); border-bottom: 1px solid rgba(197,160,89,0.12);">
+  <div class="container" style="text-align: center;">
+    <div class="reveal">
+      <p class="eyebrow">Start your stewardship</p>
+      <h2 class="section-title">Secure your OLVM position</h2>
+      <div class="rule" style="margin: 1rem auto;"></div>
+      <p class="section-sub" style="margin: 0 auto 2rem auto;">Membership tiers are based on OLVM holdings — stake or acquire tokens to unlock benefits and contribute to a living olive estate.</p>
+      <div style="display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-primary" onclick="alert('Explore OLVM acquisition / staking portal — demo contact: hello@olivium.io')">View staking tiers →</button>
+        <button class="btn-outline-gold" onclick="window.location.href='#tiers';">Compare membership benefits</button>
+      </div>
+      <p style="margin-top: 2rem; font-size: 0.7rem; color: #7c8a7c;">240 olive trees · 240,000,000 OLVM (Mignole) · Tuscan Estate · Low-carbon luxury</p>
+    </div>
+  </div>
+</section>
+
+<footer style="background: #050805; padding: 2rem; text-align: center; border-top: 1px solid rgba(197,160,89,0.08);">
+  <div style="font-family: var(--font-serif); letter-spacing: 1px;">OLIVIUM — San Vincenzo, Tuscany</div>
+  <div style="font-size: 0.65rem; color: #5f6e5a; margin-top: 0.6rem;">© 2026 · Token membership | OLVM utility & stewardship</div>
+</footer>
+
+<script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.js"></script>
+<script type="module" src="./src/pro.ts"></script>
+</body>
+</html>
