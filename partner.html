@@ -201,6 +201,9 @@
   .intake-next{flex:1;padding:14px;border-radius:40px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15));border:0.5px solid var(--gold);color:var(--gold);font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation}
   .intake-back{padding:14px 20px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer;touch-action:manipulation}
   .intake-courage-note{margin:0 24px 16px;padding:12px 16px;background:rgba(155,109,255,0.08);border:0.5px solid rgba(155,109,255,0.25);border-radius:14px;font-size:12px;color:var(--text2);line-height:1.6;font-style:italic}
+  input[type='date'].intake-input,input[type='time'].intake-input{-webkit-appearance:none;appearance:none;color-scheme:dark;min-height:50px}
+  input[type='date'].intake-input::-webkit-calendar-picker-indicator,input[type='time'].intake-input::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1) saturate(3) hue-rotate(10deg);cursor:pointer;opacity:0.7}
+  .intake-time-hint{font-size:11px;color:var(--text3);margin-top:4px;padding:0 4px;font-style:italic}
 </style>
 </head>
 <body>
@@ -329,7 +332,7 @@
     </div>
 
     <div id="screen-cosmic" class="screen">
-<div class="header-strip"><div class="header-date">Cosmic Context</div><div class="header-row"><div style="font-size:12px;color:var(--text2);font-style:italic">The universe holds you both</div></div></div><div class="card"><div class="card-title">Moon Wisdom</div><div style="background:linear-gradient(135deg,rgba(15,21,37,0.9),rgba(20,28,48,0.9));border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center"><div style="font-size:48px" id="moon-big-icon">🌔</div><div style="margin-top:8px;color:var(--gold2);font-family:var(--font);font-size:16px" id="moon-big-phase">Moon</div><div style="font-size:13px;color:var(--text2);margin-top:6px" id="moon-release-txt"></div><div style="font-size:13px;color:var(--teal);margin-top:4px;font-style:italic" id="moon-invite-txt"></div><div style="font-size:12px;color:var(--text2);margin-top:10px;padding:8px;background:rgba(255,255,255,0.04);border-radius:10px" id="moon-energy-txt"></div></div></div><div class="card"><div class="card-title">Daily Horoscope</div><div id="horoscope-content"></div></div><div class="card"><div class="card-title">Dream Journal ✨</div><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">Dreams carry messages. Record them before they fade.</div><input type="text" id="dream-title" style="width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;margin-bottom:12px;outline:none" placeholder="Dream title…"><textarea class="journal-textarea" id="dream-input" placeholder="What did you dream? What stayed with you?" style="height:90px;margin-bottom:8px"></textarea><div style="margin:0 0 12px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">Tag this dream:</div><div id="dream-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div></div><button id="dream-submit-btn" onclick="saveDreamEntry()" style="width:100%;padding:12px;border-radius:40px;background:rgba(155,109,255,0.15);border:0.5px solid var(--purple);color:var(--purple);cursor:pointer;font-size:14px">Record Dream 🌙</button></div><div style="font-size:11px;color:var(--text3);padding:8px 16px;letter-spacing:1px;text-transform:uppercase">Dream Archive</div><div id="dream-entries" style="padding:0 16px 20px"></div></div>
+<div class="header-strip"><div class="header-date">Cosmic Context</div><div class="header-row"><div style="font-size:12px;color:var(--text2);font-style:italic">The universe holds you both</div></div><div id="cosmic-birth-info" style="font-size:11px;color:var(--gold3);margin-top:4px;font-style:italic"></div></div><div class="card"><div class="card-title">Moon Wisdom</div><div style="background:linear-gradient(135deg,rgba(15,21,37,0.9),rgba(20,28,48,0.9));border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center"><div style="font-size:48px" id="moon-big-icon">🌔</div><div style="margin-top:8px;color:var(--gold2);font-family:var(--font);font-size:16px" id="moon-big-phase">Moon</div><div style="font-size:13px;color:var(--text2);margin-top:6px" id="moon-release-txt"></div><div style="font-size:13px;color:var(--teal);margin-top:4px;font-style:italic" id="moon-invite-txt"></div><div style="font-size:12px;color:var(--text2);margin-top:10px;padding:8px;background:rgba(255,255,255,0.04);border-radius:10px" id="moon-energy-txt"></div></div></div><div class="card"><div class="card-title">Daily Horoscope</div><div id="horoscope-content"></div></div><div class="card"><div class="card-title">Dream Journal ✨</div><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">Dreams carry messages. Record them before they fade.</div><input type="text" id="dream-title" style="width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;margin-bottom:12px;outline:none" placeholder="Dream title…"><textarea class="journal-textarea" id="dream-input" placeholder="What did you dream? What stayed with you?" style="height:90px;margin-bottom:8px"></textarea><div style="margin:0 0 12px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">Tag this dream:</div><div id="dream-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div></div><button id="dream-submit-btn" onclick="saveDreamEntry()" style="width:100%;padding:12px;border-radius:40px;background:rgba(155,109,255,0.15);border:0.5px solid var(--purple);color:var(--purple);cursor:pointer;font-size:14px">Record Dream 🌙</button></div><div style="font-size:11px;color:var(--text3);padding:8px 16px;letter-spacing:1px;text-transform:uppercase">Dream Archive</div><div id="dream-entries" style="padding:0 16px 20px"></div></div>
   </div>
 
   <nav class="bottom-nav" id="bottom-nav" style="display:none;">
@@ -1208,6 +1211,18 @@ function updateCosmicScreen(){
   var moon=getMoonPhase(new Date());
   var mi=document.getElementById('moon-big-icon'),mp=document.getElementById('moon-big-phase'),mr=document.getElementById('moon-release-txt'),minv=document.getElementById('moon-invite-txt'),me=document.getElementById('moon-energy-txt');
   if(mi)mi.textContent=moon.icon;if(mp)mp.textContent=moon.name;if(mr)mr.textContent='Release: '+moon.release;if(minv)minv.textContent='Invite: '+moon.invite;if(me)me.textContent=moon.energy;
+  // Show user's birth data in cosmic header
+  var slot=currentMySlot||'A';
+  var myIntake=(liveData&&(slot==='A'?liveData.intake_a:liveData.intake_b))||{};
+  var dob=myIntake.dob||'', btime=myIntake.birth_time||'', bplace=myIntake.birthplace||'';
+  var birthEl=document.getElementById('cosmic-birth-info');
+  if(birthEl){
+    var parts=[];
+    if(dob) parts.push(new Date(dob+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}));
+    if(btime) parts.push('born '+btime);
+    if(bplace) parts.push(bplace);
+    birthEl.textContent=parts.length?'✦ '+parts.join(' · '):'';
+  }
   var hc=document.getElementById('horoscope-content');
   if(hc){var now=new Date(),idx=(now.getMonth()*31+now.getDate())%3;var msgs=[{sign:'♋ Cancer Season',txt:'Home is not a place but a feeling you create between you. This week: ask what home means to each of you.'},{sign:'♑ For the Builder',txt:'Mercury asks: are you communicating what you feel, or what you think they want to hear?'},{sign:'♉ For the Nurturer',txt:'Notice where you mistake stillness for safety. Some things worth building require motion first.'}];hc.innerHTML=msgs.map(function(m){return'<div style="padding:14px;background:rgba(155,109,255,0.06);border:0.5px solid rgba(155,109,255,0.2);border-radius:14px;margin-bottom:10px"><div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);margin-bottom:6px">'+m.sign+'</div><div style="font-size:13px;color:var(--text1);line-height:1.7;font-family:var(--font);font-style:italic">'+m.txt+'</div></div>';}).join('');}
   var ld=typeof liveData!=='undefined'?liveData:{};
@@ -1590,6 +1605,8 @@ function showDbSetupBanner(missing) {
     '  created_at timestamptz default now()',
     ');',
     '-- Add ALL missing columns to existing relationships table:',
+    '-- Note: DOB, birth_time, birthplace are stored inside intake_a/intake_b JSONB',
+    '-- No extra columns needed for those fields.',
     'alter table relationships add column if not exists intake_a jsonb default \'{}\'::jsonb;',
     'alter table relationships add column if not exists intake_b jsonb default \'{}\'::jsonb;',
     'alter table relationships add column if not exists intake_a_done boolean default false;',
@@ -1721,9 +1738,11 @@ var intakeAnswers  = {};
 var intakePage     = 0;
 var INTAKE_PAGES   = [
   { title:'About You', icon:'🌱',
-    subtitle:'This builds your personal baseline. Answer honestly — this is a mirror, not a test.',
+    subtitle:'This builds your personal baseline — and your astrological chart. Answer honestly.',
     fields:[
-      {id:'age',         label:'Your age',                                    type:'text',     placeholder:'e.g. 32'},
+      {id:'dob',         label:'Date of birth',                               type:'date',     placeholder:''},
+      {id:'birth_time',  label:'Time of birth (as precise as you know)',       type:'time',     placeholder:'e.g. 07:30'},
+      {id:'birthplace',  label:'Place of birth (city, country)',               type:'text',     placeholder:'e.g. Naples, Italy'},
       {id:'nationality', label:'Nationality / cultural heritage',              type:'text',     placeholder:'e.g. Italian-Brazilian'},
       {id:'prev_rel',    label:'Previous long-term relationships or marriages',type:'textarea', placeholder:'No judgement here'},
       {id:'children',    label:'Do you already have children?',                type:'yesno'},
@@ -1801,7 +1820,12 @@ function renderIntakePage() {
   var fieldsHtml = page.fields.map(function(f){
     var saved = intakeAnswers[f.id]||'';
     var el='';
-    if(f.type==='text'){
+    if(f.type==='date'){
+      el='<input type="date" class="intake-input" id="if_'+f.id+'" value="'+escHtml(saved)+'" style="cursor:pointer">';
+    } else if(f.type==='time'){
+      el='<input type="time" class="intake-input" id="if_'+f.id+'" value="'+escHtml(saved)+'" style="cursor:pointer">'
+        +'<div class="intake-time-hint">If you don\'t know the exact time, leave blank or enter your best guess.</div>';
+    } else if(f.type==='text'){
       el='<input type="text" class="intake-input" id="if_'+f.id+'" placeholder="'+(f.placeholder||'')+'" value="'+escHtml(saved)+'" autocomplete="off">';
     } else if(f.type==='textarea'){
       el='<textarea class="intake-input" id="if_'+f.id+'" placeholder="'+(f.placeholder||'')+'" rows="3">'+escHtml(saved)+'</textarea>';
@@ -1884,11 +1908,37 @@ async function saveIntakeProgress(done){
   }
 }
 async function completeIntake(){
+  // Disable the Complete button immediately to prevent double-submit
+  var nextBtn = document.querySelector('.intake-next');
+  if(nextBtn){ nextBtn.disabled=true; nextBtn.textContent='Saving…'; }
   await saveIntakeProgress(true);
+  // Hide intake screen
+  var is=document.getElementById('intake-screen');
+  if(is) is.style.display='none';
   showToast('Profile complete! Welcome to your journey ✨');
   if(sbClient&&currentRelationshipId){
     var res=await sbClient.from('relationships').select('*').eq('id',currentRelationshipId).single();
-    if(res.data) startMainApp(res.data);
+    if(res.data){
+      // Bypass intake gate — we just completed it
+      liveData=res.data;
+      var slot=currentMySlot||'A';
+      // Mark intake done locally so the startMainApp wrapper doesn't re-gate
+      if(slot==='A') liveData.intake_a_done=true;
+      else           liveData.intake_b_done=true;
+      if(typeof _origSMA==='function') _origSMA(liveData);
+      else if(typeof startMainApp==='function') startMainApp(liveData);
+    } else {
+      // No data back — still open main app with current liveData
+      if(slot==='A') liveData.intake_a_done=true;
+      else           liveData.intake_b_done=true;
+      if(typeof _origSMA==='function') _origSMA(liveData);
+    }
+  } else {
+    // Demo mode — go straight in
+    var slot=currentMySlot||'A';
+    if(slot==='A') liveData.intake_a_done=true;
+    else           liveData.intake_b_done=true;
+    if(typeof _origSMA==='function') _origSMA(liveData);
   }
 }
 
