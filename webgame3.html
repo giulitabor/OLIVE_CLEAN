@@ -44,7 +44,7 @@
                     <span>⏰ <span id="ui-time">08:00</span></span>
                     <span>🌡️ <span id="ui-temp">24°C</span></span>
                     <span>🌤️ <span id="ui-weather">Clear</span></span>
-                    <span>🌸 <span id="ui-season">Spring</span></span>
+                    <span><span id="ui-season-emoji">🌸</span> <span id="ui-season">Spring</span></span>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -76,6 +76,10 @@
             <button class="btn" id="plant-btn">🌱 PLANT (5 SOL)</button>
             <button class="btn btn-danger" id="spray-btn">🐛 SPRAY (0.5)</button>
         </div>
+        <div class="grid-2 mb-3">
+            <button class="btn btn-success" id="harvest-all-btn" style="font-size:11px;">🫒 HARVEST ALL</button>
+            <button class="btn" id="water-all-btn" style="font-size:11px; background:rgba(30,100,180,0.25); border-color:#3b82f6; color:#93c5fd;">💧 WATER ALL</button>
+        </div>
 
         <!-- Market -->
         <div class="card mb-3">
@@ -91,6 +95,9 @@
                     <div id="ui-trend" class="text-xs text-green-500">+0%</div>
                 </div>
                 <button class="btn btn-success" id="sell-btn" style="padding: 8px 20px;">SELL</button>
+            </div>
+            <div class="flex gap-2 mt-2" style="justify-content:flex-end;">
+                <button class="btn" id="sell-half-btn" style="font-size:10px; padding:4px 12px; opacity:0.7;">SELL HALF</button>
             </div>
         </div>
 
@@ -136,15 +143,19 @@
                 <span class="text-xs text-blue-400">📋 DAILY QUEST</span>
                 <span class="text-xs text-gold" id="quest-reward">Reward: 10 SOL</span>
             </div>
-            <div class="text-sm mt-1">Harvest <span id="quest-current">0</span>/<span id="quest-target">50</span> kg</div>
+            <div class="text-sm mt-1">Harvest <span id="quest-current">0</span>/<span id="quest-target">50</span> kg · <span class="text-[9px] opacity-60">+<span id="quest-seed-reward">1</span> 🌱</span></div>
             <div class="progress-bar mt-2"><div id="quest-progress" class="progress-fill" style="background:#3b82f6; width:0%"></div></div>
         </div>
 
         <!-- Grove Section -->
         <div class="flex-between mb-2">
             <span class="section-title">🌿 YOUR GROVE</span>
-            <span class="text-xs opacity-50"><span class="text-gold">⭐</span> <span id="rare-count">0</span> Rare</span>
+            <div class="flex gap-3 text-xs opacity-50">
+                <span><span class="text-gold">⭐</span> <span id="rare-count">0</span> Rare</span>
+                <span id="dead-tree-badge" style="display:none; color:#ef4444;">💀 <span id="dead-count">0</span> Dead</span>
+            </div>
         </div>
+        <div class="text-[8px] opacity-30 mb-2 text-center">Tap a tree to 💧 water it · Tap 🫒 mature trees to harvest</div>
         <div id="grove-container" class="grove-grid"></div>
 
         <!-- Ledger -->
@@ -173,23 +184,27 @@
         </div>
         <div class="space-y-3">
             <button id="upg-irrigation-mobile" class="btn w-full text-left" onclick="game.upgrade('irrigation'); closePanel()">
-                💧 Auto-Irrigation <span class="float-right text-gold">15 SOL</span>
+                💧 Auto-Irrigation <span class="float-right text-gold" id="upg-irrigation-cost">15 SOL</span>
                 <div class="text-[9px] opacity-50">Maintains water at 70%</div>
             </button>
             <button id="upg-misting-mobile" class="btn w-full text-left" onclick="game.upgrade('misting'); closePanel()">
-                🌫️ Misting System <span class="float-right text-gold">10 SOL</span>
+                🌫️ Misting System <span class="float-right text-gold" id="upg-misting-cost">10 SOL</span>
                 <div class="text-[9px] opacity-50">Reduces pest spread</div>
             </button>
             <button id="upg-fertilizer-mobile" class="btn w-full text-left" onclick="game.upgrade('fertilizer'); closePanel()">
-                🌿 Organic Fertilizer <span class="float-right text-gold">8 SOL</span>
+                🌿 Organic Fertilizer <span class="float-right text-gold" id="upg-fertilizer-cost">8 SOL</span>
                 <div class="text-[9px] opacity-50">Boosts growth rate</div>
             </button>
-            <button class="btn w-full text-left" onclick="game.upgradeFlyTraps(); closePanel()">
-    🪰 Venus Fly Traps <span class="float-right text-gold">0.003 SOL</span>
+            <button id="upg-flytraps-mobile" class="btn w-full text-left" onclick="game.upgradeFlyTraps(); closePanel()">
+    🪰 Venus Fly Traps <span class="float-right text-gold" id="upg-flytraps-cost">0.003 SOL</span>
     <div class="text-[9px] opacity-50">Pests die 50% faster (3% per tick)</div>
 </button>
             <button class="btn w-full text-left" onclick="game.cleanMill(); closePanel()">
                 🧼 Steam Clean Mill <span class="float-right text-gold">0.2 SOL</span>
+            </button>
+            <button class="btn w-full text-left" style="border-color:#ef4444; color:#ef4444;" onclick="game.removeDeadTrees(); closePanel()">
+                💀 Remove Dead Trees <span class="float-right" style="color:#ef4444;">Free</span>
+                <div class="text-[9px] opacity-50">Clear dead trees from your grove</div>
             </button>
         </div>
     </div>
@@ -202,20 +217,20 @@
         </div>
         <div class="text-center text-sm mb-3">✨ Seeds: <span id="seeds-display" class="text-purple-400 font-bold">0</span></div>
         <div class="space-y-2">
-            <button class="btn w-full text-left" onclick="game.unlockSkill('yield'); closePanel()">
-                📈 Hyper-Yield <span class="float-right text-purple-400">5 Seeds</span>
+            <button class="btn w-full text-left" id="skill-yield-btn" onclick="game.unlockSkill('yield'); closePanel()">
+                📈 Hyper-Yield <span class="float-right text-purple-400" id="skill-yield-cost">5 Seeds</span>
                 <div class="text-[9px] opacity-50">+80% harvest yield</div>
             </button>
-            <button class="btn w-full text-left" onclick="game.unlockSkill('speed'); closePanel()">
-                ⚡ Rapid Bloom <span class="float-right text-purple-400">5 Seeds</span>
+            <button class="btn w-full text-left" id="skill-speed-btn" onclick="game.unlockSkill('speed'); closePanel()">
+                ⚡ Rapid Bloom <span class="float-right text-purple-400" id="skill-speed-cost">5 Seeds</span>
                 <div class="text-[9px] opacity-50">2.5x faster growth</div>
             </button>
-            <button class="btn w-full text-left" onclick="game.unlockSkill('cold'); closePanel()">
-                ❄️ Pure Cold <span class="float-right text-purple-400">5 Seeds</span>
+            <button class="btn w-full text-left" id="skill-cold-btn" onclick="game.unlockSkill('cold'); closePanel()">
+                ❄️ Pure Cold <span class="float-right text-purple-400" id="skill-cold-cost">5 Seeds</span>
                 <div class="text-[9px] opacity-50">+60% night extraction</div>
             </button>
-            <button class="btn w-full text-left" onclick="game.unlockSkill('rare'); closePanel()">
-                🧬 DNA Grafting <span class="float-right text-purple-400">8 Seeds</span>
+            <button class="btn w-full text-left" id="skill-rare-btn" onclick="game.unlockSkill('rare'); closePanel()">
+                🧬 DNA Grafting <span class="float-right text-purple-400" id="skill-rare-cost">8 Seeds</span>
                 <div class="text-[9px] opacity-50">25% rare tree chance</div>
             </button>
         </div>
