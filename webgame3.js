@@ -5,11 +5,9 @@
 import { sb, getIdentity, isConnected, connection } from "./src/connection.ts";
 import { PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
-import { Transaction, TransactionInstruction } from "@solana/web3.js";
-import BN from 'bn.js';
 
 // OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
-const OLV_MINT_ADDRESS = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
+const OLV_MINT_ADDRESS = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa");
 
 let currentUser = null;
 let walletSolBalance = 0;
@@ -32,6 +30,7 @@ const state = {
     combo: 1.0, comboRef: null,
     quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
     achievements: { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false },
+    // OLV Shop state
     fertilizerBoost: false,
     fertilizerBoostEnd: 0,
     protectionActive: false,
@@ -96,6 +95,7 @@ async function fetchWalletBalances(walletAddress) {
         const treasurySol = await getTreasurySolBalance();
         
         console.log(`💰 Wallet: ${solInSol} SOL, ${olvBalance} OLV`);
+        console.log(`🏦 Treasury: ${treasurySol} SOL`);
         
         return { sol: solInSol, olv: olvBalance, treasury: treasurySol };
     } catch (err) {
@@ -104,7 +104,67 @@ async function fetchWalletBalances(walletAddress) {
     }
 }
 
-atreasuryPDA
+async function spendOlvTokens(amount, reason) {
+    if (!currentUser || !currentUser.wallet) {
+        showToast("Connect wallet first!", true);
+        return false;
+    }
+    
+    if (walletOlvBalance < amount) {
+        showToast(`Need ${amount} OLV! You have ${walletOlvBalance}`, true);
+        return false;
+    }
+    
+    try {
+        const provider = window.phantom?.solana || window.solana;
+        if (!provider) {
+            showToast("Phantom wallet not found!", true);
+            return false;
+        }
+        
+        const fromWallet = new PublicKey(currentUser.wallet);
+        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
+        const fromTokenAccount = await getAssociatedTokenAddress(olvMint, fromWallet);
+        
+        // Send to treasury's token account (or burn address)
+        const activeProgram = window._program;
+        const [treasuryPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from("treasury")],
+            activeProgram.programId
+        );
+        const treasuryTokenAccount = await getAssociatedTokenAddress(olvMint, treasuryPDA);
+        
+        // Create transfer instruction
+        const transaction = new Transaction().add(
+            createTransferInstruction(
+                fromTokenAccount,
+                treasuryTokenAccount,
+                fromWallet,
+                amount * Math.pow(10, 6)
+            )
+        );
+        
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromWallet;
+        
+        const signed = await provider.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signed.serialize());
+        await connection.confirmTransaction(signature);
+        
+        walletOlvBalance -= amount;
+        updateWalletBalancesUI();
+        
+        showToast(`✅ Spent ${amount} OLV on ${reason}!`);
+        log(`💸 Spent ${amount} OLV on ${reason}`);
+        return true;
+        
+    } catch (err) {
+        console.error("OLV spend error:", err);
+        showToast("Transaction failed!", true);
+        return false;
+    }
+}
 
 function createTransferInstruction(source, destination, owner, amount) {
     return new TransactionInstruction({
@@ -117,133 +177,6 @@ function createTransferInstruction(source, destination, owner, amount) {
         programId: TOKEN_PROGRAM_ID,
         data: Buffer.from([3, ...new BN(amount).toArray('le', 8)])
     });
-}
-
-
-// ============================================================
-// RESET FUNCTION
-// ============================================================
-
-async function resetGame() {
-    // Show confirmation dialog with options
-    const confirmed = confirm(
-        "⚠️ WARNING: This will reset your entire estate!\n\n" +
-        "All trees, oil, hopper contents, and progress will be lost.\n\n" +
-        "Select payment method:\n" +
-        "• Click OK to pay 3 SOL\n" +
-        "• Cancel then click again to pay 300 OLV\n\n" +
-        "Your Ancient Seeds and skills will be preserved."
-    );
-    
-    if (!confirmed) {
-        // Check for OLV payment option if they cancelled
-        const olvConfirm = confirm(
-            "Reset with 300 OLV instead?\n\n" +
-            "This will deduct 300 OLV from your wallet and reset your estate."
-        );
-        
-        if (!olvConfirm) {
-            showToast("Reset cancelled.");
-            return false;
-        }
-        
-        // OLV payment
-        if (!currentUser) {
-            showToast("Connect wallet first to pay with OLV!", true);
-            return false;
-        }
-        
-        if (walletOlvBalance < 300) {
-            showToast(`Need 300 OLV! You have ${walletOlvBalance}`, true);
-            return false;
-        }
-        
-        const spent = await spendOlvTokens(300, "Estate Reset");
-        if (!spent) return false;
-        
-        performReset();
-        showToast("✅ Estate reset! Paid 300 OLV");
-        return true;
-    }
-    
-    // SOL payment
-    if (state.sol < 3) {
-        showToast("Need 3 SOL to reset! (or 300 OLV)", true);
-        return false;
-    }
-    
-    state.sol -= 3;
-    performReset();
-    showToast("✅ Estate reset! Paid 3 SOL");
-    return true;
-}
-
-function performReset() {
-    // Save current seeds and skills before reset
-    const preservedSeeds = state.seeds;
-    const preservedSkills = [...state.skills];
-    const preservedSkillMultipliers = { ...state.skillMultipliers };
-    const preservedUpgrades = { ...state.upgrades };
-    
-    // Reset all game state
-    state.sol = 25.0;
-    state.oil = 0;
-    state.hopper = 0;
-    state.lifetimeSol = 25.0;
-    state.treesPlanted = 0;
-    state.totalHarvests = 0;
-    state.comboRecord = 1.0;
-    state.rareCount = 0;
-    state.trees = [];
-    state.mill = { mash: 0, gunk: 0 };
-    state.combo = 1.0;
-    state.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
-    state.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
-    state.fertilizerBoost = false;
-    state.fertilizerBoostEnd = 0;
-    state.protectionActive = false;
-    state.protectionEnd = 0;
-    state.nextTreeLegendary = false;
-    
-    // Restore preserved items
-    state.seeds = preservedSeeds;
-    state.skills = preservedSkills;
-    state.skillMultipliers = preservedSkillMultipliers;
-    state.upgrades = preservedUpgrades;
-    
-    // Plant starting trees
-    for (let i = 0; i < 3; i++) {
-        state.trees.push({
-            id: '#' + (state.treesPlanted + i + 1),
-            age: 0, health: 100, water: 85, pests: 0,
-            stage: 'seed', rarity: 'common',
-            protected: false
-        });
-    }
-    state.treesPlanted += 3;
-    
-    log("🔄 Estate reset! Ancient knowledge preserved (Seeds & Skills kept).");
-    log(`✨ Preserved ${preservedSeeds} Ancient Seeds and ${preservedSkills.length} skills`);
-    render();
-    if (currentUser) saveGameToCloud();
-}
-
-function upgradeFlyTraps() {
-    const cost = 0.003;
-    if (state.sol < cost) {
-        showToast(`Need ${cost} SOL to install Fly Traps!`, true);
-        return;
-    }
-    if (state.upgrades.flyTraps) {
-        showToast("Fly Traps already installed!", true);
-        return;
-    }
-    state.sol -= cost;
-    state.upgrades.flyTraps = true;
-    log("🪰 Fly Traps installed! Pests now die 50% faster.");
-    showToast("🪰 Fly Traps installed! +50% pest reduction rate");
-    render();
-    if (currentUser) saveGameToCloud();
 }
 
 // ============================================================
@@ -271,6 +204,7 @@ async function buyWithOlv(itemId) {
     const success = await spendOlvTokens(item.cost, item.name);
     if (!success) return;
     
+    // Apply rewards
     if (item.reward.seeds) {
         state.seeds += item.reward.seeds;
         log(`🌱 +${item.reward.seeds} Ancient Seeds`);
@@ -395,10 +329,12 @@ async function updateWalletBalancesUI() {
     const walletOlvEl = document.getElementById('wallet-olv-balance');
     const uiSolEl = document.getElementById('ui-sol');
     const uiOlvEl = document.getElementById('ui-olv');
+    const treasuryEl = document.getElementById('treasury-balance');
     
     if (walletSolEl) walletSolEl.innerText = walletSolBalance.toFixed(4);
     if (walletOlvEl) walletOlvEl.innerText = Math.floor(walletOlvBalance);
     if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
+    if (treasuryEl) treasuryEl.innerText = treasurySolBalance.toFixed(2);
     
     if (uiSolEl && walletSolBalance > 0 && state.sol === 25) {
         state.sol = walletSolBalance;
@@ -436,8 +372,6 @@ function hideConnectModal() {
 
 function handleDisconnect() {
     currentUser = null;
-    localStorage.removeItem('walletAddress');
-    localStorage.removeItem('currentUser');
     
     const navIdentity = document.getElementById('nav-identity-display');
     const navTier = document.getElementById('nav-tier-label');
@@ -487,7 +421,6 @@ async function connectWallet() {
         };
         
         localStorage.setItem('walletAddress', walletAddress);
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
         
         const navIdentity = document.getElementById('nav-identity-display');
         const navTier = document.getElementById('nav-tier-label');
@@ -507,27 +440,7 @@ async function connectWallet() {
         showToast('✅ Wallet connected! Fetching balances...');
         
         await updateWalletBalancesUI();
-        
-        const loaded = await loadGameFromCloud();
-        
-        if (!loaded) {
-            log("🌿 No existing save found. Starting a new estate!");
-            if (state.trees.length === 0) {
-                for (let i = 0; i < 3; i++) {
-                    state.trees.push({
-                        id: '#' + (state.treesPlanted + i + 1),
-                        age: 0, health: 100, water: 85, pests: 0,
-                        stage: 'seed', rarity: 'common',
-                        protected: false
-                    });
-                }
-                state.treesPlanted += 3;
-            }
-            render();
-            await saveGameToCloud();
-        }
-        
-        render();
+        await loadGameFromCloud();
         
     } catch (err) {
         console.error("Wallet connection error:", err);
@@ -536,17 +449,12 @@ async function connectWallet() {
 }
 
 async function emailLogin() {
-    const emailId = 'steward@olivium.io';
-    const emailWallet = 'email_' + emailId.replace(/[^a-zA-Z0-9]/g, '_');
-    
     currentUser = {
-        email: emailId,
-        wallet: emailWallet,
+        email: 'steward@olivium.io',
+        wallet: 'email_' + Date.now(),
         type: 'email',
         display: 'steward@...'
     };
-    
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
     
     const navIdentity = document.getElementById('nav-identity-display');
     const navTier = document.getElementById('nav-tier-label');
@@ -564,27 +472,7 @@ async function emailLogin() {
     
     hideConnectModal();
     showToast('✅ Logged in! Loading your estate...');
-    
-    const loaded = await loadGameFromCloud();
-    
-    if (!loaded) {
-        log("🌿 No existing save found. Starting a new estate!");
-        if (state.trees.length === 0) {
-            for (let i = 0; i < 3; i++) {
-                state.trees.push({
-                    id: '#' + (state.treesPlanted + i + 1),
-                    age: 0, health: 100, water: 85, pests: 0,
-                    stage: 'seed', rarity: 'common',
-                    protected: false
-                });
-            }
-            state.treesPlanted += 3;
-        }
-        render();
-        await saveGameToCloud();
-    }
-    
-    render();
+    await loadGameFromCloud();
 }
 
 // ============================================================
@@ -780,6 +668,7 @@ function checkQuest() {
 // ============================================================
 
 function gameLoop() {
+    // Check for expired boosts
     if (state.fertilizerBoost && Date.now() > state.fertilizerBoostEnd) {
         state.fertilizerBoost = false;
         log("Fertilizer boost expired");
@@ -792,6 +681,7 @@ function gameLoop() {
     state.trees.forEach(tree => {
         if (tree.health <= 0) return;
         
+        // Protection prevents pest spread
         if (tree.protected) {
             tree.pests = Math.max(0, tree.pests - 5);
         }
@@ -811,8 +701,6 @@ function gameLoop() {
             tree.pests = Math.min(100, tree.pests + 5);
         }
         if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
-        if (state.upgrades.flyTraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 3); // Fly traps remove 3% more pests
-        
         if (tree.water < 15) tree.health -= 4;
         if (tree.pests > 40) tree.health -= 3;
         if (tree.health <= 0) tree.stage = 'dead';
@@ -848,16 +736,11 @@ function marketCycle() {
 }
 
 // ============================================================
-// CLOUD SAVE FUNCTIONS - FIXED
+// CLOUD SAVE FUNCTIONS
 // ============================================================
 
 async function saveGameToCloud() {
-    if (!currentUser || !sb) {
-        console.log("❌ Cannot save: no user or supabase client");
-        return false;
-    }
-    
-    console.log("💾 Saving game for:", currentUser.wallet);
+    if (!currentUser || !sb) return;
     
     const saveData = {
         wallet: currentUser.wallet,
@@ -885,27 +768,15 @@ async function saveGameToCloud() {
             .from('game_saves')
             .upsert(saveData, { onConflict: 'wallet' });
         
-        if (error) {
-            console.error("❌ Save error:", error);
-            return false;
-        }
-        
-        console.log("✅ Game saved successfully!");
-        return true;
-        
+        if (error) console.error('Save error:', error);
+        else console.log('💾 Game saved to cloud');
     } catch (err) {
-        console.error("❌ Cloud save exception:", err);
-        return false;
+        console.error('Cloud save failed:', err);
     }
 }
 
 async function loadGameFromCloud() {
-    if (!currentUser || !sb) {
-        console.log("❌ Cannot load: no user or supabase client");
-        return false;
-    }
-    
-    console.log("📥 Loading game for:", currentUser.wallet);
+    if (!currentUser || !sb) return false;
     
     try {
         const { data, error } = await sb
@@ -914,19 +785,11 @@ async function loadGameFromCloud() {
             .eq('wallet', currentUser.wallet)
             .maybeSingle();
         
-        if (error) {
-            console.error("❌ Load error:", error);
+        if (error || !data) {
+            console.log('No saved game found');
             return false;
         }
         
-        if (!data) {
-            console.log("📭 No saved game found");
-            return false;
-        }
-        
-        console.log("✅ Found saved game!");
-        
-        // Restore state
         state.sol = data.sol ?? 25;
         state.seeds = data.seeds ?? 0;
         state.oil = data.oil ?? 0;
@@ -937,25 +800,23 @@ async function loadGameFromCloud() {
         state.comboRecord = data.comboRecord ?? 1.0;
         state.rareCount = data.rareCount ?? 0;
         state.trees = data.trees ? JSON.parse(data.trees) : [];
-        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) :{ irrigation: false, misting: false, fertilizer: false, flyTraps: false };
+        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) : { irrigation: false, misting: false, fertilizer: false };
         state.skills = data.skills || [];
         state.skillMultipliers = data.skillMultipliers ? JSON.parse(data.skillMultipliers) : { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 };
         state.mill = data.mill ? JSON.parse(data.mill) : { mash: 0, gunk: 0 };
         state.quest = data.quest ? JSON.parse(data.quest) : { target: 50, current: 0, reward: 10, seedReward: 1 };
         state.achievements = data.achievements ? JSON.parse(data.achievements) : { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
         
-        // Apply skill multipliers
         if (state.skills.includes('yield')) state.skillMultipliers.yield = 1.8;
         if (state.skills.includes('speed')) state.skillMultipliers.speed = 2.5;
         if (state.skills.includes('cold')) state.skillMultipliers.extraction = 1.6;
         if (state.skills.includes('rare')) state.skillMultipliers.rare = 0.25;
         
-        log("🌿 Game loaded from cloud! Welcome back, Steward.");
         render();
+        log("🌿 Game loaded from cloud! Welcome back.");
         return true;
-        
     } catch (err) {
-        console.error("❌ Load exception:", err);
+        console.error('Load error:', err);
         return false;
     }
 }
@@ -979,12 +840,14 @@ function render() {
     document.getElementById('tree-count').innerText = state.trees.length;
     document.getElementById('rare-count').innerText = state.rareCount;
     
+    // Update OLV display
     const uiOlvEl = document.getElementById('ui-olv');
     if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
     
     const shopBalance = document.getElementById('shop-olv-balance');
     if (shopBalance) shopBalance.innerText = Math.floor(walletOlvBalance);
     
+    // Update boosts display
     const boostsContainer = document.getElementById('active-boosts');
     if (boostsContainer) {
         let boostsHtml = '';
@@ -1140,15 +1003,7 @@ function addOlvShopPanel() {
                 <div class="text-[9px] opacity-50">Next tree planted is Legendary (5x yield)</div>
             </div>
         </div>
-        <div class="card" style="border-color:#ef4444; cursor:pointer; margin-top: 8px;" onclick="game.resetGame()">
-    <div class="flex-between">
-        <div><span class="text-lg">⚠️</span> Reset Estate</div>
-        <div class="text-red-400">3 SOL / 300 OLV</div>
-    </div>
-    <div class="text-[9px] opacity-50">Reset your estate (Keeps Seeds & Skills)</div>
-</div>
     `;
-    
     panelsContainer.appendChild(shopPanel);
 }
 
@@ -1214,6 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.onclick = () => openPanel(item.dataset.panel);
     });
     
+    // Re-bind shop nav after adding
     setTimeout(() => {
         document.querySelectorAll('.nav-item').forEach(item => {
             item.onclick = () => openPanel(item.dataset.panel);
@@ -1221,74 +1077,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
     
     window.game = { 
-    upgrade: (t) => { upgrade(t); closePanel(); }, 
-    upgradeFlyTraps: () => { upgradeFlyTraps(); closePanel(); },
-    unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
-    buyWithOlv,
-    cleanMill, 
-    prestige, 
-    buyTree, 
-    sprayGrove, 
-    sellOil, 
-    pressMill,
-    saveGameToCloud,
-    resetGame
-};
+        upgrade: (t) => { upgrade(t); closePanel(); }, 
+        unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
+        buyWithOlv,
+        cleanMill, 
+        prestige, 
+        buyTree, 
+        sprayGrove, 
+        sellOil, 
+        pressMill 
+    };
     window.closePanel = closePanel;
     window.openPanel = openPanel;
     
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            const navIdentity = document.getElementById('nav-identity-display');
-            const navTier = document.getElementById('nav-tier-label');
-            const connectBtn = document.getElementById('connectBtn');
-            
-            if (navIdentity) navIdentity.innerText = currentUser.display;
-            if (navTier) navTier.innerText = 'Mignole Steward';
-            if (connectBtn) {
-                const icon = currentUser.type === 'wallet' ? '◎' : '✉';
-                connectBtn.innerText = `${icon} Disconnect`;
-                connectBtn.onclick = handleDisconnect;
-                connectBtn.style.background = '#3a2a10';
-                connectBtn.style.borderColor = '#C5A059';
-            }
-            
-            loadGameFromCloud().then(loaded => {
-                if (!loaded && state.trees.length === 0) {
-                    for (let i = 0; i < 3; i++) {
-                        state.trees.push({
-                            id: '#' + (state.treesPlanted + i + 1),
-                            age: 0, health: 100, water: 85, pests: 0,
-                            stage: 'seed', rarity: 'common',
-                            protected: false
-                        });
-                    }
-                    state.treesPlanted += 3;
-                    render();
-                }
-            });
-        } catch(e) {
-            console.error("Failed to restore user:", e);
-        }
-    } else {
-        for (let i = 0; i < 3; i++) {
-            state.trees.push({
-                id: '#' + (state.treesPlanted + i + 1),
-                age: 0, health: 100, water: 85, pests: 0,
-                stage: 'seed', rarity: 'common',
-                protected: false
-            });
-        }
-        state.treesPlanted += 3;
+    const savedWallet = localStorage.getItem('walletAddress');
+    if (savedWallet) {
+        currentUser = {
+            wallet: savedWallet,
+            type: 'wallet',
+            display: savedWallet.slice(0, 8) + '...'
+        };
+        updateWalletBalancesUI();
+        loadGameFromCloud();
     }
     
+    for (let i = 0; i < 3; i++) buyTree();
     setInterval(gameLoop, 2000);
     setInterval(weatherCycle, 20000);
     setInterval(marketCycle, 15000);
     setInterval(() => { state.world.time = (state.world.time + 1) % 24; render(); }, 30000);
-    
     render();
     log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
     log("🔐 Click 'Connect Profile' to connect your wallet and save progress!");
