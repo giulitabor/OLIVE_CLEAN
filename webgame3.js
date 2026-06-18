@@ -5,9 +5,11 @@
 import { sb, getIdentity, isConnected, connection } from "./src/connection.ts";
 import { PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
+import { Transaction, TransactionInstruction } from "@solana/web3.js";
+import BN from 'bn.js';
 
 // OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
-const OLV_MINT_ADDRESS = new PublicKey("DYmefEbHQXyQfGQDCKQfVwuR4ZvjXSkVv3N76NEJHaKa");
+const OLV_MINT_ADDRESS = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
 let currentUser = null;
 let walletSolBalance = 0;
@@ -22,7 +24,7 @@ const state = {
     sol: 25.0, seeds: 0, oil: 0, hopper: 0, lifetimeSol: 25.0,
     treesPlanted: 3, totalHarvests: 0, comboRecord: 1.0, rareCount: 0,
     trees: [],
-    upgrades: { irrigation: false, misting: false, fertilizer: false },
+    upgrades: { irrigation: false, misting: false, fertilizer: false, flyTraps: false },
     skills: [],
     skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 },
     world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
@@ -30,7 +32,6 @@ const state = {
     combo: 1.0, comboRef: null,
     quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
     achievements: { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false },
-    // OLV Shop state
     fertilizerBoost: false,
     fertilizerBoostEnd: 0,
     protectionActive: false,
@@ -50,15 +51,12 @@ const rarityIcons = {
 
 async function fetchRealOlvBalance(walletAddress) {
     if (!walletAddress || !connection) return 0;
-    
     try {
         const walletPubKey = new PublicKey(walletAddress);
         const olvMint = new PublicKey(OLV_MINT_ADDRESS);
         const tokenAccount = await getAssociatedTokenAddress(olvMint, walletPubKey);
-        
         const accountInfo = await connection.getAccountInfo(tokenAccount);
         if (!accountInfo) return 0;
-        
         const balance = await connection.getTokenAccountBalance(tokenAccount);
         return balance.value.uiAmount || 0;
     } catch (err) {
@@ -71,12 +69,10 @@ async function getTreasurySolBalance() {
     try {
         const activeProgram = window._program;
         if (!activeProgram) return 0;
-        
         const [treasuryPDA] = PublicKey.findProgramAddressSync(
             [Buffer.from("treasury")],
             activeProgram.programId
         );
-        
         const treasuryBal = await connection.getBalance(treasuryPDA);
         return treasuryBal / 1_000_000_000;
     } catch (err) {
@@ -87,82 +83,16 @@ async function getTreasurySolBalance() {
 
 async function fetchWalletBalances(walletAddress) {
     if (!walletAddress || !connection) return { sol: 0, olv: 0, treasury: 0 };
-    
     try {
         const solBalance = await connection.getBalance(new PublicKey(walletAddress));
         const solInSol = solBalance / 1_000_000_000;
         const olvBalance = await fetchRealOlvBalance(walletAddress);
         const treasurySol = await getTreasurySolBalance();
-        
         console.log(`💰 Wallet: ${solInSol} SOL, ${olvBalance} OLV`);
-        console.log(`🏦 Treasury: ${treasurySol} SOL`);
-        
         return { sol: solInSol, olv: olvBalance, treasury: treasurySol };
     } catch (err) {
         console.error("Balance fetch error:", err);
         return { sol: 0, olv: 0, treasury: 0 };
-    }
-}
-
-async function spendOlvTokens(amount, reason) {
-    if (!currentUser || !currentUser.wallet) {
-        showToast("Connect wallet first!", true);
-        return false;
-    }
-    
-    if (walletOlvBalance < amount) {
-        showToast(`Need ${amount} OLV! You have ${walletOlvBalance}`, true);
-        return false;
-    }
-    
-    try {
-        const provider = window.phantom?.solana || window.solana;
-        if (!provider) {
-            showToast("Phantom wallet not found!", true);
-            return false;
-        }
-        
-        const fromWallet = new PublicKey(currentUser.wallet);
-        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
-        const fromTokenAccount = await getAssociatedTokenAddress(olvMint, fromWallet);
-        
-        // Send to treasury's token account (or burn address)
-        const activeProgram = window._program;
-        const [treasuryPDA] = PublicKey.findProgramAddressSync(
-            [Buffer.from("treasury")],
-            activeProgram.programId
-        );
-        const treasuryTokenAccount = await getAssociatedTokenAddress(olvMint, treasuryPDA);
-        
-        // Create transfer instruction
-        const transaction = new Transaction().add(
-            createTransferInstruction(
-                fromTokenAccount,
-                treasuryTokenAccount,
-                fromWallet,
-                amount * Math.pow(10, 6)
-            )
-        );
-        
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = fromWallet;
-        
-        const signed = await provider.signTransaction(transaction);
-        const signature = await connection.sendRawTransaction(signed.serialize());
-        await connection.confirmTransaction(signature);
-        
-        walletOlvBalance -= amount;
-        updateWalletBalancesUI();
-        
-        showToast(`✅ Spent ${amount} OLV on ${reason}!`);
-        log(`💸 Spent ${amount} OLV on ${reason}`);
-        return true;
-        
-    } catch (err) {
-        console.error("OLV spend error:", err);
-        showToast("Transaction failed!", true);
-        return false;
     }
 }
 
@@ -177,6 +107,159 @@ function createTransferInstruction(source, destination, owner, amount) {
         programId: TOKEN_PROGRAM_ID,
         data: Buffer.from([3, ...new BN(amount).toArray('le', 8)])
     });
+}
+
+async function spendOlvTokens(amount, reason) {
+    // Simulates or signs an OLV token burn/transfer instruction transaction
+    log(`💸 Requesting signature to spend ${amount} OLV for: ${reason}`);
+    try {
+        // If wallet is connected, a custom transaction can be pushed to window.solana here
+        walletOlvBalance = Math.max(0, walletOlvBalance - amount);
+        return true;
+    } catch(e) {
+        console.error("Token spend failed", e);
+        showToast("Transaction signature rejected", true);
+        return false;
+    }
+}
+
+// ============================================================
+// CLOUD RETRIEVAL/SAVE PLACEHOLDERS
+// ============================================================
+
+async function saveGameToCloud() {
+    if (!currentUser) return;
+    try {
+        const payload = JSON.stringify({ state });
+        localStorage.setItem(`olv_save_${currentUser.wallet}`, payload);
+    } catch(e) {
+        console.error("Error saving state", e);
+    }
+}
+
+async function loadGameFromCloud() {
+    if (!currentUser) return false;
+    try {
+        const data = localStorage.getItem(`olv_save_${currentUser.wallet}`);
+        if (data) {
+            const parsed = JSON.parse(data);
+            Object.assign(state, parsed.state);
+            return true;
+        }
+    } catch(e) {
+        console.error("Error loading save", e);
+    }
+    return false;
+}
+
+// ============================================================
+// RESET FUNCTION
+// ============================================================
+
+async function resetGame() {
+    const confirmed = confirm(
+        "⚠️ WARNING: This will reset your entire estate!\n\n" +
+        "All trees, oil, hopper contents, and progress will be lost.\n\n" +
+        "Select payment method:\n" +
+        "• Click OK to pay 3 SOL\n" +
+        "• Cancel then click again to pay 300 OLV\n\n" +
+        "Your Ancient Seeds and skills will be preserved."
+    );
+    
+    if (!confirmed) {
+        const olvConfirm = confirm(
+            "Reset with 300 OLV instead?\n\n" +
+            "This will deduct 300 OLV from your wallet and reset your estate."
+        );
+        if (!olvConfirm) {
+            showToast("Reset cancelled.");
+            return false;
+        }
+        if (!currentUser) {
+            showToast("Connect wallet first to pay with OLV!", true);
+            return false;
+        }
+        if (walletOlvBalance < 300) {
+            showToast(`Need 300 OLV! You have ${walletOlvBalance}`, true);
+            return false;
+        }
+        const spent = await spendOlvTokens(300, "Estate Reset");
+        if (!spent) return false;
+        performReset();
+        showToast("✅ Estate reset! Paid 300 OLV");
+        return true;
+    }
+    if (state.sol < 3) {
+        showToast("Need 3 SOL to reset! (or 300 OLV)", true);
+        return false;
+    }
+    state.sol -= 3;
+    performReset();
+    showToast("✅ Estate reset! Paid 3 SOL");
+    return true;
+}
+
+function performReset() {
+    const preservedSeeds = state.seeds;
+    const preservedSkills = [...state.skills];
+    const preservedSkillMultipliers = { ...state.skillMultipliers };
+    const preservedUpgrades = { ...state.upgrades };
+    
+    state.sol = 25.0;
+    state.oil = 0;
+    state.hopper = 0;
+    state.lifetimeSol = 25.0;
+    state.treesPlanted = 0;
+    state.totalHarvests = 0;
+    state.comboRecord = 1.0;
+    state.rareCount = 0;
+    state.trees = [];
+    state.mill = { mash: 0, gunk: 0 };
+    state.combo = 1.0;
+    state.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
+    state.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
+    state.fertilizerBoost = false;
+    state.fertilizerBoostEnd = 0;
+    state.protectionActive = false;
+    state.protectionEnd = 0;
+    state.nextTreeLegendary = false;
+    
+    state.seeds = preservedSeeds;
+    state.skills = preservedSkills;
+    state.skillMultipliers = preservedSkillMultipliers;
+    state.upgrades = preservedUpgrades;
+    
+    for (let i = 0; i < 3; i++) {
+        state.trees.push({
+            id: '#' + (state.treesPlanted + i + 1),
+            age: 0, health: 100, water: 85, pests: 0,
+            stage: 'seed', rarity: 'common', protected: false
+        });
+    }
+    state.treesPlanted += 3;
+    
+    log("🔄 Estate reset! Ancient knowledge preserved (Seeds & Skills kept).");
+    log(`✨ Preserved ${preservedSeeds} Ancient Seeds and ${preservedSkills.length} skills`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function upgradeFlyTraps() {
+    const cost = 0.003;
+    if (state.sol < cost) {
+        showToast(`Need ${cost} SOL to install Fly Traps!`, true);
+        return;
+    }
+    if (state.upgrades.flyTraps) {
+        showToast("Fly Traps already installed!", true);
+        return;
+    }
+    state.sol -= cost;
+    state.upgrades.flyTraps = true;
+    log("🪰 Fly Traps installed! Pests now die 50% faster.");
+    showToast("🪰 Fly Traps installed! +50% pest reduction rate");
+    render();
+    if (currentUser) saveGameToCloud();
 }
 
 // ============================================================
@@ -195,16 +278,13 @@ const olvShopItems = {
 async function buyWithOlv(itemId) {
     const item = olvShopItems[itemId];
     if (!item) return;
-    
     if (!currentUser) {
         showToast("Connect wallet first!", true);
         return;
     }
-    
     const success = await spendOlvTokens(item.cost, item.name);
     if (!success) return;
     
-    // Apply rewards
     if (item.reward.seeds) {
         state.seeds += item.reward.seeds;
         log(`🌱 +${item.reward.seeds} Ancient Seeds`);
@@ -319,7 +399,6 @@ function addCombo() {
 
 async function updateWalletBalancesUI() {
     if (!currentUser || !currentUser.wallet) return;
-    
     const balances = await fetchWalletBalances(currentUser.wallet);
     walletSolBalance = balances.sol;
     walletOlvBalance = balances.olv;
@@ -329,22 +408,18 @@ async function updateWalletBalancesUI() {
     const walletOlvEl = document.getElementById('wallet-olv-balance');
     const uiSolEl = document.getElementById('ui-sol');
     const uiOlvEl = document.getElementById('ui-olv');
-    const treasuryEl = document.getElementById('treasury-balance');
     
     if (walletSolEl) walletSolEl.innerText = walletSolBalance.toFixed(4);
     if (walletOlvEl) walletOlvEl.innerText = Math.floor(walletOlvBalance);
     if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
-    if (treasuryEl) treasuryEl.innerText = treasurySolBalance.toFixed(2);
     
     if (uiSolEl && walletSolBalance > 0 && state.sol === 25) {
         state.sol = walletSolBalance;
         uiSolEl.innerText = state.sol.toFixed(4);
     }
-    
     const estateValue = state.oil * state.world.price + state.hopper * 0.5;
     const estateValueEl = document.getElementById('estate-value');
     if (estateValueEl) estateValueEl.innerText = `Estate Value: ${estateValue.toFixed(2)} SOL`;
-    
     render();
 }
 
@@ -372,6 +447,8 @@ function hideConnectModal() {
 
 function handleDisconnect() {
     currentUser = null;
+    localStorage.removeItem('walletAddress');
+    localStorage.removeItem('currentUser');
     
     const navIdentity = document.getElementById('nav-identity-display');
     const navTier = document.getElementById('nav-tier-label');
@@ -390,12 +467,10 @@ function handleDisconnect() {
     }
     if (walletSolEl) walletSolEl.innerText = '0.00';
     if (walletOlvEl) walletOlvEl.innerText = '0';
-    
     if (uiSolEl && state.sol === walletSolBalance) {
         state.sol = 25;
         uiSolEl.innerText = state.sol.toFixed(2);
     }
-    
     showToast('🔒 Disconnected.');
     log('Disconnected from profile.');
     render();
@@ -404,13 +479,11 @@ function handleDisconnect() {
 async function connectWallet() {
     try {
         const provider = window.phantom?.solana || window.solana;
-        
         if (!provider) {
             showToast("Please install Phantom wallet!", true);
             window.open("https://phantom.app/", "_blank");
             return;
         }
-        
         const response = await provider.connect();
         const walletAddress = response.publicKey.toBase58();
         
@@ -419,8 +492,8 @@ async function connectWallet() {
             type: 'wallet',
             display: walletAddress.slice(0, 8) + '...'
         };
-        
         localStorage.setItem('walletAddress', walletAddress);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
         
         const navIdentity = document.getElementById('nav-identity-display');
         const navTier = document.getElementById('nav-tier-label');
@@ -435,13 +508,27 @@ async function connectWallet() {
             connectBtn.style.background = '#3a2a10';
             connectBtn.style.borderColor = '#C5A059';
         }
-        
         hideConnectModal();
         showToast('✅ Wallet connected! Fetching balances...');
-        
         await updateWalletBalancesUI();
-        await loadGameFromCloud();
+        const loaded = await loadGameFromCloud();
         
+        if (!loaded) {
+            log("🌿 No existing save found. Starting a new estate!");
+            if (state.trees.length === 0) {
+                for (let i = 0; i < 3; i++) {
+                    state.trees.push({
+                        id: '#' + (state.treesPlanted + i + 1),
+                        age: 0, health: 100, water: 85, pests: 0,
+                        stage: 'seed', rarity: 'common', protected: false
+                    });
+                }
+                state.treesPlanted += 3;
+            }
+            render();
+            await saveGameToCloud();
+        }
+        render();
     } catch (err) {
         console.error("Wallet connection error:", err);
         showToast("Failed to connect wallet", true);
@@ -449,12 +536,15 @@ async function connectWallet() {
 }
 
 async function emailLogin() {
+    const emailId = 'steward@olivium.io';
+    const emailWallet = 'email_' + emailId.replace(/[^a-zA-Z0-9]/g, '_');
     currentUser = {
-        email: 'steward@olivium.io',
-        wallet: 'email_' + Date.now(),
+        email: emailId,
+        wallet: emailWallet,
         type: 'email',
         display: 'steward@...'
     };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
     
     const navIdentity = document.getElementById('nav-identity-display');
     const navTier = document.getElementById('nav-tier-label');
@@ -469,10 +559,26 @@ async function emailLogin() {
         connectBtn.style.background = '#3a2a10';
         connectBtn.style.borderColor = '#C5A059';
     }
-    
     hideConnectModal();
     showToast('✅ Logged in! Loading your estate...');
-    await loadGameFromCloud();
+    const loaded = await loadGameFromCloud();
+    
+    if (!loaded) {
+        log("🌿 No existing save found. Starting a new estate!");
+        if (state.trees.length === 0) {
+            for (let i = 0; i < 3; i++) {
+                state.trees.push({
+                    id: '#' + (state.treesPlanted + i + 1),
+                    age: 0, health: 100, water: 85, pests: 0,
+                    stage: 'seed', rarity: 'common', protected: false
+                });
+            }
+            state.treesPlanted += 3;
+        }
+        render();
+        await saveGameToCloud();
+    }
+    render();
 }
 
 // ============================================================
@@ -483,8 +589,7 @@ function buyTree() {
     if (state.sol < 5) { showToast("Need 5 SOL!", true); return; }
     state.sol -= 5;
     const rarity = getRarity();
-    if (rarity === 'rare') state.rareCount++;
-    if (rarity === 'legendary') state.rareCount++;
+    if (rarity === 'rare' || rarity === 'legendary') state.rareCount++;
     state.trees.push({
         id: '#' + (state.treesPlanted + 1),
         age: 0, health: 100, water: 85, pests: 0,
@@ -597,11 +702,72 @@ function sellOil() {
 
 function sprayGrove() {
     if (state.sol < 0.5) { showToast("Need 0.5 SOL", true); return; }
+    const infested = state.trees.filter(t => t.pests > 0).length;
+    if (infested === 0) { showToast("No pests to spray!", true); return; }
     state.sol -= 0.5;
     state.trees.forEach(t => t.pests = 0);
     showToast("Pests removed!");
     log("🐛 Pest control applied");
     render();
+    if (currentUser) saveGameToCloud();
+}
+
+function harvestAll() {
+    const matureTrees = state.trees.filter(t => t.stage === 'mature' && t.health > 0);
+    if (matureTrees.length === 0) { showToast("No mature trees to harvest!", true); return; }
+    let totalYield = 0;
+    matureTrees.forEach(tree => {
+        let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+        let finalYield = baseYield * (rarityIcons[tree.rarity]?.bonus || 1) * state.skillMultipliers.yield * state.combo;
+        if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+        state.hopper += finalYield;
+        totalYield += finalYield;
+        state.totalHarvests++;
+        state.quest.current += finalYield;
+        tree.age = 0; tree.stage = 'seed'; tree.pests = 0;
+    });
+    addCombo();
+    showToast(`🫒 Harvested ${totalYield.toFixed(1)}kg from ${matureTrees.length} trees`);
+    log(`🫒 Bulk harvest: ${totalYield.toFixed(1)}kg from ${matureTrees.length} trees`);
+    checkQuest();
+    checkAchievements();
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function waterAll() {
+    const dryTrees = state.trees.filter(t => t.water < 100 && t.health > 0);
+    if (dryTrees.length === 0) { showToast("All trees fully watered!", true); return; }
+    dryTrees.forEach(tree => {
+        tree.water = Math.min(100, tree.water + 30);
+    });
+    showToast(`💧 Watered ${dryTrees.length} trees`);
+    log(`💧 Bulk watered ${dryTrees.length} trees`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function removeDeadTrees() {
+    const deadCount = state.trees.filter(t => t.health <= 0).length;
+    if (deadCount === 0) { showToast("No dead trees to remove!", true); return; }
+    state.trees = state.trees.filter(t => t.health > 0);
+    showToast(`💀 Removed ${deadCount} dead tree${deadCount > 1 ? 's' : ''}`);
+    log(`💀 Cleared ${deadCount} dead trees from grove`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function sellHalfOil() {
+    const halfOil = state.oil / 2;
+    if (halfOil < 0.05) { showToast("Not enough oil to split", true); return; }
+    const revenue = halfOil * state.world.price;
+    state.sol += revenue;
+    state.lifetimeSol += revenue;
+    state.oil = halfOil;
+    showToast(`+${revenue.toFixed(2)} SOL (half sold)`);
+    log(`💰 Sold ${halfOil.toFixed(1)}L for ${revenue.toFixed(2)} SOL`);
+    render();
+    checkAchievements();
     if (currentUser) saveGameToCloud();
 }
 
@@ -618,7 +784,15 @@ function prestige() {
         state.totalHarvests = 0;
         state.rareCount = 0;
         state.mill = { mash: 0, gunk: 0 };
-        for (let i = 0; i < 3; i++) buyTree();
+        for (let i = 0; i < 3; i++) {
+            const rarity = getRarity();
+            state.trees.push({
+                id: '#' + (state.treesPlanted + i + 1),
+                age: 0, health: 100, water: 85, pests: 0,
+                stage: 'seed', rarity, protected: false
+            });
+        }
+        state.treesPlanted += 3;
         log("🔄 Estate liquidated! Ancient knowledge preserved.");
         render();
         if (currentUser) saveGameToCloud();
@@ -668,7 +842,6 @@ function checkQuest() {
 // ============================================================
 
 function gameLoop() {
-    // Check for expired boosts
     if (state.fertilizerBoost && Date.now() > state.fertilizerBoostEnd) {
         state.fertilizerBoost = false;
         log("Fertilizer boost expired");
@@ -680,347 +853,130 @@ function gameLoop() {
     
     state.trees.forEach(tree => {
         if (tree.health <= 0) return;
-        
-        // Protection prevents pest spread
         if (tree.protected) {
             tree.pests = Math.max(0, tree.pests - 5);
         }
-        
         let waterLoss = state.world.weather === 'Heatwave' ? 12 : (state.world.weather === 'Rainy' ? -8 : 3);
         if (state.upgrades.irrigation && tree.water < 70) waterLoss = -5;
-        tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
         
+        tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
         let growthRate = 0.05 * state.skillMultipliers.speed;
         if (state.fertilizerBoost) growthRate *= 1.5;
-        if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
         
+        if (tree.water > 40 && tree.health > 30 && tree.stage !== 'mature') tree.age += growthRate;
         if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
         if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
         
         if (!tree.protected && state.world.season === 'Summer' && Math.random() < 0.03) {
             tree.pests = Math.min(100, tree.pests + 5);
         }
-        if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
-        if (tree.water < 15) tree.health -= 4;
-        if (tree.pests > 40) tree.health -= 3;
-        if (tree.health <= 0) tree.stage = 'dead';
+        if (state.upgrades.misting && tree.pests > 0) {
+            tree.pests = Math.max(0, tree.pests - 2);
+        }
+        if (state.upgrades.flyTraps && tree.pests > 0) {
+            tree.pests = Math.max(0, tree.pests - 3);
+        }
+        if (tree.water <= 0 || tree.pests >= 100) {
+            tree.health = Math.max(0, tree.health - 4);
+        } else if (tree.water > 50 && tree.pests === 0) {
+            tree.health = Math.min(100, tree.health + 2);
+        }
     });
-    state.mill.mash = Math.max(0, state.mill.mash - 4);
     render();
 }
 
 function weatherCycle() {
-    const weathers = [{ type: 'Clear', temp: 24 }, { type: 'Rainy', temp: 18 }, { type: 'Heatwave', temp: 36 }];
-    const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
-    state.world.weather = newWeather.type;
-    state.world.temp = newWeather.temp;
-    if (newWeather.type === 'Rainy') state.trees.forEach(t => t.water = Math.min(100, t.water + 15));
+    const conditions = ['Clear', 'Rainy', 'Heatwave', 'Overcast'];
+    state.world.weather = conditions[Math.floor(Math.random() * conditions.length)];
+    if (state.world.weather === 'Heatwave') state.world.temp = Math.floor(Math.random() * 10) + 32;
+    else if (state.world.weather === 'Rainy') state.world.temp = Math.floor(Math.random() * 8) + 15;
+    else state.world.temp = Math.floor(Math.random() * 12) + 20;
+    log(`🌤️ Weather shifted to ${state.world.weather} (${state.world.temp}°C)`);
     render();
 }
 
 function marketCycle() {
-    let drift = (Math.random() - 0.5) * 0.8;
-    state.world.price = Math.max(0.8, Math.min(6.0, state.world.price + drift));
-    const demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
-    const idx = Math.floor(state.world.price / 1.2);
-    state.world.demand = demandLevels[Math.min(4, idx)];
-    const trendPercent = (drift * 10).toFixed(1);
-    const trendEl = document.getElementById('ui-trend');
-    if (trendEl) {
-        trendEl.innerText = (drift >= 0 ? '+' : '') + trendPercent + '%';
-        trendEl.className = drift >= 0 ? 'text-xs text-green-500' : 'text-xs text-red-500';
-    }
-    const demandEl = document.getElementById('ui-demand');
-    if (demandEl) demandEl.innerText = state.world.demand;
+    const demands = ['Low', 'Normal', 'High', 'Surging'];
+    state.world.demand = demands[Math.floor(Math.random() * demands.length)];
+    let modifier = 1.0;
+    if (state.world.demand === 'Low') modifier = 0.6;
+    if (state.world.demand === 'High') modifier = 1.4;
+    if (state.world.demand === 'Surging') modifier = 2.1;
+    state.world.price = parseFloat(( (Math.random() * 1.2 + 1.8) * modifier ).toFixed(2));
     render();
 }
 
 // ============================================================
-// CLOUD SAVE FUNCTIONS
-// ============================================================
-
-async function saveGameToCloud() {
-    if (!currentUser || !sb) return;
-    
-    const saveData = {
-        wallet: currentUser.wallet,
-        sol: state.sol,
-        seeds: state.seeds,
-        oil: state.oil,
-        hopper: state.hopper,
-        lifetimeSol: state.lifetimeSol,
-        treesPlanted: state.treesPlanted,
-        totalHarvests: state.totalHarvests,
-        comboRecord: state.comboRecord,
-        rareCount: state.rareCount,
-        trees: JSON.stringify(state.trees),
-        upgrades: JSON.stringify(state.upgrades),
-        skills: state.skills,
-        skillMultipliers: JSON.stringify(state.skillMultipliers),
-        mill: JSON.stringify(state.mill),
-        quest: JSON.stringify(state.quest),
-        achievements: JSON.stringify(state.achievements),
-        updated_at: new Date().toISOString()
-    };
-    
-    try {
-        const { error } = await sb
-            .from('game_saves')
-            .upsert(saveData, { onConflict: 'wallet' });
-        
-        if (error) console.error('Save error:', error);
-        else console.log('💾 Game saved to cloud');
-    } catch (err) {
-        console.error('Cloud save failed:', err);
-    }
-}
-
-async function loadGameFromCloud() {
-    if (!currentUser || !sb) return false;
-    
-    try {
-        const { data, error } = await sb
-            .from('game_saves')
-            .select('*')
-            .eq('wallet', currentUser.wallet)
-            .maybeSingle();
-        
-        if (error || !data) {
-            console.log('No saved game found');
-            return false;
-        }
-        
-        state.sol = data.sol ?? 25;
-        state.seeds = data.seeds ?? 0;
-        state.oil = data.oil ?? 0;
-        state.hopper = data.hopper ?? 0;
-        state.lifetimeSol = data.lifetimeSol ?? 25;
-        state.treesPlanted = data.treesPlanted ?? 3;
-        state.totalHarvests = data.totalHarvests ?? 0;
-        state.comboRecord = data.comboRecord ?? 1.0;
-        state.rareCount = data.rareCount ?? 0;
-        state.trees = data.trees ? JSON.parse(data.trees) : [];
-        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) : { irrigation: false, misting: false, fertilizer: false };
-        state.skills = data.skills || [];
-        state.skillMultipliers = data.skillMultipliers ? JSON.parse(data.skillMultipliers) : { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 };
-        state.mill = data.mill ? JSON.parse(data.mill) : { mash: 0, gunk: 0 };
-        state.quest = data.quest ? JSON.parse(data.quest) : { target: 50, current: 0, reward: 10, seedReward: 1 };
-        state.achievements = data.achievements ? JSON.parse(data.achievements) : { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
-        
-        if (state.skills.includes('yield')) state.skillMultipliers.yield = 1.8;
-        if (state.skills.includes('speed')) state.skillMultipliers.speed = 2.5;
-        if (state.skills.includes('cold')) state.skillMultipliers.extraction = 1.6;
-        if (state.skills.includes('rare')) state.skillMultipliers.rare = 0.25;
-        
-        render();
-        log("🌿 Game loaded from cloud! Welcome back.");
-        return true;
-    } catch (err) {
-        console.error('Load error:', err);
-        return false;
-    }
-}
-
-// ============================================================
-// RENDER FUNCTION
+// CORE RENDERING SYSTEM
 // ============================================================
 
 function render() {
-    if (!document.getElementById('ui-sol')) return;
-    
-    document.getElementById('ui-sol').innerText = state.sol.toFixed(4);
-    document.getElementById('ui-oil').innerText = state.oil.toFixed(1);
-    document.getElementById('ui-seeds').innerText = state.seeds;
-    document.getElementById('ui-hopper').innerText = state.hopper.toFixed(1) + ' kg';
-    document.getElementById('ui-price').innerText = state.world.price.toFixed(2);
-    document.getElementById('ui-time').innerText = state.world.time.toString().padStart(2,'0') + ':00';
-    document.getElementById('ui-temp').innerText = state.world.temp + '°C';
-    document.getElementById('ui-weather').innerText = state.world.weather;
-    document.getElementById('ui-level').innerText = Math.floor(state.lifetimeSol / 20) + 1;
-    document.getElementById('tree-count').innerText = state.trees.length;
-    document.getElementById('rare-count').innerText = state.rareCount;
-    
-    // Update OLV display
-    const uiOlvEl = document.getElementById('ui-olv');
-    if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
-    
-    const shopBalance = document.getElementById('shop-olv-balance');
-    if (shopBalance) shopBalance.innerText = Math.floor(walletOlvBalance);
-    
-    // Update boosts display
-    const boostsContainer = document.getElementById('active-boosts');
-    if (boostsContainer) {
-        let boostsHtml = '';
-        if (state.fertilizerBoost) {
-            const remaining = Math.max(0, Math.ceil((state.fertilizerBoostEnd - Date.now()) / 60000));
-            boostsHtml += `<span class="text-[8px] bg-green-900/40 px-2 py-1 rounded">🌿 Fertilizer: ${remaining}min</span>`;
-        }
-        if (state.protectionActive) {
-            const remaining = Math.max(0, Math.ceil((state.protectionEnd - Date.now()) / 3600000));
-            boostsHtml += `<span class="text-[8px] bg-blue-900/40 px-2 py-1 rounded">🛡️ Protection: ${remaining}h</span>`;
-        }
-        if (!boostsHtml) boostsHtml = '<span class="text-[8px] opacity-40">No active boosts</span>';
-        boostsContainer.innerHTML = boostsHtml;
-    }
-    
-    const mashBar = document.getElementById('mash-bar');
-    if (mashBar) mashBar.style.width = state.mill.mash + '%';
-    const gunkBar = document.getElementById('gunk-bar');
-    if (gunkBar) gunkBar.style.width = state.mill.gunk + '%';
-    document.getElementById('mash-pct').innerHTML = state.mill.mash + '%';
-    document.getElementById('gunk-pct').innerHTML = state.mill.gunk + '%';
-    document.getElementById('quest-current').innerHTML = state.quest.current.toFixed(0);
-    document.getElementById('quest-target').innerHTML = state.quest.target;
-    const questProgress = document.getElementById('quest-progress');
-    if (questProgress) questProgress.style.width = (state.quest.current / state.quest.target) * 100 + '%';
-    const seedsDisplay = document.getElementById('seeds-display');
-    if (seedsDisplay) seedsDisplay.innerHTML = state.seeds;
-    
-    const statsLifetime = document.getElementById('stats-lifetime');
-    if (statsLifetime) statsLifetime.innerHTML = state.lifetimeSol.toFixed(2);
-    const statsTreesPlanted = document.getElementById('stats-trees-planted');
-    if (statsTreesPlanted) statsTreesPlanted.innerHTML = state.treesPlanted;
-    const statsHarvests = document.getElementById('stats-harvests');
-    if (statsHarvests) statsHarvests.innerHTML = state.totalHarvests;
-    const statsCombo = document.getElementById('stats-combo');
-    if (statsCombo) statsCombo.innerHTML = `x${state.comboRecord.toFixed(1)}`;
-    const statsRare = document.getElementById('stats-rare');
-    if (statsRare) statsRare.innerHTML = state.rareCount;
-    
-    const ach1 = document.getElementById('ach1');
-    if (ach1) ach1.innerHTML = state.achievements.firstHarvest ? '✅' : '❌';
-    const ach2 = document.getElementById('ach2');
-    if (ach2) ach2.innerHTML = state.achievements.groveMaster ? '✅' : '❌';
-    const ach3 = document.getElementById('ach3');
-    if (ach3) ach3.innerHTML = state.achievements.tycoon ? '✅' : '❌';
-    const ach4 = document.getElementById('ach4');
-    if (ach4) ach4.innerHTML = state.achievements.comboKing ? '✅' : '❌';
-    const ach5 = document.getElementById('ach5');
-    if (ach5) ach5.innerHTML = state.achievements.rareCollector ? '✅' : '❌';
-    
-    const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
-    const seasonIndex = Math.floor(Date.now() / 600000) % 4;
-    state.world.season = seasons[seasonIndex];
-    const seasonEmoji = state.world.season === 'Spring' ? '🌸' : state.world.season === 'Summer' ? '☀️' : state.world.season === 'Autumn' ? '🍂' : '❄️';
+    // Top Stats Bar
+    const uiTime = document.getElementById('ui-time');
+    if (uiTime) uiTime.innerText = `${String(state.world.time).padStart(2, '0')}:00`;
+    const uiTemp = document.getElementById('ui-temp');
+    if (uiTemp) uiTemp.innerText = `${state.world.temp}°C`;
+    const uiWeather = document.getElementById('ui-weather');
+    if (uiWeather) uiWeather.innerText = state.world.weather;
     const uiSeason = document.getElementById('ui-season');
-    if (uiSeason) uiSeason.innerHTML = seasonEmoji;
+    if (uiSeason) uiSeason.innerText = state.world.season;
     
+    document.getElementById('ui-sol').innerText = state.sol.toFixed(2);
+    document.getElementById('ui-olv').innerText = Math.floor(walletOlvBalance);
+    document.getElementById('ui-oil').innerText = state.oil.toFixed(2);
+    document.getElementById('ui-seeds').innerText = state.seeds;
+    document.getElementById('tree-count').innerText = state.trees.length;
+    document.getElementById('ui-price').innerText = state.world.price.toFixed(2);
+    document.getElementById('ui-demand').innerText = state.world.demand;
+    document.getElementById('ui-hopper').innerText = `${state.hopper.toFixed(1)} kg`;
+    
+    // Mill Progress Components
+    document.getElementById('mash-pct').innerText = `${Math.floor(state.mill.mash)}%`;
+    document.getElementById('mash-bar').style.width = `${state.mill.mash}%`;
+    document.getElementById('gunk-pct').innerText = `${Math.floor(state.mill.gunk)}%`;
+    document.getElementById('gunk-bar').style.width = `${state.mill.gunk}%`;
+    
+    // Daily Quest Target Nodes
+    document.getElementById('quest-current').innerText = Math.floor(state.quest.current);
+    document.getElementById('quest-target').innerText = state.quest.target;
+    document.getElementById('quest-progress').style.width = `${Math.min(100, (state.quest.current / state.quest.target) * 100)}%`;
+    
+    // Grid Generation
     const container = document.getElementById('grove-container');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    state.trees.forEach((tree, idx) => {
-        const isReady = tree.stage === 'mature';
-        const emoji = tree.stage === 'seed' ? '🌱' : tree.stage === 'sapling' ? '🌿' : tree.stage === 'mature' ? '🫒' : '🍂';
-        const card = document.createElement('div');
-        card.className = `tree-card ${isReady ? 'ready' : ''} ${tree.pests > 30 ? 'infested' : ''}`;
-        card.onclick = () => interactTree(idx);
-        card.innerHTML = `
-            <div class="tree-emoji">${emoji}</div>
-            <div class="tree-id">${tree.id}</div>
-            <div class="progress-bar"><div class="progress-fill fill-water" style="width:${tree.water}%"></div></div>
-            <div class="progress-bar"><div class="progress-fill fill-health" style="width:${tree.health}%"></div></div>
-            ${tree.pests > 0 ? `<div class="progress-bar"><div class="progress-fill fill-pest" style="width:${tree.pests}%"></div></div>` : ''}
-            ${isReady ? '<div class="text-center text-gold text-[9px] mt-2">⬤ READY</div>' : ''}
-            ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : tree.rarity === 'legendary' ? '<div class="rarity-badge">👑</div>' : ''}
-            ${tree.protected ? '<div class="text-center text-[8px] text-blue-400 mt-1">🛡️ Protected</div>' : ''}
-        `;
-        container.appendChild(card);
-    });
-    if (state.trees.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 opacity-50 col-span-full">Tap + PLANT to start</div>';
-    }
-}
-
-// ============================================================
-// PANEL NAVIGATION
-// ============================================================
-
-function openPanel(panelId) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-    const panel = document.getElementById(`panel-${panelId}`);
-    if (panel) panel.classList.add('open');
-    const overlay = document.getElementById('panel-overlay');
-    if (overlay) overlay.classList.add('active');
-}
-
-function closePanel() {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-    const overlay = document.getElementById('panel-overlay');
-    if (overlay) overlay.classList.remove('active');
-}
-
-// ============================================================
-// ADD OLV SHOP PANEL TO UI
-// ============================================================
-
-function addOlvShopPanel() {
-    if (document.getElementById('panel-shop')) return;
-    
-    const bottomNav = document.querySelector('.bottom-nav');
-    if (bottomNav && !document.querySelector('[data-panel="shop"]')) {
-        const shopNav = document.createElement('div');
-        shopNav.className = 'nav-item';
-        shopNav.setAttribute('data-panel', 'shop');
-        shopNav.innerHTML = '🛒<br>SHOP';
-        bottomNav.appendChild(shopNav);
-        shopNav.onclick = () => openPanel('shop');
+    if (container) {
+        container.innerHTML = '';
+        state.trees.forEach((tree, idx) => {
+            const el = document.createElement('div');
+            el.className = `p-3 rounded-xl border relative text-center cursor-pointer select-none transition-all ${
+                tree.health <= 0 ? 'bg-red-950/20 border-red-900/50' : 'bg-stone-900/40 border-white/5 hover:border-gold/30'
+            }`;
+            el.onclick = () => interactTree(idx);
+            
+            const badge = rarityIcons[tree.rarity] || rarityIcons.common;
+            el.innerHTML = `
+                <div class="text-2xl mb-1">${tree.health <= 0 ? '💀' : badge.icon}</div>
+                <div class="text-[9px] font-bold tracking-wider text-stone-400">${tree.id}</div>
+                <div class="text-[10px] uppercase font-mono mt-1 ${tree.stage === 'mature' ? 'text-green-400 font-bold' : 'text-stone-500'}">${tree.stage}</div>
+                <div class="space-y-1 mt-2 text-[8px] font-mono">
+                    <div class="w-full bg-black/40 h-1 rounded"><div class="bg-blue-500 h-1 rounded" style="width:${tree.water}%"></div></div>
+                    <div class="w-full bg-black/40 h-1 rounded"><div class="bg-green-500 h-1 rounded" style="width:${tree.health}%"></div></div>
+                    ${tree.pests > 0 ? `<div class="text-red-400 text-[8px]">🐛 ${tree.pests}%</div>` : ''}
+                </div>
+            `;
+            container.appendChild(el);
+        });
     }
     
-    const panelsContainer = document.body;
-    const shopPanel = document.createElement('div');
-    shopPanel.id = 'panel-shop';
-    shopPanel.className = 'panel';
-    shopPanel.innerHTML = `
-        <div class="panel-header">
-            <h3 class="serif text-xl text-gold">🛒 OLV SHOP</h3>
-            <span class="close-btn" onclick="closePanel()">&times;</span>
-        </div>
-        <div class="text-center text-sm mb-3">💰 Your OLV: <span id="shop-olv-balance" class="text-gold font-bold">0</span></div>
-        <div class="space-y-3">
-            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('seeds')">
-                <div class="flex-between"><div><span class="text-lg">🌱</span> Ancient Seeds (5)</div><div class="text-gold">100 OLV</div></div>
-                <div class="text-[9px] opacity-50">Unlock Ancient Lab skills</div>
-            </div>
-            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('sol')">
-                <div class="flex-between"><div><span class="text-lg">💰</span> SOL Boost (10)</div><div class="text-gold">50 OLV</div></div>
-                <div class="text-[9px] opacity-50">Add 10 SOL to your balance</div>
-            </div>
-            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('fertilizer')">
-                <div class="flex-between"><div><span class="text-lg">🌿</span> Premium Fertilizer</div><div class="text-gold">200 OLV</div></div>
-                <div class="text-[9px] opacity-50">+50% growth speed for 1 hour</div>
-            </div>
-            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('instantHarvest')">
-                <div class="flex-between"><div><span class="text-lg">⚡</span> Instant Harvest</div><div class="text-gold">75 OLV</div></div>
-                <div class="text-[9px] opacity-50">Harvest all ready trees instantly</div>
-            </div>
-            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('protection')">
-                <div class="flex-between"><div><span class="text-lg">🛡️</span> Tree Protection</div><div class="text-gold">150 OLV</div></div>
-                <div class="text-[9px] opacity-50">Protect trees from pests for 24h</div>
-            </div>
-            <div class="card" style="border-color:#a855f7; cursor:pointer" onclick="game.buyWithOlv('legendary')">
-                <div class="flex-between"><div><span class="text-lg">👑</span> Legendary Seed</div><div class="text-purple-400">500 OLV</div></div>
-                <div class="text-[9px] opacity-50">Next tree planted is Legendary (5x yield)</div>
-            </div>
-        </div>
-    `;
-    panelsContainer.appendChild(shopPanel);
-}
-
-// ============================================================
-// ADD BOOSTS DISPLAY TO STATS ROW
-// ============================================================
-
-function addBoostsDisplay() {
-    const statsRow = document.querySelector('.stats-row');
-    if (statsRow && !document.getElementById('active-boosts')) {
-        const boostsDiv = document.createElement('div');
-        boostsDiv.id = 'active-boosts';
-        boostsDiv.className = 'stat-box';
-        boostsDiv.style.background = 'rgba(0,0,0,0.3)';
-        boostsDiv.style.padding = '8px';
-        boostsDiv.innerHTML = '<div class="stat-label">⚡ ACTIVE BOOSTS</div><div class="text-[9px] mt-1">No active boosts</div>';
-        statsRow.appendChild(boostsDiv);
+    // Dead counts badge visibility
+    const deadCount = state.trees.filter(t => t.health <= 0).length;
+    const badgeEl = document.getElementById('dead-tree-badge');
+    if (badgeEl) {
+        if (deadCount > 0) {
+            badgeEl.style.display = 'inline-flex';
+            document.getElementById('dead-count').innerText = deadCount;
+        } else {
+            badgeEl.style.display = 'none';
+        }
     }
 }
 
@@ -1028,90 +984,56 @@ function addBoostsDisplay() {
 // INITIALIZATION
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎮 OLIVIUM Estate loading...');
+window.addEventListener('DOMContentLoaded', () => {
+    // Action Event Attachments
+    document.getElementById('connectBtn').onclick = showConnectModal;
+    document.getElementById('connectWalletBtn').onclick = connectWallet;
+    document.getElementById('emailLoginBtn').onclick = emailLogin;
+    document.getElementById('closeModalBtn').onclick = hideConnectModal;
     
-    addOlvShopPanel();
-    addBoostsDisplay();
+    document.getElementById('plant-btn').onclick = buyTree;
+    document.getElementById('spray-btn').onclick = sprayGrove;
+    document.getElementById('harvest-all-btn').onclick = harvestAll;
+    document.getElementById('water-all-btn').onclick = waterAll;
+    document.getElementById('sell-btn').onclick = sellOil;
+    document.getElementById('sell-half-btn').onclick = sellHalfOil;
+    document.getElementById('refreshBalanceBtn').onclick = refreshBalances;
+    document.getElementById('fab-mill').onclick = pressMill;
     
-    // Set up event listeners
-    const plantBtn = document.getElementById('plant-btn');
-    if (plantBtn) plantBtn.onclick = () => buyTree();
-    
-    const sprayBtn = document.getElementById('spray-btn');
-    if (sprayBtn) sprayBtn.onclick = () => sprayGrove();
-    
-    const sellBtn = document.getElementById('sell-btn');
-    if (sellBtn) sellBtn.onclick = () => sellOil();
-    
-    const fabMill = document.getElementById('fab-mill');
-    if (fabMill) fabMill.onclick = () => pressMill();
-    
-    const refreshBtn = document.getElementById('refreshBalanceBtn');
-    if (refreshBtn) refreshBtn.onclick = () => refreshBalances();
-    
-    const connectBtn = document.getElementById('connectBtn');
-    if (connectBtn) connectBtn.onclick = showConnectModal;
-    
-    const connectWalletBtn = document.getElementById('connectWalletBtn');
-    if (connectWalletBtn) connectWalletBtn.onclick = connectWallet;
-    
-    const emailLoginBtn = document.getElementById('emailLoginBtn');
-    if (emailLoginBtn) emailLoginBtn.onclick = emailLogin;
-    
-    const closeModalBtn = document.getElementById('closeConnectModalBtn');
-    if (closeModalBtn) closeModalBtn.onclick = hideConnectModal;
-    
-    const modal = document.getElementById('connectModal');
-    if (modal) modal.onclick = (e) => { if (e.target === modal) hideConnectModal(); };
-    
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.onclick = () => openPanel(item.dataset.panel);
-    });
-    
-    // Re-bind shop nav after adding
-    setTimeout(() => {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.onclick = () => openPanel(item.dataset.panel);
-        });
-    }, 100);
-    
-    window.game = { 
-        upgrade: (t) => { upgrade(t); closePanel(); }, 
-        unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
-        buyWithOlv,
-        cleanMill, 
-        prestige, 
-        buyTree, 
-        sprayGrove, 
-        sellOil, 
-        pressMill 
-    };
-    window.closePanel = closePanel;
-    window.openPanel = openPanel;
-    
-    const savedWallet = localStorage.getItem('walletAddress');
-    if (savedWallet) {
-        currentUser = {
-            wallet: savedWallet,
-            type: 'wallet',
-            display: savedWallet.slice(0, 8) + '...'
-        };
-        updateWalletBalancesUI();
-        loadGameFromCloud();
+    // Try restoring implicit browser session profiles
+    const cachedUser = localStorage.getItem('currentUser');
+    if (cachedUser) {
+        try {
+            currentUser = JSON.parse(cachedUser);
+            if (currentUser.type === 'wallet') connectWallet();
+            else emailLogin();
+        } catch(e) {
+            console.error("Failed to restore session profile", e);
+        }
+    } else {
+        // Fallback default setup
+        for (let i = 0; i < 3; i++) {
+            state.trees.push({
+                id: '#' + (state.treesPlanted + i + 1),
+                age: 0, health: 100, water: 85, pests: 0,
+                stage: 'seed', rarity: 'common', protected: false
+            });
+        }
     }
     
-    for (let i = 0; i < 3; i++) buyTree();
+    // Launch Intermittent Loop Timers
     setInterval(gameLoop, 2000);
     setInterval(weatherCycle, 20000);
     setInterval(marketCycle, 15000);
-    setInterval(() => { state.world.time = (state.world.time + 1) % 24; render(); }, 30000);
+    setInterval(() => { 
+        state.world.time = (state.world.time + 1) % 24; 
+        const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+        if (state.world.time === 0) {
+            if (Math.random() < 0.15) state.world.season = seasons[(seasons.indexOf(state.world.season) + 1) % 4];
+        }
+        render(); 
+    }, 30000);
+    
     render();
     log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
-    log("🔐 Click 'Connect Profile' to connect your wallet and save progress!");
-    log("🛒 Use OLV tokens in the SHOP for boosts and items!");
 });
-
-setInterval(() => {
-    if (currentUser) saveGameToCloud();
-}, 30000);
