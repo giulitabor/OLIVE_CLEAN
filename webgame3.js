@@ -1,5 +1,5 @@
 // ============================================================
-// OLIVIUM — KINTARA EDITION (High-Stakes Resource Strategy)
+// OLIVIUM GAME - Complete with Wallet Balances & OLV Shop
 // ============================================================
 
 import { sb, getIdentity, isConnected, connection } from "./src/connection.ts";
@@ -8,6 +8,7 @@ import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import { Transaction, TransactionInstruction } from "@solana/web3.js";
 import BN from 'bn.js';
 
+// OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
 const OLV_MINT_ADDRESS = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
 let currentUser = null;
@@ -16,20 +17,18 @@ let walletOlvBalance = 0;
 let treasurySolBalance = 0;
 
 // ============================================================
-// GAME STATE (Expanded for Kintara-Mode Mechanics)
+// GAME STATE
 // ============================================================
+
 const state = {
     sol: 25.0, seeds: 0, oil: 0, hopper: 0, lifetimeSol: 25.0,
     treesPlanted: 3, totalHarvests: 0, comboRecord: 1.0, rareCount: 0,
     trees: [],
-    // Kintara Build Spec paths: 'none', 'agrarian', 'industrialist', 'speculator'
-    specialization: 'none', 
     upgrades: { irrigation: false, misting: false, fertilizer: false, flyTraps: false },
     skills: [],
     skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 },
     world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
-    // Mill tracking: mash tracks total volume, gunk now acts as the toxic "Thermal Stress" gauge
-    mill: { mash: 0, gunk: 0, broken: false },
+    mill: { mash: 0, gunk: 0, heat: 0, failureRisk: 0 },
     combo: 1.0, comboRef: null,
     quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
     achievements: { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false },
@@ -37,472 +36,586 @@ const state = {
     fertilizerBoostEnd: 0,
     protectionActive: false,
     protectionEnd: 0,
-    nextTreeLegendary: false
+    nextTreeLegendary: false,
+    // Kintara Archetype System
+    archetype: null,           // 'agrarian' | 'industrialist' | 'speculator' | null
+    archetypeLocked: false,
+    groveDensity: 0,           // Agrarian: over-saturation counter
+    // Cartel Speculator
+    futures: [],               // Array of { lockedPrice, expiresAt, amount }
+    marketPool: 2.50,          // Simulated global pool price
+    marketVolume: 0,           // Total oil sold this cycle (affects pool)
+    // Mill thermal
+    millPressCooldown: 0,      // Timestamp: prevents instant spam spam
+    blightActive: false,        // Agrarian risk flag
 };
 
 const rarityIcons = {
     common: { icon: '🌳', bonus: 1.0, name: 'Common' },
-    rare: { icon: '💎', bonus: 2.2, name: 'Rare' },
-    legendary: { icon: '👑', bonus: 5.5, name: 'Legendary' }
+    rare: { icon: '💎', bonus: 2.0, name: 'Rare' },
+    legendary: { icon: '👑', bonus: 5.0, name: 'Legendary' }
 };
 
 // ============================================================
-// KINTARA SYSTEMIC MECHANICS (New Code Injections)
+// OLV TOKEN FUNCTIONS
 // ============================================================
 
-/**
- * Archetype Lock Engine: Restructures player priorities per run
- */
-function chooseSpecialization(specName) {
-    if (state.specialization !== 'none') {
-        showToast("⚠️ Specialization locked for this cycle! Liquidate to re-spec.", true);
-        return;
-    }
-    state.specialization = specName;
+async function fetchRealOlvBalance(walletAddress) {
+    if (!walletAddress || !connection) return 0;
     
-    if (specName === 'agrarian') {
-        state.skillMultipliers.yield = 1.5;
-        state.skillMultipliers.speed = 1.3;
-        log("🌾 Path of the Agrarian chosen: +50% Yield, +30% Growth Speed. Blight risks increased.");
-    } else if (specName === 'industrialist') {
-        state.skillMultipliers.extraction = 1.75;
-        log("⚙️ Path of the Industrialist chosen: +75% Extraction Efficiency. Mill structural hazard expanded.");
-    } else if (specName === 'speculator') {
-        log("📊 Path of the Speculator chosen: Immune to dynamic asset market drops. Futures contract access enabled.");
+    try {
+        const walletPubKey = new PublicKey(walletAddress);
+        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
+        const tokenAccount = await getAssociatedTokenAddress(olvMint, walletPubKey);
+        
+        const accountInfo = await connection.getAccountInfo(tokenAccount);
+        if (!accountInfo) return 0;
+        
+        const balance = await connection.getTokenAccountBalance(tokenAccount);
+        return balance.value.uiAmount || 0;
+    } catch (err) {
+        console.error("OLV balance fetch error:", err);
+        return 0;
     }
-    render();
-    if (currentUser) saveGameToCloud();
 }
 
-/**
- * Grid Proximity Processing: Spatially handles contagious blight vectors
- */
-function processGridContagion(tree, idx) {
-    if (tree.pests > 45 && !tree.protected) {
-        // Grid calculations mapping close nodes: 3-column rows
-        const checkIndices = [];
-        if (idx % 3 !== 0) checkIndices.push(idx - 1); // West
-        if (idx % 3 !== 2) checkIndices.push(idx + 1); // East
-        if (idx >= 3) checkIndices.push(idx - 3);      // North
-        if (idx + 3 < state.trees.length) checkIndices.push(idx + 3); // South
-
-        const spreadChance = state.specialization === 'agrarian' ? 0.15 : 0.07;
+async function getTreasurySolBalance() {
+    try {
+        const activeProgram = window._program;
+        if (!activeProgram) return 0;
         
-        checkIndices.forEach(nIdx => {
-            const neighbor = state.trees[nIdx];
-            if (neighbor && neighbor.health > 0 && !neighbor.protected) {
-                const legacyPests = neighbor.pests;
-                neighbor.pests = Math.min(100, neighbor.pests + (state.world.weather === 'Heatwave' ? 8 : 4));
-                if (legacyPests < 20 && neighbor.pests >= 20) {
-                    log(`⚠️ Blight contagion spreading from Tree ${tree.id} ➔ Tree ${neighbor.id}!`);
-                }
-            }
+        const [treasuryPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from("treasury")],
+            activeProgram.programId
+        );
+        
+        const treasuryBal = await connection.getBalance(treasuryPDA);
+        return treasuryBal / 1_000_000_000;
+    } catch (err) {
+        console.error("Treasury balance error:", err);
+        return 0;
+    }
+}
+
+async function fetchWalletBalances(walletAddress) {
+    if (!walletAddress || !connection) return { sol: 0, olv: 0, treasury: 0 };
+    
+    try {
+        const solBalance = await connection.getBalance(new PublicKey(walletAddress));
+        const solInSol = solBalance / 1_000_000_000;
+        const olvBalance = await fetchRealOlvBalance(walletAddress);
+        const treasurySol = await getTreasurySolBalance();
+        
+        console.log(`💰 Wallet: ${solInSol} SOL, ${olvBalance} OLV`);
+        
+        return { sol: solInSol, olv: olvBalance, treasury: treasurySol };
+    } catch (err) {
+        console.error("Balance fetch error:", err);
+        return { sol: 0, olv: 0, treasury: 0 };
+    }
+}
+
+function createTransferInstruction(source, destination, owner, amount) {
+    return new TransactionInstruction({
+        keys: [
+            { pubkey: source, isSigner: false, isWritable: true },
+            { pubkey: destination, isSigner: false, isWritable: true },
+            { pubkey: owner, isSigner: true, isWritable: false },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+        ],
+        programId: TOKEN_PROGRAM_ID,
+        data: Buffer.from([3, ...new BN(amount).toArray('le', 8)])
+    });
+}
+
+
+// ============================================================
+// RESET FUNCTION
+// ============================================================
+
+async function resetGame() {
+    // Show confirmation dialog with options
+    const confirmed = confirm(
+        "⚠️ WARNING: This will reset your entire estate!\n\n" +
+        "All trees, oil, hopper contents, and progress will be lost.\n\n" +
+        "Select payment method:\n" +
+        "• Click OK to pay 3 SOL\n" +
+        "• Cancel then click again to pay 300 OLV\n\n" +
+        "Your Ancient Seeds and skills will be preserved."
+    );
+    
+    if (!confirmed) {
+        // Check for OLV payment option if they cancelled
+        const olvConfirm = confirm(
+            "Reset with 300 OLV instead?\n\n" +
+            "This will deduct 300 OLV from your wallet and reset your estate."
+        );
+        
+        if (!olvConfirm) {
+            showToast("Reset cancelled.");
+            return false;
+        }
+        
+        // OLV payment
+        if (!currentUser) {
+            showToast("Connect wallet first to pay with OLV!", true);
+            return false;
+        }
+        
+        if (walletOlvBalance < 300) {
+            showToast(`Need 300 OLV! You have ${walletOlvBalance}`, true);
+            return false;
+        }
+        
+        const spent = await spendOlvTokens(300, "Estate Reset");
+        if (!spent) return false;
+        
+        performReset();
+        showToast("✅ Estate reset! Paid 300 OLV");
+        return true;
+    }
+    
+    // SOL payment
+    if (state.sol < 3) {
+        showToast("Need 3 SOL to reset! (or 300 OLV)", true);
+        return false;
+    }
+    
+    state.sol -= 3;
+    performReset();
+    showToast("✅ Estate reset! Paid 3 SOL");
+    return true;
+}
+
+function performReset() {
+    // Save current seeds and skills before reset
+    const preservedSeeds = state.seeds;
+    const preservedSkills = [...state.skills];
+    const preservedSkillMultipliers = { ...state.skillMultipliers };
+    const preservedUpgrades = { ...state.upgrades };
+    
+    // Reset all game state
+    state.sol = 25.0;
+    state.oil = 0;
+    state.hopper = 0;
+    state.lifetimeSol = 25.0;
+    state.treesPlanted = 0;
+    state.totalHarvests = 0;
+    state.comboRecord = 1.0;
+    state.rareCount = 0;
+    state.trees = [];
+    state.mill = { mash: 0, gunk: 0 };
+    state.combo = 1.0;
+    state.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
+    state.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
+    state.fertilizerBoost = false;
+    state.fertilizerBoostEnd = 0;
+    state.protectionActive = false;
+    state.protectionEnd = 0;
+    state.nextTreeLegendary = false;
+    
+    // Restore preserved items
+    state.seeds = preservedSeeds;
+    state.skills = preservedSkills;
+    state.skillMultipliers = preservedSkillMultipliers;
+    state.upgrades = preservedUpgrades;
+    
+    // Plant starting trees
+    for (let i = 0; i < 3; i++) {
+        state.trees.push({
+            id: '#' + (state.treesPlanted + i + 1),
+            age: 0, health: 100, water: 85, pests: 0,
+            stage: 'seed', rarity: 'common',
+            protected: false
         });
     }
-}
-
-// ============================================================
-// CORE PROCESSING LOOPS
-// ============================================================
-
-function gameLoop() {
-    // Check durations
-    if (state.fertilizerBoost && Date.now() > state.fertilizerBoostEnd) {
-        state.fertilizerBoost = false;
-        log("🌿 Fertilizer boost expired.");
-    }
-    if (state.protectionActive && Date.now() > state.protectionEnd) {
-        state.protectionActive = false;
-        log("🛡️ Protection field dissolved.");
-    }
-
-    // Dynamic Spoilage: Hopper inventory slowly decays if left unrefined
-    if (state.hopper > 0) {
-        const decayRate = state.specialization === 'industrialist' ? 0.02 : 0.1;
-        state.hopper = Math.max(0, state.hopper - decayRate);
-    }
-
-    // Cooling cycle for the extraction unit
-    if (state.mill.gunk > 0) {
-        const coolRate = state.specialization === 'industrialist' ? 2.5 : 1.2;
-        state.mill.gunk = Math.max(0, state.mill.gunk - coolRate);
-    }
-
-    // Tree Simulation Engine
-    state.trees.forEach((tree, idx) => {
-        if (tree.health <= 0) return;
-
-        // Process spatial blight logic
-        processGridContagion(tree, idx);
-
-        // Core dehydration loop mechanics
-        let waterLoss = state.world.weather === 'Heatwave' ? 14 : (state.world.weather === 'Rainy' ? -10 : 4);
-        if (state.upgrades.irrigation && tree.water < 70) waterLoss = -4;
-        tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
-
-        // Kintara Precision Hydration Window Check (72% - 88% Balance)
-        let inOptimalZone = (tree.water >= 72 && tree.water <= 88);
-        
-        let growthRate = 0.05 * state.skillMultipliers.speed;
-        if (inOptimalZone) growthRate *= 1.6; // Perfect Bloom Bonus
-        if (state.fertilizerBoost) growthRate *= 1.5;
-        if (tree.water > 95) tree.health = Math.max(0, tree.health - 2); // Overwatering rot
-
-        if (tree.water > 30 && tree.health > 20 && tree.stage !== 'mature') {
-            tree.age += growthRate;
-        }
-
-        if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
-        if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
-
-        // Pest Generation
-        let pestRoll = state.world.season === 'Summer' ? 0.05 : 0.02;
-        if (state.specialization === 'agrarian') pestRoll *= 1.8; // High-density vulnerability
-        
-        if (!tree.protected && Math.random() < pestRoll) {
-            tree.pests = Math.min(100, tree.pests + 6);
-        }
-
-        // Pest mitigation vectors
-        if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 1.5);
-        if (state.upgrades.flyTraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2.5);
-
-        // Health Degradation State
-        if (tree.water <= 0 || tree.pests >= 100) {
-            tree.health = Math.max(0, tree.health - 5);
-        } else if (tree.water > 45 && tree.pests === 0) {
-            tree.health = Math.min(100, tree.health + 1.5);
-        }
-    });
-
+    state.treesPlanted += 3;
+    
+    log("🔄 Estate reset! Ancient knowledge preserved (Seeds & Skills kept).");
+    log(`✨ Preserved ${preservedSeeds} Ancient Seeds and ${preservedSkills.length} skills`);
     render();
+    if (currentUser) saveGameToCloud();
+}
+
+function upgradeFlyTraps() {
+    const cost = 0.003;
+    if (state.sol < cost) {
+        showToast(`Need ${cost} SOL to install Fly Traps!`, true);
+        return;
+    }
+    if (state.upgrades.flyTraps) {
+        showToast("Fly Traps already installed!", true);
+        return;
+    }
+    state.sol -= cost;
+    state.upgrades.flyTraps = true;
+    log("🪰 Fly Traps installed! Pests now die 50% faster.");
+    showToast("🪰 Fly Traps installed! +50% pest reduction rate");
+    render();
+    if (currentUser) saveGameToCloud();
 }
 
 // ============================================================
-// REWORKED KINTARA INDUSTRIAL MILL MECHANICS
+// OLV SHOP FUNCTIONS
 // ============================================================
 
-function pressMill() {
-    if (state.mill.broken) {
-        showToast("💥 Mechanical system ruptured! Force repair required.", true);
+const olvShopItems = {
+    seeds: { name: 'Ancient Seeds', cost: 100, reward: { seeds: 5 } },
+    sol: { name: 'SOL Boost', cost: 50, reward: { sol: 10 } },
+    fertilizer: { name: 'Premium Fertilizer', cost: 200, reward: { fertilizerBoost: true, duration: 3600000 } },
+    instantHarvest: { name: 'Instant Harvest', cost: 75, reward: { instantHarvest: true } },
+    protection: { name: 'Tree Protection', cost: 150, reward: { protection: true, duration: 86400000 } },
+    legendary: { name: 'Legendary Seed', cost: 500, reward: { legendary: true } }
+};
+
+async function buyWithOlv(itemId) {
+    const item = olvShopItems[itemId];
+    if (!item) return;
+    
+    if (!currentUser) {
+        showToast("Connect wallet first!", true);
         return;
     }
-    if (state.hopper <= 0) {
-        showToast("No biomass in hopper!", true);
-        return;
+    
+    const success = await spendOlvTokens(item.cost, item.name);
+    if (!success) return;
+    
+    if (item.reward.seeds) {
+        state.seeds += item.reward.seeds;
+        log(`🌱 +${item.reward.seeds} Ancient Seeds`);
+        showToast(`+${item.reward.seeds} Ancient Seeds!`);
     }
-
-    // Operational parameters change depending on build path selection
-    const rawFeed = 3.5; 
-    const thermalStress = state.specialization === 'industrialist' ? 3.0 : 6.0;
-
-    state.mill.mash += 12;
-    state.mill.gunk += thermalStress; // Gunk represents Thermal Overpressure
-    state.hopper = Math.max(0, state.hopper - rawFeed);
-
-    // Critical failure trigger checks
-    if (state.mill.gunk >= 100) {
-        state.mill.broken = true;
-        state.mill.mash = 0;
-        state.mill.gunk = 100;
-        state.hopper = Math.max(0, state.hopper - 40); // Material blowback loss
-        log("💥 CRITICAL FAILURE: Refinery thermal lines ruptured! Lost local hopper reserves.");
-        showToast("💥 REFINE BLOWOUT! Mill broken.", true);
-        render();
-        return;
+    if (item.reward.sol) {
+        state.sol += item.reward.sol;
+        log(`💰 +${item.reward.sol} SOL`);
+        showToast(`+${item.reward.sol} SOL!`);
     }
-
-    // Processing resolution cycle
-    if (state.mill.mash >= 100) {
-        const coldBonus = (state.world.time > 20 || state.world.time < 6) ? 1.4 : 1.0;
-        const processEfficiency = (100 - state.mill.gunk) / 100;
-        
-        let oilYield = 2.5 * processEfficiency * coldBonus * state.skillMultipliers.extraction;
-        
-        state.oil += oilYield;
-        state.mill.mash = 0;
-        
-        log(`🏺 Refined ${oilYield.toFixed(2)}L EVOO. Thermal Stress: ${Math.floor(state.mill.gunk)}%`);
-        if (state.mill.gunk > 75) log("⚠️ Heat generation approaching structural threshold boundaries!");
+    if (item.reward.fertilizerBoost) {
+        state.fertilizerBoost = true;
+        state.fertilizerBoostEnd = Date.now() + item.reward.duration;
+        log(`🌿 Fertilizer boost active for 1 hour!`);
+        showToast(`🌿 Fertilizer boost active! +50% growth`);
+    }
+    if (item.reward.instantHarvest) {
+        let totalHarvest = 0;
+        state.trees.forEach(tree => {
+            if (tree.stage === 'mature') {
+                const yieldAmt = 12 * state.skillMultipliers.yield;
+                state.hopper += yieldAmt;
+                totalHarvest += yieldAmt;
+                tree.age = 0;
+                tree.stage = 'seed';
+            }
+        });
+        log(`⚡ Instant harvest! +${totalHarvest.toFixed(1)}kg`);
+        showToast(`⚡ Instant harvest! +${totalHarvest.toFixed(1)}kg`);
+    }
+    if (item.reward.protection) {
+        state.protectionActive = true;
+        state.protectionEnd = Date.now() + item.reward.duration;
+        log(`🛡️ Tree protection active for 24 hours!`);
+        showToast(`🛡️ Trees protected from pests for 24 hours!`);
+    }
+    if (item.reward.legendary) {
+        state.nextTreeLegendary = true;
+        log(`👑 Next tree will be Legendary!`);
+        showToast(`👑 Next tree will be Legendary (5x yield)!`);
     }
     
     render();
     if (currentUser) saveGameToCloud();
 }
 
-function cleanMill() {
-    // Acts as manual field-repair mechanics matrix
-    if (state.mill.broken) {
-        const repairCost = 1.5;
-        if (state.sol < repairCost) {
-            showToast(`Need ${repairCost} SOL to rebuild core layout!`, true);
-            return;
-        }
-        state.sol -= repairCost;
-        state.mill.broken = false;
-        state.mill.gunk = 0;
-        log("🔧 Rebuilt processing core. Refinery mechanics online.");
-        showToast("🔧 Core rebuilt!");
-    } else {
-        const cleanCost = 0.15;
-        if (state.sol < cleanCost) {
-            showToast(`Need ${cleanCost} SOL for rapid cooling fluid!`, true);
-            return;
-        }
-        state.sol -= cleanCost;
-        state.mill.gunk = 0;
-        log("🧼 Flush cycles completed. Engine cooled to 0%.");
-        showToast("❄️ Thermal engine flushed");
-    }
-    render();
-    if (currentUser) saveGameToCloud();
-}
-
 // ============================================================
-// DYNAMIC MACRO MARKET SIMULATION
+// HELPER FUNCTIONS
 // ============================================================
 
-function sellOil() {
-    if (state.oil < 0.1) {
-        showToast("No fluid commodity assets stored.", true);
-        return;
+function getRarity() {
+    if (state.nextTreeLegendary) {
+        state.nextTreeLegendary = false;
+        return 'legendary';
     }
-    let revenue = state.oil * state.world.price;
-    state.sol += revenue;
-    state.lifetimeSol += revenue;
-    
-    log(`💰 Exchanged ${state.oil.toFixed(2)}L for +${revenue.toFixed(3)} SOL.`);
-    
-    // Kintara Dynamic Price Slippage System: Selling dumps local market pools
-    if (state.specialization !== 'speculator') {
-        const drop = (state.oil * 0.04);
-        state.world.price = Math.max(0.8, parseFloat((state.world.price - drop).toFixed(2)));
-        log(`📉 Asset pool diluted! Market price drops to ${state.world.price.toFixed(2)} SOL.`);
-    }
-    
-    state.oil = 0;
-    render();
-    checkAchievements();
-    if (currentUser) saveGameToCloud();
+    let roll = Math.random();
+    if (roll < state.skillMultipliers.rare) return 'rare';
+    return 'common';
 }
 
-function marketCycle() {
-    const demands = ['Low', 'Normal', 'High', 'Surging'];
-    state.world.demand = demands[Math.floor(Math.random() * demands.length)];
-    
-    let modifier = 1.0;
-    if (state.world.demand === 'Low') modifier = 0.55;
-    if (state.world.demand === 'High') modifier = 1.35;
-    if (state.world.demand === 'Surging') modifier = 2.3;
-
-    // Reset baseline price corridors dynamically
-    state.world.price = parseFloat(((Math.random() * 1.4 + 1.6) * modifier).toFixed(2));
-    log(`📊 Market Update: Demand is ${state.world.demand}. Global price: ${state.world.price.toFixed(2)} SOL/L`);
-    render();
+function showToast(msg, isError = false) {
+    const toast = document.createElement('div');
+    toast.innerText = msg;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '100px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.background = isError ? '#ef4444' : 'linear-gradient(135deg, #c9903e, #b8860b)';
+    toast.style.color = isError ? 'white' : 'black';
+    toast.style.padding = '10px 20px';
+    toast.style.borderRadius = '40px';
+    toast.style.fontSize = '12px';
+    toast.style.fontWeight = 'bold';
+    toast.style.zIndex = '1000';
+    toast.style.whiteSpace = 'nowrap';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
 }
 
-function weatherCycle() {
-    const conditions = ['Clear', 'Rainy', 'Heatwave', 'Overcast'];
-    state.world.weather = conditions[Math.floor(Math.random() * conditions.length)];
-    
-    if (state.world.weather === 'Heatwave') {
-        state.world.temp = Math.floor(Math.random() * 10) + 33;
-        log("🚨 HEATWAVE REGISTERED: Water consumption rates spiked dramatically!");
-    } else if (state.world.weather === 'Rainy') {
-        state.world.temp = Math.floor(Math.random() * 8) + 14;
-        log("🌧️ Aquifer recharging automatically via precipitation.");
-    } else {
-        state.world.temp = Math.floor(Math.random() * 10) + 20;
-    }
-    render();
+function log(msg) {
+    const ledger = document.getElementById('ledger');
+    if (!ledger) return;
+    const entry = document.createElement('div');
+    entry.innerHTML = `> ${msg}`;
+    entry.className = 'opacity-60 pb-1';
+    ledger.prepend(entry);
+    if (ledger.children.length > 20) ledger.lastChild.remove();
 }
 
-// ============================================================
-// CRITICAL CYCLICAL PRESTIGE ENGINE
-// ============================================================
-
-function prestige() {
-    let reward = Math.floor(state.lifetimeSol / 35);
-    if (reward < 1) {
-        showToast("Minimum 35 lifetime SOL required to liquidate assets!", true);
-        return;
-    }
-
-    // Kintara strategic timing check: Liquidating during surging demand doubles token awards
-    if (state.world.demand === 'Surging') {
-        reward *= 2;
-        showToast("👑 MARKET SURGE RUN BONUS UNLOCKED!");
-    }
-
-    if (confirm(`Liquidate your entire infrastructure profile for ${reward} Ancient Seeds?\n\nThis completely resets the current run loop to re-spec your specialization archetype.`)) {
-        state.seeds += reward;
-        state.sol = 25.0;
-        state.oil = 0;
-        state.hopper = 0;
-        state.trees = [];
-        state.lifetimeSol = 25.0;
-        state.totalHarvests = 0;
-        state.rareCount = 0;
-        state.specialization = 'none'; // Wipe archetype settings to select fresh specialization path
-        state.mill = { mash: 0, gunk: 0, broken: false };
-        
-        // Spawn fresh baseline grid nodes
-        state.treesPlanted = 0;
-        for (let i = 0; i < 3; i++) {
-            state.trees.push({
-                id: '#' + (state.treesPlanted + 1),
-                age: 0, health: 100, water: 80, pests: 0,
-                stage: 'seed', rarity: 'common', protected: false
-            });
-            state.treesPlanted++;
-        }
-        
-        log("🔄 Estate successfully liquidated. Re-enter the grid layout.");
+function addCombo() {
+    state.combo += 0.15;
+    if (state.combo > state.comboRecord) state.comboRecord = state.combo;
+    const comboDisplay = document.getElementById('combo-display');
+    if (comboDisplay) comboDisplay.innerHTML = `${state.combo.toFixed(1)}x`;
+    clearTimeout(state.comboRef);
+    state.comboRef = setTimeout(() => {
+        state.combo = 1.0;
+        if (comboDisplay) comboDisplay.innerHTML = '1.0x';
+    }, 3000);
+    if (state.comboRecord >= 5 && !state.achievements.comboKing) {
+        state.achievements.comboKing = true;
+        state.sol += 5;
+        showToast("🏆 Combo King! +5 SOL");
         render();
         if (currentUser) saveGameToCloud();
     }
 }
 
 // ============================================================
-// REWRITTEN CORE RENDER MATRIX
+// WALLET BALANCE FUNCTIONS
 // ============================================================
 
-function render() {
-    // Upper Data Nodes
-    document.getElementById('ui-time').innerText = `${String(state.world.time).padStart(2, '0')}:00`;
-    document.getElementById('ui-temp').innerText = `${state.world.temp}°C`;
-    document.getElementById('ui-weather').innerText = state.world.weather;
-    document.getElementById('ui-season').innerText = state.world.season;
+async function updateWalletBalancesUI() {
+    if (!currentUser || !currentUser.wallet) return;
     
-    document.getElementById('ui-sol').innerText = state.sol.toFixed(2);
-    document.getElementById('ui-olv').innerText = Math.floor(walletOlvBalance);
-    document.getElementById('ui-oil').innerText = state.oil.toFixed(2);
-    document.getElementById('ui-seeds').innerText = state.seeds;
-    document.getElementById('tree-count').innerText = state.trees.length;
-    document.getElementById('ui-price').innerText = state.world.price.toFixed(2);
-    document.getElementById('ui-demand').innerText = state.world.demand;
-    document.getElementById('ui-hopper').innerText = `${state.hopper.toFixed(1)} kg`;
+    const balances = await fetchWalletBalances(currentUser.wallet);
+    walletSolBalance = balances.sol;
+    walletOlvBalance = balances.olv;
+    treasurySolBalance = balances.treasury;
     
-    // Specialization Archetype Tracker Injection
-    const levelNode = document.getElementById('ui-level');
-    if (levelNode) {
-        levelNode.innerText = state.specialization.toUpperCase();
-        levelNode.className = `text-xs font-bold font-mono ${
-            state.specialization === 'none' ? 'text-stone-400' : 
-            state.specialization === 'agrarian' ? 'text-green-400' : 
-            state.specialization === 'industrialist' ? 'text-yellow-500' : 'text-purple-400'
-        }`;
+    const walletSolEl = document.getElementById('wallet-sol-balance');
+    const walletOlvEl = document.getElementById('wallet-olv-balance');
+    const uiSolEl = document.getElementById('ui-sol');
+    const uiOlvEl = document.getElementById('ui-olv');
+    
+    if (walletSolEl) walletSolEl.innerText = walletSolBalance.toFixed(4);
+    if (walletOlvEl) walletOlvEl.innerText = Math.floor(walletOlvBalance);
+    if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
+    
+    if (uiSolEl && walletSolBalance > 0 && state.sol === 25) {
+        state.sol = walletSolBalance;
+        uiSolEl.innerText = state.sol.toFixed(4);
     }
+    
+    const estateValue = state.oil * state.world.price + state.hopper * 0.5;
+    const estateValueEl = document.getElementById('estate-value');
+    if (estateValueEl) estateValueEl.innerText = `Estate Value: ${estateValue.toFixed(2)} SOL`;
+    
+    render();
+}
 
-    // Core Thermal Engineering Processing Indicators
-    const mashPct = Math.floor(state.mill.mash);
-    const thermalStress = Math.floor(state.mill.gunk);
-    
-    document.getElementById('mash-pct').innerText = `${mashPct}%`;
-    document.getElementById('mash-bar').style.width = `${mashPct}%`;
-    
-    const gunkLabel = document.getElementById('gunk-pct');
-    const gunkBar = document.getElementById('gunk-bar');
-    
-    if (state.mill.broken) {
-        gunkLabel.innerText = "BURST";
-        gunkLabel.className = "font-mono text-red-500 font-bold animate-pulse";
-        gunkBar.style.width = "100%";
-        gunkBar.className = "bg-red-700 h-full transition-all";
-    } else {
-        gunkLabel.innerText = `${thermalStress}%`;
-        gunkLabel.className = "font-mono text-yellow-600";
-        gunkBar.style.width = `${thermalStress}%`;
-        gunkBar.className = thermalStress > 75 ? "bg-yellow-500 h-full animate-pulse" : "bg-yellow-600 h-full";
-    }
-    
-    // Contracts Layout
-    document.getElementById('quest-current').innerText = Math.floor(state.quest.current);
-    document.getElementById('quest-target').innerText = state.quest.target;
-    document.getElementById('quest-progress').style.width = `${Math.min(100, (state.quest.current / state.quest.target) * 100)}%`;
-    
-    // Spatial Grid Execution Elements
-    const container = document.getElementById('grove-container');
-    if (container) {
-        container.innerHTML = '';
-        state.trees.forEach((tree, idx) => {
-            const el = document.createElement('div');
-            
-            // Highlight optimal water metrics (72-88%) using structural border enhancements
-            const inOptZone = (tree.water >= 72 && tree.water <= 88 && tree.health > 0);
-            
-            el.className = `p-3 rounded-xl border relative text-center cursor-pointer select-none transition-all ${
-                tree.health <= 0 ? 'bg-red-950/20 border-red-900/40' : 
-                inOptZone ? 'bg-stone-900/70 border-green-500/60' : 'bg-stone-900/40 border-white/5'
-            }`;
-            el.onclick = () => interactTree(idx);
-            
-            const badge = rarityIcons[tree.rarity] || rarityIcons.common;
-            el.innerHTML = `
-                <div class="text-2xl mb-1">${tree.health <= 0 ? '💀' : badge.icon}</div>
-                <div class="text-[9px] font-bold tracking-wider text-stone-400">${tree.id}</div>
-                <div class="text-[10px] uppercase font-mono mt-1 ${tree.stage === 'mature' ? 'text-green-400 font-bold' : 'text-stone-500'}">${tree.stage}</div>
-                <div class="space-y-1 mt-2 text-[8px] font-mono">
-                    <div class="w-full bg-black/40 h-1 rounded"><div class="bg-blue-500 h-1 rounded" style="width:${tree.water}%"></div></div>
-                    <div class="w-full bg-black/40 h-1 rounded"><div class="bg-green-500 h-1 rounded" style="width:${tree.health}%"></div></div>
-                    ${tree.pests > 0 ? `<div class="text-red-500 font-bold text-[8px] mt-0.5">⚠️ BLIGHT ${tree.pests}%</div>` : ''}
-                </div>
-            `;
-            container.appendChild(el);
-        });
-    }
+async function refreshBalances() {
+    if (!currentUser) { showToast("Connect wallet first!", true); return; }
+    showToast("Refreshing balances...");
+    await updateWalletBalancesUI();
+    showToast("Balances updated!");
+    if (currentUser) await saveGameToCloud();
 }
 
 // ============================================================
-// WALLET INTERFACE SIMULATORS
+// CONNECT/DISCONNECT FUNCTIONS
 // ============================================================
-async function spendOlvTokens(amount, reason) {
-    log(`💸 Authorizing ${amount} OLV spent for: ${reason}`);
-    walletOlvBalance = Math.max(0, walletOlvBalance - amount);
-    return true;
+
+function showConnectModal() {
+    const modal = document.getElementById('connectModal');
+    if (modal) modal.style.display = 'flex';
 }
 
-async function fetchRealOlvBalance(walletAddress) { return 0; }
-async function getTreasurySolBalance() { return 0; }
-async function fetchWalletBalances(walletAddress) { return { sol: 25.0, olv: 0, treasury: 0 }; }
-async function updateWalletBalancesUI() { render(); }
-async function refreshBalances() { showToast("Synced with network endpoints."); render(); }
-
-async function saveGameToCloud() {
-    if (!currentUser) return;
-    localStorage.setItem(`kintara_olv_save_${currentUser.wallet}`, JSON.stringify({ state }));
+function hideConnectModal() {
+    const modal = document.getElementById('connectModal');
+    if (modal) modal.style.display = 'none';
 }
 
-async function loadGameFromCloud() {
-    if (!currentUser) return false;
-    const data = localStorage.getItem(`kintara_olv_save_${currentUser.wallet}`);
-    if (data) {
-        Object.assign(state, JSON.parse(data).state);
-        return true;
+function handleDisconnect() {
+    currentUser = null;
+    localStorage.removeItem('walletAddress');
+    localStorage.removeItem('currentUser');
+    
+    const navIdentity = document.getElementById('nav-identity-display');
+    const navTier = document.getElementById('nav-tier-label');
+    const connectBtn = document.getElementById('connectBtn');
+    const uiSolEl = document.getElementById('ui-sol');
+    const walletSolEl = document.getElementById('wallet-sol-balance');
+    const walletOlvEl = document.getElementById('wallet-olv-balance');
+    
+    if (navIdentity) navIdentity.innerText = 'NOT CONNECTED';
+    if (navTier) navTier.innerText = 'Guest Mode';
+    if (connectBtn) {
+        connectBtn.innerText = 'Connect Profile';
+        connectBtn.onclick = showConnectModal;
+        connectBtn.style.background = '#5a7a2b';
+        connectBtn.style.borderColor = '';
     }
-    return false;
+    if (walletSolEl) walletSolEl.innerText = '0.00';
+    if (walletOlvEl) walletOlvEl.innerText = '0';
+    
+    if (uiSolEl && state.sol === walletSolBalance) {
+        state.sol = 25;
+        uiSolEl.innerText = state.sol.toFixed(2);
+    }
+    
+    showToast('🔒 Disconnected.');
+    log('Disconnected from profile.');
+    render();
+}
+
+async function connectWallet() {
+    try {
+        const provider = window.phantom?.solana || window.solana;
+        
+        if (!provider) {
+            showToast("Please install Phantom wallet!", true);
+            window.open("https://phantom.app/", "_blank");
+            return;
+        }
+        
+        const response = await provider.connect();
+        const walletAddress = response.publicKey.toBase58();
+        
+        currentUser = {
+            wallet: walletAddress,
+            type: 'wallet',
+            display: walletAddress.slice(0, 8) + '...'
+        };
+        
+        localStorage.setItem('walletAddress', walletAddress);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        const navIdentity = document.getElementById('nav-identity-display');
+        const navTier = document.getElementById('nav-tier-label');
+        const connectBtn = document.getElementById('connectBtn');
+        
+        const icon = '◎';
+        if (navIdentity) navIdentity.innerText = currentUser.display;
+        if (navTier) navTier.innerText = 'Mignole Steward';
+        if (connectBtn) {
+            connectBtn.innerText = `${icon} Disconnect`;
+            connectBtn.onclick = handleDisconnect;
+            connectBtn.style.background = '#3a2a10';
+            connectBtn.style.borderColor = '#C5A059';
+        }
+        
+        hideConnectModal();
+        showToast('✅ Wallet connected! Fetching balances...');
+        
+        await updateWalletBalancesUI();
+        
+        const loaded = await loadGameFromCloud();
+        
+        if (!loaded) {
+            log("🌿 No existing save found. Starting a new estate!");
+            if (state.trees.length === 0) {
+                for (let i = 0; i < 3; i++) {
+                    state.trees.push({
+                        id: '#' + (state.treesPlanted + i + 1),
+                        age: 0, health: 100, water: 85, pests: 0,
+                        stage: 'seed', rarity: 'common',
+                        protected: false
+                    });
+                }
+                state.treesPlanted += 3;
+            }
+            render();
+            await saveGameToCloud();
+        }
+        
+        render();
+        
+    } catch (err) {
+        console.error("Wallet connection error:", err);
+        showToast("Failed to connect wallet", true);
+    }
+}
+
+async function emailLogin() {
+    const emailId = 'steward@olivium.io';
+    const emailWallet = 'email_' + emailId.replace(/[^a-zA-Z0-9]/g, '_');
+    
+    currentUser = {
+        email: emailId,
+        wallet: emailWallet,
+        type: 'email',
+        display: 'steward@...'
+    };
+    
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    
+    const navIdentity = document.getElementById('nav-identity-display');
+    const navTier = document.getElementById('nav-tier-label');
+    const connectBtn = document.getElementById('connectBtn');
+    
+    const icon = '✉';
+    if (navIdentity) navIdentity.innerText = currentUser.display;
+    if (navTier) navTier.innerText = 'Mignole Steward';
+    if (connectBtn) {
+        connectBtn.innerText = `${icon} Disconnect`;
+        connectBtn.onclick = handleDisconnect;
+        connectBtn.style.background = '#3a2a10';
+        connectBtn.style.borderColor = '#C5A059';
+    }
+    
+    hideConnectModal();
+    showToast('✅ Logged in! Loading your estate...');
+    
+    const loaded = await loadGameFromCloud();
+    
+    if (!loaded) {
+        log("🌿 No existing save found. Starting a new estate!");
+        if (state.trees.length === 0) {
+            for (let i = 0; i < 3; i++) {
+                state.trees.push({
+                    id: '#' + (state.treesPlanted + i + 1),
+                    age: 0, health: 100, water: 85, pests: 0,
+                    stage: 'seed', rarity: 'common',
+                    protected: false
+                });
+            }
+            state.treesPlanted += 3;
+        }
+        render();
+        await saveGameToCloud();
+    }
+    
+    render();
 }
 
 // ============================================================
-// CORE SEED ACTIONS (Standard Handling)
+// GAME ACTIONS
 // ============================================================
 
 function buyTree() {
     if (state.sol < 5) { showToast("Need 5 SOL!", true); return; }
     state.sol -= 5;
-    let roll = Math.random();
-    let rarity = 'common';
-    if (roll < state.skillMultipliers.rare) rarity = 'rare';
-    if (state.nextTreeLegendary) { rarity = 'legendary'; state.nextTreeLegendary = false; }
-    
+    const rarity = getRarity();
+    if (rarity === 'rare') state.rareCount++;
+    if (rarity === 'legendary') state.rareCount++;
     state.trees.push({
         id: '#' + (state.treesPlanted + 1),
-        age: 0, health: 100, water: 80, pests: 0,
-        stage: 'seed', rarity: rarity, protected: state.protectionActive
+        age: 0, health: 100, water: 85, pests: 0,
+        stage: 'seed', rarity: rarity,
+        protected: state.protectionActive || false
     });
     state.treesPlanted++;
-    log(`🌱 Planted fresh ${rarity.toUpperCase()} node across grid.`);
+    log(`🌱 Planted ${rarityIcons[rarity]?.name || rarity} tree`);
     render();
+    checkAchievements();
     if (currentUser) saveGameToCloud();
 }
 
@@ -511,44 +624,429 @@ function interactTree(index) {
     if (!tree || tree.health <= 0) return;
     
     if (tree.stage === 'mature') {
-        let baseYield = 11 * (tree.health / 100);
-        let finalYield = baseYield * (rarityIcons[tree.rarity]?.bonus || 1) * state.skillMultipliers.yield;
+        let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+        let finalYield = baseYield * (rarityIcons[tree.rarity]?.bonus || 1) * state.skillMultipliers.yield * state.combo;
+        if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
         
         state.hopper += finalYield;
         state.totalHarvests++;
         state.quest.current += finalYield;
-        
         tree.age = 0; tree.stage = 'seed'; tree.pests = 0;
-        showToast(`+${finalYield.toFixed(1)}kg collected`);
-        log(`🫒 Grid index harvest generated +${finalYield.toFixed(1)}kg.`);
+        addCombo();
+        showToast(`+${finalYield.toFixed(1)}kg`);
+        log(`🫒 Harvested ${finalYield.toFixed(1)}kg`);
         checkQuest();
+        checkAchievements();
     } else {
-        tree.water = Math.min(100, tree.water + 25);
-        showToast('💧 Hydration matrix calibrated');
+        tree.water = Math.min(100, tree.water + 30);
+        showToast('💧 +30% Water');
     }
     render();
+    if (currentUser) saveGameToCloud();
 }
 
-function harvestAll() {
-    const targets = state.trees.filter(t => t.stage === 'mature' && t.health > 0);
-    if (targets.length === 0) { showToast("No mature items found.", true); return; }
-    targets.forEach((_, idx) => {
-        const actualIdx = state.trees.findIndex(t => t.stage === 'mature' && t.health > 0);
-        if (actualIdx !== -1) interactTree(actualIdx);
-    });
-}
+function pressMill() {
+    if (state.hopper <= 0) { showToast("No fruit in hopper!", true); return; }
+    if (state.mill.gunk >= 100) { showToast("💥 Mill clogged! Clean it first!", true); return; }
 
-function waterAll() {
-    state.trees.forEach(t => { if (t.health > 0) t.water = Math.min(100, t.water + 25); });
-    showToast("💧 Grid hydration sequence completed.");
+    // Industrialist: thermal threshold risk system
+    const isIndustrialist = state.archetype === 'industrialist';
+    const heatGain = isIndustrialist ? 8 : 5;          // Industrialist presses harder
+    const gunkGain = 2.0 + (state.mill.mash * 0.05);  // Gunk builds faster at high mash
+
+    state.mill.mash = Math.min(100, state.mill.mash + (isIndustrialist ? 12 : 10));
+    state.mill.heat = Math.min(100, (state.mill.heat || 0) + heatGain);
+    state.mill.gunk = Math.min(100, state.mill.gunk + gunkGain);
+    state.hopper = Math.max(0, state.hopper - 1.5);
+
+    // Warning threshold
+    if (state.mill.gunk >= 85 && state.mill.gunk < 100) {
+        showToast("⚠️ Mill pressure critical! Risk of failure!", true);
+        log("⚠️ WARNING: Mill pressure critical! High risk of mechanical failure.");
+    }
+
+    // EXPLOSION / mechanical failure
+    if (state.mill.gunk >= 100) {
+        const hopperLoss = Math.min(state.hopper + 50, state.hopper + state.mill.mash * 0.5);
+        state.hopper = Math.max(0, state.hopper - hopperLoss);
+        state.mill.mash = 0;
+        state.mill.heat = 0;
+        state.mill.gunk = 80; // Partially clogged after explosion
+        showToast("💥 THE MILL BLEW UP! Lost hopper inventory!", true);
+        log("💥 Critical Failure: Mill overheated and ruptured. Hopper contents lost.");
+        render();
+        if (currentUser) saveGameToCloud();
+        return;
+    }
+
+    // Standard processing: full batch when mash reaches 100
+    if (state.mill.mash >= 100) {
+        const isNight = state.world.time > 20 || state.world.time < 6;
+        const coldBonus = (isNight && state.skillMultipliers.extraction > 1) ? 1.5 : 1.0;
+        // Industrialist gets +30% extraction when heat < 60 (precision zone)
+        const industrialistBonus = (isIndustrialist && state.mill.heat < 60) ? 1.3 : 1.0;
+        const purityPenalty = (100 - state.mill.gunk) / 100;
+        const oilYield = (state.hopper + 15) * 0.22 * purityPenalty * coldBonus * state.skillMultipliers.extraction * industrialistBonus;
+        state.oil += oilYield;
+        state.hopper = 0;
+        state.mill.mash = 0;
+        state.mill.heat = Math.max(0, state.mill.heat - 20); // Cool down slightly after batch
+        log(`🏺 Pressed ${oilYield.toFixed(2)}L EVOO (${(purityPenalty * 100).toFixed(0)}% purity)`);
+        showToast(`+${oilYield.toFixed(1)}L Oil`);
+    }
     render();
+    if (currentUser) saveGameToCloud();
+}
+
+// ============================================================
+// KINTARA ARCHETYPE SYSTEM
+// ============================================================
+
+const ARCHETYPES = {
+    agrarian: {
+        name: 'The Agrarian',
+        icon: '🌿',
+        desc: 'Max grove density, exponential harvest combo — but blight spreads fast.',
+        bonuses: ['Grove cap +50%', '+30% combo multiplier', 'Over-saturation boosts yield'],
+        risks: ['Pests spread contagiously between adjacent trees', 'Taxes Industrialist/Speculator skills by 30%']
+    },
+    industrialist: {
+        name: 'The Industrialist',
+        icon: '⚙️',
+        desc: 'Precise thermal pressing extracts maximum oil — but one mistake blows the mill.',
+        bonuses: ['+30% extraction in precision zone (heat<60)', 'Press faster before heat spikes', 'Gunk decay 2x faster'],
+        risks: ['Mill pressure builds exponentially', 'Explosion wipes hopper', 'Taxes Agrarian/Speculator skills by 30%']
+    },
+    speculator: {
+        name: 'The Cartel Speculator',
+        icon: '📈',
+        desc: 'Lock futures contracts with OLV, exploit market crashes and supply shocks.',
+        bonuses: ['Buy oil price futures with OLV', 'Sell events drop market for rivals', '+20% sell revenue'],
+        risks: ['Futures can expire worthless', 'Needs active management', 'Taxes Agrarian/Industrialist skills by 30%']
+    }
+};
+
+function chooseArchetype(type) {
+    if (state.archetypeLocked) { showToast("Archetype locked until prestige!", true); return; }
+    if (!ARCHETYPES[type]) return;
+    state.archetype = type;
+    state.archetypeLocked = true;
+    const a = ARCHETYPES[type];
+    log(`🏛️ Locked in as ${a.name}! ${a.desc}`);
+    showToast(`${a.icon} ${a.name} locked!`);
+    // Apply archetype-specific state changes
+    if (type === 'agrarian') {
+        state.skillMultipliers.yield *= 1.3; // combo boost
+    }
+    if (type === 'industrialist') {
+        state.mill.gunkDecayRate = 2; // faster gunk decay
+    }
+    if (type === 'speculator') {
+        // 20% sell bonus applied at sellOil time
+    }
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+// Futures contracts (Cartel Speculator)
+function buyFuture(amountOil) {
+    if (state.archetype !== 'speculator') { showToast("Only Speculators can trade futures!", true); return; }
+    if (!currentUser) { showToast("Connect wallet to trade!", true); return; }
+    const olvCost = Math.ceil(amountOil * 5); // 5 OLV per unit locked
+    if (walletOlvBalance < olvCost) { showToast(`Need ${olvCost} OLV!`, true); return; }
+    // Lock current market price for 3 weather cycles (~60s)
+    const contract = {
+        lockedPrice: state.world.price,
+        expiresAt: Date.now() + 60000,
+        amount: amountOil,
+        olvCost
+    };
+    state.futures.push(contract);
+    showToast(`📜 Future locked: ${amountOil}L @ ${state.world.price.toFixed(2)} SOL`);
+    log(`📜 Futures contract: ${amountOil}L @ ${state.world.price.toFixed(2)} (expires 60s)`);
+    render();
+}
+
+function settleFutures() {
+    const now = Date.now();
+    const expired = state.futures.filter(f => now >= f.expiresAt);
+    const active = state.futures.filter(f => now < f.expiresAt);
+    expired.forEach(f => {
+        log(`📜 Futures contract expired: ${f.amount}L @ ${f.lockedPrice.toFixed(2)} (unused)`);
+    });
+    state.futures = active;
+}
+
+function sellOilWithFuture(futureIdx) {
+    const future = state.futures[futureIdx];
+    if (!future || Date.now() >= future.expiresAt) { showToast("Contract expired!", true); return; }
+    const sellAmt = Math.min(state.oil, future.amount);
+    if (sellAmt <= 0) { showToast("No oil to sell!", true); return; }
+    const revenue = sellAmt * future.lockedPrice * 1.2; // Speculator +20% bonus
+    state.sol += revenue;
+    state.lifetimeSol += revenue;
+    state.oil -= sellAmt;
+    state.futures.splice(futureIdx, 1);
+    // Market impact: selling large amounts drops pool price
+    applyMarketImpact(sellAmt);
+    showToast(`📜 Future settled! +${revenue.toFixed(2)} SOL @ ${future.lockedPrice.toFixed(2)}`);
+    log(`📜 Future settled: ${sellAmt.toFixed(1)}L → +${revenue.toFixed(2)} SOL`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function applyMarketImpact(volumeSold) {
+    // Each unit sold depresses the simulated pool price slightly
+    const impact = volumeSold * 0.004;
+    state.marketPool = Math.max(0.5, state.marketPool - impact);
+    state.world.price = Math.max(0.5, Math.min(state.world.price, state.marketPool));
+    state.marketVolume += volumeSold;
+    if (volumeSold > 20) {
+        log(`📉 Market depressed by large sale: ${volumeSold.toFixed(1)}L sold`);
+    }
+}
+
+function openArchetypePanel() {
+    const overlay = document.createElement('div');
+    overlay.id = 'archetype-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const locked = state.archetypeLocked;
+    overlay.innerHTML = `
+        <div style="background:#1a110a;border:1px solid #c9903e;border-radius:16px;padding:20px;max-width:360px;width:100%;">
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:20px;color:#c9903e;font-weight:bold;">🏛️ STEWARD SPECIALIZATION</div>
+                <div style="font-size:10px;opacity:0.5;margin-top:4px;">${locked ? `Locked as: ${ARCHETYPES[state.archetype]?.icon} ${ARCHETYPES[state.archetype]?.name}` : 'Choose your path — locks until prestige'}</div>
+            </div>
+            ${Object.entries(ARCHETYPES).map(([key, a]) => `
+                <div onclick="${locked ? '' : `game.chooseArchetype('${key}'); document.getElementById('archetype-overlay').remove();`}"
+                     style="background:${state.archetype === key ? 'rgba(201,144,62,0.2)' : 'rgba(255,255,255,0.04)'};border:1px solid ${state.archetype === key ? '#c9903e' : 'rgba(255,255,255,0.1)'};border-radius:10px;padding:12px;margin-bottom:10px;cursor:${locked ? 'default' : 'pointer'};">
+                    <div style="font-weight:bold;color:#c9903e;">${a.icon} ${a.name} ${state.archetype === key ? '✅' : ''}</div>
+                    <div style="font-size:10px;opacity:0.7;margin:4px 0;">${a.desc}</div>
+                    <div style="font-size:9px;color:#4ade80;">✓ ${a.bonuses.join(' · ')}</div>
+                    <div style="font-size:9px;color:#ef4444;margin-top:2px;">⚠ ${a.risks[0]}</div>
+                </div>
+            `).join('')}
+            <button onclick="document.getElementById('archetype-overlay').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function openFuturesPanel() {
+    if (state.archetype !== 'speculator') { showToast("Speculator path only!", true); return; }
+    settleFutures();
+    const overlay = document.createElement('div');
+    overlay.id = 'futures-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const futureOptions = [10, 25, 50];
+    overlay.innerHTML = `
+        <div style="background:#1a110a;border:1px solid #a855f7;border-radius:16px;padding:20px;max-width:360px;width:100%;">
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:18px;color:#a855f7;font-weight:bold;">📜 FUTURES EXCHANGE</div>
+                <div style="font-size:10px;opacity:0.5;">Lock today's price for 60 seconds · +20% sell bonus</div>
+                <div style="font-size:11px;margin-top:6px;">Current price: <span style="color:#c9903e;">${state.world.price.toFixed(2)} SOL/L</span></div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <div style="font-size:10px;opacity:0.6;margin-bottom:6px;">BUY NEW CONTRACT:</div>
+                ${futureOptions.map(amt => `
+                    <button onclick="game.buyFuture(${amt}); document.getElementById('futures-overlay').remove();"
+                        style="width:100%;margin-bottom:6px;padding:10px;background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:8px;color:white;cursor:pointer;text-align:left;">
+                        📜 Lock ${amt}L @ ${state.world.price.toFixed(2)} <span style="float:right;color:#a855f7;">${Math.ceil(amt * 5)} OLV</span>
+                    </button>
+                `).join('')}
+            </div>
+            ${state.futures.length > 0 ? `
+            <div>
+                <div style="font-size:10px;opacity:0.6;margin-bottom:6px;">ACTIVE CONTRACTS:</div>
+                ${state.futures.map((f, i) => `
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-size:11px;">📜 ${f.amount}L @ ${f.lockedPrice.toFixed(2)} SOL</div>
+                            <div style="font-size:9px;opacity:0.5;">Expires ${Math.max(0, Math.ceil((f.expiresAt - Date.now()) / 1000))}s</div>
+                        </div>
+                        <button onclick="game.sellOilWithFuture(${i}); document.getElementById('futures-overlay').remove();"
+                            style="padding:6px 12px;background:#4ade80;color:black;border:none;border-radius:6px;cursor:pointer;font-size:10px;font-weight:bold;">SETTLE</button>
+                    </div>
+                `).join('')}
+            </div>` : '<div style="font-size:10px;opacity:0.4;text-align:center;">No active contracts</div>'}
+            <button onclick="document.getElementById('futures-overlay').remove()" style="width:100%;margin-top:10px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function cleanMill() {
+    if (state.sol < 0.2) { showToast("Need 0.2 SOL", true); return; }
+    state.sol -= 0.2;
+    state.mill.gunk = 0;
+    showToast("Mill cleaned!");
+    log("🧼 Mill cleaned");
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function upgrade(type) {
+    const costs = { irrigation: 15, misting: 10, fertilizer: 8 };
+    if (state.sol < costs[type]) { showToast(`Need ${costs[type]} SOL`, true); return; }
+    if (state.upgrades[type]) { showToast("Already purchased!", true); return; }
+    state.sol -= costs[type];
+    state.upgrades[type] = true;
+    log(`✅ ${type} installed!`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function unlockSkill(skill) {
+    const costs = { yield: 5, speed: 5, cold: 5, rare: 8 };
+    if (state.seeds < costs[skill]) { showToast(`Need ${costs[skill]} Ancient Seeds`, true); return; }
+    if (state.skills.includes(skill)) { showToast("Already unlocked!", true); return; }
+    state.seeds -= costs[skill];
+    state.skills.push(skill);
+    if (skill === 'yield') state.skillMultipliers.yield = 1.8;
+    if (skill === 'speed') state.skillMultipliers.speed = 2.5;
+    if (skill === 'cold') state.skillMultipliers.extraction = 1.6;
+    if (skill === 'rare') state.skillMultipliers.rare = 0.25;
+    log(`✨ Unlocked ${skill.toUpperCase()}!`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function sellOil() {
+    if (state.oil < 0.1) { showToast("No oil to sell", true); return; }
+    const speculatorBonus = state.archetype === 'speculator' ? 1.2 : 1.0;
+    let revenue = state.oil * state.world.price * speculatorBonus;
+    applyMarketImpact(state.oil); // large sales depress pool price
+    state.sol += revenue;
+    state.lifetimeSol += revenue;
+    showToast(`+${revenue.toFixed(2)} SOL`);
+    log(`💰 Sold ${state.oil.toFixed(1)}L for ${revenue.toFixed(2)} SOL`);
+    state.oil = 0;
+    render();
+    checkAchievements();
+    if (currentUser) saveGameToCloud();
 }
 
 function sprayGrove() {
-    if (state.sol < 0.5) { showToast("Insufficent operational SOL", true); return; }
+    if (state.sol < 0.5) { showToast("Need 0.5 SOL", true); return; }
+    const infested = state.trees.filter(t => t.pests > 0).length;
+    if (infested === 0) { showToast("No pests to spray!", true); return; }
     state.sol -= 0.5;
     state.trees.forEach(t => t.pests = 0);
-    showToast("🐛 Pest vectors eradicated.");
+    showToast("Pests removed!");
+    log("🐛 Pest control applied");
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function harvestAll() {
+    const matureTrees = state.trees.filter(t => t.stage === 'mature' && t.health > 0);
+    if (matureTrees.length === 0) { showToast("No mature trees to harvest!", true); return; }
+    let totalYield = 0;
+    matureTrees.forEach(tree => {
+        let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+        let finalYield = baseYield * (rarityIcons[tree.rarity]?.bonus || 1) * state.skillMultipliers.yield * state.combo;
+        if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+        state.hopper += finalYield;
+        totalYield += finalYield;
+        state.totalHarvests++;
+        state.quest.current += finalYield;
+        tree.age = 0; tree.stage = 'seed'; tree.pests = 0;
+    });
+    addCombo();
+    showToast(`🫒 Harvested ${totalYield.toFixed(1)}kg from ${matureTrees.length} trees`);
+    log(`🫒 Bulk harvest: ${totalYield.toFixed(1)}kg from ${matureTrees.length} trees`);
+    checkQuest();
+    checkAchievements();
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function waterAll() {
+    const dryTrees = state.trees.filter(t => t.water < 100 && t.health > 0);
+    if (dryTrees.length === 0) { showToast("All trees fully watered!", true); return; }
+    dryTrees.forEach(tree => { tree.water = Math.min(100, tree.water + 30); });
+    showToast(`💧 Watered ${dryTrees.length} trees`);
+    log(`💧 Bulk watered ${dryTrees.length} trees`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function removeDeadTrees() {
+    const deadCount = state.trees.filter(t => t.health <= 0).length;
+    if (deadCount === 0) { showToast("No dead trees to remove!", true); return; }
+    state.trees = state.trees.filter(t => t.health > 0);
+    showToast(`💀 Removed ${deadCount} dead tree${deadCount > 1 ? 's' : ''}`);
+    log(`💀 Cleared ${deadCount} dead trees from grove`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function sellHalfOil() {
+    const halfOil = state.oil / 2;
+    if (halfOil < 0.05) { showToast("Not enough oil to split", true); return; }
+    const revenue = halfOil * state.world.price;
+    state.sol += revenue;
+    state.lifetimeSol += revenue;
+    state.oil = halfOil;
+    showToast(`+${revenue.toFixed(2)} SOL (half sold)`);
+    log(`💰 Sold ${halfOil.toFixed(1)}L for ${revenue.toFixed(2)} SOL`);
+    render();
+    checkAchievements();
+    if (currentUser) saveGameToCloud();
+}
+
+function prestige() {
+    let reward = Math.floor(state.lifetimeSol / 40);
+    if (reward < 1) { showToast("Earn 40 lifetime SOL first!", true); return; }
+    if (confirm(`Liquidate estate for ${reward} Ancient Seeds?`)) {
+        state.seeds += reward;
+        state.sol = 25;
+        state.oil = 0;
+        state.hopper = 0;
+        state.trees = [];
+        state.lifetimeSol = 0;
+        state.totalHarvests = 0;
+        state.rareCount = 0;
+        state.mill = { mash: 0, gunk: 0 };
+        // Plant 3 starter trees for free (prestige bonus)
+        for (let i = 0; i < 3; i++) {
+            const rarity = getRarity();
+            state.trees.push({
+                id: '#' + (state.treesPlanted + i + 1),
+                age: 0, health: 100, water: 85, pests: 0,
+                stage: 'seed', rarity, protected: false
+            });
+        }
+        state.treesPlanted += 3;
+        log("🔄 Estate liquidated! Ancient knowledge preserved.");
+        render();
+        if (currentUser) saveGameToCloud();
+    }
+}
+
+function checkAchievements() {
+    if (state.totalHarvests >= 1 && !state.achievements.firstHarvest) {
+        state.achievements.firstHarvest = true;
+        state.sol += 2;
+        showToast("🏆 First Harvest! +2 SOL");
+    }
+    if (state.trees.length >= 10 && !state.achievements.groveMaster) {
+        state.achievements.groveMaster = true;
+        state.sol += 10;
+        state.seeds++;
+        showToast("🏆 Grove Master! +10 SOL + Seed");
+    }
+    if (state.lifetimeSol >= 100 && !state.achievements.tycoon) {
+        state.achievements.tycoon = true;
+        state.sol += 20;
+        showToast("🏆 Tycoon! +20 SOL");
+    }
+    if (state.rareCount >= 5 && !state.achievements.rareCollector) {
+        state.achievements.rareCollector = true;
+        state.sol += 15;
+        state.seeds++;
+        showToast("🏆 Rare Collector! +15 SOL + Seed");
+    }
     render();
 }
 
@@ -556,53 +1054,736 @@ function checkQuest() {
     if (state.quest.current >= state.quest.target) {
         state.sol += state.quest.reward;
         state.seeds += state.quest.seedReward;
-        showToast(`🏆 CONTRACT FULFILLED! +${state.quest.reward} SOL`);
+        showToast(`✅ Quest complete! +${state.quest.reward} SOL`);
         state.quest.current = 0;
-        state.quest.target = Math.floor(Math.random() * 60) + 40;
+        state.quest.target = Math.floor(Math.random() * 80) + 40;
+        state.quest.reward = Math.floor(state.quest.target / 5) + 5;
         render();
     }
 }
 
-function checkAchievements() {}
-function sellHalfOil() {}
-function resetGame() { if(confirm("Hard clear estate context data?")) { localStorage.clear(); location.reload(); } }
-
 // ============================================================
-// SYSTEM ENTRY CONFIGURATIONS
+// GAME LOOPS
 // ============================================================
 
-window.addEventListener('DOMContentLoaded', () => {
-    // Basic structural initialization actions
-    document.getElementById('plant-btn').onclick = buyTree;
-    document.getElementById('spray-btn').onclick = sprayGrove;
-    document.getElementById('harvest-all-btn').onclick = harvestAll;
-    document.getElementById('water-all-btn').onclick = waterAll;
-    document.getElementById('style-sell-btn').onclick = sellOil;
-    document.getElementById('fab-mill').onclick = pressMill;
+function gameLoop() {
+    if (state.fertilizerBoost && Date.now() > state.fertilizerBoostEnd) {
+        state.fertilizerBoost = false;
+        log("Fertilizer boost expired");
+    }
+    if (state.protectionActive && Date.now() > state.protectionEnd) {
+        state.protectionActive = false;
+        log("Tree protection expired");
+    }
+
+    // Settle expired futures
+    settleFutures();
+
+    // Market pool slowly recovers
+    state.marketPool = Math.min(6.0, state.marketPool + 0.01);
+
+    // Agrarian: track grove density (over-saturation)
+    state.groveDensity = state.trees.length;
+    const isOverSaturated = state.archetype === 'agrarian' && state.groveDensity > 9;
+
+    state.trees.forEach((tree, idx) => {
+        if (tree.health <= 0) return;
+        
+        if (tree.protected) {
+            tree.pests = Math.max(0, tree.pests - 5);
+        }
+        
+        let waterLoss = state.world.weather === 'Heatwave' ? 12 : (state.world.weather === 'Rainy' ? -8 : 3);
+        if (state.upgrades.irrigation && tree.water < 70) waterLoss = -5;
+        tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
+        
+        // Growth: slower when over-saturated, but combo multiplier compensates at harvest
+        let growthRate = 0.05 * state.skillMultipliers.speed;
+        if (state.fertilizerBoost) growthRate *= 1.5;
+        if (isOverSaturated) growthRate *= 0.7; // density penalty
+        if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
+        
+        if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
+        if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
+        
+        // Pest spread — Agrarian blight: contagious between neighbors
+        if (!tree.protected && state.world.season === 'Summer' && Math.random() < 0.03) {
+            tree.pests = Math.min(100, tree.pests + 5);
+        }
+
+        // Blight spread: if heavily infested and unprotected
+        if (tree.pests > 50 && !tree.protected) {
+            const blightSpreadChance = isOverSaturated ? 0.18 : 0.08; // Agrarian: 2x spread chance
+            const neighbors = [idx - 1, idx + 1, idx - 3, idx + 3];
+            neighbors.forEach(nIdx => {
+                if (state.trees[nIdx] && state.trees[nIdx].health > 0 && Math.random() < blightSpreadChance) {
+                    state.trees[nIdx].pests = Math.min(100, state.trees[nIdx].pests + 2);
+                    if (Math.random() < 0.3) { // only log occasionally
+                        log(`⚠️ Blight spreading from ${tree.id} to ${state.trees[nIdx].id}!`);
+                    }
+                }
+            });
+            if (isOverSaturated && !state.blightActive) {
+                state.blightActive = true;
+                log("🚨 BLIGHT ALERT: Dense grove accelerating pest contagion!");
+                showToast("🚨 Blight spreading! Spray now!", true);
+            }
+        }
+
+        if (state.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
+        if (state.upgrades.flyTraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 3);
+        
+        if (tree.water < 15) tree.health -= 4;
+        if (tree.pests > 40) tree.health -= 3;
+        if (tree.health <= 0) { tree.health = 0; tree.stage = 'dead'; }
+    });
+
+    // Blight resets when all pests cleared
+    if (state.blightActive && state.trees.every(t => t.pests < 50)) {
+        state.blightActive = false;
+    }
+
+    // Mill: mash decay + heat/gunk cooling over time
+    state.mill.mash = Math.max(0, state.mill.mash - 4);
+    state.mill.heat = Math.max(0, (state.mill.heat || 0) - (state.archetype === 'industrialist' ? 4 : 2));
+    state.mill.gunk = Math.max(0, state.mill.gunk - (state.archetype === 'industrialist' ? 0.4 : 0.2));
+
+    render();
+}
+
+function weatherCycle() {
+    const weathers = [{ type: 'Clear', temp: 24 }, { type: 'Rainy', temp: 18 }, { type: 'Heatwave', temp: 36 }];
+    const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
+    state.world.weather = newWeather.type;
+    state.world.temp = newWeather.temp;
+    if (newWeather.type === 'Rainy') state.trees.forEach(t => t.water = Math.min(100, t.water + 15));
+    render();
+}
+
+function marketCycle() {
+    let drift = (Math.random() - 0.5) * 0.8;
+    // Market recovers toward marketPool baseline
+    const target = state.marketPool;
+    state.world.price = state.world.price + (target - state.world.price) * 0.3 + drift;
+    state.world.price = Math.max(0.5, Math.min(6.0, state.world.price));
+    const demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
+    const idx = Math.floor(state.world.price / 1.2);
+    state.world.demand = demandLevels[Math.min(4, idx)];
+    const trendPercent = (drift * 10).toFixed(1);
+    const trendEl = document.getElementById('ui-trend');
+    if (trendEl) {
+        trendEl.innerText = (drift >= 0 ? '+' : '') + trendPercent + '%';
+        trendEl.className = drift >= 0 ? 'text-xs text-green-500' : 'text-xs text-red-500';
+    }
+    const demandEl = document.getElementById('ui-demand');
+    if (demandEl) demandEl.innerText = state.world.demand;
+    render();
+}
+
+// ============================================================
+// CLOUD SAVE FUNCTIONS - FIXED
+// ============================================================
+
+async function saveGameToCloud() {
+    if (!currentUser || !sb) {
+        console.log("❌ Cannot save: no user or supabase client");
+        return false;
+    }
     
-    // Injection of dynamic archetype panel selection bindings directly to bottom utilities
-    const utilitiesContainer = document.querySelector('.fixed.bottom-0 div');
-    if (utilitiesContainer) {
-        utilitiesContainer.innerHTML = `
-            <button class="text-center text-green-500 font-bold" onclick="chooseSpecialization('agrarian')">🌾<br>AGRARIAN</button>
-            <button class="text-center text-yellow-500 font-bold" onclick="chooseSpecialization('industrialist')">⚙️<br>INDUSTRIAL</button>
-            <button class="text-center text-purple-400 font-bold" onclick="chooseSpecialization('speculator')">📊<br>SPECULATOR</button>
-            <button class="text-center hover:text-white" onclick="cleanMill()">🔧<br>COOL/REPAIR</button>
+    console.log("💾 Saving game for:", currentUser.wallet);
+    
+    const saveData = {
+        wallet: currentUser.wallet,
+        sol: state.sol,
+        seeds: state.seeds,
+        oil: state.oil,
+        hopper: state.hopper,
+        lifetimeSol: state.lifetimeSol,
+        treesPlanted: state.treesPlanted,
+        totalHarvests: state.totalHarvests,
+        comboRecord: state.comboRecord,
+        rareCount: state.rareCount,
+        trees: JSON.stringify(state.trees),
+        upgrades: JSON.stringify(state.upgrades),
+        skills: state.skills,
+        skillMultipliers: JSON.stringify(state.skillMultipliers),
+        mill: JSON.stringify(state.mill),
+        quest: JSON.stringify(state.quest),
+        achievements: JSON.stringify(state.achievements),
+        archetype: state.archetype,
+        futures: JSON.stringify(state.futures),
+        market_pool: state.marketPool,
+        updated_at: new Date().toISOString()
+    };
+    
+    try {
+        const { error } = await sb
+            .from('game_saves')
+            .upsert(saveData, { onConflict: 'wallet' });
+        
+        if (error) {
+            console.error("❌ Save error:", error);
+            return false;
+        }
+        
+        console.log("✅ Game saved successfully!");
+        return true;
+        
+    } catch (err) {
+        console.error("❌ Cloud save exception:", err);
+        return false;
+    }
+}
+
+async function loadGameFromCloud() {
+    if (!currentUser || !sb) {
+        console.log("❌ Cannot load: no user or supabase client");
+        return false;
+    }
+    
+    console.log("📥 Loading game for:", currentUser.wallet);
+    
+    try {
+        const { data, error } = await sb
+            .from('game_saves')
+            .select('*')
+            .eq('wallet', currentUser.wallet)
+            .maybeSingle();
+        
+        if (error) {
+            console.error("❌ Load error:", error);
+            return false;
+        }
+        
+        if (!data) {
+            console.log("📭 No saved game found");
+            return false;
+        }
+        
+        console.log("✅ Found saved game!");
+        
+        // Restore state
+        state.sol = data.sol ?? 25;
+        state.seeds = data.seeds ?? 0;
+        state.oil = data.oil ?? 0;
+        state.hopper = data.hopper ?? 0;
+        state.lifetimeSol = data.lifetimeSol ?? 25;
+        state.treesPlanted = data.treesPlanted ?? 3;
+        state.totalHarvests = data.totalHarvests ?? 0;
+        state.comboRecord = data.comboRecord ?? 1.0;
+        state.rareCount = data.rareCount ?? 0;
+        state.trees = data.trees ? JSON.parse(data.trees) : [];
+        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) :{ irrigation: false, misting: false, fertilizer: false, flyTraps: false };
+        state.skills = data.skills || [];
+        state.skillMultipliers = data.skillMultipliers ? JSON.parse(data.skillMultipliers) : { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 };
+        state.mill = data.mill ? JSON.parse(data.mill) : { mash: 0, gunk: 0 };
+        state.quest = data.quest ? JSON.parse(data.quest) : { target: 50, current: 0, reward: 10, seedReward: 1 };
+        state.achievements = data.achievements ? JSON.parse(data.achievements) : { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
+        state.archetype = data.archetype || null;
+        state.archetypeLocked = !!data.archetype;
+        state.futures = data.futures ? JSON.parse(data.futures) : [];
+        state.marketPool = data.market_pool ?? 2.50;
+        if (!state.mill.heat) state.mill.heat = 0;
+        
+        // Apply skill multipliers
+        if (state.skills.includes('yield')) state.skillMultipliers.yield = 1.8;
+        if (state.skills.includes('speed')) state.skillMultipliers.speed = 2.5;
+        if (state.skills.includes('cold')) state.skillMultipliers.extraction = 1.6;
+        if (state.skills.includes('rare')) state.skillMultipliers.rare = 0.25;
+        
+        log("🌿 Game loaded from cloud! Welcome back, Steward.");
+        render();
+        return true;
+        
+    } catch (err) {
+        console.error("❌ Load exception:", err);
+        return false;
+    }
+}
+
+// ============================================================
+// RENDER FUNCTION
+// ============================================================
+
+function render() {
+    if (!document.getElementById('ui-sol')) return;
+    
+    document.getElementById('ui-sol').innerText = state.sol.toFixed(4);
+    document.getElementById('ui-oil').innerText = state.oil.toFixed(1);
+    document.getElementById('ui-seeds').innerText = state.seeds;
+    document.getElementById('ui-hopper').innerText = state.hopper.toFixed(1) + ' kg';
+    document.getElementById('ui-price').innerText = state.world.price.toFixed(2);
+    document.getElementById('ui-time').innerText = state.world.time.toString().padStart(2,'0') + ':00';
+    document.getElementById('ui-temp').innerText = state.world.temp + '°C';
+    document.getElementById('ui-weather').innerText = state.world.weather;
+    document.getElementById('ui-level').innerText = Math.floor(state.lifetimeSol / 20) + 1;
+    document.getElementById('tree-count').innerText = state.trees.length;
+    document.getElementById('rare-count').innerText = state.rareCount;
+    
+    // Season: fix emoji + text separately
+    const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+    const seasonIndex = Math.floor(Date.now() / 600000) % 4;
+    state.world.season = seasons[seasonIndex];
+    const seasonEmoji = state.world.season === 'Spring' ? '🌸' : state.world.season === 'Summer' ? '☀️' : state.world.season === 'Autumn' ? '🍂' : '❄️';
+    const uiSeasonEmoji = document.getElementById('ui-season-emoji');
+    if (uiSeasonEmoji) uiSeasonEmoji.innerText = seasonEmoji;
+    const uiSeason = document.getElementById('ui-season');
+    if (uiSeason) uiSeason.innerText = state.world.season;
+    
+    // OLV balances
+    const uiOlvEl = document.getElementById('ui-olv');
+    if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
+    const shopBalance = document.getElementById('shop-olv-balance');
+    if (shopBalance) shopBalance.innerText = Math.floor(walletOlvBalance);
+    
+    // Estate sync bar (value vs SOL held)
+    const estateValue = state.oil * state.world.price + state.hopper * 0.5;
+    const estateValueEl = document.getElementById('estate-value');
+    if (estateValueEl) estateValueEl.innerText = `Estate Value: ${estateValue.toFixed(2)} SOL`;
+    const syncBar = document.getElementById('estate-sync-bar');
+    if (syncBar) {
+        const syncPct = Math.min(100, (estateValue / Math.max(1, state.sol + estateValue)) * 100);
+        syncBar.style.width = syncPct + '%';
+    }
+    
+    // Active boosts
+    const boostsContainer = document.getElementById('active-boosts');
+    if (boostsContainer) {
+        let boostsHtml = '';
+        if (state.fertilizerBoost) {
+            const remaining = Math.max(0, Math.ceil((state.fertilizerBoostEnd - Date.now()) / 60000));
+            boostsHtml += `<span class="text-[8px] bg-green-900/40 px-2 py-1 rounded">🌿 Fertilizer: ${remaining}min</span>`;
+        }
+        if (state.protectionActive) {
+            const remaining = Math.max(0, Math.ceil((state.protectionEnd - Date.now()) / 3600000));
+            boostsHtml += `<span class="text-[8px] bg-blue-900/40 px-2 py-1 rounded">🛡️ Protection: ${remaining}h</span>`;
+        }
+        if (!boostsHtml) boostsHtml = '<span class="text-[8px] opacity-40">No active boosts</span>';
+        boostsContainer.innerHTML = boostsHtml;
+    }
+    
+    // Mill
+    const mashBar = document.getElementById('mash-bar');
+    if (mashBar) mashBar.style.width = state.mill.mash + '%';
+    const gunkBar = document.getElementById('gunk-bar');
+    if (gunkBar) gunkBar.style.width = state.mill.gunk + '%';
+    document.getElementById('mash-pct').innerHTML = state.mill.mash + '%';
+    document.getElementById('gunk-pct').innerHTML = Math.floor(state.mill.gunk) + '%';
+    // Mill heat bar
+    const heatBar = document.getElementById('heat-bar');
+    if (heatBar) {
+        const heat = state.mill.heat || 0;
+        heatBar.style.width = heat + '%';
+        heatBar.style.background = heat > 75 ? '#ef4444' : heat > 50 ? '#f97316' : '#facc15';
+    }
+    const heatPct = document.getElementById('heat-pct');
+    if (heatPct) {
+        const heat = state.mill.heat || 0;
+        heatPct.innerHTML = Math.floor(heat) + '%';
+        heatPct.style.color = heat > 75 ? '#ef4444' : 'inherit';
+    }
+    // Gunk color at critical
+    if (gunkBar) gunkBar.style.background = state.mill.gunk > 85 ? '#ef4444' : state.mill.gunk > 60 ? '#f97316' : '#7c3aed';
+
+    // Archetype badge
+    const archetypeBadge = document.getElementById('archetype-badge');
+    if (archetypeBadge) {
+        if (state.archetype) {
+            const a = ARCHETYPES[state.archetype];
+            archetypeBadge.innerHTML = `${a.icon} ${a.name}`;
+            archetypeBadge.style.display = 'inline-block';
+        } else {
+            archetypeBadge.innerHTML = '🏛️ Choose Path';
+            archetypeBadge.style.display = 'inline-block';
+            archetypeBadge.style.opacity = '0.5';
+        }
+    }
+
+    // Futures badge (Speculator)
+    const futuresBtn = document.getElementById('futures-btn');
+    if (futuresBtn) {
+        futuresBtn.style.display = state.archetype === 'speculator' ? 'inline-block' : 'none';
+        if (state.futures.length > 0) futuresBtn.innerText = `📜 Futures (${state.futures.length})`;
+        else futuresBtn.innerText = '📜 Futures';
+    }
+
+    // Blight warning banner
+    const blightBanner = document.getElementById('blight-banner');
+    if (blightBanner) blightBanner.style.display = state.blightActive ? 'block' : 'none';
+
+    // Over-saturation density indicator (Agrarian)
+    const densityEl = document.getElementById('grove-density');
+    if (densityEl && state.archetype === 'agrarian') {
+        const overSat = state.groveDensity > 9;
+        densityEl.style.display = 'inline';
+        densityEl.innerHTML = overSat ? `🔥 Over-saturated (${state.groveDensity})` : `🌿 Density: ${state.groveDensity}`;
+        densityEl.style.color = overSat ? '#f97316' : '#4ade80';
+    } else if (densityEl) {
+        densityEl.style.display = 'none';
+    }
+    
+    // Quest
+    document.getElementById('quest-current').innerHTML = state.quest.current.toFixed(0);
+    document.getElementById('quest-target').innerHTML = state.quest.target;
+    const questSeedRewardEl = document.getElementById('quest-seed-reward');
+    if (questSeedRewardEl) questSeedRewardEl.innerHTML = state.quest.seedReward || 1;
+    const questProgress = document.getElementById('quest-progress');
+    if (questProgress) questProgress.style.width = Math.min(100, (state.quest.current / state.quest.target) * 100) + '%';
+    const seedsDisplay = document.getElementById('seeds-display');
+    if (seedsDisplay) seedsDisplay.innerHTML = state.seeds;
+    
+    // Stats panel
+    const statsLifetime = document.getElementById('stats-lifetime');
+    if (statsLifetime) statsLifetime.innerHTML = state.lifetimeSol.toFixed(2);
+    const statsTreesPlanted = document.getElementById('stats-trees-planted');
+    if (statsTreesPlanted) statsTreesPlanted.innerHTML = state.treesPlanted;
+    const statsHarvests = document.getElementById('stats-harvests');
+    if (statsHarvests) statsHarvests.innerHTML = state.totalHarvests;
+    const statsCombo = document.getElementById('stats-combo');
+    if (statsCombo) statsCombo.innerHTML = `x${state.comboRecord.toFixed(1)}`;
+    const statsRare = document.getElementById('stats-rare');
+    if (statsRare) statsRare.innerHTML = state.rareCount;
+    
+    // Achievements
+    const ach1 = document.getElementById('ach1');
+    if (ach1) ach1.innerHTML = state.achievements.firstHarvest ? '✅' : '❌';
+    const ach2 = document.getElementById('ach2');
+    if (ach2) ach2.innerHTML = state.achievements.groveMaster ? '✅' : '❌';
+    const ach3 = document.getElementById('ach3');
+    if (ach3) ach3.innerHTML = state.achievements.tycoon ? '✅' : '❌';
+    const ach4 = document.getElementById('ach4');
+    if (ach4) ach4.innerHTML = state.achievements.comboKing ? '✅' : '❌';
+    const ach5 = document.getElementById('ach5');
+    if (ach5) ach5.innerHTML = state.achievements.rareCollector ? '✅' : '❌';
+    
+    // Upgrade purchased states
+    ['irrigation', 'misting', 'fertilizer'].forEach(key => {
+        const costEl = document.getElementById(`upg-${key}-cost`);
+        const btnEl = document.getElementById(`upg-${key}-mobile`);
+        if (state.upgrades[key]) {
+            if (costEl) costEl.innerHTML = '✅ Installed';
+            if (btnEl) { btnEl.style.opacity = '0.5'; btnEl.style.pointerEvents = 'none'; }
+        }
+    });
+    const flyTrapsCostEl = document.getElementById('upg-flytraps-cost');
+    const flyTrapsBtnEl = document.getElementById('upg-flytraps-mobile');
+    if (state.upgrades.flyTraps) {
+        if (flyTrapsCostEl) flyTrapsCostEl.innerHTML = '✅ Installed';
+        if (flyTrapsBtnEl) { flyTrapsBtnEl.style.opacity = '0.5'; flyTrapsBtnEl.style.pointerEvents = 'none'; }
+    }
+    
+    // Skill purchased states
+    ['yield', 'speed', 'cold', 'rare'].forEach(skill => {
+        const costEl = document.getElementById(`skill-${skill}-cost`);
+        const btnEl = document.getElementById(`skill-${skill}-btn`);
+        if (state.skills.includes(skill)) {
+            if (costEl) costEl.innerHTML = '✅ Active';
+            if (btnEl) { btnEl.style.opacity = '0.5'; btnEl.style.pointerEvents = 'none'; }
+        }
+    });
+    
+    // Dead tree badge
+    const deadCount = state.trees.filter(t => t.health <= 0).length;
+    const deadBadge = document.getElementById('dead-tree-badge');
+    const deadCountEl = document.getElementById('dead-count');
+    if (deadBadge) deadBadge.style.display = deadCount > 0 ? 'inline' : 'none';
+    if (deadCountEl) deadCountEl.innerText = deadCount;
+    
+    // Harvest-all button: highlight when trees are ready
+    const harvestAllBtn = document.getElementById('harvest-all-btn');
+    if (harvestAllBtn) {
+        const readyCount = state.trees.filter(t => t.stage === 'mature' && t.health > 0).length;
+        harvestAllBtn.innerText = readyCount > 0 ? `🫒 HARVEST ALL (${readyCount})` : '🫒 HARVEST ALL';
+        harvestAllBtn.style.opacity = readyCount > 0 ? '1' : '0.4';
+    }
+    
+    // Sell half button: show only if oil > 0
+    const sellHalfBtn = document.getElementById('sell-half-btn');
+    if (sellHalfBtn) sellHalfBtn.style.display = state.oil >= 0.1 ? 'inline-block' : 'none';
+    
+    // Grove render
+    const container = document.getElementById('grove-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    state.trees.forEach((tree, idx) => {
+        const isReady = tree.stage === 'mature';
+        const isDead = tree.health <= 0;
+        const emoji = isDead ? '🍂' : tree.stage === 'seed' ? '🌱' : tree.stage === 'sapling' ? '🌿' : '🫒';
+        
+        // Growth progress: seed 0-5, sapling 5-12
+        let growthPct = 0;
+        if (tree.stage === 'seed') growthPct = Math.min(100, (tree.age / 5) * 100);
+        else if (tree.stage === 'sapling') growthPct = Math.min(100, ((tree.age - 5) / 7) * 100);
+        else if (tree.stage === 'mature') growthPct = 100;
+        
+        const card = document.createElement('div');
+        card.className = `tree-card ${isReady ? 'ready' : ''} ${tree.pests > 30 ? 'infested' : ''} ${isDead ? 'dead' : ''}`;
+        if (!isDead) card.onclick = () => interactTree(idx);
+        card.innerHTML = `
+            <div class="tree-emoji">${emoji}</div>
+            <div class="tree-id">${tree.id}</div>
+            ${!isDead ? `
+            <div class="progress-bar" title="Water"><div class="progress-fill fill-water" style="width:${tree.water}%"></div></div>
+            <div class="progress-bar" title="Health"><div class="progress-fill fill-health" style="width:${tree.health}%"></div></div>
+            ${!isReady ? `<div class="progress-bar" title="Growth" style="opacity:0.5"><div class="progress-fill" style="width:${growthPct}%; background:linear-gradient(90deg,#a3e635,#84cc16);"></div></div>` : ''}
+            ${tree.pests > 0 ? `<div class="progress-bar"><div class="progress-fill fill-pest" style="width:${tree.pests}%"></div></div>` : ''}
+            ${isReady ? '<div class="text-center text-gold text-[9px] mt-2">⬤ READY</div>' : ''}
+            ` : '<div class="text-center text-[9px] mt-1" style="color:#ef4444;">DEAD</div>'}
+            ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : tree.rarity === 'legendary' ? '<div class="rarity-badge">👑</div>' : ''}
+            ${tree.protected ? '<div class="text-center text-[8px] text-blue-400 mt-1">🛡️</div>' : ''}
         `;
+        container.appendChild(card);
+    });
+    if (state.trees.length === 0) {
+        container.innerHTML = '<div class="text-center py-10 opacity-50 col-span-full">Tap + PLANT to start</div>';
     }
+}
 
-    // Frame loops execution
-    setInterval(gameLoop, 2000);
-    setInterval(weatherCycle, 16000);
-    setInterval(marketCycle, 22000);
+// ============================================================
+// PANEL NAVIGATION
+// ============================================================
+
+function openPanel(panelId) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+    const panel = document.getElementById(`panel-${panelId}`);
+    if (panel) panel.classList.add('open');
+    const overlay = document.getElementById('panel-overlay');
+    if (overlay) overlay.classList.add('active');
+}
+
+function closePanel() {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+    const overlay = document.getElementById('panel-overlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+// ============================================================
+// ADD OLV SHOP PANEL TO UI
+// ============================================================
+
+function addOlvShopPanel() {
+    if (document.getElementById('panel-shop')) return;
     
-    // Initialize baseline starting items
-    for (let i = 0; i < 3; i++) {
-        state.trees.push({
-            id: '#' + (i + 1), age: 0, health: 100, water: 80, stage: 'seed', rarity: 'common', protected: false
-        });
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav && !document.querySelector('[data-panel="shop"]')) {
+        const shopNav = document.createElement('div');
+        shopNav.className = 'nav-item';
+        shopNav.setAttribute('data-panel', 'shop');
+        shopNav.innerHTML = '🛒<br>SHOP';
+        bottomNav.appendChild(shopNav);
+        shopNav.onclick = () => openPanel('shop');
     }
+    
+    const panelsContainer = document.body;
+    const shopPanel = document.createElement('div');
+    shopPanel.id = 'panel-shop';
+    shopPanel.className = 'panel';
+    shopPanel.innerHTML = `
+        <div class="panel-header">
+            <h3 class="serif text-xl text-gold">🛒 OLV SHOP</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="text-center text-sm mb-3">💰 Your OLV: <span id="shop-olv-balance" class="text-gold font-bold">0</span></div>
+        <div class="space-y-3">
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('seeds')">
+                <div class="flex-between"><div><span class="text-lg">🌱</span> Ancient Seeds (5)</div><div class="text-gold">100 OLV</div></div>
+                <div class="text-[9px] opacity-50">Unlock Ancient Lab skills</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('sol')">
+                <div class="flex-between"><div><span class="text-lg">💰</span> SOL Boost (10)</div><div class="text-gold">50 OLV</div></div>
+                <div class="text-[9px] opacity-50">Add 10 SOL to your balance</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('fertilizer')">
+                <div class="flex-between"><div><span class="text-lg">🌿</span> Premium Fertilizer</div><div class="text-gold">200 OLV</div></div>
+                <div class="text-[9px] opacity-50">+50% growth speed for 1 hour</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('instantHarvest')">
+                <div class="flex-between"><div><span class="text-lg">⚡</span> Instant Harvest</div><div class="text-gold">75 OLV</div></div>
+                <div class="text-[9px] opacity-50">Harvest all ready trees instantly</div>
+            </div>
+            <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('protection')">
+                <div class="flex-between"><div><span class="text-lg">🛡️</span> Tree Protection</div><div class="text-gold">150 OLV</div></div>
+                <div class="text-[9px] opacity-50">Protect trees from pests for 24h</div>
+            </div>
+            <div class="card" style="border-color:#a855f7; cursor:pointer" onclick="game.buyWithOlv('legendary')">
+                <div class="flex-between"><div><span class="text-lg">👑</span> Legendary Seed</div><div class="text-purple-400">500 OLV</div></div>
+                <div class="text-[9px] opacity-50">Next tree planted is Legendary (5x yield)</div>
+            </div>
+        </div>
+        <div class="card" style="border-color:#ef4444; cursor:pointer; margin-top: 8px;" onclick="game.resetGame()">
+    <div class="flex-between">
+        <div><span class="text-lg">⚠️</span> Reset Estate</div>
+        <div class="text-red-400">3 SOL / 300 OLV</div>
+    </div>
+    <div class="text-[9px] opacity-50">Reset your estate (Keeps Seeds & Skills)</div>
+</div>
+    `;
+    
+    panelsContainer.appendChild(shopPanel);
+}
+
+// ============================================================
+// ADD BOOSTS DISPLAY TO STATS ROW
+// ============================================================
+
+function addBoostsDisplay() {
+    const statsRow = document.querySelector('.stats-row');
+    if (statsRow && !document.getElementById('active-boosts')) {
+        const boostsDiv = document.createElement('div');
+        boostsDiv.id = 'active-boosts';
+        boostsDiv.className = 'stat-box';
+        boostsDiv.style.background = 'rgba(0,0,0,0.3)';
+        boostsDiv.style.padding = '8px';
+        boostsDiv.innerHTML = '<div class="stat-label">⚡ ACTIVE BOOSTS</div><div class="text-[9px] mt-1">No active boosts</div>';
+        statsRow.appendChild(boostsDiv);
+    }
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎮 OLIVIUM Estate loading...');
+    
+    addOlvShopPanel();
+    addBoostsDisplay();
+    
+    // Set up event listeners
+    const plantBtn = document.getElementById('plant-btn');
+    if (plantBtn) plantBtn.onclick = () => buyTree();
+    
+    const sprayBtn = document.getElementById('spray-btn');
+    if (sprayBtn) sprayBtn.onclick = () => sprayGrove();
+    
+    const harvestAllBtn = document.getElementById('harvest-all-btn');
+    if (harvestAllBtn) harvestAllBtn.onclick = () => harvestAll();
+    
+    const waterAllBtn = document.getElementById('water-all-btn');
+    if (waterAllBtn) waterAllBtn.onclick = () => waterAll();
+    
+    const sellBtn = document.getElementById('sell-btn');
+    if (sellBtn) sellBtn.onclick = () => sellOil();
+    
+    const sellHalfBtn = document.getElementById('sell-half-btn');
+    if (sellHalfBtn) sellHalfBtn.onclick = () => sellHalfOil();
+    
+    const fabMill = document.getElementById('fab-mill');
+    if (fabMill) fabMill.onclick = () => pressMill();
+    
+    const refreshBtn = document.getElementById('refreshBalanceBtn');
+    if (refreshBtn) refreshBtn.onclick = () => refreshBalances();
+    
+    const connectBtn = document.getElementById('connectBtn');
+    if (connectBtn) connectBtn.onclick = showConnectModal;
+    
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    if (connectWalletBtn) connectWalletBtn.onclick = connectWallet;
+    
+    const emailLoginBtn = document.getElementById('emailLoginBtn');
+    if (emailLoginBtn) emailLoginBtn.onclick = emailLogin;
+    
+    const closeModalBtn = document.getElementById('closeConnectModalBtn');
+    if (closeModalBtn) closeModalBtn.onclick = hideConnectModal;
+    
+    const modal = document.getElementById('connectModal');
+    if (modal) modal.onclick = (e) => { if (e.target === modal) hideConnectModal(); };
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.onclick = () => openPanel(item.dataset.panel);
+    });
+    
+    setTimeout(() => {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.onclick = () => openPanel(item.dataset.panel);
+        });
+    }, 100);
+    
+    window.game = { 
+    upgrade: (t) => { upgrade(t); closePanel(); }, 
+    upgradeFlyTraps: () => { upgradeFlyTraps(); closePanel(); },
+    unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
+    buyWithOlv,
+    cleanMill, 
+    prestige, 
+    buyTree, 
+    sprayGrove,
+    harvestAll,
+    waterAll,
+    removeDeadTrees,
+    sellHalfOil,
+    sellOil,
+    pressMill,
+    saveGameToCloud,
+    resetGame,
+    chooseArchetype,
+    openArchetypePanel,
+    openFuturesPanel,
+    buyFuture,
+    sellOilWithFuture,
+};
+    window.closePanel = closePanel;
+    window.openPanel = openPanel;
+    
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            const navIdentity = document.getElementById('nav-identity-display');
+            const navTier = document.getElementById('nav-tier-label');
+            const connectBtn = document.getElementById('connectBtn');
+            
+            if (navIdentity) navIdentity.innerText = currentUser.display;
+            if (navTier) navTier.innerText = 'Mignole Steward';
+            if (connectBtn) {
+                const icon = currentUser.type === 'wallet' ? '◎' : '✉';
+                connectBtn.innerText = `${icon} Disconnect`;
+                connectBtn.onclick = handleDisconnect;
+                connectBtn.style.background = '#3a2a10';
+                connectBtn.style.borderColor = '#C5A059';
+            }
+            
+            loadGameFromCloud().then(loaded => {
+                if (!loaded && state.trees.length === 0) {
+                    for (let i = 0; i < 3; i++) {
+                        state.trees.push({
+                            id: '#' + (state.treesPlanted + i + 1),
+                            age: 0, health: 100, water: 85, pests: 0,
+                            stage: 'seed', rarity: 'common',
+                            protected: false
+                        });
+                    }
+                    state.treesPlanted += 3;
+                    render();
+                }
+            });
+        } catch(e) {
+            console.error("Failed to restore user:", e);
+        }
+    } else {
+        for (let i = 0; i < 3; i++) {
+            state.trees.push({
+                id: '#' + (state.treesPlanted + i + 1),
+                age: 0, health: 100, water: 85, pests: 0,
+                stage: 'seed', rarity: 'common',
+                protected: false
+            });
+        }
+        state.treesPlanted += 3;
+    }
+    
+    setInterval(gameLoop, 2000);
+    setInterval(weatherCycle, 20000);
+    setInterval(marketCycle, 15000);
+    setInterval(() => { state.world.time = (state.world.time + 1) % 24; render(); }, 30000);
     
     render();
-    log("🎮 Kintara System Core initiated. Select a specialization archetype below to begin your operational strategy run!");
+    log("🌿 Tap trees to water/harvest. Press the gold button for the mill!");
+    log("🔐 Click 'Connect Profile' to connect your wallet and save progress!");
+    log("🛒 Use OLV tokens in the SHOP for boosts and items!");
 });
+
+setInterval(() => {
+    if (currentUser) saveGameToCloud();
+}, 30000);
