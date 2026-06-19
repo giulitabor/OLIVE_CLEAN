@@ -3,263 +3,509 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>OLIVIUM — OliveGrove MATRIX</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>OLIVIUM — The Ultimate Web3 Grove Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
     
     <style>
         :root {
             --gold: #C5A059;
             --gold-dark: #3a2a10;
+            --olive: #6B8E23;
+            --charcoal: #0c0c0a;
+            --danger: #922b21;
+            --blue: #3498DB;
+            --purple: #9B59B6;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'JetBrains Mono', monospace;
-            background-color: #050404; /* True dark matrix black */
-            color: #f5f5f4; 
+            background: var(--charcoal);
+            color: #f5eed8;
+            min-height: 100vh;
+            overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
         }
-        .font-serif {
-            font-family: 'Playfair Display', serif;
-        }
-        
-        /* Smooth dynamic updates */
-        .transition-all {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
 
-        /* Scanline Overlay for Cyberpunk/Tactical feel */
-        body::before {
-            content: " ";
-            display: block;
+        .serif { font-family: 'Cormorant Garamond', serif; }
+
+        /* --- WEATHER & BACKGROUND INFRASTRUCTURE --- */
+        #sky-bg {
             position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 99999;
-            opacity: 0.4;
-            pointer-events: none;
-            background-size: 100% 4px, 6px 100%;
+            inset: 0;
+            background: linear-gradient(to bottom, #0a0c10, #1a1a15);
+            z-index: -1;
+            transition: all 5s ease;
         }
 
-        /* Ledger custom track */
-        #ledger::-webkit-scrollbar {
-            width: 4px;
+        #weather-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+            transition: background 2s ease;
         }
-        #ledger::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.5);
+
+        .rain-drop {
+            position: absolute;
+            background: rgba(135, 206, 235, 0.4);
+            width: 1px;
+            height: 15px;
+            animation: rainFall linear infinite;
         }
-        #ledger::-webkit-scrollbar-thumb {
-            background: rgba(197, 160, 89, 0.3);
-            border-radius: 2px;
+
+        @keyframes rainFall { to { transform: translateY(100vh); } }
+
+        /* --- FLOATING TEXT EFFECTS --- */
+        .float-text {
+            position: absolute;
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1rem;
+            animation: floatUp 1.5s forwards;
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
         }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake { animation: shake 0.5s ease; }
+
+        /* --- LAYOUT COMPONENT STRUCTS --- */
+        .game-container {
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            position: relative;
+            z-index: 10;
+        }
+
+        .game-header {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(20px);
+            border-b: 1px solid rgba(197, 160, 89, 0.2);
+            z-index: 40;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1px;
+            background: rgba(255,255,255,0.02);
+        }
+
+        @media (min-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 320px 1fr 340px;
+            }
+            .mobile-panel-only { display: none !important; }
+        }
+
+        .panel {
+            background: rgba(12, 12, 10, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* --- INTERACTIVE GRID ARRAYS --- */
+        .tree-slot {
+            background: linear-gradient(145deg, #151512, #0a0a09);
+            border: 2px solid rgba(197, 160, 89, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tree-slot:hover {
+            transform: translateY(-4px);
+            border-color: var(--gold);
+            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.15);
+        }
+
+        .tree-slot.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.35);
+        }
+
+        .tree-slot.infested { animation: shake 0.5s infinite; border-color: var(--danger); }
+        .tree-slot.ready { animation: readyGlow 2s infinite; }
+        .tree-slot.legendary { border-color: var(--purple); box-shadow: 0 0 20px rgba(155, 89, 182, 0.4); }
+        .tree-slot.rare { border-color: var(--blue); box-shadow: 0 0 15px rgba(52, 152, 219, 0.3); }
+
+        @keyframes readyGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(107, 142, 35, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(107, 142, 35, 0); }
+        }
+
+        /* --- SLIDING CONTROL SIDE DRAWERS (Mobile Layouts fallback) --- */
+        .sliding-panel {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #0d0d0b;
+            border-top: 2px solid var(--gold);
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .sliding-panel.active { transform: translateY(0); }
+        .panel-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            z-index: 90;
+        }
+        .panel-overlay.active { display: block; }
+
+        #ledger::-webkit-scrollbar, #event-ledger::-webkit-scrollbar { width: 4px; }
+        #ledger::-webkit-scrollbar-thumb, #event-ledger::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
     </style>
 </head>
-<body class="text-stone-100 p-4 max-w-xl mx-auto min-h-screen pb-32">
+<body>
+    <div id="sky-bg"></div>
+    <div id="weather-overlay"></div>
 
-    <!-- Top Status Bar -->
-    <nav class="fixed top-0 left-0 right-0 bg-stone-950/95 border-b border-stone-800 backdrop-blur z-50 px-4 py-3">
-        <div class="flex justify-between items-center max-w-xl mx-auto">
-            <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                <span class="font-serif text-sm font-bold tracking-widest text-white">
-                    OLIVIUM // <span class="text-yellow-500 font-mono text-xs tracking-normal">KINTARA_CORE</span>
-                </span>
-            </div>
-            <div class="text-right">
-                <span class="text-[9px] text-stone-500 block font-bold uppercase tracking-wider">ARCHETYPE SPEC</span>
-                <span id="ui-level" class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">LOADING...</span>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Content Margin Spacer -->
-    <div class="mt-16">
-        
-        <!-- Environment Diagnostics & Clock Module -->
-        <div class="bg-stone-900/40 border border-stone-800/80 rounded-2xl p-3 mb-4 flex justify-between items-center shadow-md">
-            <div class="flex items-center gap-3">
-                <!-- Clock Icon Container -->
-                <div class="p-2 bg-stone-800/60 rounded-xl border border-stone-700/50 text-stone-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="text-xs font-mono">
-                    <div class="text-stone-400 font-bold"><span id="ui-time">00:00</span> <span class="text-[10px] text-stone-600">SYSTEM TIME</span></div>
-                    <div class="text-[10px] text-stone-500 flex gap-2 mt-0.5">
-                        <span>🌡️ <span id="ui-temp">0°C</span></span>
-                        <span>🌤️ <span id="ui-weather">STABLE</span></span>
-                        <span>🌸 <span id="ui-season">SPRING</span></span>
+    <div class="game-container">
+        <!-- GLOBAL APPLICATION HEADER SYSTEM -->
+        <nav class="game-header px-4 py-3 md:px-8 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center justify-between w-full sm:w-auto gap-4">
+                <div class="game-title text-xl md:text-2xl font-bold tracking-widest text-white">
+                    🫒 OLIVIUM <span class="serif italic text-[#C5A059] ml-1">ESTATE</span>
+                    <div class="prestige-badge inline-block ml-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-2 py-0.5 rounded-full text-[10px] font-bold" id="prestige-badge" style="display: none;">
+                        ⭐ Gen <span id="prestige-level">1</span>
                     </div>
                 </div>
+                <div class="flex gap-2">
+                    <span class="weather-tag text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider" id="weather-tag">☀️ Optimal</span>
+                    <span class="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider">⛓️ Devnet</span>
+                </div>
             </div>
+
+            <!-- Core Financials & Status Blocks -->
+            <div class="flex items-center justify-between w-full sm:w-auto gap-4 md:gap-6">
+                <div class="flex gap-3 text-center">
+                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[65px]">
+                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">SOL</div>
+                        <div id="sol-balance" class="text-sm font-mono font-bold text-yellow-500">25.00</div>
+                    </div>
+                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[65px]">
+                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">EVOO (L)</div>
+                        <div id="oil-vault" class="text-sm font-mono font-bold text-emerald-400">0.0</div>
+                    </div>
+                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[55px]">
+                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">LEVEL</div>
+                        <div id="level" class="text-sm font-mono font-bold text-stone-200">1</div>
+                    </div>
+                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[55px]">
+                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">COMBO</div>
+                        <div id="combo" class="text-sm font-mono font-bold text-purple-400">0</div>
+                    </div>
+                </div>
+
+                <!-- Web3 Identity Hook Indicator -->
+                <div class="flex items-center gap-3 border-l border-white/10 pl-4">
+                    <div class="text-right hidden md:block">
+                        <p id="nav-tier-label" class="text-[9px] font-bold text-stone-500 uppercase tracking-widest">Guest Mode</p>
+                        <p id="nav-identity-display" class="text-[10px] font-mono text-stone-400 tracking-tight">NOT CONNECTED</p>
+                    </div>
+                    <button id="connectBtn" class="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:brightness-110 text-stone-950 font-mono text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md">Connect Profile</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN RESPONSIVE THREE-PANEL MATRIX GRID APPLICATION LAYOUT -->
+        <div class="main-layout flex-1">
             
-            <!-- Real-Time Dynamic Global Pool Exchange Value -->
-            <div class="text-right border-l border-stone-800 pl-4">
-                <span class="text-[9px] text-stone-500 font-bold block uppercase tracking-wider">MARKET VALUE</span>
-                <div class="flex items-baseline justify-end gap-1">
-                    <span id="ui-price" class="text-lg font-bold font-mono text-yellow-500">0.00</span>
-                    <span class="text-[9px] text-stone-500 font-mono">SOL/L</span>
-                </div>
-                <span id="ui-demand" class="text-[9px] font-mono text-emerald-400 uppercase font-bold">NORMAL CAPACITY</span>
-            </div>
-        </div>
-
-        <!-- Major Wallet Balances Grid Matrix -->
-        <div class="grid grid-cols-3 gap-2 mb-4">
-            <div class="bg-gradient-to-b from-stone-900 to-stone-950 border border-stone-800 rounded-xl p-3 shadow-sm relative overflow-hidden">
-                <div class="absolute top-1 right-1 opacity-10 text-yellow-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <div class="text-[8px] text-stone-500 font-bold tracking-wider">AVAILABLE SOL</div>
-                <div id="ui-sol" class="text-sm font-mono font-bold text-yellow-500 mt-1">0.00</div>
-            </div>
-            <div class="bg-gradient-to-b from-stone-900 to-stone-950 border border-stone-800 rounded-xl p-3 shadow-sm relative overflow-hidden">
-                <div class="absolute top-1 right-1 opacity-10 text-emerald-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                </div>
-                <div class="text-[8px] text-stone-500 font-bold tracking-wider">STAKED OLV</div>
-                <div id="ui-olv" class="text-sm font-mono font-bold text-emerald-400 mt-1">0</div>
-            </div>
-            <div class="bg-gradient-to-b from-stone-900 to-stone-950 border border-stone-800 rounded-xl p-3 shadow-sm relative overflow-hidden">
-                <div class="absolute top-1 right-1 opacity-10 text-stone-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                </div>
-                <div class="text-[8px] text-stone-500 font-bold tracking-wider">CRUDE OIL RECLAIMED</div>
-                <div id="ui-oil" class="text-sm font-mono font-bold text-stone-100 mt-1">0.00</div>
-            </div>
-        </div>
-
-        <!-- Secondary Commodities (Seeds & Hopper Warehouse) -->
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <div class="bg-stone-900/60 border border-stone-800/60 rounded-xl p-2.5 flex items-center gap-3">
-                <span class="text-xl">🧬</span>
-                <div>
-                    <span class="text-[8px] text-stone-500 block font-bold uppercase tracking-wider">ANCIENT SEEDS</span>
-                    <span id="ui-seeds" class="text-xs font-mono font-bold text-yellow-600">0</span>
-                </div>
-            </div>
-            <div class="bg-stone-900/60 border border-stone-800/60 rounded-xl p-2.5 flex items-center gap-3">
-                <span class="text-xl">🏺</span>
-                <div>
-                    <span class="text-[8px] text-stone-500 block font-bold uppercase tracking-wider">HOPPER BIOMASS</span>
-                    <span id="ui-hopper" class="text-xs font-mono font-bold text-stone-300">0.0 kg</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Network Interactions Controls Interface -->
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <button id="plant-btn" class="bg-stone-900 hover:bg-stone-850 border border-stone-700/60 text-xs font-bold py-3 rounded-xl text-yellow-500 tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                DEPLOY GROVE NODE
-            </button>
-            <button id="spray-btn" class="bg-red-950/20 hover:bg-red-950/40 border border-red-900/40 text-xs font-bold py-3 rounded-xl text-red-400 tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                FLUSH GRID BLIGHT
-            </button>
-        </div>
-
-        <!-- High-Pressure Industrial Processing Refinery Module Dashboard -->
-        <div class="bg-stone-900/60 border border-stone-800 rounded-2xl p-4 mb-4 shadow-xl relative overflow-hidden">
-            <div class="flex justify-between items-center mb-3">
-                <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span class="text-[10px] text-stone-300 font-bold tracking-widest uppercase">EXTRACTION REFINERY CORE</span>
-                </div>
-                <span class="text-[8px] text-stone-600 font-mono">CONTINUOUS HARVEST PROCESSING</span>
-            </div>
-            
-            <div class="space-y-3">
-                <div>
-                    <div class="flex justify-between text-[10px] font-mono text-stone-400">
-                        <span class="flex items-center gap-1">⚡ MASH LINE PRESSURE</span>
-                        <span id="mash-pct" class="font-bold text-yellow-500">0%</span>
+            <!-- LEFT PANEL: QUEST TRACKING & DEPLOYMENT BOUNTIES (Desktop Hidden Fallback) -->
+            <div class="panel hidden lg:block p-6 border-r border-white/5 overflow-y-auto">
+                <h3 class="serif text-lg font-bold text-[#C5A059] mb-4 flex items-center gap-2">📋 MATRIX BOUNTY CONTRACT</h3>
+                <div class="quest-card bg-blue-500/5 border border-blue-500/30 p-4 rounded-xl mb-6">
+                    <div class="font-bold text-sm mb-1 text-stone-200" id="quest-title">Harvest 50L of oil</div>
+                    <div class="text-xs text-stone-400 font-mono mb-2">Fulfillment Tracker: <span id="quest-current" class="text-white font-bold">0</span> / <span id="quest-target">50</span> kg</div>
+                    <div class="w-full bg-black/50 h-1.5 rounded-full overflow-hidden border border-white/5">
+                        <div class="bar-fill bg-blue-500 h-full transition-all" id="quest-progress" style="width: 0%;"></div>
                     </div>
-                    <div class="w-full bg-black/80 h-2 rounded-full mt-1 p-0.5 overflow-hidden border border-stone-800">
-                        <div id="mash-bar" class="bg-gradient-to-r from-yellow-600 to-yellow-400 h-full rounded-full transition-all" style="width:0%"></div>
+                    <div class="color-[var(--gold)] text-[10px] font-mono font-bold mt-2 text-[#C5A059]" id="quest-reward">Reward: 500 SOL</div>
+                </div>
+
+                <h3 class="serif text-lg font-bold text-[#C5A059] mb-4 flex items-center justify-between">
+                    <span>🏆 ACHIEVEMENTS</span>
+                    <span id="achievement-count" class="text-xs font-mono opacity-50 font-normal">0/15</span>
+                </h3>
+                <div id="achievement-list" class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                    <!-- Dynamic injection vector inside framework -->
+                </div>
+            </div>
+
+            <!-- CENTER WORKSPACE: THE ACTIVE PRODUCTION GROVE VIEW -->
+            <div class="grove-area p-4 md:p-8 overflow-y-auto flex flex-col justify-between">
+                <div>
+                    <!-- Meta Diagnostic Headers telemetry metrics -->
+                    <div class="flex justify-between items-center border-b border-white/5 pb-3 mb-6">
+                        <div>
+                            <h2 class="serif text-xl font-bold text-stone-300">SECURED PRODUCTION GRID</h2>
+                            <div class="flex gap-3 text-[10px] text-stone-500 font-mono mt-0.5">
+                                <span>⏰ TIME: <span id="ui-time" class="text-stone-400">08:00</span></span>
+                                <span>🌡️ TEMP: <span id="ui-temp" class="text-stone-400">24°C</span></span>
+                                <span>🌤️ SYS: <span id="ui-weather" class="text-stone-400">Clear</span></span>
+                                <span>🌸 CYCLE: <span id="ui-season" class="text-stone-400">Spring</span></span>
+                            </div>
+                        </div>
+                        <div class="text-right text-[11px] font-mono">
+                            <span class="text-stone-500 font-bold block uppercase tracking-wider text-[9px]">SECURED ASSET DEPTH</span>
+                            <span class="text-[#C5A059]">⭐</span> <span id="rare-count" class="font-bold text-stone-300">0</span> Rare Nodes Identified
+                        </div>
+                    </div>
+
+                    <!-- Primary Grid Array Wrapper Box -->
+                    <div class="trees-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4" id="trees-grid">
+                        <!-- Populated completely programmatically via script assets nodes models loop hooks -->
                     </div>
                 </div>
-                <div>
-                    <div class="flex justify-between text-[10px] font-mono text-stone-400">
-                        <span class="flex items-center gap-1">🔥 STRUCTURAL THERMAL STRESS</span>
-                        <span id="gunk-pct" class="font-bold text-red-500">0%</span>
+
+                <!-- Web3 Multi-Asset Escrow Sync Module Monitor Frame -->
+                <div class="bg-gradient-to-r from-stone-900 to-black border border-[#c9903e]/30 rounded-2xl p-4 mt-8 shadow-inner">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-xs font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
+                            <span>💰 WEB3 WALLET OVERPOST METRICS</span>
+                        </div>
+                        <button id="refreshBalanceBtn" class="text-[10px] font-mono text-[#C5A059]/60 hover:text-[#C5A059] transition-colors">⟳ Sync Escrow</button>
                     </div>
-                    <div class="w-full bg-black/80 h-2 rounded-full mt-1 p-0.5 overflow-hidden border border-stone-800">
-                        <div id="gunk-bar" class="bg-gradient-to-r from-red-800 to-red-500 h-full rounded-full transition-all" style="width:0%"></div>
+                    <div class="grid grid-cols-2 gap-4 text-xs font-mono border-t border-white/5 pt-2">
+                        <div><span class="text-stone-500 font-bold">◎ ACCOUNT SOL:</span> <span id="wallet-sol-balance" class="font-bold text-yellow-500">0.00</span></div>
+                        <div><span class="text-stone-500 font-bold">🫒 ACCOUNT OLV:</span> <span id="wallet-olv-balance" class="font-bold text-emerald-400">0</span></div>
                     </div>
+                    <div class="w-full bg-black/60 h-1.5 rounded-full mt-3 overflow-hidden border border-white/5">
+                        <div id="estate-sync-bar" class="bg-gradient-to-r from-[#c9903e] to-yellow-600 h-full transition-all" style="width:0%"></div>
+                    </div>
+                    <div class="text-[9px] font-mono opacity-40 mt-1.5 text-right" id="estate-value">Estimated Estate Market Value: 0 SOL</div>
                 </div>
             </div>
-        </div>
 
-        <!-- Bounty Execution Metrics Tracker -->
-        <div class="bg-gradient-to-r from-stone-900 to-stone-950 border border-stone-800 rounded-2xl p-4 mb-4 shadow-sm">
-            <div class="flex justify-between items-center text-[10px] font-bold mb-1">
-                <span class="text-stone-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    MATRIX EXTRACTION CONTRACT
-                </span>
-                <span class="text-yellow-500 font-mono" id="quest-reward">PAYOUT: 10 SOL</span>
-            </div>
-            <div class="text-xs text-stone-400 font-mono">Fulfillment Quotient: <span id="quest-current" class="text-white font-bold">0</span> / <span id="quest-target" class="text-stone-500 font-bold">0</span> kg</div>
-            <div class="w-full bg-black/70 h-1.5 rounded-full mt-2.5 overflow-hidden">
-                <div id="quest-progress" class="bg-gradient-to-r from-yellow-600 to-yellow-500 h-full rounded-full transition-all" style="width:0%"></div>
-            </div>
-        </div>
+            <!-- RIGHT PANEL: GAME ENGINE REFINERY CONTROLS & TRADING HOOKS -->
+            <div class="panel hidden lg:flex flex-col p-6 border-l border-white/5 overflow-y-auto justify-between space-y-6">
+                <div>
+                    <!-- Selected Entity Metadata Box view -->
+                    <h3 class="serif text-lg font-bold text-[#C5A059] mb-3">🌿 SELECTED GRIDS COMPONENT</h3>
+                    <div class="info-card bg-black/40 border border-white/5 p-4 rounded-xl mb-4" id="tree-info">
+                        <p class="text-center opacity-40 text-xs font-mono py-4">Select live ecosystem target matrix nodes</p>
+                    </div>
 
-        <!-- Active Array Grid Matrix Container Map -->
-        <div class="mb-2 flex items-center justify-between">
-            <span class="text-[10px] font-bold text-stone-500 tracking-widest uppercase">📡 SECURED ASSET GRID</span>
-            <span class="text-[8px] text-stone-600 font-mono">CLICK MAP NODES</span>
-        </div>
-        
-        <!-- Grid injection workspace -->
-        <div id="grove-container" class="grid grid-cols-3 gap-3 mb-6">
-            <!-- Filled via Script Array -->
-        </div>
+                    <!-- Tactical Actions triggers interface block -->
+                    <div class="space-y-2 mb-6">
+                        <button class="w-full bg-[#C5A059] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed font-bold py-2.5 rounded-xl text-stone-950 font-mono text-xs transition-all uppercase tracking-wider flex items-center justify-center gap-2" id="water-btn" disabled>💧 Irrigate Node (+25%)</button>
+                        <button class="w-full bg-red-900 hover:bg-red-800 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl font-mono text-xs transition-all uppercase tracking-wider" id="treat-btn" disabled>🐛 Flush Parasitic Pest Vectors</button>
+                        <button class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed text-stone-950 font-bold py-2.5 rounded-xl font-mono text-xs transition-all uppercase tracking-wider" id="harvest-btn" disabled>🫒 Core Biomass Extract Yield</button>
+                    </div>
 
-        <!-- Global Transaction Log Stream Output -->
-        <div class="bg-stone-950 border border-stone-900 rounded-xl p-3 shadow-inner">
-            <div class="text-[8px] text-stone-600 font-bold mb-1.5 uppercase tracking-wider flex items-center gap-1">
-                <div class="w-1.5 h-1.5 rounded-full bg-stone-700"></div>
-                DIAGNOSTICS & TELEMETRY STREAM
-            </div>
-            <div id="ledger" class="text-[10px] font-mono space-y-1 max-h-24 overflow-y-auto text-stone-500 leading-relaxed">
-                <div>> Core infrastructure arrays linked. STATUS: NOMINAL.</div>
+                    <!-- Core Industrial Processing Refinery Module Dashboard -->
+                    <h3 class="serif text-lg font-bold text-[#C5A059] mb-3">⚙️ REFINERY FLUID PRESS</h3>
+                    <div class="mill-zone bg-stone-900/40 border-2 border-white/5 hover:border-[#C5A059]/40 rounded-2xl p-4 text-center cursor-pointer transition-all mb-4" onclick="pressMill()">
+                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-widest">Raw Harvest Storage Bin</div>
+                        <div class="text-xl font-mono font-bold my-1 text-white" id="fruit-bin">0.0 kg</div>
+                        <div class="text-3xl filter grayscale hover:grayscale-0 transition duration-300 my-2">⚙️</div>
+                        <div class="text-[9px] font-mono text-[#C5A059] font-bold tracking-widest uppercase">CLICK ELEMENT AXIS TO PRESS PRESS</div>
+                        <div class="grid grid-cols-2 gap-3 mt-3 text-left text-[10px] border-t border-white/5 pt-3">
+                            <div>
+                                <span class="text-stone-400">⚡ MASH LINE: <span id="mash-pct" class="text-yellow-500 font-bold">0%</span></span>
+                                <div class="w-full bg-black/80 h-1.5 rounded mt-0.5 overflow-hidden border border-white/5"><div id="mash-bar" class="bg-gradient-to-r from-yellow-600 to-yellow-400 h-full transition-all" style="width:0%"></div></div>
+                            </div>
+                            <div>
+                                <span class="text-stone-400">🧼 THERMAL STRAIN: <span id="gunk-pct" class="text-red-500 font-bold">0%</span></span>
+                                <div class="w-full bg-black/80 h-1.5 rounded mt-0.5 overflow-hidden border border-white/5"><div id="gunk-bar" class="bg-gradient-to-r from-red-700 to-red-500 h-full transition-all" style="width:0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Liquid Global Swap Pool Market Execution Box -->
+                    <div class="card bg-stone-950/60 border border-white/5 rounded-2xl p-4 mb-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="text-[10px] text-stone-500 font-bold uppercase tracking-wider">GLOBAL LIQUID SWAP VALUE</div>
+                                <div class="flex items-baseline gap-1 mt-0.5">
+                                    <span class="text-xl font-mono font-bold text-yellow-500" id="ui-price">2.50</span>
+                                    <span class="text-[10px] font-mono text-stone-500">SOL / L</span>
+                                </div>
+                                <div class="text-[9px] font-mono text-stone-500 mt-1">Liquidity Demand: <span id="ui-demand" class="text-green-400 font-bold">Normal</span> <span id="ui-trend" class="text-green-500 ml-1">+0%</span></div>
+                            </div>
+                            <button class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:brightness-110 font-bold px-4 py-2 rounded-xl text-stone-950 text-xs font-mono transition-all" id="sell-btn">SELL EVOO</button>
+                        </div>
+                    </div>
+
+                    <!-- Deployment Warehouse Hub Store -->
+                    <h3 class="serif text-lg font-bold text-[#C5A059] mb-3">🏺 CORE DEPOT EXCHANGE</h3>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                        <button class="bg-stone-900 border border-white/10 p-2.5 rounded-xl hover:bg-stone-800 text-left transition-all" onclick="buyTree()">🌳 Plant Core Node<br><span class="text-[#C5A059] font-bold">5.0 SOL</span></button>
+                        <button class="bg-stone-900 border border-white/10 p-2.5 rounded-xl hover:bg-stone-800 text-left transition-all" onclick="buyAutoIrrigation()">🚿 Auto-Irrigation<br><span class="text-[#C5A059] font-bold">3.0 SOL</span></button>
+                    </div>
+                </div>
+
+                <!-- Ledger Operational Logs History Stream -->
+                <div>
+                    <h4 class="text-[9px] font-bold tracking-widest text-stone-500 mb-1.5 uppercase">📜 SYSTEM INFRASTRUCTURE LOG TRANSACTION STREAM</h4>
+                    <div id="event-ledger" class="text-[10px] font-mono space-y-1 max-h-24 overflow-y-auto bg-black/40 border border-white/5 p-2 rounded-xl text-stone-400">
+                        <div class="ledger-entry"><span class="text-[#C5A059] opacity-50">&gt;</span> Localized core infrastructure processing framework connected. STATUS: NOMINAL.</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Central Liquidation Pool Button Strategy Trigger -->
-    <div class="mt-4 flex justify-end">
-        <button id="style-sell-btn" class="bg-yellow-500 hover:bg-yellow-400 text-stone-950 font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-yellow-500/10 flex items-center gap-1.5 uppercase tracking-wider font-mono">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            DUMP EVOO LIQUID TO POOL
+    <!-- MOBILE DISPATCH FLOATING COMPONENT FOR FLUID MILL RUNNING -->
+    <button id="fab-mill" class="fixed bottom-20 right-6 md:hidden bg-gradient-to-tr from-yellow-500 to-yellow-600 text-stone-950 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-40 font-bold border border-yellow-400/20 transition-transform active:scale-95 shadow-yellow-500/20">🏺</button>
+
+    <!-- MOBILE NAVIGATION EXPANSION BAR ANCHOR CONTROLS -->
+    <div class="mobile-panel-only fixed bottom-0 left-0 right-0 bg-stone-950 border-t border-white/5 backdrop-blur-md z-50 py-2.5 shadow-2xl flex justify-around text-center text-[10px] font-bold font-mono tracking-widest text-stone-400">
+        <div class="cursor-pointer text-white" onclick="openMobileDrawer('grove')">🌳<br>GROVE</div>
+        <div class="cursor-pointer hover:text-white transition-colors" onclick="openMobileDrawer('upgrades')">⚙️<br>UPGRADES</div>
+        <div class="cursor-pointer hover:text-white transition-colors" onclick="openMobileDrawer('skills')">🧬<br>SKILLS</div>
+        <div class="cursor-pointer hover:text-white transition-colors" onclick="openMobileDrawer('stats')">📊<br>STATS</div>
+    </div>
+
+    <!-- SLIDING COMPONENT DRAWERS FOR COMPACT VIEWPORT SCREEN REALESTATE -->
+    <div id="panel-overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+    <!-- SLIDING REGISTER: UPGRADES ENGINE -->
+    <div id="panel-upgrades" class="sliding-panel p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+            <h3 class="serif text-xl font-bold text-yellow-500">⚙️ INFRASTRUCTURE UPGRADES</h3>
+            <button class="text-xl text-stone-500" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="space-y-2">
+            <button id="upg-irrigation-mobile" class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.upgrade('irrigation'); closePanel()">
+                💧 Auto-Irrigation Vector <span class="float-right text-yellow-500">15 SOL</span>
+                <div class="text-[9px] opacity-40 mt-1">Locks node water line retention configurations at 70% floor value.</div>
+            </button>
+            <button id="upg-misting-mobile" class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.upgrade('misting'); closePanel()">
+                🌫️ Cloud Misting Arrays <span class="float-right text-yellow-500">10 SOL</span>
+                <div class="text-[9px] opacity-40 mt-1">Dampens transmission vectors tracking insect pest configurations across clusters.</div>
+            </button>
+            <button id="upg-fertilizer-mobile" class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.upgrade('fertilizer'); closePanel()">
+                🌿 Organic Bio-Catalyst <span class="float-right text-yellow-500">8 SOL</span>
+                <div class="text-[9px] opacity-40 mt-1">Accelerates natural botanical cycle progress timelines exponentially.</div>
+            </button>
+            <button class="w-full bg-stone-900 border border-red-900/30 text-red-400 p-3 rounded-xl text-left text-xs font-mono" onclick="game.cleanMill(); closePanel()">
+                🧼 High-Pressure Steam Flush Clean <span class="float-right text-yellow-500">0.2 SOL</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- SLIDING REGISTER: SKILLS & PRESTIGE ENGINE -->
+    <div id="panel-skills" class="sliding-panel p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+            <h3 class="serif text-xl font-bold text-purple-400">🧬 ANCIENT SEQUENCE LAB</h3>
+            <button class="text-xl text-stone-500" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="text-center font-mono text-sm py-1 bg-purple-500/10 border border-purple-500/20 rounded-xl">✨ Available Relic Seeds Stock: <span id="seeds-display" class="text-purple-400 font-bold">0</span></div>
+        <div class="space-y-2">
+            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('yield'); closePanel()">
+                📈 Hyper-Yield Matrix <span class="float-right text-purple-400">5 Seeds</span>
+                <div class="text-[9px] opacity-40 mt-1">+80% raw volume output multiplier tracking across standard collections.</div>
+            </button>
+            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('speed'); closePanel()">
+                ⚡ Rapid Cellular Bloom <span class="float-right text-purple-400">5 Seeds</span>
+                <div class="text-[9px] opacity-40 mt-1">2.5x throughput enhancement scaling for standard development layers.</div>
+            </button>
+            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('cold'); closePanel()">
+                ❄️ Cryo Pure Extraction <span class="float-right text-purple-400">5 Seeds</span>
+                <div class="text-[9px] opacity-40 mt-1">+60% overnight industrial performance efficiency expansion.</div>
+            </button>
+            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('rare'); closePanel()">
+                🧬 Radical DNA Cross-Grafting <span class="float-right text-purple-400">8 Seeds</span>
+                <div class="text-[9px] opacity-40 mt-1">Locks down permanent +25% transformation structural chance base rates.</div>
+            </button>
+        </div>
+        <button class="w-full bg-gradient-to-r from-purple-800 to-purple-600 hover:brightness-110 text-white font-bold font-mono text-xs py-3 rounded-xl mt-4" onclick="game.prestige()">
+            🔄 LIQUIDATE CORE INDUSTRIAL ESTATE (RESET FOR POWER)
         </button>
     </div>
 
-    <!-- The Refining Fluid Smasher Trigger FAB -->
-    <button id="fab-mill" class="fixed bottom-24 right-6 bg-gradient-to-tr from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 hover:scale-105 active:scale-95 text-stone-950 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-40 font-bold border border-yellow-400/20 shadow-yellow-500/20 transition-all">🏺</button>
-
-    <!-- Bottom Specialization Framework Toolbar Anchor -->
-    <div class="fixed bottom-0 left-0 right-0 bg-stone-950 border-t border-stone-900 backdrop-blur-md z-35 py-3 shadow-2xl">
-        <div class="flex justify-around items-center max-w-xl mx-auto text-[9px] font-bold tracking-widest font-mono">
-            <!-- Scripts allocate archetype buttons layouts directly here -->
+    <!-- SLIDING REGISTER: SYSTEM OVERALL STATISTICS AND ACHIEVEMENTS -->
+    <div id="panel-stats" class="sliding-panel p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+            <h3 class="serif text-xl font-bold text-yellow-500">📊 ANALYTICS TELEMETRY</h3>
+            <button class="text-xl text-stone-500" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="bg-black/40 border border-white/5 p-4 rounded-xl space-y-2 text-xs font-mono">
+            <div class="flex justify-between"><span>💰 Cumulative Global SOL:</span><span id="stats-lifetime" class="text-yellow-500 font-bold">0.00</span></div>
+            <div class="flex justify-between"><span>🌳 Structural Nodes Placed:</span><span id="stats-trees-planted" class="text-stone-300">0</span></div>
+            <div class="flex justify-between"><span>🫒 Iterative Harvest Routines:</span><span id="stats-harvests" class="text-stone-300">0</span></div>
+            <div class="flex justify-between"><span>⚡ Historical Combo Record:</span><span id="stats-combo" class="text-purple-400 font-bold">x1.0</span></div>
+            <div class="flex justify-between"><span>⭐ Anomalous Rare Elements:</span><span id="stats-rare" class="text-emerald-400 font-bold">0</span></div>
+        </div>
+        <div class="bg-black/40 border border-white/5 p-4 rounded-xl">
+            <div class="text-yellow-500 text-xs font-bold font-mono uppercase mb-2">🏆 PERSISTENT RECOGNITION STATUS ENTRIES</div>
+            <div class="text-[10px] font-mono space-y-1.5 text-stone-400">
+                <div class="flex justify-between"><span>Initial Yield Operations Complete:</span><span id="ach1" class="font-bold">❌</span></div>
+                <div class="flex justify-between"><span>Grove Cluster Master (10 Nodes):</span><span id="ach2" class="font-bold">❌</span></div>
+                <div class="flex justify-between"><span>Sovereign Wealth Executive (100 SOL):</span><span id="ach3" class="font-bold">❌</span></div>
+                <div class="flex justify-between"><span>Combo Sequence Overlord (x5 Link):</span><span id="ach4" class="font-bold">❌</span></div>
+                <div class="flex justify-between"><span>Ecosystem Rare Collector:</span><span id="ach5" class="font-bold">❌</span></div>
+            </div>
         </div>
     </div>
 
+    <!-- WEB3 IDENTITY AUTHENTICATION MODAL ENTRY INTERFACE LAYER -->
+    <div class="modal-overlay fixed inset-0 bg-black/85 flex items-center justify-center z-[200]" id="connectModal" style="display:none;">
+        <div class="max-w-md w-full bg-stone-900 border border-white/10 p-6 md:p-8 rounded-3xl text-center relative mx-4 shadow-2xl">
+            <button id="closeConnectModalBtn" class="absolute top-4 right-4 text-xl font-mono text-stone-500 hover:text-white transition-colors" style="background:none; border:none;">&times;</button>
+            <span class="text-4xl mb-2 block">🌿</span>
+            <h2 class="serif text-2xl font-bold mb-1 text-white">Connect to Olivium Engine</h2>
+            <p class="text-[10px] font-mono text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
+            
+            <div class="space-y-4 text-left font-mono">
+                <!-- Vector Alpha Entry Point -->
+                <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                    <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                        <span>◎ Native Cryptographic Wallet</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold">Web3 Inline</span>
+                    </div>
+                    <p class="text-[11px] text-stone-400 mb-3">Resolve secure web3 localized asset holdings using your active sandbox cluster extensions.</p>
+                    <button id="connectWalletBtn" class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-xs font-bold py-2.5 rounded-xl transition-colors">Connect Phantom / Solana Hub</button>
+                </div>
+                
+                <!-- Vector Beta Backup Entry Point -->
+                <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                    <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                        <span>✉ Custodial Profile Access</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-bold">Secure MFA</span>
+                    </div>
+                    <p class="text-[11px] text-stone-400 mb-3">Authorize structural progress states tracking using traditional off-chain cloud profiles profiles.</p>
+                    <button id="emailLoginBtn" class="w-full bg-stone-800 hover:bg-stone-700 text-white text-xs font-bold py-2.5 rounded-xl border border-white/5 transition-colors">Continue with Managed Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CORE ENGINE MODULE SYSTEM INITIATION SCRIPT LINK -->
     <script>
-        // Diagnostic Logger Hook Utility functions
-        function log(msg) {
-            const l = document.getElementById('ledger');
-            if (l) {
-                const entry = document.createElement('div');
-                entry.innerHTML = `<span class="text-stone-700">&gt;</span> ${msg}`;
-                l.appendChild(entry);
-                l.scrollTop = l.scrollHeight;
+        // Interface Drawer Router Actions System for Handheld Devices
+        function openMobileDrawer(panelId) {
+            closePanel();
+            const panel = document.getElementById(`panel-${panelId}`);
+            const overlay = document.getElementById('panel-overlay');
+            if(panel && overlay) {
+                panel.classList.add('active');
+                overlay.classList.add('active');
             }
         }
-        function showToast(msg, isError = false) {
-            log(`${isError ? '<span class="text-red-500 font-bold">[CRIT]</span>' : '<span class="text-yellow-500">✓</span>'} ${msg}`);
+        function closePanel() {
+            document.querySelectorAll('.sliding-panel').forEach(p => p.classList.remove('active'));
+            const overlay = document.getElementById('panel-overlay');
+            if(overlay) overlay.classList.remove('active');
         }
     </script>
     <script type="module" src="webgame3.js"></script>
