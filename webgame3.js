@@ -48,13 +48,53 @@ const state = {
     // Mill thermal
     millPressCooldown: 0,      // Timestamp: prevents instant spam spam
     blightActive: false,        // Agrarian risk flag
+    // Sprite system
+    useSprites: true,          // Toggle sprite rendering
 };
 
 const rarityIcons = {
-    common: { icon: '🌳', bonus: 1.0, name: 'Common' },
-    rare: { icon: '💎', bonus: 2.0, name: 'Rare' },
-    legendary: { icon: '👑', bonus: 5.0, name: 'Legendary' }
+    common: { icon: '🌳', bonus: 1.0, name: 'Common', sprite: 'common' },
+    rare: { icon: '💎', bonus: 2.0, name: 'Rare', sprite: 'rare' },
+    legendary: { icon: '👑', bonus: 5.0, name: 'Legendary', sprite: 'legendary' }
 };
+
+// ============================================================
+// SPRITE SYSTEM
+// ============================================================
+
+// Inline SVG sprites for tree stages
+const SPRITES = {
+    seed: {
+        common: `<svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="16" fill="#4a7c3f"/><circle cx="24" cy="18" r="10" fill="#6abf4a"/><ellipse cx="24" cy="30" rx="6" ry="4" fill="#8a6520"/></svg>`,
+        rare: `<svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="16" fill="#4a7c3f"/><circle cx="24" cy="18" r="10" fill="#6abf4a"/><ellipse cx="24" cy="30" rx="6" ry="4" fill="#8a6520"/><circle cx="24" cy="24" r="6" fill="none" stroke="#c5a059" stroke-width="2" stroke-dasharray="4,4"/></svg>`,
+        legendary: `<svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="16" fill="#4a7c3f"/><circle cx="24" cy="18" r="10" fill="#6abf4a"/><ellipse cx="24" cy="30" rx="6" ry="4" fill="#8a6520"/><circle cx="24" cy="24" r="8" fill="none" stroke="#ffd700" stroke-width="2"/><circle cx="24" cy="24" r="3" fill="#ffd700"/></svg>`
+    },
+    sapling: {
+        common: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#6d4c2a"/><circle cx="24" cy="22" r="12" fill="#3a7a2a"/><circle cx="18" cy="20" r="6" fill="#4ade80"/><circle cx="30" cy="20" r="5" fill="#4ade80"/></svg>`,
+        rare: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#6d4c2a"/><circle cx="24" cy="22" r="12" fill="#3a7a2a"/><circle cx="18" cy="20" r="6" fill="#4ade80"/><circle cx="30" cy="20" r="5" fill="#4ade80"/><circle cx="24" cy="22" r="6" fill="none" stroke="#c5a059" stroke-width="1.5" stroke-dasharray="3,3"/></svg>`,
+        legendary: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#6d4c2a"/><circle cx="24" cy="22" r="12" fill="#3a7a2a"/><circle cx="18" cy="20" r="6" fill="#4ade80"/><circle cx="30" cy="20" r="5" fill="#4ade80"/><circle cx="24" cy="22" r="7" fill="none" stroke="#ffd700" stroke-width="2"/><text x="24" y="26" font-size="10" text-anchor="middle" fill="#ffd700">★</text></svg>`
+    },
+    mature: {
+        common: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#6d4c2a"/><circle cx="24" cy="20" r="14" fill="#2a6a2a"/><circle cx="16" cy="18" r="6" fill="#4ade80"/><circle cx="32" cy="18" r="5" fill="#4ade80"/><circle cx="24" cy="14" r="5" fill="#4ade80"/><ellipse cx="18" cy="28" rx="4" ry="3" fill="#8a6520"/><ellipse cx="30" cy="28" rx="4" ry="3" fill="#8a6520"/></svg>`,
+        rare: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#6d4c2a"/><circle cx="24" cy="20" r="14" fill="#2a6a2a"/><circle cx="16" cy="18" r="6" fill="#4ade80"/><circle cx="32" cy="18" r="5" fill="#4ade80"/><circle cx="24" cy="14" r="5" fill="#4ade80"/><ellipse cx="18" cy="28" rx="4" ry="3" fill="#8a6520"/><ellipse cx="30" cy="28" rx="4" ry="3" fill="#8a6520"/><circle cx="24" cy="22" r="8" fill="none" stroke="#c5a059" stroke-width="2" stroke-dasharray="4,4"/></svg>`,
+        legendary: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#6d4c2a"/><circle cx="24" cy="20" r="14" fill="#2a6a2a"/><circle cx="16" cy="18" r="6" fill="#4ade80"/><circle cx="32" cy="18" r="5" fill="#4ade80"/><circle cx="24" cy="14" r="5" fill="#4ade80"/><ellipse cx="18" cy="28" rx="4" ry="3" fill="#8a6520"/><ellipse cx="30" cy="28" rx="4" ry="3" fill="#8a6520"/><circle cx="24" cy="22" r="10" fill="none" stroke="#ffd700" stroke-width="2"/><text x="24" y="26" font-size="12" text-anchor="middle" fill="#ffd700">★</text></svg>`
+    },
+    dead: `<svg viewBox="0 0 48 48" width="48" height="48"><rect x="22" y="28" width="4" height="12" fill="#5a4a3a"/><line x1="16" y1="14" x2="32" y2="26" stroke="#5a4a3a" stroke-width="2"/><line x1="32" y1="14" x2="16" y2="26" stroke="#5a4a3a" stroke-width="2"/><circle cx="24" cy="20" r="12" fill="#4a3a2a" opacity="0.3"/></svg>`
+};
+
+function getSpriteSVG(stage, rarity) {
+    if (stage === 'dead') return SPRITES.dead;
+    const stageMap = SPRITES[stage] || SPRITES.seed;
+    return stageMap[rarity] || stageMap.common;
+}
+
+function createSpriteElement(stage, rarity) {
+    const svg = getSpriteSVG(stage, rarity);
+    const container = document.createElement('div');
+    container.className = 'sprite-container';
+    container.innerHTML = svg;
+    return container;
+}
 
 // ============================================================
 // OLV TOKEN FUNCTIONS
@@ -341,22 +381,33 @@ function getRarity() {
 }
 
 function showToast(msg, isError = false) {
+    // Remove existing toasts
+    document.querySelectorAll('.toast-message').forEach(el => el.remove());
+    
     const toast = document.createElement('div');
+    toast.className = 'toast-message';
     toast.innerText = msg;
-    toast.style.position = 'fixed';
-    toast.style.bottom = '100px';
-    toast.style.left = '50%';
-    toast.style.transform = 'translateX(-50%)';
-    toast.style.background = isError ? '#ef4444' : 'linear-gradient(135deg, #c9903e, #b8860b)';
-    toast.style.color = isError ? 'white' : 'black';
-    toast.style.padding = '10px 20px';
-    toast.style.borderRadius = '40px';
-    toast.style.fontSize = '12px';
-    toast.style.fontWeight = 'bold';
-    toast.style.zIndex = '1000';
-    toast.style.whiteSpace = 'nowrap';
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '100px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: isError ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #c9903e, #b8860b)',
+        color: isError ? 'white' : '#1a120a',
+        padding: '10px 20px',
+        borderRadius: '40px',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        zIndex: '1000',
+        whiteSpace: 'nowrap',
+        maxWidth: '90%',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        border: isError ? '1px solid #ef4444' : '1px solid var(--gold)',
+        fontFamily: 'JetBrains Mono, monospace',
+        pointerEvents: 'none'
+    });
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+    setTimeout(() => toast.remove(), 2500);
 }
 
 function log(msg) {
@@ -385,6 +436,30 @@ function addCombo() {
         showToast("🏆 Combo King! +5 SOL");
         render();
         if (currentUser) saveGameToCloud();
+    }
+}
+
+// ── Sparkle Effect ──────────────────────────────────────────
+function createSparkle(x, y, text = '✨') {
+    const el = document.createElement('div');
+    el.className = 'sparkle';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.fontSize = (16 + Math.random() * 20) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+}
+
+function triggerHarvestSparkles() {
+    for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+            createSparkle(
+                20 + Math.random() * window.innerWidth * 0.6,
+                20 + Math.random() * window.innerHeight * 0.4,
+                ['✨', '🌟', '💫', '⭐'][Math.floor(Math.random() * 4)]
+            );
+        }, i * 100);
     }
 }
 
@@ -614,6 +689,8 @@ function buyTree() {
     });
     state.treesPlanted++;
     log(`🌱 Planted ${rarityIcons[rarity]?.name || rarity} tree`);
+    // Trigger planting sparkles
+    createSparkle(window.innerWidth * 0.3 + Math.random() * 100, window.innerHeight * 0.4 + Math.random() * 100, '🌱');
     render();
     checkAchievements();
     if (currentUser) saveGameToCloud();
@@ -633,13 +710,16 @@ function interactTree(index) {
         state.quest.current += finalYield;
         tree.age = 0; tree.stage = 'seed'; tree.pests = 0;
         addCombo();
-        showToast(`+${finalYield.toFixed(1)}kg`);
+        triggerHarvestSparkles();
+        showToast(`+${finalYield.toFixed(1)}kg 🫒`);
         log(`🫒 Harvested ${finalYield.toFixed(1)}kg`);
         checkQuest();
         checkAchievements();
     } else {
         tree.water = Math.min(100, tree.water + 30);
         showToast('💧 +30% Water');
+        // Create water ripple effect
+        createSparkle(window.innerWidth * 0.3 + Math.random() * 100, window.innerHeight * 0.4 + Math.random() * 100, '💧');
     }
     render();
     if (currentUser) saveGameToCloud();
@@ -692,7 +772,11 @@ function pressMill() {
         state.mill.mash = 0;
         state.mill.heat = Math.max(0, state.mill.heat - 20); // Cool down slightly after batch
         log(`🏺 Pressed ${oilYield.toFixed(2)}L EVOO (${(purityPenalty * 100).toFixed(0)}% purity)`);
-        showToast(`+${oilYield.toFixed(1)}L Oil`);
+        showToast(`+${oilYield.toFixed(1)}L Oil 🏺`);
+        // Sparkle effect for oil production
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => createSparkle(window.innerWidth * 0.4 + Math.random() * 100, window.innerHeight * 0.3 + Math.random() * 100, '🟡'), i * 80);
+        }
     }
     render();
     if (currentUser) saveGameToCloud();
@@ -807,12 +891,15 @@ function applyMarketImpact(volumeSold) {
 }
 
 function openArchetypePanel() {
-    const overlay = document.createElement('div');
-    overlay.id = 'archetype-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const overlay = document.getElementById('archetype-overlay');
+    if (overlay) { overlay.remove(); return; }
+    
+    const newOverlay = document.createElement('div');
+    newOverlay.id = 'archetype-overlay';
+    newOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
     const locked = state.archetypeLocked;
-    overlay.innerHTML = `
-        <div style="background:#1a110a;border:1px solid #c9903e;border-radius:16px;padding:20px;max-width:360px;width:100%;">
+    newOverlay.innerHTML = `
+        <div style="background:#1a110a;border:1px solid #c9903e;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
             <div style="text-align:center;margin-bottom:16px;">
                 <div style="font-size:20px;color:#c9903e;font-weight:bold;">🏛️ STEWARD SPECIALIZATION</div>
                 <div style="font-size:10px;opacity:0.5;margin-top:4px;">${locked ? `Locked as: ${ARCHETYPES[state.archetype]?.icon} ${ARCHETYPES[state.archetype]?.name}` : 'Choose your path — locks until prestige'}</div>
@@ -829,18 +916,21 @@ function openArchetypePanel() {
             <button onclick="document.getElementById('archetype-overlay').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
         </div>
     `;
-    document.body.appendChild(overlay);
+    document.body.appendChild(newOverlay);
 }
 
 function openFuturesPanel() {
     if (state.archetype !== 'speculator') { showToast("Speculator path only!", true); return; }
     settleFutures();
-    const overlay = document.createElement('div');
-    overlay.id = 'futures-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const overlay = document.getElementById('futures-overlay');
+    if (overlay) { overlay.remove(); return; }
+    
+    const newOverlay = document.createElement('div');
+    newOverlay.id = 'futures-overlay';
+    newOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
     const futureOptions = [10, 25, 50];
-    overlay.innerHTML = `
-        <div style="background:#1a110a;border:1px solid #a855f7;border-radius:16px;padding:20px;max-width:360px;width:100%;">
+    newOverlay.innerHTML = `
+        <div style="background:#1a110a;border:1px solid #a855f7;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
             <div style="text-align:center;margin-bottom:16px;">
                 <div style="font-size:18px;color:#a855f7;font-weight:bold;">📜 FUTURES EXCHANGE</div>
                 <div style="font-size:10px;opacity:0.5;">Lock today's price for 60 seconds · +20% sell bonus</div>
@@ -872,14 +962,14 @@ function openFuturesPanel() {
             <button onclick="document.getElementById('futures-overlay').remove()" style="width:100%;margin-top:10px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
         </div>
     `;
-    document.body.appendChild(overlay);
+    document.body.appendChild(newOverlay);
 }
 
 function cleanMill() {
     if (state.sol < 0.2) { showToast("Need 0.2 SOL", true); return; }
     state.sol -= 0.2;
     state.mill.gunk = 0;
-    showToast("Mill cleaned!");
+    showToast("🧼 Mill cleaned!");
     log("🧼 Mill cleaned");
     render();
     if (currentUser) saveGameToCloud();
@@ -892,6 +982,7 @@ function upgrade(type) {
     state.sol -= costs[type];
     state.upgrades[type] = true;
     log(`✅ ${type} installed!`);
+    showToast(`✅ ${type} upgrade installed!`);
     render();
     if (currentUser) saveGameToCloud();
 }
@@ -907,6 +998,7 @@ function unlockSkill(skill) {
     if (skill === 'cold') state.skillMultipliers.extraction = 1.6;
     if (skill === 'rare') state.skillMultipliers.rare = 0.25;
     log(`✨ Unlocked ${skill.toUpperCase()}!`);
+    showToast(`🧬 ${skill.toUpperCase()} unlocked!`);
     render();
     if (currentUser) saveGameToCloud();
 }
@@ -918,7 +1010,7 @@ function sellOil() {
     applyMarketImpact(state.oil); // large sales depress pool price
     state.sol += revenue;
     state.lifetimeSol += revenue;
-    showToast(`+${revenue.toFixed(2)} SOL`);
+    showToast(`💰 +${revenue.toFixed(2)} SOL`);
     log(`💰 Sold ${state.oil.toFixed(1)}L for ${revenue.toFixed(2)} SOL`);
     state.oil = 0;
     render();
@@ -932,7 +1024,7 @@ function sprayGrove() {
     if (infested === 0) { showToast("No pests to spray!", true); return; }
     state.sol -= 0.5;
     state.trees.forEach(t => t.pests = 0);
-    showToast("Pests removed!");
+    showToast("🐛 Pests removed!");
     log("🐛 Pest control applied");
     render();
     if (currentUser) saveGameToCloud();
@@ -953,6 +1045,7 @@ function harvestAll() {
         tree.age = 0; tree.stage = 'seed'; tree.pests = 0;
     });
     addCombo();
+    triggerHarvestSparkles();
     showToast(`🫒 Harvested ${totalYield.toFixed(1)}kg from ${matureTrees.length} trees`);
     log(`🫒 Bulk harvest: ${totalYield.toFixed(1)}kg from ${matureTrees.length} trees`);
     checkQuest();
@@ -1518,7 +1611,7 @@ function render() {
     const sellHalfBtn = document.getElementById('sell-half-btn');
     if (sellHalfBtn) sellHalfBtn.style.display = state.oil >= 0.1 ? 'inline-block' : 'none';
     
-    // Grove render
+    // Grove render with sprites
     const container = document.getElementById('grove-container');
     if (!container) return;
     
@@ -1537,17 +1630,23 @@ function render() {
         const card = document.createElement('div');
         card.className = `tree-card ${isReady ? 'ready' : ''} ${tree.pests > 30 ? 'infested' : ''} ${isDead ? 'dead' : ''}`;
         if (!isDead) card.onclick = () => interactTree(idx);
+        
+        // Use sprite if available, fallback to emoji
+        const spriteHTML = state.useSprites ? 
+            `<div class="sprite-container">${getSpriteSVG(tree.stage, tree.rarity)}</div>` :
+            `<div class="tree-emoji">${emoji}</div>`;
+        
         card.innerHTML = `
-            <div class="tree-emoji">${emoji}</div>
+            ${spriteHTML}
             <div class="tree-id">${tree.id}</div>
             ${!isDead ? `
             <div class="progress-bar" title="Water"><div class="progress-fill fill-water" style="width:${tree.water}%"></div></div>
             <div class="progress-bar" title="Health"><div class="progress-fill fill-health" style="width:${tree.health}%"></div></div>
             ${!isReady ? `<div class="progress-bar" title="Growth" style="opacity:0.5"><div class="progress-fill" style="width:${growthPct}%; background:linear-gradient(90deg,#a3e635,#84cc16);"></div></div>` : ''}
             ${tree.pests > 0 ? `<div class="progress-bar"><div class="progress-fill fill-pest" style="width:${tree.pests}%"></div></div>` : ''}
-            ${isReady ? '<div class="text-center text-gold text-[9px] mt-2">⬤ READY</div>' : ''}
+            ${isReady ? '<div class="text-center text-gold text-[9px] mt-1">⬤ READY</div>' : ''}
             ` : '<div class="text-center text-[9px] mt-1" style="color:#ef4444;">DEAD</div>'}
-            ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : tree.rarity === 'legendary' ? '<div class="rarity-badge">👑</div>' : ''}
+            ${tree.rarity === 'rare' ? '<div class="rarity-badge">💎</div>' : tree.rarity === 'legendary' ? '<div class="rarity-badge legendary">👑</div>' : ''}
             ${tree.protected ? '<div class="text-center text-[8px] text-blue-400 mt-1">🛡️</div>' : ''}
         `;
         container.appendChild(card);
@@ -1562,15 +1661,24 @@ function render() {
 // ============================================================
 
 function openPanel(panelId) {
+    // Close all panels
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+    // Open the target panel
     const panel = document.getElementById(`panel-${panelId}`);
-    if (panel) panel.classList.add('open');
-    const overlay = document.getElementById('panel-overlay');
-    if (overlay) overlay.classList.add('active');
+    if (panel) {
+        panel.classList.add('open');
+        // Update nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.panel === panelId);
+        });
+        const overlay = document.getElementById('panel-overlay');
+        if (overlay) overlay.classList.add('active');
+    }
 }
 
 function closePanel() {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     const overlay = document.getElementById('panel-overlay');
     if (overlay) overlay.classList.remove('active');
 }
@@ -1587,7 +1695,7 @@ function addOlvShopPanel() {
         const shopNav = document.createElement('div');
         shopNav.className = 'nav-item';
         shopNav.setAttribute('data-panel', 'shop');
-        shopNav.innerHTML = '🛒<br>SHOP';
+        shopNav.innerHTML = '<span class="nav-icon">🛒</span>SHOP';
         bottomNav.appendChild(shopNav);
         shopNav.onclick = () => openPanel('shop');
     }
@@ -1629,12 +1737,12 @@ function addOlvShopPanel() {
             </div>
         </div>
         <div class="card" style="border-color:#ef4444; cursor:pointer; margin-top: 8px;" onclick="game.resetGame()">
-    <div class="flex-between">
-        <div><span class="text-lg">⚠️</span> Reset Estate</div>
-        <div class="text-red-400">3 SOL / 300 OLV</div>
-    </div>
-    <div class="text-[9px] opacity-50">Reset your estate (Keeps Seeds & Skills)</div>
-</div>
+            <div class="flex-between">
+                <div><span class="text-lg">⚠️</span> Reset Estate</div>
+                <div class="text-red-400">3 SOL / 300 OLV</div>
+            </div>
+            <div class="text-[9px] opacity-50">Reset your estate (Keeps Seeds & Skills)</div>
+        </div>
     `;
     
     panelsContainer.appendChild(shopPanel);
@@ -1707,39 +1815,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('connectModal');
     if (modal) modal.onclick = (e) => { if (e.target === modal) hideConnectModal(); };
     
+    // Set up panel navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.onclick = () => openPanel(item.dataset.panel);
     });
     
-    setTimeout(() => {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.onclick = () => openPanel(item.dataset.panel);
-        });
-    }, 100);
-    
+    // Expose game functions to window
     window.game = { 
-    upgrade: (t) => { upgrade(t); closePanel(); }, 
-    upgradeFlyTraps: () => { upgradeFlyTraps(); closePanel(); },
-    unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
-    buyWithOlv,
-    cleanMill, 
-    prestige, 
-    buyTree, 
-    sprayGrove,
-    harvestAll,
-    waterAll,
-    removeDeadTrees,
-    sellHalfOil,
-    sellOil,
-    pressMill,
-    saveGameToCloud,
-    resetGame,
-    chooseArchetype,
-    openArchetypePanel,
-    openFuturesPanel,
-    buyFuture,
-    sellOilWithFuture,
-};
+        upgrade: (t) => { upgrade(t); closePanel(); }, 
+        upgradeFlyTraps: () => { upgradeFlyTraps(); closePanel(); },
+        unlockSkill: (s) => { unlockSkill(s); closePanel(); }, 
+        buyWithOlv,
+        cleanMill, 
+        prestige, 
+        buyTree, 
+        sprayGrove,
+        harvestAll,
+        waterAll,
+        removeDeadTrees,
+        sellHalfOil,
+        sellOil,
+        pressMill,
+        saveGameToCloud,
+        resetGame,
+        chooseArchetype,
+        openArchetypePanel,
+        openFuturesPanel,
+        buyFuture,
+        sellOilWithFuture,
+    };
     window.closePanel = closePanel;
     window.openPanel = openPanel;
     
@@ -1804,3 +1908,28 @@ document.addEventListener('DOMContentLoaded', () => {
 setInterval(() => {
     if (currentUser) saveGameToCloud();
 }, 30000);
+
+// ── Missing: spendOlvTokens function ──────────────────────
+async function spendOlvTokens(amount, reason) {
+    if (!currentUser || !currentUser.wallet) {
+        showToast("Connect wallet first!", true);
+        return false;
+    }
+    
+    try {
+        // This is a stub - you'll need to implement actual token transfer logic
+        // For now, simulate a successful spend if balance is sufficient
+        if (walletOlvBalance >= amount) {
+            walletOlvBalance -= amount;
+            showToast(`💸 Spent ${amount} OLV on ${reason}`);
+            return true;
+        } else {
+            showToast(`Insufficient OLV! Need ${amount}, have ${walletOlvBalance}`, true);
+            return false;
+        }
+    } catch (err) {
+        console.error("OLV spend error:", err);
+        showToast("Failed to spend OLV", true);
+        return false;
+    }
+}
