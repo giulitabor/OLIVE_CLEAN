@@ -3,511 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>OLIVIUM — The Ultimate Web3 Grove Matrix</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
+    <title>OLIVIUM — The Olive Estate Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <style>
-        :root {
-            --gold: #C5A059;
-            --gold-dark: #3a2a10;
-            --olive: #6B8E23;
-            --charcoal: #0c0c0a;
-            --danger: #922b21;
-            --blue: #3498DB;
-            --purple: #9B59B6;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--charcoal);
-            color: #f5eed8;
-            min-height: 100vh;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .serif { font-family: 'Cormorant Garamond', serif; }
-
-        /* --- WEATHER & BACKGROUND INFRASTRUCTURE --- */
-        #sky-bg {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(to bottom, #0a0c10, #1a1a15);
-            z-index: -1;
-            transition: all 5s ease;
-        }
-
-        #weather-overlay {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 5;
-            transition: background 2s ease;
-        }
-
-        .rain-drop {
-            position: absolute;
-            background: rgba(135, 206, 235, 0.4);
-            width: 1px;
-            height: 15px;
-            animation: rainFall linear infinite;
-        }
-
-        @keyframes rainFall { to { transform: translateY(100vh); } }
-
-        /* --- FLOATING TEXT EFFECTS --- */
-        .float-text {
-            position: absolute;
-            color: var(--gold);
-            font-weight: 700;
-            font-size: 1rem;
-            animation: floatUp 1.5s forwards;
-            pointer-events: none;
-            z-index: 1000;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
-
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-
-        .shake { animation: shake 0.5s ease; }
-
-        /* --- LAYOUT COMPONENT STRUCTS --- */
-        .game-container {
-            min-height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            position: relative;
-            z-index: 10;
-        }
-
-        .game-header {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(20px);
-            border-b: 1px solid rgba(197, 160, 89, 0.2);
-            z-index: 40;
-        }
-
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1px;
-            background: rgba(255,255,255,0.02);
-        }
-
-        @media (min-width: 1024px) {
-            .main-layout {
-                grid-template-columns: 320px 1fr 340px;
-            }
-            .mobile-panel-only { display: none !important; }
-        }
-
-        .panel {
-            background: rgba(12, 12, 10, 0.95);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        /* --- INTERACTIVE GRID ARRAYS --- */
-        .tree-slot {
-            background: linear-gradient(145deg, #151512, #0a0a09);
-            border: 2px solid rgba(197, 160, 89, 0.15);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .tree-slot:hover {
-            transform: translateY(-4px);
-            border-color: var(--gold);
-            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.15);
-        }
-
-        .tree-slot.selected {
-            border-color: var(--gold);
-            box-shadow: 0 0 20px rgba(197, 160, 89, 0.35);
-        }
-
-        .tree-slot.infested { animation: shake 0.5s infinite; border-color: var(--danger); }
-        .tree-slot.ready { animation: readyGlow 2s infinite; }
-        .tree-slot.legendary { border-color: var(--purple); box-shadow: 0 0 20px rgba(155, 89, 182, 0.4); }
-        .tree-slot.rare { border-color: var(--blue); box-shadow: 0 0 15px rgba(52, 152, 219, 0.3); }
-
-        @keyframes readyGlow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(107, 142, 35, 0.4); }
-            70% { box-shadow: 0 0 0 12px rgba(107, 142, 35, 0); }
-        }
-
-        /* --- SLIDING CONTROL SIDE DRAWERS (Mobile Layouts fallback) --- */
-        .sliding-panel {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: #0d0d0b;
-            border-top: 2px solid var(--gold);
-            border-radius: 20px 20px 0 0;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .sliding-panel.active { transform: translateY(0); }
-        .panel-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            z-index: 90;
-        }
-        .panel-overlay.active { display: block; }
-
-        #ledger::-webkit-scrollbar, #event-ledger::-webkit-scrollbar { width: 4px; }
-        #ledger::-webkit-scrollbar-thumb, #event-ledger::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
-    </style>
+    <!-- External CSS -->
+    <link rel="stylesheet" href="webgame3.css">
 </head>
 <body>
-    <div id="sky-bg"></div>
-    <div id="weather-overlay"></div>
 
-    <div class="game-container">
-        <!-- GLOBAL APPLICATION HEADER SYSTEM -->
-        <nav class="game-header px-4 py-3 md:px-8 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="flex items-center justify-between w-full sm:w-auto gap-4">
-                <div class="game-title text-xl md:text-2xl font-bold tracking-widest text-white">
-                    🫒 OLIVIUM <span class="serif italic text-[#C5A059] ml-1">ESTATE</span>
-                    <div class="prestige-badge inline-block ml-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-2 py-0.5 rounded-full text-[10px] font-bold" id="prestige-badge" style="display: none;">
-                        ⭐ Gen <span id="prestige-level">1</span>
-                    </div>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="flex items-center gap-2">
+                <span class="serif text-xl font-bold text-white tracking-widest">
+                    OLIVIUM <span class="italic text-[#C5A059]">ESTATE</span>
+                </span>
+            </div>
+            <div class="nav-links">
+                <a href="index2.html">ADOPTION BOARD</a>
+                <a href="villa_stay.html">VILLA STAY</a>
+                <a href="game_rules.html" class="active">HOW TO PLAY GAME</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="wallet-info hidden sm:block">
+                    <p id="nav-tier-label" class="wallet-label">Guest Mode</p>
+                    <p id="nav-identity-display" class="wallet-address">NOT CONNECTED</p>
                 </div>
-                <div class="flex gap-2">
-                    <span class="weather-tag text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider" id="weather-tag">☀️ Optimal</span>
-                    <span class="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider">⛓️ Devnet</span>
+                <button id="connectBtn" class="connect-btn">Connect Profile</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="mt-20">
+        <!-- Header -->
+        <div class="flex-between mb-3">
+            <div>
+                <h1 class="serif text-2xl text-gold">OLIVIUM ESTATE</h1>
+                <div class="flex gap-3 text-[9px] opacity-50 mt-1">
+                    <span>⏰ <span id="ui-time">08:00</span></span>
+                    <span>🌡️ <span id="ui-temp">24°C</span></span>
+                    <span>🌤️ <span id="ui-weather">Clear</span></span>
+                    <span><span id="ui-season-emoji">🌸</span> <span id="ui-season">Spring</span></span>
                 </div>
             </div>
-
-            <!-- Core Financials & Status Blocks -->
-            <div class="flex items-center justify-between w-full sm:w-auto gap-4 md:gap-6">
-                <div class="flex gap-3 text-center">
-                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[65px]">
-                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">SOL</div>
-                        <div id="sol-balance" class="text-sm font-mono font-bold text-yellow-500">25.00</div>
-                    </div>
-                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[65px]">
-                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">EVOO (L)</div>
-                        <div id="oil-vault" class="text-sm font-mono font-bold text-emerald-400">0.0</div>
-                    </div>
-                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[55px]">
-                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">LEVEL</div>
-                        <div id="level" class="text-sm font-mono font-bold text-stone-200">1</div>
-                    </div>
-                    <div class="bg-black/40 border border-white/5 rounded-xl px-3 py-1 min-w-[55px]">
-                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">COMBO</div>
-                        <div id="combo" class="text-sm font-mono font-bold text-purple-400">0</div>
-                    </div>
+            <div class="flex gap-2">
+                <div class="stat-box" style="padding: 8px 12px;">
+                    <div class="stat-label">SOL</div>
+                    <div class="stat-value text-base" id="ui-sol">0.00</div>
                 </div>
-
-                <!-- Web3 Identity Hook Indicator -->
-                <div class="flex items-center gap-3 border-l border-white/10 pl-4">
-                    <div class="text-right hidden md:block">
-                        <p id="nav-tier-label" class="text-[9px] font-bold text-stone-500 uppercase tracking-widest">Guest Mode</p>
-                        <p id="nav-identity-display" class="text-[10px] font-mono text-stone-400 tracking-tight">NOT CONNECTED</p>
-                    </div>
-                    <button id="connectBtn" class="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:brightness-110 text-stone-950 font-mono text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md">Connect Profile</button>
+                <div class="stat-box" style="padding: 8px 12px;">
+                    <div class="stat-label">OLV</div>
+                    <div class="stat-value text-base" id="ui-olv">0</div>
                 </div>
-            </div>
-        </nav>
-
-        <!-- MAIN RESPONSIVE THREE-PANEL MATRIX GRID APPLICATION LAYOUT -->
-        <div class="main-layout flex-1">
-            
-            <!-- LEFT PANEL: QUEST TRACKING & DEPLOYMENT BOUNTIES (Desktop Hidden Fallback) -->
-            <div class="panel hidden lg:block p-6 border-r border-white/5 overflow-y-auto">
-                <h3 class="serif text-lg font-bold text-[#C5A059] mb-4 flex items-center gap-2">📋 MATRIX BOUNTY CONTRACT</h3>
-                <div class="quest-card bg-blue-500/5 border border-blue-500/30 p-4 rounded-xl mb-6">
-                    <div class="font-bold text-sm mb-1 text-stone-200" id="quest-title">Harvest 50L of oil</div>
-                    <div class="text-xs text-stone-400 font-mono mb-2">Fulfillment Tracker: <span id="quest-current" class="text-white font-bold">0</span> / <span id="quest-target">50</span> kg</div>
-                    <div class="w-full bg-black/50 h-1.5 rounded-full overflow-hidden border border-white/5">
-                        <div class="bar-fill bg-blue-500 h-full transition-all" id="quest-progress" style="width: 0%;"></div>
-                    </div>
-                    <div class="color-[var(--gold)] text-[10px] font-mono font-bold mt-2 text-[#C5A059]" id="quest-reward">Reward: 500 SOL</div>
-                </div>
-
-                <h3 class="serif text-lg font-bold text-[#C5A059] mb-4 flex items-center justify-between">
-                    <span>🏆 ACHIEVEMENTS</span>
-                    <span id="achievement-count" class="text-xs font-mono opacity-50 font-normal">0/15</span>
-                </h3>
-                <div id="achievement-list" class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                    <!-- Dynamic injection vector inside framework -->
-                </div>
-            </div>
-
-            <!-- CENTER WORKSPACE: THE ACTIVE PRODUCTION GROVE VIEW -->
-            <div class="grove-area p-4 md:p-8 overflow-y-auto flex flex-col justify-between">
-                <div>
-                    <!-- Meta Diagnostic Headers telemetry metrics -->
-                    <div class="flex justify-between items-center border-b border-white/5 pb-3 mb-6">
-                        <div>
-                            <h2 class="serif text-xl font-bold text-stone-300">SECURED PRODUCTION GRID</h2>
-                            <div class="flex gap-3 text-[10px] text-stone-500 font-mono mt-0.5">
-                                <span>⏰ TIME: <span id="ui-time" class="text-stone-400">08:00</span></span>
-                                <span>🌡️ TEMP: <span id="ui-temp" class="text-stone-400">24°C</span></span>
-                                <span>🌤️ SYS: <span id="ui-weather" class="text-stone-400">Clear</span></span>
-                                <span>🌸 CYCLE: <span id="ui-season" class="text-stone-400">Spring</span></span>
-                            </div>
-                        </div>
-                        <div class="text-right text-[11px] font-mono">
-                            <span class="text-stone-500 font-bold block uppercase tracking-wider text-[9px]">SECURED ASSET DEPTH</span>
-                            <span class="text-[#C5A059]">⭐</span> <span id="rare-count" class="font-bold text-stone-300">0</span> Rare Nodes Identified
-                        </div>
-                    </div>
-
-                    <!-- Primary Grid Array Wrapper Box -->
-                    <div class="trees-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4" id="trees-grid">
-                        <!-- Populated completely programmatically via script assets nodes models loop hooks -->
-                    </div>
-                </div>
-
-                <!-- Web3 Multi-Asset Escrow Sync Module Monitor Frame -->
-                <div class="bg-gradient-to-r from-stone-900 to-black border border-[#c9903e]/30 rounded-2xl p-4 mt-8 shadow-inner">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="text-xs font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
-                            <span>💰 WEB3 WALLET OVERPOST METRICS</span>
-                        </div>
-                        <button id="refreshBalanceBtn" class="text-[10px] font-mono text-[#C5A059]/60 hover:text-[#C5A059] transition-colors">⟳ Sync Escrow</button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 text-xs font-mono border-t border-white/5 pt-2">
-                        <div><span class="text-stone-500 font-bold">◎ ACCOUNT SOL:</span> <span id="wallet-sol-balance" class="font-bold text-yellow-500">0.00</span></div>
-                        <div><span class="text-stone-500 font-bold">🫒 ACCOUNT OLV:</span> <span id="wallet-olv-balance" class="font-bold text-emerald-400">0</span></div>
-                    </div>
-                    <div class="w-full bg-black/60 h-1.5 rounded-full mt-3 overflow-hidden border border-white/5">
-                        <div id="estate-sync-bar" class="bg-gradient-to-r from-[#c9903e] to-yellow-600 h-full transition-all" style="width:0%"></div>
-                    </div>
-                    <div class="text-[9px] font-mono opacity-40 mt-1.5 text-right" id="estate-value">Estimated Estate Market Value: 0 SOL</div>
-                </div>
-            </div>
-
-            <!-- RIGHT PANEL: GAME ENGINE REFINERY CONTROLS & TRADING HOOKS -->
-            <div class="panel hidden lg:flex flex-col p-6 border-l border-white/5 overflow-y-auto justify-between space-y-6">
-                <div>
-                    <!-- Selected Entity Metadata Box view -->
-                    <h3 class="serif text-lg font-bold text-[#C5A059] mb-3">🌿 SELECTED GRIDS COMPONENT</h3>
-                    <div class="info-card bg-black/40 border border-white/5 p-4 rounded-xl mb-4" id="tree-info">
-                        <p class="text-center opacity-40 text-xs font-mono py-4">Select live ecosystem target matrix nodes</p>
-                    </div>
-
-                    <!-- Tactical Actions triggers interface block -->
-                    <div class="space-y-2 mb-6">
-                        <button class="w-full bg-[#C5A059] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed font-bold py-2.5 rounded-xl text-stone-950 font-mono text-xs transition-all uppercase tracking-wider flex items-center justify-center gap-2" id="water-btn" disabled>💧 Irrigate Node (+25%)</button>
-                        <button class="w-full bg-red-900 hover:bg-red-800 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl font-mono text-xs transition-all uppercase tracking-wider" id="treat-btn" disabled>🐛 Flush Parasitic Pest Vectors</button>
-                        <button class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed text-stone-950 font-bold py-2.5 rounded-xl font-mono text-xs transition-all uppercase tracking-wider" id="harvest-btn" disabled>🫒 Core Biomass Extract Yield</button>
-                    </div>
-
-                    <!-- Core Industrial Processing Refinery Module Dashboard -->
-                    <h3 class="serif text-lg font-bold text-[#C5A059] mb-3">⚙️ REFINERY FLUID PRESS</h3>
-                    <div class="mill-zone bg-stone-900/40 border-2 border-white/5 hover:border-[#C5A059]/40 rounded-2xl p-4 text-center cursor-pointer transition-all mb-4" onclick="pressMill()">
-                        <div class="text-[9px] text-stone-500 font-bold uppercase tracking-widest">Raw Harvest Storage Bin</div>
-                        <div class="text-xl font-mono font-bold my-1 text-white" id="fruit-bin">0.0 kg</div>
-                        <div class="text-3xl filter grayscale hover:grayscale-0 transition duration-300 my-2">⚙️</div>
-                        <div class="text-[9px] font-mono text-[#C5A059] font-bold tracking-widest uppercase">CLICK ELEMENT AXIS TO PRESS PRESS</div>
-                        <div class="grid grid-cols-2 gap-3 mt-3 text-left text-[10px] border-t border-white/5 pt-3">
-                            <div>
-                                <span class="text-stone-400">⚡ MASH LINE: <span id="mash-pct" class="text-yellow-500 font-bold">0%</span></span>
-                                <div class="w-full bg-black/80 h-1.5 rounded mt-0.5 overflow-hidden border border-white/5"><div id="mash-bar" class="bg-gradient-to-r from-yellow-600 to-yellow-400 h-full transition-all" style="width:0%"></div></div>
-                            </div>
-                            <div>
-                                <span class="text-stone-400">🧼 THERMAL STRAIN: <span id="gunk-pct" class="text-red-500 font-bold">0%</span></span>
-                                <div class="w-full bg-black/80 h-1.5 rounded mt-0.5 overflow-hidden border border-white/5"><div id="gunk-bar" class="bg-gradient-to-r from-red-700 to-red-500 h-full transition-all" style="width:0%"></div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Liquid Global Swap Pool Market Execution Box -->
-                    <div class="card bg-stone-950/60 border border-white/5 rounded-2xl p-4 mb-4">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="text-[10px] text-stone-500 font-bold uppercase tracking-wider">GLOBAL LIQUID SWAP VALUE</div>
-                                <div class="flex items-baseline gap-1 mt-0.5">
-                                    <span class="text-xl font-mono font-bold text-yellow-500" id="ui-price">2.50</span>
-                                    <span class="text-[10px] font-mono text-stone-500">SOL / L</span>
-                                </div>
-                                <div class="text-[9px] font-mono text-stone-500 mt-1">Liquidity Demand: <span id="ui-demand" class="text-green-400 font-bold">Normal</span> <span id="ui-trend" class="text-green-500 ml-1">+0%</span></div>
-                            </div>
-                            <button class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:brightness-110 font-bold px-4 py-2 rounded-xl text-stone-950 text-xs font-mono transition-all" id="sell-btn">SELL EVOO</button>
-                        </div>
-                    </div>
-
-                    <!-- Deployment Warehouse Hub Store -->
-                    <h3 class="serif text-lg font-bold text-[#C5A059] mb-3">🏺 CORE DEPOT EXCHANGE</h3>
-                    <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                        <button class="bg-stone-900 border border-white/10 p-2.5 rounded-xl hover:bg-stone-800 text-left transition-all" onclick="buyTree()">🌳 Plant Core Node<br><span class="text-[#C5A059] font-bold">5.0 SOL</span></button>
-                        <button class="bg-stone-900 border border-white/10 p-2.5 rounded-xl hover:bg-stone-800 text-left transition-all" onclick="buyAutoIrrigation()">🚿 Auto-Irrigation<br><span class="text-[#C5A059] font-bold">3.0 SOL</span></button>
-                    </div>
-                </div>
-
-                <!-- Ledger Operational Logs History Stream -->
-                <div>
-                    <h4 class="text-[9px] font-bold tracking-widest text-stone-500 mb-1.5 uppercase">📜 SYSTEM INFRASTRUCTURE LOG TRANSACTION STREAM</h4>
-                    <div id="event-ledger" class="text-[10px] font-mono space-y-1 max-h-24 overflow-y-auto bg-black/40 border border-white/5 p-2 rounded-xl text-stone-400">
-                        <div class="ledger-entry"><span class="text-[#C5A059] opacity-50">&gt;</span> Localized core infrastructure processing framework connected. STATUS: NOMINAL.</div>
-                    </div>
+                <div class="stat-box" style="padding: 8px 12px;">
+                    <div class="stat-label">OIL</div>
+                    <div class="stat-value text-base" id="ui-oil">0.00</div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- MOBILE DISPATCH FLOATING COMPONENT FOR FLUID MILL RUNNING -->
-    <button id="fab-mill" class="fixed bottom-20 right-6 md:hidden bg-gradient-to-tr from-yellow-500 to-yellow-600 text-stone-950 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-40 font-bold border border-yellow-400/20 transition-transform active:scale-95 shadow-yellow-500/20">🏺</button>
-
-    <!-- MOBILE NAVIGATION EXPANSION BAR ANCHOR CONTROLS -->
-    <div class="mobile-panel-only fixed bottom-0 left-0 right-0 bg-stone-950 border-t border-white/5 backdrop-blur-md z-50 py-2.5 shadow-2xl flex justify-around text-center text-[10px] font-bold font-mono tracking-widest text-stone-400">
-        <div class="cursor-pointer text-white" onclick="openMobileDrawer('grove')">🌳<br>GROVE</div>
-        <div class="cursor-pointer hover:text-white transition-colors" onclick="openMobileDrawer('upgrades')">⚙️<br>UPGRADES</div>
-        <div class="cursor-pointer hover:text-white transition-colors" onclick="openMobileDrawer('skills')">🧬<br>SKILLS</div>
-        <div class="cursor-pointer hover:text-white transition-colors" onclick="openMobileDrawer('stats')">📊<br>STATS</div>
-    </div>
-
-    <!-- SLIDING COMPONENT DRAWERS FOR COMPACT VIEWPORT SCREEN REALESTATE -->
-    <div id="panel-overlay" class="panel-overlay" onclick="closePanel()"></div>
-
-    <!-- SLIDING REGISTER: UPGRADES ENGINE -->
-    <div id="panel-upgrades" class="sliding-panel p-6 space-y-4">
-        <div class="flex justify-between items-center border-b border-white/5 pb-2">
-            <h3 class="serif text-xl font-bold text-yellow-500">⚙️ INFRASTRUCTURE UPGRADES</h3>
-            <button class="text-xl text-stone-500" onclick="closePanel()">&times;</button>
+        <!-- Quick Stats -->
+        <div class="stats-row">
+            <div class="stat-box"><div class="stat-label">⭐ SEEDS</div><div class="stat-value" id="ui-seeds">0</div></div>
+            <div class="stat-box"><div class="stat-label">🌳 TREES</div><div class="stat-value" id="tree-count">0</div></div>
+            <div class="stat-box"><div class="stat-label">⚡ COMBO</div><div class="stat-value" id="combo-display">1.0x</div></div>
+            <div class="stat-box"><div class="stat-label">📊 LEVEL</div><div class="stat-value" id="ui-level">1</div></div>
         </div>
+
+        <!-- Archetype + Speculator Futures Row -->
+        <div class="flex gap-2 mb-3" style="align-items:center;">
+            <button id="archetype-badge" onclick="game.openArchetypePanel()" class="btn" style="flex:1;font-size:10px;padding:6px 8px;text-align:left;">🏛️ Choose Path</button>
+            <button id="futures-btn" onclick="game.openFuturesPanel()" class="btn" style="display:none;font-size:10px;padding:6px 10px;border-color:#a855f7;color:#a855f7;">📜 Futures</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid-2 mb-3">
+            <button class="btn" id="plant-btn">🌱 PLANT (5 SOL)</button>
+            <button class="btn btn-danger" id="spray-btn">🐛 SPRAY (0.5)</button>
+        </div>
+        <div class="grid-2 mb-3">
+            <button class="btn btn-success" id="harvest-all-btn" style="font-size:11px;">🫒 HARVEST ALL</button>
+            <button class="btn" id="water-all-btn" style="font-size:11px; background:rgba(30,100,180,0.25); border-color:#3b82f6; color:#93c5fd;">💧 WATER ALL</button>
+        </div>
+
+        <!-- Market -->
+        <div class="card mb-3">
+            <div class="flex-between">
+                <div>
+                    <div class="text-xs opacity-50">GLOBAL MARKET</div>
+                    <div class="text-2xl font-bold text-gold" id="ui-price">2.50</div>
+                    <div class="text-xs">SOL / Liter</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs opacity-50">Demand</div>
+                    <div id="ui-demand" class="text-sm">Normal</div>
+                    <div id="ui-trend" class="text-xs text-green-500">+0%</div>
+                </div>
+                <button class="btn btn-success" id="sell-btn" style="padding: 8px 20px;">SELL</button>
+            </div>
+            <div class="flex gap-2 mt-2" style="justify-content:flex-end;">
+                <button class="btn" id="sell-half-btn" style="font-size:10px; padding:4px 12px; opacity:0.7;">SELL HALF</button>
+            </div>
+        </div>
+
+        <!-- Wallet Balances Card -->
+        <div class="card mb-3" style="background: rgba(197,160,89,0.05); border-color: #c9903e;">
+            <div class="flex-between">
+                <div>
+                    <div class="text-xs opacity-50">💰 WALLET BALANCES</div>
+                    <div class="flex gap-4 mt-1">
+                        <div><span class="text-gold">◎ SOL:</span> <span id="wallet-sol-balance" class="font-bold">0.00</span></div>
+                        <div><span class="text-gold">🫒 OLV:</span> <span id="wallet-olv-balance" class="font-bold">0</span></div>
+                    </div>
+                </div>
+                <button id="refreshBalanceBtn" class="text-[9px] text-gold/60 hover:text-gold">⟳ Refresh</button>
+            </div>
+            <div class="progress-bar mt-2"><div id="estate-sync-bar" class="progress-fill" style="background:#c9903e; width:0%"></div></div>
+            <div class="text-[8px] opacity-40 mt-1" id="estate-value">Estate Value: 0 SOL</div>
+        </div>
+
+        <!-- Mill Status -->
+        <div class="card mb-3">
+            <div class="flex-between">
+                <div>
+                    <div class="text-xs opacity-50">🏺 HOPPER</div>
+                    <div class="text-xl font-bold" id="ui-hopper">0.0 kg</div>
+                </div>
+                <div>
+                    <div class="text-xs opacity-50">⚙️ MASH</div>
+                    <div id="mash-pct">0%</div>
+                    <div class="progress-bar w-24"><div id="mash-bar" class="progress-fill bg-gold" style="width:0%"></div></div>
+                </div>
+                <div>
+                    <div class="text-xs opacity-50">🌡️ HEAT</div>
+                    <div id="heat-pct" style="font-size:10px;">0%</div>
+                    <div class="progress-bar w-24"><div id="heat-bar" class="progress-fill" style="background:#facc15; width:0%"></div></div>
+                </div>
+                <div>
+                    <div class="text-xs opacity-50">🧼 GUNK</div>
+                    <div id="gunk-pct">0%</div>
+                    <div class="progress-bar w-24"><div id="gunk-bar" class="progress-fill" style="background:#ef4444; width:0%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Quest -->
+        <div class="card mb-3" style="background: rgba(59,130,246,0.05); border-color: #3b82f6;">
+            <div class="flex-between">
+                <span class="text-xs text-blue-400">📋 DAILY QUEST</span>
+                <span class="text-xs text-gold" id="quest-reward">Reward: 10 SOL</span>
+            </div>
+            <div class="text-sm mt-1">Harvest <span id="quest-current">0</span>/<span id="quest-target">50</span> kg · <span class="text-[9px] opacity-60">+<span id="quest-seed-reward">1</span> 🌱</span></div>
+            <div class="progress-bar mt-2"><div id="quest-progress" class="progress-fill" style="background:#3b82f6; width:0%"></div></div>
+        </div>
+
+        <!-- Grove Section -->
+        <div class="flex-between mb-2">
+            <span class="section-title">🌿 YOUR GROVE</span>
+            <div class="flex gap-2 text-xs opacity-50 flex-wrap" style="justify-content:flex-end;">
+                <span id="grove-density" style="display:none;font-size:9px;"></span>
+                <span><span class="text-gold">⭐</span> <span id="rare-count">0</span> Rare</span>
+                <span id="dead-tree-badge" style="display:none; color:#ef4444;">💀 <span id="dead-count">0</span> Dead</span>
+            </div>
+        </div>
+        <!-- Blight warning -->
+        <div id="blight-banner" style="display:none;background:rgba(239,68,68,0.15);border:1px solid #ef4444;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#ef4444;text-align:center;">
+            🚨 BLIGHT ACTIVE — Pests spreading between adjacent trees! Spray immediately.
+        </div>
+        <div class="text-[8px] opacity-30 mb-2 text-center">Tap a tree to 💧 water it · Tap 🫒 mature trees to harvest</div>
+        <div id="grove-container" class="grove-grid"></div>
+
+        <!-- Ledger -->
+        <div class="card mt-3">
+            <div class="text-xs opacity-50 mb-2">📜 ESTATE LEDGER</div>
+            <div id="ledger" class="text-[9px] space-y-1 max-h-32 overflow-y-auto opacity-60"></div>
+        </div>
+    </div>
+
+    <!-- Floating Mill Button -->
+    <button id="fab-mill" class="fab-mill">🏺</button>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" data-panel="grove">🌳<br>GROVE</div>
+        <div class="nav-item" data-panel="upgrades">⚙️<br>UPGRADES</div>
+        <div class="nav-item" data-panel="skills">🧬<br>SKILLS</div>
+        <div class="nav-item" data-panel="stats">📊<br>STATS</div>
+    </div>
+
+    <!-- UPGRADES PANEL -->
+    <div id="panel-upgrades" class="panel">
+        <div class="panel-header">
+            <h3 class="serif text-xl text-gold">⚙️ UPGRADES</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="space-y-3">
+            <button id="upg-irrigation-mobile" class="btn w-full text-left" onclick="game.upgrade('irrigation'); closePanel()">
+                💧 Auto-Irrigation <span class="float-right text-gold" id="upg-irrigation-cost">15 SOL</span>
+                <div class="text-[9px] opacity-50">Maintains water at 70%</div>
+            </button>
+            <button id="upg-misting-mobile" class="btn w-full text-left" onclick="game.upgrade('misting'); closePanel()">
+                🌫️ Misting System <span class="float-right text-gold" id="upg-misting-cost">10 SOL</span>
+                <div class="text-[9px] opacity-50">Reduces pest spread</div>
+            </button>
+            <button id="upg-fertilizer-mobile" class="btn w-full text-left" onclick="game.upgrade('fertilizer'); closePanel()">
+                🌿 Organic Fertilizer <span class="float-right text-gold" id="upg-fertilizer-cost">8 SOL</span>
+                <div class="text-[9px] opacity-50">Boosts growth rate</div>
+            </button>
+            <button id="upg-flytraps-mobile" class="btn w-full text-left" onclick="game.upgradeFlyTraps(); closePanel()">
+    🪰 Venus Fly Traps <span class="float-right text-gold" id="upg-flytraps-cost">0.003 SOL</span>
+    <div class="text-[9px] opacity-50">Pests die 50% faster (3% per tick)</div>
+</button>
+            <button class="btn w-full text-left" onclick="game.cleanMill(); closePanel()">
+                🧼 Steam Clean Mill <span class="float-right text-gold">0.2 SOL</span>
+            </button>
+            <button class="btn w-full text-left" style="border-color:#ef4444; color:#ef4444;" onclick="game.removeDeadTrees(); closePanel()">
+                💀 Remove Dead Trees <span class="float-right" style="color:#ef4444;">Free</span>
+                <div class="text-[9px] opacity-50">Clear dead trees from your grove</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- SKILLS PANEL -->
+    <div id="panel-skills" class="panel">
+        <div class="panel-header">
+            <h3 class="serif text-xl text-purple-400">🧬 ANCIENT LAB</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
+        </div>
+        <div class="text-center text-sm mb-3">✨ Seeds: <span id="seeds-display" class="text-purple-400 font-bold">0</span></div>
         <div class="space-y-2">
-            <button id="upg-irrigation-mobile" class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.upgrade('irrigation'); closePanel()">
-                💧 Auto-Irrigation Vector <span class="float-right text-yellow-500">15 SOL</span>
-                <div class="text-[9px] opacity-40 mt-1">Locks node water line retention configurations at 70% floor value.</div>
+            <button class="btn w-full text-left" id="skill-yield-btn" onclick="game.unlockSkill('yield'); closePanel()">
+                📈 Hyper-Yield <span class="float-right text-purple-400" id="skill-yield-cost">5 Seeds</span>
+                <div class="text-[9px] opacity-50">+80% harvest yield</div>
             </button>
-            <button id="upg-misting-mobile" class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.upgrade('misting'); closePanel()">
-                🌫️ Cloud Misting Arrays <span class="float-right text-yellow-500">10 SOL</span>
-                <div class="text-[9px] opacity-40 mt-1">Dampens transmission vectors tracking insect pest configurations across clusters.</div>
+            <button class="btn w-full text-left" id="skill-speed-btn" onclick="game.unlockSkill('speed'); closePanel()">
+                ⚡ Rapid Bloom <span class="float-right text-purple-400" id="skill-speed-cost">5 Seeds</span>
+                <div class="text-[9px] opacity-50">2.5x faster growth</div>
             </button>
-            <button id="upg-fertilizer-mobile" class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.upgrade('fertilizer'); closePanel()">
-                🌿 Organic Bio-Catalyst <span class="float-right text-yellow-500">8 SOL</span>
-                <div class="text-[9px] opacity-40 mt-1">Accelerates natural botanical cycle progress timelines exponentially.</div>
+            <button class="btn w-full text-left" id="skill-cold-btn" onclick="game.unlockSkill('cold'); closePanel()">
+                ❄️ Pure Cold <span class="float-right text-purple-400" id="skill-cold-cost">5 Seeds</span>
+                <div class="text-[9px] opacity-50">+60% night extraction</div>
             </button>
-            <button class="w-full bg-stone-900 border border-red-900/30 text-red-400 p-3 rounded-xl text-left text-xs font-mono" onclick="game.cleanMill(); closePanel()">
-                🧼 High-Pressure Steam Flush Clean <span class="float-right text-yellow-500">0.2 SOL</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- SLIDING REGISTER: SKILLS & PRESTIGE ENGINE -->
-    <div id="panel-skills" class="sliding-panel p-6 space-y-4">
-        <div class="flex justify-between items-center border-b border-white/5 pb-2">
-            <h3 class="serif text-xl font-bold text-purple-400">🧬 ANCIENT SEQUENCE LAB</h3>
-            <button class="text-xl text-stone-500" onclick="closePanel()">&times;</button>
-        </div>
-        <div class="text-center font-mono text-sm py-1 bg-purple-500/10 border border-purple-500/20 rounded-xl">✨ Available Relic Seeds Stock: <span id="seeds-display" class="text-purple-400 font-bold">0</span></div>
-        <div class="space-y-2">
-            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('yield'); closePanel()">
-                📈 Hyper-Yield Matrix <span class="float-right text-purple-400">5 Seeds</span>
-                <div class="text-[9px] opacity-40 mt-1">+80% raw volume output multiplier tracking across standard collections.</div>
-            </button>
-            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('speed'); closePanel()">
-                ⚡ Rapid Cellular Bloom <span class="float-right text-purple-400">5 Seeds</span>
-                <div class="text-[9px] opacity-40 mt-1">2.5x throughput enhancement scaling for standard development layers.</div>
-            </button>
-            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('cold'); closePanel()">
-                ❄️ Cryo Pure Extraction <span class="float-right text-purple-400">5 Seeds</span>
-                <div class="text-[9px] opacity-40 mt-1">+60% overnight industrial performance efficiency expansion.</div>
-            </button>
-            <button class="w-full bg-stone-900 border border-white/5 p-3 rounded-xl text-left text-xs font-mono" onclick="game.unlockSkill('rare'); closePanel()">
-                🧬 Radical DNA Cross-Grafting <span class="float-right text-purple-400">8 Seeds</span>
-                <div class="text-[9px] opacity-40 mt-1">Locks down permanent +25% transformation structural chance base rates.</div>
+            <button class="btn w-full text-left" id="skill-rare-btn" onclick="game.unlockSkill('rare'); closePanel()">
+                🧬 DNA Grafting <span class="float-right text-purple-400" id="skill-rare-cost">8 Seeds</span>
+                <div class="text-[9px] opacity-50">25% rare tree chance</div>
             </button>
         </div>
-        <button class="w-full bg-gradient-to-r from-purple-800 to-purple-600 hover:brightness-110 text-white font-bold font-mono text-xs py-3 rounded-xl mt-4" onclick="game.prestige()">
-            🔄 LIQUIDATE CORE INDUSTRIAL ESTATE (RESET FOR POWER)
+        <button class="btn w-full mt-4" style="background:#a855f7; color:white; border:none;" onclick="game.prestige()">
+            🔄 LIQUIDATE ESTATE
         </button>
     </div>
 
-    <!-- SLIDING REGISTER: SYSTEM OVERALL STATISTICS AND ACHIEVEMENTS -->
-    <div id="panel-stats" class="sliding-panel p-6 space-y-4">
-        <div class="flex justify-between items-center border-b border-white/5 pb-2">
-            <h3 class="serif text-xl font-bold text-yellow-500">📊 ANALYTICS TELEMETRY</h3>
-            <button class="text-xl text-stone-500" onclick="closePanel()">&times;</button>
+    <!-- STATS PANEL -->
+    <div id="panel-stats" class="panel">
+        <div class="panel-header">
+            <h3 class="serif text-xl text-gold">📊 STATISTICS</h3>
+            <span class="close-btn" onclick="closePanel()">&times;</span>
         </div>
-        <div class="bg-black/40 border border-white/5 p-4 rounded-xl space-y-2 text-xs font-mono">
-            <div class="flex justify-between"><span>💰 Cumulative Global SOL:</span><span id="stats-lifetime" class="text-yellow-500 font-bold">0.00</span></div>
-            <div class="flex justify-between"><span>🌳 Structural Nodes Placed:</span><span id="stats-trees-planted" class="text-stone-300">0</span></div>
-            <div class="flex justify-between"><span>🫒 Iterative Harvest Routines:</span><span id="stats-harvests" class="text-stone-300">0</span></div>
-            <div class="flex justify-between"><span>⚡ Historical Combo Record:</span><span id="stats-combo" class="text-purple-400 font-bold">x1.0</span></div>
-            <div class="flex justify-between"><span>⭐ Anomalous Rare Elements:</span><span id="stats-rare" class="text-emerald-400 font-bold">0</span></div>
-        </div>
-        <div class="bg-black/40 border border-white/5 p-4 rounded-xl">
-            <div class="text-yellow-500 text-xs font-bold font-mono uppercase mb-2">🏆 PERSISTENT RECOGNITION STATUS ENTRIES</div>
-            <div class="text-[10px] font-mono space-y-1.5 text-stone-400">
-                <div class="flex justify-between"><span>Initial Yield Operations Complete:</span><span id="ach1" class="font-bold">❌</span></div>
-                <div class="flex justify-between"><span>Grove Cluster Master (10 Nodes):</span><span id="ach2" class="font-bold">❌</span></div>
-                <div class="flex justify-between"><span>Sovereign Wealth Executive (100 SOL):</span><span id="ach3" class="font-bold">❌</span></div>
-                <div class="flex justify-between"><span>Combo Sequence Overlord (x5 Link):</span><span id="ach4" class="font-bold">❌</span></div>
-                <div class="flex justify-between"><span>Ecosystem Rare Collector:</span><span id="ach5" class="font-bold">❌</span></div>
+        <div class="space-y-3">
+            <div class="card">
+                <div class="flex-between"><span>💰 Lifetime SOL</span><span id="stats-lifetime" class="text-gold">0.00</span></div>
+                <div class="flex-between mt-2"><span>🌳 Trees Planted</span><span id="stats-trees-planted">0</span></div>
+                <div class="flex-between mt-2"><span>🫒 Total Harvests</span><span id="stats-harvests">0</span></div>
+                <div class="flex-between mt-2"><span>⚡ Combo Record</span><span id="stats-combo">x1.0</span></div>
+                <div class="flex-between mt-2"><span>⭐ Rare Trees</span><span id="stats-rare">0</span></div>
             </div>
-        </div>
-    </div>
-
-    <!-- WEB3 IDENTITY AUTHENTICATION MODAL ENTRY INTERFACE LAYER -->
-    <div class="modal-overlay fixed inset-0 bg-black/85 flex items-center justify-center z-[200]" id="connectModal" style="display:none;">
-        <div class="max-w-md w-full bg-stone-900 border border-white/10 p-6 md:p-8 rounded-3xl text-center relative mx-4 shadow-2xl">
-            <button id="closeConnectModalBtn" class="absolute top-4 right-4 text-xl font-mono text-stone-500 hover:text-white transition-colors" style="background:none; border:none;">&times;</button>
-            <span class="text-4xl mb-2 block">🌿</span>
-            <h2 class="serif text-2xl font-bold mb-1 text-white">Connect to Olivium Engine</h2>
-            <p class="text-[10px] font-mono text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
-            
-            <div class="space-y-4 text-left font-mono">
-                <!-- Vector Alpha Entry Point -->
-                <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
-                    <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
-                        <span>◎ Native Cryptographic Wallet</span>
-                        <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold">Web3 Inline</span>
-                    </div>
-                    <p class="text-[11px] text-stone-400 mb-3">Resolve secure web3 localized asset holdings using your active sandbox cluster extensions.</p>
-                    <button id="connectWalletBtn" class="w-full bg-[#5a7a2b] hover:bg-[#6b8e36] text-white text-xs font-bold py-2.5 rounded-xl transition-colors">Connect Phantom / Solana Hub</button>
-                </div>
-                
-                <!-- Vector Beta Backup Entry Point -->
-                <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
-                    <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
-                        <span>✉ Custodial Profile Access</span>
-                        <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-bold">Secure MFA</span>
-                    </div>
-                    <p class="text-[11px] text-stone-400 mb-3">Authorize structural progress states tracking using traditional off-chain cloud profiles profiles.</p>
-                    <button id="emailLoginBtn" class="w-full bg-stone-800 hover:bg-stone-700 text-white text-xs font-bold py-2.5 rounded-xl border border-white/5 transition-colors">Continue with Managed Profile</button>
+            <div class="card">
+                <div class="text-gold text-xs mb-2">🏆 ACHIEVEMENTS</div>
+                <div class="text-[9px] space-y-1">
+                    <div>First Harvest: <span id="ach1">❌</span></div>
+                    <div>Grove Master (10 trees): <span id="ach2">❌</span></div>
+                    <div>Tycoon (100 SOL): <span id="ach3">❌</span></div>
+                    <div>Combo King (x5): <span id="ach4">❌</span></div>
+                    <div>Rare Collector: <span id="ach5">❌</span></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MAIN CORE ENGINE MODULE SYSTEM INITIATION SCRIPT LINK -->
-    <script>
-        // Interface Drawer Router Actions System for Handheld Devices
-        function openMobileDrawer(panelId) {
-            closePanel();
-            const panel = document.getElementById(`panel-${panelId}`);
-            const overlay = document.getElementById('panel-overlay');
-            if(panel && overlay) {
-                panel.classList.add('active');
-                overlay.classList.add('active');
-            }
-        }
-        function closePanel() {
-            document.querySelectorAll('.sliding-panel').forEach(p => p.classList.remove('active'));
-            const overlay = document.getElementById('panel-overlay');
-            if(overlay) overlay.classList.remove('active');
-        }
-    </script>
+    <div id="panel-overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+    <!-- Connect Modal -->
+    <div class="modal-overlay" id="connectModal" style="display:none;">
+        <div class="max-w-md w-full tech-card p-8 rounded-3xl text-center relative overflow-hidden mx-4">
+            <div class="relative z-10">
+                <button id="closeConnectModalBtn" class="absolute -top-2 right-0 text-xl font-mono text-stone-500 hover:text-white transition" style="background:none; border:none; font-size:24px;">&times;</button>
+                <span class="text-3xl mb-3 block">🌿</span>
+                <h2 class="serif text-2xl font-bold mb-2 text-white">Connect to Olivium</h2>
+                <p class="text-xs text-stone-400 mb-6 uppercase tracking-widest">Select Estate Verification Vector</p>
+                <div class="space-y-4 text-left">
+                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                            <span>◎ Wallet Authentication</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono">Web3</span>
+                        </div>
+                        <p class="text-[11px] text-stone-400 mb-3">Resolve direct web3 asset holdings instantly using your browser extension.</p>
+                        <button id="connectWalletBtn" class="w-full bg-[#5a7a2b] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#6b8e36] transition-colors">Connect Phantom / Solana</button>
+                    </div>
+                    <div class="p-4 rounded-2xl border border-white/5 bg-black/40 hover:border-[#C5A059]/30 transition-all">
+                        <div class="font-bold text-sm text-white mb-1 flex justify-between items-center">
+                            <span>✉ Custodial Profile Access</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">Secure MFA</span>
+                        </div>
+                        <p class="text-[11px] text-stone-400 mb-3">Authorize using your traditional off-chain email profile.</p>
+                        <button id="emailLoginBtn" class="w-full bg-stone-800 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-stone-700 border border-white/5 transition-colors">Continue with Email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script imports -->
     <script type="module" src="webgame3.js"></script>
 </body>
 </html>
