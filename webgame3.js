@@ -1181,56 +1181,73 @@ function marketCycle() {
 }
 
 // ============================================================
-// CLOUD SAVE FUNCTIONS - FIXED
+// CLOUD SAVE FUNCTIONS
 // ============================================================
+
+// Columns added in the Kintara update. If the DB migration has not run yet,
+// saveGameToCloud falls back to the legacy schema automatically so saves never break.
+const EXTENDED_SAVE_COLUMNS = ['archetype', 'futures', 'market_pool'];
 
 async function saveGameToCloud() {
     if (!currentUser || !sb) {
-        console.log("❌ Cannot save: no user or supabase client");
+        console.log("Cannot save: no user or supabase client");
         return false;
     }
-    
-    console.log("💾 Saving game for:", currentUser.wallet);
-    
-    const saveData = {
-        wallet: currentUser.wallet,
-        sol: state.sol,
-        seeds: state.seeds,
-        oil: state.oil,
-        hopper: state.hopper,
-        lifetimeSol: state.lifetimeSol,
-        treesPlanted: state.treesPlanted,
-        totalHarvests: state.totalHarvests,
-        comboRecord: state.comboRecord,
-        rareCount: state.rareCount,
-        trees: JSON.stringify(state.trees),
-        upgrades: JSON.stringify(state.upgrades),
-        skills: state.skills,
+
+    const baseSave = {
+        wallet:           currentUser.wallet,
+        sol:              state.sol,
+        seeds:            state.seeds,
+        oil:              state.oil,
+        hopper:           state.hopper,
+        lifetimeSol:      state.lifetimeSol,
+        treesPlanted:     state.treesPlanted,
+        totalHarvests:    state.totalHarvests,
+        comboRecord:      state.comboRecord,
+        rareCount:        state.rareCount,
+        trees:            JSON.stringify(state.trees),
+        upgrades:         JSON.stringify(state.upgrades),
+        skills:           state.skills,
         skillMultipliers: JSON.stringify(state.skillMultipliers),
-        mill: JSON.stringify(state.mill),
-        quest: JSON.stringify(state.quest),
-        achievements: JSON.stringify(state.achievements),
-        archetype: state.archetype,
-        futures: JSON.stringify(state.futures),
-        market_pool: state.marketPool,
-        updated_at: new Date().toISOString()
+        mill:             JSON.stringify(state.mill),
+        quest:            JSON.stringify(state.quest),
+        achievements:     JSON.stringify(state.achievements),
+        updated_at:       new Date().toISOString()
     };
-    
-    try {
+
+    const extendedSave = {
+        ...baseSave,
+        archetype:   state.archetype,
+        futures:     JSON.stringify(state.futures),
+        market_pool: state.marketPool
+    };
+
+    const tryUpsert = async (payload) => {
         const { error } = await sb
             .from('game_saves')
-            .upsert(saveData, { onConflict: 'wallet' });
-        
+            .upsert(payload, { onConflict: 'wallet' });
+        return error;
+    };
+
+    try {
+        let error = await tryUpsert(extendedSave);
+
         if (error) {
-            console.error("❌ Save error:", error);
-            return false;
+            if (error.code === 'PGRST204') {
+                console.warn("New columns missing — run migration_game_saves.sql in Supabase, falling back to base schema.");
+                error = await tryUpsert(baseSave);
+            }
+            if (error) {
+                console.error("Save error:", error);
+                return false;
+            }
         }
-        
-        console.log("✅ Game saved successfully!");
+
+        console.log("Game saved!");
         return true;
-        
+
     } catch (err) {
-        console.error("❌ Cloud save exception:", err);
+        console.error("Cloud save exception:", err);
         return false;
     }
 }
