@@ -6,9 +6,51 @@
     <title>OLIVIUM — The Olive Estate Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
-    <link rel="stylesheet" href="webgame3.css">
+    
+    <style>
+        /* Core System Settings */
+        :root {
+            --gold: #C5A059;
+            --gold-dark: #3a2a10;
+        }
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #0c0a09; /* Tailwind stone-950 */
+            color: #f5f5f4; /* Tailwind stone-100 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        /* Custom Scrollbar for Ledger Outflows */
+        #ledger::-webkit-scrollbar {
+            width: 4px;
+        }
+        #ledger::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        #ledger::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.2);
+            border-radius: 2px;
+        }
+        #ledger::-webkit-scrollbar-thumb:hover {
+            background: rgba(197, 160, 89, 0.4);
+        }
+
+        /* Micro-Animations for UI Components */
+        .transition-all {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Active Status Borders */
+        .border-gold\/30:hover {
+            border-color: rgba(197, 160, 89, 0.3) !important;
+            box-shadow: 0 0 12px rgba(197, 160, 89, 0.05);
+        }
+    </style>
 </head>
-<body class="bg-stone-950 text-stone-100 font-sans p-4 max-w-xl mx-auto">
+<body class="bg-stone-950 text-stone-100 p-4 max-w-xl mx-auto">
 
     <nav class="fixed top-0 left-0 right-0 bg-stone-900/90 border-b border-white/5 backdrop-blur z-50 px-4 py-2">
         <div class="flex justify-between items-center max-w-xl mx-auto">
@@ -194,5 +236,6 @@
         </div>
     </div>
 
+    <script type="module" src="webgame3.js"></script>
 </body>
 </html>
