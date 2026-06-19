@@ -1,5 +1,5 @@
 // ============================================================
-// OLIVIUM GAME - Complete with OLV Token Purchases & Treasury
+// OLIVIUM GAME - Complete with OLV Token Purchases & Protocol PDA
 // ============================================================
 
 import { sb, getIdentity, isConnected, connection } from "./src/connection.ts";
@@ -7,19 +7,22 @@ import { PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import { Transaction, TransactionInstruction } from "@solana/web3.js";
 import BN from 'bn.js';
+import * as anchor from "@project-serum/anchor";
 
 // OLV Token Mint Address - REPLACE WITH YOUR ACTUAL OLV MINT
 const OLV_MINT_ADDRESS = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
+// Program ID - Will be auto-detected from window._program
+let PROGRAM_ID = null;
+let protocolPDA = null;
+let protocolTokenAccount = null;
+
 let currentUser = null;
 let walletSolBalance = 0;
 let walletOlvBalance = 0;
-let treasurySolBalance = 0;
-let treasuryOlvBalance = 0;
+let protocolSolBalance = 0;
+let protocolOlvBalance = 0;
 let balanceCheckInterval = null;
-
-// Treasury wallet address - REPLACE WITH YOUR TREASURY WALLET
-const TREASURY_WALLET = new PublicKey("YOUR_TREASURY_WALLET_ADDRESS_HERE");
 
 // ============================================================
 // GAME STATE
@@ -103,6 +106,114 @@ function getSpriteSVG(stage, rarity) {
 }
 
 // ============================================================
+// PROTOCOL PDA FUNCTIONS
+// ============================================================
+
+/**
+ * Find the protocol PDA using the same method as your Anchor program
+ * Uses the program from window._program or window.program
+ */
+function findProtocolPDA() {
+    try {
+        // Try to get the program from window
+        const program = window._program || window.program;
+        if (!program) {
+            console.warn("No program found in window._program or window.program");
+            // Fallback: try to use the PROGRAM_ID constant
+            if (PROGRAM_ID) {
+                const [pda, bump] = PublicKey.findProgramAddressSync(
+                    [Buffer.from("protocol")],
+                    PROGRAM_ID
+                );
+                return { pda, bump, programId: PROGRAM_ID };
+            }
+            return null;
+        }
+        
+        const [pda, bump] = PublicKey.findProgramAddressSync(
+            [Buffer.from("protocol")],
+            program.programId
+        );
+        
+        // Store the program ID for later use
+        PROGRAM_ID = program.programId;
+        
+        return { pda, bump, programId: program.programId };
+    } catch (err) {
+        console.error("Failed to find protocol PDA:", err);
+        return null;
+    }
+}
+
+/**
+ * Get the protocol token account (associated token account for OLV)
+ */
+async function getProtocolTokenAccount(protocolPda, olvMint = OLV_MINT_ADDRESS) {
+    try {
+        const tokenAccount = await getAssociatedTokenAddress(
+            olvMint,
+            protocolPda,
+            true // allow owner off-curve (PDA)
+        );
+        return tokenAccount;
+    } catch (err) {
+        console.error("Failed to get protocol token account:", err);
+        return null;
+    }
+}
+
+/**
+ * Check if a token account exists and get its balance
+ */
+async function getTokenAccountBalance(tokenAccount) {
+    try {
+        const accountInfo = await connection.getAccountInfo(tokenAccount);
+        if (!accountInfo) return { exists: false, balance: 0 };
+        
+        const balance = await connection.getTokenAccountBalance(tokenAccount);
+        return { exists: true, balance: balance.value.uiAmount || 0 };
+    } catch (err) {
+        console.error("Failed to get token balance:", err);
+        return { exists: false, balance: 0 };
+    }
+}
+
+/**
+ * Initialize the protocol PDA and token account
+ * Call this once at startup
+ */
+async function initializeProtocolPDA() {
+    const result = findProtocolPDA();
+    if (!result) {
+        console.error("❌ Failed to find protocol PDA");
+        return false;
+    }
+    
+    protocolPDA = result.pda;
+    console.log(`🏦 Protocol PDA: ${protocolPDA.toBase58()}`);
+    console.log(`🔢 Protocol Bump: ${result.bump}`);
+    console.log(`📋 Program ID: ${result.programId.toBase58()}`);
+    
+    // Get the protocol token account
+    protocolTokenAccount = await getProtocolTokenAccount(protocolPDA);
+    if (protocolTokenAccount) {
+        console.log(`📦 Protocol Token Account: ${protocolTokenAccount.toBase58()}`);
+        
+        // Check if it exists
+        const info = await getTokenAccountBalance(protocolTokenAccount);
+        if (info.exists) {
+            console.log(`💰 Protocol OLV Balance: ${info.balance}`);
+            protocolOlvBalance = info.balance;
+        } else {
+            console.log(`⚠️ Protocol token account not initialized yet`);
+            protocolOlvBalance = 0;
+        }
+    }
+    
+    return true;
+}
+
+// ============================================================
 // OLV TOKEN FUNCTIONS
 // ============================================================
 
@@ -125,52 +236,66 @@ async function fetchRealOlvBalance(walletAddress) {
     }
 }
 
-async function fetchTreasuryOlvBalance() {
+async function fetchProtocolOlvBalance() {
     try {
-        const treasuryPubKey = new PublicKey(TREASURY_WALLET);
-        const olvMint = new PublicKey(OLV_MINT_ADDRESS);
-        const tokenAccount = await getAssociatedTokenAddress(olvMint, treasuryPubKey);
+        if (!protocolPDA) {
+            await initializeProtocolPDA();
+        }
+        if (!protocolPDA || !protocolTokenAccount) {
+            return 0;
+        }
         
-        const accountInfo = await connection.getAccountInfo(tokenAccount);
-        if (!accountInfo) return 0;
+        const result = await getTokenAccountBalance(protocolTokenAccount);
+        protocolOlvBalance = result.balance;
         
-        const balance = await connection.getTokenAccountBalance(tokenAccount);
-        return balance.value.uiAmount || 0;
+        console.log(`🏦 Protocol OLV: ${protocolOlvBalance}`);
+        return result.balance;
+        
     } catch (err) {
-        console.error("Treasury OLV balance fetch error:", err);
+        console.error("Protocol OLV balance fetch error:", err);
         return 0;
     }
 }
 
-async function getTreasurySolBalance() {
+async function getProtocolSolBalance() {
     try {
-        const treasuryBal = await connection.getBalance(new PublicKey(TREASURY_WALLET));
-        return treasuryBal / 1_000_000_000;
+        if (!protocolPDA) {
+            await initializeProtocolPDA();
+        }
+        if (!protocolPDA) return 0;
+        
+        const solBalance = await connection.getBalance(protocolPDA);
+        protocolSolBalance = solBalance / 1_000_000_000;
+        return protocolSolBalance;
     } catch (err) {
-        console.error("Treasury SOL balance error:", err);
+        console.error("Protocol SOL balance error:", err);
         return 0;
     }
 }
 
 async function fetchWalletBalances(walletAddress) {
-    if (!walletAddress || !connection) return { sol: 0, olv: 0, treasury: 0 };
+    if (!walletAddress || !connection) return { sol: 0, olv: 0, protocolSol: 0, protocolOlv: 0 };
     
     try {
         const solBalance = await connection.getBalance(new PublicKey(walletAddress));
         const solInSol = solBalance / 1_000_000_000;
         const olvBalance = await fetchRealOlvBalance(walletAddress);
-        const treasurySol = await getTreasurySolBalance();
-        const treasuryOlv = await fetchTreasuryOlvBalance();
         
-        treasuryOlvBalance = treasuryOlv;
+        await fetchProtocolOlvBalance();
+        await getProtocolSolBalance();
         
-        console.log(`💰 Wallet: ${solInSol} SOL, ${olvBalance} OLV`);
-        console.log(`🏦 Treasury: ${treasurySol} SOL, ${treasuryOlv} OLV`);
+        console.log(`💰 Wallet: ${solInSol.toFixed(4)} SOL, ${olvBalance.toFixed(2)} OLV`);
+        console.log(`🏦 Protocol: ${protocolSolBalance.toFixed(4)} SOL, ${protocolOlvBalance.toFixed(2)} OLV`);
         
-        return { sol: solInSol, olv: olvBalance, treasury: treasurySol };
+        return { 
+            sol: solInSol, 
+            olv: olvBalance, 
+            protocolSol: protocolSolBalance,
+            protocolOlv: protocolOlvBalance 
+        };
     } catch (err) {
         console.error("Balance fetch error:", err);
-        return { sol: 0, olv: 0, treasury: 0 };
+        return { sol: 0, olv: 0, protocolSol: 0, protocolOlv: 0 };
     }
 }
 
@@ -188,7 +313,7 @@ function createTransferInstruction(source, destination, owner, amount) {
 }
 
 // ============================================================
-// CORE OLV SPEND FUNCTION - SENDS TOKENS TO TREASURY
+// CORE OLV SPEND FUNCTION - SENDS TOKENS TO PROTOCOL PDA
 // ============================================================
 
 async function spendOlvTokens(amount, reason) {
@@ -197,43 +322,49 @@ async function spendOlvTokens(amount, reason) {
         return false;
     }
     
-    // Check if we have enough OLV
     if (walletOlvBalance < amount) {
         showToast(`Insufficient OLV! Need ${amount}, have ${Math.floor(walletOlvBalance)}`, true);
         return false;
     }
     
     try {
-        // Attempt actual token transfer if connected via wallet
+        if (!protocolPDA) {
+            await initializeProtocolPDA();
+        }
+        if (!protocolPDA || !protocolTokenAccount) {
+            showToast("Failed to find protocol account", true);
+            return false;
+        }
+        
         if (currentUser.type === 'wallet' && window.solana) {
             try {
                 const provider = window.solana;
                 const walletPubKey = new PublicKey(currentUser.wallet);
                 const olvMint = new PublicKey(OLV_MINT_ADDRESS);
-                const treasuryPubKey = new PublicKey(TREASURY_WALLET);
                 
-                // Get source token account (user's OLV account)
                 const sourceTokenAccount = await getAssociatedTokenAddress(olvMint, walletPubKey);
                 
-                // Get destination token account (treasury OLV account)
-                const destTokenAccount = await getAssociatedTokenAddress(olvMint, treasuryPubKey);
-                
-                // Check if destination account exists, if not, we need to create it
-                const destAccountInfo = await connection.getAccountInfo(destTokenAccount);
-                if (!destAccountInfo) {
-                    showToast("Treasury account not initialized. Contact admin.", true);
+                const sourceInfo = await connection.getAccountInfo(sourceTokenAccount);
+                if (!sourceInfo) {
+                    showToast("No OLV token account found. Please get some OLV first.", true);
                     return false;
                 }
                 
-                // Create transfer instruction
+                const destInfo = await connection.getAccountInfo(protocolTokenAccount);
+                if (!destInfo) {
+                    showToast("Protocol token account not initialized. Contact admin.", true);
+                    return false;
+                }
+                
+                const amountWithDecimals = new BN(amount * 1_000_000_000);
+                
                 const transferIx = createTransferInstruction(
                     sourceTokenAccount,
-                    destTokenAccount,
+                    protocolTokenAccount,
                     walletPubKey,
-                    amount * 1_000_000_000 // Convert to lamports (assuming 9 decimals)
+                    amountWithDecimals.toNumber()
                 );
                 
-                // Create and send transaction
                 const transaction = new Transaction().add(transferIx);
                 const { blockhash } = await connection.getRecentBlockhash();
                 transaction.recentBlockhash = blockhash;
@@ -243,11 +374,14 @@ async function spendOlvTokens(amount, reason) {
                 const signature = await connection.sendRawTransaction(signed.serialize());
                 await connection.confirmTransaction(signature);
                 
-                console.log(`✅ Sent ${amount} OLV to treasury: ${signature}`);
-                walletOlvBalance -= amount;
-                treasuryOlvBalance += amount;
+                console.log(`✅ Sent ${amount} OLV to protocol PDA: ${signature}`);
+                console.log(`🏦 Protocol PDA: ${protocolPDA.toBase58()}`);
+                console.log(`📦 Protocol Token Account: ${protocolTokenAccount.toBase58()}`);
                 
-                showToast(`✅ ${amount} OLV sent to treasury for ${reason}`);
+                walletOlvBalance -= amount;
+                protocolOlvBalance += amount;
+                
+                showToast(`✅ ${amount} OLV sent to protocol for ${reason}`);
                 return true;
                 
             } catch (txErr) {
@@ -256,10 +390,9 @@ async function spendOlvTokens(amount, reason) {
                 return false;
             }
         } else {
-            // Email/guest mode - simulated spend with logging
             walletOlvBalance -= amount;
-            treasuryOlvBalance += amount;
-            console.log(`💸 Simulated: Spent ${amount} OLV on ${reason} (${walletOlvBalance} remaining)`);
+            protocolOlvBalance += amount;
+            console.log(`💸 Simulated: Spent ${amount} OLV on ${reason}`);
             showToast(`💸 Spent ${amount} OLV on ${reason} (simulated)`);
             return true;
         }
@@ -343,7 +476,7 @@ async function buyWithOlv(itemId) {
 }
 
 // ============================================================
-// BUY TREE WITH OLV
+// BUY FUNCTIONS WITH OLV
 // ============================================================
 
 async function buyTreeWithOlv() {
@@ -362,7 +495,6 @@ async function buyTreeWithOlv() {
     const success = await spendOlvTokens(cost, "Tree Purchase");
     if (!success) return;
     
-    // Plant the tree
     const rarity = getRarity();
     if (rarity === 'rare') state.rareCount++;
     if (rarity === 'legendary') state.rareCount++;
@@ -379,10 +511,6 @@ async function buyTreeWithOlv() {
     checkAchievements();
     if (currentUser) saveGameToCloud();
 }
-
-// ============================================================
-// BUY UPGRADE WITH OLV
-// ============================================================
 
 async function buyUpgradeWithOlv(type) {
     const costs = {
@@ -420,10 +548,6 @@ async function buyUpgradeWithOlv(type) {
     if (currentUser) saveGameToCloud();
 }
 
-// ============================================================
-// CLEAN MILL WITH OLV
-// ============================================================
-
 async function cleanMillWithOlv() {
     const cost = OLV_PRICES.cleanMill;
     
@@ -451,10 +575,6 @@ async function cleanMillWithOlv() {
     render();
     if (currentUser) saveGameToCloud();
 }
-
-// ============================================================
-// RESET GAME WITH OLV
-// ============================================================
 
 async function resetGameWithOlv() {
     const cost = OLV_PRICES.resetGame;
@@ -485,7 +605,6 @@ async function resetGameWithOlv() {
 // ============================================================
 
 async function resetGame() {
-    // Show confirmation dialog with options
     const confirmed = confirm(
         "⚠️ WARNING: This will reset your entire estate!\n\n" +
         "All trees, oil, hopper contents, and progress will be lost.\n\n" +
@@ -496,7 +615,6 @@ async function resetGame() {
     );
     
     if (!confirmed) {
-        // Check for OLV payment option if they cancelled
         const olvConfirm = confirm(
             "Reset with 300 OLV instead?\n\n" +
             "This will deduct 300 OLV from your wallet and reset your estate."
@@ -507,7 +625,6 @@ async function resetGame() {
             return false;
         }
         
-        // OLV payment
         if (!currentUser) {
             showToast("Connect wallet first to pay with OLV!", true);
             return false;
@@ -526,7 +643,6 @@ async function resetGame() {
         return true;
     }
     
-    // SOL payment
     if (state.sol < 3) {
         showToast("Need 3 SOL to reset! (or 300 OLV)", true);
         return false;
@@ -587,7 +703,13 @@ function performReset() {
 function upgradeFlyTraps() {
     const cost = 0.003;
     if (state.sol < cost) {
-        showToast(`Need ${cost} SOL to install Fly Traps!`, true);
+        if (walletOlvBalance >= OLV_PRICES.flyTraps) {
+            if (confirm(`Not enough SOL! Would you like to buy Fly Traps with ${OLV_PRICES.flyTraps} OLV instead?`)) {
+                buyUpgradeWithOlv('flyTraps');
+                return;
+            }
+        }
+        showToast(`Need ${cost} SOL (or ${OLV_PRICES.flyTraps} OLV)`, true);
         return;
     }
     if (state.upgrades.flyTraps) {
@@ -722,7 +844,11 @@ async function updateWalletBalancesUI() {
     const balances = await fetchWalletBalances(currentUser.wallet);
     walletSolBalance = balances.sol;
     walletOlvBalance = balances.olv;
-    treasurySolBalance = balances.treasury;
+    protocolSolBalance = balances.protocolSol;
+    protocolOlvBalance = balances.protocolOlv;
+    
+    await fetchProtocolOlvBalance();
+    await getProtocolSolBalance();
     
     const walletSolEl = document.getElementById('wallet-sol-balance');
     const walletOlvEl = document.getElementById('wallet-olv-balance');
@@ -733,9 +859,17 @@ async function updateWalletBalancesUI() {
     if (walletOlvEl) walletOlvEl.innerText = Math.floor(walletOlvBalance);
     if (uiOlvEl) uiOlvEl.innerText = Math.floor(walletOlvBalance);
     
-    // Update treasury display
-    const treasuryEl = document.getElementById('treasury-balance');
-    if (treasuryEl) treasuryEl.innerText = Math.floor(treasuryOlvBalance);
+    const protocolOlvEl = document.getElementById('protocol-olv-balance');
+    if (protocolOlvEl) protocolOlvEl.innerText = Math.floor(protocolOlvBalance);
+    
+    const protocolSolEl = document.getElementById('protocol-sol-balance');
+    if (protocolSolEl) protocolSolEl.innerText = protocolSolBalance.toFixed(4);
+    
+    const protocolPdaEl = document.getElementById('protocol-pda');
+    if (protocolPdaEl && protocolPDA) {
+        protocolPdaEl.innerText = protocolPDA.toBase58().slice(0, 8) + '...';
+        protocolPdaEl.title = protocolPDA.toBase58();
+    }
     
     if (uiSolEl && walletSolBalance > 0 && state.sol === 25) {
         state.sol = walletSolBalance;
@@ -752,6 +886,7 @@ async function updateWalletBalancesUI() {
 async function refreshBalances() {
     if (!currentUser) { showToast("Connect wallet first!", true); return; }
     showToast("🔄 Refreshing balances...");
+    await initializeProtocolPDA();
     await updateWalletBalancesUI();
     showToast("✅ Balances updated!");
     if (currentUser) await saveGameToCloud();
@@ -843,6 +978,7 @@ async function connectWallet() {
         hideConnectModal();
         showToast('✅ Wallet connected! Fetching balances...');
         
+        await initializeProtocolPDA();
         await updateWalletBalancesUI();
         
         if (balanceCheckInterval) clearInterval(balanceCheckInterval);
@@ -909,7 +1045,8 @@ async function emailLogin() {
     
     walletSolBalance = 25.0;
     walletOlvBalance = 100;
-    treasuryOlvBalance = 0;
+    protocolOlvBalance = 0;
+    await initializeProtocolPDA();
     updateWalletBalancesUI();
     
     const loaded = await loadGameFromCloud();
@@ -939,16 +1076,15 @@ async function emailLogin() {
 // ============================================================
 
 function buyTree() {
-    if (state.sol < 5) { 
-        // Offer OLV option
+    if (state.sol < 5) {
         if (walletOlvBalance >= OLV_PRICES.tree) {
             if (confirm(`Not enough SOL! Would you like to buy a tree with ${OLV_PRICES.tree} OLV instead?`)) {
                 buyTreeWithOlv();
                 return;
             }
         }
-        showToast("Need 5 SOL! (or " + OLV_PRICES.tree + " OLV)", true); 
-        return; 
+        showToast("Need 5 SOL! (or " + OLV_PRICES.tree + " OLV)", true);
+        return;
     }
     state.sol -= 5;
     const rarity = getRarity();
@@ -998,9 +1134,15 @@ function interactTree(index) {
 
 function pressMill() {
     if (state.hopper <= 0) { showToast("No fruit in hopper!", true); return; }
-    if (state.mill.gunk >= 100) { 
-        showToast("💥 Mill clogged! Clean it with SOL or OLV!", true); 
-        return; 
+    if (state.mill.gunk >= 100) {
+        if (walletOlvBalance >= OLV_PRICES.cleanMill) {
+            if (confirm(`Mill is clogged! Clean it with ${OLV_PRICES.cleanMill} OLV?`)) {
+                cleanMillWithOlv();
+                return;
+            }
+        }
+        showToast("💥 Mill clogged! Clean it with SOL or OLV!", true);
+        return;
     }
 
     const isIndustrialist = state.archetype === 'industrialist';
@@ -1050,192 +1192,16 @@ function pressMill() {
     if (currentUser) saveGameToCloud();
 }
 
-// ============================================================
-// KINTARA ARCHETYPE SYSTEM
-// ============================================================
-
-const ARCHETYPES = {
-    agrarian: {
-        name: 'The Agrarian',
-        icon: '🌿',
-        desc: 'Max grove density, exponential harvest combo — but blight spreads fast.',
-        bonuses: ['Grove cap +50%', '+30% combo multiplier', 'Over-saturation boosts yield'],
-        risks: ['Pests spread contagiously between adjacent trees', 'Taxes Industrialist/Speculator skills by 30%']
-    },
-    industrialist: {
-        name: 'The Industrialist',
-        icon: '⚙️',
-        desc: 'Precise thermal pressing extracts maximum oil — but one mistake blows the mill.',
-        bonuses: ['+30% extraction in precision zone (heat<60)', 'Press faster before heat spikes', 'Gunk decay 2x faster'],
-        risks: ['Mill pressure builds exponentially', 'Explosion wipes hopper', 'Taxes Agrarian/Speculator skills by 30%']
-    },
-    speculator: {
-        name: 'The Cartel Speculator',
-        icon: '📈',
-        desc: 'Lock futures contracts with OLV, exploit market crashes and supply shocks.',
-        bonuses: ['Buy oil price futures with OLV', 'Sell events drop market for rivals', '+20% sell revenue'],
-        risks: ['Futures can expire worthless', 'Needs active management', 'Taxes Agrarian/Industrialist skills by 30%']
-    }
-};
-
-function chooseArchetype(type) {
-    if (state.archetypeLocked) { showToast("Archetype locked until prestige!", true); return; }
-    if (!ARCHETYPES[type]) return;
-    state.archetype = type;
-    state.archetypeLocked = true;
-    const a = ARCHETYPES[type];
-    log(`🏛️ Locked in as ${a.name}! ${a.desc}`);
-    showToast(`${a.icon} ${a.name} locked!`);
-    if (type === 'agrarian') {
-        state.skillMultipliers.yield *= 1.3;
-    }
-    if (type === 'industrialist') {
-        state.mill.gunkDecayRate = 2;
-    }
-    render();
-    if (currentUser) saveGameToCloud();
-}
-
-function buyFuture(amountOil) {
-    if (state.archetype !== 'speculator') { showToast("Only Speculators can trade futures!", true); return; }
-    if (!currentUser) { showToast("Connect wallet to trade!", true); return; }
-    const olvCost = Math.ceil(amountOil * 5);
-    if (walletOlvBalance < olvCost) { showToast(`Need ${olvCost} OLV!`, true); return; }
-    const contract = {
-        lockedPrice: state.world.price,
-        expiresAt: Date.now() + 60000,
-        amount: amountOil,
-        olvCost
-    };
-    state.futures.push(contract);
-    showToast(`📜 Future locked: ${amountOil}L @ ${state.world.price.toFixed(2)} SOL`);
-    log(`📜 Futures contract: ${amountOil}L @ ${state.world.price.toFixed(2)} (expires 60s)`);
-    render();
-}
-
-function settleFutures() {
-    const now = Date.now();
-    const expired = state.futures.filter(f => now >= f.expiresAt);
-    const active = state.futures.filter(f => now < f.expiresAt);
-    expired.forEach(f => {
-        log(`📜 Futures contract expired: ${f.amount}L @ ${f.lockedPrice.toFixed(2)} (unused)`);
-    });
-    state.futures = active;
-}
-
-function sellOilWithFuture(futureIdx) {
-    const future = state.futures[futureIdx];
-    if (!future || Date.now() >= future.expiresAt) { showToast("Contract expired!", true); return; }
-    const sellAmt = Math.min(state.oil, future.amount);
-    if (sellAmt <= 0) { showToast("No oil to sell!", true); return; }
-    const revenue = sellAmt * future.lockedPrice * 1.2;
-    state.sol += revenue;
-    state.lifetimeSol += revenue;
-    state.oil -= sellAmt;
-    state.futures.splice(futureIdx, 1);
-    applyMarketImpact(sellAmt);
-    showToast(`📜 Future settled! +${revenue.toFixed(2)} SOL @ ${future.lockedPrice.toFixed(2)}`);
-    log(`📜 Future settled: ${sellAmt.toFixed(1)}L → +${revenue.toFixed(2)} SOL`);
-    render();
-    if (currentUser) saveGameToCloud();
-}
-
-function applyMarketImpact(volumeSold) {
-    const impact = volumeSold * 0.004;
-    state.marketPool = Math.max(0.5, state.marketPool - impact);
-    state.world.price = Math.max(0.5, Math.min(state.world.price, state.marketPool));
-    state.marketVolume += volumeSold;
-    if (volumeSold > 20) {
-        log(`📉 Market depressed by large sale: ${volumeSold.toFixed(1)}L sold`);
-    }
-}
-
-function openArchetypePanel() {
-    const overlay = document.getElementById('archetype-overlay');
-    if (overlay) { overlay.remove(); return; }
-    
-    const newOverlay = document.createElement('div');
-    newOverlay.id = 'archetype-overlay';
-    newOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
-    const locked = state.archetypeLocked;
-    newOverlay.innerHTML = `
-        <div style="background:#1a110a;border:1px solid #c9903e;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
-            <div style="text-align:center;margin-bottom:16px;">
-                <div style="font-size:20px;color:#c9903e;font-weight:bold;">🏛️ STEWARD SPECIALIZATION</div>
-                <div style="font-size:10px;opacity:0.5;margin-top:4px;">${locked ? `Locked as: ${ARCHETYPES[state.archetype]?.icon} ${ARCHETYPES[state.archetype]?.name}` : 'Choose your path — locks until prestige'}</div>
-            </div>
-            ${Object.entries(ARCHETYPES).map(([key, a]) => `
-                <div onclick="${locked ? '' : `game.chooseArchetype('${key}'); document.getElementById('archetype-overlay').remove();`}"
-                     style="background:${state.archetype === key ? 'rgba(201,144,62,0.2)' : 'rgba(255,255,255,0.04)'};border:1px solid ${state.archetype === key ? '#c9903e' : 'rgba(255,255,255,0.1)'};border-radius:10px;padding:12px;margin-bottom:10px;cursor:${locked ? 'default' : 'pointer'};">
-                    <div style="font-weight:bold;color:#c9903e;">${a.icon} ${a.name} ${state.archetype === key ? '✅' : ''}</div>
-                    <div style="font-size:10px;opacity:0.7;margin:4px 0;">${a.desc}</div>
-                    <div style="font-size:9px;color:#4ade80;">✓ ${a.bonuses.join(' · ')}</div>
-                    <div style="font-size:9px;color:#ef4444;margin-top:2px;">⚠ ${a.risks[0]}</div>
-                </div>
-            `).join('')}
-            <button onclick="document.getElementById('archetype-overlay').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
-        </div>
-    `;
-    document.body.appendChild(newOverlay);
-}
-
-function openFuturesPanel() {
-    if (state.archetype !== 'speculator') { showToast("Speculator path only!", true); return; }
-    settleFutures();
-    const overlay = document.getElementById('futures-overlay');
-    if (overlay) { overlay.remove(); return; }
-    
-    const newOverlay = document.createElement('div');
-    newOverlay.id = 'futures-overlay';
-    newOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
-    const futureOptions = [10, 25, 50];
-    newOverlay.innerHTML = `
-        <div style="background:#1a110a;border:1px solid #a855f7;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
-            <div style="text-align:center;margin-bottom:16px;">
-                <div style="font-size:18px;color:#a855f7;font-weight:bold;">📜 FUTURES EXCHANGE</div>
-                <div style="font-size:10px;opacity:0.5;">Lock today's price for 60 seconds · +20% sell bonus</div>
-                <div style="font-size:11px;margin-top:6px;">Current price: <span style="color:#c9903e;">${state.world.price.toFixed(2)} SOL/L</span></div>
-            </div>
-            <div style="margin-bottom:12px;">
-                <div style="font-size:10px;opacity:0.6;margin-bottom:6px;">BUY NEW CONTRACT:</div>
-                ${futureOptions.map(amt => `
-                    <button onclick="game.buyFuture(${amt}); document.getElementById('futures-overlay').remove();"
-                        style="width:100%;margin-bottom:6px;padding:10px;background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:8px;color:white;cursor:pointer;text-align:left;">
-                        📜 Lock ${amt}L @ ${state.world.price.toFixed(2)} <span style="float:right;color:#a855f7;">${Math.ceil(amt * 5)} OLV</span>
-                    </button>
-                `).join('')}
-            </div>
-            ${state.futures.length > 0 ? `
-            <div>
-                <div style="font-size:10px;opacity:0.6;margin-bottom:6px;">ACTIVE CONTRACTS:</div>
-                ${state.futures.map((f, i) => `
-                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-                        <div>
-                            <div style="font-size:11px;">📜 ${f.amount}L @ ${f.lockedPrice.toFixed(2)} SOL</div>
-                            <div style="font-size:9px;opacity:0.5;">Expires ${Math.max(0, Math.ceil((f.expiresAt - Date.now()) / 1000))}s</div>
-                        </div>
-                        <button onclick="game.sellOilWithFuture(${i}); document.getElementById('futures-overlay').remove();"
-                            style="padding:6px 12px;background:#4ade80;color:black;border:none;border-radius:6px;cursor:pointer;font-size:10px;font-weight:bold;">SETTLE</button>
-                    </div>
-                `).join('')}
-            </div>` : '<div style="font-size:10px;opacity:0.4;text-align:center;">No active contracts</div>'}
-            <button onclick="document.getElementById('futures-overlay').remove()" style="width:100%;margin-top:10px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
-        </div>
-    `;
-    document.body.appendChild(newOverlay);
-}
-
 function cleanMill() {
-    if (state.sol < 0.2) { 
-        // Offer OLV option
+    if (state.sol < 0.2) {
         if (walletOlvBalance >= OLV_PRICES.cleanMill) {
             if (confirm(`Not enough SOL! Would you like to clean the mill with ${OLV_PRICES.cleanMill} OLV instead?`)) {
                 cleanMillWithOlv();
                 return;
             }
         }
-        showToast(`Need 0.2 SOL (or ${OLV_PRICES.cleanMill} OLV)`, true); 
-        return; 
+        showToast(`Need 0.2 SOL (or ${OLV_PRICES.cleanMill} OLV)`, true);
+        return;
     }
     state.sol -= 0.2;
     state.mill.gunk = 0;
@@ -1254,7 +1220,6 @@ function upgrade(type) {
     };
     
     if (state.sol < costs[type]) {
-        // Offer OLV option
         if (walletOlvBalance >= olvCosts[type]) {
             if (confirm(`Not enough SOL! Would you like to buy ${type} with ${olvCosts[type]} OLV instead?`)) {
                 buyUpgradeWithOlv(type);
@@ -1438,6 +1403,181 @@ function checkQuest() {
         state.quest.reward = Math.floor(state.quest.target / 5) + 5;
         render();
     }
+}
+
+// ============================================================
+// KINTARA ARCHETYPE SYSTEM
+// ============================================================
+
+const ARCHETYPES = {
+    agrarian: {
+        name: 'The Agrarian',
+        icon: '🌿',
+        desc: 'Max grove density, exponential harvest combo — but blight spreads fast.',
+        bonuses: ['Grove cap +50%', '+30% combo multiplier', 'Over-saturation boosts yield'],
+        risks: ['Pests spread contagiously between adjacent trees', 'Taxes Industrialist/Speculator skills by 30%']
+    },
+    industrialist: {
+        name: 'The Industrialist',
+        icon: '⚙️',
+        desc: 'Precise thermal pressing extracts maximum oil — but one mistake blows the mill.',
+        bonuses: ['+30% extraction in precision zone (heat<60)', 'Press faster before heat spikes', 'Gunk decay 2x faster'],
+        risks: ['Mill pressure builds exponentially', 'Explosion wipes hopper', 'Taxes Agrarian/Speculator skills by 30%']
+    },
+    speculator: {
+        name: 'The Cartel Speculator',
+        icon: '📈',
+        desc: 'Lock futures contracts with OLV, exploit market crashes and supply shocks.',
+        bonuses: ['Buy oil price futures with OLV', 'Sell events drop market for rivals', '+20% sell revenue'],
+        risks: ['Futures can expire worthless', 'Needs active management', 'Taxes Agrarian/Industrialist skills by 30%']
+    }
+};
+
+function chooseArchetype(type) {
+    if (state.archetypeLocked) { showToast("Archetype locked until prestige!", true); return; }
+    if (!ARCHETYPES[type]) return;
+    state.archetype = type;
+    state.archetypeLocked = true;
+    const a = ARCHETYPES[type];
+    log(`🏛️ Locked in as ${a.name}! ${a.desc}`);
+    showToast(`${a.icon} ${a.name} locked!`);
+    if (type === 'agrarian') {
+        state.skillMultipliers.yield *= 1.3;
+    }
+    if (type === 'industrialist') {
+        state.mill.gunkDecayRate = 2;
+    }
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function buyFuture(amountOil) {
+    if (state.archetype !== 'speculator') { showToast("Only Speculators can trade futures!", true); return; }
+    if (!currentUser) { showToast("Connect wallet to trade!", true); return; }
+    const olvCost = Math.ceil(amountOil * 5);
+    if (walletOlvBalance < olvCost) { showToast(`Need ${olvCost} OLV!`, true); return; }
+    const contract = {
+        lockedPrice: state.world.price,
+        expiresAt: Date.now() + 60000,
+        amount: amountOil,
+        olvCost
+    };
+    state.futures.push(contract);
+    showToast(`📜 Future locked: ${amountOil}L @ ${state.world.price.toFixed(2)} SOL`);
+    log(`📜 Futures contract: ${amountOil}L @ ${state.world.price.toFixed(2)} (expires 60s)`);
+    render();
+}
+
+function settleFutures() {
+    const now = Date.now();
+    const expired = state.futures.filter(f => now >= f.expiresAt);
+    const active = state.futures.filter(f => now < f.expiresAt);
+    expired.forEach(f => {
+        log(`📜 Futures contract expired: ${f.amount}L @ ${f.lockedPrice.toFixed(2)} (unused)`);
+    });
+    state.futures = active;
+}
+
+function sellOilWithFuture(futureIdx) {
+    const future = state.futures[futureIdx];
+    if (!future || Date.now() >= future.expiresAt) { showToast("Contract expired!", true); return; }
+    const sellAmt = Math.min(state.oil, future.amount);
+    if (sellAmt <= 0) { showToast("No oil to sell!", true); return; }
+    const revenue = sellAmt * future.lockedPrice * 1.2;
+    state.sol += revenue;
+    state.lifetimeSol += revenue;
+    state.oil -= sellAmt;
+    state.futures.splice(futureIdx, 1);
+    applyMarketImpact(sellAmt);
+    showToast(`📜 Future settled! +${revenue.toFixed(2)} SOL @ ${future.lockedPrice.toFixed(2)}`);
+    log(`📜 Future settled: ${sellAmt.toFixed(1)}L → +${revenue.toFixed(2)} SOL`);
+    render();
+    if (currentUser) saveGameToCloud();
+}
+
+function applyMarketImpact(volumeSold) {
+    const impact = volumeSold * 0.004;
+    state.marketPool = Math.max(0.5, state.marketPool - impact);
+    state.world.price = Math.max(0.5, Math.min(state.world.price, state.marketPool));
+    state.marketVolume += volumeSold;
+    if (volumeSold > 20) {
+        log(`📉 Market depressed by large sale: ${volumeSold.toFixed(1)}L sold`);
+    }
+}
+
+function openArchetypePanel() {
+    const overlay = document.getElementById('archetype-overlay');
+    if (overlay) { overlay.remove(); return; }
+    
+    const newOverlay = document.createElement('div');
+    newOverlay.id = 'archetype-overlay';
+    newOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const locked = state.archetypeLocked;
+    newOverlay.innerHTML = `
+        <div style="background:#1a110a;border:1px solid #c9903e;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:20px;color:#c9903e;font-weight:bold;">🏛️ STEWARD SPECIALIZATION</div>
+                <div style="font-size:10px;opacity:0.5;margin-top:4px;">${locked ? `Locked as: ${ARCHETYPES[state.archetype]?.icon} ${ARCHETYPES[state.archetype]?.name}` : 'Choose your path — locks until prestige'}</div>
+            </div>
+            ${Object.entries(ARCHETYPES).map(([key, a]) => `
+                <div onclick="${locked ? '' : `game.chooseArchetype('${key}'); document.getElementById('archetype-overlay').remove();`}"
+                     style="background:${state.archetype === key ? 'rgba(201,144,62,0.2)' : 'rgba(255,255,255,0.04)'};border:1px solid ${state.archetype === key ? '#c9903e' : 'rgba(255,255,255,0.1)'};border-radius:10px;padding:12px;margin-bottom:10px;cursor:${locked ? 'default' : 'pointer'};">
+                    <div style="font-weight:bold;color:#c9903e;">${a.icon} ${a.name} ${state.archetype === key ? '✅' : ''}</div>
+                    <div style="font-size:10px;opacity:0.7;margin:4px 0;">${a.desc}</div>
+                    <div style="font-size:9px;color:#4ade80;">✓ ${a.bonuses.join(' · ')}</div>
+                    <div style="font-size:9px;color:#ef4444;margin-top:2px;">⚠ ${a.risks[0]}</div>
+                </div>
+            `).join('')}
+            <button onclick="document.getElementById('archetype-overlay').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
+        </div>
+    `;
+    document.body.appendChild(newOverlay);
+}
+
+function openFuturesPanel() {
+    if (state.archetype !== 'speculator') { showToast("Speculator path only!", true); return; }
+    settleFutures();
+    const overlay = document.getElementById('futures-overlay');
+    if (overlay) { overlay.remove(); return; }
+    
+    const newOverlay = document.createElement('div');
+    newOverlay.id = 'futures-overlay';
+    newOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const futureOptions = [10, 25, 50];
+    newOverlay.innerHTML = `
+        <div style="background:#1a110a;border:1px solid #a855f7;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:18px;color:#a855f7;font-weight:bold;">📜 FUTURES EXCHANGE</div>
+                <div style="font-size:10px;opacity:0.5;">Lock today's price for 60 seconds · +20% sell bonus</div>
+                <div style="font-size:11px;margin-top:6px;">Current price: <span style="color:#c9903e;">${state.world.price.toFixed(2)} SOL/L</span></div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <div style="font-size:10px;opacity:0.6;margin-bottom:6px;">BUY NEW CONTRACT:</div>
+                ${futureOptions.map(amt => `
+                    <button onclick="game.buyFuture(${amt}); document.getElementById('futures-overlay').remove();"
+                        style="width:100%;margin-bottom:6px;padding:10px;background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:8px;color:white;cursor:pointer;text-align:left;">
+                        📜 Lock ${amt}L @ ${state.world.price.toFixed(2)} <span style="float:right;color:#a855f7;">${Math.ceil(amt * 5)} OLV</span>
+                    </button>
+                `).join('')}
+            </div>
+            ${state.futures.length > 0 ? `
+            <div>
+                <div style="font-size:10px;opacity:0.6;margin-bottom:6px;">ACTIVE CONTRACTS:</div>
+                ${state.futures.map((f, i) => `
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-size:11px;">📜 ${f.amount}L @ ${f.lockedPrice.toFixed(2)} SOL</div>
+                            <div style="font-size:9px;opacity:0.5;">Expires ${Math.max(0, Math.ceil((f.expiresAt - Date.now()) / 1000))}s</div>
+                        </div>
+                        <button onclick="game.sellOilWithFuture(${i}); document.getElementById('futures-overlay').remove();"
+                            style="padding:6px 12px;background:#4ade80;color:black;border:none;border-radius:6px;cursor:pointer;font-size:10px;font-weight:bold;">SETTLE</button>
+                    </div>
+                `).join('')}
+            </div>` : '<div style="font-size:10px;opacity:0.4;text-align:center;">No active contracts</div>'}
+            <button onclick="document.getElementById('futures-overlay').remove()" style="width:100%;margin-top:10px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
+        </div>
+    `;
+    document.body.appendChild(newOverlay);
 }
 
 // ============================================================
@@ -1652,7 +1792,7 @@ async function loadGameFromCloud() {
         state.comboRecord = data.comboRecord ?? 1.0;
         state.rareCount = data.rareCount ?? 0;
         state.trees = data.trees ? JSON.parse(data.trees) : [];
-        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) :{ irrigation: false, misting: false, fertilizer: false, flyTraps: false };
+        state.upgrades = data.upgrades ? JSON.parse(data.upgrades) : { irrigation: false, misting: false, fertilizer: false, flyTraps: false };
         state.skills = data.skills || [];
         state.skillMultipliers = data.skillMultipliers ? JSON.parse(data.skillMultipliers) : { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 };
         state.mill = data.mill ? JSON.parse(data.mill) : { mash: 0, gunk: 0 };
@@ -1960,8 +2100,14 @@ function addOlvShopPanel() {
             <h3 class="serif text-xl text-gold">🛒 OLV SHOP</h3>
             <span class="close-btn" onclick="closePanel()">&times;</span>
         </div>
-        <div class="text-center text-sm mb-3">💰 Your OLV: <span id="shop-olv-balance" class="text-gold font-bold">0</span></div>
-        <div class="text-center text-xs text-dim mb-3">🏦 Treasury OLV: <span id="treasury-balance" class="text-gold font-bold">0</span></div>
+        <div class="text-center text-sm mb-2">💰 Your OLV: <span id="shop-olv-balance" class="text-gold font-bold">0</span></div>
+        <div class="text-center text-xs text-dim mb-3">
+            🏦 Protocol: <span id="protocol-olv-balance" class="text-gold font-bold">0</span> OLV
+            <div class="text-[8px] opacity-50 mt-1">
+                <span id="protocol-pda">PDA: ...</span>
+                <span class="ml-2">SOL: <span id="protocol-sol-balance">0.00</span></span>
+            </div>
+        </div>
         <div class="space-y-3">
             <div class="card" style="cursor:pointer" onclick="game.buyWithOlv('seeds')">
                 <div class="flex-between"><div><span class="text-lg">🌱</span> Ancient Seeds (5)</div><div class="text-gold">100 OLV</div></div>
@@ -2057,8 +2203,11 @@ function addBoostsDisplay() {
 // INITIALIZATION
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎮 OLIVIUM Estate loading...');
+    
+    // Initialize protocol PDA first
+    await initializeProtocolPDA();
     
     addOlvShopPanel();
     addBoostsDisplay();
@@ -2164,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 walletSolBalance = 25.0;
                 walletOlvBalance = 100;
-                treasuryOlvBalance = 0;
+                protocolOlvBalance = 0;
                 updateWalletBalancesUI();
             }
             
