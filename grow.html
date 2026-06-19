@@ -204,6 +204,14 @@
   input[type='date'].intake-input,input[type='time'].intake-input{-webkit-appearance:none;appearance:none;color-scheme:dark;min-height:50px}
   input[type='date'].intake-input::-webkit-calendar-picker-indicator,input[type='time'].intake-input::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1) saturate(3) hue-rotate(10deg);cursor:pointer;opacity:0.7}
   .intake-time-hint{font-size:11px;color:var(--text3);margin-top:4px;padding:0 4px;font-style:italic}
+
+  /* ── SACRED ARTS STYLES ── */
+  #tab-sacred .card { margin-top: 12px; }
+  #breath-counter-display .progress-track { height: 4px; }
+  .sacred-art-completed { opacity: 0.7; text-decoration: line-through; }
+  .sacred-art-completed .exercise-title { color: var(--teal); }
+  .ritual-progress { background: linear-gradient(90deg, var(--gold), var(--teal)); }
+  .witness-timer { font-family: monospace; font-size: 28px; letter-spacing: 2px; }
 </style>
 </head>
 <body>
@@ -781,11 +789,14 @@ function switchPartner(p, btn) {
 }
 
 function switchGrowthTab(tab, btn) {
-  ['radar','practices','couples','wheel','private'].forEach(function(t){
+  ['radar','practices','couples','wheel','private','sacred'].forEach(function(t){
     var el=document.getElementById('tab-'+t); if(el) el.style.display=t===tab?'block':'none';
   });
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  if (tab === 'sacred') {
+    setTimeout(renderSacredArts, 50);
+  }
 }
 
 function setJournalPartner(p, btn) {
@@ -979,43 +990,51 @@ function renderSacredArts() {
   if (!tabContainer) {
     const growthTabs = document.getElementById('growth-tab-row');
     if (growthTabs) {
-      const newTab = document.createElement('div');
-      newTab.className = 'tab';
-      newTab.setAttribute('onclick', "switchGrowthTab('sacred',this)");
-      newTab.textContent = 'Sacred';
-      growthTabs.appendChild(newTab);
+      // Check if sacred tab already exists
+      let existing = growthTabs.querySelector('.tab:last-child');
+      if (!existing || existing.textContent !== 'Sacred') {
+        const newTab = document.createElement('div');
+        newTab.className = 'tab';
+        newTab.setAttribute('onclick', "switchGrowthTab('sacred',this)");
+        newTab.textContent = 'Sacred';
+        growthTabs.appendChild(newTab);
+      }
     }
     
     // Create content container
     const parent = document.querySelector('#screen-growth');
     if (parent) {
-      const container = document.createElement('div');
-      container.id = 'tab-sacred';
-      container.style.display = 'none';
-      container.innerHTML = `
-        <div class="card">
-          <div class="card-title">🌬️ Sacred Arts — 64 Paths to Union</div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:16px;font-style:italic;line-height:1.6">
-            "When the breath is unsteady, all is unsteady.<br>
-            When the breath is still, all is still."<br>
-            <span style="font-size:11px;color:var(--text3)">— Hatha Yoga Pradipika</span>
+      // Check if container already exists
+      let existingContainer = document.getElementById('tab-sacred');
+      if (!existingContainer) {
+        const container = document.createElement('div');
+        container.id = 'tab-sacred';
+        container.style.display = 'none';
+        container.innerHTML = `
+          <div class="card">
+            <div class="card-title">🌬️ Sacred Arts — 64 Paths to Union</div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:16px;font-style:italic;line-height:1.6">
+              "When the breath is unsteady, all is unsteady.<br>
+              When the breath is still, all is still."<br>
+              <span style="font-size:11px;color:var(--text3)">— Hatha Yoga Pradipika</span>
+            </div>
+            <div id="sacred-arts-content"></div>
           </div>
-          <div id="sacred-arts-content"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">🧘 Breath Counter</div>
-          <div id="breath-counter-display"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">🌞🌜 90 Day Solar-Lunar Ritual</div>
-          <div id="ritual-90-display"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">🔥 Shiva & Jiva — The Witness Practice</div>
-          <div id="witness-practice"></div>
-        </div>
-      `;
-      parent.insertBefore(container, parent.lastElementChild);
+          <div class="card">
+            <div class="card-title">🧘 Breath Counter</div>
+            <div id="breath-counter-display"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🌞🌜 90 Day Solar-Lunar Ritual</div>
+            <div id="ritual-90-display"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔥 Shiva & Jiva — The Witness Practice</div>
+            <div id="witness-practice"></div>
+          </div>
+        `;
+        parent.insertBefore(container, parent.lastElementChild);
+      }
     }
   }
   renderSacredArtsContent();
@@ -1269,26 +1288,6 @@ function startWitnessPractice() {
   }, 1000);
   renderWitnessPractice();
 }
-
-// ── PATCH switchGrowthTab to include sacred tab ──────────────────
-var _origSwitchGrowthTab = typeof switchGrowthTab === 'function' ? switchGrowthTab : null;
-switchGrowthTab = function(tab, btn) {
-  if (_origSwitchGrowthTab) _origSwitchGrowthTab(tab, btn);
-  if (tab === 'sacred') {
-    setTimeout(renderSacredArts, 50);
-  }
-};
-
-// ── PATCH renderPractices to initialize sacred arts if needed ──
-var _origRenderPractices = typeof renderPractices === 'function' ? renderPractices : null;
-renderPractices = function() {
-  if (_origRenderPractices) _origRenderPractices();
-  // Ensure sacred tab exists
-  const sacredTab = document.querySelector('#growth-tab-row .tab:last-child');
-  if (sacredTab && sacredTab.textContent !== 'Sacred') {
-    renderSacredArts();
-  }
-};
 // ══ ADDED GLOBALS ══════════════════════════════════════════════════════════
 let completedTasks = (typeof liveData !== 'undefined' && liveData.completed_tasks) ? liveData.completed_tasks : {};
 let xpData = {A:0, B:0};
