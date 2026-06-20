@@ -1918,6 +1918,13 @@ function render() {
 // ============================================================
 
 function openPanel(panelId) {
+    // The "grove" tab isn't a slide-up panel — it's the main page itself.
+    // Treat it as "close everything and show the base view".
+    if (panelId === 'grove') {
+        closePanel();
+        return;
+    }
+
     // Close all panels first
     document.querySelectorAll('.panel').forEach(p => {
         p.classList.remove('active');
@@ -1934,6 +1941,8 @@ function openPanel(panelId) {
     if (panel) {
         panel.classList.add('active');
         if (overlay) overlay.classList.add('active');
+    } else {
+        console.warn(`openPanel: no panel found for "${panelId}"`);
     }
 }
 
