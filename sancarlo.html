@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>San Carlo Local Market</title>
+<style>
+/* ============================================================
+   MOBILE-FIRST UI RESPONSIVENESS & RE-ARCHITECTURING
+   ============================================================ */
+
+/* 1. Fluid Typography & Touch Targets */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 84px; /* Ensure content clears bottom sticky elements */
+}
+
+input, select, textarea, button, .btn {
+  min-height: 44px; /* Essential iOS tap-target rule */
+  font-size: 16px !important; /* Forces iOS Safari not to auto-zoom layouts on input focus */
+}
+
+/* 2. Optimized Main Grid Layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)) !important; /* Perfect 2-column mobile breakdown */
+  gap: 12px !important;
+  padding: 4px;
+}
+
+/* 3. Streamlined Fluid Cards */
+.card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-img {
+  height: 120px !important; /* Keeps listing cards highly uniform on compact vertical screens */
+}
+
+.card-body {
+  padding: 10px !important;
+}
+
+.card-body h3 {
+  font-size: 15px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-footer {
+  padding: 8px 10px !important;
+  flex-direction: column; /* Stacks quantity controls beautifully on narrow device viewports */
+  gap: 6px !important;
+}
+
+.card-footer .qty-input {
+  width: 100% !important;
+}
+
+/* 4. Thumb-Reach Navigation Bar for Mobile Ports */
+@media (max-width: 768px) {
+  header.topbar {
+    position: relative !important;
+    padding: 12px 16px !important;
+  }
+
+  header.topbar nav.tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--green-900);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 6px;
+    border-radius: 0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+  }
+
+  header.topbar nav.tabs button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 11px !important;
+    padding: 6px 0 !important;
+    gap: 2px;
+  }
+
+  /* Repositioning Floating Action Cart button above bottom nav bar */
+  .cart-fab {
+    bottom: 74px !important;
+    right: 16px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+  }
+}
+  /* ============================================================
+     ROOT VARIABLES
+     ============================================================ */
+  :root {
+    --green-900: #1a3a2a;
+    --green-800: #1f4a2f;
+    --green-700: #2a6a3a;
+    --green-600: #3a8a4a;
+    --green-500: #4aaa5a;
+    --green-100: #e8f5e8;
+    --cream: #fdfaf5;
+    --tomato: #c4502a;
+    --tomato-dark: #a03a1a;
+    --gold: #f5b342;
+    --text: #1a2a1a;
+    --muted: #6a7a6a;
+    --border: #dce5dc;
+    --white: #ffffff;
+    --shadow: 0 2px 12px rgba(26, 58, 42, 0.08);
+    --radius: 16px;
+    --radius-sm: 8px;
+    --transition: all 0.2s ease;
+  }
+  /* Incoming Orders - Full page */
+  #view-incomingOrders .page-head .actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  /* Quick status filter buttons */
+  .status-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .status-filters button {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 2px solid var(--border);
+    background: var(--white);
+    transition: var(--transition);
+  }
+  .status-filters button:hover { border-color: var(--green-500); }
+  .status-filters button.active {
+    background: var(--green-600);
+    color: white;
+    border-color: var(--green-600);
+  }
+  .status-filters button.active:hover { background: var(--green-700); }
+  /* ============================================================
+     RESET & BASE
+     ============================================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  input, select, textarea { font-family: inherit; }
+
+  .hidden { display: none !important; }
+
+  /* ============================================================
+     SCROLLBAR
+     ============================================================ */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--green-500); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--green-700); }
+
+  /* ============================================================
+     BUTTONS
+     ============================================================ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-primary {
+    background: var(--tomato);
+    color: white;
+    border-color: var(--tomato);
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--tomato-dark); border-color: var(--tomato-dark); }
+
+  .btn-secondary {
+    background: var(--green-600);
+    color: white;
+    border-color: var(--green-600);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--green-700); border-color: var(--green-700); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--green-700);
+    border-color: var(--green-600);
+  }
+  .btn-outline:hover:not(:disabled) { background: var(--green-100); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.12);
+    color: white;
+  }
+  .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+
+  .btn-danger {
+    background: #c0392b;
+    color: white;
+    border-color: #c0392b;
+  }
+  .btn-danger:hover:not(:disabled) { background: #a93226; border-color: #a93226; }
+
+  .btn-success {
+    background: var(--green-600);
+    color: white;
+    border-color: var(--green-600);
+  }
+  .btn-success:hover:not(:disabled) { background: var(--green-700); }
+
+  .btn-small { padding: 6px 12px; font-size: 12px; }
+  .btn-large { padding: 14px 28px; font-size: 16px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* ============================================================
+     TOP HEADER
+     ============================================================ */
+  header.topbar {
+    background: var(--green-900);
+    color: var(--white);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 20px;
+  }
+  .brand .logo { font-size: 28px; }
+  .brand-sub {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: #a0c0a0;
+    letter-spacing: 0.5px;
+    margin-top: -2px;
+  }
+
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.08);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    flex-wrap: wrap;
+  }
+  nav.tabs button {
+    color: #b0c8b0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: var(--transition);
+  }
+  nav.tabs button:hover { color: white; background: rgba(255,255,255,0.05); }
+  nav.tabs button.active {
+    background: var(--white);
+    color: var(--green-900);
+  }
+  nav.tabs button.active:hover { background: var(--white); }
+
+  .auth-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+  }
+  .user-role-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .role-admin { background: #e74c3c; color: white; }
+  .role-farmer { background: #f39c12; color: white; }
+  .role-customer { background: #2ecc71; color: white; }
+
+  /* ============================================================
+     MAIN
+     ============================================================ */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 100px;
+  }
+
+  /* ============================================================
+     SECTIONS
+     ============================================================ */
+  .section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .page-head h1 {
+    font-size: 28px;
+    color: var(--green-900);
+    font-weight: 800;
+  }
+  .page-head h1 small {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--muted);
+    display: block;
+    margin-top: 4px;
+  }
+  .page-head .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* ============================================================
+     FILTERS
+     ============================================================ */
+  .filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .filters input,
+  .filters select {
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    background: var(--white);
+    transition: var(--transition);
+    flex: 1;
+    min-width: 160px;
+  }
+  .filters input:focus,
+  .filters select:focus {
+    outline: none;
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(74, 170, 90, 0.1);
+  }
+  .filters input { flex: 2; }
+
+  /* ============================================================
+     GRID & CARDS
+     ============================================================ */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(26, 58, 42, 0.12);
+  }
+
+  .card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: var(--green-100);
+  }
+  .card-img.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    background: var(--green-100);
+  }
+  .card-body { padding: 16px; flex: 1; }
+  .card-body h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    color: var(--green-900);
+    font-weight: 700;
+  }
+  .card-meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .price {
+    font-weight: 700;
+    color: var(--tomato);
+    font-size: 20px;
+  }
+  .price span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .stock {
+    font-size: 13px;
+    color: var(--green-700);
+  }
+  .stock.low { color: var(--tomato-dark); font-weight: 600; }
+  .stock.out { color: #999; }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--green-100);
+    color: var(--green-700);
+    padding: 3px 10px;
+    border-radius: 99px;
+    margin-bottom: 8px;
+  }
+
+  .card-footer {
+    padding: 12px 16px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .qty-input {
+    width: 64px;
+    padding: 8px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    text-align: center;
+  }
+  .qty-input:focus {
+    outline: none;
+    border-color: var(--green-500);
+  }
+
+  /* ============================================================
+     EMPTY STATE
+     ============================================================ */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .big { font-size: 56px; margin-bottom: 16px; display: block; }
+  .empty-state h3 { font-size: 20px; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 15px; }
+
+  .loading-spinner {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .loading-spinner::after {
+    content: '';
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--green-600);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-top: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============================================================
+     AUTH MODAL
+     ============================================================ */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 58, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 24px;
+    color: var(--muted);
+    transition: var(--transition);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal h2 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    color: var(--green-900);
+  }
+  .modal .sub {
+    margin: 0 0 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .modal .field {
+    margin-bottom: 16px;
+  }
+  .modal .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--green-900);
+  }
+  .modal .field input,
+  .modal .field select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    transition: var(--transition);
+  }
+  .modal .field input:focus,
+  .modal .field select:focus {
+    outline: none;
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(74, 170, 90, 0.1);
+  }
+  .modal .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .modal .checkbox-row input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--green-600);
+  }
+  .modal .checkbox-row label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .modal .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal .switch-mode {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+  .modal .switch-mode button {
+    color: var(--green-700);
+    font-weight: 600;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .form-msg {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .form-msg.error {
+    background: #fde8e8;
+    color: #a03a1a;
+    border: 1px solid #f5c8c8;
+  }
+  .form-msg.success {
+    background: var(--green-100);
+    color: var(--green-700);
+    border: 1px solid #a0d0a0;
+  }
+  .form-msg.info {
+    background: #e8f0fe;
+    color: #1a5a8a;
+    border: 1px solid #a0c0e0;
+  }
+
+  /* ============================================================
+     CART
+     ============================================================ */
+  .cart-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--tomato);
+    color: var(--white);
+    border: none;
+    border-radius: 99px;
+    padding: 14px 24px;
+    font-weight: 700;
+    font-size: 15px;
+    box-shadow: 0 6px 24px rgba(196, 80, 42, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 60;
+    transition: var(--transition);
+  }
+  .cart-fab:hover { transform: scale(1.05); background: var(--tomato-dark); }
+  .cart-badge {
+    background: var(--white);
+    color: var(--tomato-dark);
+    border-radius: 99px;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .cart-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 420px;
+    background: var(--white);
+    box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+    z-index: 10090;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cart-panel.open { transform: translateX(0); }
+
+  .cart-header {
+    padding: 20px 24px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .cart-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--green-900);
+  }
+  .cart-header .close-btn {
+    font-size: 24px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .cart-header .close-btn:hover { color: var(--text); }
+
+  .cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px;
+  }
+  .cart-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .cart-line:last-child { border-bottom: none; }
+  .cart-line .info { flex: 1; }
+  .cart-line .info strong {
+    display: block;
+    font-size: 14px;
+    color: var(--green-900);
+  }
+  .cart-line .info span {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .cart-line .remove {
+    color: var(--tomato-dark);
+    font-size: 13px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .cart-line .remove:hover { text-decoration: underline; }
+
+  .cart-footer {
+    padding: 16px 24px 24px;
+    border-top: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .cart-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: var(--green-900);
+  }
+  .cart-total span:last-child { color: var(--tomato); }
+
+  .cart-panel textarea {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 50px;
+    margin-bottom: 12px;
+    transition: var(--transition);
+  }
+  .cart-panel textarea:focus {
+    outline: none;
+    border-color: var(--green-500);
+  }
+
+  .cart-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 80;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .cart-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ============================================================
+     ORDER CARDS
+     ============================================================ */
+  .order-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+  }
+  .order-card:hover { box-shadow: 0 4px 16px rgba(26, 58, 42, 0.1); }
+
+  .order-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .order-card-head h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--green-900);
+  }
+  .order-card-head .when {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-pending { background: #fef5e7; color: #a67a2a; }
+  .status-confirmed { background: #e8f0fe; color: #2a5a8a; }
+  .status-ready { background: var(--green-100); color: var(--green-700); }
+  .status-completed { background: #e8e8e8; color: #6a6a6a; }
+  .status-cancelled { background: #fde8e8; color: #a03a1a; }
+
+  .order-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    font-size: 14px;
+  }
+  .order-item-row:last-child { border-bottom: none; }
+  .order-item-row .left strong { display: block; }
+  .order-item-row .left span { color: var(--muted); font-size: 13px; }
+  .order-item-row select {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    font-size: 12px;
+    background: var(--white);
+  }
+  .order-item-row select:focus { outline: none; border-color: var(--green-500); }
+
+  /* ============================================================
+     GROWER DASHBOARD
+     ============================================================ */
+  .dash-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  .dash-tabs button {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+  }
+  .dash-tabs button:hover { color: var(--text); }
+  .dash-tabs button.active {
+    color: var(--green-900);
+    border-bottom-color: var(--tomato);
+  }
+
+  .listing-form {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .listing-form h3 {
+    margin: 0 0 16px;
+    color: var(--green-900);
+    font-size: 18px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .field { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--green-900);
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    transition: var(--transition);
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(74, 170, 90, 0.1);
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+  }
+
+  .my-listing-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    transition: var(--transition);
+  }
+  .my-listing-row:hover { border-color: var(--green-500); }
+  .my-listing-row img,
+  .my-listing-row .img-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--green-100);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .my-listing-row .info { flex: 1; min-width: 0; }
+  .my-listing-row .info strong {
+    display: block;
+    font-size: 14px;
+    color: var(--green-900);
+  }
+  .my-listing-row .info span {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .my-listing-row .actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* ============================================================
+     ADMIN DASHBOARD
+     ============================================================ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: var(--radius);
+    text-align: center;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(26, 58, 42, 0.1); }
+  .stat-card .number {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--green-900);
+    line-height: 1.2;
+  }
+  .stat-card .label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stat-card .icon { font-size: 28px; display: block; margin-bottom: 4px; }
+
+  .admin-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+     /* ============================================================
+        RESPONSIVE (MOBILE-FIRST NAVIGATION FIXED)
+        ============================================================ */
+     @media (max-width: 768px) {
+       header.topbar {
+         padding: 12px 16px;
+       }
+
+       /* Turn the navigation wrapper into a polished, fixed bottom bar */
+       nav.tabs {
+         order: 3;
+         width: 100%;
+         position: fixed;
+         bottom: 0;
+         left: 0;
+         right: 0;
+         background: var(--green-900); /* Keep it a solid bar */
+         display: flex;
+         justify-content: space-around;
+         align-items: center;
+         padding: 10px 8px;
+         border-radius: 0;
+         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+         z-index: 1000;
+         gap: 6px;
+       }
+
+       /* Make all menu tab buttons uniform, sleek, and highly tap-target friendly */
+       nav.tabs button {
+         flex: 1;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         justify-content: center;
+         padding: 8px 4px !important;
+         font-size: 12px !important;
+         font-weight: 600;
+         border-radius: 20px !important; /* Elegant pill shape */
+         color: #b0c8b0 !important;
+         background: transparent !important;
+         transition: var(--transition);
+         min-height: 44px; /* Proper touch-target spacing */
+       }
+
+       /* Style the active pill button so it doesn't break the layout canvas */
+       nav.tabs button.active {
+         background: rgba(255, 255, 255, 0.15) !important; /* Soft premium glassmorphism overlay */
+         color: var(--white) !important;
+         box-shadow: none;
+       }
+
+       /* Ensure the auth layout areas sit comfortably above */
+       .auth-area { order: 2; }
+       .brand { font-size: 17px; }
+       .page-head h1 { font-size: 22px; }
+       .grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
+       .cart-panel { max-width: 100%; }
+
+       /* Shift the Floating Cart badge up slightly so it clears the bottom menu bar */
+       .cart-fab {
+         bottom: 76px !important;
+         right: 16px !important;
+       }
+     }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .modal { padding: 20px; margin: 10px; }
+    .my-listing-row { flex-wrap: wrap; }
+    .my-listing-row .actions { width: 100%; justify-content: flex-start; }
+  }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .app-footer {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+  }
+  .app-footer a { color: var(--green-700); font-weight: 600; }
+  .app-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+     <!-- Update your header block in index.html to wrap both auth and notification nicely -->
+     <header class="topbar">
+       <div class="brand">
+         <span class="logo">🌱</span>
+         <div>
+           San Carlo Market
+           <span class="brand-sub">Fresh from the grower • Pickup in person</span>
+         </div>
+       </div>
+
+       <!-- Right Action Stack for Mobile Integration -->
+       <div class="topbar-right-stack" style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+         <!-- Farmer Notification Badge Container -->
+         <div id="farmerNotificationArea" class="hidden" style="position: relative;">
+           <button id="farmerNotificationBtn" style="font-size: 22px; padding: 4px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center;">
+             🔔
+             <span id="farmerNotificationCount" style="position: absolute; top: -4px; right: -4px; background: var(--tomato); color: white; border-radius: 99px; font-size: 10px; font-weight: 700; padding: 2px 6px; min-width: 18px; text-align: center; border: 2px solid var(--green-900);">0</span>
+           </button>
+         </div>
+
+         <div class="auth-area" id="authArea">
+           <button class="btn btn-ghost" id="signInBtn">Sign In</button>
+           <button class="btn btn-primary" id="signUpBtn">Sign Up</button>
+         </div>
+       </div>
+
+       <nav class="tabs" id="mainNav">
+         <button data-view="browse" class="active">🛒 Browse</button>
+         <button data-view="myOrders">📦 My Orders</button>
+         <button data-view="growerDash" id="growerTabBtn" class="hidden">🌾 Farm Stand</button>
+         <button data-view="adminDash" id="adminTabBtn" class="hidden">⚙️ Admin</button>
+       </nav>
+     </header>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main>
+
+  <!-- ============================== BROWSE ============================== -->
+  <section class="section active" id="view-browse">
+    <div class="page-head">
+      <div>
+        <h1>
+          What's Fresh This Week
+          <small>Order online, pick up in San Carlo. Pay at pickup.</small>
+        </h1>
+      </div>
+    </div>
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="🔍 Search tomatoes, basil, squash..." />
+      <select id="categoryFilter">
+        <option value="all">All Categories</option>
+        <option value="vegetable">🥕 Vegetables</option>
+        <option value="fruit">🍓 Fruits</option>
+        <option value="herb">🌿 Herbs</option>
+        <option value="other">🧺 Other</option>
+      </select>
+    </div>
+    <div id="listingsGrid" class="grid"></div>
+  </section>
+
+  <!-- ============================== MY ORDERS ============================== -->
+  <section class="section" id="view-myOrders">
+    <div class="page-head">
+      <div>
+        <h1>
+          My Orders
+          <small>Track your orders and pickup status</small>
+        </h1>
+      </div>
+    </div>
+    <div id="myOrdersList"></div>
+  </section>
+
+  <!-- ============================== GROWER DASHBOARD ============================== -->
+  <section class="section" id="view-growerDash">
+    <div class="page-head">
+      <div>
+        <h1>
+          🌾 My Farm Stand
+          <small>Manage your listings and fulfill orders</small>
+        </h1>
+      </div>
+    </div>
+    <div class="dash-tabs" id="dashTabs">
+      <button data-dash="listings" class="active">📋 My Listings</button>
+      <button data-dash="incoming">📥 Incoming Orders</button>
+    </div>
+
+    <div id="dash-listings">
+      <div class="listing-form">
+        <h3 id="listingFormTitle">🌱 Add a New Listing</h3>
+        <div id="listingFormMsg"></div>
+        <input type="hidden" id="editingListingId" value="" />
+        <div class="form-grid">
+          <div class="field">
+            <label>Item Name *</label>
+            <input type="text" id="lf_title" placeholder="e.g. Heirloom Tomatoes" />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select id="lf_category">
+              <option value="vegetable">🥕 Vegetable</option>
+              <option value="fruit">🍓 Fruit</option>
+              <option value="herb">🌿 Herb</option>
+              <option value="other">🧺 Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Price (per unit) *</label>
+            <input type="number" id="lf_price" step="0.01" placeholder="3.50" />
+          </div>
+          <div class="field">
+            <label>Unit</label>
+            <select id="lf_unit">
+              <option value="lb">lb (pound)</option>
+              <option value="kg">kg (kilogram)</option>
+              <option value="lt">Lt</option>
+              <option value="bunch">bunch</option>
+              <option value="basket">basket</option>
+              <option value="each">each</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Quantity Available *</label>
+            <input type="number" id="lf_qty" step="0.5" placeholder="10" />
+          </div>
+          <div class="field">
+            <label>Photo</label>
+            <input type="file" id="lf_image" accept="image/*" />
+          </div>
+          <div class="field full">
+            <label>Description</label>
+            <textarea id="lf_desc" rows="3" placeholder="Notes about freshness, variety, growing method..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="saveListingBtn">➕ Add Listing</button>
+          <button class="btn btn-outline hidden" id="cancelEditBtn">✖ Cancel</button>
+        </div>
+      </div>
+
+      <div id="myListings"></div>
+    </div>
+
+    <div id="dash-incoming" class="hidden">
+      <div id="incomingOrders"></div>
+    </div>
+  </section>
+
+
+  <!-- ============================== INCOMING ORDERS (Full Page View) ============================== -->
+  <section class="section" id="view-incomingOrders">
+    <div id="incomingOrdersView"></div>
+  </section>
+  <!-- ============================== ADMIN DASHBOARD ============================== -->
+  <section class="section" id="view-adminDash">
+    <div class="page-head">
+      <div>
+        <h1>
+          ⚙️ Admin Dashboard
+          <small>Manage users, listings, and orders</small>
+        </h1>
+      </div>
+    </div>
+    <div class="dash-tabs" id="adminDashTabs">
+      <button data-dash="admin" class="active">📊 Overview</button>
+      <button data-dash="listings">📋 All Listings</button>
+      <button data-dash="incoming">📦 All Orders</button>
+    </div>
+    <div id="dash-admin">
+      <div id="adminPanel"></div>
+    </div>
+    <div id="dash-listings" class="hidden">
+      <div id="adminListings"></div>
+    </div>
+    <div id="dash-incoming" class="hidden">
+      <div id="adminOrders"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="app-footer">
+  🌱 San Carlo Local Market — connecting neighborhood growers and buyers.
+  <br><small>Made with ❤️ for the San Carlo community</small>
+</footer>
+
+<!-- ============================================================
+     CART
+     ============================================================ -->
+<button class="cart-fab hidden" id="cartFab">
+  🧺 Cart <span class="cart-badge" id="cartCount">0</span>
+</button>
+
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-header">
+    <h2>🛒 Your Cart</h2>
+    <button class="close-btn" id="closeCartBtn">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-footer">
+    <div class="cart-total">
+      <span>Total (pay at pickup)</span>
+      <span id="cartTotal">$0.00</span>
+    </div>
+    <textarea class="pickup-note" id="pickupNote" placeholder="📝 Optional: Preferred pickup time or special requests"></textarea>
+    <div id="checkoutMsg"></div>
+    <button class="btn btn-primary btn-full" id="checkoutBtn">✅ Place Order</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     AUTH MODAL
+     ============================================================ -->
+<div class="modal-backdrop hidden" id="authModal">
+  <div class="modal">
+    <button class="modal-close" id="closeAuthModal">✕</button>
+    <h2 id="authModalTitle">Sign In</h2>
+    <p class="sub" id="authModalSub">Welcome back to San Carlo Local Market.</p>
+    <div id="authFormMsg"></div>
+
+    <div class="field hidden" id="fullNameField">
+      <label>Full Name</label>
+      <input type="text" id="auth_fullname" placeholder="Jane Doe" />
+    </div>
+    <div class="field hidden" id="farmNameField">
+      <label>Farm Name <span style="font-weight:400;color:var(--muted);">(if grower)</span></label>
+      <input type="text" id="auth_farmname" placeholder="San Carlo Farm" />
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="auth_email" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="auth_password" placeholder="••••••••" />
+    </div>
+    <div class="checkbox-row hidden" id="growerCheckRow">
+      <input type="checkbox" id="auth_isgrower" />
+      <label for="auth_isgrower">🌾 I'm a grower — I want to sell produce</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-full" id="authSubmitBtn">Sign In</button>
+    </div>
+    <div class="switch-mode" id="authSwitchRow">
+      Don't have an account? <button id="switchToSignUp">Sign up</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>
