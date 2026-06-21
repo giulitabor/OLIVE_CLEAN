@@ -174,7 +174,8 @@ if (authSubmitBtn) {
       await refreshSession();
     } catch (err) {
       showFormMsg(authFormMsg, err.message || "Something went wrong.", "error");
-    } : null {
+    } finally {
+      // FIX: Cleaned up the ": null" structural syntax typo here
       authSubmitBtn.disabled = false;
       updateAuthModalUI();
     }
