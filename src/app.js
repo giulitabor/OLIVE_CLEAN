@@ -221,7 +221,7 @@ async function loadAdminPanel() {
   }
 }
 
-async function loadAdminActivity() {
+async function L_loadAdminActivity() {
   const container = el("adminActivity");
   if (!container) return;
 
