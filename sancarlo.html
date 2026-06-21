@@ -1377,7 +1377,7 @@ input, select, textarea, button, .btn {
 <!-- ============================================================
      AUTH MODAL
      ============================================================ -->
-<!-- Auth Modal Structure -->
+<!-- Auth Modal Container -->
 <div id="authModal" class="modal hidden">
   <div class="modal-content">
     <span id="closeAuthModal" class="close">&times;</span>
@@ -1398,19 +1398,21 @@ input, select, textarea, button, .btn {
       <input type="tel" id="auth_phone" placeholder="+1234567890" />
     </div>
 
-    <div class="form-group">
+    <!-- Email (Always Visible) -->
+    <div id="emailFieldGroup" class="form-group">
       <label for="auth_email">Email Address</label>
       <input type="email" id="auth_email" placeholder="you@example.com" required />
     </div>
 
-    <div class="form-group" id="passwordFieldGroup">
+    <!-- Password Group -->
+    <div id="passwordFieldGroup" class="form-group">
       <label for="auth_password">Password</label>
       <input type="password" id="auth_password" placeholder="••••••••" required />
     </div>
 
     <!-- Forgot Password Toggle Link -->
-    <div id="forgotPasswordRow" class="form-meta-row" style="margin-bottom: 12px; text-align: right;">
-      <button id="forgotPasswordBtn" class="btn-link" style="font-size: 0.85rem; background: none; border: none; color: var(--green-700); cursor: pointer; padding: 0;">Forgot Password?</button>
+    <div id="forgotPasswordRow" class="form-meta-row">
+      <button id="forgotPasswordBtn" type="button" class="btn-link">Forgot Password?</button>
     </div>
 
     <!-- Grower Toggle Checkbox (Hidden in Sign In) -->
@@ -1419,13 +1421,14 @@ input, select, textarea, button, .btn {
       <label for="auth_isgrower">I am a local grower selling produce</label>
     </div>
 
+    <!-- Action Buttons -->
     <button id="authSubmitBtn" class="btn btn-primary btn-block">Sign In</button>
     
     <div id="authSwitchRow" class="auth-switch">
-      Don't have an account? <button id="switchToSignUp">Sign up</button>
+      Don't have an account? <button id="switchToSignUp" type="button" class="btn-link">Sign up</button>
     </div>
   </div>
-</div>                               
+</div>                       
 
 <script type="module" src="/src/app.js"></script>
 </body>
