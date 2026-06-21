@@ -1355,7 +1355,7 @@ async function loadIncomingOrders() {
 // ============================================================
 // ADMIN DASHBOARD
 // ============================================================
-async function loadAdminPanel() {
+async function yloadAdminPanel() {
   const container = el("adminPanel");
   if (!container || !currentUser) return;
   container.innerHTML = `<div class="loading-spinner">Loading admin data...</div>`;
