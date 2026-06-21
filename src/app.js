@@ -413,7 +413,11 @@ async function loadAdminOrders() {
 }
 function updateUI() {
   const authArea = el("authArea");
-  const growerTab = el("growerTabBtn");
+const growerTabBtn = el("growerTabBtn");
+// Added Notification Selectors
+const farmerNotificationArea = el("farmerNotificationArea");
+const farmerNotificationCount = el("farmerNotificationCount");
+const farmerNotificationBtn = el("farmerNotificationBtn");
   const adminTab = el("adminTabBtn");
   const cartFab = el("cartFab");
 
