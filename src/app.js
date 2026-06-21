@@ -720,21 +720,58 @@ function renderAuthArea() {
   }
 }
 
+// ===================================================================
+// FARMER LIVE NOTIFICATION PIPELINE
+// ===================================================================
 async function updateFarmerNotificationCount() {
   if (!currentUser || !currentProfile || !currentProfile.is_grower) return;
 
-  // Count items assigned to this grower that are still 'pending'
-  const { count, error } = await db
-    .from("order_items")
-    .select("*", { count: "exact", head: true })
-    .eq("grower_id", currentUser.id)
-    .eq("item_status", "pending");
+  try {
+    // Queries Supabase count totals for order items matching this specific grower that remain 'pending'
+    const { count, error } = await db
+      .from("order_items")
+      .select("*", { count: "exact", head: true })
+      .eq("grower_id", currentUser.id)
+      .eq("item_status", "pending");
 
-  if (!error && farmerNotificationCount) {
-    farmerNotificationCount.textContent = count;
-    // Visually dim the badge if there are zero pending alerts
-    farmerNotificationCount.style.display = count > 0 ? "block" : "none";
+    if (!error && farmerNotificationCount) {
+      farmerNotificationCount.textContent = count || 0;
+      // Only show the bright red indicator circle if there are incoming actions needed
+      farmerNotificationCount.style.display = count > 0 ? "block" : "none";
+    }
+  } catch (err) {
+    console.error("Failed to sync farmer incoming notification counts:", err);
   }
+}
+
+// Wire up the click handler to directly open incoming orders
+if (farmerNotificationBtn) {
+  farmerNotificationBtn.onclick = () => {
+    // 1. Swap main app framework context view
+    setView("growerDash");
+
+    // 2. Adjust internal nested dashboard tab pointers to target 'incoming'
+    activeDashTab = "incoming";
+    document.querySelectorAll("#dashTabs button").forEach((b) => b.classList.remove("active"));
+    
+    const incomingTabBtn = document.querySelector('#dashTabs button[data-dash="incoming"]');
+    if (incomingTabBtn) incomingTabBtn.classList.add("active");
+
+    el("dash-listings").classList.add("hidden");
+    el("dash-incoming").classList.remove("hidden");
+
+    // 3. Populate and load data
+    loadIncomingOrders();
+  };
+}
+
+// Hook into the native lifecycle handler so changing statuses updates the navbar badge smoothly
+if (typeof loadIncomingOrders === "function") {
+  const nativeLoadIncomingOrders = loadIncomingOrders;
+  loadIncomingOrders = async function (...args) {
+    await nativeLoadIncomingOrders(...args);
+    updateFarmerNotificationCount();
+  };
 }
 
 // Hook it into the incoming order tab tracking loop so it auto-decrements when they change status
