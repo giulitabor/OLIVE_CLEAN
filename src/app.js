@@ -39,69 +39,32 @@ const hide = (el) => el?.classList.add("hidden");
 // ============================================================
 // AUTH
 // ============================================================
+// ===================================================================
+// SESSION HANDLING & LIVE NOTIFICATIONS
+// ===================================================================
 async function refreshSession() {
-  try {
-    const { data: { session } } = await db.auth.getSession();
-    currentUser = session?.user || null;
+  const { data: { session } } = await db.auth.getSession();
+  currentUser = session ? session.user : null;
 
-    if (currentUser) {
-      try {
-        // First try to get the profile
-        const { data: profile, error } = await db
-          .from("profiles")
-          .select("*")
-          .eq("id", currentUser.id)
-          .single();
+  if (currentUser) {
+    const { data: profile, error } = await db
+      .from("profiles")
+      .select("*")
+      .eq("id", currentUser.id)
+      .single();
+    currentProfile = error ? null : profile;
+  } else {
+    currentProfile = null;
+  }
 
-        if (error || !profile) {
-          console.log("Profile not found, creating one...");
-
-          // Create profile if it doesn't exist
-          const { data: newProfile, error: createError } = await db
-            .from("profiles")
-            .insert({
-              id: currentUser.id,
-              full_name: currentUser.user_metadata?.full_name || currentUser.email || 'User',
-              role: 'customer',
-              is_grower: false
-            })
-            .select()
-            .single();
-
-          if (createError) {
-            console.error("Error creating profile:", createError);
-            currentProfile = null;
-          } else {
-            currentProfile = newProfile;
-            console.log("✅ Profile created:", currentProfile);
-          }
-        } else {
-          currentProfile = profile;
-          console.log("✅ Profile loaded:", currentProfile);
-        }
-      } catch (e) {
-        console.error("Profile error:", e);
-        currentProfile = null;
-      }
-    } else {
-      currentProfile = null;
+  renderAuthArea();
+  loadListings();
+  if (currentUser) {
+    loadMyOrders();
+    if (currentProfile && currentProfile.is_grower) {
+      loadMyListings();
+      loadIncomingOrders();
     }
-
-    updateUI();
-    await loadListings();
-
-    if (currentUser && currentProfile) {
-      await loadMyOrders();
-      if (currentProfile.is_grower) {
-        await loadMyListings();
-        await loadIncomingOrders();
-      }
-      if (currentProfile.role === "admin") {
-        await loadAdminPanel();
-      }
-    }
-  } catch (e) {
-    console.error("Refresh session error:", e);
   }
 }
 
@@ -728,13 +691,17 @@ function renderAuthArea() {
     `;
     el("signOutBtn").onclick = signOut;
     growerTabBtn.classList.toggle("hidden", !currentProfile.is_grower);
-
-    // Show/Hide notification bell based on grower flag
+    
+    // Toggle notification area visibility based on status
     if (farmerNotificationArea) {
-      farmerNotificationArea.classList.toggle("hidden", !currentProfile.is_grower);
-      if (currentProfile.is_grower) updateFarmerNotificationCount();
+      if (currentProfile.is_grower) {
+        farmerNotificationArea.classList.remove("hidden");
+        updateFarmerNotificationCount();
+      } else {
+        farmerNotificationArea.classList.add("hidden");
+      }
     }
-
+    
     cartFab.classList.remove("hidden");
   } else {
     authArea.innerHTML = `
@@ -744,7 +711,7 @@ function renderAuthArea() {
     el("signInBtn").onclick = () => openAuthModal("signin");
     el("signUpBtn").onclick = () => openAuthModal("signup");
     growerTabBtn.classList.add("hidden");
-
+    
     if (farmerNotificationArea) farmerNotificationArea.classList.add("hidden");
     cartFab.classList.add("hidden");
     if (document.getElementById("view-growerDash").classList.contains("active")) {
