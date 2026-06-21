@@ -1302,55 +1302,74 @@ async function handleSaveListing() {
 // ============================================================
 // INCOMING ORDERS (Grower view)
 // ============================================================
+// ===================================================================
+// GROWER DASHBOARD — INCOMING ORDERS
+// ===================================================================
 async function loadIncomingOrders() {
   const container = el("incomingOrders");
-  if (!container || !currentUser) return;
+  if (!currentUser) return;
   container.innerHTML = `<div class="loading-spinner">Loading incoming orders...</div>`;
 
-  try {
-    const { data, error } = await db
-      .from("order_items")
-      .select("*, listings(title, unit), orders(created_at, pickup_note, buyer:buyer_id(full_name))")
-      .eq("grower_id", currentUser.id)
-      .order("created_at", { ascending: false });
+  const { data, error } = await db
+    .from("order_items")
+    .select("*, listings(title, unit), orders(created_at, pickup_note, profiles:buyer_id(full_name))")
+    .eq("grower_id", currentUser.id)
+    .order("created_at", { ascending: false });
 
-    if (error) throw error;
+  if (error) {
+    container.innerHTML = `<div class="empty-state">Couldn't load orders: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
 
-    if (!data || data.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div class="big">🧺</div>No orders yet.</div>`;
-      return;
+  if (!data || data.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="big">🧺</div>No orders yet for your listings.</div>`;
+    // Update count immediately if list is empty
+    if (typeof updateFarmerNotificationCount === "function") {
+      updateFarmerNotificationCount();
     }
+    return;
+  }
 
-    const statuses = ["pending", "confirmed", "ready", "completed", "cancelled"];
+  const statuses = ["pending", "confirmed", "ready", "completed", "cancelled"];
 
-    container.innerHTML = data.map(it => `
-      <div class="order-card">
-        <div class="order-card-head">
-          <div>
-            <h3>${escapeHtml(it.listings?.title || "Item")}</h3>
-            <div class="when">${timeAgo(it.orders?.created_at)} · buyer: ${escapeHtml(it.orders?.buyer?.full_name || "Unknown")}</div>
-          </div>
-          <select data-item-status="${it.id}">
-            ${statuses.map(s => `<option value="${s}" ${s === it.item_status ? "selected" : ""}>${s}</option>`).join("")}
-          </select>
+  container.innerHTML = data.map((it) => `
+    <div class="order-card">
+      <div class="order-card-head">
+        <div>
+          <h3>${escapeHtml(it.listings ? it.listings.title : "Item")}</h3>
+          <div class="when">${it.orders ? timeAgo(it.orders.created_at) : ""} · buyer: ${escapeHtml(it.orders && it.orders.profiles ? it.orders.profiles.full_name : "Unknown")}</div>
         </div>
-        <div class="order-item-row">
-          <div class="left">
-            <strong>${it.quantity} ${escapeHtml(it.listings?.unit || "")}</strong>
-            <span>${formatMoney(it.price_at_order)} each · ${formatMoney(it.quantity * it.price_at_order)} total</span>
-          </div>
-        </div>
-        ${it.orders?.pickup_note ? `<div class="card-meta">Note: ${escapeHtml(it.orders.pickup_note)}</div>` : ""}
+        <select data-item-status="${it.id}">
+          ${statuses.map((s) => `<option value="${s}" ${s === it.item_status ? "selected" : ""}>${s}</option>`).join("")}
+        </select>
       </div>
-    `).join("");
+      <div class="order-item-row">
+        <div class="left">
+          <strong>${it.quantity} ${escapeHtml(it.listings ? it.listings.unit : "")}</strong>
+          <span>${formatMoney(it.price_at_order)} each · ${formatMoney(it.quantity * it.price_at_order)} total</span>
+        </div>
+      </div>
+      ${it.orders && it.orders.pickup_note ? `<div class="card-meta" style="margin-top:6px;">Note: ${escapeHtml(it.orders.pickup_note)}</div>` : ""}
+    </div>
+  `).join("");
 
-    container.querySelectorAll("[data-item-status]").forEach(sel => {
-      sel.addEventListener("change", async () => {
-        await db.from("order_items").update({ item_status: sel.value }).eq("id", sel.dataset.itemStatus);
-      });
+  container.querySelectorAll("[data-item-status]").forEach((sel) => {
+    sel.addEventListener("change", async () => {
+      await db
+        .from("order_items")
+        .update({ item_status: sel.value })
+        .eq("id", sel.dataset.itemStatus);
+        
+      // Reactive Count Modification Loop
+      if (typeof updateFarmerNotificationCount === "function") {
+        updateFarmerNotificationCount();
+      }
     });
-  } catch (e) {
-    container.innerHTML = `<div class="empty-state">Error: ${escapeHtml(e.message)}</div>`;
+  });
+
+  // Calculate live badge parameters upon initial fetch completion
+  if (typeof updateFarmerNotificationCount === "function") {
+    updateFarmerNotificationCount();
   }
 }
 
