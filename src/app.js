@@ -766,13 +766,7 @@ if (farmerNotificationBtn) {
 }
 
 // Hook into the native lifecycle handler so changing statuses updates the navbar badge smoothly
-if (typeof loadIncomingOrders === "function") {
-  const nativeLoadIncomingOrders = loadIncomingOrders;
-  loadIncomingOrders = async function (...args) {
-    await nativeLoadIncomingOrders(...args);
-    updateFarmerNotificationCount();
-  };
-}
+
 
 // Hook it into the incoming order tab tracking loop so it auto-decrements when they change status
 const originalLoadIncomingOrders = loadIncomingOrders;
