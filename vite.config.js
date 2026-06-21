@@ -35,6 +35,8 @@ export default defineConfig({
 
 
         grow: resolve(__dirname, "grow.html"),
+                sancarlo: resolve(__dirname, "sancarlo.html"),
+
 
         partner: resolve(__dirname, "partner.html"),
 
