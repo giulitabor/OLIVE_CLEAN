@@ -99,25 +99,167 @@ function openAuthModal(mode) {
   authModal.classList.remove("hidden");
 }
 
+// Add "reset" into our valid state tracking ecosystem
+//let authMode = "signin"; // "signin", "signup", or "reset"
+
+// Capture our new element references safely
+const phoneField = el("phoneField");
+const passwordFieldGroup = el("passwordFieldGroup");
+const forgotPasswordRow = el("forgotPasswordRow");
+const forgotPasswordBtn = el("forgotPasswordBtn");
+
+// Modify the modal UI manager to support all three modes cleanly
 function updateAuthModalUI() {
+  authFormMsg.innerHTML = "";
+  
   if (authMode === "signin") {
     authModalTitle.textContent = "Sign In";
     authModalSub.textContent = "Welcome back to San Carlo Local Market.";
-    fullNameField.classList.add("hidden");
-    growerCheckRow.classList.add("hidden");
+    if (fullNameField) fullNameField.classList.add("hidden");
+    if (phoneField) phoneField.classList.add("hidden");
+    if (passwordFieldGroup) passwordFieldGroup.classList.remove("hidden");
+    if (forgotPasswordRow) forgotPasswordRow.classList.remove("hidden");
+    if (growerCheckRow) growerCheckRow.classList.add("hidden");
     authSubmitBtn.textContent = "Sign In";
-    authSwitchRow.innerHTML = `Don't have an account? <button id="switchToSignUp">Sign up</button>`;
+    authSwitchRow.innerHTML = `Don't have an account? <button id="switchToSignUp" class="btn-link">Sign up</button>`;
     el("switchToSignUp").onclick = () => { authMode = "signup"; updateAuthModalUI(); };
-  } else {
+
+  } else if (authMode === "signup") {
     authModalTitle.textContent = "Sign Up";
     authModalSub.textContent = "Join your local San Carlo market.";
-    fullNameField.classList.remove("hidden");
-    growerCheckRow.classList.remove("hidden");
+    if (fullNameField) fullNameField.classList.remove("hidden");
+    if (phoneField) phoneField.classList.remove("hidden");
+    if (passwordFieldGroup) passwordFieldGroup.classList.remove("hidden");
+    if (forgotPasswordRow) forgotPasswordRow.classList.add("hidden");
+    if (growerCheckRow) growerCheckRow.classList.remove("hidden");
     authSubmitBtn.textContent = "Create Account";
-    authSwitchRow.innerHTML = `Already have an account? <button id="switchToSignIn">Sign in</button>`;
+    authSwitchRow.innerHTML = `Already have an account? <button id="switchToSignIn" class="btn-link">Sign in</button>`;
+    el("switchToSignIn").onclick = () => { authMode = "signin"; updateAuthModalUI(); };
+
+  } else if (authMode === "reset") {
+    authModalTitle.textContent = "Reset Password";
+    authModalSub.textContent = "Enter your email to receive a recovery link.";
+    if (fullNameField) fullNameField.classList.add("hidden");
+    if (phoneField) phoneField.classList.add("hidden");
+    if (passwordFieldGroup) passwordFieldGroup.classList.add("hidden");
+    if (forgotPasswordRow) forgotPasswordRow.classList.add("hidden");
+    if (growerCheckRow) growerCheckRow.classList.add("hidden");
+    authSubmitBtn.textContent = "Send Recovery Email";
+    authSwitchRow.innerHTML = `Back to <button id="switchToSignIn" class="btn-link">Sign In</button>`;
     el("switchToSignIn").onclick = () => { authMode = "signin"; updateAuthModalUI(); };
   }
 }
+
+// Bind the forgot password click option
+if (forgotPasswordBtn) {
+  forgotPasswordBtn.onclick = () => {
+    authMode = "reset";
+    updateAuthModalUI();
+  };
+}
+
+// Process the complete auth action payload inside authSubmitBtn.onclick
+if (authSubmitBtn) {
+  authSubmitBtn.onclick = async () => {
+    const email = el("auth_email").value.trim();
+    const password = el("auth_password").value;
+    authFormMsg.innerHTML = "";
+
+    if (!email) {
+      showFormMsg(authFormMsg, "Please enter your email address.", "error");
+      return;
+    }
+
+    if (authMode !== "reset" && !password) {
+      showFormMsg(authFormMsg, "Please enter your password.", "error");
+      return;
+    }
+
+    authSubmitBtn.disabled = true;
+    const originalText = authSubmitBtn.textContent;
+    authSubmitBtn.textContent = "Please wait...";
+
+    try {
+      if (authMode === "reset") {
+        // --- 1. PASSWORD RECOVERY LOGIC ---
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin, // Returns user back to your app
+        });
+        if (error) throw error;
+        showFormMsg(authFormMsg, "Password recovery link sent! Check your inbox.", "success");
+        
+      } else if (authMode === "signup") {
+        // --- 2. SIGNUP FLOW WITH PHONE CAPTURE ---
+        const fullName = el("auth_fullname").value.trim();
+        const phone = el("auth_phone").value.trim();
+        const isGrower = el("auth_isgrower").checked;
+
+        const { data, error } = await db.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName, phone: phone } },
+        });
+        if (error) throw error;
+
+        if (data.user) {
+          // Sync profile fields down into database custom metadata fields
+          await db
+            .from("profiles")
+            .update({ full_name: fullName, phone: phone, is_grower: isGrower })
+            .eq("id", data.user.id);
+        }
+
+        if (!data.session) {
+          showFormMsg(authFormMsg, "Account created! Check your email to confirm, then sign in.", "success");
+          authSubmitBtn.disabled = false;
+          authSubmitBtn.textContent = originalText;
+          return;
+        }
+      } else {
+        // --- 3. STANDARD SIGN IN ---
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+
+      if (authMode !== "reset") {
+        closeAuthModal();
+        await refreshSession();
+      }
+    } catch (err) {
+      showFormMsg(authFormMsg, err.message || "Something went wrong.", "error");
+    } finally {
+      authSubmitBtn.disabled = false;
+      authSubmitBtn.textContent = originalText;
+    }
+  };
+}
+
+// --- 4. HANDLE INCOMING PASSWORD UPDATE LINKS ---
+// When users click the link in their recovery email, Supabase sends an access token in the hash URL
+async function handlePasswordRecoveryRouting() {
+  const hash = window.location.hash;
+  if (hash && hash.includes("type=recovery")) {
+    const newPassword = prompt("Please enter your new password:");
+    if (!newPassword || newPassword.trim().length < 6) {
+      alert("Password must be at least 6 characters long.");
+      return;
+    }
+    
+    const { error } = await db.auth.updateUser({ password: newPassword.trim() });
+    if (error) {
+      alert("Error updating password: " + error.message);
+    } else {
+      alert("Password updated successfully! You can now log in.");
+      window.location.hash = ""; // Clean up URL bar
+      openAuthModal("signin");
+    }
+  }
+}
+
+// Drop this execution listener inside your main init loop area
+window.addEventListener("DOMContentLoaded", () => {
+  handlePasswordRecoveryRouting();
+});
 
 function closeAuthModal() {
   authModal.classList.add("hidden");
