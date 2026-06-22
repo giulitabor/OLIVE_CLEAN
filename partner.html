@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<!-- Relaxed CSP -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
   script-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
@@ -748,7 +747,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==================== COMPLETE APP ====================
-// FIXED: Proper intake values for relationship metrics
+// FIXED: XP scaling properly so metrics don't jump to 100%
 
 let sbClient = null;
 let currentUser = null;
@@ -777,7 +776,7 @@ let personalMetrics = {
   vulnerability: { base: 64, current: 64, changes: [] }
 };
 
-// ── Relationship Metrics (will be set from intake) ──
+// ── Relationship Metrics ──
 let relationshipMetrics = {
   sharedVision: { base: 48, current: 48, changes: [] },
   friendship: { base: 75, current: 75, changes: [] },
@@ -991,9 +990,7 @@ function addAllPersonalMetrics(amount, source) {
   spawnFloatingEmoji('🧑 +' + amount + ' all personal');
 }
 
-// ===== FIXED: Proper intake value extraction =====
 function initializeMetrics(intakeData, coupleStats) {
-  // Personal metrics from intake
   personalMetrics.empathy.base = calculatePersonalBase(intakeData, coupleStats, 'empathy');
   personalMetrics.selfAwareness.base = calculatePersonalBase(intakeData, coupleStats, 'selfAwareness');
   personalMetrics.communication.base = calculatePersonalBase(intakeData, coupleStats, 'communication');
@@ -1004,7 +1001,6 @@ function initializeMetrics(intakeData, coupleStats) {
     personalMetrics[key].current = personalMetrics[key].base;
   });
   
-  // Relationship metrics from couple_stats - USE DIRECT VALUES
   if (coupleStats) {
     relationshipMetrics.sharedVision.base = coupleStats.vision || 48;
     relationshipMetrics.friendship.base = coupleStats.friendship || 75;
@@ -1042,6 +1038,7 @@ function calculatePersonalBase(intake, stats, metric) {
   }
 }
 
+// ===== FIXED: Proper XP scaling =====
 function recalculateAllMetrics() {
   let totalXP = getTotalXP();
   let vLevel = getPathLevel('variety');
@@ -1057,7 +1054,7 @@ function recalculateAllMetrics() {
     relationshipMetrics[key].current = relationshipMetrics[key].base;
   });
   
-  // Personal Path Bonuses
+  // ── Path Level Bonuses ──
   if (vLevel >= 3) personalMetrics.empathy.current += 5;
   if (vLevel >= 5) personalMetrics.empathy.current += 10;
   if (vLevel >= 7) personalMetrics.empathy.current += 8;
@@ -1090,27 +1087,34 @@ function recalculateAllMetrics() {
   let tRank = getPathRank('transcendence');
   if (tRank >= 1) { relationshipMetrics.sharedVision.current += 2 * tRank; relationshipMetrics.trust.current += 2 * tRank; }
   
-  let xpBonus = Math.floor(totalXP / 10) * 0.5;
+  // ── XP Bonus: 1 point per 100 XP (NOT per 10 XP) ──
+  let xpBonus = Math.floor(totalXP / 100); // 1 per 100 XP, not 0.5 per 10!
   Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += xpBonus);
   Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += xpBonus);
   
-  let xpMilestones = [
-    { xp: 100, bonus: 2 }, { xp: 250, bonus: 3 }, { xp: 500, bonus: 4 },
-    { xp: 750, bonus: 3 }, { xp: 1000, bonus: 5 }, { xp: 1500, bonus: 4 }, { xp: 2000, bonus: 6 }
-  ];
-  xpMilestones.forEach(m => {
-    if (totalXP >= m.xp) {
-      Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += m.bonus);
-      Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += m.bonus);
-    }
-  });
+  // ── XP Milestone Bonuses (ONLY the highest milestone applies, not cumulative) ──
+  let milestoneBonus = 0;
+  if (totalXP >= 2000) milestoneBonus = 6;
+  else if (totalXP >= 1500) milestoneBonus = 5;
+  else if (totalXP >= 1000) milestoneBonus = 4;
+  else if (totalXP >= 750) milestoneBonus = 3;
+  else if (totalXP >= 500) milestoneBonus = 2;
+  else if (totalXP >= 250) milestoneBonus = 1;
+  else if (totalXP >= 100) milestoneBonus = 0.5;
   
+  if (milestoneBonus > 0) {
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += milestoneBonus);
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += milestoneBonus);
+  }
+  
+  // ── Temple Stage Bonuses ──
   let stage = computeSanctuaryStage();
   if (stage >= 1) { relationshipMetrics.trust.current += 2; relationshipMetrics.intimacy.current += 2; }
   if (stage >= 3) { relationshipMetrics.friendship.current += 3; relationshipMetrics.teamwork.current += 3; }
   if (stage >= 5) { relationshipMetrics.sharedVision.current += 4; relationshipMetrics.communication.current += 4; }
   if (stage >= 7) { Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 5); }
   
+  // ── Achievement Bonuses ──
   if (achievements.includes('first_xp')) {
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
     Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 1);
@@ -1145,6 +1149,7 @@ function recalculateAllMetrics() {
     relationshipMetrics.communication.current += 5;
   }
   
+  // ── Streak Bonuses ──
   if (streakData.days >= 7) {
     Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 2);
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
@@ -1154,17 +1159,19 @@ function recalculateAllMetrics() {
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 2);
   }
   
+  // ── Personal → Relationship Feedback ──
   let pComm = personalMetrics.communication.current;
   let rComm = relationshipMetrics.communication.current;
-  relationshipMetrics.communication.current = Math.min(100, Math.round((rComm + pComm * 0.2)));
+  relationshipMetrics.communication.current = Math.min(100, Math.round((rComm + pComm * 0.15)));
   
   let pEmp = personalMetrics.empathy.current;
-  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + pEmp * 0.1));
-  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pEmp * 0.1));
+  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + pEmp * 0.08));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pEmp * 0.08));
   
   let pVul = personalMetrics.vulnerability.current;
-  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pVul * 0.1));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pVul * 0.08));
   
+  // ── Cap everything at 100 ──
   Object.keys(personalMetrics).forEach(key => {
     personalMetrics[key].current = Math.min(100, Math.round(personalMetrics[key].current));
   });
@@ -1430,7 +1437,6 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', function() {
-  // Setup button
   const connectBtn = document.getElementById('connect-btn');
   if (connectBtn) {
     connectBtn.onclick = () => {
@@ -1442,13 +1448,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Demo button
   const demoBtn = document.getElementById('demo-btn');
   if (demoBtn) {
     demoBtn.onclick = () => { startDemoMode(); };
   }
 
-  // Login button
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) {
     loginBtn.onclick = async () => {
@@ -1467,7 +1471,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Signup button
   const signupBtn = document.getElementById('signup-btn');
   if (signupBtn) {
     signupBtn.onclick = async () => {
@@ -1481,7 +1484,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Create relation button
   const createBtn = document.getElementById('create-relation-btn');
   if (createBtn) {
     createBtn.onclick = async () => {
@@ -1514,7 +1516,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Join relation button
   const joinBtn = document.getElementById('join-relation-btn');
   if (joinBtn) {
     joinBtn.onclick = async () => {
@@ -1529,7 +1530,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Copy code button
   const copyBtn = document.getElementById('copy-code-btn');
   if (copyBtn) {
     copyBtn.onclick = () => {
@@ -1654,15 +1654,7 @@ function startDemoMode() {
     vision_10yr: 'In 10 years, we wake up...'
   };
   
-  // These are the correct starting values from the intake
-  let demoStats = { 
-    trust: 60, 
-    intimacy: 65, 
-    communication: 60, 
-    vision: 48, 
-    friendship: 75, 
-    teamwork: 60 
-  };
+  let demoStats = { trust: 60, intimacy: 65, communication: 60, vision: 48, friendship: 75, teamwork: 60 };
   
   liveData = {
     partner_a_name: 'Ana', partner_b_name: 'Marco',
