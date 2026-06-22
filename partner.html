@@ -1045,8 +1045,38 @@ function recalculateAllMetrics() {
   let dLevel = getPathLevel('development');
   let cLevel = getPathLevel('consummation');
   let tLevel = getPathLevel('transcendence');
-  
-  // Reset to base
+
+  // ── Seed base values from intake (overrides hardcoded defaults when data exists) ──
+  var slot = currentMySlot || 'A';
+  var myIn = (liveData && (slot === 'A' ? liveData.intake_a : liveData.intake_b)) || {};
+  var partnerSlot = slot === 'A' ? 'B' : 'A';
+  var partnerIn = (liveData && (partnerSlot === 'A' ? liveData.intake_a : liveData.intake_b)) || {};
+  function ir(obj, id, fb) { var v = Number(obj[id]); return isNaN(v) ? fb : Math.min(10, Math.max(1, v)); }
+  function avgRating(id, fb) {
+    var a = ir(myIn, id, null), b = ir(partnerIn, id, null);
+    if (a === null && b === null) return fb;
+    if (a === null) return b * 10;
+    if (b === null) return a * 10;
+    return Math.round((a + b) / 2 * 10);
+  }
+  var hasMyIntake = Object.keys(myIn).length > 3;
+  if (hasMyIntake) {
+    // Personal bases from my intake
+    personalMetrics.empathy.base       = Math.round(ir(myIn,'rate_emotional',5.8)*10);
+    personalMetrics.selfAwareness.base = Math.round((ir(myIn,'soul_purpose',6.5)*5 + ir(myIn,'rate_emotional',6)*5));
+    personalMetrics.communication.base = Math.round(ir(myIn,'rate_communication',5.6)*10);
+    personalMetrics.confidence.base    = Math.round(ir(myIn,'rate_vision',7)*10);
+    personalMetrics.vulnerability.base = Math.round(ir(myIn,'soul_courage',6.4)*10);
+    // Relationship bases averaged from both partners' intake
+    relationshipMetrics.trust.base          = avgRating('rate_trust', 60);
+    relationshipMetrics.intimacy.base       = Math.round((avgRating('rate_emotional',65) + avgRating('rate_sexual',60)) / 2);
+    relationshipMetrics.communication.base  = avgRating('rate_communication', 60);
+    relationshipMetrics.sharedVision.base   = avgRating('rate_vision', 48);
+    relationshipMetrics.friendship.base     = avgRating('rate_friendship', 75);
+    relationshipMetrics.teamwork.base       = avgRating('rate_teamwork', 60);
+  }
+
+  // Reset to (possibly updated) base
   Object.keys(personalMetrics).forEach(key => {
     personalMetrics[key].current = personalMetrics[key].base;
   });
@@ -1159,17 +1189,16 @@ function recalculateAllMetrics() {
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 2);
   }
   
-  // ── Personal → Relationship Feedback ──
+  // ── Personal → Relationship Feedback (conservative: only excess above 50 bleeds over) ──
   let pComm = personalMetrics.communication.current;
-  let rComm = relationshipMetrics.communication.current;
-  relationshipMetrics.communication.current = Math.min(100, Math.round((rComm + pComm * 0.15)));
+  relationshipMetrics.communication.current = Math.min(100, Math.round(relationshipMetrics.communication.current + Math.max(0, pComm - 50) * 0.05));
   
   let pEmp = personalMetrics.empathy.current;
-  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + pEmp * 0.08));
-  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pEmp * 0.08));
+  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + Math.max(0, pEmp - 50) * 0.04));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + Math.max(0, pEmp - 50) * 0.04));
   
   let pVul = personalMetrics.vulnerability.current;
-  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pVul * 0.08));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + Math.max(0, pVul - 50) * 0.04));
   
   // ── Cap everything at 100 ──
   Object.keys(personalMetrics).forEach(key => {
@@ -1180,10 +1209,31 @@ function recalculateAllMetrics() {
   });
   
   babyReadiness = getBabyReadiness();
-  
+
   renderGrowthBars();
   drawWheel();
-  renderCoupleExtras();
+  // Only refresh visible couple elements, don't restart galaxy animation
+  var coupleScreen = document.getElementById('screen-couple');
+  if (coupleScreen && coupleScreen.classList.contains('active')) {
+    renderInsights();
+    drawMountain();
+    var coupleProgressEl = document.getElementById('couple-progress');
+    if (coupleProgressEl) {
+      var bars = [
+        ['Shared Vision', getRelationshipMetric('sharedVision')],
+        ['Friendship', getRelationshipMetric('friendship')],
+        ['Trust', getRelationshipMetric('trust')],
+        ['Teamwork', getRelationshipMetric('teamwork')],
+        ['Communication', getRelationshipMetric('communication')],
+        ['Intimacy', getRelationshipMetric('intimacy')]
+      ];
+      coupleProgressEl.innerHTML = bars.map(function(b) {
+        return '<div style="display:flex;align-items:center;gap:10px;margin:8px 0"><div style="font-size:12px;color:var(--text2);width:110px;flex-shrink:0;">' + b[0] + '</div><div style="flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));width:' + b[1] + '%"></div></div><div style="font-size:12px;color:var(--gold);min-width:32px;text-align:right;">' + b[1] + '%</div></div>';
+      }).join('');
+    }
+    var babyEl = document.getElementById('baby-pct');
+    if (babyEl) babyEl.innerHTML = getBabyReadiness() + '%';
+  }
   updateWeatherProgress();
   drawTree();
   updateHomeScreen();
@@ -2684,64 +2734,182 @@ function updateRiverBalance(river, delta) {
 }
 
 // ==================== WHEEL ====================
+// Build soul dimensions from intake answers + live metrics
+function getSoulDims() {
+  var slot = currentMySlot || 'A';
+  var my = (liveData && (slot==='A' ? liveData.intake_a : liveData.intake_b)) || {};
+  function ir(id, fb) { var v = Number(my[id]); return isNaN(v) ? fb : Math.min(10, Math.max(1, v)); }
+  function has(id, minLen) { return my[id] && String(my[id]).trim().length > (minLen||15); }
+  function cap(v) { return Math.min(1, Math.max(0.05, v)); }
+  // Blend intake answers with live calculated metrics (intake anchors the soul reading)
+  return [
+    { l:'Purpose',       icon:'🧭', c:'rgba(201,168,76,0.85)',
+      v: cap( ir('soul_purpose',4)/10*0.45 + ir('rate_vision',4)/10*0.35 + (has('vision_10yr',30)?0.20:0.05) ) },
+    { l:'Courage',       icon:'🔥', c:'rgba(232,112,112,0.85)',
+      v: cap( ir('soul_courage',4)/10*0.40 + (has('shadow_fear',20)?0.30:0.05) + (has('soul_wound',20)?0.15:0) + ir('rate_trust',4)/10*0.15 ) },
+    { l:'Openness',      icon:'🌊', c:'rgba(78,205,196,0.85)',
+      v: cap( ir('soul_openness',4)/10*0.50 + ir('rate_communication',4)/10*0.25 + (has('soul_lesson',20)?0.25:0.05) ) },
+    { l:'Presence',      icon:'🌿', c:'rgba(100,200,120,0.85)',
+      v: cap( ir('soul_presence',4)/10*0.50 + (templeState.personal.presence||0)/100*0.25 + Math.min(1,templeState.waterGlasses/8)*0.25 ) },
+    { l:'Vulnerability', icon:'💧', c:'rgba(155,109,255,0.85)',
+      v: cap( (has('shadow_truth',20)?0.35:0.05) + (has('final',25)?0.30:0.05) + (has('soul_fear_love',20)?0.20:0.05) + ir('rate_emotional',3)/10*0.15 ) },
+    { l:'Self-Knowing',  icon:'🪞', c:'rgba(240,180,100,0.85)',
+      v: cap( getPersonalMetric('selfAwareness')/100*0.40 + (has('shadow_fear',20)?0.20:0.05) + (has('soul_depth',20)?0.25:0.05) + (has('soul_wound',20)?0.15:0) ) },
+    { l:'Gift',          icon:'✨', c:'rgba(200,160,240,0.85)',
+      v: cap( (has('soul_gift',20)?0.45:0.10) + ir('rate_friendship',4)/10*0.25 + (has('admire',15)?0.15:0.05) + ir('soul_courage',4)/10*0.15 ) },
+    { l:'Trust',         icon:'🔐', c:'rgba(78,200,180,0.75)',
+      v: cap( getRelationshipMetric('trust')/100*0.45 + ir('rate_emotional',4)/10*0.25 + (has('loved_when',15)?0.20:0.05) + (has('final',20)?0.10:0) ) },
+  ];
+}
+
 function drawWheel() {
   var canvas = document.getElementById('wheel-canvas');
   if (!canvas) return;
-  var S = 200, cx = S / 2, cy = S / 2, r = 72, dpr = window.devicePixelRatio || 1;
-  canvas.width = canvas.height = S * dpr; canvas.style.width = canvas.style.height = S + 'px';
-  var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, S, S);
-  
-  var sl = [
-    {l:'Empathy', v: Math.min(1, getPersonalMetric('empathy') / 100), c: 'rgba(78,205,196,0.8)'},
-    {l:'Self-Awareness', v: Math.min(1, getPersonalMetric('selfAwareness') / 100), c: 'rgba(155,109,255,0.8)'},
-    {l:'Communication', v: Math.min(1, (getPersonalMetric('communication') + getRelationshipMetric('communication')) / 200), c: 'rgba(201,168,76,0.8)'},
-    {l:'Trust', v: Math.min(1, getRelationshipMetric('trust') / 100), c: 'rgba(232,112,112,0.8)'},
-    {l:'Intimacy', v: Math.min(1, getRelationshipMetric('intimacy') / 100), c: 'rgba(201,168,76,0.7)'}
-  ];
-  
-  var n = sl.length;
-  sl.forEach((s, i) => {
-    var a0 = (i / n) * Math.PI * 2 - Math.PI / 2, a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r * s.v, a0, a1); ctx.closePath(); ctx.fillStyle = s.c; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a0, a1); ctx.closePath(); ctx.strokeStyle = 'rgba(240,232,208,0.08)'; ctx.lineWidth = 0.5; ctx.stroke();
+  var S = 260, cx = S/2, cy = S/2, r = 96, dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.height = S * dpr;
+  canvas.style.width = canvas.style.height = S + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, S, S);
+
+  var locked = !isFeatureUnlocked(520);
+  var dims = getSoulDims();
+  var n = dims.length;
+
+  // Background rings
+  [0.25, 0.5, 0.75, 1].forEach(function(f) {
+    ctx.beginPath(); ctx.arc(cx, cy, r*f, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(240,232,208,' + (0.04 + f*0.04) + ')';
+    ctx.lineWidth = 0.5; ctx.stroke();
   });
-  [0.25, 0.5, 0.75, 1].forEach(f => { ctx.beginPath(); ctx.arc(cx, cy, r * f, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(240,232,208,0.06)'; ctx.lineWidth = 0.5; ctx.stroke(); });
-  sl.forEach((_, i) => { var a = (i / n) * Math.PI * 2 - Math.PI / 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); ctx.strokeStyle = 'rgba(240,232,208,0.1)'; ctx.lineWidth = 0.5; ctx.stroke(); });
-  
-  var lb = document.getElementById('wheel-labels');
-  if(lb) {
-    lb.innerHTML = sl.map(s => {
-      let pChange = null;
-      let rChange = null;
-      let label = s.l.toLowerCase().replace('-', '');
-      if (personalMetrics[label]) pChange = personalMetrics[label]?.changes?.slice(-1)[0];
-      if (relationshipMetrics[label]) rChange = relationshipMetrics[label]?.changes?.slice(-1)[0];
-      let changeHtml = '';
-      if (pChange && pChange.amount > 0) changeHtml = ' <span style="font-size:9px;color:var(--teal);">+'+pChange.amount+'</span>';
-      if (rChange && rChange.amount > 0) changeHtml += ' <span style="font-size:9px;color:var(--gold);">💑+'+rChange.amount+'</span>';
-      return '<div class="wheel-label-item"><span class="label-name">' + s.l + '</span><span class="label-value">' + Math.round(s.v * 100) + '%' + changeHtml + '</span></div>';
-    }).join('');
+  // Axis spokes
+  dims.forEach(function(_, i) {
+    var a = (i/n)*Math.PI*2 - Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
+    ctx.strokeStyle = 'rgba(240,232,208,0.09)'; ctx.lineWidth = 0.5; ctx.stroke();
+  });
+
+  if (locked) {
+    // Greyed out placeholder
+    ctx.beginPath();
+    for (var i = 0; i < n; i++) {
+      var a = (i/n)*Math.PI*2 - Math.PI/2;
+      var x = cx + Math.cos(a)*r*0.45, y = cy + Math.sin(a)*r*0.45;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(150,140,120,0.1)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(150,140,120,0.25)'; ctx.lineWidth = 1; ctx.stroke();
+  } else {
+    // Filled spider polygon
+    ctx.beginPath();
+    dims.forEach(function(d, i) {
+      var a = (i/n)*Math.PI*2 - Math.PI/2;
+      var x = cx + Math.cos(a)*r*d.v, y = cy + Math.sin(a)*r*d.v;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    var pg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    pg.addColorStop(0, 'rgba(201,168,76,0.22)');
+    pg.addColorStop(1, 'rgba(155,109,255,0.10)');
+    ctx.fillStyle = pg; ctx.fill();
+    ctx.strokeStyle = 'rgba(201,168,76,0.45)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Colored arc segments + tip dots
+    dims.forEach(function(d, i) {
+      var a0 = (i/n)*Math.PI*2 - Math.PI/2, a1 = ((i+1)/n)*Math.PI*2 - Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r*d.v, a0, a1); ctx.closePath();
+      ctx.fillStyle = d.c.replace('0.85','0.16'); ctx.fill();
+      var da = (a0 + a1) / 2;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(da)*r*d.v, cy + Math.sin(da)*r*d.v, 3, 0, Math.PI*2);
+      ctx.fillStyle = d.c; ctx.fill();
+    });
   }
-  
-  var container = canvas.parentElement;
-  var existing = container.querySelector('.wheel-lock-overlay');
-  if (existing) existing.remove();
-  if (!isFeatureUnlocked(520)) {
-    var lockDiv = document.createElement('div');
-    lockDiv.className = 'wheel-lock-overlay';
-    lockDiv.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.55);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold);font-weight:600;pointer-events:none;text-align:center;padding:20px;';
-    lockDiv.textContent = '🔒 ' + (520 - getTotalXP()) + ' XP needed to unlock Soul Wheel';
-    container.appendChild(lockDiv);
+
+  // Center glow
+  var cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 14);
+  cg.addColorStop(0, 'rgba(201,168,76,' + (locked ? '0.2' : '0.5') + ')');
+  cg.addColorStop(1, 'rgba(201,168,76,0)');
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2);
+  ctx.fillStyle = locked ? 'rgba(150,140,120,0.6)' : 'rgba(201,168,76,0.95)'; ctx.fill();
+
+  // Labels
+  ctx.font = 'bold 8.5px -apple-system,sans-serif';
+  dims.forEach(function(d, i) {
+    var a = (i/n)*Math.PI*2 - Math.PI/2;
+    var lx = cx + Math.cos(a)*(r+16), ly = cy + Math.sin(a)*(r+16);
+    ctx.fillStyle = locked ? 'rgba(150,140,120,0.5)' : 'rgba(240,232,208,0.72)';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.icon + ' ' + d.l, lx, ly + 3);
+  });
+
+  // Update labels card
+  var lb = document.getElementById('wheel-labels');
+  if (lb) {
+    if (locked) {
+      lb.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text2);font-style:italic;font-size:13px">Earn ' + (520 - getTotalXP()) + ' more XP to unlock your Soul Wheel ✦</div>';
+    } else {
+      lb.innerHTML = dims.map(function(d) {
+        var pct = Math.round(d.v * 100);
+        return '<div style="background:var(--glass2);border-radius:12px;padding:10px;border:0.5px solid var(--border);cursor:pointer" onclick="showSoulDetail('' + d.l + '')">'
+          + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
+          + '<span style="font-size:14px">' + d.icon + '</span>'
+          + '<span style="font-size:11px;color:var(--text2)">' + d.l + '</span>'
+          + '<span style="font-size:12px;font-weight:700;color:var(--gold);margin-left:auto">' + pct + '%</span>'
+          + '</div>'
+          + '<div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">'
+          + '<div style="width:' + pct + '%;height:100%;background:' + d.c + ';border-radius:2px"></div>'
+          + '</div></div>';
+      }).join('');
+    }
   }
 }
+
+function showSoulDetail(label) {
+  var dims = getSoulDims();
+  var d = dims.find(function(x) { return x.l === label; }); if (!d) return;
+  var pct = Math.round(d.v * 100);
+  var descs = {
+    'Purpose': 'Your sense of direction and meaning in life.',
+    'Courage': 'Living your truth. Facing your fears honestly.',
+    'Openness': 'Your willingness to be changed by love.',
+    'Presence': 'Being fully here — in your body, your life.',
+    'Vulnerability': 'Your capacity to be truly known by another.',
+    'Self-Knowing': 'The depth of your inner awareness.',
+    'Gift': 'What you bring to the world and this relationship.',
+    'Trust': 'Your foundation of safety in being known.'
+  };
+  var ex = document.getElementById('modal-soul-dim'); if (ex) ex.remove();
+  var div = document.createElement('div');
+  div.id = 'modal-soul-dim';
+  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:flex;align-items:flex-end;justify-content:center;z-index:1010';
+  div.innerHTML = '<div style="width:100%;max-width:480px;background:#11151f;border:0.5px solid var(--border);border-radius:32px 32px 0 0;padding:28px">'
+    + '<div style="width:40px;height:4px;background:rgba(201,168,76,0.35);border-radius:2px;margin:0 auto 20px"></div>'
+    + '<div style="text-align:center;font-size:44px;margin-bottom:8px">' + d.icon + '</div>'
+    + '<div style="text-align:center;font-size:22px;color:var(--gold2);font-family:var(--font);margin-bottom:6px">' + d.l + '</div>'
+    + '<div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:20px;font-style:italic">' + (descs[d.l]||'') + '</div>'
+    + '<div style="height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:14px">'
+    + '<div style="width:' + pct + '%;height:100%;background:' + d.c + ';border-radius:4px"></div></div>'
+    + '<div style="text-align:center;font-size:36px;font-weight:700;color:var(--gold);margin-bottom:22px">' + pct + '%</div>'
+    + '<button onclick="document.getElementById('modal-soul-dim').remove()" style="width:100%;padding:13px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer">Close</button>'
+    + '</div>';
+  document.body.appendChild(div);
+  div.addEventListener('click', function(e) { if (e.target === div) div.remove(); });
+}
+window.showSoulDetail = showSoulDetail;
 
 function isFeatureUnlocked(xpNeeded) { return getTotalXP() >= xpNeeded; }
 
 // ==================== COUPLE EXTRAS ====================
 function renderCoupleExtras() {
-  drawMountain();
-  startGalaxy();
   renderInsights();
+  // Defer canvas draws one frame so the couple screen has painted and has real offsetWidth
+  requestAnimationFrame(function() {
+    drawMountain();
+    startGalaxy();
+  });
   var el = document.getElementById('couple-progress');
   if(el) {
     var bars = [
@@ -2781,9 +2949,14 @@ function renderInsights() {
 
 function drawMountain() {
   var canvas = document.getElementById('mountain-canvas'); if(!canvas) return;
-  var dpr = window.devicePixelRatio || 1, W = canvas.offsetWidth, H = 200;
-  canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, W, H);
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || canvas.parentElement && canvas.parentElement.offsetWidth || 340;
+  var H = 200;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
   var cx = W / 2, top = 20;
   ctx.beginPath(); ctx.moveTo(W * 0.05, H - 10); ctx.lineTo(cx - 18, top + 30); ctx.lineTo(cx, top); ctx.lineTo(cx + 18, top + 30); ctx.lineTo(W * 0.95, H - 10); ctx.closePath();
   var mg = ctx.createLinearGradient(0, top, 0, H); mg.addColorStop(0, 'rgba(30,40,70,0.9)'); mg.addColorStop(1, 'rgba(15,21,37,0.4)'); ctx.fillStyle = mg; ctx.fill();
@@ -2805,9 +2978,18 @@ function drawMountain() {
 function startGalaxy() { if(galaxyRAF) cancelAnimationFrame(galaxyRAF); drawGalaxyFrame(); }
 function drawGalaxyFrame() {
   var canvas = document.getElementById('galaxy-canvas'); if(!canvas) return;
-  var dpr = window.devicePixelRatio || 1, W = canvas.offsetWidth, H = 240;
-  if(canvas.width !== W * dpr) { canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; }
-  var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, W, H);
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || canvas.parentElement && canvas.parentElement.offsetWidth || 340;
+  var H = 240;
+  // Only resize (and re-scale) when dimensions actually change
+  if(canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    canvas._lastDpr = dpr;
+  }
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
   var t = Date.now() * 0.001, aX = W * 0.25, aY = H * 0.45, bX = W * 0.75, bY = H * 0.55, cX = W / 2, cY = H / 2;
   [30, 50, 70].forEach((r, i) => { ctx.beginPath(); ctx.arc(aX, aY, r, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(78,205,196,' + (0.07 - i * 0.02) + ')'; ctx.lineWidth = 0.5; ctx.stroke(); });
   [25, 45, 65].forEach((r, i) => { ctx.beginPath(); ctx.arc(bX, bY, r, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(155,109,255,' + (0.07 - i * 0.02) + ')'; ctx.lineWidth = 0.5; ctx.stroke(); });
@@ -3060,6 +3242,19 @@ const INTAKE_PAGES = [
       {id:'shadow_fear', label:'The fear I rarely admit…', type:'textarea'},
       {id:'shadow_truth', label:'The truth I have not fully spoken…', type:'textarea'},
       {id:'final', label:'If my partner could understand one thing about me completely…', type:'textarea'},
+    ]
+  },
+  { title:'Soul Portrait', icon:'🌀', subtitle:'Eight dimensions of your inner world. These power your Soul Wheel — a living map of who you are becoming.', courage:true,
+    fields: [
+      {id:'soul_purpose',   label:'Sense of personal purpose right now (1–10)',             type:'scale'},
+      {id:'soul_courage',   label:'How courageously are you living your truth today? (1–10)',type:'scale'},
+      {id:'soul_openness',  label:'How open are you to being changed by this relationship? (1–10)', type:'scale'},
+      {id:'soul_presence',  label:'How present are you in your own body and life? (1–10)',  type:'scale'},
+      {id:'soul_depth',     label:'What are you here to learn in this life?',               type:'textarea', placeholder:'Write the first thing that arrives…'},
+      {id:'soul_wound',     label:'The wound you carry that still shapes how you love is…', type:'textarea', placeholder:'Name it without shame'},
+      {id:'soul_gift',      label:'The gift you bring to this relationship that you rarely name is…', type:'textarea', placeholder:'Be honest about your strengths'},
+      {id:'soul_fear_love', label:'What are you most afraid of when it comes to being truly loved?', type:'textarea', placeholder:'The deepest one'},
+      {id:'soul_lesson',    label:'What lesson do you believe your partner arrived to teach you?', type:'textarea', placeholder:'Go deep'},
     ]
   },
 ];
