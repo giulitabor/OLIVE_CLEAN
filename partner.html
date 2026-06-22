@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>Two Paths, One Journey — Dynamic Growth</title>
+<title>Two Paths, One Journey — Complete Growth</title>
 <style>
   :root {
     --navy: #0a0e1a;
@@ -629,7 +629,7 @@
           <div class="streak-badge" id="streak-badge">🔥 0 day streak</div>
         </div>
       </div>
-      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">78%</div><div class="tree-stat-lbl">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">76%</div><div class="tree-stat-lbl">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">82%</div><div class="tree-stat-lbl">Vision</div></div></div></div>
+      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div class="tree-stat-lbl">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div class="tree-stat-lbl">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div class="tree-stat-lbl">Vision</div></div></div></div>
       <div class="card"><div class="card-title">Relationship Weather</div><div id="weather-progress"></div></div>
       <div class="card"><div class="card-title">Daily Pulse</div><div id="pulse-theme" style="font-size:15px;color:var(--gold2);font-family:var(--font);font-style:italic;margin-bottom:10px;text-align:center"></div><div id="pulse-tasks"></div></div>
       <div class="card"><div class="card-title">Archetype</div><div style="display:flex;align-items:center;gap:16px;justify-content:center;padding:8px 0"><span id="arch-symbol" style="font-size:40px">⚒</span><div><div id="arch-name" style="font-size:16px;font-weight:600;color:var(--gold2)">Builders</div><div id="arch-lesson" style="font-size:12px;color:var(--text2);font-style:italic">Create foundations before expansion.</div></div></div></div>
@@ -638,7 +638,7 @@
     <!-- COUPLE -->
     <div id="screen-couple" class="screen">
       <div class="header-strip"><div class="header-date">Our Journey</div><div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div></div>
-      <div class="card"><div class="card-title">Baby Readiness</div><div style="text-align:center;margin-top:8px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">75%</div></div></div>
+      <div class="card"><div class="card-title">Baby Readiness</div><div style="text-align:center;margin-top:8px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">70%</div><div style="font-size:11px;color:var(--text3);margin-top:4px;">Growing with your relationship</div></div></div>
       <div id="couple-progress" class="card"></div>
       <div class="card"><div class="card-title">Insights</div><div id="insights-content"></div></div>
       <div class="card"><div class="card-title">Mountain</div><canvas id="mountain-canvas" style="width:100%;height:200px;display:block"></canvas></div>
@@ -737,9 +737,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ==================== COMPLETE APP with Dynamic Growth System ====================
-// All features: Temple, Timer, Shadow Work, Dreams, Achievements, Streak, XP, Wheel
-// + Four Paths + Dynamic Metrics (Empathy, Self-Awareness, Communication, Confidence, Vulnerability)
+// ==================== COMPLETE APP ====================
+// FULLY INTEGRATED: Personal + Relationship + Baby Readiness + Archetype + Mastery
+// EVERYTHING grows together
 
 let sbClient = null;
 let currentUser = null;
@@ -759,14 +759,27 @@ let timerSeconds = 0;
 let timerTotalSeconds = 0;
 let sanctuaryRAF = null;
 
-// ── Dynamic Metrics ──
-let growthMetrics = {
+// ── Personal Metrics ──
+let personalMetrics = {
   empathy: { base: 58, current: 58, changes: [] },
   selfAwareness: { base: 65, current: 65, changes: [] },
   communication: { base: 56, current: 56, changes: [] },
   confidence: { base: 70, current: 70, changes: [] },
   vulnerability: { base: 64, current: 64, changes: [] }
 };
+
+// ── Relationship Metrics ──
+let relationshipMetrics = {
+  sharedVision: { base: 48, current: 48, changes: [] },
+  friendship: { base: 75, current: 75, changes: [] },
+  trust: { base: 60, current: 60, changes: [] },
+  teamwork: { base: 60, current: 60, changes: [] },
+  communication: { base: 60, current: 60, changes: [] },
+  intimacy: { base: 65, current: 65, changes: [] }
+};
+
+// ── Baby Readiness ──
+let babyReadiness = 70;
 
 // ── Paths Progress ──
 let pathProgress = {
@@ -876,28 +889,134 @@ const ACHIEVEMENTS = [
 
 function safeSubscribe(channel) { realtimeChannels.push(channel); return channel; }
 
-// ==================== DYNAMIC METRICS SYSTEM ====================
+// ==================== METRICS SYSTEM ====================
+
+function getPersonalMetric(name) {
+  return personalMetrics[name]?.current || 50;
+}
+
+function getRelationshipMetric(name) {
+  let map = {
+    'sharedVision': 'sharedVision',
+    'friendship': 'friendship',
+    'trust': 'trust',
+    'teamwork': 'teamwork',
+    'communication': 'communication',
+    'intimacy': 'intimacy'
+  };
+  let key = map[name] || name;
+  return relationshipMetrics[key]?.current || 50;
+}
+
+function getBabyReadiness() {
+  // Baby readiness = weighted average of key relationship metrics
+  let vision = getRelationshipMetric('sharedVision');
+  let trust = getRelationshipMetric('trust');
+  let teamwork = getRelationshipMetric('teamwork');
+  let intimacy = getRelationshipMetric('intimacy');
+  let comm = getRelationshipMetric('communication');
+  let friendship = getRelationshipMetric('friendship');
+  
+  // Weighted formula
+  let readiness = (vision * 0.25 + trust * 0.20 + teamwork * 0.15 + intimacy * 0.15 + comm * 0.15 + friendship * 0.10);
+  return Math.min(100, Math.round(readiness));
+}
+
+function getArchetype() {
+  let metrics = [
+    { name: 'Builders', symbol: '⚒', lesson: 'Create foundations before expansion.', score: getRelationshipMetric('teamwork') + getRelationshipMetric('sharedVision') },
+    { name: 'Healers', symbol: '🌿', lesson: 'Your wounds are portals to deeper connection.', score: getPersonalMetric('empathy') + getRelationshipMetric('trust') },
+    { name: 'Explorers', symbol: '🧭', lesson: 'Keep moving — but build a home base together.', score: getRelationshipMetric('friendship') + getPersonalMetric('confidence') },
+    { name: 'Lovers', symbol: '❤️', lesson: 'Passion without depth becomes habit. Deepen daily.', score: getRelationshipMetric('intimacy') + getPersonalMetric('vulnerability') },
+    { name: 'Alchemists', symbol: '🔥', lesson: 'You are here to transform each other consciously.', score: getPersonalMetric('selfAwareness') + getRelationshipMetric('communication') }
+  ];
+  let best = metrics.reduce((a, b) => a.score > b.score ? a : b);
+  return best;
+}
+
+function addPersonalMetric(name, amount, source) {
+  if (!personalMetrics[name]) return;
+  let old = personalMetrics[name].current;
+  let newVal = Math.min(100, Math.max(0, old + amount));
+  personalMetrics[name].current = Math.round(newVal);
+  personalMetrics[name].changes.push({ amount, source, timestamp: new Date().toISOString() });
+  if (personalMetrics[name].changes.length > 20) personalMetrics[name].changes.shift();
+  spawnFloatingEmoji('📈 +' + amount + ' ' + name);
+}
+
+function addRelationshipMetric(name, amount, source) {
+  let map = {
+    'sharedVision': 'sharedVision',
+    'friendship': 'friendship',
+    'trust': 'trust',
+    'teamwork': 'teamwork',
+    'communication': 'communication',
+    'intimacy': 'intimacy'
+  };
+  let key = map[name] || name;
+  if (!relationshipMetrics[key]) return;
+  let old = relationshipMetrics[key].current;
+  let newVal = Math.min(100, Math.max(0, old + amount));
+  relationshipMetrics[key].current = Math.round(newVal);
+  relationshipMetrics[key].changes.push({ amount, source, timestamp: new Date().toISOString() });
+  if (relationshipMetrics[key].changes.length > 20) relationshipMetrics[key].changes.shift();
+  spawnFloatingEmoji('💑 +' + amount + ' ' + name);
+  
+  // Baby readiness auto-updates via getBabyReadiness()
+}
+
+function addAllRelationshipMetrics(amount, source) {
+  Object.keys(relationshipMetrics).forEach(key => {
+    let old = relationshipMetrics[key].current;
+    let newVal = Math.min(100, Math.max(0, old + amount));
+    relationshipMetrics[key].current = Math.round(newVal);
+    relationshipMetrics[key].changes.push({ amount, source, timestamp: new Date().toISOString() });
+    if (relationshipMetrics[key].changes.length > 20) relationshipMetrics[key].changes.shift();
+  });
+  spawnFloatingEmoji('💑 +' + amount + ' all relationship');
+}
+
+function addAllPersonalMetrics(amount, source) {
+  Object.keys(personalMetrics).forEach(key => {
+    let old = personalMetrics[key].current;
+    let newVal = Math.min(100, Math.max(0, old + amount));
+    personalMetrics[key].current = Math.round(newVal);
+    personalMetrics[key].changes.push({ amount, source, timestamp: new Date().toISOString() });
+    if (personalMetrics[key].changes.length > 20) personalMetrics[key].changes.shift();
+  });
+  spawnFloatingEmoji('🧑 +' + amount + ' all personal');
+}
 
 function initializeMetrics(intakeData, coupleStats) {
-  // Set base values from intake
-  growthMetrics.empathy.base = calculateBaseMetric(intakeData, coupleStats, 'empathy');
-  growthMetrics.selfAwareness.base = calculateBaseMetric(intakeData, coupleStats, 'selfAwareness');
-  growthMetrics.communication.base = calculateBaseMetric(intakeData, coupleStats, 'communication');
-  growthMetrics.confidence.base = calculateBaseMetric(intakeData, coupleStats, 'confidence');
-  growthMetrics.vulnerability.base = calculateBaseMetric(intakeData, coupleStats, 'vulnerability');
+  // Personal metrics from intake
+  personalMetrics.empathy.base = calculatePersonalBase(intakeData, coupleStats, 'empathy');
+  personalMetrics.selfAwareness.base = calculatePersonalBase(intakeData, coupleStats, 'selfAwareness');
+  personalMetrics.communication.base = calculatePersonalBase(intakeData, coupleStats, 'communication');
+  personalMetrics.confidence.base = calculatePersonalBase(intakeData, coupleStats, 'confidence');
+  personalMetrics.vulnerability.base = calculatePersonalBase(intakeData, coupleStats, 'vulnerability');
   
-  // Initialize current values
-  Object.keys(growthMetrics).forEach(key => {
-    growthMetrics[key].current = growthMetrics[key].base;
-    growthMetrics[key].changes = [];
+  Object.keys(personalMetrics).forEach(key => {
+    personalMetrics[key].current = personalMetrics[key].base;
   });
   
-  // Apply initial bonuses from path levels if any
+  // Relationship metrics from couple_stats
+  if (coupleStats) {
+    relationshipMetrics.sharedVision.base = coupleStats.vision || 48;
+    relationshipMetrics.friendship.base = coupleStats.friendship || 75;
+    relationshipMetrics.trust.base = coupleStats.trust || 60;
+    relationshipMetrics.teamwork.base = coupleStats.teamwork || 60;
+    relationshipMetrics.communication.base = coupleStats.communication || 60;
+    relationshipMetrics.intimacy.base = coupleStats.intimacy || 65;
+    
+    Object.keys(relationshipMetrics).forEach(key => {
+      relationshipMetrics[key].current = relationshipMetrics[key].base;
+    });
+  }
+  
   recalculateAllMetrics();
 }
 
-function calculateBaseMetric(intake, stats, metric) {
-  // Use the same logic as computeMyGrowthStats but return raw values
+function calculatePersonalBase(intake, stats, metric) {
   function r(id, fallback) { var v = Number(intake[id]); return isNaN(v) ? fallback : Math.round(v * 10); }
   function has(id) { return intake[id] && intake[id].length > 20; }
   function cap(v) { return Math.min(95, Math.max(10, Math.round(v))); }
@@ -918,132 +1037,215 @@ function calculateBaseMetric(intake, stats, metric) {
   }
 }
 
-function addMetricGrowth(metricName, amount, source) {
-  if (!growthMetrics[metricName]) return;
-  let oldValue = growthMetrics[metricName].current;
-  let newValue = Math.min(100, Math.max(0, oldValue + amount));
-  growthMetrics[metricName].current = Math.round(newValue);
-  growthMetrics[metricName].changes.push({
-    amount: amount,
-    source: source,
-    timestamp: new Date().toISOString()
-  });
-  // Keep only last 20 changes for display
-  if (growthMetrics[metricName].changes.length > 20) {
-    growthMetrics[metricName].changes.shift();
-  }
-  spawnFloatingEmoji('📈 +' + amount + ' ' + metricName);
-}
-
 function recalculateAllMetrics() {
-  // Get current XP
   let totalXP = getTotalXP();
-  let varietyLevel = getPathLevel('variety');
-  let developmentLevel = getPathLevel('development');
-  let consummationLevel = getPathLevel('consummation');
-  let transcendenceLevel = getPathLevel('transcendence');
+  let vLevel = getPathLevel('variety');
+  let dLevel = getPathLevel('development');
+  let cLevel = getPathLevel('consummation');
+  let tLevel = getPathLevel('transcendence');
   
-  // Start from base
-  Object.keys(growthMetrics).forEach(key => {
-    growthMetrics[key].current = growthMetrics[key].base;
+  // Reset to base
+  Object.keys(personalMetrics).forEach(key => {
+    personalMetrics[key].current = personalMetrics[key].base;
+  });
+  Object.keys(relationshipMetrics).forEach(key => {
+    relationshipMetrics[key].current = relationshipMetrics[key].base;
   });
   
-  // Apply path level bonuses
+  // ── Personal Path Bonuses ──
   // Variety → Empathy + Confidence
-  if (varietyLevel >= 3) growthMetrics.empathy.current += 5;
-  if (varietyLevel >= 5) growthMetrics.empathy.current += 10;
-  if (varietyLevel >= 7) growthMetrics.empathy.current += 8;
-  if (varietyLevel >= 10) growthMetrics.empathy.current += 7;
-  if (varietyLevel >= 4) growthMetrics.confidence.current += 5;
-  if (varietyLevel >= 6) growthMetrics.confidence.current += 8;
+  if (vLevel >= 3) personalMetrics.empathy.current += 5;
+  if (vLevel >= 5) personalMetrics.empathy.current += 10;
+  if (vLevel >= 7) personalMetrics.empathy.current += 8;
+  if (vLevel >= 10) personalMetrics.empathy.current += 7;
+  if (vLevel >= 4) personalMetrics.confidence.current += 5;
+  if (vLevel >= 6) personalMetrics.confidence.current += 8;
+  // Variety → Relationship: Friendship + Intimacy
+  if (vLevel >= 3) { relationshipMetrics.friendship.current += 5; relationshipMetrics.intimacy.current += 3; }
+  if (vLevel >= 5) { relationshipMetrics.friendship.current += 8; relationshipMetrics.intimacy.current += 5; }
+  // Mastery rank bonus
+  let vRank = getPathRank('variety');
+  if (vRank >= 1) relationshipMetrics.friendship.current += 2 * vRank;
   
   // Development → Self-Awareness + Communication
-  if (developmentLevel >= 3) growthMetrics.selfAwareness.current += 5;
-  if (developmentLevel >= 5) growthMetrics.selfAwareness.current += 10;
-  if (developmentLevel >= 7) growthMetrics.selfAwareness.current += 8;
-  if (developmentLevel >= 10) growthMetrics.selfAwareness.current += 7;
-  if (developmentLevel >= 4) growthMetrics.communication.current += 5;
-  if (developmentLevel >= 6) growthMetrics.communication.current += 8;
+  if (dLevel >= 3) personalMetrics.selfAwareness.current += 5;
+  if (dLevel >= 5) personalMetrics.selfAwareness.current += 10;
+  if (dLevel >= 7) personalMetrics.selfAwareness.current += 8;
+  if (dLevel >= 10) personalMetrics.selfAwareness.current += 7;
+  if (dLevel >= 4) personalMetrics.communication.current += 5;
+  if (dLevel >= 6) personalMetrics.communication.current += 8;
+  // Development → Relationship: Trust + Communication
+  if (dLevel >= 3) { relationshipMetrics.trust.current += 5; relationshipMetrics.communication.current += 5; }
+  if (dLevel >= 5) { relationshipMetrics.trust.current += 8; relationshipMetrics.communication.current += 8; }
+  let dRank = getPathRank('development');
+  if (dRank >= 1) relationshipMetrics.trust.current += 2 * dRank;
   
-  // Consummation → Communication + Vulnerability
-  if (consummationLevel >= 3) growthMetrics.communication.current += 5;
-  if (consummationLevel >= 5) growthMetrics.communication.current += 10;
-  if (consummationLevel >= 7) growthMetrics.communication.current += 8;
-  if (consummationLevel >= 10) growthMetrics.communication.current += 7;
-  if (consummationLevel >= 4) growthMetrics.vulnerability.current += 5;
-  if (consummationLevel >= 6) growthMetrics.vulnerability.current += 8;
+  // Consummation → Relationship: Shared Vision + Teamwork
+  if (cLevel >= 3) { relationshipMetrics.sharedVision.current += 5; relationshipMetrics.teamwork.current += 5; }
+  if (cLevel >= 5) { relationshipMetrics.sharedVision.current += 8; relationshipMetrics.teamwork.current += 8; }
+  let cRank = getPathRank('consummation');
+  if (cRank >= 1) { relationshipMetrics.sharedVision.current += 2 * cRank; relationshipMetrics.teamwork.current += 2 * cRank; }
   
-  // Transcendence → Vulnerability + Empathy
-  if (transcendenceLevel >= 3) growthMetrics.vulnerability.current += 5;
-  if (transcendenceLevel >= 5) growthMetrics.vulnerability.current += 10;
-  if (transcendenceLevel >= 7) growthMetrics.vulnerability.current += 8;
-  if (transcendenceLevel >= 10) growthMetrics.vulnerability.current += 7;
-  if (transcendenceLevel >= 4) growthMetrics.empathy.current += 5;
-  if (transcendenceLevel >= 6) growthMetrics.empathy.current += 8;
+  // Transcendence → Relationship: Shared Vision + Trust + Intimacy
+  if (tLevel >= 3) { relationshipMetrics.sharedVision.current += 5; relationshipMetrics.trust.current += 3; relationshipMetrics.intimacy.current += 3; }
+  if (tLevel >= 5) { relationshipMetrics.sharedVision.current += 8; relationshipMetrics.trust.current += 5; relationshipMetrics.intimacy.current += 5; }
+  let tRank = getPathRank('transcendence');
+  if (tRank >= 1) { relationshipMetrics.sharedVision.current += 2 * tRank; relationshipMetrics.trust.current += 2 * tRank; }
   
-  // Apply XP milestone bonuses
-  if (totalXP >= 100) { growthMetrics.empathy.current += 2; growthMetrics.selfAwareness.current += 2; growthMetrics.communication.current += 2; growthMetrics.confidence.current += 2; growthMetrics.vulnerability.current += 2; }
-  if (totalXP >= 250) { growthMetrics.empathy.current += 3; growthMetrics.selfAwareness.current += 3; growthMetrics.communication.current += 3; growthMetrics.confidence.current += 3; growthMetrics.vulnerability.current += 3; }
-  if (totalXP >= 500) { growthMetrics.empathy.current += 4; growthMetrics.selfAwareness.current += 4; growthMetrics.communication.current += 4; growthMetrics.confidence.current += 4; growthMetrics.vulnerability.current += 4; }
-  if (totalXP >= 750) { growthMetrics.empathy.current += 3; growthMetrics.selfAwareness.current += 3; growthMetrics.communication.current += 3; growthMetrics.confidence.current += 3; growthMetrics.vulnerability.current += 3; }
-  if (totalXP >= 1000) { growthMetrics.empathy.current += 5; growthMetrics.selfAwareness.current += 5; growthMetrics.communication.current += 5; growthMetrics.confidence.current += 5; growthMetrics.vulnerability.current += 5; }
-  if (totalXP >= 1500) { growthMetrics.empathy.current += 4; growthMetrics.selfAwareness.current += 4; growthMetrics.communication.current += 4; growthMetrics.confidence.current += 4; growthMetrics.vulnerability.current += 4; }
-  if (totalXP >= 2000) { growthMetrics.empathy.current += 6; growthMetrics.selfAwareness.current += 6; growthMetrics.communication.current += 6; growthMetrics.confidence.current += 6; growthMetrics.vulnerability.current += 6; }
+  // ── Continuous XP-to-Metric Conversion ──
+  // Every 10 XP = +0.5 to all metrics (capped at 100)
+  let xpBonus = Math.floor(totalXP / 10) * 0.5;
+  Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += xpBonus);
+  Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += xpBonus);
   
-  // Apply achievement bonuses
-  if (achievements.includes('first_xp')) { addMetricGrowth('empathy', 1, 'achievement: First XP'); addMetricGrowth('selfAwareness', 1, 'achievement: First XP'); addMetricGrowth('communication', 1, 'achievement: First XP'); addMetricGrowth('confidence', 1, 'achievement: First XP'); addMetricGrowth('vulnerability', 1, 'achievement: First XP'); }
-  if (achievements.includes('streak_3')) { addMetricGrowth('empathy', 2, 'achievement: 3-Day Streak'); addMetricGrowth('selfAwareness', 2, 'achievement: 3-Day Streak'); addMetricGrowth('communication', 2, 'achievement: 3-Day Streak'); addMetricGrowth('confidence', 2, 'achievement: 3-Day Streak'); addMetricGrowth('vulnerability', 2, 'achievement: 3-Day Streak'); }
-  if (achievements.includes('xp_100')) { addMetricGrowth('empathy', 2, 'achievement: 100 XP'); addMetricGrowth('selfAwareness', 2, 'achievement: 100 XP'); addMetricGrowth('communication', 2, 'achievement: 100 XP'); addMetricGrowth('confidence', 2, 'achievement: 100 XP'); addMetricGrowth('vulnerability', 2, 'achievement: 100 XP'); }
-  if (achievements.includes('gate_keeper')) { addMetricGrowth('communication', 3, 'achievement: Gate Keeper'); addMetricGrowth('selfAwareness', 3, 'achievement: Gate Keeper'); }
-  if (achievements.includes('xp_520')) { addMetricGrowth('empathy', 5, 'achievement: Temple Guardian'); addMetricGrowth('selfAwareness', 5, 'achievement: Temple Guardian'); addMetricGrowth('communication', 5, 'achievement: Temple Guardian'); addMetricGrowth('confidence', 5, 'achievement: Temple Guardian'); addMetricGrowth('vulnerability', 5, 'achievement: Temple Guardian'); }
-  if (achievements.includes('path_variety_5')) { addMetricGrowth('empathy', 8, 'achievement: Heart Awakening'); }
-  if (achievements.includes('path_development_5')) { addMetricGrowth('selfAwareness', 8, 'achievement: Mirror of Souls'); }
-  if (achievements.includes('path_consummation_5')) { addMetricGrowth('communication', 8, 'achievement: Sacred Partnership'); }
-  if (achievements.includes('path_transcendence_5')) { addMetricGrowth('empathy', 10, 'achievement: Innate Light'); addMetricGrowth('selfAwareness', 10, 'achievement: Innate Light'); addMetricGrowth('communication', 10, 'achievement: Innate Light'); addMetricGrowth('confidence', 10, 'achievement: Innate Light'); addMetricGrowth('vulnerability', 10, 'achievement: Innate Light'); }
-  
-  // Cap all metrics at 100
-  Object.keys(growthMetrics).forEach(key => {
-    growthMetrics[key].current = Math.min(100, Math.round(growthMetrics[key].current));
+  // ── XP Milestone Bonuses ──
+  let xpMilestones = [
+    { xp: 100, bonus: 2 }, { xp: 250, bonus: 3 }, { xp: 500, bonus: 4 },
+    { xp: 750, bonus: 3 }, { xp: 1000, bonus: 5 }, { xp: 1500, bonus: 4 }, { xp: 2000, bonus: 6 }
+  ];
+  xpMilestones.forEach(m => {
+    if (totalXP >= m.xp) {
+      Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += m.bonus);
+      Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += m.bonus);
+    }
   });
+  
+  // ── Temple Stage → Relationship Bonuses ──
+  let stage = computeSanctuaryStage();
+  if (stage >= 1) { relationshipMetrics.trust.current += 2; relationshipMetrics.intimacy.current += 2; }
+  if (stage >= 3) { relationshipMetrics.friendship.current += 3; relationshipMetrics.teamwork.current += 3; }
+  if (stage >= 5) { relationshipMetrics.sharedVision.current += 4; relationshipMetrics.communication.current += 4; }
+  if (stage >= 7) { Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 5); }
+  
+  // ── Achievement Bonuses ──
+  if (achievements.includes('first_xp')) {
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 1);
+  }
+  if (achievements.includes('water_master')) {
+    personalMetrics.selfAwareness.current += 3;
+    relationshipMetrics.trust.current += 2;
+  }
+  if (achievements.includes('gate_keeper')) {
+    relationshipMetrics.trust.current += 3;
+    relationshipMetrics.communication.current += 3;
+    personalMetrics.communication.current += 3;
+    personalMetrics.selfAwareness.current += 3;
+  }
+  if (achievements.includes('xp_520')) {
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 5);
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 5);
+  }
+  if (achievements.includes('path_consummation_5')) {
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 8);
+  }
+  if (achievements.includes('path_transcendence_5')) {
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 10);
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 10);
+  }
+  if (achievements.includes('path_variety_5')) {
+    personalMetrics.empathy.current += 8;
+    relationshipMetrics.friendship.current += 5;
+  }
+  if (achievements.includes('path_development_5')) {
+    personalMetrics.selfAwareness.current += 8;
+    relationshipMetrics.communication.current += 5;
+  }
+  
+  // ── Streak Bonuses ──
+  if (streakData.days >= 7) {
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 2);
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
+  }
+  if (streakData.days >= 30) {
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 4);
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 2);
+  }
+  
+  // ── Personal → Relationship Feedback Loop ──
+  // Personal communication feeds into relationship communication
+  let pComm = personalMetrics.communication.current;
+  let rComm = relationshipMetrics.communication.current;
+  relationshipMetrics.communication.current = Math.min(100, Math.round((rComm + pComm * 0.2)));
+  
+  // Personal empathy feeds into relationship trust + intimacy
+  let pEmp = personalMetrics.empathy.current;
+  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + pEmp * 0.1));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pEmp * 0.1));
+  
+  // Personal vulnerability feeds into relationship intimacy
+  let pVul = personalMetrics.vulnerability.current;
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pVul * 0.1));
+  
+  // ── Cap everything at 100 ──
+  Object.keys(personalMetrics).forEach(key => {
+    personalMetrics[key].current = Math.min(100, Math.round(personalMetrics[key].current));
+  });
+  Object.keys(relationshipMetrics).forEach(key => {
+    relationshipMetrics[key].current = Math.min(100, Math.round(relationshipMetrics[key].current));
+  });
+  
+  // Update baby readiness
+  babyReadiness = getBabyReadiness();
   
   // Update UI
   renderGrowthBars();
   drawWheel();
-}
-
-function getMetricValue(metricName) {
-  return growthMetrics[metricName]?.current || 50;
+  renderCoupleExtras();
+  updateWeatherProgress();
+  drawTree();
+  updateHomeScreen();
 }
 
 // ==================== PATH SYSTEM ====================
 const PATH_ACTIVITIES = {
   variety: [
-    { id: 'v1', icon: '😊', name: 'Smile Challenge', desc: 'Spend one minute smiling at each other without speaking.', xp: 15, cat: 'Emotional awareness', metricBonus: { empathy: 2, confidence: 1 } },
-    { id: 'v2', icon: '💖', name: 'Daily Appreciation', desc: 'Tell your partner three genuine things you appreciate.', xp: 10, cat: 'Gratitude', metricBonus: { empathy: 3, confidence: 1 } },
-    { id: 'v3', icon: '📝', name: 'Beauty Journal', desc: 'Write five beautiful things you noticed today.', xp: 20, cat: 'Presence', metricBonus: { empathy: 2, selfAwareness: 1 } },
-    { id: 'v4', icon: '🧘', name: 'Heart Meditation', desc: 'Five-minute heart meditation focusing on love.', xp: 20, cat: 'Presence', metricBonus: { empathy: 3, confidence: 2 } },
-    { id: 'v5', icon: '👁️', name: 'Eye Contact', desc: '30 seconds of silent eye contact, simply present.', xp: 15, cat: 'Presence', metricBonus: { empathy: 2, vulnerability: 1 } },
+    { id: 'v1', icon: '😊', name: 'Smile Challenge', desc: 'Spend one minute smiling at each other without speaking.', xp: 15, cat: 'Emotional awareness', 
+      personalBonus: { empathy: 2, confidence: 1 }, relationshipBonus: { friendship: 2, intimacy: 1 } },
+    { id: 'v2', icon: '💖', name: 'Daily Appreciation', desc: 'Tell your partner three genuine things you appreciate.', xp: 10, cat: 'Gratitude',
+      personalBonus: { empathy: 3, confidence: 1 }, relationshipBonus: { friendship: 3, intimacy: 2 } },
+    { id: 'v3', icon: '📝', name: 'Beauty Journal', desc: 'Write five beautiful things you noticed today.', xp: 20, cat: 'Presence',
+      personalBonus: { empathy: 2, selfAwareness: 1 }, relationshipBonus: { friendship: 1 } },
+    { id: 'v4', icon: '🧘', name: 'Heart Meditation', desc: 'Five-minute heart meditation focusing on love.', xp: 20, cat: 'Presence',
+      personalBonus: { empathy: 3, confidence: 2 }, relationshipBonus: { trust: 2 } },
+    { id: 'v5', icon: '👁️', name: 'Eye Contact', desc: '30 seconds of silent eye contact, simply present.', xp: 15, cat: 'Presence',
+      personalBonus: { empathy: 2, vulnerability: 1 }, relationshipBonus: { intimacy: 3, trust: 2 } },
   ],
   development: [
-    { id: 'd1', icon: '🗣️', name: 'Conscious Conversation', desc: '20 minutes without interruptions, truly listening.', xp: 30, cat: 'Communication', metricBonus: { communication: 3, empathy: 2 } },
-    { id: 'd2', icon: '👂', name: 'Active Listening', desc: 'Reflect back what your partner shared.', xp: 25, cat: 'Listening', metricBonus: { communication: 3, selfAwareness: 2 } },
-    { id: 'd3', icon: '💭', name: 'Dream Sharing', desc: 'Share a hope and a fear openly.', xp: 20, cat: 'Vulnerability', metricBonus: { vulnerability: 3, selfAwareness: 2 } },
-    { id: 'd4', icon: '🫂', name: 'Guided Meditation', desc: 'Breathe together for 5 minutes.', xp: 30, cat: 'Trust', metricBonus: { selfAwareness: 3, empathy: 2 } },
-    { id: 'd5', icon: '🤝', name: 'Conflict Resolution', desc: 'Resolve a disagreement peacefully with active listening.', xp: 40, cat: 'Understanding', metricBonus: { communication: 4, vulnerability: 3 } },
+    { id: 'd1', icon: '🗣️', name: 'Conscious Conversation', desc: '20 minutes without interruptions, truly listening.', xp: 30, cat: 'Communication',
+      personalBonus: { communication: 3, empathy: 2 }, relationshipBonus: { communication: 3, trust: 3, sharedVision: 3 } },
+    { id: 'd2', icon: '👂', name: 'Active Listening', desc: 'Reflect back what your partner shared.', xp: 25, cat: 'Listening',
+      personalBonus: { communication: 3, selfAwareness: 2 }, relationshipBonus: { communication: 3, trust: 2 } },
+    { id: 'd3', icon: '💭', name: 'Dream Sharing', desc: 'Share a hope and a fear openly.', xp: 20, cat: 'Vulnerability',
+      personalBonus: { vulnerability: 3, selfAwareness: 2 }, relationshipBonus: { intimacy: 3, trust: 2 } },
+    { id: 'd4', icon: '🫂', name: 'Guided Meditation', desc: 'Breathe together for 5 minutes.', xp: 30, cat: 'Trust',
+      personalBonus: { selfAwareness: 3, empathy: 2 }, relationshipBonus: { trust: 3, intimacy: 2 } },
+    { id: 'd5', icon: '🤝', name: 'Conflict Resolution', desc: 'Resolve a disagreement peacefully with active listening.', xp: 40, cat: 'Understanding',
+      personalBonus: { communication: 4, vulnerability: 3 }, relationshipBonus: { trust: 4, communication: 4, teamwork: 3 } },
   ],
   consummation: [
-    { id: 'c1', icon: '🤝', name: 'Team Challenge', desc: 'Complete a project together (cook, build, plan).', xp: 40, cat: 'Cooperation', metricBonus: { communication: 3, confidence: 2 } },
-    { id: 'c2', icon: '🍳', name: 'Cook Together', desc: 'Prepare a meal together from start to finish.', xp: 20, cat: 'Shared experiences', metricBonus: { communication: 2, empathy: 2 } },
-    { id: 'c3', icon: '🤲', name: 'Volunteer Together', desc: 'Help someone or something together.', xp: 50, cat: 'Service', metricBonus: { empathy: 4, vulnerability: 2 } },
-    { id: 'c4', icon: '🎨', name: 'Create Together', desc: 'Art, music, garden — create something meaningful.', xp: 40, cat: 'Shared experiences', metricBonus: { communication: 3, confidence: 3 } },
-    { id: 'c5', icon: '🫂', name: 'Mindful Embrace', desc: 'A mindful hug, present and connected.', xp: 15, cat: 'Compassion', metricBonus: { empathy: 2, vulnerability: 2 } },
+    { id: 'c1', icon: '🤝', name: 'Team Challenge', desc: 'Complete a project together (cook, build, plan).', xp: 40, cat: 'Cooperation',
+      personalBonus: { communication: 3, confidence: 2 }, relationshipBonus: { teamwork: 4, sharedVision: 3, friendship: 2 } },
+    { id: 'c2', icon: '🍳', name: 'Cook Together', desc: 'Prepare a meal together from start to finish.', xp: 20, cat: 'Shared experiences',
+      personalBonus: { communication: 2, empathy: 2 }, relationshipBonus: { teamwork: 3, friendship: 2 } },
+    { id: 'c3', icon: '🤲', name: 'Volunteer Together', desc: 'Help someone or something together.', xp: 50, cat: 'Service',
+      personalBonus: { empathy: 4, vulnerability: 2 }, relationshipBonus: { friendship: 3, teamwork: 3, trust: 3 } },
+    { id: 'c4', icon: '🎨', name: 'Create Together', desc: 'Art, music, garden — create something meaningful.', xp: 40, cat: 'Shared experiences',
+      personalBonus: { communication: 3, confidence: 3 }, relationshipBonus: { sharedVision: 3, teamwork: 3 } },
+    { id: 'c5', icon: '🫂', name: 'Mindful Embrace', desc: 'A mindful hug, present and connected.', xp: 15, cat: 'Compassion',
+      personalBonus: { empathy: 2, vulnerability: 2 }, relationshipBonus: { intimacy: 3, trust: 2 } },
   ],
   transcendence: [
-    { id: 't1', icon: '🧘', name: 'Meditate Together', desc: '20-minute shared meditation.', xp: 50, cat: 'Meditation', metricBonus: { selfAwareness: 4, empathy: 3 } },
-    { id: 't2', icon: '🚶', name: 'Silent Walk', desc: 'Walk in nature without phones or words.', xp: 40, cat: 'Presence', metricBonus: { selfAwareness: 3, empathy: 3 } },
-    { id: 't3', icon: '🤲', name: 'Acts of Kindness', desc: 'Help someone anonymously.', xp: 30, cat: 'Service', metricBonus: { empathy: 3, vulnerability: 2 } },
-    { id: 't4', icon: '📖', name: 'Study Wisdom', desc: 'Read and discuss philosophy or spiritual teachings.', xp: 40, cat: 'Wisdom', metricBonus: { selfAwareness: 3, communication: 2 } },
-    { id: 't5', icon: '🎯', name: 'Vision Board', desc: 'Create a shared vision for the future.', xp: 35, cat: 'Purpose', metricBonus: { confidence: 3, empathy: 2 } },
+    { id: 't1', icon: '🧘', name: 'Meditate Together', desc: '20-minute shared meditation.', xp: 50, cat: 'Meditation',
+      personalBonus: { selfAwareness: 4, empathy: 3 }, relationshipBonus: { trust: 3, intimacy: 2 } },
+    { id: 't2', icon: '🚶', name: 'Silent Walk', desc: 'Walk in nature without phones or words.', xp: 40, cat: 'Presence',
+      personalBonus: { selfAwareness: 3, empathy: 3 }, relationshipBonus: { intimacy: 3, trust: 2 } },
+    { id: 't3', icon: '🤲', name: 'Acts of Kindness', desc: 'Help someone anonymously.', xp: 30, cat: 'Service',
+      personalBonus: { empathy: 3, vulnerability: 2 }, relationshipBonus: { friendship: 2, trust: 2 } },
+    { id: 't4', icon: '📖', name: 'Study Wisdom', desc: 'Read and discuss philosophy or spiritual teachings.', xp: 40, cat: 'Wisdom',
+      personalBonus: { selfAwareness: 3, communication: 2 }, relationshipBonus: { sharedVision: 3 } },
+    { id: 't5', icon: '🎯', name: 'Vision Board', desc: 'Create a shared vision for the future.', xp: 35, cat: 'Purpose',
+      personalBonus: { confidence: 3, empathy: 2 }, relationshipBonus: { sharedVision: 4, trust: 3 } },
   ]
 };
 
@@ -1108,7 +1310,6 @@ function addPathXP(pathKey, amount) {
       let achMap = { variety: 'path_variety_5', development: 'path_development_5', consummation: 'path_consummation_5', transcendence: 'path_transcendence_5' };
       unlockAchievement(achMap[pathKey]);
     }
-    // Recalculate metrics on path level up
     recalculateAllMetrics();
     needed = getPathXPNeeded(pathKey);
   }
@@ -1178,17 +1379,22 @@ function renderPathsTab() {
       let slot = currentMySlot || 'A';
       let key2 = slot + '_path_' + a.id;
       let done = completedTasks && completedTasks[key2];
-      let metricDisplay = '';
-      if (a.metricBonus) {
-        let parts = [];
-        Object.entries(a.metricBonus).forEach(([m, v]) => {
-          parts.push(m.charAt(0).toUpperCase() + m.slice(1) + ' +' + v);
+      let personalDisplay = '';
+      let relationshipDisplay = '';
+      if (a.personalBonus) {
+        let parts = Object.entries(a.personalBonus).map(([m, v]) => m.charAt(0).toUpperCase() + m.slice(1) + ' +' + v);
+        personalDisplay = ' <span style="font-size:9px;color:var(--teal);">🧑 ' + parts.join(' ') + '</span>';
+      }
+      if (a.relationshipBonus) {
+        let parts = Object.entries(a.relationshipBonus).map(([m, v]) => {
+          let labels = { sharedVision: 'Vision', friendship: 'Friendship', trust: 'Trust', teamwork: 'Teamwork', communication: 'Comm', intimacy: 'Intimacy' };
+          return (labels[m] || m) + ' +' + v;
         });
-        metricDisplay = ' <span style="font-size:9px;color:var(--teal);">📈 ' + parts.join(' ') + '</span>';
+        relationshipDisplay = ' <span style="font-size:9px;color:var(--gold);">💑 ' + parts.join(' ') + '</span>';
       }
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--glass2);border-radius:10px;margin-bottom:4px;border:0.5px solid ' + (done ? pathColors[key] : 'var(--border)') + ';">';
       html += '<span style="font-size:16px;">' + a.icon + '</span>';
-      html += '<div style="flex:1;font-size:12px;color:var(--text1);">' + a.name + ' <span style="font-size:10px;color:var(--text2);">(' + a.cat + ')</span>' + metricDisplay + '</div>';
+      html += '<div style="flex:1;font-size:12px;color:var(--text1);">' + a.name + ' <span style="font-size:10px;color:var(--text2);">(' + a.cat + ')</span>' + personalDisplay + relationshipDisplay + '</div>';
       html += '<span style="font-size:10px;color:var(--gold);">+' + a.xp + ' XP</span>';
       html += '<button onclick="completePathActivity(\'' + key + '\',\'' + a.id + '\',' + a.xp + ',this)" style="padding:2px 10px;border-radius:20px;background:' + (done ? 'rgba(78,205,196,0.15)' : 'rgba(201,168,76,0.1)') + ';border:0.5px solid ' + (done ? 'var(--teal)' : 'var(--gold)') + ';color:' + (done ? 'var(--teal)' : 'var(--gold)') + ';font-size:10px;cursor:pointer;">' + (done ? '✓ Done' : 'Start') + '</button>';
       html += '</div>';
@@ -1210,13 +1416,19 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
   completedTasks[key] = true;
   if (btn) { btn.textContent = '✓ Done'; btn.style.background = 'rgba(78,205,196,0.15)'; btn.style.borderColor = 'var(--teal)'; btn.style.color = 'var(--teal)'; }
   
-  // Find activity to get metric bonuses
   let activity = PATH_ACTIVITIES[pathKey]?.find(a => a.id === activityId);
-  if (activity && activity.metricBonus) {
-    Object.entries(activity.metricBonus).forEach(([metric, bonus]) => {
-      addMetricGrowth(metric, bonus, 'activity: ' + activity.name);
-    });
-    showToast('📈 Metrics updated!');
+  if (activity) {
+    if (activity.personalBonus) {
+      Object.entries(activity.personalBonus).forEach(([metric, bonus]) => {
+        addPersonalMetric(metric, bonus, 'activity: ' + activity.name);
+      });
+    }
+    if (activity.relationshipBonus) {
+      Object.entries(activity.relationshipBonus).forEach(([metric, bonus]) => {
+        addRelationshipMetric(metric, bonus, 'activity: ' + activity.name);
+      });
+    }
+    showToast('📈 Personal & Relationship metrics updated!');
   }
   
   addPathXP(pathKey, xp);
@@ -1277,11 +1489,12 @@ document.getElementById('create-relation-btn').onclick = async () => {
     id: relationId, invite_code: inviteCode,
     partner_a_id: currentUser.id, partner_a_name: nameA,
     partner_b_id: null, partner_b_name: nameB, partner_b_joined: false,
-    couple_stats: { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 },
+    couple_stats: { trust: 60, intimacy: 65, communication: 60, vision: 48, friendship: 75, teamwork: 60 },
     baby_readiness: 70,
     temple_state: JSON.stringify(templeState),
     path_progress: JSON.stringify(pathProgress),
-    growth_metrics: JSON.stringify(growthMetrics),
+    personal_metrics: JSON.stringify(personalMetrics),
+    relationship_metrics: JSON.stringify(relationshipMetrics),
     created_at: new Date().toISOString()
   };
   const { error } = await sbClient.from('relationships').insert([relationData]);
@@ -1357,22 +1570,33 @@ function startMainApp(relation) {
   if (relation.path_progress) {
     try { pathProgress = JSON.parse(relation.path_progress); } catch(e) {}
   }
-  if (relation.growth_metrics) {
+  if (relation.personal_metrics) {
     try { 
-      let saved = JSON.parse(relation.growth_metrics);
+      let saved = JSON.parse(relation.personal_metrics);
       Object.keys(saved).forEach(key => {
-        if (growthMetrics[key]) {
-          growthMetrics[key].base = saved[key].base || growthMetrics[key].base;
-          growthMetrics[key].current = saved[key].current || growthMetrics[key].current;
-          growthMetrics[key].changes = saved[key].changes || [];
+        if (personalMetrics[key]) {
+          personalMetrics[key].base = saved[key].base || personalMetrics[key].base;
+          personalMetrics[key].current = saved[key].current || personalMetrics[key].current;
+          personalMetrics[key].changes = saved[key].changes || [];
+        }
+      });
+    } catch(e) {}
+  }
+  if (relation.relationship_metrics) {
+    try { 
+      let saved = JSON.parse(relation.relationship_metrics);
+      Object.keys(saved).forEach(key => {
+        if (relationshipMetrics[key]) {
+          relationshipMetrics[key].base = saved[key].base || relationshipMetrics[key].base;
+          relationshipMetrics[key].current = saved[key].current || relationshipMetrics[key].current;
+          relationshipMetrics[key].changes = saved[key].changes || [];
         }
       });
     } catch(e) {}
   }
   
-  // Initialize metrics from intake if not already set
   var slotData = slot === 'A' ? relation.intake_a : relation.intake_b;
-  if (slotData && !growthMetrics.empathy.base) {
+  if (slotData) {
     initializeMetrics(slotData || {}, relation.couple_stats || {});
   }
   
@@ -1402,7 +1626,6 @@ function startDemoMode() {
   document.getElementById('bottom-nav').style.display = 'flex';
   currentMySlot = 'A';
   
-  // Set demo intake data
   let demoIntake = {
     rate_emotional: 7, rate_communication: 6, rate_vision: 8,
     rate_trust: 7, rate_friendship: 8, rate_teamwork: 7, rate_sexual: 6,
@@ -1416,20 +1639,22 @@ function startDemoMode() {
     vision_10yr: 'In 10 years, we wake up...'
   };
   
+  let demoStats = { trust: 60, intimacy: 65, communication: 60, vision: 48, friendship: 75, teamwork: 60 };
+  
   liveData = {
     partner_a_name: 'Ana', partner_b_name: 'Marco',
-    couple_stats: { trust: 78, intimacy: 62, communication: 74, vision: 82, friendship: 85 },
-    baby_readiness: 75,
-    xp_a: 340, xp_b: 280,
+    couple_stats: demoStats,
+    baby_readiness: 70,
+    xp_a: 120, xp_b: 80,
     temple_state: JSON.stringify(templeState),
     path_progress: JSON.stringify(pathProgress),
     intake_a: demoIntake,
     intake_a_done: true
   };
   
-  initializeMetrics(demoIntake, liveData.couple_stats);
+  initializeMetrics(demoIntake, demoStats);
   
-  xpData = {A: 340, B: 280};
+  xpData = {A: 120, B: 80};
   completedTasks = {p1: true, c1: true};
   updateAllUI();
   startAnimations();
@@ -1458,13 +1683,19 @@ function setupRealtimeForRelationship() {
           if (liveData.path_progress) {
             try { pathProgress = JSON.parse(liveData.path_progress); } catch(e) {}
           }
-          if (liveData.growth_metrics) {
+          if (liveData.personal_metrics) {
             try { 
-              let saved = JSON.parse(liveData.growth_metrics);
+              let saved = JSON.parse(liveData.personal_metrics);
               Object.keys(saved).forEach(key => {
-                if (growthMetrics[key]) {
-                  growthMetrics[key].current = saved[key].current || growthMetrics[key].current;
-                }
+                if (personalMetrics[key]) personalMetrics[key].current = saved[key].current || personalMetrics[key].current;
+              });
+            } catch(e) {}
+          }
+          if (liveData.relationship_metrics) {
+            try { 
+              let saved = JSON.parse(liveData.relationship_metrics);
+              Object.keys(saved).forEach(key => {
+                if (relationshipMetrics[key]) relationshipMetrics[key].current = saved[key].current || relationshipMetrics[key].current;
               });
             } catch(e) {}
           }
@@ -1498,11 +1729,17 @@ async function safeRelUpdate(updates) {
 function updateAllUI() {
   updateWeatherProgress(); drawTree(); renderGrowthBars(); renderPrivateEntries(); renderJournal();
   updatePartnerDisplay(); updateXpDisplay();
-  document.getElementById('baby-pct').innerHTML = (liveData.baby_readiness || 70) + '%';
-  const stats = liveData.couple_stats || {};
-  document.getElementById('stat-growth').innerHTML = Math.floor((stats.trust + stats.communication + stats.vision) / 3) + '%';
-  document.getElementById('stat-harmony').innerHTML = (stats.trust || 70) + '%';
-  document.getElementById('stat-vision').innerHTML = (stats.vision || 80) + '%';
+  
+  // Baby Readiness
+  let baby = getBabyReadiness();
+  document.getElementById('baby-pct').innerHTML = baby + '%';
+  
+  // Tree stats - now fully dynamic
+  let avgGrowth = Math.round((getPersonalMetric('empathy') + getPersonalMetric('selfAwareness') + getPersonalMetric('communication')) / 3);
+  document.getElementById('stat-growth').innerHTML = avgGrowth + '%';
+  document.getElementById('stat-harmony').innerHTML = getRelationshipMetric('trust') + '%';
+  document.getElementById('stat-vision').innerHTML = getRelationshipMetric('sharedVision') + '%';
+  
   updateHomeScreen(); renderCoupleExtras();
   recalculateAllMetrics();
 }
@@ -1510,9 +1747,16 @@ function updateAllUI() {
 function updateWeatherProgress() {
   const el = document.getElementById('weather-progress');
   if (!el) return;
-  const stats = liveData.couple_stats || { trust: 70, intimacy: 65, communication: 72, vision: 80, friendship: 78 };
-  el.innerHTML = Object.entries(stats).map(([k, v]) =>
-    `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`
+  const metrics = [
+    { label: 'Shared Vision', value: getRelationshipMetric('sharedVision') },
+    { label: 'Friendship', value: getRelationshipMetric('friendship') },
+    { label: 'Trust', value: getRelationshipMetric('trust') },
+    { label: 'Teamwork', value: getRelationshipMetric('teamwork') },
+    { label: 'Communication', value: getRelationshipMetric('communication') },
+    { label: 'Intimacy', value: getRelationshipMetric('intimacy') }
+  ];
+  el.innerHTML = metrics.map(m =>
+    `<div class="progress-row"><div class="progress-label">${m.label}</div><div class="progress-track"><div class="progress-fill" style="width:${m.value}%"></div></div><div>${m.value}%</div></div>`
   ).join('');
 }
 
@@ -1526,33 +1770,68 @@ function drawTree() {
   ctx.clearRect(0, 0, w, h);
   ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base-80); ctx.strokeStyle = '#8B5A2B'; ctx.lineWidth = 8; ctx.stroke();
   for(let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx-15+i*5, base+12); ctx.stroke(); }
-  const stats = liveData.couple_stats || {};
-  const growth = (stats.trust + stats.communication) / 2;
+  const trust = getRelationshipMetric('trust');
+  const comm = getRelationshipMetric('communication');
+  const growth = (trust + comm) / 2;
   for(let i=0;i<8+Math.floor(growth/10);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#3c9e6d'; ctx.fill(); }
-  for(let i=0;i<4+Math.floor((stats.intimacy||62)/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
+  const intimacy = getRelationshipMetric('intimacy');
+  for(let i=0;i<4+Math.floor(intimacy/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
+  // Add baby readiness as a small fruit
+  let baby = getBabyReadiness();
+  if (baby > 70) {
+    let fruitCount = Math.floor((baby - 70) / 5);
+    for (let i = 0; i < Math.min(fruitCount, 5); i++) {
+      let x = cx - 15 + i * 8 + Math.random() * 4;
+      let y = base - 50 + Math.random() * 20;
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff6b6b'; ctx.fill();
+    }
+  }
 }
 
 function renderGrowthBars() {
   const el = document.getElementById('growth-bars');
   if(!el) return;
   
-  // Use dynamic metrics
-  const metrics = [
-    { key: 'empathy', label: 'Empathy', value: getMetricValue('empathy') },
-    { key: 'selfAwareness', label: 'Self-Awareness', value: getMetricValue('selfAwareness') },
-    { key: 'communication', label: 'Communication', value: getMetricValue('communication') },
-    { key: 'confidence', label: 'Confidence', value: getMetricValue('confidence') },
-    { key: 'vulnerability', label: 'Vulnerability', value: getMetricValue('vulnerability') }
+  const personal = [
+    { key: 'empathy', label: 'Empathy', value: getPersonalMetric('empathy') },
+    { key: 'selfAwareness', label: 'Self-Awareness', value: getPersonalMetric('selfAwareness') },
+    { key: 'communication', label: 'Communication', value: getPersonalMetric('communication') },
+    { key: 'confidence', label: 'Confidence', value: getPersonalMetric('confidence') },
+    { key: 'vulnerability', label: 'Vulnerability', value: getPersonalMetric('vulnerability') }
   ];
   
-  el.innerHTML = metrics.map(m => {
-    let change = growthMetrics[m.key]?.changes?.slice(-1)[0];
-    let changeHtml = '';
-    if (change && change.amount > 0) {
-      changeHtml = ' <span class="metric-change">+'+change.amount+'</span>';
-    }
-    return `<div class="progress-row"><div class="progress-label">${m.label}</div><div class="progress-track"><div class="progress-fill teal" style="width:${m.value}%"></div></div><div>${m.value}%${changeHtml}</div></div>`;
-  }).join('');
+  const relationship = [
+    { key: 'sharedVision', label: 'Shared Vision', value: getRelationshipMetric('sharedVision') },
+    { key: 'friendship', label: 'Friendship', value: getRelationshipMetric('friendship') },
+    { key: 'trust', label: 'Trust', value: getRelationshipMetric('trust') },
+    { key: 'teamwork', label: 'Teamwork', value: getRelationshipMetric('teamwork') },
+    { key: 'communication', label: 'Communication', value: getRelationshipMetric('communication') },
+    { key: 'intimacy', label: 'Intimacy', value: getRelationshipMetric('intimacy') }
+  ];
+  
+  let html = '<div style="font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:1px;">🧑 Personal Growth</div>';
+  personal.forEach(m => {
+    let change = personalMetrics[m.key]?.changes?.slice(-1)[0];
+    let changeHtml = change && change.amount > 0 ? ' <span class="metric-change">+'+change.amount+'</span>' : '';
+    html += `<div class="progress-row"><div class="progress-label">${m.label}</div><div class="progress-track"><div class="progress-fill teal" style="width:${m.value}%"></div></div><div>${m.value}%${changeHtml}</div></div>`;
+  });
+  
+  html += '<div style="font-size:10px;color:var(--text3);margin:12px 0 8px;letter-spacing:1px;">💑 Relationship Growth</div>';
+  relationship.forEach(m => {
+    let change = relationshipMetrics[m.key]?.changes?.slice(-1)[0];
+    let changeHtml = change && change.amount > 0 ? ' <span class="metric-change">+'+change.amount+'</span>' : '';
+    html += `<div class="progress-row"><div class="progress-label">${m.label}</div><div class="progress-track"><div class="progress-fill" style="width:${m.value}%;background:linear-gradient(90deg,var(--gold),var(--gold2));"></div></div><div>${m.value}%${changeHtml}</div></div>`;
+  });
+  
+  // Baby Readiness
+  let baby = getBabyReadiness();
+  html += `<div style="margin-top:12px;padding:10px;background:var(--glass2);border-radius:12px;border:0.5px solid rgba(78,205,196,0.2);">
+    <div style="font-size:10px;color:var(--text3);letter-spacing:1px;">👶 Baby Readiness</div>
+    <div class="progress-row"><div class="progress-label">Readiness</div><div class="progress-track"><div class="progress-fill" style="width:${baby}%;background:linear-gradient(90deg,#ff6b6b,var(--teal));"></div></div><div>${baby}%</div></div>
+  </div>`;
+  
+  el.innerHTML = html;
 }
 
 async function renderJournal() {
@@ -1598,7 +1877,9 @@ async function addJournalEntry() {
   input.value = '';
   renderJournal();
   showToast('📖 Entry shared!');
-  addMetricGrowth('selfAwareness', 1, 'journal entry');
+  addPersonalMetric('selfAwareness', 1, 'journal entry');
+  addRelationshipMetric('communication', 1, 'journal entry');
+  addRelationshipMetric('friendship', 1, 'journal entry');
   recalculateAllMetrics();
 }
 
@@ -1694,20 +1975,13 @@ function updateStreak() {
   updateStreakDisplay();
   if (streakData.days >= 3) unlockAchievement('streak_3');
   if (streakData.days >= 7) {
-    // Streak bonus to metrics
-    addMetricGrowth('empathy', 2, 'streak: 7 days');
-    addMetricGrowth('selfAwareness', 2, 'streak: 7 days');
-    addMetricGrowth('communication', 2, 'streak: 7 days');
-    addMetricGrowth('confidence', 2, 'streak: 7 days');
-    addMetricGrowth('vulnerability', 2, 'streak: 7 days');
+    addAllRelationshipMetrics(2, 'streak: 7 days');
+    addAllPersonalMetrics(1, 'streak: 7 days');
     recalculateAllMetrics();
   }
   if (streakData.days >= 30) {
-    addMetricGrowth('empathy', 3, 'streak: 30 days');
-    addMetricGrowth('selfAwareness', 3, 'streak: 30 days');
-    addMetricGrowth('communication', 3, 'streak: 30 days');
-    addMetricGrowth('confidence', 3, 'streak: 30 days');
-    addMetricGrowth('vulnerability', 3, 'streak: 30 days');
+    addAllRelationshipMetrics(4, 'streak: 30 days');
+    addAllPersonalMetrics(2, 'streak: 30 days');
     recalculateAllMetrics();
   }
 }
@@ -1842,7 +2116,8 @@ function toggleTimerModal() {
         spawnConfetti();
         showToast('🎉 Practice complete! Amazing work!');
         awardXP(10);
-        addMetricGrowth('selfAwareness', 2, 'timer practice');
+        addPersonalMetric('selfAwareness', 2, 'timer practice');
+        addRelationshipMetric('trust', 1, 'timer practice');
         recalculateAllMetrics();
       }
     }, 1000);
@@ -1903,8 +2178,10 @@ async function saveShadowWork() {
   await awardXP(30);
   spawnFloatingEmoji('🌑');
   addPathXP('development', 20);
-  addMetricGrowth('selfAwareness', 3, 'shadow work');
-  addMetricGrowth('vulnerability', 3, 'shadow work');
+  addPersonalMetric('selfAwareness', 3, 'shadow work');
+  addPersonalMetric('vulnerability', 3, 'shadow work');
+  addRelationshipMetric('trust', 3, 'shadow work');
+  addRelationshipMetric('intimacy', 3, 'shadow work');
   recalculateAllMetrics();
 }
 
@@ -1926,21 +2203,27 @@ const COUPLE_TASKS = [
   {id:'c4',icon:'🙏',title:'Gratitude Out Loud', dur:'5 min', xp:50, desc:'Three specific things you love about your partner.', timerSec:300 },
 ];
 
-function taskCardHTML(t){
+function taskCardHTML(t, isCouple){
   var slot=currentMySlot||'A'; var key=slot+'_'+t.id; var done=completedTasks && completedTasks[key];
+  let bonusText = '';
+  if (isCouple) {
+    bonusText = ' <span style="font-size:9px;color:var(--gold);">💑 All Relationship +2</span>';
+  } else {
+    bonusText = ' <span style="font-size:9px;color:var(--teal);">🧑 +Self-Awareness +1</span>';
+  }
   return '<div style="background:var(--glass);border:0.5px solid var(--border);border-radius:20px;padding:16px;margin-bottom:10px;">'
     +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
     +'<div style="font-size:24px;flex-shrink:0;">'+t.icon+'</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text1);">'+t.title+'</div>'
     +'<div style="font-size:11px;color:var(--gold);margin-left:auto;white-space:nowrap;">'+t.dur+'</div></div>'
-    +'<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px;">'+t.desc+'</div>'
+    +'<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px;">'+t.desc+bonusText+'</div>'
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-    +'<div onclick="markTaskComplete(\''+t.id+'\','+t.xp+',this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:'+(done?'rgba(78,205,196,0.2)':'rgba(78,205,196,0.1)')+';border:0.5px solid var(--teal);border-radius:8px;color:var(--teal);font-size:12px;cursor:pointer;opacity:'+(done?'0.7':'1')+';">'+(done?'✓ Completed':'Complete (+'+t.xp+' XP)')+'</div>'
+    +'<div onclick="markTaskComplete(\''+t.id+'\','+t.xp+','+(isCouple?'true':'false')+',this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:'+(done?'rgba(78,205,196,0.2)':'rgba(78,205,196,0.1)')+';border:0.5px solid var(--teal);border-radius:8px;color:var(--teal);font-size:12px;cursor:pointer;opacity:'+(done?'0.7':'1')+';">'+(done?'✓ Completed':'Complete (+'+t.xp+' XP)')+'</div>'
     +(t.timerSec?'<div onclick="openTimerModal(\''+t.icon+'\',\''+t.title+'\','+t.timerSec+')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(201,168,76,0.1);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:12px;cursor:pointer;">⏱ Timer</div>':'')
     +'</div></div>';
 }
 
-async function markTaskComplete(taskId, xp, btnEl) {
+async function markTaskComplete(taskId, xp, isCouple, btnEl) {
   if(!completedTasks) completedTasks = {};
   var slot = currentMySlot || 'A';
   var key = slot + '_' + taskId;
@@ -1948,15 +2231,20 @@ async function markTaskComplete(taskId, xp, btnEl) {
   completedTasks[key] = true;
   if(btnEl){ btnEl.innerHTML = '✓ Completed'; btnEl.style.opacity = '0.7'; }
   await awardXP(xp);
+  
   if (taskId.startsWith('p')) {
     addPathXP('variety', Math.floor(xp * 0.5));
-    addMetricGrowth('selfAwareness', 1, 'practice: ' + taskId);
+    addPersonalMetric('selfAwareness', 1, 'practice: ' + taskId);
+    addPersonalMetric('confidence', 1, 'practice: ' + taskId);
   }
-  if (taskId.startsWith('c')) {
+  if (taskId.startsWith('c') || isCouple) {
     addPathXP('consummation', Math.floor(xp * 0.5));
-    addMetricGrowth('communication', 2, 'couple task: ' + taskId);
-    addMetricGrowth('empathy', 1, 'couple task: ' + taskId);
+    // All relationship metrics get a boost from couple tasks
+    addAllRelationshipMetrics(2, 'couple task: ' + taskId);
+    addPersonalMetric('communication', 2, 'couple task: ' + taskId);
+    addPersonalMetric('empathy', 1, 'couple task: ' + taskId);
   }
+  
   if(sbClient && currentRelationshipId && currentUser) {
     await safeRelUpdate({ completed_tasks: completedTasks });
   }
@@ -1965,8 +2253,8 @@ async function markTaskComplete(taskId, xp, btnEl) {
   recalculateAllMetrics();
 }
 
-function renderPractices(){var el=document.getElementById('practices-list');if(el)el.innerHTML=PRACTICES.map(taskCardHTML).join('');}
-function renderCouplesTasks(){var el=document.getElementById('couples-list');if(el)el.innerHTML=COUPLE_TASKS.map(taskCardHTML).join('');}
+function renderPractices(){var el=document.getElementById('practices-list');if(el)el.innerHTML=PRACTICES.map(t => taskCardHTML(t, false)).join('');}
+function renderCouplesTasks(){var el=document.getElementById('couples-list');if(el)el.innerHTML=COUPLE_TASKS.map(t => taskCardHTML(t, true)).join('');}
 
 // ==================== TEMPLE ====================
 function renderTempleTab() {
@@ -2237,7 +2525,8 @@ window.logWater = function() {
   saveTempleState();
   if (templeState.waterGlasses >= 10) checkAchievements();
   addPathXP('variety', 3);
-  addMetricGrowth('selfAwareness', 1, 'water logging');
+  addPersonalMetric('selfAwareness', 1, 'water logging');
+  addRelationshipMetric('trust', 1, 'water logging');
   recalculateAllMetrics();
 };
 
@@ -2251,7 +2540,9 @@ window.startBreathSession = function(type) {
   saveTempleState();
   spawnFloatingEmoji('🌬️');
   addPathXP('transcendence', 10);
-  addMetricGrowth('selfAwareness', 2, 'breath: ' + name);
+  addPersonalMetric('selfAwareness', 2, 'breath: ' + name);
+  addRelationshipMetric('trust', 2, 'breath: ' + name);
+  addRelationshipMetric('intimacy', 1, 'breath: ' + name);
   recalculateAllMetrics();
 };
 
@@ -2267,8 +2558,11 @@ window.markGateComplete = function(gateId, btn) {
   spawnConfetti();
   checkAchievements();
   addPathXP('development', 15);
-  addMetricGrowth('communication', 2, 'gate: ' + gate.name);
-  addMetricGrowth('selfAwareness', 2, 'gate: ' + gate.name);
+  addPersonalMetric('communication', 3, 'gate: ' + gate.name);
+  addPersonalMetric('selfAwareness', 3, 'gate: ' + gate.name);
+  addRelationshipMetric('trust', 4, 'gate: ' + gate.name);
+  addRelationshipMetric('communication', 4, 'gate: ' + gate.name);
+  addRelationshipMetric('intimacy', 2, 'gate: ' + gate.name);
   recalculateAllMetrics();
 };
 
@@ -2287,8 +2581,11 @@ window.markTemplePractice = function(id, xp, btnEl) {
   renderTempleTab();
   saveTempleState();
   addPathXP('consummation', Math.floor(xp * 0.5));
-  addMetricGrowth('empathy', 2, 'temple practice');
-  addMetricGrowth('communication', 1, 'temple practice');
+  addPersonalMetric('empathy', 2, 'temple practice');
+  addPersonalMetric('communication', 2, 'temple practice');
+  addRelationshipMetric('trust', 3, 'temple practice');
+  addRelationshipMetric('intimacy', 3, 'temple practice');
+  addRelationshipMetric('friendship', 1, 'temple practice');
   recalculateAllMetrics();
 };
 
@@ -2312,7 +2609,9 @@ window.saveTempleReflection = async function() {
   saveTempleState();
   spawnFloatingEmoji('📝');
   addPathXP('transcendence', 10);
-  addMetricGrowth('selfAwareness', 3, 'temple reflection');
+  addPersonalMetric('selfAwareness', 3, 'temple reflection');
+  addRelationshipMetric('trust', 3, 'temple reflection');
+  addRelationshipMetric('intimacy', 2, 'temple reflection');
   recalculateAllMetrics();
 };
 
@@ -2348,7 +2647,8 @@ window.setFoundation = function(key, value, btn) {
   showToast('✦ ' + key + ' updated to ' + value + '%');
   setTimeout(() => { document.getElementById('modal-foundation').remove(); renderTempleTab(); saveTempleState(); }, 500);
   addPathXP('variety', 5);
-  addMetricGrowth('selfAwareness', 1, 'foundation: ' + key);
+  addPersonalMetric('selfAwareness', 2, 'foundation: ' + key);
+  addRelationshipMetric('trust', 1, 'foundation: ' + key);
   recalculateAllMetrics();
 };
 
@@ -2364,13 +2664,13 @@ function drawWheel() {
   canvas.width = canvas.height = S * dpr; canvas.style.width = canvas.style.height = S + 'px';
   var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, S, S);
   
-  // Use dynamic metrics
+  // Combine personal + relationship metrics for the wheel
   var sl = [
-    {l:'Empathy', v: Math.min(1, getMetricValue('empathy') / 100), c: 'rgba(78,205,196,0.8)'},
-    {l:'Self-Awareness', v: Math.min(1, getMetricValue('selfAwareness') / 100), c: 'rgba(155,109,255,0.8)'},
-    {l:'Communication', v: Math.min(1, getMetricValue('communication') / 100), c: 'rgba(201,168,76,0.8)'},
-    {l:'Confidence', v: Math.min(1, getMetricValue('confidence') / 100), c: 'rgba(232,112,112,0.8)'},
-    {l:'Vulnerability', v: Math.min(1, getMetricValue('vulnerability') / 100), c: 'rgba(201,168,76,0.7)'}
+    {l:'Empathy', v: Math.min(1, getPersonalMetric('empathy') / 100), c: 'rgba(78,205,196,0.8)'},
+    {l:'Self-Awareness', v: Math.min(1, getPersonalMetric('selfAwareness') / 100), c: 'rgba(155,109,255,0.8)'},
+    {l:'Communication', v: Math.min(1, (getPersonalMetric('communication') + getRelationshipMetric('communication')) / 200), c: 'rgba(201,168,76,0.8)'},
+    {l:'Trust', v: Math.min(1, getRelationshipMetric('trust') / 100), c: 'rgba(232,112,112,0.8)'},
+    {l:'Intimacy', v: Math.min(1, getRelationshipMetric('intimacy') / 100), c: 'rgba(201,168,76,0.7)'}
   ];
   
   var n = sl.length;
@@ -2385,11 +2685,14 @@ function drawWheel() {
   var lb = document.getElementById('wheel-labels');
   if(lb) {
     lb.innerHTML = sl.map(s => {
-      let change = growthMetrics[s.l.toLowerCase().replace('-', '')]?.changes?.slice(-1)[0];
+      let pChange = null;
+      let rChange = null;
+      let label = s.l.toLowerCase().replace('-', '');
+      if (personalMetrics[label]) pChange = personalMetrics[label]?.changes?.slice(-1)[0];
+      if (relationshipMetrics[label]) rChange = relationshipMetrics[label]?.changes?.slice(-1)[0];
       let changeHtml = '';
-      if (change && change.amount > 0) {
-        changeHtml = ' <span style="font-size:9px;color:var(--teal);">+'+change.amount+'</span>';
-      }
+      if (pChange && pChange.amount > 0) changeHtml = ' <span style="font-size:9px;color:var(--teal);">+'+pChange.amount+'</span>';
+      if (rChange && rChange.amount > 0) changeHtml += ' <span style="font-size:9px;color:var(--gold);">💑+'+rChange.amount+'</span>';
       return '<div class="wheel-label-item"><span class="label-name">' + s.l + '</span><span class="label-value">' + Math.round(s.v * 100) + '%' + changeHtml + '</span></div>';
     }).join('');
   }
@@ -2406,17 +2709,6 @@ function drawWheel() {
   }
 }
 
-function computeMyGrowthStats() {
-  // Return dynamic metrics for compatibility
-  return {
-    empathy: getMetricValue('empathy'),
-    selfAwareness: getMetricValue('selfAwareness'),
-    communication: getMetricValue('communication'),
-    confidence: getMetricValue('confidence'),
-    vulnerability: getMetricValue('vulnerability')
-  };
-}
-
 function isFeatureUnlocked(xpNeeded) { return getTotalXP() >= xpNeeded; }
 
 // ==================== COUPLE EXTRAS ====================
@@ -2424,22 +2716,39 @@ function renderCoupleExtras() {
   drawMountain();
   startGalaxy();
   renderInsights();
-  var s = liveData && liveData.couple_stats ? liveData.couple_stats : {};
   var el = document.getElementById('couple-progress');
   if(el) {
-    var bars = [['Shared Vision', s.vision || 80], ['Friendship', s.friendship || 78], ['Trust', s.trust || 70], ['Teamwork', s.teamwork || 75], ['Communication', s.communication || 72], ['Intimacy', s.intimacy || 65]];
+    var bars = [
+      ['Shared Vision', getRelationshipMetric('sharedVision')],
+      ['Friendship', getRelationshipMetric('friendship')],
+      ['Trust', getRelationshipMetric('trust')],
+      ['Teamwork', getRelationshipMetric('teamwork')],
+      ['Communication', getRelationshipMetric('communication')],
+      ['Intimacy', getRelationshipMetric('intimacy')]
+    ];
     el.innerHTML = bars.map(b => '<div style="display:flex;align-items:center;gap:10px;margin:8px 0"><div style="font-size:12px;color:var(--text2);width:110px;flex-shrink:0;">' + b[0] + '</div><div style="flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));width:' + b[1] + '%"></div></div><div style="font-size:12px;color:var(--gold);min-width:32px;text-align:right;">' + b[1] + '%</div></div>').join('');
   }
 }
 
 function renderInsights() {
   var el = document.getElementById('insights-content'); if(!el) return;
-  var s = liveData && liveData.couple_stats ? liveData.couple_stats : {};
+  var trust = getRelationshipMetric('trust');
+  var vision = getRelationshipMetric('sharedVision');
+  var comm = getRelationshipMetric('communication');
+  var intimacy = getRelationshipMetric('intimacy');
+  var friendship = getRelationshipMetric('friendship');
+  var teamwork = getRelationshipMetric('teamwork');
   var items = [];
-  if ((s.vision || 80) >= 78) items.push({c:'teal', icon:'🌅', t:'Vision Alignment', txt:'Both of you want the same life.'});
-  if ((s.trust || 70) >= 76) items.push({c:'teal', icon:'🔐', t:'Deep Trust', txt:'Trust is the soil.'});
-  if ((s.communication || 72) < 72) items.push({c:'rose', icon:'⚠️', t:'Communication Pressure', txt:'Hard conversations may be accumulating.'});
-  if ((s.intimacy || 65) < 70) items.push({c:'rose', icon:'⚠️', t:'Intimacy Attention', txt:'Emotional and physical closeness needs intentional care.'});
+  if (vision >= 70) items.push({c:'teal', icon:'🌅', t:'Vision Alignment', txt:'Both of you want the same life. Your future is aligned.'});
+  if (trust >= 70) items.push({c:'teal', icon:'🔐', t:'Deep Trust', txt:'Trust is the soil of your connection. It runs deep.'});
+  if (trust < 60) items.push({c:'rose', icon:'⚠️', t:'Trust Building', txt:'Trust is the foundation. Focus on consistency and honesty.'});
+  if (comm < 65) items.push({c:'rose', icon:'⚠️', t:'Communication Pressure', txt:'Hard conversations may be accumulating. Create safe space.'});
+  if (intimacy < 70) items.push({c:'rose', icon:'⚠️', t:'Intimacy Attention', txt:'Emotional and physical closeness needs intentional care.'});
+  if (friendship >= 80) items.push({c:'teal', icon:'🤝', t:'Strong Friendship', txt:'Your friendship is the bedrock. This is beautiful.'});
+  if (teamwork >= 75) items.push({c:'teal', icon:'⚡', t:'Great Teamwork', txt:'You work together like a well-oiled machine.'});
+  if (items.length === 0) {
+    items.push({c:'purple', icon:'🌟', t:'Strong Connection', txt:'Your relationship is flourishing. Keep nurturing it.'});
+  }
   items.push({c:'purple', icon:'🌿', t:'Next Edge', txt:"Your next level requires one conversation you've both been avoiding."});
   el.innerHTML = items.map(i => '<div style="padding:14px;background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;margin-bottom:10px;"><div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--' + i.c + ');margin-bottom:8px;">' + i.icon + ' ' + i.t + '</div><div style="font-size:13px;color:var(--text1);line-height:1.7;font-family:var(--font);font-style:italic;">' + i.txt + '</div></div>').join('');
 }
@@ -2454,8 +2763,12 @@ function drawMountain() {
   var mg = ctx.createLinearGradient(0, top, 0, H); mg.addColorStop(0, 'rgba(30,40,70,0.9)'); mg.addColorStop(1, 'rgba(15,21,37,0.4)'); ctx.fillStyle = mg; ctx.fill();
   ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx - 18, top + 28); ctx.lineTo(cx + 18, top + 28); ctx.closePath(); ctx.fillStyle = 'rgba(245,245,255,0.85)'; ctx.fill();
   ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx, H - 15); ctx.bezierCurveTo(cx + 15, H * 0.6, cx - 10, H * 0.3, cx, top + 10); ctx.strokeStyle = 'rgba(201,168,76,0.2)'; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-  var s = liveData && liveData.couple_stats ? liveData.couple_stats : {};
-  var stages = [{l:'Friendship', v:s.friendship || 78}, {l:'Trust', v:s.trust || 70}, {l:'Intimacy', v:s.intimacy || 65}, {l:'Vision', v:s.vision || 80}];
+  var stages = [
+    {l:'Friendship', v: getRelationshipMetric('friendship')},
+    {l:'Trust', v: getRelationshipMetric('trust')},
+    {l:'Intimacy', v: getRelationshipMetric('intimacy')},
+    {l:'Vision', v: getRelationshipMetric('sharedVision')}
+  ];
   var climbPct = stages.reduce((a,b) => a + b.v, 0) / 4 / 100;
   var coupleY = top + (H - 30) * (1 - climbPct * 0.88);
   stages.forEach((sg, i) => { var frac = i / (stages.length - 1), y = H - 15 - (H - 40) * frac; ctx.beginPath(); ctx.arc(cx, y, 4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(201,168,76,0.7)'; ctx.fill(); ctx.font = '10px sans-serif'; ctx.fillStyle = 'rgba(240,232,208,0.6)'; ctx.textAlign = i % 2 === 0 ? 'right' : 'left'; ctx.fillText(sg.l + ' ' + sg.v + '%', i % 2 === 0 ? cx - 12 : cx + 12, y + 4); });
@@ -2474,9 +2787,10 @@ function drawGalaxyFrame() {
   [25, 45, 65].forEach((r, i) => { ctx.beginPath(); ctx.arc(bX, bY, r, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(155,109,255,' + (0.07 - i * 0.02) + ')'; ctx.lineWidth = 0.5; ctx.stroke(); });
   for(var i=0; i<8; i++){ var a = t * 0.5 + (i / 8) * Math.PI * 2, px = aX + Math.cos(a) * (35 + i * 4) * 0.6, py = aY + Math.sin(a) * (35 + i * 4) * 0.3; ctx.beginPath(); ctx.arc(px, py, 1, 0, Math.PI * 2); ctx.fillStyle = 'rgba(78,205,196,' + (0.3 + i * 0.04) + ')'; ctx.fill(); }
   for(var i=0; i<8; i++){ var a = -t * 0.4 + (i / 8) * Math.PI * 2, px = bX + Math.cos(a) * (30 + i * 4) * 0.6, py = bY + Math.sin(a) * (30 + i * 4) * 0.3; ctx.beginPath(); ctx.arc(px, py, 1, 0, Math.PI * 2); ctx.fillStyle = 'rgba(155,109,255,' + (0.3 + i * 0.04) + ')'; ctx.fill(); }
-  var s = liveData && liveData.couple_stats ? liveData.couple_stats : {};
-  var vals = Object.values(s); var align = vals.length ? vals.reduce((a,b) => a + b, 0) / vals.length / 100 : 0.7;
-  if(align > 0.7){ var cs = [[cX - 20, cY - 30], [cX + 10, cY - 15], [cX, cY + 20], [cX - 15, cY + 5]]; ctx.strokeStyle = 'rgba(201,168,76,0.2)'; ctx.lineWidth = 0.5; for(var i=0; i<cs.length-1; i++){ ctx.beginPath(); ctx.moveTo(cs[i][0], cs[i][1]); ctx.lineTo(cs[i+1][0], cs[i+1][1]); ctx.stroke(); } cs.forEach(p => { ctx.beginPath(); ctx.arc(p[0], p[1], 1.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(201,168,76,0.6)'; ctx.fill(); }); }
+  var trust = getRelationshipMetric('trust');
+  var intimacy = getRelationshipMetric('intimacy');
+  var align = (trust + intimacy) / 200;
+  if(align > 0.6){ var cs = [[cX - 20, cY - 30], [cX + 10, cY - 15], [cX, cY + 20], [cX - 15, cY + 5]]; ctx.strokeStyle = 'rgba(201,168,76,0.2)'; ctx.lineWidth = 0.5; for(var i=0; i<cs.length-1; i++){ ctx.beginPath(); ctx.moveTo(cs[i][0], cs[i][1]); ctx.lineTo(cs[i+1][0], cs[i+1][1]); ctx.stroke(); } cs.forEach(p => { ctx.beginPath(); ctx.arc(p[0], p[1], 1.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(201,168,76,0.6)'; ctx.fill(); }); }
   var bg = ctx.createLinearGradient(aX, aY, bX, bY); bg.addColorStop(0, 'rgba(78,205,196,0.15)'); bg.addColorStop(0.5, 'rgba(201,168,76,0.2)'); bg.addColorStop(1, 'rgba(155,109,255,0.15)'); ctx.beginPath(); ctx.moveTo(aX, aY); ctx.lineTo(bX, bY); ctx.strokeStyle = bg; ctx.lineWidth = 2; ctx.stroke();
   var pulse = (Math.sin(t * 2) + 1) * 3; ctx.beginPath(); ctx.arc(cX, cY, 8 + pulse, 0, Math.PI * 2); ctx.fillStyle = 'rgba(232,112,112,' + (0.1 + pulse * 0.02) + ')'; ctx.fill(); ctx.beginPath(); ctx.arc(cX, cY, 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(232,112,112,0.8)'; ctx.fill();
   var ld = liveData || {};
@@ -2532,13 +2846,11 @@ function renderDailyPulse(now, moon) {
 }
 
 function renderArchetype() {
-  var AT = [{n:'Builders', s:'⚒', l:'Create foundations before expansion.'}, {n:'Healers', s:'🌿', l:'Your wounds are portals.'}, {n:'Explorers', s:'🧭', l:'Keep moving — but build a home base.'}, {n:'Lovers', s:'❤️', l:'Passion without depth becomes habit.'}, {n:'Alchemists', s:'🔥', l:'You are here to transform each other.'}];
-  var cs = liveData && liveData.couple_stats ? liveData.couple_stats : {};
-  var scores = [(cs.vision || 70) / 10 + (cs.friendship || 70) / 10, (cs.trust || 70) / 10 + (cs.communication || 70) / 10, (cs.friendship || 70) / 10, (cs.intimacy || 70) / 10, 0];
-  var bi = 0; scores.forEach((v,i) => { if(v > scores[bi]) bi = i; });
-  var a = AT[bi];
+  let arch = getArchetype();
   var sym = document.getElementById('arch-symbol'), nm = document.getElementById('arch-name'), ls = document.getElementById('arch-lesson');
-  if(sym) sym.textContent = a.s; if(nm) nm.textContent = a.n; if(ls) ls.textContent = a.l;
+  if(sym) sym.textContent = arch.symbol;
+  if(nm) nm.textContent = arch.name;
+  if(ls) ls.textContent = arch.lesson;
 }
 
 // ==================== COSMIC ====================
@@ -2604,8 +2916,10 @@ async function saveDreamEntry() {
   await awardXP(20);
   spawnFloatingEmoji('🌙');
   addPathXP('transcendence', 10);
-  addMetricGrowth('selfAwareness', 2, 'dream recording');
-  addMetricGrowth('empathy', 1, 'dream recording');
+  addPersonalMetric('selfAwareness', 2, 'dream recording');
+  addPersonalMetric('empathy', 2, 'dream recording');
+  addRelationshipMetric('intimacy', 3, 'dream recording');
+  addRelationshipMetric('trust', 2, 'dream recording');
   recalculateAllMetrics();
 }
 
@@ -2665,7 +2979,9 @@ async function savePrivateNote() {
   await awardXP(10);
   spawnFloatingEmoji('📝');
   addPathXP('development', 5);
-  addMetricGrowth('selfAwareness', 2, 'private note');
+  addPersonalMetric('selfAwareness', 2, 'private note');
+  addRelationshipMetric('trust', 2, 'private note');
+  addRelationshipMetric('intimacy', 1, 'private note');
   recalculateAllMetrics();
 }
 
@@ -2778,17 +3094,17 @@ async function saveIntakeProgress(done) {
     var existing = (liveData && liveData.couple_stats) || {};
     updates.couple_stats = mergeStats(existing, derived.couple_stats, slot);
     updates.baby_readiness = derived.baby_readiness;
-    // Initialize metrics after intake
     initializeMetrics(intakeAnswers, updates.couple_stats || {});
-    updates.growth_metrics = JSON.stringify(growthMetrics);
+    updates.personal_metrics = JSON.stringify(personalMetrics);
+    updates.relationship_metrics = JSON.stringify(relationshipMetrics);
   }
   await safeRelUpdate(updates);
 }
 
 function deriveProfileFromIntake(answers) {
   function rating(id, fallback){ var v = Number(answers[id]); return isNaN(v) ? (fallback || 7) * 10 : Math.round(v * 10); }
-  var trust = rating('rate_trust', 7), intimacy = Math.round((rating('rate_emotional', 7) + rating('rate_sexual', 6)) / 2);
-  var communication = rating('rate_communication', 7), vision = rating('rate_vision', 8), friendship = rating('rate_friendship', 8), teamwork = rating('rate_teamwork', 7);
+  var trust = rating('rate_trust', 6), intimacy = Math.round((rating('rate_emotional', 6) + rating('rate_sexual', 6)) / 2);
+  var communication = rating('rate_communication', 6), vision = rating('rate_vision', 5), friendship = rating('rate_friendship', 8), teamwork = rating('rate_teamwork', 6);
   var couple_stats = {trust, intimacy, communication, vision, friendship, teamwork};
   var baby_readiness = Math.min(100, Math.round((trust * 0.4 + intimacy * 0.3 + communication * 0.3) * 0.3 + (teamwork * 0.5 + trust * 0.5) * 0.3 + (friendship * 0.4 + vision * 0.6) * 0.2 + 65 * 0.2));
   return {couple_stats, baby_readiness};
@@ -2797,8 +3113,8 @@ function deriveProfileFromIntake(answers) {
 function mergeStats(existing, newStats, slot) {
   var merged = {};
   Object.keys(newStats).forEach(k => {
-    var ex = existing[k] != null ? existing[k] : 70;
-    merged[k] = (ex === 70 || ex == null) ? newStats[k] : Math.round((ex + newStats[k]) / 2);
+    var ex = existing[k] != null ? existing[k] : 60;
+    merged[k] = (ex === 60 || ex == null) ? newStats[k] : Math.round((ex + newStats[k]) / 2);
   });
   return merged;
 }
