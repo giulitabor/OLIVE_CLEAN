@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>Two Paths, One Journey — Complete Sanctuary</title>
+<title>Two Paths, One Journey — Dynamic Growth</title>
 <style>
   :root {
     --navy: #0a0e1a;
@@ -525,6 +525,12 @@
     color: var(--gold2);
     display: inline-block;
   }
+  .metric-change {
+    font-size: 10px;
+    color: var(--teal);
+    margin-left: 4px;
+  }
+  .metric-change.down { color: var(--rose); }
 </style>
 </head>
 <body>
@@ -731,9 +737,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ==================== COMPLETE APP with Four Growth Paths + Mastery Ranks ====================
-// All features working: Temple, Timer, Shadow Work, Dreams, Achievements, Streak, XP, Wheel
-// + Four Paths (Variety, Development, Consummation, Transcendence) + Mastery Ranks
+// ==================== COMPLETE APP with Dynamic Growth System ====================
+// All features: Temple, Timer, Shadow Work, Dreams, Achievements, Streak, XP, Wheel
+// + Four Paths + Dynamic Metrics (Empathy, Self-Awareness, Communication, Confidence, Vulnerability)
 
 let sbClient = null;
 let currentUser = null;
@@ -752,6 +758,15 @@ let timerRunning = false;
 let timerSeconds = 0;
 let timerTotalSeconds = 0;
 let sanctuaryRAF = null;
+
+// ── Dynamic Metrics ──
+let growthMetrics = {
+  empathy: { base: 58, current: 58, changes: [] },
+  selfAwareness: { base: 65, current: 65, changes: [] },
+  communication: { base: 56, current: 56, changes: [] },
+  confidence: { base: 70, current: 70, changes: [] },
+  vulnerability: { base: 64, current: 64, changes: [] }
+};
 
 // ── Paths Progress ──
 let pathProgress = {
@@ -861,35 +876,174 @@ const ACHIEVEMENTS = [
 
 function safeSubscribe(channel) { realtimeChannels.push(channel); return channel; }
 
+// ==================== DYNAMIC METRICS SYSTEM ====================
+
+function initializeMetrics(intakeData, coupleStats) {
+  // Set base values from intake
+  growthMetrics.empathy.base = calculateBaseMetric(intakeData, coupleStats, 'empathy');
+  growthMetrics.selfAwareness.base = calculateBaseMetric(intakeData, coupleStats, 'selfAwareness');
+  growthMetrics.communication.base = calculateBaseMetric(intakeData, coupleStats, 'communication');
+  growthMetrics.confidence.base = calculateBaseMetric(intakeData, coupleStats, 'confidence');
+  growthMetrics.vulnerability.base = calculateBaseMetric(intakeData, coupleStats, 'vulnerability');
+  
+  // Initialize current values
+  Object.keys(growthMetrics).forEach(key => {
+    growthMetrics[key].current = growthMetrics[key].base;
+    growthMetrics[key].changes = [];
+  });
+  
+  // Apply initial bonuses from path levels if any
+  recalculateAllMetrics();
+}
+
+function calculateBaseMetric(intake, stats, metric) {
+  // Use the same logic as computeMyGrowthStats but return raw values
+  function r(id, fallback) { var v = Number(intake[id]); return isNaN(v) ? fallback : Math.round(v * 10); }
+  function has(id) { return intake[id] && intake[id].length > 20; }
+  function cap(v) { return Math.min(95, Math.max(10, Math.round(v))); }
+  
+  switch(metric) {
+    case 'empathy':
+      return cap(r('rate_emotional', 7) * 0.4 + (has('shadow_judge_p') ? 80 : 50) * 0.2 + (has('admire') ? 90 : 60) * 0.2 + (stats.trust || 70) * 0.2);
+    case 'selfAwareness':
+      return cap((has('shadow_fear') ? 90 : 50) * 0.25 + (has('shadow_truth') ? 90 : 50) * 0.25 + (has('final') ? 90 : 60) * 0.25 + r('rate_emotional', 6) * 0.25);
+    case 'communication':
+      return cap(r('rate_communication', 7) * 0.6 + (has('energy_leak') ? 80 : 50) * 0.2 + (has('unloved') ? 80 : 50) * 0.2);
+    case 'confidence':
+      return cap(r('rate_vision', 7) * 0.4 + (has('child_imagine') ? 80 : 50) * 0.3 + (has('vision_10yr') ? 90 : 50) * 0.3);
+    case 'vulnerability':
+      return cap((has('shadow_truth') ? 90 : 40) * 0.35 + (has('final') ? 90 : 50) * 0.35 + (has('unloved') ? 80 : 50) * 0.3);
+    default:
+      return 50;
+  }
+}
+
+function addMetricGrowth(metricName, amount, source) {
+  if (!growthMetrics[metricName]) return;
+  let oldValue = growthMetrics[metricName].current;
+  let newValue = Math.min(100, Math.max(0, oldValue + amount));
+  growthMetrics[metricName].current = Math.round(newValue);
+  growthMetrics[metricName].changes.push({
+    amount: amount,
+    source: source,
+    timestamp: new Date().toISOString()
+  });
+  // Keep only last 20 changes for display
+  if (growthMetrics[metricName].changes.length > 20) {
+    growthMetrics[metricName].changes.shift();
+  }
+  spawnFloatingEmoji('📈 +' + amount + ' ' + metricName);
+}
+
+function recalculateAllMetrics() {
+  // Get current XP
+  let totalXP = getTotalXP();
+  let varietyLevel = getPathLevel('variety');
+  let developmentLevel = getPathLevel('development');
+  let consummationLevel = getPathLevel('consummation');
+  let transcendenceLevel = getPathLevel('transcendence');
+  
+  // Start from base
+  Object.keys(growthMetrics).forEach(key => {
+    growthMetrics[key].current = growthMetrics[key].base;
+  });
+  
+  // Apply path level bonuses
+  // Variety → Empathy + Confidence
+  if (varietyLevel >= 3) growthMetrics.empathy.current += 5;
+  if (varietyLevel >= 5) growthMetrics.empathy.current += 10;
+  if (varietyLevel >= 7) growthMetrics.empathy.current += 8;
+  if (varietyLevel >= 10) growthMetrics.empathy.current += 7;
+  if (varietyLevel >= 4) growthMetrics.confidence.current += 5;
+  if (varietyLevel >= 6) growthMetrics.confidence.current += 8;
+  
+  // Development → Self-Awareness + Communication
+  if (developmentLevel >= 3) growthMetrics.selfAwareness.current += 5;
+  if (developmentLevel >= 5) growthMetrics.selfAwareness.current += 10;
+  if (developmentLevel >= 7) growthMetrics.selfAwareness.current += 8;
+  if (developmentLevel >= 10) growthMetrics.selfAwareness.current += 7;
+  if (developmentLevel >= 4) growthMetrics.communication.current += 5;
+  if (developmentLevel >= 6) growthMetrics.communication.current += 8;
+  
+  // Consummation → Communication + Vulnerability
+  if (consummationLevel >= 3) growthMetrics.communication.current += 5;
+  if (consummationLevel >= 5) growthMetrics.communication.current += 10;
+  if (consummationLevel >= 7) growthMetrics.communication.current += 8;
+  if (consummationLevel >= 10) growthMetrics.communication.current += 7;
+  if (consummationLevel >= 4) growthMetrics.vulnerability.current += 5;
+  if (consummationLevel >= 6) growthMetrics.vulnerability.current += 8;
+  
+  // Transcendence → Vulnerability + Empathy
+  if (transcendenceLevel >= 3) growthMetrics.vulnerability.current += 5;
+  if (transcendenceLevel >= 5) growthMetrics.vulnerability.current += 10;
+  if (transcendenceLevel >= 7) growthMetrics.vulnerability.current += 8;
+  if (transcendenceLevel >= 10) growthMetrics.vulnerability.current += 7;
+  if (transcendenceLevel >= 4) growthMetrics.empathy.current += 5;
+  if (transcendenceLevel >= 6) growthMetrics.empathy.current += 8;
+  
+  // Apply XP milestone bonuses
+  if (totalXP >= 100) { growthMetrics.empathy.current += 2; growthMetrics.selfAwareness.current += 2; growthMetrics.communication.current += 2; growthMetrics.confidence.current += 2; growthMetrics.vulnerability.current += 2; }
+  if (totalXP >= 250) { growthMetrics.empathy.current += 3; growthMetrics.selfAwareness.current += 3; growthMetrics.communication.current += 3; growthMetrics.confidence.current += 3; growthMetrics.vulnerability.current += 3; }
+  if (totalXP >= 500) { growthMetrics.empathy.current += 4; growthMetrics.selfAwareness.current += 4; growthMetrics.communication.current += 4; growthMetrics.confidence.current += 4; growthMetrics.vulnerability.current += 4; }
+  if (totalXP >= 750) { growthMetrics.empathy.current += 3; growthMetrics.selfAwareness.current += 3; growthMetrics.communication.current += 3; growthMetrics.confidence.current += 3; growthMetrics.vulnerability.current += 3; }
+  if (totalXP >= 1000) { growthMetrics.empathy.current += 5; growthMetrics.selfAwareness.current += 5; growthMetrics.communication.current += 5; growthMetrics.confidence.current += 5; growthMetrics.vulnerability.current += 5; }
+  if (totalXP >= 1500) { growthMetrics.empathy.current += 4; growthMetrics.selfAwareness.current += 4; growthMetrics.communication.current += 4; growthMetrics.confidence.current += 4; growthMetrics.vulnerability.current += 4; }
+  if (totalXP >= 2000) { growthMetrics.empathy.current += 6; growthMetrics.selfAwareness.current += 6; growthMetrics.communication.current += 6; growthMetrics.confidence.current += 6; growthMetrics.vulnerability.current += 6; }
+  
+  // Apply achievement bonuses
+  if (achievements.includes('first_xp')) { addMetricGrowth('empathy', 1, 'achievement: First XP'); addMetricGrowth('selfAwareness', 1, 'achievement: First XP'); addMetricGrowth('communication', 1, 'achievement: First XP'); addMetricGrowth('confidence', 1, 'achievement: First XP'); addMetricGrowth('vulnerability', 1, 'achievement: First XP'); }
+  if (achievements.includes('streak_3')) { addMetricGrowth('empathy', 2, 'achievement: 3-Day Streak'); addMetricGrowth('selfAwareness', 2, 'achievement: 3-Day Streak'); addMetricGrowth('communication', 2, 'achievement: 3-Day Streak'); addMetricGrowth('confidence', 2, 'achievement: 3-Day Streak'); addMetricGrowth('vulnerability', 2, 'achievement: 3-Day Streak'); }
+  if (achievements.includes('xp_100')) { addMetricGrowth('empathy', 2, 'achievement: 100 XP'); addMetricGrowth('selfAwareness', 2, 'achievement: 100 XP'); addMetricGrowth('communication', 2, 'achievement: 100 XP'); addMetricGrowth('confidence', 2, 'achievement: 100 XP'); addMetricGrowth('vulnerability', 2, 'achievement: 100 XP'); }
+  if (achievements.includes('gate_keeper')) { addMetricGrowth('communication', 3, 'achievement: Gate Keeper'); addMetricGrowth('selfAwareness', 3, 'achievement: Gate Keeper'); }
+  if (achievements.includes('xp_520')) { addMetricGrowth('empathy', 5, 'achievement: Temple Guardian'); addMetricGrowth('selfAwareness', 5, 'achievement: Temple Guardian'); addMetricGrowth('communication', 5, 'achievement: Temple Guardian'); addMetricGrowth('confidence', 5, 'achievement: Temple Guardian'); addMetricGrowth('vulnerability', 5, 'achievement: Temple Guardian'); }
+  if (achievements.includes('path_variety_5')) { addMetricGrowth('empathy', 8, 'achievement: Heart Awakening'); }
+  if (achievements.includes('path_development_5')) { addMetricGrowth('selfAwareness', 8, 'achievement: Mirror of Souls'); }
+  if (achievements.includes('path_consummation_5')) { addMetricGrowth('communication', 8, 'achievement: Sacred Partnership'); }
+  if (achievements.includes('path_transcendence_5')) { addMetricGrowth('empathy', 10, 'achievement: Innate Light'); addMetricGrowth('selfAwareness', 10, 'achievement: Innate Light'); addMetricGrowth('communication', 10, 'achievement: Innate Light'); addMetricGrowth('confidence', 10, 'achievement: Innate Light'); addMetricGrowth('vulnerability', 10, 'achievement: Innate Light'); }
+  
+  // Cap all metrics at 100
+  Object.keys(growthMetrics).forEach(key => {
+    growthMetrics[key].current = Math.min(100, Math.round(growthMetrics[key].current));
+  });
+  
+  // Update UI
+  renderGrowthBars();
+  drawWheel();
+}
+
+function getMetricValue(metricName) {
+  return growthMetrics[metricName]?.current || 50;
+}
+
 // ==================== PATH SYSTEM ====================
 const PATH_ACTIVITIES = {
   variety: [
-    { id: 'v1', icon: '😊', name: 'Smile Challenge', desc: 'Spend one minute smiling at each other without speaking.', xp: 15, cat: 'Emotional awareness' },
-    { id: 'v2', icon: '💖', name: 'Daily Appreciation', desc: 'Tell your partner three genuine things you appreciate.', xp: 10, cat: 'Gratitude' },
-    { id: 'v3', icon: '📝', name: 'Beauty Journal', desc: 'Write five beautiful things you noticed today.', xp: 20, cat: 'Presence' },
-    { id: 'v4', icon: '🧘', name: 'Heart Meditation', desc: 'Five-minute heart meditation focusing on love.', xp: 20, cat: 'Presence' },
-    { id: 'v5', icon: '👁️', name: 'Eye Contact', desc: '30 seconds of silent eye contact, simply present.', xp: 15, cat: 'Presence' },
+    { id: 'v1', icon: '😊', name: 'Smile Challenge', desc: 'Spend one minute smiling at each other without speaking.', xp: 15, cat: 'Emotional awareness', metricBonus: { empathy: 2, confidence: 1 } },
+    { id: 'v2', icon: '💖', name: 'Daily Appreciation', desc: 'Tell your partner three genuine things you appreciate.', xp: 10, cat: 'Gratitude', metricBonus: { empathy: 3, confidence: 1 } },
+    { id: 'v3', icon: '📝', name: 'Beauty Journal', desc: 'Write five beautiful things you noticed today.', xp: 20, cat: 'Presence', metricBonus: { empathy: 2, selfAwareness: 1 } },
+    { id: 'v4', icon: '🧘', name: 'Heart Meditation', desc: 'Five-minute heart meditation focusing on love.', xp: 20, cat: 'Presence', metricBonus: { empathy: 3, confidence: 2 } },
+    { id: 'v5', icon: '👁️', name: 'Eye Contact', desc: '30 seconds of silent eye contact, simply present.', xp: 15, cat: 'Presence', metricBonus: { empathy: 2, vulnerability: 1 } },
   ],
   development: [
-    { id: 'd1', icon: '🗣️', name: 'Conscious Conversation', desc: '20 minutes without interruptions, truly listening.', xp: 30, cat: 'Communication' },
-    { id: 'd2', icon: '👂', name: 'Active Listening', desc: 'Reflect back what your partner shared.', xp: 25, cat: 'Listening' },
-    { id: 'd3', icon: '💭', name: 'Dream Sharing', desc: 'Share a hope and a fear openly.', xp: 20, cat: 'Vulnerability' },
-    { id: 'd4', icon: '🫂', name: 'Guided Meditation', desc: 'Breathe together for 5 minutes.', xp: 30, cat: 'Trust' },
-    { id: 'd5', icon: '🤝', name: 'Conflict Resolution', desc: 'Resolve a disagreement peacefully with active listening.', xp: 40, cat: 'Understanding' },
+    { id: 'd1', icon: '🗣️', name: 'Conscious Conversation', desc: '20 minutes without interruptions, truly listening.', xp: 30, cat: 'Communication', metricBonus: { communication: 3, empathy: 2 } },
+    { id: 'd2', icon: '👂', name: 'Active Listening', desc: 'Reflect back what your partner shared.', xp: 25, cat: 'Listening', metricBonus: { communication: 3, selfAwareness: 2 } },
+    { id: 'd3', icon: '💭', name: 'Dream Sharing', desc: 'Share a hope and a fear openly.', xp: 20, cat: 'Vulnerability', metricBonus: { vulnerability: 3, selfAwareness: 2 } },
+    { id: 'd4', icon: '🫂', name: 'Guided Meditation', desc: 'Breathe together for 5 minutes.', xp: 30, cat: 'Trust', metricBonus: { selfAwareness: 3, empathy: 2 } },
+    { id: 'd5', icon: '🤝', name: 'Conflict Resolution', desc: 'Resolve a disagreement peacefully with active listening.', xp: 40, cat: 'Understanding', metricBonus: { communication: 4, vulnerability: 3 } },
   ],
   consummation: [
-    { id: 'c1', icon: '🤝', name: 'Team Challenge', desc: 'Complete a project together (cook, build, plan).', xp: 40, cat: 'Cooperation' },
-    { id: 'c2', icon: '🍳', name: 'Cook Together', desc: 'Prepare a meal together from start to finish.', xp: 20, cat: 'Shared experiences' },
-    { id: 'c3', icon: '🤲', name: 'Volunteer Together', desc: 'Help someone or something together.', xp: 50, cat: 'Service' },
-    { id: 'c4', icon: '🎨', name: 'Create Together', desc: 'Art, music, garden — create something meaningful.', xp: 40, cat: 'Shared experiences' },
-    { id: 'c5', icon: '🫂', name: 'Mindful Embrace', desc: 'A mindful hug, present and connected.', xp: 15, cat: 'Compassion' },
+    { id: 'c1', icon: '🤝', name: 'Team Challenge', desc: 'Complete a project together (cook, build, plan).', xp: 40, cat: 'Cooperation', metricBonus: { communication: 3, confidence: 2 } },
+    { id: 'c2', icon: '🍳', name: 'Cook Together', desc: 'Prepare a meal together from start to finish.', xp: 20, cat: 'Shared experiences', metricBonus: { communication: 2, empathy: 2 } },
+    { id: 'c3', icon: '🤲', name: 'Volunteer Together', desc: 'Help someone or something together.', xp: 50, cat: 'Service', metricBonus: { empathy: 4, vulnerability: 2 } },
+    { id: 'c4', icon: '🎨', name: 'Create Together', desc: 'Art, music, garden — create something meaningful.', xp: 40, cat: 'Shared experiences', metricBonus: { communication: 3, confidence: 3 } },
+    { id: 'c5', icon: '🫂', name: 'Mindful Embrace', desc: 'A mindful hug, present and connected.', xp: 15, cat: 'Compassion', metricBonus: { empathy: 2, vulnerability: 2 } },
   ],
   transcendence: [
-    { id: 't1', icon: '🧘', name: 'Meditate Together', desc: '20-minute shared meditation.', xp: 50, cat: 'Meditation' },
-    { id: 't2', icon: '🚶', name: 'Silent Walk', desc: 'Walk in nature without phones or words.', xp: 40, cat: 'Presence' },
-    { id: 't3', icon: '🤲', name: 'Acts of Kindness', desc: 'Help someone anonymously.', xp: 30, cat: 'Service' },
-    { id: 't4', icon: '📖', name: 'Study Wisdom', desc: 'Read and discuss philosophy or spiritual teachings.', xp: 40, cat: 'Wisdom' },
-    { id: 't5', icon: '🎯', name: 'Vision Board', desc: 'Create a shared vision for the future.', xp: 35, cat: 'Purpose' },
+    { id: 't1', icon: '🧘', name: 'Meditate Together', desc: '20-minute shared meditation.', xp: 50, cat: 'Meditation', metricBonus: { selfAwareness: 4, empathy: 3 } },
+    { id: 't2', icon: '🚶', name: 'Silent Walk', desc: 'Walk in nature without phones or words.', xp: 40, cat: 'Presence', metricBonus: { selfAwareness: 3, empathy: 3 } },
+    { id: 't3', icon: '🤲', name: 'Acts of Kindness', desc: 'Help someone anonymously.', xp: 30, cat: 'Service', metricBonus: { empathy: 3, vulnerability: 2 } },
+    { id: 't4', icon: '📖', name: 'Study Wisdom', desc: 'Read and discuss philosophy or spiritual teachings.', xp: 40, cat: 'Wisdom', metricBonus: { selfAwareness: 3, communication: 2 } },
+    { id: 't5', icon: '🎯', name: 'Vision Board', desc: 'Create a shared vision for the future.', xp: 35, cat: 'Purpose', metricBonus: { confidence: 3, empathy: 2 } },
   ]
 };
 
@@ -922,11 +1076,11 @@ function getPathXPNeeded(pathKey) {
 
 function getPathRank(pathKey) {
   let level = getPathLevel(pathKey);
-  if (level >= 9) return 4; // Master
-  if (level >= 7) return 3; // Guide
-  if (level >= 5) return 2; // Companion
-  if (level >= 3) return 1; // Practitioner
-  return 0; // Explorer
+  if (level >= 9) return 4;
+  if (level >= 7) return 3;
+  if (level >= 5) return 2;
+  if (level >= 3) return 1;
+  return 0;
 }
 
 function getPathBadge(pathKey) {
@@ -954,6 +1108,8 @@ function addPathXP(pathKey, amount) {
       let achMap = { variety: 'path_variety_5', development: 'path_development_5', consummation: 'path_consummation_5', transcendence: 'path_transcendence_5' };
       unlockAchievement(achMap[pathKey]);
     }
+    // Recalculate metrics on path level up
+    recalculateAllMetrics();
     needed = getPathXPNeeded(pathKey);
   }
   renderPathsTab();
@@ -1004,7 +1160,6 @@ function renderPathsTab() {
     html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Level ' + p.level + ' / 10</span><span>' + p.xp + ' / ' + needed + ' XP</span></div>';
     html += '<div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:' + pct + '%;background:' + pathColors[key] + ';border-radius:3px;"></div></div>';
     
-    // Skills
     html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">';
     allSkills.forEach(s => {
       let unlocked = skills.includes(s);
@@ -1012,22 +1167,28 @@ function renderPathsTab() {
     });
     html += '</div>';
 
-    // XP Categories
     html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
     cats.forEach(c => {
       html += '<span class="xp-cat">' + c + '</span>';
     });
     html += '</div>';
 
-    // Activities
     html += '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Activities</div>';
     activities.forEach(a => {
       let slot = currentMySlot || 'A';
       let key2 = slot + '_path_' + a.id;
       let done = completedTasks && completedTasks[key2];
+      let metricDisplay = '';
+      if (a.metricBonus) {
+        let parts = [];
+        Object.entries(a.metricBonus).forEach(([m, v]) => {
+          parts.push(m.charAt(0).toUpperCase() + m.slice(1) + ' +' + v);
+        });
+        metricDisplay = ' <span style="font-size:9px;color:var(--teal);">📈 ' + parts.join(' ') + '</span>';
+      }
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--glass2);border-radius:10px;margin-bottom:4px;border:0.5px solid ' + (done ? pathColors[key] : 'var(--border)') + ';">';
       html += '<span style="font-size:16px;">' + a.icon + '</span>';
-      html += '<div style="flex:1;font-size:12px;color:var(--text1);">' + a.name + ' <span style="font-size:10px;color:var(--text2);">(' + a.cat + ')</span></div>';
+      html += '<div style="flex:1;font-size:12px;color:var(--text1);">' + a.name + ' <span style="font-size:10px;color:var(--text2);">(' + a.cat + ')</span>' + metricDisplay + '</div>';
       html += '<span style="font-size:10px;color:var(--gold);">+' + a.xp + ' XP</span>';
       html += '<button onclick="completePathActivity(\'' + key + '\',\'' + a.id + '\',' + a.xp + ',this)" style="padding:2px 10px;border-radius:20px;background:' + (done ? 'rgba(78,205,196,0.15)' : 'rgba(201,168,76,0.1)') + ';border:0.5px solid ' + (done ? 'var(--teal)' : 'var(--gold)') + ';color:' + (done ? 'var(--teal)' : 'var(--gold)') + ';font-size:10px;cursor:pointer;">' + (done ? '✓ Done' : 'Start') + '</button>';
       html += '</div>';
@@ -1049,6 +1210,15 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
   completedTasks[key] = true;
   if (btn) { btn.textContent = '✓ Done'; btn.style.background = 'rgba(78,205,196,0.15)'; btn.style.borderColor = 'var(--teal)'; btn.style.color = 'var(--teal)'; }
   
+  // Find activity to get metric bonuses
+  let activity = PATH_ACTIVITIES[pathKey]?.find(a => a.id === activityId);
+  if (activity && activity.metricBonus) {
+    Object.entries(activity.metricBonus).forEach(([metric, bonus]) => {
+      addMetricGrowth(metric, bonus, 'activity: ' + activity.name);
+    });
+    showToast('📈 Metrics updated!');
+  }
+  
   addPathXP(pathKey, xp);
   await awardXP(xp);
   spawnFloatingEmoji('🌱+' + xp);
@@ -1058,6 +1228,7 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
   }
   renderPathsTab();
   savePathProgress();
+  recalculateAllMetrics();
 }
 
 // ==================== INIT ====================
@@ -1110,6 +1281,7 @@ document.getElementById('create-relation-btn').onclick = async () => {
     baby_readiness: 70,
     temple_state: JSON.stringify(templeState),
     path_progress: JSON.stringify(pathProgress),
+    growth_metrics: JSON.stringify(growthMetrics),
     created_at: new Date().toISOString()
   };
   const { error } = await sbClient.from('relationships').insert([relationData]);
@@ -1185,6 +1357,24 @@ function startMainApp(relation) {
   if (relation.path_progress) {
     try { pathProgress = JSON.parse(relation.path_progress); } catch(e) {}
   }
+  if (relation.growth_metrics) {
+    try { 
+      let saved = JSON.parse(relation.growth_metrics);
+      Object.keys(saved).forEach(key => {
+        if (growthMetrics[key]) {
+          growthMetrics[key].base = saved[key].base || growthMetrics[key].base;
+          growthMetrics[key].current = saved[key].current || growthMetrics[key].current;
+          growthMetrics[key].changes = saved[key].changes || [];
+        }
+      });
+    } catch(e) {}
+  }
+  
+  // Initialize metrics from intake if not already set
+  var slotData = slot === 'A' ? relation.intake_a : relation.intake_b;
+  if (slotData && !growthMetrics.empathy.base) {
+    initializeMetrics(slotData || {}, relation.couple_stats || {});
+  }
   
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('relationship-setup-screen').style.display = 'none';
@@ -1203,6 +1393,7 @@ function startMainApp(relation) {
   loadStreak();
   checkAchievements();
   renderPathsTab();
+  recalculateAllMetrics();
 }
 
 function startDemoMode() {
@@ -1210,14 +1401,34 @@ function startDemoMode() {
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('bottom-nav').style.display = 'flex';
   currentMySlot = 'A';
+  
+  // Set demo intake data
+  let demoIntake = {
+    rate_emotional: 7, rate_communication: 6, rate_vision: 8,
+    rate_trust: 7, rate_friendship: 8, rate_teamwork: 7, rate_sexual: 6,
+    shadow_judge_p: 'Sometimes I judge when...',
+    shadow_fear: 'I fear being misunderstood...',
+    shadow_truth: 'I haven\'t said that I...',
+    final: 'If my partner understood one thing...',
+    admire: 'I admire how you...',
+    unloved: 'I feel unloved when...',
+    child_imagine: 'I imagine being a parent who...',
+    vision_10yr: 'In 10 years, we wake up...'
+  };
+  
   liveData = {
     partner_a_name: 'Ana', partner_b_name: 'Marco',
     couple_stats: { trust: 78, intimacy: 62, communication: 74, vision: 82, friendship: 85 },
     baby_readiness: 75,
     xp_a: 340, xp_b: 280,
     temple_state: JSON.stringify(templeState),
-    path_progress: JSON.stringify(pathProgress)
+    path_progress: JSON.stringify(pathProgress),
+    intake_a: demoIntake,
+    intake_a_done: true
   };
+  
+  initializeMetrics(demoIntake, liveData.couple_stats);
+  
   xpData = {A: 340, B: 280};
   completedTasks = {p1: true, c1: true};
   updateAllUI();
@@ -1227,6 +1438,7 @@ function startDemoMode() {
   loadStreak();
   checkAchievements();
   renderPathsTab();
+  recalculateAllMetrics();
 }
 
 function setupRealtimeForRelationship() {
@@ -1246,10 +1458,21 @@ function setupRealtimeForRelationship() {
           if (liveData.path_progress) {
             try { pathProgress = JSON.parse(liveData.path_progress); } catch(e) {}
           }
+          if (liveData.growth_metrics) {
+            try { 
+              let saved = JSON.parse(liveData.growth_metrics);
+              Object.keys(saved).forEach(key => {
+                if (growthMetrics[key]) {
+                  growthMetrics[key].current = saved[key].current || growthMetrics[key].current;
+                }
+              });
+            } catch(e) {}
+          }
           updateAllUI();
           renderTempleTab();
           drawWheel();
           renderPathsTab();
+          recalculateAllMetrics();
         }
       }
     ).subscribe()
@@ -1281,6 +1504,7 @@ function updateAllUI() {
   document.getElementById('stat-harmony').innerHTML = (stats.trust || 70) + '%';
   document.getElementById('stat-vision').innerHTML = (stats.vision || 80) + '%';
   updateHomeScreen(); renderCoupleExtras();
+  recalculateAllMetrics();
 }
 
 function updateWeatherProgress() {
@@ -1311,10 +1535,24 @@ function drawTree() {
 function renderGrowthBars() {
   const el = document.getElementById('growth-bars');
   if(!el) return;
-  const growthData = computeMyGrowthStats();
-  el.innerHTML = Object.entries(growthData).map(([k,v]) =>
-    `<div class="progress-row"><div class="progress-label">${k}</div><div class="progress-track"><div class="progress-fill" style="width:${v}%"></div></div><div>${v}%</div></div>`
-  ).join('');
+  
+  // Use dynamic metrics
+  const metrics = [
+    { key: 'empathy', label: 'Empathy', value: getMetricValue('empathy') },
+    { key: 'selfAwareness', label: 'Self-Awareness', value: getMetricValue('selfAwareness') },
+    { key: 'communication', label: 'Communication', value: getMetricValue('communication') },
+    { key: 'confidence', label: 'Confidence', value: getMetricValue('confidence') },
+    { key: 'vulnerability', label: 'Vulnerability', value: getMetricValue('vulnerability') }
+  ];
+  
+  el.innerHTML = metrics.map(m => {
+    let change = growthMetrics[m.key]?.changes?.slice(-1)[0];
+    let changeHtml = '';
+    if (change && change.amount > 0) {
+      changeHtml = ' <span class="metric-change">+'+change.amount+'</span>';
+    }
+    return `<div class="progress-row"><div class="progress-label">${m.label}</div><div class="progress-track"><div class="progress-fill teal" style="width:${m.value}%"></div></div><div>${m.value}%${changeHtml}</div></div>`;
+  }).join('');
 }
 
 async function renderJournal() {
@@ -1360,6 +1598,8 @@ async function addJournalEntry() {
   input.value = '';
   renderJournal();
   showToast('📖 Entry shared!');
+  addMetricGrowth('selfAwareness', 1, 'journal entry');
+  recalculateAllMetrics();
 }
 
 function switchGrowthTab(tab, btn) {
@@ -1384,7 +1624,7 @@ function switchScreen(screen, btn) {
   if(btn) btn.classList.add('active');
   if (screen === 'journal') renderJournal();
   if (screen === 'couple') renderCoupleExtras();
-  if (screen === 'growth') { renderGrowthBars(); renderPractices(); renderCouplesTasks(); renderTempleTab(); drawWheel(); renderPathsTab(); }
+  if (screen === 'growth') { renderGrowthBars(); renderPractices(); renderCouplesTasks(); renderTempleTab(); drawWheel(); renderPathsTab(); recalculateAllMetrics(); }
   if (screen === 'cosmic') updateCosmicScreen();
   if (screen === 'home') updateHomeScreen();
 }
@@ -1429,6 +1669,7 @@ async function awardXP(amount) {
   drawWheel();
   checkAchievements();
   renderPathsTab();
+  recalculateAllMetrics();
 }
 
 function loadStreak() {
@@ -1452,6 +1693,23 @@ function updateStreak() {
   try { localStorage.setItem('lovebase_streak', JSON.stringify(streakData)); } catch(e) {}
   updateStreakDisplay();
   if (streakData.days >= 3) unlockAchievement('streak_3');
+  if (streakData.days >= 7) {
+    // Streak bonus to metrics
+    addMetricGrowth('empathy', 2, 'streak: 7 days');
+    addMetricGrowth('selfAwareness', 2, 'streak: 7 days');
+    addMetricGrowth('communication', 2, 'streak: 7 days');
+    addMetricGrowth('confidence', 2, 'streak: 7 days');
+    addMetricGrowth('vulnerability', 2, 'streak: 7 days');
+    recalculateAllMetrics();
+  }
+  if (streakData.days >= 30) {
+    addMetricGrowth('empathy', 3, 'streak: 30 days');
+    addMetricGrowth('selfAwareness', 3, 'streak: 30 days');
+    addMetricGrowth('communication', 3, 'streak: 30 days');
+    addMetricGrowth('confidence', 3, 'streak: 30 days');
+    addMetricGrowth('vulnerability', 3, 'streak: 30 days');
+    recalculateAllMetrics();
+  }
 }
 
 function updateStreakDisplay() {
@@ -1488,6 +1746,7 @@ function unlockAchievement(id) {
   showToast('🏆 ' + a.title + ' unlocked!');
   clearTimeout(window._achTimeout);
   window._achTimeout = setTimeout(closeAchievement, 5000);
+  recalculateAllMetrics();
 }
 
 function closeAchievement() {
@@ -1583,6 +1842,8 @@ function toggleTimerModal() {
         spawnConfetti();
         showToast('🎉 Practice complete! Amazing work!');
         awardXP(10);
+        addMetricGrowth('selfAwareness', 2, 'timer practice');
+        recalculateAllMetrics();
       }
     }, 1000);
   } else {
@@ -1642,6 +1903,9 @@ async function saveShadowWork() {
   await awardXP(30);
   spawnFloatingEmoji('🌑');
   addPathXP('development', 20);
+  addMetricGrowth('selfAwareness', 3, 'shadow work');
+  addMetricGrowth('vulnerability', 3, 'shadow work');
+  recalculateAllMetrics();
 }
 
 document.getElementById('shadow-modal').addEventListener('click', function(e) {
@@ -1684,13 +1948,21 @@ async function markTaskComplete(taskId, xp, btnEl) {
   completedTasks[key] = true;
   if(btnEl){ btnEl.innerHTML = '✓ Completed'; btnEl.style.opacity = '0.7'; }
   await awardXP(xp);
-  if (taskId.startsWith('p')) addPathXP('variety', Math.floor(xp * 0.5));
-  if (taskId.startsWith('c')) addPathXP('consummation', Math.floor(xp * 0.5));
+  if (taskId.startsWith('p')) {
+    addPathXP('variety', Math.floor(xp * 0.5));
+    addMetricGrowth('selfAwareness', 1, 'practice: ' + taskId);
+  }
+  if (taskId.startsWith('c')) {
+    addPathXP('consummation', Math.floor(xp * 0.5));
+    addMetricGrowth('communication', 2, 'couple task: ' + taskId);
+    addMetricGrowth('empathy', 1, 'couple task: ' + taskId);
+  }
   if(sbClient && currentRelationshipId && currentUser) {
     await safeRelUpdate({ completed_tasks: completedTasks });
   }
   spawnConfetti();
   spawnFloatingEmoji('🎉');
+  recalculateAllMetrics();
 }
 
 function renderPractices(){var el=document.getElementById('practices-list');if(el)el.innerHTML=PRACTICES.map(taskCardHTML).join('');}
@@ -1965,6 +2237,8 @@ window.logWater = function() {
   saveTempleState();
   if (templeState.waterGlasses >= 10) checkAchievements();
   addPathXP('variety', 3);
+  addMetricGrowth('selfAwareness', 1, 'water logging');
+  recalculateAllMetrics();
 };
 
 window.startBreathSession = function(type) {
@@ -1977,6 +2251,8 @@ window.startBreathSession = function(type) {
   saveTempleState();
   spawnFloatingEmoji('🌬️');
   addPathXP('transcendence', 10);
+  addMetricGrowth('selfAwareness', 2, 'breath: ' + name);
+  recalculateAllMetrics();
 };
 
 window.markGateComplete = function(gateId, btn) {
@@ -1991,6 +2267,9 @@ window.markGateComplete = function(gateId, btn) {
   spawnConfetti();
   checkAchievements();
   addPathXP('development', 15);
+  addMetricGrowth('communication', 2, 'gate: ' + gate.name);
+  addMetricGrowth('selfAwareness', 2, 'gate: ' + gate.name);
+  recalculateAllMetrics();
 };
 
 window.markTemplePractice = function(id, xp, btnEl) {
@@ -2008,6 +2287,9 @@ window.markTemplePractice = function(id, xp, btnEl) {
   renderTempleTab();
   saveTempleState();
   addPathXP('consummation', Math.floor(xp * 0.5));
+  addMetricGrowth('empathy', 2, 'temple practice');
+  addMetricGrowth('communication', 1, 'temple practice');
+  recalculateAllMetrics();
 };
 
 window.saveTempleReflection = async function() {
@@ -2030,6 +2312,8 @@ window.saveTempleReflection = async function() {
   saveTempleState();
   spawnFloatingEmoji('📝');
   addPathXP('transcendence', 10);
+  addMetricGrowth('selfAwareness', 3, 'temple reflection');
+  recalculateAllMetrics();
 };
 
 async function saveTempleState() {
@@ -2064,6 +2348,8 @@ window.setFoundation = function(key, value, btn) {
   showToast('✦ ' + key + ' updated to ' + value + '%');
   setTimeout(() => { document.getElementById('modal-foundation').remove(); renderTempleTab(); saveTempleState(); }, 500);
   addPathXP('variety', 5);
+  addMetricGrowth('selfAwareness', 1, 'foundation: ' + key);
+  recalculateAllMetrics();
 };
 
 function updateRiverBalance(river, delta) {
@@ -2077,14 +2363,16 @@ function drawWheel() {
   var S = 200, cx = S / 2, cy = S / 2, r = 72, dpr = window.devicePixelRatio || 1;
   canvas.width = canvas.height = S * dpr; canvas.style.width = canvas.style.height = S + 'px';
   var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, S, S);
-  var stats = computeMyGrowthStats();
+  
+  // Use dynamic metrics
   var sl = [
-    {l:'Empathy', v: Math.min(1, (stats.empathy || 60) / 100), c: 'rgba(78,205,196,0.8)'},
-    {l:'Self-Awareness', v: Math.min(1, (stats.selfAwareness || 60) / 100), c: 'rgba(155,109,255,0.8)'},
-    {l:'Communication', v: Math.min(1, (stats.communication || 60) / 100), c: 'rgba(201,168,76,0.8)'},
-    {l:'Confidence', v: Math.min(1, (stats.confidence || 60) / 100), c: 'rgba(232,112,112,0.8)'},
-    {l:'Vulnerability', v: Math.min(1, (stats.vulnerability || 50) / 100), c: 'rgba(201,168,76,0.7)'}
+    {l:'Empathy', v: Math.min(1, getMetricValue('empathy') / 100), c: 'rgba(78,205,196,0.8)'},
+    {l:'Self-Awareness', v: Math.min(1, getMetricValue('selfAwareness') / 100), c: 'rgba(155,109,255,0.8)'},
+    {l:'Communication', v: Math.min(1, getMetricValue('communication') / 100), c: 'rgba(201,168,76,0.8)'},
+    {l:'Confidence', v: Math.min(1, getMetricValue('confidence') / 100), c: 'rgba(232,112,112,0.8)'},
+    {l:'Vulnerability', v: Math.min(1, getMetricValue('vulnerability') / 100), c: 'rgba(201,168,76,0.7)'}
   ];
+  
   var n = sl.length;
   sl.forEach((s, i) => {
     var a0 = (i / n) * Math.PI * 2 - Math.PI / 2, a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
@@ -2093,8 +2381,19 @@ function drawWheel() {
   });
   [0.25, 0.5, 0.75, 1].forEach(f => { ctx.beginPath(); ctx.arc(cx, cy, r * f, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(240,232,208,0.06)'; ctx.lineWidth = 0.5; ctx.stroke(); });
   sl.forEach((_, i) => { var a = (i / n) * Math.PI * 2 - Math.PI / 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); ctx.strokeStyle = 'rgba(240,232,208,0.1)'; ctx.lineWidth = 0.5; ctx.stroke(); });
+  
   var lb = document.getElementById('wheel-labels');
-  if(lb) lb.innerHTML = sl.map(s => '<div class="wheel-label-item"><span class="label-name">' + s.l + '</span><span class="label-value">' + Math.round(s.v * 100) + '%</span></div>').join('');
+  if(lb) {
+    lb.innerHTML = sl.map(s => {
+      let change = growthMetrics[s.l.toLowerCase().replace('-', '')]?.changes?.slice(-1)[0];
+      let changeHtml = '';
+      if (change && change.amount > 0) {
+        changeHtml = ' <span style="font-size:9px;color:var(--teal);">+'+change.amount+'</span>';
+      }
+      return '<div class="wheel-label-item"><span class="label-name">' + s.l + '</span><span class="label-value">' + Math.round(s.v * 100) + '%' + changeHtml + '</span></div>';
+    }).join('');
+  }
+  
   var container = canvas.parentElement;
   var existing = container.querySelector('.wheel-lock-overlay');
   if (existing) existing.remove();
@@ -2108,18 +2407,13 @@ function drawWheel() {
 }
 
 function computeMyGrowthStats() {
-  var slot = currentMySlot || 'A';
-  var myIntake = (liveData && (slot === 'A' ? liveData.intake_a : liveData.intake_b)) || {};
-  var cs = (liveData && liveData.couple_stats) || {};
-  function r(id, fallback) { var v = Number(myIntake[id]); return isNaN(v) ? fallback : Math.round(v * 10); }
-  function has(id) { return myIntake[id] && myIntake[id].length > 20; }
-  function cap(v) { return Math.min(95, Math.max(10, Math.round(v))); }
+  // Return dynamic metrics for compatibility
   return {
-    empathy: cap(r('rate_emotional', 7) * 0.4 + (has('shadow_judge_p') ? 80 : 50) * 0.2 + (has('admire') ? 90 : 60) * 0.2 + (cs.trust || 70) * 0.2),
-    selfAwareness: cap((has('shadow_fear') ? 90 : 50) * 0.25 + (has('shadow_truth') ? 90 : 50) * 0.25 + (has('final') ? 90 : 60) * 0.25 + r('rate_emotional', 6) * 0.25),
-    communication: cap(r('rate_communication', 7) * 0.6 + (has('energy_leak') ? 80 : 50) * 0.2 + (has('unloved') ? 80 : 50) * 0.2),
-    confidence: cap(r('rate_vision', 7) * 0.4 + (has('child_imagine') ? 80 : 50) * 0.3 + (has('vision_10yr') ? 90 : 50) * 0.3),
-    vulnerability: cap((has('shadow_truth') ? 90 : 40) * 0.35 + (has('final') ? 90 : 50) * 0.35 + (has('unloved') ? 80 : 50) * 0.3),
+    empathy: getMetricValue('empathy'),
+    selfAwareness: getMetricValue('selfAwareness'),
+    communication: getMetricValue('communication'),
+    confidence: getMetricValue('confidence'),
+    vulnerability: getMetricValue('vulnerability')
   };
 }
 
@@ -2310,6 +2604,9 @@ async function saveDreamEntry() {
   await awardXP(20);
   spawnFloatingEmoji('🌙');
   addPathXP('transcendence', 10);
+  addMetricGrowth('selfAwareness', 2, 'dream recording');
+  addMetricGrowth('empathy', 1, 'dream recording');
+  recalculateAllMetrics();
 }
 
 async function loadDreams() {
@@ -2368,6 +2665,8 @@ async function savePrivateNote() {
   await awardXP(10);
   spawnFloatingEmoji('📝');
   addPathXP('development', 5);
+  addMetricGrowth('selfAwareness', 2, 'private note');
+  recalculateAllMetrics();
 }
 
 // ==================== INTAKE ====================
@@ -2479,6 +2778,9 @@ async function saveIntakeProgress(done) {
     var existing = (liveData && liveData.couple_stats) || {};
     updates.couple_stats = mergeStats(existing, derived.couple_stats, slot);
     updates.baby_readiness = derived.baby_readiness;
+    // Initialize metrics after intake
+    initializeMetrics(intakeAnswers, updates.couple_stats || {});
+    updates.growth_metrics = JSON.stringify(growthMetrics);
   }
   await safeRelUpdate(updates);
 }
