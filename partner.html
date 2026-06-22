@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<!-- Relaxed CSP to allow everything needed -->
+<!-- Relaxed CSP -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
   script-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
@@ -748,7 +748,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==================== COMPLETE APP ====================
-// All features working with proper ID matching
+// FIXED: Proper intake values for relationship metrics
 
 let sbClient = null;
 let currentUser = null;
@@ -777,7 +777,7 @@ let personalMetrics = {
   vulnerability: { base: 64, current: 64, changes: [] }
 };
 
-// ── Relationship Metrics ──
+// ── Relationship Metrics (will be set from intake) ──
 let relationshipMetrics = {
   sharedVision: { base: 48, current: 48, changes: [] },
   friendship: { base: 75, current: 75, changes: [] },
@@ -991,7 +991,9 @@ function addAllPersonalMetrics(amount, source) {
   spawnFloatingEmoji('🧑 +' + amount + ' all personal');
 }
 
+// ===== FIXED: Proper intake value extraction =====
 function initializeMetrics(intakeData, coupleStats) {
+  // Personal metrics from intake
   personalMetrics.empathy.base = calculatePersonalBase(intakeData, coupleStats, 'empathy');
   personalMetrics.selfAwareness.base = calculatePersonalBase(intakeData, coupleStats, 'selfAwareness');
   personalMetrics.communication.base = calculatePersonalBase(intakeData, coupleStats, 'communication');
@@ -1002,6 +1004,7 @@ function initializeMetrics(intakeData, coupleStats) {
     personalMetrics[key].current = personalMetrics[key].base;
   });
   
+  // Relationship metrics from couple_stats - USE DIRECT VALUES
   if (coupleStats) {
     relationshipMetrics.sharedVision.base = coupleStats.vision || 48;
     relationshipMetrics.friendship.base = coupleStats.friendship || 75;
@@ -1046,6 +1049,7 @@ function recalculateAllMetrics() {
   let cLevel = getPathLevel('consummation');
   let tLevel = getPathLevel('transcendence');
   
+  // Reset to base
   Object.keys(personalMetrics).forEach(key => {
     personalMetrics[key].current = personalMetrics[key].base;
   });
@@ -1638,8 +1642,8 @@ function startDemoMode() {
   currentMySlot = 'A';
   
   let demoIntake = {
-    rate_emotional: 7, rate_communication: 6, rate_vision: 8,
-    rate_trust: 7, rate_friendship: 8, rate_teamwork: 7, rate_sexual: 6,
+    rate_emotional: 7, rate_communication: 6, rate_vision: 5,
+    rate_trust: 6, rate_friendship: 8, rate_teamwork: 6, rate_sexual: 6,
     shadow_judge_p: 'Sometimes I judge when...',
     shadow_fear: 'I fear being misunderstood...',
     shadow_truth: 'I haven\'t said that I...',
@@ -1650,13 +1654,21 @@ function startDemoMode() {
     vision_10yr: 'In 10 years, we wake up...'
   };
   
-  let demoStats = { trust: 60, intimacy: 65, communication: 60, vision: 48, friendship: 75, teamwork: 60 };
+  // These are the correct starting values from the intake
+  let demoStats = { 
+    trust: 60, 
+    intimacy: 65, 
+    communication: 60, 
+    vision: 48, 
+    friendship: 75, 
+    teamwork: 60 
+  };
   
   liveData = {
     partner_a_name: 'Ana', partner_b_name: 'Marco',
     couple_stats: demoStats,
     baby_readiness: 70,
-    xp_a: 120, xp_b: 80,
+    xp_a: 0, xp_b: 0,
     temple_state: JSON.stringify(templeState),
     path_progress: JSON.stringify(pathProgress),
     intake_a: demoIntake,
@@ -1665,7 +1677,7 @@ function startDemoMode() {
   
   initializeMetrics(demoIntake, demoStats);
   
-  xpData = {A: 120, B: 80};
+  xpData = {A: 0, B: 0};
   completedTasks = {};
   updateAllUI();
   startAnimations();
