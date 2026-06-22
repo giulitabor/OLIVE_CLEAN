@@ -516,6 +516,15 @@
     border-radius: 12px;
     margin: 2px 4px 2px 0;
   }
+  .mastery-rank {
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: rgba(201,168,76,0.08);
+    border: 0.5px solid rgba(201,168,76,0.2);
+    color: var(--gold2);
+    display: inline-block;
+  }
 </style>
 </head>
 <body>
@@ -722,9 +731,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ==================== COMPLETE APP with Four Growth Paths ====================
+// ==================== COMPLETE APP with Four Growth Paths + Mastery Ranks ====================
 // All features working: Temple, Timer, Shadow Work, Dreams, Achievements, Streak, XP, Wheel
-// + Four Paths (Variety, Development, Consummation, Transcendence)
+// + Four Paths (Variety, Development, Consummation, Transcendence) + Mastery Ranks
 
 let sbClient = null;
 let currentUser = null;
@@ -746,11 +755,12 @@ let sanctuaryRAF = null;
 
 // ── Paths Progress ──
 let pathProgress = {
-  variety: { xp: 0, level: 1, skills: [] },
-  development: { xp: 0, level: 1, skills: [] },
-  consummation: { xp: 0, level: 1, skills: [] },
-  transcendence: { xp: 0, level: 1, skills: [] }
+  variety: { xp: 0, level: 1, skills: [], rank: 0 },
+  development: { xp: 0, level: 1, skills: [], rank: 0 },
+  consummation: { xp: 0, level: 1, skills: [], rank: 0 },
+  transcendence: { xp: 0, level: 1, skills: [], rank: 0 }
 };
+const MASTERY_RANKS = ['Explorer', 'Practitioner', 'Companion', 'Guide', 'Master'];
 const PATH_LEVELS = {
   variety: { name: 'Variety', icon: '🌸', badge: 'Heart Awakening', maxLevel: 10 },
   development: { name: 'Development', icon: '👁', badge: 'Mirror of Souls', maxLevel: 10 },
@@ -907,7 +917,16 @@ function getPathXP(pathKey) {
 
 function getPathXPNeeded(pathKey) {
   let level = getPathLevel(pathKey);
-  return level * 25 + 10; // scaling: 35, 60, 85, etc.
+  return level * 25 + 10;
+}
+
+function getPathRank(pathKey) {
+  let level = getPathLevel(pathKey);
+  if (level >= 9) return 4; // Master
+  if (level >= 7) return 3; // Guide
+  if (level >= 5) return 2; // Companion
+  if (level >= 3) return 1; // Practitioner
+  return 0; // Explorer
 }
 
 function getPathBadge(pathKey) {
@@ -920,19 +939,17 @@ function getPathBadge(pathKey) {
 }
 
 function addPathXP(pathKey, amount) {
-  if (!pathProgress[pathKey]) pathProgress[pathKey] = { xp: 0, level: 1, skills: [] };
+  if (!pathProgress[pathKey]) pathProgress[pathKey] = { xp: 0, level: 1, skills: [], rank: 0 };
   pathProgress[pathKey].xp += amount;
   let needed = getPathXPNeeded(pathKey);
   while (pathProgress[pathKey].xp >= needed && pathProgress[pathKey].level < 10) {
     pathProgress[pathKey].level += 1;
-    // Unlock skill
     let skills = PATH_SKILLS[pathKey] || [];
     if (pathProgress[pathKey].level <= skills.length) {
       pathProgress[pathKey].skills.push(skills[pathProgress[pathKey].level - 1]);
     }
     spawnConfetti();
     showToast('🌱 ' + PATH_LEVELS[pathKey]?.name + ' Path Level ' + pathProgress[pathKey].level + '!');
-    // Check achievements for level 5
     if (pathProgress[pathKey].level === 5) {
       let achMap = { variety: 'path_variety_5', development: 'path_development_5', consummation: 'path_consummation_5', transcendence: 'path_transcendence_5' };
       unlockAchievement(achMap[pathKey]);
@@ -971,16 +988,18 @@ function renderPathsTab() {
   };
 
   paths.forEach(key => {
-    let p = pathProgress[key] || { xp: 0, level: 1, skills: [] };
+    let p = pathProgress[key] || { xp: 0, level: 1, skills: [], rank: 0 };
     let needed = getPathXPNeeded(key);
     let pct = Math.min(100, Math.round((p.xp / needed) * 100));
     let skills = p.skills || [];
     let allSkills = PATH_SKILLS[key] || [];
     let cats = XP_CATEGORIES[key] || [];
     let activities = PATH_ACTIVITIES[key] || [];
+    let rank = getPathRank(key);
+    let rankName = MASTERY_RANKS[rank] || 'Explorer';
 
     html += '<div class="card" style="border-left: 3px solid ' + pathColors[key] + ';">';
-    html += '<div class="card-title">' + pathIcons[key] + ' ' + pathNames[key] + ' Path <span class="path-badge l' + (key === 'variety' ? '1' : key === 'development' ? '2' : key === 'consummation' ? '3' : '4') + '">' + getPathBadge(key) + '</span></div>';
+    html += '<div class="card-title">' + pathIcons[key] + ' ' + pathNames[key] + ' Path <span class="path-badge l' + (key === 'variety' ? '1' : key === 'development' ? '2' : key === 'consummation' ? '3' : '4') + '">' + getPathBadge(key) + '</span> <span class="mastery-rank">' + rankName + '</span></div>';
     html += '<div style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:8px;">' + pathThemes[key] + '</div>';
     html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Level ' + p.level + ' / 10</span><span>' + p.xp + ' / ' + needed + ' XP</span></div>';
     html += '<div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:' + pct + '%;background:' + pathColors[key] + ';border-radius:3px;"></div></div>';
@@ -1030,9 +1049,7 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
   completedTasks[key] = true;
   if (btn) { btn.textContent = '✓ Done'; btn.style.background = 'rgba(78,205,196,0.15)'; btn.style.borderColor = 'var(--teal)'; btn.style.color = 'var(--teal)'; }
   
-  // Award XP to the path
   addPathXP(pathKey, xp);
-  // Also award general XP
   await awardXP(xp);
   spawnFloatingEmoji('🌱+' + xp);
   
@@ -1162,11 +1179,9 @@ function startMainApp(relation) {
   var intakeDone = slot === 'A' ? relation.intake_a_done : relation.intake_b_done;
   if (!intakeDone) { startIntake(relation, slot); return; }
   
-  // Load temple state from DB
   if (relation.temple_state) {
     try { templeState = JSON.parse(relation.temple_state); } catch(e) {}
   }
-  // Load path progress
   if (relation.path_progress) {
     try { pathProgress = JSON.parse(relation.path_progress); } catch(e) {}
   }
@@ -1626,7 +1641,6 @@ async function saveShadowWork() {
   showToast('🌑 Shadow work saved privately.');
   await awardXP(30);
   spawnFloatingEmoji('🌑');
-  // Add to development path
   addPathXP('development', 20);
 }
 
@@ -1670,7 +1684,6 @@ async function markTaskComplete(taskId, xp, btnEl) {
   completedTasks[key] = true;
   if(btnEl){ btnEl.innerHTML = '✓ Completed'; btnEl.style.opacity = '0.7'; }
   await awardXP(xp);
-  // Add to variety path for individual practices
   if (taskId.startsWith('p')) addPathXP('variety', Math.floor(xp * 0.5));
   if (taskId.startsWith('c')) addPathXP('consummation', Math.floor(xp * 0.5));
   if(sbClient && currentRelationshipId && currentUser) {
@@ -1951,7 +1964,6 @@ window.logWater = function() {
   renderTempleTab();
   saveTempleState();
   if (templeState.waterGlasses >= 10) checkAchievements();
-  // Add to variety path
   addPathXP('variety', 3);
 };
 
@@ -1964,7 +1976,6 @@ window.startBreathSession = function(type) {
   renderTempleTab();
   saveTempleState();
   spawnFloatingEmoji('🌬️');
-  // Add to transcendence path
   addPathXP('transcendence', 10);
 };
 
@@ -1979,7 +1990,6 @@ window.markGateComplete = function(gateId, btn) {
   saveTempleState();
   spawnConfetti();
   checkAchievements();
-  // Add to development path
   addPathXP('development', 15);
 };
 
@@ -1997,7 +2007,6 @@ window.markTemplePractice = function(id, xp, btnEl) {
   }
   renderTempleTab();
   saveTempleState();
-  // Add to consummation path
   addPathXP('consummation', Math.floor(xp * 0.5));
 };
 
@@ -2020,7 +2029,6 @@ window.saveTempleReflection = async function() {
   renderTempleTab();
   saveTempleState();
   spawnFloatingEmoji('📝');
-  // Add to transcendence path
   addPathXP('transcendence', 10);
 };
 
@@ -2055,7 +2063,6 @@ window.setFoundation = function(key, value, btn) {
   }
   showToast('✦ ' + key + ' updated to ' + value + '%');
   setTimeout(() => { document.getElementById('modal-foundation').remove(); renderTempleTab(); saveTempleState(); }, 500);
-  // Add to variety path
   addPathXP('variety', 5);
 };
 
@@ -2302,7 +2309,6 @@ async function saveDreamEntry() {
   showToast('Dream recorded ✨');
   await awardXP(20);
   spawnFloatingEmoji('🌙');
-  // Add to transcendence path
   addPathXP('transcendence', 10);
 }
 
@@ -2361,7 +2367,6 @@ async function savePrivateNote() {
   showToast(shared ? '✨ Saved! Partner can see this.' : '🔒 Saved privately.');
   await awardXP(10);
   spawnFloatingEmoji('📝');
-  // Add to development path
   addPathXP('development', 5);
 }
 
