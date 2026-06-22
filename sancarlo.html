@@ -161,6 +161,26 @@ input, select, textarea, button, .btn {
   width: auto;
   cursor: pointer;
 }
+   /* --- Fixes the Auth Modal Close Button positioning --- */
+#authModal .modal-content {
+  position: relative; /* Gives the close button an absolute anchoring reference */
+}
+
+#authModal .close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--muted, #6a7a6a);
+  cursor: pointer;
+  line-height: 1;
+  z-index: 10;
+}
+
+#authModal .close:hover {
+  color: var(--tomato);
+}
 
 /* Forgot Password alignment link */
 .form-meta-row {
