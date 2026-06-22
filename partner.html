@@ -3,737 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<!-- CSP meta tag to allow Supabase connections -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  connect-src 'self' https://eohdfgvebqdxstwdildk.supabase.co wss://eohdfgvebqdxstwdildk.supabase.co https://cdn.jsdelivr.net;
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  font-src 'self' data:;
+">
 <title>Two Paths, One Journey — Complete Growth</title>
 <style>
-  :root {
-    --navy: #0a0e1a;
-    --navy2: #0f1525;
-    --navy3: #141c30;
-    --gold: #c9a84c;
-    --gold2: #e8c96a;
-    --rose: #e87070;
-    --teal: #4ecdc4;
-    --purple: #9b6dff;
-    --glass: rgba(255,255,255,0.05);
-    --glass2: rgba(255,255,255,0.08);
-    --border: rgba(201,168,76,0.2);
-    --text1: #f0e8d0;
-    --text2: #a89880;
-    --font: 'Georgia', serif;
-    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--navy);
-    color: var(--text1);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-  #stars-canvas {
-    position: fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    pointer-events: none;
-    z-index: 0;
-  }
-  #app {
-    position: relative;
-    z-index: 1;
-    max-width: 480px;
-    margin: 0 auto;
-    padding-bottom: 80px;
-  }
-  .card {
-    background: var(--glass);
-    border: 0.5px solid var(--border);
-    border-radius: 24px;
-    padding: 20px;
-    margin: 12px 16px;
-  }
-  .card-title {
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-title::after {
-    content:'';
-    flex:1;
-    height: 0.5px;
-    background: var(--border);
-  }
-  .input-field {
-    width: 100%;
-    background: var(--glass2);
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
-    padding: 14px;
-    color: var(--text1);
-    font-size: 14px;
-    margin-bottom: 12px;
-    outline: none;
-  }
-  .input-field:focus { border-color: var(--gold); }
-  .btn-primary {
-    width: 100%;
-    padding: 14px;
-    border-radius: 40px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15));
-    border: 0.5px solid var(--gold);
-    color: var(--gold);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-  }
-  .btn-primary:hover { background: rgba(201,168,76,0.3); }
-  .btn-secondary {
-    background: var(--glass);
-    color: var(--text2);
-  }
-  .invite-code {
-    background: rgba(78,205,196,0.1);
-    border: 1px dashed var(--teal);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    margin: 16px 0;
-  }
-  .code-display {
-    font-size: 28px;
-    letter-spacing: 4px;
-    font-family: monospace;
-    color: var(--teal);
-    margin: 8px 0;
-  }
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left:50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 480px;
-    background: rgba(10,14,26,0.95);
-    backdrop-filter: blur(20px);
-    border-top: 0.5px solid var(--border);
-    display: flex;
-    z-index: 100;
-    padding: 8px 0 6px;
-  }
-  .nav-item {
-    flex:1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    cursor: pointer;
-    padding: 6px 0;
-    background: none;
-    border: none;
-    color: var(--text2);
-    font-size: 9px;
-    text-transform: uppercase;
-    transition: color 0.3s;
-  }
-  .nav-item.active { color: var(--gold); }
-  .nav-icon { font-size: 20px; }
-  .nav-dot { width: 4px; height:4px; border-radius:50%; background:var(--gold); opacity:0; }
-  .nav-item.active .nav-dot { opacity:1; }
-  .screen { display: none; animation: fadeIn 0.3s ease; }
-  .screen.active { display: block; }
-  @keyframes fadeIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
-  .header-strip {
-    background: linear-gradient(135deg, var(--navy2), var(--navy3));
-    border-bottom: 0.5px solid var(--border);
-    padding: 16px 20px 12px;
-  }
-  .header-date { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-  .header-row { display: flex; align-items: center; justify-content: space-between; }
-  .progress-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
-  .progress-label { font-size:12px; color:var(--text2); width:110px; text-transform:capitalize; }
-  .progress-track { flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
-  .progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--gold), var(--gold2)); transition:width 0.5s ease; }
-  .progress-fill.teal { background:linear-gradient(90deg, var(--teal), #80e8e2); }
-  .tree-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-  .tree-stat { text-align:center; background:var(--glass2); border-radius:12px; padding:8px; }
-  .tree-stat-val { font-size:20px; font-weight:600; color:var(--gold2); }
-  .sync-status { font-size: 10px; color: var(--teal); text-align: right; padding: 4px 16px; }
-  .tab-row { display: flex; background: var(--navy2); margin: 8px 16px 0; border-radius: 40px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
-  .tab { flex:1; padding: 8px; font-size: 12px; color: var(--text2); text-align: center; cursor: pointer; border-radius: 32px; white-space: nowrap; transition: all 0.3s; }
-  .tab.active { background: rgba(201,168,76,0.2); color: var(--gold); }
-  .journal-entry { padding: 14px; background: var(--glass); border-left: 2px solid var(--gold); border-radius: 0 16px 16px 0; margin-bottom: 10px; }
-  .journal-textarea { width:100%; background: var(--glass2); border:0.5px solid var(--border); border-radius:20px; padding:12px; color:var(--text1); font-size:14px; resize:none; height:80px; }
-  .journal-btn { width:100%; padding:12px; background:linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1)); border:0.5px solid var(--gold); border-radius:40px; color:var(--gold); margin-top:8px; cursor:pointer; }
-  #tree-canvas { width:100%; height:220px; display:block; }
-
-  /* ── TIMER MODAL ── */
-  #timer-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.92);
-    backdrop-filter: blur(20px);
-    z-index: 10000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 24px;
-  }
-  #timer-modal.show { display: flex; animation: fadeIn 0.4s ease; }
-  .timer-circle {
-    position: relative;
-    width: 260px;
-    height: 260px;
-    border-radius: 50%;
-    background: conic-gradient(var(--gold) var(--progress, 0%), rgba(255,255,255,0.05) var(--progress, 0%));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.3s;
-  }
-  .timer-circle-inner {
-    width: 230px;
-    height: 230px;
-    border-radius: 50%;
-    background: var(--navy);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .timer-display {
-    font-size: 64px;
-    font-weight: 700;
-    color: var(--text1);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 2px;
-    font-family: monospace;
-  }
-  .timer-display.warning { color: var(--rose); animation: pulse 0.5s ease infinite alternate; }
-  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
-  .timer-label { font-size: 14px; color: var(--gold2); margin-top: 4px; font-family: var(--font); }
-  .timer-icon { font-size: 48px; margin-bottom: 8px; }
-  .timer-controls {
-    display: flex;
-    gap: 16px;
-    margin-top: 32px;
-  }
-  .timer-btn {
-    padding: 14px 32px;
-    border-radius: 40px;
-    border: 0.5px solid var(--gold);
-    background: rgba(201,168,76,0.15);
-    color: var(--gold);
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    min-width: 100px;
-  }
-  .timer-btn:hover { background: rgba(201,168,76,0.3); transform: scale(1.02); }
-  .timer-btn.pause { border-color: var(--rose); color: var(--rose); background: rgba(232,112,112,0.15); }
-  .timer-btn.pause:hover { background: rgba(232,112,112,0.3); }
-  .timer-btn.close-btn { border-color: var(--border); color: var(--text2); background: var(--glass); }
-  .timer-btn.close-btn:hover { background: rgba(255,255,255,0.1); }
-  .timer-close-x {
-    position: absolute;
-    top: 24px;
-    right: 24px;
-    font-size: 28px;
-    color: var(--text2);
-    cursor: pointer;
-    background: none;
-    border: none;
-    transition: transform 0.3s;
-  }
-  .timer-close-x:hover { transform: rotate(90deg); color: var(--text1); }
-
-  /* ── STREAK & ACHIEVEMENTS ── */
-  .streak-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(201,168,76,0.15);
-    border: 0.5px solid var(--gold);
-    border-radius: 40px;
-    padding: 6px 14px;
-    font-size: 12px;
-    color: var(--gold);
-  }
-  .achievement-unlock {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    background: rgba(10,14,26,0.95);
-    backdrop-filter: blur(20px);
-    border: 2px solid var(--gold);
-    border-radius: 32px;
-    padding: 32px 40px;
-    z-index: 9999;
-    text-align: center;
-    opacity: 0;
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: none;
-    max-width: 340px;
-  }
-  .achievement-unlock.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
-  .achievement-icon { font-size: 56px; display: block; margin-bottom: 8px; }
-  .achievement-title { font-size: 20px; color: var(--gold2); font-family: var(--font); }
-  .achievement-desc { font-size: 13px; color: var(--text2); margin-top: 6px; }
-
-  /* ── CONFETTI ── */
-  .confetti-piece {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    top: -10px;
-    z-index: 9998;
-    pointer-events: none;
-    animation: confettiFall linear forwards;
-  }
-  @keyframes confettiFall {
-    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-  }
-
-  /* ── WHEEL ── */
-  .wheel-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    position: relative;
-  }
-  .wheel-container canvas {
-    max-width: 100%;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.03);
-  }
-  .wheel-labels-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    width: 100%;
-  }
-  .wheel-label-item {
-    background: var(--glass2);
-    border-radius: 8px;
-    padding: 8px 12px;
-    border: 0.5px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .wheel-label-item .label-name { font-size: 11px; color: var(--text2); }
-  .wheel-label-item .label-value { font-size: 13px; font-weight: 600; color: var(--gold); }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(10,14,26,0.95);
-    backdrop-filter: blur(12px);
-    border: 0.5px solid var(--gold);
-    border-radius: 40px;
-    padding: 12px 24px;
-    color: var(--gold2);
-    font-size: 14px;
-    z-index: 999;
-    opacity: 0;
-    transition: all 0.4s ease;
-    pointer-events: none;
-    max-width: 90%;
-    text-align: center;
-  }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(-8px); }
-
-  /* ── INTAKE ── */
-  .intake-screen{min-height:100vh;padding:0 0 40px}
-  .intake-hero{padding:40px 24px 24px;text-align:center}
-  .intake-hero-icon{font-size:52px;margin-bottom:12px}
-  .intake-hero-title{font-size:26px;font-family:var(--font);color:var(--gold2);margin-bottom:6px}
-  .intake-hero-sub{font-size:13px;color:var(--text2);line-height:1.6}
-  .intake-progress{display:flex;gap:5px;margin:0 24px 20px}
-  .intake-pip{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.12);transition:background 0.4s}
-  .intake-pip.done{background:var(--gold)}
-  .intake-pip.current{background:var(--gold2)}
-  .intake-field{padding:0 24px 14px}
-  .intake-label{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:8px;display:block;font-style:italic}
-  .intake-input{width:100%;background:var(--glass2);border:0.5px solid var(--border);border-radius:16px;padding:14px;color:var(--text1);font-size:16px;outline:none;-webkit-appearance:none}
-  .intake-input:focus{border-color:var(--gold)}
-  textarea.intake-input{resize:none;height:90px;font-family:inherit;line-height:1.5}
-  .intake-scale{display:flex;gap:4px}
-  .intake-scale-dot{flex:1;height:36px;border-radius:8px;background:var(--glass);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);cursor:pointer;transition:all 0.15s;touch-action:manipulation}
-  .intake-scale-dot.sel{background:rgba(201,168,76,0.25);border-color:var(--gold);color:var(--gold);font-weight:600}
-  .intake-yesno{display:flex;gap:8px}
-  .intake-yn-btn{flex:1;padding:12px;border-radius:40px;border:0.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:14px;cursor:pointer;text-align:center;touch-action:manipulation;transition:all 0.2s}
-  .intake-yn-btn.sel{border-color:var(--gold);background:rgba(201,168,76,0.15);color:var(--gold)}
-  .intake-nav{display:flex;gap:10px;padding:20px 24px 0}
-  .intake-next{flex:1;padding:14px;border-radius:40px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(201,168,76,0.15));border:0.5px solid var(--gold);color:var(--gold);font-size:15px;font-weight:600;cursor:pointer}
-  .intake-back{padding:14px 20px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer}
-  .intake-courage-note{margin:0 24px 16px;padding:12px 16px;background:rgba(155,109,255,0.08);border:0.5px solid rgba(155,109,255,0.25);border-radius:14px;font-size:12px;color:var(--text2);line-height:1.6;font-style:italic}
-
-  /* ── XP LOCK ── */
-  .xp-lock-overlay {
-    position: relative;
-    opacity: 0.5;
-    pointer-events: none;
-  }
-  .xp-lock-overlay::after {
-    content: '🔒 ' attr(data-xp-needed) ' XP needed';
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
-    border-radius: 24px;
-    font-size: 14px;
-    color: var(--gold);
-    font-weight: 600;
-    pointer-events: none;
-  }
-
-  /* ── FLOATING EMOJI ── */
-  .floating-emoji {
-    position: fixed;
-    pointer-events: none;
-    z-index: 9997;
-    font-size: 28px;
-    animation: floatUp 2s ease-out forwards;
-  }
-  @keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    100% { transform: translateY(-120px) scale(0.5); opacity: 0; }
-  }
-
-  /* ── TEMPLE ── */
-  .temple-gate-card {
-    padding: 14px;
-    background: var(--glass);
-    border-radius: 16px;
-    margin-bottom: 10px;
-    border: 0.5px solid var(--border);
-  }
-  .temple-gate-card.done { border-color: rgba(78,205,196,0.3); }
-  .temple-practice-card {
-    background: var(--glass);
-    border: 0.5px solid var(--border);
-    border-radius: 20px;
-    padding: 16px;
-    margin-bottom: 10px;
-  }
-  
-  /* ── SHADOW MODAL ── */
-  #shadow-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.92);
-    backdrop-filter: blur(20px);
-    z-index: 9999;
-    display: none;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 0;
-  }
-  #shadow-modal.show { display: flex; animation: fadeIn 0.3s ease; }
-  .shadow-content {
-    width: 100%;
-    max-width: 480px;
-    background: #11151f;
-    border: 0.5px solid rgba(201,168,76,0.35);
-    border-radius: 32px 32px 0 0;
-    padding: 24px;
-    max-height: 85vh;
-    overflow-y: auto;
-  }
-  
-  /* ── DREAM TAGS ── */
-  .dream-tag {
-    padding: 6px 12px;
-    border-radius: 40px;
-    border: 0.5px solid var(--border);
-    background: var(--glass);
-    color: var(--text2);
-    font-size: 12px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.2s;
-  }
-  .dream-tag.active { border-color: var(--purple); color: var(--purple); background: rgba(155,109,255,0.12); }
-
-  /* ── WATER WISDOM ── */
-  .water-wisdom-card {
-    background: rgba(78,205,196,0.06);
-    border-color: rgba(78,205,196,0.2);
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    margin-top: 12px;
-  }
-
-  /* ── GROWTH PATH BADGES ── */
-  .path-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    background: rgba(201,168,76,0.12);
-    border: 0.5px solid var(--gold);
-    color: var(--gold);
-  }
-  .path-badge.l1 { border-color: #ffb7c5; color: #ffb7c5; background: rgba(255,183,197,0.1); }
-  .path-badge.l2 { border-color: #9b6dff; color: #9b6dff; background: rgba(155,109,255,0.1); }
-  .path-badge.l3 { border-color: #e87070; color: #e87070; background: rgba(232,112,112,0.1); }
-  .path-badge.l4 { border-color: #4ecdc4; color: #4ecdc4; background: rgba(78,205,196,0.1); }
-  .skill-pill {
-    display: inline-block;
-    font-size: 10px;
-    padding: 2px 10px;
-    border-radius: 12px;
-    background: var(--glass2);
-    border: 0.5px solid var(--border);
-    color: var(--text2);
-    margin: 2px 4px 2px 0;
-  }
-  .xp-cat {
-    font-size: 10px;
-    color: var(--text3);
-    display: inline-block;
-    background: rgba(255,255,255,0.04);
-    padding: 2px 8px;
-    border-radius: 12px;
-    margin: 2px 4px 2px 0;
-  }
-  .mastery-rank {
-    font-size: 10px;
-    padding: 2px 10px;
-    border-radius: 12px;
-    background: rgba(201,168,76,0.08);
-    border: 0.5px solid rgba(201,168,76,0.2);
-    color: var(--gold2);
-    display: inline-block;
-  }
-  .metric-change {
-    font-size: 10px;
-    color: var(--teal);
-    margin-left: 4px;
-  }
-  .metric-change.down { color: var(--rose); }
+  /* ... all your existing styles ... */
 </style>
 </head>
 <body>
-<canvas id="stars-canvas"></canvas>
-<div id="app">
-
-  <!-- SETUP -->
-  <div id="setup-screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:40px 24px; text-align:center;">
-    <div style="font-size:60px; margin-bottom:16px;">🌿</div>
-    <div style="font-size:28px; font-family:Georgia, serif; color:var(--gold2); margin-bottom:8px;">Two Paths,<br>One Journey</div>
-    <div class="card" style="width:100%; text-align:left; margin-top:20px;">
-      <div class="card-title">Welcome to Partners LOVEbase</div>
-      <button class="btn-primary" id="connect-btn">Connect ✨</button>
-      <button class="btn-primary btn-secondary" id="demo-btn" style="margin-top:8px;">Demo Mode</button>
-    </div>
-  </div>
-
-  <!-- AUTH -->
-  <div id="auth-screen" style="display:none; min-height:100vh; padding:40px 20px;">
-    <div style="text-align:center; margin-bottom:32px;">
-      <div style="font-size:48px;">💑</div>
-      <div style="font-size:24px; font-family:Georgia; color:var(--gold2); margin-top:8px;">Welcome Back</div>
-      <div style="font-size:13px; color:var(--text2); margin-top:4px;">Sign in to continue your journey</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Authentication</div>
-      <input type="email" id="auth-email" class="input-field" placeholder="Email">
-      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6 characters)">
-      <div id="auth-error-msg" style="color:var(--rose);font-size:12px;min-height:18px;margin-bottom:4px"></div>
-      <button class="btn-primary" id="login-btn">Sign In</button>
-      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;">Create New Account</button>
-      <div style="text-align:center;margin-top:16px">
-        <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- INTAKE -->
-  <div id="intake-screen" style="display:none"><div class="intake-screen" id="intake-inner"></div></div>
-
-  <!-- FORGOT PASSWORD -->
-  <div id="forgot-password-screen" style="display:none;min-height:100vh;padding:40px 20px;">
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="font-size:48px">🔑</div>
-      <div style="font-size:24px;font-family:Georgia;color:var(--gold2);margin-top:8px">Reset Password</div>
-    </div>
-    <div class="card">
-      <input type="email" id="reset-email" class="input-field" placeholder="Your email address">
-      <div id="reset-error" style="color:var(--rose);font-size:12px;min-height:18px;"></div>
-      <div id="reset-success" style="color:var(--teal);font-size:13px;min-height:18px;"></div>
-      <button id="reset-btn" onclick="sendPasswordReset()" class="btn-primary">Send Reset Link ✉️</button>
-      <button onclick="showSignIn()" class="btn-primary btn-secondary" style="margin-top:8px;">← Back to Sign In</button>
-    </div>
-  </div>
-
-  <!-- RELATIONSHIP SETUP -->
-  <div id="relationship-setup-screen" style="display:none; min-height:100vh; padding:40px 20px;">
-    <div style="text-align:center; margin-bottom:24px;">
-      <div style="font-size:48px;">🏠</div>
-      <div style="font-size:22px; font-family:Georgia; color:var(--gold2);">Start Your Journey</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Create New Relationship</div>
-      <input type="text" id="rel-name-a" class="input-field" placeholder="Your name">
-      <input type="text" id="rel-name-b" class="input-field" placeholder="Partner's name">
-      <button class="btn-primary" id="create-relation-btn">Create Relationship ✨</button>
-    </div>
-    <div class="card">
-      <div class="card-title">Join Existing Relationship</div>
-      <input type="text" id="join-code" class="input-field" placeholder="Enter 6-digit invite code">
-      <button class="btn-primary btn-secondary" id="join-relation-btn">Join Relationship</button>
-    </div>
-  </div>
-
-  <!-- WAITING -->
-  <div id="waiting-screen" style="display:none; min-height:100vh; padding:40px 20px; text-align:center;">
-    <div style="font-size:60px; margin-bottom:20px;">⏳</div>
-    <div style="font-size:20px; font-family:Georgia; color:var(--gold2);">Waiting for Partner</div>
-    <div class="invite-code">
-      <div style="font-size:12px; color:var(--teal);">Your Invite Code</div>
-      <div class="code-display" id="invite-code-display">------</div>
-      <button class="btn-primary btn-secondary" id="copy-code-btn" style="margin-top:8px; padding:8px;">📋 Copy Code</button>
-    </div>
-  </div>
-
-  <!-- MAIN APP -->
-  <div id="main-app" style="display:none;">
-    <div class="sync-status" id="sync-status">🟢 Live Synced</div>
-
-    <!-- HOME -->
-    <div id="screen-home" class="screen active">
-      <div class="header-strip">
-        <div class="header-date" id="hdr-date"></div>
-        <div class="header-row">
-          <div class="header-moon" id="hdr-moon">🌔 Waxing Gibbous</div>
-          <div class="streak-badge" id="streak-badge">🔥 0 day streak</div>
-        </div>
-      </div>
-      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div class="tree-stat-lbl">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div class="tree-stat-lbl">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div class="tree-stat-lbl">Vision</div></div></div></div>
-      <div class="card"><div class="card-title">Relationship Weather</div><div id="weather-progress"></div></div>
-      <div class="card"><div class="card-title">Daily Pulse</div><div id="pulse-theme" style="font-size:15px;color:var(--gold2);font-family:var(--font);font-style:italic;margin-bottom:10px;text-align:center"></div><div id="pulse-tasks"></div></div>
-      <div class="card"><div class="card-title">Archetype</div><div style="display:flex;align-items:center;gap:16px;justify-content:center;padding:8px 0"><span id="arch-symbol" style="font-size:40px">⚒</span><div><div id="arch-name" style="font-size:16px;font-weight:600;color:var(--gold2)">Builders</div><div id="arch-lesson" style="font-size:12px;color:var(--text2);font-style:italic">Create foundations before expansion.</div></div></div></div>
-    </div>
-
-    <!-- COUPLE -->
-    <div id="screen-couple" class="screen">
-      <div class="header-strip"><div class="header-date">Our Journey</div><div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div></div>
-      <div class="card"><div class="card-title">Baby Readiness</div><div style="text-align:center;margin-top:8px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">70%</div><div style="font-size:11px;color:var(--text3);margin-top:4px;">Growing with your relationship</div></div></div>
-      <div id="couple-progress" class="card"></div>
-      <div class="card"><div class="card-title">Insights</div><div id="insights-content"></div></div>
-      <div class="card"><div class="card-title">Mountain</div><canvas id="mountain-canvas" style="width:100%;height:200px;display:block"></canvas></div>
-      <div class="card"><div class="card-title">Galaxy</div><canvas id="galaxy-canvas" style="width:100%;height:240px;display:block"></canvas></div>
-    </div>
-
-    <!-- GROWTH -->
-    <div id="screen-growth" class="screen">
-      <div style="display:flex; align-items:center; gap:12px; padding:16px; background:var(--glass); margin:12px 16px; border-radius:32px;">
-        <div style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;" id="growth-avatar">🌸</div>
-        <div><div id="growth-name" style="font-weight:600;">Loading</div><div style="font-size:11px;color:var(--text2);">Your journey</div></div>
-        <div id="growth-xp" style="margin-left:auto;background:rgba(201,168,76,0.15);border-radius:20px;padding:4px 12px;">✨ 0 XP</div>
-      </div>
-      <div class="tab-row" id="growth-tab-row">
-        <div class="tab active" onclick="switchGrowthTab('radar',this)">Growth</div>
-        <div class="tab" onclick="switchGrowthTab('practices',this)">Daily</div>
-        <div class="tab" onclick="switchGrowthTab('couples',this)">Together</div>
-        <div class="tab" onclick="switchGrowthTab('wheel',this)">Soul</div>
-        <div class="tab" onclick="switchGrowthTab('private',this)">Private</div>
-        <div class="tab" onclick="switchGrowthTab('temple',this)">🌿 Temple</div>
-        <div class="tab" onclick="switchGrowthTab('paths',this)">🌱 Paths</div>
-      </div>
-      <div id="tab-radar"><div class="card"><div id="growth-bars"></div></div></div>
-      <div id="tab-practices" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase">Individual Practices</div><div id="practices-list" style="padding:0 16px"></div></div>
-      <div id="tab-couples" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase">Together Exercises</div><div id="couples-list" style="padding:0 16px"></div></div>
-      <div id="tab-wheel" style="display:none;"><div class="card"><div class="card-title">Soul Journey Wheel</div><div class="wheel-container"><canvas id="wheel-canvas" width="200" height="200" style="width:200px;height:200px;display:block;margin:0 auto;"></canvas><div class="wheel-labels-grid" id="wheel-labels"></div></div></div></div>
-      <div id="tab-private" style="display:none;"><div style="padding:12px 16px 0"><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">🔒 Only you can see these.</div><textarea class="journal-textarea" id="private-input" placeholder="Your private truth…" style="margin-bottom:8px"></textarea><label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;margin-bottom:12px"><input type="checkbox" id="private-share-toggle" style="accent-color:var(--gold)"> 🌟 Share with partner</label><button onclick="savePrivateNote()" style="width:100%;padding:12px;border-radius:40px;background:rgba(78,205,196,0.15);border:0.5px solid var(--teal);color:var(--teal);cursor:pointer;font-size:14px">Save Private Note 🔒</button></div><div id="private-entries" style="padding:0 16px;margin-top:12px"></div></div>
-      <div id="tab-temple" style="display:none;"><div id="temple-container" style="padding:0 16px 16px;"></div></div>
-      <div id="tab-paths" style="display:none;"><div id="paths-container" style="padding:0 16px 16px;"></div></div>
-    </div>
-
-    <!-- JOURNAL -->
-    <div id="screen-journal" class="screen">
-      <div class="header-strip"><div class="header-date">Shared Journal</div></div>
-      <div class="journal-input-area" style="margin:12px 16px;"><textarea class="journal-textarea" id="journal-input" placeholder="Write freely... Partner sees instantly ✨"></textarea><button class="journal-btn" onclick="addJournalEntry()">Add Entry ✦</button></div>
-      <div id="journal-entries" style="padding:0 16px;"></div>
-    </div>
-
-    <!-- COSMOS -->
-    <div id="screen-cosmic" class="screen">
-      <div class="header-strip"><div class="header-date">Cosmic Context</div><div class="header-row"><div style="font-size:12px;color:var(--text2);font-style:italic">The universe holds you both</div></div><div id="cosmic-birth-info" style="font-size:11px;color:var(--gold3);margin-top:4px;font-style:italic"></div></div>
-      <div class="card"><div class="card-title">Moon Wisdom</div><div style="background:linear-gradient(135deg,rgba(15,21,37,0.9),rgba(20,28,48,0.9));border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center"><div style="font-size:48px" id="moon-big-icon">🌔</div><div style="margin-top:8px;color:var(--gold2);font-family:var(--font);font-size:16px" id="moon-big-phase">Moon</div><div style="font-size:13px;color:var(--text2);margin-top:6px" id="moon-release-txt"></div><div style="font-size:13px;color:var(--teal);margin-top:4px;font-style:italic" id="moon-invite-txt"></div><div style="font-size:12px;color:var(--text2);margin-top:10px;padding:8px;background:rgba(255,255,255,0.04);border-radius:10px" id="moon-energy-txt"></div></div></div>
-      <div class="card"><div class="card-title">Daily Horoscope</div><div id="horoscope-content"></div></div>
-      <div class="card"><div class="card-title">Dream Journal ✨</div><input type="text" id="dream-title" class="input-field" placeholder="Dream title…"><textarea class="journal-textarea" id="dream-input" placeholder="What did you dream?" style="height:90px;margin-bottom:8px"></textarea><div style="margin:0 0 12px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">Tag this dream:</div><div id="dream-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div></div><button id="dream-submit-btn" onclick="saveDreamEntry()" style="width:100%;padding:12px;border-radius:40px;background:rgba(155,109,255,0.15);border:0.5px solid var(--purple);color:var(--purple);cursor:pointer;font-size:14px">Record Dream 🌙</button></div><div style="font-size:11px;color:var(--text3);padding:8px 16px;letter-spacing:1px;text-transform:uppercase">Dream Archive</div><div id="dream-entries" style="padding:0 16px 20px"></div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav" id="bottom-nav" style="display:none;">
-    <button class="nav-item active" data-nav="home" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="couple" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span>Our Journey</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="growth" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span>My Growth</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="journal" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="cosmic" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmos</span><div class="nav-dot"></div></button>
-  </nav>
-</div>
-
-<!-- TOAST -->
-<div id="toast"></div>
-
-<!-- TIMER MODAL -->
-<div id="timer-modal">
-  <button class="timer-close-x" onclick="closeTimerModal()">✕</button>
-  <div class="timer-circle" id="timer-circle">
-    <div class="timer-circle-inner">
-      <div class="timer-icon" id="timer-modal-icon">⏱</div>
-      <div class="timer-display" id="timer-modal-display">00:00</div>
-      <div class="timer-label" id="timer-modal-label">Practice</div>
-    </div>
-  </div>
-  <div class="timer-controls">
-    <button class="timer-btn" id="timer-modal-start" onclick="toggleTimerModal()">▶ Start</button>
-    <button class="timer-btn close-btn" onclick="closeTimerModal()">Close</button>
-  </div>
-</div>
-
-<!-- ACHIEVEMENT UNLOCK -->
-<div class="achievement-unlock" id="achievement-unlock">
-  <span class="achievement-icon" id="achievement-icon">🏆</span>
-  <div class="achievement-title" id="achievement-title">Achievement Unlocked!</div>
-  <div class="achievement-desc" id="achievement-desc">You're on fire!</div>
-  <button onclick="closeAchievement()" style="margin-top:16px;padding:10px 30px;border-radius:40px;border:0.5px solid var(--gold);background:rgba(201,168,76,0.15);color:var(--gold);cursor:pointer;font-size:14px;">Awesome! ✨</button>
-</div>
-
-<!-- SHADOW MODAL -->
-<div id="shadow-modal">
-  <div class="shadow-content">
-    <div style="width:40px;height:4px;background:rgba(201,168,76,0.35);border-radius:2px;margin:0 auto 20px;"></div>
-    <h3 style="color:var(--rose);margin-bottom:4px;">Shadow Work 🌑</h3>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;font-style:italic;">What you cannot say becomes the wall between you.</p>
-    <div id="shadow-questions"></div>
-    <button onclick="saveShadowWork()" style="width:100%;padding:14px;border-radius:40px;background:rgba(232,112,112,0.12);border:0.5px solid var(--rose);color:var(--rose);font-size:15px;cursor:pointer;margin-top:12px;">Save Shadow Work 🌑</button>
-    <button onclick="closeShadowModal()" style="width:100%;padding:14px;border-radius:40px;background:var(--glass);border:0.5px solid var(--border);color:var(--text2);font-size:15px;cursor:pointer;margin-top:8px;">Close</button>
-  </div>
-</div>
+<!-- ... all your existing HTML ... -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -909,15 +194,12 @@ function getRelationshipMetric(name) {
 }
 
 function getBabyReadiness() {
-  // Baby readiness = weighted average of key relationship metrics
   let vision = getRelationshipMetric('sharedVision');
   let trust = getRelationshipMetric('trust');
   let teamwork = getRelationshipMetric('teamwork');
   let intimacy = getRelationshipMetric('intimacy');
   let comm = getRelationshipMetric('communication');
   let friendship = getRelationshipMetric('friendship');
-  
-  // Weighted formula
   let readiness = (vision * 0.25 + trust * 0.20 + teamwork * 0.15 + intimacy * 0.15 + comm * 0.15 + friendship * 0.10);
   return Math.min(100, Math.round(readiness));
 }
@@ -961,8 +243,6 @@ function addRelationshipMetric(name, amount, source) {
   relationshipMetrics[key].changes.push({ amount, source, timestamp: new Date().toISOString() });
   if (relationshipMetrics[key].changes.length > 20) relationshipMetrics[key].changes.shift();
   spawnFloatingEmoji('💑 +' + amount + ' ' + name);
-  
-  // Baby readiness auto-updates via getBabyReadiness()
 }
 
 function addAllRelationshipMetrics(amount, source) {
@@ -988,7 +268,6 @@ function addAllPersonalMetrics(amount, source) {
 }
 
 function initializeMetrics(intakeData, coupleStats) {
-  // Personal metrics from intake
   personalMetrics.empathy.base = calculatePersonalBase(intakeData, coupleStats, 'empathy');
   personalMetrics.selfAwareness.base = calculatePersonalBase(intakeData, coupleStats, 'selfAwareness');
   personalMetrics.communication.base = calculatePersonalBase(intakeData, coupleStats, 'communication');
@@ -999,7 +278,6 @@ function initializeMetrics(intakeData, coupleStats) {
     personalMetrics[key].current = personalMetrics[key].base;
   });
   
-  // Relationship metrics from couple_stats
   if (coupleStats) {
     relationshipMetrics.sharedVision.base = coupleStats.vision || 48;
     relationshipMetrics.friendship.base = coupleStats.friendship || 75;
@@ -1044,7 +322,6 @@ function recalculateAllMetrics() {
   let cLevel = getPathLevel('consummation');
   let tLevel = getPathLevel('transcendence');
   
-  // Reset to base
   Object.keys(personalMetrics).forEach(key => {
     personalMetrics[key].current = personalMetrics[key].base;
   });
@@ -1052,53 +329,43 @@ function recalculateAllMetrics() {
     relationshipMetrics[key].current = relationshipMetrics[key].base;
   });
   
-  // ── Personal Path Bonuses ──
-  // Variety → Empathy + Confidence
+  // Personal Path Bonuses
   if (vLevel >= 3) personalMetrics.empathy.current += 5;
   if (vLevel >= 5) personalMetrics.empathy.current += 10;
   if (vLevel >= 7) personalMetrics.empathy.current += 8;
   if (vLevel >= 10) personalMetrics.empathy.current += 7;
   if (vLevel >= 4) personalMetrics.confidence.current += 5;
   if (vLevel >= 6) personalMetrics.confidence.current += 8;
-  // Variety → Relationship: Friendship + Intimacy
   if (vLevel >= 3) { relationshipMetrics.friendship.current += 5; relationshipMetrics.intimacy.current += 3; }
   if (vLevel >= 5) { relationshipMetrics.friendship.current += 8; relationshipMetrics.intimacy.current += 5; }
-  // Mastery rank bonus
   let vRank = getPathRank('variety');
   if (vRank >= 1) relationshipMetrics.friendship.current += 2 * vRank;
   
-  // Development → Self-Awareness + Communication
   if (dLevel >= 3) personalMetrics.selfAwareness.current += 5;
   if (dLevel >= 5) personalMetrics.selfAwareness.current += 10;
   if (dLevel >= 7) personalMetrics.selfAwareness.current += 8;
   if (dLevel >= 10) personalMetrics.selfAwareness.current += 7;
   if (dLevel >= 4) personalMetrics.communication.current += 5;
   if (dLevel >= 6) personalMetrics.communication.current += 8;
-  // Development → Relationship: Trust + Communication
   if (dLevel >= 3) { relationshipMetrics.trust.current += 5; relationshipMetrics.communication.current += 5; }
   if (dLevel >= 5) { relationshipMetrics.trust.current += 8; relationshipMetrics.communication.current += 8; }
   let dRank = getPathRank('development');
   if (dRank >= 1) relationshipMetrics.trust.current += 2 * dRank;
   
-  // Consummation → Relationship: Shared Vision + Teamwork
   if (cLevel >= 3) { relationshipMetrics.sharedVision.current += 5; relationshipMetrics.teamwork.current += 5; }
   if (cLevel >= 5) { relationshipMetrics.sharedVision.current += 8; relationshipMetrics.teamwork.current += 8; }
   let cRank = getPathRank('consummation');
   if (cRank >= 1) { relationshipMetrics.sharedVision.current += 2 * cRank; relationshipMetrics.teamwork.current += 2 * cRank; }
   
-  // Transcendence → Relationship: Shared Vision + Trust + Intimacy
   if (tLevel >= 3) { relationshipMetrics.sharedVision.current += 5; relationshipMetrics.trust.current += 3; relationshipMetrics.intimacy.current += 3; }
   if (tLevel >= 5) { relationshipMetrics.sharedVision.current += 8; relationshipMetrics.trust.current += 5; relationshipMetrics.intimacy.current += 5; }
   let tRank = getPathRank('transcendence');
   if (tRank >= 1) { relationshipMetrics.sharedVision.current += 2 * tRank; relationshipMetrics.trust.current += 2 * tRank; }
   
-  // ── Continuous XP-to-Metric Conversion ──
-  // Every 10 XP = +0.5 to all metrics (capped at 100)
   let xpBonus = Math.floor(totalXP / 10) * 0.5;
   Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += xpBonus);
   Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += xpBonus);
   
-  // ── XP Milestone Bonuses ──
   let xpMilestones = [
     { xp: 100, bonus: 2 }, { xp: 250, bonus: 3 }, { xp: 500, bonus: 4 },
     { xp: 750, bonus: 3 }, { xp: 1000, bonus: 5 }, { xp: 1500, bonus: 4 }, { xp: 2000, bonus: 6 }
@@ -1110,14 +377,12 @@ function recalculateAllMetrics() {
     }
   });
   
-  // ── Temple Stage → Relationship Bonuses ──
   let stage = computeSanctuaryStage();
   if (stage >= 1) { relationshipMetrics.trust.current += 2; relationshipMetrics.intimacy.current += 2; }
   if (stage >= 3) { relationshipMetrics.friendship.current += 3; relationshipMetrics.teamwork.current += 3; }
   if (stage >= 5) { relationshipMetrics.sharedVision.current += 4; relationshipMetrics.communication.current += 4; }
   if (stage >= 7) { Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 5); }
   
-  // ── Achievement Bonuses ──
   if (achievements.includes('first_xp')) {
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
     Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 1);
@@ -1152,7 +417,6 @@ function recalculateAllMetrics() {
     relationshipMetrics.communication.current += 5;
   }
   
-  // ── Streak Bonuses ──
   if (streakData.days >= 7) {
     Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 2);
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
@@ -1162,22 +426,17 @@ function recalculateAllMetrics() {
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 2);
   }
   
-  // ── Personal → Relationship Feedback Loop ──
-  // Personal communication feeds into relationship communication
   let pComm = personalMetrics.communication.current;
   let rComm = relationshipMetrics.communication.current;
   relationshipMetrics.communication.current = Math.min(100, Math.round((rComm + pComm * 0.2)));
   
-  // Personal empathy feeds into relationship trust + intimacy
   let pEmp = personalMetrics.empathy.current;
   relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + pEmp * 0.1));
   relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pEmp * 0.1));
   
-  // Personal vulnerability feeds into relationship intimacy
   let pVul = personalMetrics.vulnerability.current;
   relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pVul * 0.1));
   
-  // ── Cap everything at 100 ──
   Object.keys(personalMetrics).forEach(key => {
     personalMetrics[key].current = Math.min(100, Math.round(personalMetrics[key].current));
   });
@@ -1185,10 +444,8 @@ function recalculateAllMetrics() {
     relationshipMetrics[key].current = Math.min(100, Math.round(relationshipMetrics[key].current));
   });
   
-  // Update baby readiness
   babyReadiness = getBabyReadiness();
   
-  // Update UI
   renderGrowthBars();
   drawWheel();
   renderCoupleExtras();
@@ -1655,7 +912,7 @@ function startDemoMode() {
   initializeMetrics(demoIntake, demoStats);
   
   xpData = {A: 120, B: 80};
-  completedTasks = {p1: true, c1: true};
+  completedTasks = {};
   updateAllUI();
   startAnimations();
   renderTempleTab();
@@ -1730,15 +987,17 @@ function updateAllUI() {
   updateWeatherProgress(); drawTree(); renderGrowthBars(); renderPrivateEntries(); renderJournal();
   updatePartnerDisplay(); updateXpDisplay();
   
-  // Baby Readiness
   let baby = getBabyReadiness();
-  document.getElementById('baby-pct').innerHTML = baby + '%';
+  let babyEl = document.getElementById('baby-pct');
+  if (babyEl) babyEl.innerHTML = baby + '%';
   
-  // Tree stats - now fully dynamic
   let avgGrowth = Math.round((getPersonalMetric('empathy') + getPersonalMetric('selfAwareness') + getPersonalMetric('communication')) / 3);
-  document.getElementById('stat-growth').innerHTML = avgGrowth + '%';
-  document.getElementById('stat-harmony').innerHTML = getRelationshipMetric('trust') + '%';
-  document.getElementById('stat-vision').innerHTML = getRelationshipMetric('sharedVision') + '%';
+  let growthEl = document.getElementById('stat-growth');
+  if (growthEl) growthEl.innerHTML = avgGrowth + '%';
+  let harmonyEl = document.getElementById('stat-harmony');
+  if (harmonyEl) harmonyEl.innerHTML = getRelationshipMetric('trust') + '%';
+  let visionEl = document.getElementById('stat-vision');
+  if (visionEl) visionEl.innerHTML = getRelationshipMetric('sharedVision') + '%';
   
   updateHomeScreen(); renderCoupleExtras();
   recalculateAllMetrics();
@@ -1764,7 +1023,8 @@ function drawTree() {
   const canvas = document.getElementById('tree-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  canvas.width = canvas.offsetWidth;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || 340;
   canvas.height = 220;
   const w = canvas.width, h = canvas.height, cx = w/2, base = h-15;
   ctx.clearRect(0, 0, w, h);
@@ -1776,7 +1036,6 @@ function drawTree() {
   for(let i=0;i<8+Math.floor(growth/10);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#3c9e6d'; ctx.fill(); }
   const intimacy = getRelationshipMetric('intimacy');
   for(let i=0;i<4+Math.floor(intimacy/20);i++){ let x=cx-20+Math.random()*40, y=base-70+Math.random()*50; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='#ffb7c5'; ctx.fill(); }
-  // Add baby readiness as a small fruit
   let baby = getBabyReadiness();
   if (baby > 70) {
     let fruitCount = Math.floor((baby - 70) / 5);
@@ -1824,7 +1083,6 @@ function renderGrowthBars() {
     html += `<div class="progress-row"><div class="progress-label">${m.label}</div><div class="progress-track"><div class="progress-fill" style="width:${m.value}%;background:linear-gradient(90deg,var(--gold),var(--gold2));"></div></div><div>${m.value}%${changeHtml}</div></div>`;
   });
   
-  // Baby Readiness
   let baby = getBabyReadiness();
   html += `<div style="margin-top:12px;padding:10px;background:var(--glass2);border-radius:12px;border:0.5px solid rgba(78,205,196,0.2);">
     <div style="font-size:10px;color:var(--text3);letter-spacing:1px;">👶 Baby Readiness</div>
@@ -2239,7 +1497,6 @@ async function markTaskComplete(taskId, xp, isCouple, btnEl) {
   }
   if (taskId.startsWith('c') || isCouple) {
     addPathXP('consummation', Math.floor(xp * 0.5));
-    // All relationship metrics get a boost from couple tasks
     addAllRelationshipMetrics(2, 'couple task: ' + taskId);
     addPersonalMetric('communication', 2, 'couple task: ' + taskId);
     addPersonalMetric('empathy', 1, 'couple task: ' + taskId);
@@ -2664,7 +1921,6 @@ function drawWheel() {
   canvas.width = canvas.height = S * dpr; canvas.style.width = canvas.style.height = S + 'px';
   var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, S, S);
   
-  // Combine personal + relationship metrics for the wheel
   var sl = [
     {l:'Empathy', v: Math.min(1, getPersonalMetric('empathy') / 100), c: 'rgba(78,205,196,0.8)'},
     {l:'Self-Awareness', v: Math.min(1, getPersonalMetric('selfAwareness') / 100), c: 'rgba(155,109,255,0.8)'},
@@ -2951,6 +2207,10 @@ function prependDreamRow(d) {
 }
 
 // ==================== PRIVATE NOTES ====================
+function renderPrivateEntries() {
+  loadPrivateNotes();
+}
+
 async function loadPrivateNotes() {
   var el = document.getElementById('private-entries'); if(!el) return;
   if(!sbClient || !currentUser) { el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">Sign in to load private notes.</div>'; return; }
