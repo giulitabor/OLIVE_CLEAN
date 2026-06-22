@@ -1360,10 +1360,20 @@ input, select, textarea, button, .btn {
     </div>
 
     <div id="dash-listings">
-      <div class="listing-form">
-        <h3 id="listingFormTitle">🌱 Add a New Listing</h3>
-        <div id="listingFormMsg"></div>
-        <input type="hidden" id="editingListingId" value="" />
+      <!-- Locate this around line 540 in sancarlo.html -->
+<div class="listing-form">
+  <h3 id="listingFormTitle">🌱 Add a New Listing</h3>
+  <div id="listingFormMsg"></div>
+  
+  <!-- Add this new progress tracker markup right here -->
+  <div id="listingProgressContainer" class="progress-container hidden">
+    <div class="progress-label" id="progressLabel">Uploading produce details...</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="listingProgressBar"></div>
+    </div>
+  </div>
+
+  <input type="hidden" id="editingListingId" value="" />
         <div class="form-grid">
           <div class="field">
             <label>Item Name *</label>
