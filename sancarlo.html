@@ -1274,7 +1274,8 @@ input, select, textarea, button, .btn {
      HEADER
      ============================================================ -->
      <!-- Update your header block in index.html to wrap both auth and notification nicely -->
-   <header class="topbar">
+ <!-- UPDATE THIS IN sancarlo.html -->
+<header class="topbar">
   <div class="brand">
     <span class="logo">🌱</span>
     <div>
@@ -1290,18 +1291,15 @@ input, select, textarea, button, .btn {
     <button data-view="adminDash" id="adminTabBtn" class="hidden">⚙️ Admin</button>
   </nav>
 
-  <div style="display: flex; align-items: center; gap: 14px; margin-left: auto;">
-    <div id="farmerNotificationArea" class="hidden" style="position: relative; display: flex; align-items: center;">
-      <button id="farmerNotificationBtn" style="font-size: 22px; padding: 6px; background: transparent; border: none; cursor: pointer; display: inline-flex; position: relative;">
-        🔔
-        <span id="farmerNotificationCount" style="position: absolute; top: -2px; right: -2px; background: var(--tomato); color: white; border-radius: 99px; font-size: 10px; font-weight: 700; padding: 2px 6px; min-width: 18px; text-align: center; border: 2px solid var(--green-900); display: none;">0</span>
-      </button>
-    </div>
+  <!-- Notification area kept isolated -->
+  <div id="farmerNotificationArea" class="hidden" style="margin-left: auto;">
+    <button id="farmerNotificationBtn" style="font-size: 22px; padding: 6px; background: transparent; border: none;">🔔</button>
+  </div>
 
-    <div class="auth-area" id="authArea">
-      <button class="btn btn-ghost" id="signInBtn">Sign In</button>
-      <button class="btn btn-primary" id="signUpBtn">Sign Up</button>
-    </div>
+  <!-- MOVED OUT: Now a direct child of header so CSS 'order: 2' works perfectly on mobile! -->
+  <div class="auth-area" id="authArea">
+    <button class="btn btn-ghost" id="signInBtn">Sign In</button>
+    <button class="btn btn-primary" id="signUpBtn">Sign Up</button>
   </div>
 </header>
 
