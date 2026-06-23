@@ -270,10 +270,30 @@ body::after{
 .hero-sub {
   font-size: 1.05rem;
   font-weight: 300;
-  color: rgba(255,255,255,.7);
+  color: rgba(255,255,255,.9);
   max-width: 480px;
   line-height: 1.75;
   margin-bottom: 2.5rem;
+  /* ADD THIS: */
+  background: rgba(0,0,0,0.35);
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-left: 3px solid var(--gold);
+}
+
+/* Mobile fix - also add background */
+@media (max-width: 768px) {
+  .hero-sub {
+    font-size: 0.95rem;
+    padding: 0.8rem 1rem;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    margin: 0 0 1.5rem 0;
+    text-align: left;
+  }
 }
 
 /* Add these new mobile styles at the bottom of your CSS, inside the @media (max-width: 768px) block */
@@ -1102,7 +1122,7 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 <section class="hero"><div class="hero-bg"></div><div class="hero-content">
   <div class="hero-left">
     <p class="hero-eyebrow">Exclusive Tuscan Residency</p>
-    <h1>A Place To<br/><em>Return To</em></h1>
+    <h1>A Place To<br/>Return To</h1>
     <p class="hero-sub">Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency.</p>
     <div class="hero-actions"><a href="#tiers" class="btn-primary">Explore Membership</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="btn-secondary">Download PDF Brochure</a></div>
   </div>
