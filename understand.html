@@ -977,13 +977,14 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 
 <!-- MOBILE OVERLAY -->
 <div id="mob-overlay">
-  <a href="index2" onclick="closeMob()">The Experience</a>
-  <a href="App_index.html" onclick="closeMob()">The App (lite)</a>
+  <a href="#experience" onclick="closeMob()">The Experience</a>
+  <a href="#app" onclick="closeMob()">The App</a>
   <a href="#tiers" onclick="closeMob()">Membership</a>
-  <a href="harvest.html" onclick="closeMob()">Harvest Report</a>
+  <a href="#harvest" onclick="closeMob()">Harvest</a>
   <a href="#faq" onclick="closeMob()">FAQ</a>
   <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a>
   <a href="index2.html" onclick="closeMob()">← Go Back</a>
+  <button id="mob-go-back" onclick="goBackInMenu()" style="margin-top:20px;">← Go Back</button>
 </div>
 
 <!-- NAVIGATION -->
@@ -991,10 +992,10 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
   <div class="nav-inner">
     <div class="nav-logo">OLIVIUM <em>Brochure</em></div>
     <ul id="nav-links">
-      <li><a href="index2.html">Adopt</a></li>
-      <li><a href="App_index.html">The App (lite version)</a></li>
+      <li><a href="#experience">Estate</a></li>
+      <li><a href="#app">The App</a></li>
       <li><a href="#tiers">Membership</a></li>
-      <li><a href="harvest.html">Harvest</a></li>
+      <li><a href="#harvest">Harvest</a></li>
       <li><a href="#gallery">Gallery</a></li>
       <li><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="nav-cta">Brochure PDF</a></li>
     </ul>
@@ -1008,7 +1009,7 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 <section class="hero"><div class="hero-bg"></div><div class="hero-content">
   <div class="hero-left">
     <p class="hero-eyebrow">Exclusive Tuscan Residency</p>
-    <h1>A Place To<br/>Return To</h1>
+    <h1>A Place To<br/><em>Return To</em></h1>
     <p class="hero-sub">Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency.</p>
     <div class="hero-actions"><a href="#tiers" class="btn-primary">Explore Membership</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="btn-secondary">Download PDF Brochure</a></div>
   </div>
@@ -1231,62 +1232,19 @@ let navHistory = ['main'];
 const mobOverlay = document.getElementById('mob-overlay');
 const navHam = document.getElementById('nav-ham');
 
-function closeMob() { 
-  mobOverlay.classList.remove('open'); 
-  if(navHam) navHam.classList.remove('open'); 
-  document.body.style.overflow = ''; 
-}
-
-function openMob() { 
-  mobOverlay.classList.add('open'); 
-  if(navHam) navHam.classList.add('open'); 
-  document.body.style.overflow = 'hidden'; 
-}
-
-function toggleMob() { 
-  if(mobOverlay.classList.contains('open')) closeMob(); 
-  else openMob(); 
-}
-
-function goBackInMenu() { 
-  if(navHistory.length > 1) { 
-    navHistory.pop(); 
-    showMainMenu(); 
-  } else closeMob(); 
-}
-
-function showMainMenu() { 
-  mobOverlay.innerHTML = `<a href="index2.html" onclick="closeMob()">The Experience</a><a href="App_index.html" onclick="closeMob()">The App (lite version)</a><a href="#tiers" onclick="closeMob()">Membership</a><a href="#harvest" onclick="closeMob()">Harvest</a><a href="#faq" onclick="closeMob()">FAQ</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a><a href="index2.html" onclick="closeMob()">← Go Back</a>`; 
-}
-
+function closeMob() { mobOverlay.classList.remove('open'); if(navHam) navHam.classList.remove('open'); document.body.style.overflow = ''; setTimeout(() => { if (currentSubMenu) showMainMenu(); }, 300); }
+function openMob() { mobOverlay.classList.add('open'); if(navHam) navHam.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function toggleMob() { if(mobOverlay.classList.contains('open')) closeMob(); else openMob(); }
+function goBackInMenu() { if(navHistory.length > 1) { navHistory.pop(); showMainMenu(); } else closeMob(); }
+function showMainMenu() { mobOverlay.innerHTML = `<a href="#experience" onclick="closeMob()">The Experience</a><a href="#app" onclick="closeMob()">The App</a><a href="#tiers" onclick="closeMob()">Membership</a><a href="#harvest" onclick="closeMob()">Harvest</a><a href="#faq" onclick="closeMob()">FAQ</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a><a href="index2.html" onclick="closeMob()">← Go Back</a><button id="mob-go-back" onclick="goBackInMenu()" style="margin-top:20px;">← Go Back</button>`; currentSubMenu = null; }
 if(navHam) navHam.addEventListener('click', toggleMob);
 showMainMenu();
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && mobOverlay.classList.contains('open')) { if(navHistory.length > 1) goBackInMenu(); else closeMob(); } });
 
-document.addEventListener('keydown', function(e){ 
-  if(e.key==='Escape' && mobOverlay.classList.contains('open')) { 
-    if(navHistory.length > 1) goBackInMenu(); 
-    else closeMob(); 
-  } 
-});
-
-function openLightbox(img){ 
-  document.getElementById('lightbox-img').src = img.src; 
-  document.getElementById('lightbox').classList.add('open'); 
-  document.body.style.overflow = 'hidden'; 
-}
-
-function closeLightbox(){ 
-  document.getElementById('lightbox').classList.remove('open'); 
-  document.body.style.overflow = ''; 
-}
-
-document.getElementById('lightbox').addEventListener('click', function(e){ 
-  if(e.target===this) closeLightbox(); 
-});
-
-document.addEventListener('keydown', function(e){ 
-  if(e.key==='Escape') closeLightbox(); 
-});
+function openLightbox(img){ document.getElementById('lightbox-img').src = img.src; document.getElementById('lightbox').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow = ''; }
+document.getElementById('lightbox').addEventListener('click', function(e){ if(e.target===this) closeLightbox(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeLightbox(); });
 </script>
 </body>
 </html>
