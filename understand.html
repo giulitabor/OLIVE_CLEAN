@@ -7,6 +7,52 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"/>
 <style>
+   /* Hide cards on desktop, hide table on mobile */
+@media (min-width: 769px) {
+    .comp-cards { display: none; }
+    .comp-table-wrap { display: block; }
+}
+
+@media (max-width: 768px) {
+    .comp-table-wrap { display: none; }
+    .comp-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .comp-card {
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        border-left: 3px solid #7c9a6e; /* Olivium green accent */
+    }
+
+    .comp-card-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #999;
+        margin-bottom: 0.4rem;
+    }
+
+    .comp-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .comp-card-old {
+        color: #b0b0b0;
+        text-decoration: line-through;
+        font-size: 0.9rem;
+    }
+
+    .comp-card-new {
+        color: #c8e6b0;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .comp-card-old .comp-x { color: #ff6b6b; }
+    .comp-card-new .comp-check { color: #7c9a6e; }
+}
 /* ═══════════════════════════════════════════
    ROOT & RESET
 ═══════════════════════════════════════════ */
