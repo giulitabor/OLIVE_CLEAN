@@ -2137,6 +2137,16 @@ function updatePartnerDisplay() {
   updateXpDisplay();
 }
 
+  // ADD THIS FUNCTION - It was missing
+function renderPrivateEntries() {
+  // This is a placeholder - the actual loading happens in loadPrivateNotes()
+  // But we need it for updateAllUI to work
+  if (!document.getElementById('private-entries')) return;
+  // If we're on the private tab, load the notes
+  if (document.getElementById('tab-private') && document.getElementById('tab-private').style.display !== 'none') {
+    loadPrivateNotes();
+  }
+}
 // REPLACE the addJournalEntry function
 async function addJournalEntry() {
   const input = document.getElementById('journal-input');
