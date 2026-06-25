@@ -3075,6 +3075,38 @@ window.selectIntakeYN = selectIntakeYN;
 window.showForgotPassword = showForgotPassword;
 window.showSignIn = showSignIn;
 window.sendPasswordReset = sendPasswordReset;
+// Make ALL onclick functions globally accessible
+Object.assign(window, {
+  switchScreen,
+  switchGrowthTab,
+  closeAchievement,
+  closeTimerModal,
+  toggleTimerModal,
+  openTimerModal,
+  addJournalEntry,
+  saveDreamEntry,
+  savePrivateNote,
+  saveShadowWork,
+  resetMetrics,
+  logWater,
+  startBreathSession,
+  markGateComplete,
+  markTemplePractice,
+  saveTempleReflection,
+  setFoundation,
+  openFoundationModal,
+  intakeNext,
+  intakeBack,
+  selectIntakeScale,
+  selectIntakeYN,
+  showForgotPassword,
+  showSignIn,
+  sendPasswordReset,
+  completePathActivity,
+  markTaskComplete
+});
 
 console.log('✅ All functions registered globally');
+
+console.log('✅ All functions registered globally FOR REALLL');
 console.log('✅ App loaded successfully!');
