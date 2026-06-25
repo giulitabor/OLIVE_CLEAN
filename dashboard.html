@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olivium Portal — Manage Your Grove</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════
+           BRAND SYSTEM BRANDING (Strict Match)
+           ═══════════════════════════════════════ */
+        :root {
+            --olive-green: #556B2F;
+            --dusty-sage: #A8B79A;
+            --warm-cream: #F6F1E7;
+            --terracotta: #B86A4F;
+            --olive-black: #2E3526;
+            --white: #FFFFFF;
+            --muted-gray: #7A8275;
+
+            --serif: 'Cormorant Garamond', serif;
+            --sans: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--sans);
+            background-color: var(--warm-cream);
+            color: var(--olive-black);
+            line-height: 1.6;
+            padding-top: 80px; /* Space for fixed navigation */
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--serif);
+            font-weight: 400;
+            color: var(--olive-black);
+        }
+
+        /* ═══════════════════════════════════════
+           NAVIGATION BAR
+           ═══════════════════════════════════════ */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: rgba(246, 241, 231, 0.96);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(85, 107, 47, 0.15);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 100%;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            fill: var(--olive-green);
+        }
+
+        .logo-text {
+            font-family: var(--serif);
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--olive-black);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--olive-black);
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--olive-green);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--terracotta);
+        }
+
+        /* ─── Identity Pill ─────────────────────────────────────────────── */
+        .identity-profile-bar {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            background: var(--white);
+            padding: 0.5rem 1.25rem 0.5rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(85,107,47,0.12);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .identity-profile-bar #identityPill {
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .identity-profile-bar #identityTypeStat {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted-gray);
+            background: rgba(168,183,154,0.15);
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+        }
+
+        #connectBtn {
+            background: var(--olive-green);
+            color: var(--white);
+            border: none;
+            padding: 0.4rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        #connectBtn:hover {
+            background: var(--terracotta);
+            transform: translateY(-1px);
+        }
+
+        #connectBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ═══════════════════════════════════════
+           MODAL OVERLAY SYSTEM
+           ═══════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(46, 53, 38, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 2rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(168,183,154,0.3);
+            position: relative;
+            animation: modalSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-wide {
+            max-width: 560px;
+        }
+
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-body {
+            padding: 2.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .modal-description {
+            color: var(--muted-gray);
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--muted-gray);
+            transition: color 0.2s;
+            line-height: 1;
+            padding: 0 0.25rem;
+        }
+
+        .close-btn:hover {
+            color: var(--terracotta);
+        }
+
+        /* ─── Auth Options ────────────────────────────────────────────────── */
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .auth-card {
+            background: var(--warm-cream);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(168,183,154,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .auth-card:hover {
+            border-color: var(--dusty-sage);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        }
+
+        .auth-card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .auth-card-sub {
+            color: var(--muted-gray);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .primary-btn {
+            background: var(--olive-green);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .primary-btn:hover:not(:disabled) {
+            background: var(--terracotta);
+            transform: translateY(-1px);
+        }
+
+        .primary-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .primary-btn.wallet-btn {
+            background: #7B4E9E;
+        }
+
+        .primary-btn.wallet-btn:hover:not(:disabled) {
+            background: #6A3D8A;
+        }
+
+        /* ─── MFA Tabs ────────────────────────────────────────────────────── */
+        .tabs {
+            display: flex;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(168,183,154,0.2);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--muted-gray);
+        }
+
+        .tab.active {
+            background: var(--olive-green);
+            color: var(--white);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(168,183,154,0.1);
+        }
+
+        /* ─── Auth Forms ─────────────────────────────────────────────────── */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .auth-form input {
+            padding: 0.85rem 1.2rem;
+            border: 1px solid var(--dusty-sage);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: var(--sans);
+            background: var(--warm-cream);
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        .auth-form input:focus {
+            border-color: var(--olive-green);
+        }
+
+        .auth-form .primary-btn {
+            margin-top: 0.5rem;
+        }
+
+        #msg {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        #msg.show {
+            display: block;
+        }
+
+        #msg.success {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        #msg.error {
+            background: #ffebee;
+            color: #b71c1c;
+        }
+
+        #qr {
+            display: flex;
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
+
+        #qr canvas {
+            border-radius: 12px;
+            border: 1px solid rgba(168,183,154,0.2);
+        }
+
+        .otp-box {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .otp-box.show {
+            display: flex;
+        }
+
+        .otp-box input {
+            padding: 0.85rem 1.2rem;
+            border: 1px solid var(--dusty-sage);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: var(--sans);
+            background: var(--warm-cream);
+            outline: none;
+            text-align: center;
+            letter-spacing: 0.5rem;
+        }
+
+        .otp-box input:focus {
+            border-color: var(--olive-green);
+        }
+
+        /* ═══════════════════════════════════════
+           APP CONTENT CONTAINER LAYOUT
+           ═══════════════════════════════════════ */
+        .app-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            min-height: calc(100vh - 280px);
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ═══════════════════════════════════════
+           THE GROVE VIEW MODULE
+           ═══════════════════════════════════════ */
+        .grove-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(85, 107, 47, 0.1);
+            padding-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .grove-filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--dusty-sage);
+            color: var(--olive-black);
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--olive-green);
+            color: var(--warm-cream);
+            border-color: var(--olive-green);
+        }
+
+        .grove-workspace {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        .estate-telemetry-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .map-wrapper {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(46,53,38,0.04);
+            border: 1px solid rgba(168,183,154,0.3);
+        }
+
+        .map-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 380px;
+            background: #EAE3D2;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px dashed var(--dusty-sage);
+        }
+
+        .map-grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 15px;
+            padding: 2.5rem;
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-node-tree {
+            background: var(--dusty-sage);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .map-node-tree::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--warm-cream);
+            border-radius: 50%;
+        }
+
+        .map-node-tree:hover {
+            transform: scale(1.3);
+            background: var(--terracotta) !important;
+            box-shadow: 0 0 15px rgba(184,106,79,0.6);
+        }
+
+        .map-node-tree.owned { background: var(--olive-green); }
+        .map-node-tree.available { background: #899678; }
+
+        .sensor-stream-box {
+            background: var(--olive-black);
+            color: var(--warm-cream);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .sensor-node {
+            border-right: 1px solid rgba(246,241,231,0.15);
+            padding-right: 0.5rem;
+        }
+
+        .sensor-node:last-child { border-right: none; }
+
+        .sensor-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dusty-sage);
+        }
+
+        .sensor-reading {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+            font-family: monospace;
+        }
+
+        .tree-inventory-stream {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            max-height: 640px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .tree-item-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(168,183,154,0.2);
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tree-item-card:hover {
+            transform: translateX(4px);
+            border-color: var(--dusty-sage);
+            box-shadow: 0 8px 24px rgba(46,53,38,0.05);
+        }
+
+        .tree-card-thumbnail {
+            width: 100%;
+            height: 110px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 10px;
+            background-color: var(--warm-cream);
+        }
+
+        .tree-card-meta h3 {
+            font-size: 1.6rem;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        .tree-badge-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .app-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-owned { background: rgba(85,107,47,0.12); color: var(--olive-green); }
+        .badge-available { background: rgba(184,106,79,0.12); color: var(--terracotta); }
+
+        .tree-card-specs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--muted-gray);
+        }
+
+        /* ═══════════════════════════════════════
+           REWARDS & PERKS VIEW MODULE
+           ═══════════════════════════════════════ */
+        .perks-header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .perks-tier-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .tier-lockbox {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            border: 1px solid rgba(168,183,154,0.25);
+            position: relative;
+            transition: all 0.4s ease;
+        }
+
+        .tier-lockbox.locked {
+            opacity: 0.45;
+            filter: grayscale(1);
+            background: rgba(255,255,255,0.4);
+        }
+
+        .tier-lockbox.active-tier {
+            border: 2px solid var(--olive-green);
+            box-shadow: 0 12px 40px rgba(85,107,47,0.1);
+        }
+
+        .tier-lockbox.active-tier::before {
+            content: 'YOUR CURRENT LEVEL';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--olive-green);
+            color: var(--warm-cream);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.3rem 1.2rem;
+            border-radius: 35px;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .tier-lockbox h3 {
+            font-size: 2.2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .tier-shares-range {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--terracotta);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+        }
+
+        .perks-checklist {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .perks-checklist li {
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .perks-checklist li::before {
+            content: '🫒';
+            font-size: 1rem;
+        }
+
+        .harvest-disclaimer-card {
+            background: var(--olive-black);
+            color: var(--warm-cream);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .disclaimer-icon { font-size: 2.5rem; }
+
+        /* ═══════════════════════════════════════
+           VILLA BOOKING VIEW MODULE
+           ═══════════════════════════════════════ */
+        .booking-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .booking-form-panel {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 2.5rem;
+            border: 1px solid rgba(168,183,154,0.25);
+            box-shadow: 0 4px 25px rgba(46,53,38,0.03);
+        }
+
+        .booking-headline {
+            font-size: 2.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .booking-subtext {
+            color: var(--muted-gray);
+            margin-bottom: 2rem;
+        }
+
+        .form-group-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-element-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-element-wrapper label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: var(--olive-black);
+        }
+
+        .input-element-wrapper input, .input-element-wrapper select {
+            background: var(--warm-cream);
+            border: 1px solid var(--dusty-sage);
+            padding: 0.85rem 1.2rem;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 1rem;
+            color: var(--olive-black);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-element-wrapper input:focus { border-color: var(--olive-green); }
+
+        .btn-submit-booking {
+            width: 100%;
+            background: var(--terracotta);
+            color: var(--white);
+            border: none;
+            padding: 1.1rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .btn-submit-booking:hover {
+            background: #A3573D;
+            transform: translateY(-2px);
+        }
+
+        .credit-status-ledger {
+            background: linear-gradient(135deg, var(--olive-black) 0%, #1D2218 100%);
+            color: var(--warm-cream);
+            border-radius: 24px;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: fit-content;
+        }
+
+        .ledger-metric-group { margin-bottom: 3rem; }
+
+        .ledger-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--dusty-sage);
+        }
+
+        .ledger-large-balance {
+            font-family: var(--serif);
+            font-size: 5rem;
+            line-height: 1;
+            margin: 0.5rem 0;
+            color: var(--white);
+        }
+
+        .ledger-perks-list {
+            border-top: 1px solid rgba(246,241,231,0.15);
+            padding-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            font-size: 0.95rem;
+        }
+
+        /* ═══════════════════════════════════════
+           HIGHLIGHTED TIME TO HARVEST MODULE
+           ═══════════════════════════════════════ */
+        .harvest-countdown-highlight {
+            background: linear-gradient(135deg, #FAF6F0 0%, var(--warm-cream) 100%);
+            border-left: 4px solid var(--terracotta);
+            border-radius: 0 16px 16px 0;
+            padding: 1.5rem;
+            margin: 1.5rem 0 2rem 0;
+            box-shadow: 0 4px 15px rgba(184, 106, 79, 0.05);
+        }
+
+        .countdown-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .countdown-digits {
+            font-family: var(--serif);
+            font-size: 2.2rem;
+            color: var(--terracotta);
+            line-height: 1;
+            font-weight: 600;
+        }
+
+        .countdown-progress-track {
+            height: 6px;
+            background: rgba(168, 183, 154, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 0.5rem;
+        }
+
+        .countdown-progress-bar {
+            height: 100%;
+            background: var(--olive-green);
+            border-radius: 10px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ═══════════════════════════════════════
+           MODAL DRILLDOWN WINDOW SYSTEM
+           ═══════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(46, 53, 38, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 2rem;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-container {
+            background: var(--white);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 720px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(168,183,154,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-top-bar {
+            padding: 2rem;
+            background: var(--warm-cream);
+            border-bottom: 1px solid rgba(85,107,47,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            border: none;
+            font-family: monospace;
+            cursor: pointer;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--muted-gray);
+        }
+
+        .btn-close-modal:hover { color: var(--terracotta); }
+
+        .modal-content-area {
+            padding: 2.5rem;
+            overflow-y: auto;
+            max-height: 75vh;
+        }
+
+        .detail-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--warm-cream);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        /* ═══════════════════════════════════════
+           FOOTER MODULE
+           ═══════════════════════════════════════ */
+        footer {
+            background: var(--olive-black);
+            color: var(--warm-cream);
+            padding: 5rem 2rem 3rem;
+            margin-top: 6rem;
+            border-top: 1px solid rgba(85,107,47,0.2);
+        }
+
+        .footer-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.5fr repeat(3, 1fr);
+            gap: 4rem;
+            border-bottom: 1px solid rgba(246,241,231,0.1);
+            padding-bottom: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-brand h3 {
+            color: var(--white);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .footer-brand p {
+            color: var(--dusty-sage);
+            font-size: 0.95rem;
+            max-width: 280px;
+        }
+
+        .footer-column h4 {
+            color: var(--white);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .footer-links a {
+            color: var(--dusty-sage);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--white); }
+
+        .footer-bottom-row {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--muted-gray);
+        }
+
+        /* ═══════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════ */
+        @media (max-width: 1100px) {
+            .grove-workspace {
+                grid-template-columns: 1fr;
+            }
+            .perks-tier-matrix {
+                grid-template-columns: 1fr 1fr;
+            }
+            .booking-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body { padding-top: 70px; }
+            nav { height: 70px; }
+            .nav-container { padding: 0 1rem; }
+            .nav-links { gap: 1.5rem; }
+            .nav-links a { font-size: 0.75rem; }
+            .logo-text { font-size: 1.3rem; }
+            .identity-profile-bar {
+                padding: 0.3rem 0.8rem 0.3rem 1rem;
+            }
+            .identity-profile-bar #identityPill {
+                font-size: 0.7rem;
+            }
+            #connectBtn {
+                font-size: 0.65rem;
+                padding: 0.3rem 0.8rem;
+            }
+            .grove-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .grove-filters {
+                justify-content: center;
+            }
+            .perks-tier-matrix {
+                grid-template-columns: 1fr;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .form-group-row {
+                grid-template-columns: 1fr;
+            }
+            .modal-body { padding: 1.5rem; }
+            .modal { max-width: 100%; margin: 0 0.5rem; }
+            .detail-meta-grid {
+                grid-template-columns: 1fr;
+            }
+            .map-grid-container {
+                gap: 8px;
+                padding: 1.5rem;
+            }
+            .map-canvas { height: 250px; }
+            .tree-item-card {
+                grid-template-columns: 80px 1fr;
+                padding: 1rem;
+            }
+            .tree-card-thumbnail { height: 80px; }
+        }
+
+        @media (max-width: 480px) {
+            .nav-links { gap: 0.75rem; }
+            .nav-links a { font-size: 0.65rem; }
+            .identity-profile-bar #identityTypeStat { display: none; }
+            .sensor-stream-box {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.75rem;
+            }
+            .sensor-node:not(:last-child) { border-right: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="logo-group">
+                <svg class="logo-icon" viewBox="0 0 100 100">
+                    <circle cx="50" cy="35" r="10"/>
+                    <circle cx="32" cy="50" r="8"/>
+                    <circle cx="68" cy="50" r="8"/>
+                    <circle cx="50" cy="68" r="12"/>
+                    <circle cx="24" cy="28" r="6"/>
+                    <circle cx="76" cy="28" r="6"/>
+                </svg>
+                <div class="logo-text">OLIVIUM</div>
+            </a>
+            <ul class="nav-links">
+                <li><a onclick="switchAppView('grove')" id="nav-grove" class="active">The Grove</a></li>
+                <li><a onclick="switchAppView('perks')" id="nav-perks">Rewards & Perks</a></li>
+                <li><a onclick="switchAppView('villa')" id="nav-villa">Villa Booking</a></li>
+                <li>
+                    <div class="identity-profile-bar">
+                        <span id="identityPill">🌿 Guest Mode</span>
+                        <span id="identityTypeStat">Guest</span>
+                        <button class="nav-btn wallet-btn" id="connectBtn">Connect Profile</button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- CONNECT MODAL -->
+    <div class="modal-overlay" id="connectModal">
+        <div class="modal" style="max-width: 480px;">
+            <button class="close-btn" onclick="if(window.closeConnectModal) window.closeConnectModal()">&times;</button>
+            <div class="modal-body">
+                <h2 class="modal-title" style="font-size:1.6rem;">Connect to Olivium</h2>
+                <p class="modal-description">Choose your preferred access method. Wallet users interact directly with Solana. Email users receive a custodial grove wallet.</p>
+                <div class="auth-options">
+                    <div class="auth-card" id="walletConnectCard">
+                        <div class="auth-card-title">◎ Wallet Login</div>
+                        <div class="auth-card-sub">Direct Solana ownership and on-chain grove positions.</div>
+                        <button id="connectWalletBtn" class="primary-btn wallet-btn" style="margin-bottom:0;">Connect Wallet</button>
+                    </div>
+                    <div class="auth-card" id="emailConnectCard">
+                        <div class="auth-card-title">✉ Email Login</div>
+                        <div class="auth-card-sub">Fiat purchases with automatic custodial wallet creation.</div>
+                        <button id="emailLoginBtn" class="primary-btn">Continue with Email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL (MFA) -->
+    <div id="authModalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal" style="max-width: 400px;">
+            <button id="closeAuthModal" class="close-btn" style="position: absolute; top: 16px; right: 16px;">&times;</button>
+            <div class="modal-body">
+                <h2 style="text-align:center; font-size:1.5rem; margin-bottom:0.5rem;">MFA Authentication</h2>
+                <p style="text-align:center; color:var(--muted-gray); font-size:0.9rem; margin-bottom:1.5rem;">Secure your grove with multi-factor authentication</p>
+                <div class="tabs" style="display:flex;">
+                    <button id="loginTab" class="tab active">Login</button>
+                    <button id="signupTab" class="tab">Signup</button>
+                </div>
+                <form id="loginForm" class="auth-form">
+                    <input id="loginEmail" type="email" placeholder="Email" />
+                    <input id="loginPassword" type="password" placeholder="Password" />
+                    <button id="loginBtn" type="button" class="primary-btn">Login</button>
+                    <div id="loginOtpBox" class="otp-box">
+                        <input id="loginOtp" placeholder="MFA Code" maxlength="6" />
+                        <button id="verifyLoginOtp" class="primary-btn">Verify MFA</button>
+                    </div>
+                </form>
+                <form id="signupForm" class="auth-form" style="display:none;">
+                    <input id="signupEmail" type="email" placeholder="Email" />
+                    <input id="signupPassword" type="password" placeholder="Password" />
+                    <input id="signupConfirmPassword" type="password" placeholder="Confirm Password" />
+                    <div id="qr"></div>
+                    <button id="signupBtn" class="primary-btn" disabled>Signup</button>
+                    <div id="signupOtpBox" class="otp-box">
+                        <input id="signupOtp" placeholder="Authenticator Code" maxlength="6" />
+                        <button id="verifySignupOtp" class="primary-btn">Enable MFA</button>
+                    </div>
+                </form>
+                <div id="msg"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <section id="view-grove" class="view-section active">
+            <div class="grove-header">
+                <div>
+                    <h1 style="font-size: 3rem;">Estate Grove Registry</h1>
+                    <p style="color: var(--muted-gray);">Monitor real-time agricultural assets and fractional availability.</p>
+                </div>
+                <div class="grove-filters">
+                    <button class="filter-btn active" id="filter-all" data-filter="all" onclick="filterGroveRegistry('all')">All Trees</button>
+                    <button class="filter-btn" id="filter-owned" data-filter="owned" onclick="filterGroveRegistry('owned')">My Trees</button>
+                    <button class="filter-btn" id="filter-available" data-filter="available" onclick="filterGroveRegistry('available')">Available Trees</button>
+                </div>
+            </div>
+
+            <div class="grove-workspace">
+                <div class="estate-telemetry-panel">
+                    <div class="map-wrapper">
+                        <div class="map-title-bar">
+                            <h4 style="font-size: 1.3rem;">Field Map Coordinates</h4>
+                            <span style="font-size:0.8rem; font-family: monospace; color: var(--terracotta);">SAN VINCENZO, TUSCANY</span>
+                        </div>
+                        <div class="map-canvas">
+                            <div class="map-grid-container" id="interactive-map-grid"></div>
+                        </div>
+                    </div>
+
+                    <div class="sensor-stream-box">
+                        <div class="sensor-node">
+                            <div class="sensor-label">Soil Moisture</div>
+                            <div class="sensor-reading" style="color: #4AA3DF;">34.2%</div>
+                        </div>
+                        <div class="sensor-node">
+                            <div class="sensor-label">Ambient Temp</div>
+                            <div class="sensor-reading" style="color: var(--terracotta);">24.8°C</div>
+                        </div>
+                        <div class="sensor-node">
+                            <div class="sensor-label">UV Exposure</div>
+                            <div class="sensor-reading" style="color: #E2B13C;">6.4 Index</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tree-inventory-stream" id="tree-cards-container"></div>
+            </div>
+        </section>
+
+
+        <section id="view-perks" class="view-section">
+            <div class="perks-header">
+                <h1 style="font-size: 3.2rem; margin-bottom: 0.5rem;">Your Membership Perks</h1>
+                <p style="color: var(--muted-gray); max-width: 600px; margin: 0 auto;">Your lifestyle tier benefits scale accurately based on the size of your network fractional shareholdings.</p>
+            </div>
+
+            <div class="perks-tier-matrix">
+                <div class="tier-lockbox locked" id="tier-card-1">
+                    <h3>Tree Keeper</h3>
+                    <div class="tier-shares-range">1–4 Shares Registered</div>
+                    <ul class="perks-checklist">
+                        <li>Annual allocation of 3L Extra Virgin Olive Oil</li>
+                        <li>Standard Community Portal access privileges</li>
+                        <li>Bi-annual vineyard & farm visiting passes</li>
+                    </ul>
+                </div>
+
+                <div class="tier-lockbox active-tier" id="tier-card-2">
+                    <h3>Tree Lover</h3>
+                    <div class="tier-shares-range">5–9 Shares Registered</div>
+                    <ul class="perks-checklist">
+                        <li>Annual allocation of 10L Extra Virgin Olive Oil</li>
+                        <li>Priority booking system parameters for private estate villa</li>
+                        <li>Dedicated personal tree status label alignment</li>
+                        <li>Yearly estate harvest gala community invitations</li>
+                    </ul>
+                </div>
+
+                <div class="tier-lockbox locked" id="tier-card-3">
+                    <h3>Full Tree Owner</h3>
+                    <div class="tier-shares-range">10+ Shares Registered</div>
+                    <ul class="perks-checklist">
+                        <li>Maximum annual allocation of 25L Premium EVOO</li>
+                        <li>Complimentary 5 nights stay credits allocation yearly</li>
+                        <li>Name custom-engraved onto the bronze estate master plaque</li>
+                        <li>Personalized VIP direct concierge allocation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="harvest-disclaimer-card">
+                <div class="disclaimer-icon">⚠️</div>
+                <div>
+                    <h4 style="color: var(--white); font-size: 1.25rem; margin-bottom: 0.2rem;">Yield Allocation Clause</h4>
+                    <p style="color: var(--dusty-sage); font-size: 0.9rem;">* Please notice that annual olive oil packaging parameters are strictly subjected to regional seasonal agricultural climate metrics, environmental volatility factors, and actual field harvest extraction yields.</p>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="view-villa" class="view-section">
+            <div class="booking-layout">
+                <div class="booking-form-panel">
+                    <h1 class="booking-headline">Request Member Stay</h1>
+                    <p class="booking-subtext">Utilize your baseline lifestyle membership olive credits to lock in private villa reservations.</p>
+
+                    <form id="villa-booking-form" onsubmit="executeBookingTransaction(event)">
+                        <div class="form-group-row">
+                            <div class="input-element-wrapper">
+                                <label>Arrival Date</label>
+                                <input type="date" required id="book-checkin">
+                            </div>
+                            <div class="input-element-wrapper">
+                                <label>Departure Date</label>
+                                <input type="date" required id="book-checkout">
+                            </div>
+                        </div>
+
+                        <div class="form-group-row">
+                            <div class="input-element-wrapper">
+                                <label>Total Guests</label>
+                                <select id="book-guests" onchange="recalculateCreditProjection()">
+                                    <option value="1">1 Person</option>
+                                    <option value="2">2 People</option>
+                                    <option value="3">3 People</option>
+                                    <option value="4">4 People</option>
+                                </select>
+                            </div>
+                            <div class="input-element-wrapper">
+                                <label>Select Season</label>
+                                <select id="book-season" onchange="recalculateCreditProjection()">
+                                    <option value="1">Low Season (1 Credit/Night Base)</option>
+                                    <option value="1.5">Mid Season (1.5 Credits/Night Base)</option>
+                                    <option value="2.5">High Season (2.5 Credits/Night Base)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit-booking">Verify & Process Reservation</button>
+                    </form>
+                </div>
+
+                <div class="credit-status-ledger">
+                    <div class="ledger-metric-group">
+                        <div class="ledger-label">Available Olive Credits</div>
+                        <div class="ledger-large-balance" id="member-credits-display">18.0</div>
+                        <p style="color: var(--dusty-sage); font-size: 0.9rem;">Resets annually based on active tier ownership metrics.</p>
+                    </div>
+
+                    <div class="ledger-metric-group" style="margin-bottom: 0;">
+                        <div class="ledger-label" style="margin-bottom: 0.75rem;">Stay Projection Summary</div>
+                        <div class="ledger-perks-list">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>Calculated Cost Rate:</span>
+                                <span id="rate-calculation-feedback" style="font-family:monospace; color:var(--white);">1.0 Credits / Night</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-weight:600; padding-top:0.5rem; border-top:1px dashed rgba(246,241,231,0.2);">
+                                <span>Total Transaction Debits:</span>
+                                <span id="total-projected-cost" style="color: var(--terracotta);">0 Credits</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal-overlay" id="tree-detail-modal">
+        <div class="modal-container">
+            <div class="modal-top-bar">
+                <h2 id="modal-tree-title" style="font-size: 2rem;">Tree Specifications</h2>
+                <button class="btn-close-modal" onclick="closeTreeDetailModal()">[ CLOSE ]</button>
+            </div>
+            <div class="modal-content-area">
+                <div class="detail-meta-grid">
+                    <div>
+                        <div class="sensor-label" style="color:var(--muted-gray);">Tree Reference ID</div>
+                        <div id="modal-meta-id" style="font-weight:600; font-family:monospace;">OLV-000</div>
+                    </div>
+                    <div>
+                        <div class="sensor-label" style="color:var(--muted-gray);">Cultivar Variety</div>
+                        <div id="modal-meta-variety" style="font-weight:600;">Frantoio</div>
+                    </div>
+                    <div>
+                        <div class="sensor-label" style="color:var(--muted-gray);">Biological Age</div>
+                        <div id="modal-meta-age" style="font-weight:600;">42 Years</div>
+                    </div>
+                    <div>
+                        <div class="sensor-label" style="color:var(--muted-gray);">GPS Grid Matrix</div>
+                        <div id="modal-meta-gps" style="font-weight:600; font-family:monospace;">43.0841° N, 10.5422° E</div>
+                    </div>
+                </div>
+
+                <div class="harvest-countdown-highlight">
+                    <div class="countdown-meta-row">
+                        <div>
+                            <div class="sensor-label" style="color: var(--olive-black); font-weight: 600;">Agricultural Milestone Tracker</div>
+                            <div id="modal-harvest-status" style="font-size: 0.95rem; color: var(--muted-gray); margin-top: 2px;">Current Phase: Fruit Development</div>
+                        </div>
+                        <div class="text-right" style="text-align: right;">
+                            <div class="sensor-label" style="color: var(--terracotta);">Time to Harvest</div>
+                            <div id="modal-harvest-months" class="countdown-digits">5 Months</div>
+                        </div>
+                    </div>
+                    <div class="countdown-progress-track">
+                        <div id="modal-harvest-progress-bar" class="countdown-progress-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <h3 style="font-size:1.6rem; margin-bottom: 0.75rem;">Historical Harvest Analytics</h3>
+                <p id="modal-meta-harvest" style="color:#444; margin-bottom:2rem;">This specimen reliably demonstrates exceptional micro-climate agricultural resistance features, providing an average extract yield performance background of roughly 4.2 Liters of extra virgin olive fluid per cycle processing sequence.</p>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-top:1.5rem; border-top:1px solid #EEE; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <div class="sensor-label" style="color:var(--muted-gray);">Equity Availability</div>
+                        <div id="modal-meta-shares" style="font-size:1.2rem; font-weight:600; color:var(--olive-green);">3 / 10 Shares Available</div>
+                    </div>
+                    <button id="modal-action-btn" class="filter-btn active" style="padding:0.8rem 2rem;">Acquire Operational Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>OLIVIUM</h3>
+                <p>An innovative lifestyle asset fractionalization structure connecting enthusiasts with authentic Tuscan agricultural development pipelines.</p>
+            </div>
+            <div class="footer-column">
+                <h4>Ecosystem Documentation</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Development Roadmap</a></li>
+                    <li><a href="#">Agricultural Mechanics</a></li>
+                    <li><a href="#">Whitepaper Documents</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Regulatory Compliance</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Privacy Framework Agreement</a></li>
+                    <li><a href="#">Terms of Agricultural Use</a></li>
+                    <li><a href="#">Risk Mitigation Disclosure</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Support Center</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Frequently Asked Questions</a></li>
+                    <li><a href="#">Contact Concierge</a></li>
+                    <li><a href="mailto:hello@olivium.estate">hello@olivium.estate</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom-row">
+            <p>&copy; 2026 Olivium Estate. All Rights Reserved. Fully authorized member dashboard console build.</p>
+            <p>San Vincenzo, Tuscany, Italy</p>
+        </div>
+    </footer>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@coral-xyz/anchor": "https://cdn.jsdelivr.net/npm/@coral-xyz/anchor@0.29.0/+esm",
+                "@solana/web3.js": "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/+esm",
+                "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.6/+esm"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ─────────────────────────────────────────────────────────────────────
+        // Import from connection.ts and reserveb.ts
+        // ─────────────────────────────────────────────────────────────────────
+        import {
+            sb,
+            connection,
+            getIdentity,
+            isConnected,
+            connectWallet,
+            connectEmail,
+            disconnectWallet,
+        } from './src/connection.ts';
+
+        import {
+            updateIdentityBalanceUI,
+            handleDisconnectWorkflow,
+        } from './src/reserveb.ts';
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Centralized Data Storage with Month-to-Harvest analytics properties
+        // ─────────────────────────────────────────────────────────────────────
+        const estateTreeDatabase = [
+            { id: "OLV-F1-001", variety: "Frantoio", age: "48 Years", gps: "43.0841° N, 10.5422° E", status: "owned", availableShares: 0, monthsToHarvest: 5, currentPhase: "Fruit Pit Hardening", percentComplete: 60, image: "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/Tree%20F1-FR-001.jpeg" },
+            { id: "OLV-F1-002", variety: "Leccino", age: "35 Years", gps: "43.0842° N, 10.5425° E", status: "available", availableShares: 4, monthsToHarvest: 5, currentPhase: "Early Drupe Swelling", percentComplete: 55, image: "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg" },
+            { id: "OLV-F2-014", variety: "Moraiolo", age: "62 Years", gps: "43.0849° N, 10.5411° E", status: "owned", availableShares: 0, monthsToHarvest: 6, currentPhase: "Post-Flowering Setting", percentComplete: 45, image: "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/Tree%20F1-FR-001.jpeg" },
+            { id: "OLV-F3-089", variety: "Frantoio", age: "21 Years", gps: "43.0833° N, 10.5467° E", status: "available", availableShares: 7, monthsToHarvest: 5, currentPhase: "Fruit Pit Hardening", percentComplete: 60, image: "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg" },
+            { id: "OLV-F3-090", variety: "Pendolino", age: "29 Years", gps: "43.0835° N, 10.5469° E", status: "available", availableShares: 2, monthsToHarvest: 4, currentPhase: "Oil Synthesis Phase", percentComplete: 70, image: "https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close3.jpeg" }
+        ];
+
+        let currentUserCreditsBalance = 18.0;
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Expose functions to window for inline onclick handlers
+        // ─────────────────────────────────────────────────────────────────────
+        window.switchAppView = function(targetViewId) {
+            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+
+            document.getElementById(`view-${targetViewId}`).classList.add('active');
+            document.getElementById(`nav-${targetViewId}`).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.filterGroveRegistry = function(targetMode) {
+            document.querySelectorAll('.grove-filters .filter-btn').forEach(btn => btn.classList.remove('active'));
+            const targetBtn = document.getElementById(`filter-${targetMode}`);
+            if (targetBtn) targetBtn.classList.add('active');
+            renderGroveComponents(targetMode);
+        };
+
+        window.closeTreeDetailModal = function() {
+            document.getElementById('tree-detail-modal').style.display = 'none';
+            document.getElementById('modal-harvest-progress-bar').style.width = `0%`;
+        };
+
+        window.recalculateCreditProjection = function() {
+            const checkinInput = document.getElementById('book-checkin').value;
+            const checkoutInput = document.getElementById('book-checkout').value;
+
+            if (!checkinInput || !checkoutInput) return;
+
+            const dateDelta = new Date(checkoutInput) - new Date(checkinInput);
+            const computedNights = Math.ceil(dateDelta / (1000 * 60 * 60 * 24));
+
+            if (computedNights <= 0) {
+                document.getElementById('total-projected-cost').innerText = "Invalid Dates Selection";
+                return;
+            }
+
+            const activeGuestsCount = parseInt(document.getElementById('book-guests').value);
+            const baselineSeasonMultiplier = parseFloat(document.getElementById('book-season').value);
+
+            const calculatedCostRatePerNight = activeGuestsCount * baselineSeasonMultiplier;
+            const absoluteProjectedCostOutcome = calculatedCostRatePerNight * computedNights;
+
+            document.getElementById('rate-calculation-feedback').innerText = `${calculatedCostRatePerNight.toFixed(1)} Credits / Night`;
+            document.getElementById('total-projected-cost').innerText = `${absoluteProjectedCostOutcome.toFixed(1)} Olive Credits`;
+
+            return absoluteProjectedCostOutcome;
+        };
+
+        window.executeBookingTransaction = function(event) {
+            event.preventDefault();
+            const totalRequiredCostValue = window.recalculateCreditProjection();
+
+            if (!totalRequiredCostValue || totalRequiredCostValue <= 0) {
+                alert("Please correct date inputs before validation processing sequence.");
+                return;
+            }
+
+            if (totalRequiredCostValue > currentUserCreditsBalance) {
+                alert("Transaction Rejected: Insufficient active structural Olive Credits balance under present membership tier classification.");
+                return;
+            }
+
+            currentUserCreditsBalance -= totalRequiredCostValue;
+            document.getElementById('member-credits-display').innerText = currentUserCreditsBalance.toFixed(1);
+
+            alert(`Reservation Securely Registered! Transaction complete. Debited ${totalRequiredCostValue.toFixed(1)} credits from your allocated asset account balance.`);
+            document.getElementById('villa-booking-form').reset();
+            document.getElementById('total-projected-cost').innerText = "0 Credits";
+        };
+
+        window.launchTreeDetailModal = function(treeObject) {
+            document.getElementById('modal-tree-title').innerText = `Specimen Asset: ${treeObject.id}`;
+            document.getElementById('modal-meta-id').innerText = treeObject.id;
+            document.getElementById('modal-meta-variety').innerText = treeObject.variety;
+            document.getElementById('modal-meta-age').innerText = treeObject.age;
+            document.getElementById('modal-meta-gps').innerText = treeObject.gps;
+            document.getElementById('modal-meta-shares').innerText = `${treeObject.availableShares} / 10 Shares Free`;
+
+            document.getElementById('modal-harvest-status').innerText = `Current Phase: ${treeObject.currentPhase}`;
+            document.getElementById('modal-harvest-months').innerText = `${treeObject.monthsToHarvest} Months`;
+
+            setTimeout(() => {
+                document.getElementById('modal-harvest-progress-bar').style.width = `${treeObject.percentComplete}%`;
+            }, 100);
+
+            const actionBtn = document.getElementById('modal-action-btn');
+            if (treeObject.status === 'owned') {
+                actionBtn.innerText = "Operational Shares Claimed";
+                actionBtn.disabled = true;
+                actionBtn.style.opacity = "0.5";
+            } else {
+                actionBtn.innerText = "Acquire Fractional Share Unit";
+                actionBtn.disabled = false;
+                actionBtn.style.opacity = "1";
+                actionBtn.onclick = () => {
+                    alert(`Routing secure lifestyle processing pipeline for asset share reservation index reference: ${treeObject.id}`);
+                    window.closeTreeDetailModal();
+                };
+            }
+
+            document.getElementById('tree-detail-modal').style.display = 'flex';
+        };
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Render Grove Components
+        // ─────────────────────────────────────────────────────────────────────
+        function renderGroveComponents(filterMode = "all") {
+            const cardsContainer = document.getElementById('tree-cards-container');
+            const mapGridContainer = document.getElementById('interactive-map-grid');
+
+            cardsContainer.innerHTML = "";
+            mapGridContainer.innerHTML = "";
+
+            // Check if user is connected for "owned" filter
+            if (filterMode === 'owned' && !isConnected()) {
+                cardsContainer.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: var(--muted-gray); background: var(--white); border-radius: 16px; border: 1px solid rgba(168,183,154,0.2);">
+                        <p style="font-size:1.1rem; margin-bottom:0.5rem;">🔒 Connect your profile to view your trees</p>
+                        <p style="font-size:0.9rem;">Sign in with wallet or email to see your owned grove assets.</p>
+                        <button onclick="document.getElementById('connectBtn').click()" class="filter-btn active" style="margin-top:1rem;">Connect Now</button>
+                    </div>
+                `;
+                return;
+            }
+
+            estateTreeDatabase.forEach((tree, index) => {
+                if (filterMode === 'owned' && tree.status !== 'owned') return;
+                if (filterMode === 'available' && tree.status !== 'available') return;
+
+                const cardNode = document.createElement('div');
+                cardNode.className = 'tree-item-card';
+                cardNode.onclick = () => window.launchTreeDetailModal(tree);
+                cardNode.innerHTML = `
+                    <div class="tree-card-thumbnail" style="background-image: url('${tree.image}')"></div>
+                    <div class="tree-card-meta">
+                        <div class="tree-badge-row">
+                            <span class="app-badge ${tree.status === 'owned' ? 'badge-owned' : 'badge-available'}">${tree.status}</span>
+                        </div>
+                        <h3>Specimen ${tree.id}</h3>
+                        <div class="tree-card-specs">
+                            <div><strong>Type:</strong> ${tree.variety}</div>
+                            <div><strong>Age:</strong> ${tree.age}</div>
+                            <div><strong>Harvest:</strong> In ${tree.monthsToHarvest} Mo</div>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.appendChild(cardNode);
+
+                const mapNode = document.createElement('div');
+                mapNode.className = `map-node-tree ${tree.status}`;
+                mapNode.title = `Specimen ${tree.id} (${tree.variety})`;
+                mapNode.onclick = (e) => {
+                    e.stopPropagation();
+                    window.launchTreeDetailModal(tree);
+                };
+                mapGridContainer.appendChild(mapNode);
+            });
+
+            if (cardsContainer.children.length === 0) {
+                cardsContainer.innerHTML = `<p style="padding: 2rem; color: var(--muted-gray); text-align:center;">No tree assets match your currently selected filters.</p>`;
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Connect Button Logic (uses the imported functions)
+        // ─────────────────────────────────────────────────────────────────────
+        const connectBtn = document.getElementById('connectBtn');
+
+        connectBtn?.addEventListener('click', async function() {
+            const connected = isConnected();
+            if (connected) {
+                // Disconnect
+                this.textContent = 'Disconnecting…';
+                this.disabled = true;
+                try {
+                    await handleDisconnectWorkflow();
+                } finally {
+                    this.disabled = false;
+                    this.textContent = 'Connect Profile';
+                }
+            } else {
+                // Show connect modal
+                const modal = document.getElementById('connectModal');
+                if (modal) modal.style.display = 'flex';
+            }
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Wallet Connect Button inside Modal
+        // ─────────────────────────────────────────────────────────────────────
+        document.getElementById('connectWalletBtn')?.addEventListener('click', async function() {
+            this.textContent = 'Connecting…';
+            this.disabled = true;
+            try {
+                await connectWallet(false);
+                // Close modal on success
+                const modal = document.getElementById('connectModal');
+                if (modal) modal.style.display = 'none';
+                await updateIdentityBalanceUI();
+            } catch (err) {
+                console.error('Wallet connection failed:', err);
+                alert(`Connection failed: ${err.message || 'Unknown error'}`);
+            } finally {
+                this.textContent = 'Connect Wallet';
+                this.disabled = false;
+            }
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Email Login Button — opens MFA modal
+        // ─────────────────────────────────────────────────────────────────────
+        document.getElementById('emailLoginBtn')?.addEventListener('click', function() {
+            const connectModal = document.getElementById('connectModal');
+            if (connectModal) connectModal.style.display = 'none';
+
+            const authModal = document.getElementById('authModalOverlay');
+            if (authModal) authModal.style.display = 'flex';
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Close Connect Modal
+        // ─────────────────────────────────────────────────────────────────────
+        window.closeConnectModal = function() {
+            const modal = document.getElementById('connectModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // Close modal on overlay click
+        document.getElementById('connectModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // DOM Ready Initialization
+        // ─────────────────────────────────────────────────────────────────────
+        document.addEventListener("DOMContentLoaded", () => {
+            renderGroveComponents('all');
+
+            const formattingAnchorToday = new Date().toISOString().split('T')[0];
+            document.getElementById('book-checkin').min = formattingAnchorToday;
+            document.getElementById('book-checkout').min = formattingAnchorToday;
+
+            document.getElementById('book-checkin').addEventListener('change', window.recalculateCreditProjection);
+            document.getElementById('book-checkout').addEventListener('change', window.recalculateCreditProjection);
+
+            // Initial identity UI update
+            updateIdentityBalanceUI();
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Close tree detail modal on overlay click
+        // ─────────────────────────────────────────────────────────────────────
+        document.getElementById('tree-detail-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) window.closeTreeDetailModal();
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Close auth modal on overlay click
+        // ─────────────────────────────────────────────────────────────────────
+        document.getElementById('authModalOverlay')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Listen for identity changes from connection.ts
+        // ─────────────────────────────────────────────────────────────────────
+        window.addEventListener('olivium:connected', () => {
+            updateIdentityBalanceUI();
+            // Re-render grove to show owned trees if filter is active
+            const activeFilter = document.querySelector('.grove-filters .filter-btn.active');
+            if (activeFilter) {
+                const filter = activeFilter.dataset.filter || 'all';
+                renderGroveComponents(filter);
+            } else {
+                renderGroveComponents('all');
+            }
+        });
+
+        window.addEventListener('olivium:disconnected', () => {
+            updateIdentityBalanceUI();
+            // Switch to "all" filter when disconnected
+            const allBtn = document.getElementById('filter-all');
+            if (allBtn) allBtn.click();
+        });
+
+        console.log('✅ Olivium Portal initialized with connection.ts integration');
+    </script>
+</body>
+</html>
