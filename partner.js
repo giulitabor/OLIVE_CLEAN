@@ -990,6 +990,69 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
   recalculateAllMetrics();
 }
 
+// ==================== PATH POPUP ====================
+let pendingPathActivity = null;
+
+function openPathPopup(pathKey, activityId, xp, btn) {
+  let activity = PATH_ACTIVITIES[pathKey]?.find(a => a.id === activityId);
+  if (!activity) return;
+  
+  // Store for confirmation
+  pendingPathActivity = { pathKey, activityId, xp, btn };
+  
+  // Fill popup with activity data
+  document.getElementById('popup-icon').textContent = activity.icon || '🌟';
+  document.getElementById('popup-title').textContent = activity.name;
+  document.getElementById('popup-desc').textContent = activity.desc || 'Complete this practice together.';
+  document.getElementById('popup-xp').textContent = activity.xp || 0;
+  document.getElementById('popup-practice').innerHTML = '✦ ' + (activity.practice || 'Do this practice with your partner.') + ' ✦';
+  
+  // Personal bonuses
+  let personalHtml = '';
+  if (activity.personalBonus) {
+    let labels = { empathy: 'Empathy', selfAwareness: 'Self-Awareness', communication: 'Communication', confidence: 'Confidence', vulnerability: 'Vulnerability' };
+    Object.entries(activity.personalBonus).forEach(([key, val]) => {
+      personalHtml += `<span style="background:rgba(78,205,196,0.15); padding:4px 12px; border-radius:20px; border:0.5px solid rgba(78,205,196,0.3);">${labels[key] || key} +${val}</span>`;
+    });
+  }
+  document.getElementById('popup-personal').innerHTML = personalHtml || 'No personal bonuses';
+  
+  // Relationship bonuses
+  let relHtml = '';
+  if (activity.relationshipBonus) {
+    let labels = { sharedVision: 'Shared Vision', friendship: 'Friendship', trust: 'Trust', teamwork: 'Teamwork', communication: 'Communication', intimacy: 'Intimacy' };
+    Object.entries(activity.relationshipBonus).forEach(([key, val]) => {
+      relHtml += `<span style="background:rgba(201,168,76,0.15); padding:4px 12px; border-radius:20px; border:0.5px solid rgba(201,168,76,0.3);">${labels[key] || key} +${val}</span>`;
+    });
+  }
+  document.getElementById('popup-relationship').innerHTML = relHtml || 'No relationship bonuses';
+  
+  // Show popup
+  document.getElementById('path-popup').style.display = 'flex';
+  document.getElementById('path-popup').style.animation = 'fadeIn 0.3s ease';
+}
+
+function closePathPopup() {
+  document.getElementById('path-popup').style.display = 'none';
+  pendingPathActivity = null;
+}
+
+function confirmPathActivity() {
+  if (!pendingPathActivity) return;
+  
+  const { pathKey, activityId, xp, btn } = pendingPathActivity;
+  
+  // Call the original function
+  completePathActivity(pathKey, activityId, xp, btn);
+  
+  // Close popup
+  closePathPopup();
+}
+
+// Make popup functions global
+window.openPathPopup = openPathPopup;
+window.closePathPopup = closePathPopup;
+window.confirmPathActivity = confirmPathActivity;
 // ==================== INIT ====================
 document.getElementById('connect-btn').onclick = () => {
   const url = "https://eohdfgvebqdxstwdildk.supabase.co";
