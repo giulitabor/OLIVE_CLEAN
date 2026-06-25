@@ -3021,4 +3021,3 @@ function initStars() {
 initStars();
 
 console.log('✅ App loaded successfully!');
-</script>
