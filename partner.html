@@ -2974,8 +2974,8 @@ window.openFoundationModal = function(key, label, icon) {
   div.addEventListener('click', e => { if (e.target === div) div.remove(); });
 };
 
-// REPLACE the setFoundation function
-window.setFoundation = function(key, value, btn) {
+// REPLACE the setFoundation function - Make it async
+window.setFoundation = async function(key, value, btn) {
   templeState.personal[key] = value;
   if (btn) {
     btn.parentNode.querySelectorAll('div').forEach(d => { 
@@ -3003,7 +3003,6 @@ window.setFoundation = function(key, value, btn) {
   addRelationshipMetric('trust', 1, 'foundation: ' + key);
   recalculateAllMetrics();
 };
-
 function updateRiverBalance(river, delta) {
   templeState.riverBalance[river] = Math.min(100, (templeState.riverBalance[river] || 50) + delta);
 }
