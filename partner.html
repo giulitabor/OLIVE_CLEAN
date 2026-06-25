@@ -1396,48 +1396,88 @@ function recalculateAllMetrics() {
 
 
   // ADD THIS FUNCTION
+// REPLACE the applyMetricDecay function
 function applyMetricDecay() {
   const today = new Date().toDateString();
   const lastDecay = localStorage.getItem('lovebase_last_decay');
   
   // Only apply decay once per day
-  if (lastDecay === today) return;
+  if (lastDecay === today) {
+    return;
+  }
+  
+  console.log('🌙 Applying metric decay...');
   
   // Personal metrics decay slightly when not maintained
-  const personalDecay = 0.5; // 0.5% per day
-  const relationshipDecay = 0.3; // 0.3% per day
+  const personalDecay = 2; // 2% per day (increased from 0.5% to be noticeable)
+  const relationshipDecay = 1.5; // 1.5% per day (increased from 0.3%)
+  
+  let decayApplied = false;
   
   Object.keys(personalMetrics).forEach(key => {
     // Don't decay below 20%
     if (personalMetrics[key].current > 20) {
-      personalMetrics[key].current = Math.max(20, Math.round(personalMetrics[key].current - personalDecay));
+      const oldValue = personalMetrics[key].current;
+      personalMetrics[key].current = Math.max(20, Math.round(oldValue - personalDecay));
+      if (personalMetrics[key].current < oldValue) {
+        decayApplied = true;
+      }
     }
   });
   
   Object.keys(relationshipMetrics).forEach(key => {
     // Don't decay below 20%
     if (relationshipMetrics[key].current > 20) {
-      relationshipMetrics[key].current = Math.max(20, Math.round(relationshipMetrics[key].current - relationshipDecay));
+      const oldValue = relationshipMetrics[key].current;
+      relationshipMetrics[key].current = Math.max(20, Math.round(oldValue - relationshipDecay));
+      if (relationshipMetrics[key].current < oldValue) {
+        decayApplied = true;
+      }
     }
   });
   
   // Baby readiness decays slightly
   if (babyReadiness > 20) {
-    babyReadiness = Math.max(20, babyReadiness - 0.5);
+    const oldValue = babyReadiness;
+    babyReadiness = Math.max(20, Math.round(oldValue - 1));
+    if (babyReadiness < oldValue) {
+      decayApplied = true;
+    }
   }
   
   localStorage.setItem('lovebase_last_decay', today);
   
-  // If decay occurred, update UI
-  recalculateAllMetrics();
+  if (decayApplied) {
+    // Show a subtle notification
+    showToast('🌙 Some metrics have naturally settled. Keep growing!');
+    
+    // Update UI without resetting everything
+    renderGrowthBars();
+    drawWheel();
+    renderCoupleExtras();
+    updateWeatherProgress();
+    drawTree();
+    updateHomeScreen();
+    
+    // Save state
+    if (sbClient && currentRelationshipId && currentUser) {
+      safeRelUpdate({ 
+        personal_metrics: JSON.stringify(personalMetrics),
+        relationship_metrics: JSON.stringify(relationshipMetrics),
+        baby_readiness: babyReadiness
+      });
+    }
+  }
+}
+
+// Check decay function
+function checkDecay() {
+  const lastDecay = localStorage.getItem('lovebase_last_decay');
+  const today = new Date().toDateString();
   
-  // Show warning if metrics are getting low
-  const lowMetrics = Object.entries(personalMetrics)
-    .filter(([key, val]) => val.current < 40)
-    .map(([key]) => key);
-  
-  if (lowMetrics.length > 0) {
-    showToast(`⚠️ Some metrics need attention: ${lowMetrics.join(', ')}`);
+  // If we haven't decayed today, apply it
+  if (lastDecay !== today) {
+    applyMetricDecay();
   }
 }
 
@@ -3210,8 +3250,127 @@ function drawMountain() {
   ctx.fillText('🏔 Summit', cx, top - 6);
 }
 
-function startGalaxy() { if(galaxyRAF) cancelAnimationFrame(galaxyRAF); drawGalaxyFrame(); }
+function startGalaxy() { 
+  if(galaxyRAF) cancelAnimationFrame(galaxyRAF); 
+  drawGalaxyFrame(); 
+}
+
 function drawGalaxyFrame() {
+  var canvas = document.getElementById('galaxy-canvas'); 
+  if(!canvas) return;
+  
+  var rect = canvas.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  var W = rect.width || canvas.offsetWidth || 340;
+  var H = 240;
+  
+  // Set canvas size properly
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  
+  var t = Date.now() * 0.001;
+  var aX = W * 0.25, aY = H * 0.45;
+  var bX = W * 0.75, bY = H * 0.55;
+  var cX = W / 2, cY = H / 2;
+  
+  // Orbit rings
+  [30, 50, 70].forEach((r, i) => {
+    ctx.beginPath();
+    ctx.arc(aX, aY, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(78,205,196,' + (0.07 - i * 0.02) + ')';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+  
+  [25, 45, 65].forEach((r, i) => {
+    ctx.beginPath();
+    ctx.arc(bX, bY, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(155,109,255,' + (0.07 - i * 0.02) + ')';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+  
+  // Orbiting particles
+  for(var i = 0; i < 8; i++) {
+    var a = t * 0.5 + (i / 8) * Math.PI * 2;
+    var px = aX + Math.cos(a) * (35 + i * 4) * 0.6;
+    var py = aY + Math.sin(a) * (35 + i * 4) * 0.3;
+    ctx.beginPath();
+    ctx.arc(px, py, 1, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(78,205,196,' + (0.3 + i * 0.04) + ')';
+    ctx.fill();
+  }
+  
+  for(var i = 0; i < 8; i++) {
+    var a = -t * 0.4 + (i / 8) * Math.PI * 2;
+    var px = bX + Math.cos(a) * (30 + i * 4) * 0.6;
+    var py = bY + Math.sin(a) * (30 + i * 4) * 0.3;
+    ctx.beginPath();
+    ctx.arc(px, py, 1, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(155,109,255,' + (0.3 + i * 0.04) + ')';
+    ctx.fill();
+  }
+  
+  // Connection line
+  var trust = getRelationshipMetric('trust');
+  var intimacy = getRelationshipMetric('intimacy');
+  var align = (trust + intimacy) / 200;
+  
+  var bg = ctx.createLinearGradient(aX, aY, bX, bY);
+  bg.addColorStop(0, 'rgba(78,205,196,0.15)');
+  bg.addColorStop(0.5, 'rgba(201,168,76,' + (0.1 + align * 0.2) + ')');
+  bg.addColorStop(1, 'rgba(155,109,255,0.15)');
+  ctx.beginPath();
+  ctx.moveTo(aX, aY);
+  ctx.lineTo(bX, bY);
+  ctx.strokeStyle = bg;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Center pulse
+  var pulse = (Math.sin(t * 2) + 1) * 3;
+  ctx.beginPath();
+  ctx.arc(cX, cY, 8 + pulse, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(232,112,112,' + (0.1 + pulse * 0.02) + ')';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cX, cY, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(232,112,112,0.8)';
+  ctx.fill();
+  
+  // Pull effect based on alignment
+  var pull = (1 - align) * 0.15;
+  var axF = aX + (cX - aX) * pull;
+  var bxF = bX + (cX - bX) * pull;
+  
+  function drawStar(x, y, emoji, lbl, glow) {
+    var sg = ctx.createRadialGradient(x, y, 0, x, y, 28);
+    sg.addColorStop(0, glow.replace('1)', '0.3)'));
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.arc(x, y, 28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = '22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(emoji, x, y + 8);
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = 'rgba(240,232,208,0.6)';
+    ctx.fillText(lbl, x, y + 26);
+  }
+  
+  drawStar(axF, aY, '🌸', liveData.partner_a_name || 'Partner A', 'rgba(78,205,196,1)');
+  drawStar(bxF, bY, '🌿', liveData.partner_b_name || 'Partner B', 'rgba(155,109,255,1)');
+  
+  galaxyRAF = requestAnimationFrame(drawGalaxyFrame);
+}
+  function drawGalaxyFrame() {
   var canvas = document.getElementById('galaxy-canvas'); if(!canvas) return;
   var dpr = window.devicePixelRatio || 1, W = canvas.offsetWidth, H = 240;
   if(canvas.width !== W * dpr) { canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; }
