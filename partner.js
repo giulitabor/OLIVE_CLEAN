@@ -2994,33 +2994,31 @@ async function sendPasswordReset() {
 function initStars() {
   const canvas = document.getElementById('stars-canvas');
   if(!canvas) return;
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth; 
+  canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
-  const stars = Array.from({length:150}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5, a: Math.random() }));
+  const stars = Array.from({length:150}, () => ({ 
+    x: Math.random()*canvas.width, 
+    y: Math.random()*canvas.height, 
+    r: Math.random()*1.5, 
+    a: Math.random() 
+  }));
   function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle = `rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`; ctx.fill(); s.a += 0.01; });
+    stars.forEach(s => { 
+      ctx.beginPath(); 
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2); 
+      ctx.fillStyle = `rgba(245,223,160,${0.2+Math.sin(s.a)*0.3})`; 
+      ctx.fill(); 
+      s.a += 0.01; 
+    });
     requestAnimationFrame(draw);
   }
   draw();
 }
-  // ==================== MISSING FUNCTIONS FIX ====================
-
-
-// 3. Override savePathProgress to handle missing columns
-savePathProgress = function() {
-  if (sbClient && currentRelationshipId && currentUser) {
-    // Try to save, but don't crash if column doesn't exist
-    try {
-      safeRelUpdate({ path_progress: JSON.stringify(pathProgress) });
-    } catch(e) {
-      console.log('Path progress save skipped - column may not exist yet');
-    }
-  }
-};
-
-console.log('✅ All fixes applied!');
 
 // ==================== INIT ====================
 initStars();
+
+console.log('✅ App loaded successfully!');
 </script>
