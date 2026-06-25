@@ -1197,6 +1197,64 @@ function recalculateAllMetrics() {
   updateHomeScreen();
 }
 
+
+  // ADD THIS FUNCTION
+function applyMetricDecay() {
+  const today = new Date().toDateString();
+  const lastDecay = localStorage.getItem('lovebase_last_decay');
+  
+  // Only apply decay once per day
+  if (lastDecay === today) return;
+  
+  // Personal metrics decay slightly when not maintained
+  const personalDecay = 0.5; // 0.5% per day
+  const relationshipDecay = 0.3; // 0.3% per day
+  
+  Object.keys(personalMetrics).forEach(key => {
+    // Don't decay below 20%
+    if (personalMetrics[key].current > 20) {
+      personalMetrics[key].current = Math.max(20, Math.round(personalMetrics[key].current - personalDecay));
+    }
+  });
+  
+  Object.keys(relationshipMetrics).forEach(key => {
+    // Don't decay below 20%
+    if (relationshipMetrics[key].current > 20) {
+      relationshipMetrics[key].current = Math.max(20, Math.round(relationshipMetrics[key].current - relationshipDecay));
+    }
+  });
+  
+  // Baby readiness decays slightly
+  if (babyReadiness > 20) {
+    babyReadiness = Math.max(20, babyReadiness - 0.5);
+  }
+  
+  localStorage.setItem('lovebase_last_decay', today);
+  
+  // If decay occurred, update UI
+  recalculateAllMetrics();
+  
+  // Show warning if metrics are getting low
+  const lowMetrics = Object.entries(personalMetrics)
+    .filter(([key, val]) => val.current < 40)
+    .map(([key]) => key);
+  
+  if (lowMetrics.length > 0) {
+    showToast(`⚠️ Some metrics need attention: ${lowMetrics.join(', ')}`);
+  }
+}
+
+// Call this periodically and on app load
+function checkDecay() {
+  const lastDecay = localStorage.getItem('lovebase_last_decay');
+  const today = new Date().toDateString();
+  
+  // If we haven't decayed today, apply it
+  if (lastDecay !== today) {
+    applyMetricDecay();
+  }
+}
+
 // ==================== PATH SYSTEM ====================
 const PATH_ACTIVITIES = {
   variety: [
@@ -1625,6 +1683,9 @@ function startMainApp(relation) {
   checkAchievements();
   renderPathsTab();
   recalculateAllMetrics();
+  checkDailyLogin();
+  checkDecay(); // ADD THIS LINE
+
 }
 
 function startDemoMode() {
@@ -1671,6 +1732,7 @@ function startDemoMode() {
   checkAchievements();
   renderPathsTab();
   recalculateAllMetrics();
+  checkDailyLogin();
 }
 
 function setupRealtimeForRelationship() {
@@ -1911,18 +1973,7 @@ function checkDailyLogin() {
   }
 }
 
-// Call this in startMainApp and startDemoMode
-function startMainApp(relation) {
-  // ... existing code ...
-  checkDailyLogin(); // ADD THIS LINE
-  // ... rest of existing code ...
-}
 
-function startDemoMode() {
-  // ... existing code ...
-  checkDailyLogin(); // ADD THIS LINE
-  // ... rest of existing code ...
-}
 
 function switchGrowthTab(tab, btn) {
   ['radar','practices','couples','wheel','private','temple','paths'].forEach(t => {
