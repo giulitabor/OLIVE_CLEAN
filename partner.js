@@ -608,6 +608,41 @@ function recalculateAllMetrics() {
     isRecalculating = false;
   }
 }
+
+
+
+function resetMetrics() {
+  if (!confirm('Reset all metrics to baseline? This cannot be undone.')) return;
+  
+  // Reset personal metrics
+  Object.keys(personalMetrics).forEach(key => {
+    personalMetrics[key].current = personalMetrics[key].base || 50;
+    personalMetrics[key].changes = [];
+  });
+  
+  // Reset relationship metrics
+  Object.keys(relationshipMetrics).forEach(key => {
+    relationshipMetrics[key].current = relationshipMetrics[key].base || 50;
+    relationshipMetrics[key].changes = [];
+  });
+  
+  // Reset decay history
+  localStorage.removeItem('lovebase_decay_history');
+  localStorage.removeItem('lovebase_last_decay');
+  
+  // Reset streak
+  streakData.days = 0;
+  localStorage.setItem('lovebase_streak', JSON.stringify(streakData));
+  
+  // Reset achievements
+  achievements = [];
+  
+  recalcCount = 0;
+  
+  showToast('🔄 Metrics reset to baseline');
+  recalculateAllMetrics();
+  updateAllUI();
+}
   // ADD THIS FUNCTION
 // REPLACE the applyMetricDecay function
 function applyMetricDecay() {
