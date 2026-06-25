@@ -2679,15 +2679,31 @@ window.openFoundationModal = function(key, label, icon) {
   div.addEventListener('click', e => { if (e.target === div) div.remove(); });
 };
 
+// REPLACE the setFoundation function
 window.setFoundation = function(key, value, btn) {
   templeState.personal[key] = value;
   if (btn) {
-    btn.parentNode.querySelectorAll('div').forEach(d => { d.style.background = 'var(--glass)'; d.style.borderColor = 'var(--border)'; d.style.color = 'var(--text2)'; });
-    btn.style.background = 'rgba(201,168,76,0.2)'; btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--gold)';
+    btn.parentNode.querySelectorAll('div').forEach(d => { 
+      d.style.background = 'var(--glass)'; 
+      d.style.borderColor = 'var(--border)'; 
+      d.style.color = 'var(--text2)'; 
+    });
+    btn.style.background = 'rgba(201,168,76,0.2)'; 
+    btn.style.borderColor = 'var(--gold)'; 
+    btn.style.color = 'var(--gold)';
   }
   showToast('✦ ' + key + ' updated to ' + value + '%');
-  setTimeout(() => { document.getElementById('modal-foundation').remove(); renderTempleTab(); saveTempleState(); }, 500);
-  addPathXP('variety', 5);
+  
+  // ADDED: Small XP for self-care check-ins
+  await awardXP(3); // Small reward for self-awareness
+  addPathXP('variety', 2);
+  
+  setTimeout(() => { 
+    document.getElementById('modal-foundation').remove(); 
+    renderTempleTab(); 
+    saveTempleState(); 
+  }, 500);
+  
   addPersonalMetric('selfAwareness', 2, 'foundation: ' + key);
   addRelationshipMetric('trust', 1, 'foundation: ' + key);
   recalculateAllMetrics();
