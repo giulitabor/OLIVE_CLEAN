@@ -27,6 +27,8 @@ export default defineConfig({
         harvest: resolve(__dirname, "harvest.html"),
 
         debug: resolve(__dirname, "debug2.html"),
+                dashboard: resolve(__dirname, "dashboard.html"),
+
         Map: resolve(__dirname, "map.html"),
         Game: resolve(__dirname, "webgame3.html"),
 
