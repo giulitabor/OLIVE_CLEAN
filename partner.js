@@ -936,7 +936,9 @@ function renderPathsTab() {
       html += '<span style="font-size:16px;">' + a.icon + '</span>';
       html += '<div style="flex:1;font-size:12px;color:var(--text1);">' + a.name + ' <span style="font-size:10px;color:var(--text2);">(' + a.cat + ')</span>' + personalDisplay + relationshipDisplay + '</div>';
       html += '<span style="font-size:10px;color:var(--gold);">+' + a.xp + ' XP</span>';
-      html += '<button onclick="completePathActivity(\'' + key + '\',\'' + a.id + '\',' + a.xp + ',this)" style="padding:2px 10px;border-radius:20px;background:' + (done ? 'rgba(78,205,196,0.15)' : 'rgba(201,168,76,0.1)') + ';border:0.5px solid ' + (done ? 'var(--teal)' : 'var(--gold)') + ';color:' + (done ? 'var(--teal)' : 'var(--gold)') + ';font-size:10px;cursor:pointer;">' + (done ? '✓ Done' : 'Start') + '</button>';
+      
+      // UPDATED: Use openPathPopup instead of direct completePathActivity
+      html += '<button onclick="openPathPopup(\'' + key + '\',\'' + a.id + '\',' + a.xp + ',this)" style="padding:2px 10px;border-radius:20px;background:' + (done ? 'rgba(78,205,196,0.15)' : 'rgba(201,168,76,0.1)') + ';border:0.5px solid ' + (done ? 'var(--teal)' : 'var(--gold)') + ';color:' + (done ? 'var(--teal)' : 'var(--gold)') + ';font-size:10px;cursor:pointer;">' + (done ? '✓ Done' : 'Start') + '</button>';
       html += '</div>';
     });
     html += '</div>';
