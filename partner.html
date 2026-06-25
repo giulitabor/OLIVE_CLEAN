@@ -833,9 +833,6 @@ const WATER_WISDOM = [
 let waterState = { logged_glasses: 0, ritual_streak: 0, last_date: null };
 let breathState = { solar_count: 0, lunar_count: 0, harmony_count: 0 };
 let artsProgress = {};
-if (typeof templeState === 'undefined') {
-  var templeState = { completedGates: {} };
-}
 
 // ── Temple State ──
 let templeState = {
@@ -848,6 +845,9 @@ let templeState = {
   dailyQuestion: null,
   questionAnswered: false
 };
+  if (typeof templeState === 'undefined') {
+  var templeState = { completedGates: {} };
+}
 
 // ── Data ──
 const THOUGHT_QUESTIONS = [
