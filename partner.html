@@ -789,12 +789,53 @@ let pathProgress = {
   transcendence: { xp: 0, level: 1, skills: [], rank: 0 }
 };
 const MASTERY_RANKS = ['Explorer', 'Practitioner', 'Companion', 'Guide', 'Master'];
+// ==================== RECONCILED RPG ARCHITECTURE ====================
 const PATH_LEVELS = {
   variety: { name: 'Variety', icon: '🌸', badge: 'Heart Awakening', maxLevel: 10 },
   development: { name: 'Development', icon: '👁', badge: 'Mirror of Souls', maxLevel: 10 },
   consummation: { name: 'Consummation', icon: '❤️', badge: 'Sacred Partnership', maxLevel: 10 },
   transcendence: { name: 'Transcendence', icon: '✨', badge: 'Innate Light', maxLevel: 10 }
 };
+
+// Maps our advanced ritual practices directly onto your 4 core tracks
+const PATH_SUBTHEMES = {
+  variety: '64 Arts Matrix — Training cross-disciplinary creative skills & unique shared experiences.',
+  development: 'The Nine Gates — Physical presence, tracking vessel metrics, and circadian rhythm.',
+  consummation: 'Water Ritual Tracker — Emotional resonant calibration, clearing stress, and processing intimacy.',
+  transcendence: 'Solar / Lunar Channels — Alternating breathing pathways to balance internal nervous systems.'
+};
+
+const ARTS_64_DATABASE = {
+  art_01: { name: 'Vocal Resonance Tuning', cat: 'Variety', desc: 'Matching dynamic acoustic registers between partners.' },
+  art_02: { name: 'Knot-Tying & Architecture', cat: 'Variety', desc: 'Crafting structural boundaries to organize open spaces.' },
+  art_03: { name: 'Aromatic Matrix Synthesis', cat: 'Variety', desc: 'Blending specific environmental oils to ground internal centers.' },
+  art_04: { name: 'Strategic Chrono-Mapping', cat: 'Variety', desc: 'Architecting long-range multi-generational visions.' }
+};
+
+const NINE_GATES = [
+  { id:'gate_presence', icon:'🚪', name:'Gate of Pure Presence', q:'Am I here inside this flesh, or trapped inside my thoughts?', practice:'Scan your physical vessel from crown to sole. Note structural tightness without bias.' },
+  { id:'gate_vessel', icon:'🏺', name:'Gate of Sacred Nourishment', q:'Am I honoring what fuels my internal fire?', practice:'Consume a whole meal consciously, minimizing screen or environmental distraction.' },
+  { id:'gate_rhythm', icon:'⏳', name:'Gate of Circadian Flow', q:'Does my engine align with light cycles?', practice:'Establish total darkness 30 minutes before sleep tonight.' }
+];
+
+const BREATHING_SESSIONS = [
+  { id: 'solar', icon: '☀️', name: 'Pingala (Solar) Activation', purpose: 'Invigorate & Project Energy', duration: 300, desc: 'Inhale through right nostril, exhale through left. Awakens solar analysis.' },
+  { id: 'lunar', icon: '🌙', name: 'Ida (Lunar) Softening', purpose: 'Intuit, Receptive Release', duration: 300, desc: 'Inhale through left nostril, exhale through right. Cools dynamic pacing.' },
+  { id: 'harmony', icon: '☯️', name: 'Sushumna (Central) Balance', purpose: 'Absolute Unity Calibration', duration: 600, desc: 'Alternate nasal tracking dynamically. Synchronizes hemisphere balance.' }
+];
+
+const WATER_WISDOM = [
+  { icon: '💧', title: 'The Memory Matrix of Water', body: 'Consciously drinking imprints cellular presence into your internal oceans.' },
+  { icon: '🌊', title: 'Dynamic Interception', body: 'Drink clear water before hot standard infusions to filter dynamic toxic stress responses.' }
+];
+
+// Structural auxiliary tracking states for widgets
+let waterState = { logged_glasses: 0, ritual_streak: 0, last_date: null };
+let breathState = { solar_count: 0, lunar_count: 0, harmony_count: 0 };
+let artsProgress = {};
+if (typeof templeState === 'undefined') {
+  var templeState = { completedGates: {} };
+}
 
 // ── Temple State ──
 let templeState = {
