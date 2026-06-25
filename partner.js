@@ -3025,5 +3025,56 @@ function initStars() {
 
 // ==================== INIT ====================
 initStars();
+// ==================== MAKE FUNCTIONS GLOBAL ====================
+// Add this at the bottom of partner.js
 
+// Navigation functions
+window.switchScreen = switchScreen;
+window.switchGrowthTab = switchGrowthTab;
+
+// Achievement functions
+window.closeAchievement = closeAchievement;
+window.unlockAchievement = unlockAchievement;
+
+// Timer functions
+window.closeTimerModal = closeTimerModal;
+window.toggleTimerModal = toggleTimerModal;
+window.openTimerModal = openTimerModal;
+
+// Journal functions
+window.addJournalEntry = addJournalEntry;
+
+// Dream functions
+window.saveDreamEntry = saveDreamEntry;
+
+// Private notes
+window.savePrivateNote = savePrivateNote;
+
+// Shadow work
+window.saveShadowWork = saveShadowWork;
+
+// Temple functions
+window.logWater = logWater;
+window.startBreathSession = startBreathSession;
+window.markGateComplete = markGateComplete;
+window.markTemplePractice = markTemplePractice;
+window.saveTempleReflection = saveTempleReflection;
+window.setFoundation = setFoundation;
+window.openFoundationModal = openFoundationModal;
+
+// Reset
+window.resetMetrics = resetMetrics;
+
+// Intake
+window.intakeNext = intakeNext;
+window.intakeBack = intakeBack;
+window.selectIntakeScale = selectIntakeScale;
+window.selectIntakeYN = selectIntakeYN;
+
+// Auth
+window.showForgotPassword = showForgotPassword;
+window.showSignIn = showSignIn;
+window.sendPasswordReset = sendPasswordReset;
+
+console.log('✅ All functions registered globally');
 console.log('✅ App loaded successfully!');
