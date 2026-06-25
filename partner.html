@@ -1043,158 +1043,355 @@ function recalculateAllMetrics() {
   let dLevel = getPathLevel('development');
   let cLevel = getPathLevel('consummation');
   let tLevel = getPathLevel('transcendence');
-
-  // Reset to base
+  
+  // ── RESET TO BASE ──
   Object.keys(personalMetrics).forEach(key => {
-    personalMetrics[key].current = personalMetrics[key].base;
+    personalMetrics[key].current = personalMetrics[key].base || 50;
   });
   Object.keys(relationshipMetrics).forEach(key => {
-    relationshipMetrics[key].current = relationshipMetrics[key].base;
+    relationshipMetrics[key].current = relationshipMetrics[key].base || 50;
   });
-
-  // ── Personal Path Bonuses ──
-  // Variety → Empathy + Confidence
-  if (vLevel >= 3) personalMetrics.empathy.current += 5;
-  if (vLevel >= 5) personalMetrics.empathy.current += 10;
-  if (vLevel >= 7) personalMetrics.empathy.current += 8;
-  if (vLevel >= 10) personalMetrics.empathy.current += 7;
-  if (vLevel >= 4) personalMetrics.confidence.current += 5;
-  if (vLevel >= 6) personalMetrics.confidence.current += 8;
-  // Variety → Relationship: Friendship + Intimacy
-  if (vLevel >= 3) { relationshipMetrics.friendship.current += 5; relationshipMetrics.intimacy.current += 3; }
-  if (vLevel >= 5) { relationshipMetrics.friendship.current += 8; relationshipMetrics.intimacy.current += 5; }
-  // Mastery rank bonus
+  
+  // ── PERSONAL PATH BONUSES (capped) ──
+  // Variety Path → Empathy + Confidence
+  if (vLevel >= 3) {
+    let bonus = Math.min(5, vLevel * 2);
+    personalMetrics.empathy.current += bonus;
+  }
+  if (vLevel >= 5) {
+    let bonus = Math.min(10, vLevel * 3);
+    personalMetrics.empathy.current += bonus;
+  }
+  if (vLevel >= 7) {
+    let bonus = Math.min(8, vLevel * 2);
+    personalMetrics.empathy.current += bonus;
+  }
+  if (vLevel >= 10) {
+    let bonus = Math.min(7, vLevel);
+    personalMetrics.empathy.current += bonus;
+  }
+  if (vLevel >= 4) {
+    let bonus = Math.min(5, vLevel);
+    personalMetrics.confidence.current += bonus;
+  }
+  if (vLevel >= 6) {
+    let bonus = Math.min(8, vLevel * 1.5);
+    personalMetrics.confidence.current += bonus;
+  }
+  
+  // Development Path → Self-Awareness + Communication
+  if (dLevel >= 3) {
+    let bonus = Math.min(5, dLevel * 2);
+    personalMetrics.selfAwareness.current += bonus;
+  }
+  if (dLevel >= 5) {
+    let bonus = Math.min(10, dLevel * 3);
+    personalMetrics.selfAwareness.current += bonus;
+  }
+  if (dLevel >= 7) {
+    let bonus = Math.min(8, dLevel * 2);
+    personalMetrics.selfAwareness.current += bonus;
+  }
+  if (dLevel >= 10) {
+    let bonus = Math.min(7, dLevel);
+    personalMetrics.selfAwareness.current += bonus;
+  }
+  if (dLevel >= 4) {
+    let bonus = Math.min(5, dLevel);
+    personalMetrics.communication.current += bonus;
+  }
+  if (dLevel >= 6) {
+    let bonus = Math.min(8, dLevel * 1.5);
+    personalMetrics.communication.current += bonus;
+  }
+  
+  // ── RELATIONSHIP PATH BONUSES (capped) ──
+  // Variety Path → Friendship + Intimacy
+  if (vLevel >= 3) {
+    let bonus = Math.min(5, vLevel * 2);
+    relationshipMetrics.friendship.current += bonus;
+    let bonus2 = Math.min(3, vLevel);
+    relationshipMetrics.intimacy.current += bonus2;
+  }
+  if (vLevel >= 5) {
+    let bonus = Math.min(8, vLevel * 2);
+    relationshipMetrics.friendship.current += bonus;
+    let bonus2 = Math.min(5, vLevel);
+    relationshipMetrics.intimacy.current += bonus2;
+  }
+  
+  // Development Path → Trust + Communication
+  if (dLevel >= 3) {
+    let bonus = Math.min(5, dLevel * 2);
+    relationshipMetrics.trust.current += bonus;
+    let bonus2 = Math.min(5, dLevel * 2);
+    relationshipMetrics.communication.current += bonus2;
+  }
+  if (dLevel >= 5) {
+    let bonus = Math.min(8, dLevel * 2);
+    relationshipMetrics.trust.current += bonus;
+    let bonus2 = Math.min(8, dLevel * 2);
+    relationshipMetrics.communication.current += bonus2;
+  }
+  
+  // Consummation Path → Shared Vision + Teamwork
+  if (cLevel >= 3) {
+    let bonus = Math.min(5, cLevel * 2);
+    relationshipMetrics.sharedVision.current += bonus;
+    let bonus2 = Math.min(5, cLevel * 2);
+    relationshipMetrics.teamwork.current += bonus2;
+  }
+  if (cLevel >= 5) {
+    let bonus = Math.min(8, cLevel * 2);
+    relationshipMetrics.sharedVision.current += bonus;
+    let bonus2 = Math.min(8, cLevel * 2);
+    relationshipMetrics.teamwork.current += bonus2;
+  }
+  
+  // Transcendence Path → Shared Vision + Trust + Intimacy
+  if (tLevel >= 3) {
+    let bonus = Math.min(5, tLevel * 2);
+    relationshipMetrics.sharedVision.current += bonus;
+    let bonus2 = Math.min(3, tLevel);
+    relationshipMetrics.trust.current += bonus2;
+    let bonus3 = Math.min(3, tLevel);
+    relationshipMetrics.intimacy.current += bonus3;
+  }
+  if (tLevel >= 5) {
+    let bonus = Math.min(8, tLevel * 2);
+    relationshipMetrics.sharedVision.current += bonus;
+    let bonus2 = Math.min(5, tLevel);
+    relationshipMetrics.trust.current += bonus2;
+    let bonus3 = Math.min(5, tLevel);
+    relationshipMetrics.intimacy.current += bonus3;
+  }
+  
+  // ── MASTERY RANK BONUSES (capped) ──
   let vRank = getPathRank('variety');
-  if (vRank >= 1) relationshipMetrics.friendship.current += 2 * vRank;
-
-  // Development → Self-Awareness + Communication
-  if (dLevel >= 3) personalMetrics.selfAwareness.current += 5;
-  if (dLevel >= 5) personalMetrics.selfAwareness.current += 10;
-  if (dLevel >= 7) personalMetrics.selfAwareness.current += 8;
-  if (dLevel >= 10) personalMetrics.selfAwareness.current += 7;
-  if (dLevel >= 4) personalMetrics.communication.current += 5;
-  if (dLevel >= 6) personalMetrics.communication.current += 8;
-  // Development → Relationship: Trust + Communication
-  if (dLevel >= 3) { relationshipMetrics.trust.current += 5; relationshipMetrics.communication.current += 5; }
-  if (dLevel >= 5) { relationshipMetrics.trust.current += 8; relationshipMetrics.communication.current += 8; }
+  if (vRank >= 1) {
+    let bonus = Math.min(2 * vRank, 10);
+    relationshipMetrics.friendship.current += bonus;
+  }
+  
   let dRank = getPathRank('development');
-  if (dRank >= 1) relationshipMetrics.trust.current += 2 * dRank;
-
-  // Consummation → Relationship: Shared Vision + Teamwork
-  if (cLevel >= 3) { relationshipMetrics.sharedVision.current += 5; relationshipMetrics.teamwork.current += 5; }
-  if (cLevel >= 5) { relationshipMetrics.sharedVision.current += 8; relationshipMetrics.teamwork.current += 8; }
+  if (dRank >= 1) {
+    let bonus = Math.min(2 * dRank, 10);
+    relationshipMetrics.trust.current += bonus;
+  }
+  
   let cRank = getPathRank('consummation');
-  if (cRank >= 1) { relationshipMetrics.sharedVision.current += 2 * cRank; relationshipMetrics.teamwork.current += 2 * cRank; }
-
-  // Transcendence → Relationship: Shared Vision + Trust + Intimacy
-  if (tLevel >= 3) { relationshipMetrics.sharedVision.current += 5; relationshipMetrics.trust.current += 3; relationshipMetrics.intimacy.current += 3; }
-  if (tLevel >= 5) { relationshipMetrics.sharedVision.current += 8; relationshipMetrics.trust.current += 5; relationshipMetrics.intimacy.current += 5; }
+  if (cRank >= 1) {
+    let bonus = Math.min(2 * cRank, 10);
+    relationshipMetrics.sharedVision.current += bonus;
+    let bonus2 = Math.min(2 * cRank, 10);
+    relationshipMetrics.teamwork.current += bonus2;
+  }
+  
   let tRank = getPathRank('transcendence');
-  if (tRank >= 1) { relationshipMetrics.sharedVision.current += 2 * tRank; relationshipMetrics.trust.current += 2 * tRank; }
-
-  // ── Continuous XP-to-Metric Conversion ──
-  // Every 10 XP = +0.5 to all metrics (capped at 100)
-  let xpBonus = Math.floor(totalXP / 10) * 0.5;
+  if (tRank >= 1) {
+    let bonus = Math.min(2 * tRank, 10);
+    relationshipMetrics.sharedVision.current += bonus;
+    let bonus2 = Math.min(2 * tRank, 10);
+    relationshipMetrics.trust.current += bonus2;
+    let bonus3 = Math.min(2 * tRank, 10);
+    relationshipMetrics.intimacy.current += bonus3;
+  }
+  
+  // ── CONTINUOUS XP-TO-METRIC CONVERSION (CAPPED) ──
+  // Every 10 XP = +0.5 to all metrics, max +15 total
+  let xpBonus = Math.min(15, Math.floor(totalXP / 10) * 0.5);
   Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += xpBonus);
   Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += xpBonus);
-
-  // ── XP Milestone Bonuses ──
+  
+  // ── XP MILESTONE BONUSES (CAPPED) ──
+  let milestoneBonus = 0;
   let xpMilestones = [
     { xp: 100, bonus: 2 }, { xp: 250, bonus: 3 }, { xp: 500, bonus: 4 },
-    { xp: 750, bonus: 3 }, { xp: 1000, bonus: 5 }, { xp: 1500, bonus: 4 }, { xp: 2000, bonus: 6 }
+    { xp: 750, bonus: 3 }, { xp: 1000, bonus: 5 }, { xp: 1500, bonus: 4 }, 
+    { xp: 2000, bonus: 6 }, { xp: 3000, bonus: 5 }, { xp: 5000, bonus: 8 }
   ];
+  
+  // Calculate total milestone bonus with cap
   xpMilestones.forEach(m => {
     if (totalXP >= m.xp) {
-      Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += m.bonus);
-      Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += m.bonus);
+      milestoneBonus += m.bonus;
     }
   });
-
-  // ── Temple Stage → Relationship Bonuses ──
+  milestoneBonus = Math.min(20, milestoneBonus); // Cap at 20
+  
+  Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += milestoneBonus);
+  Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += milestoneBonus);
+  
+  // ── TEMPLE STAGE → RELATIONSHIP BONUSES (CAPPED) ──
   let stage = computeSanctuaryStage();
-  if (stage >= 1) { relationshipMetrics.trust.current += 2; relationshipMetrics.intimacy.current += 2; }
-  if (stage >= 3) { relationshipMetrics.friendship.current += 3; relationshipMetrics.teamwork.current += 3; }
-  if (stage >= 5) { relationshipMetrics.sharedVision.current += 4; relationshipMetrics.communication.current += 4; }
-  if (stage >= 7) { Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 5); }
-
-  // ── Achievement Bonuses ──
+  let templeBonus = Math.min(20, stage * 2);
+  
+  if (stage >= 1) { 
+    relationshipMetrics.trust.current += Math.min(2, templeBonus);
+    relationshipMetrics.intimacy.current += Math.min(2, templeBonus); 
+  }
+  if (stage >= 3) { 
+    relationshipMetrics.friendship.current += Math.min(3, templeBonus);
+    relationshipMetrics.teamwork.current += Math.min(3, templeBonus); 
+  }
+  if (stage >= 5) { 
+    relationshipMetrics.sharedVision.current += Math.min(4, templeBonus);
+    relationshipMetrics.communication.current += Math.min(4, templeBonus); 
+  }
+  if (stage >= 7) { 
+    Object.keys(relationshipMetrics).forEach(k => 
+      relationshipMetrics[k].current += Math.min(5, templeBonus)
+    ); 
+  }
+  
+  // ── ACHIEVEMENT BONUSES (CAPPED) ──
+  // First Steps
   if (achievements.includes('first_xp')) {
     Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
     Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 1);
   }
+  
+  // Water Master
   if (achievements.includes('water_master')) {
-    personalMetrics.selfAwareness.current += 3;
-    relationshipMetrics.trust.current += 2;
+    personalMetrics.selfAwareness.current += Math.min(3, 3);
+    relationshipMetrics.trust.current += Math.min(2, 2);
   }
+  
+  // Gate Keeper
   if (achievements.includes('gate_keeper')) {
-    relationshipMetrics.trust.current += 3;
-    relationshipMetrics.communication.current += 3;
-    personalMetrics.communication.current += 3;
-    personalMetrics.selfAwareness.current += 3;
+    relationshipMetrics.trust.current += Math.min(3, 3);
+    relationshipMetrics.communication.current += Math.min(3, 3);
+    personalMetrics.communication.current += Math.min(3, 3);
+    personalMetrics.selfAwareness.current += Math.min(3, 3);
   }
+  
+  // Temple Guardian (520 XP)
   if (achievements.includes('xp_520')) {
-    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 5);
-    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 5);
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += Math.min(5, 5));
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += Math.min(5, 5));
   }
-  if (achievements.includes('path_consummation_5')) {
-    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 8);
-  }
-  if (achievements.includes('path_transcendence_5')) {
-    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 10);
-    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 10);
-  }
+  
+  // Path: Variety Level 5
   if (achievements.includes('path_variety_5')) {
-    personalMetrics.empathy.current += 8;
-    relationshipMetrics.friendship.current += 5;
+    personalMetrics.empathy.current += Math.min(8, 8);
+    relationshipMetrics.friendship.current += Math.min(5, 5);
   }
+  
+  // Path: Development Level 5
   if (achievements.includes('path_development_5')) {
-    personalMetrics.selfAwareness.current += 8;
-    relationshipMetrics.communication.current += 5;
+    personalMetrics.selfAwareness.current += Math.min(8, 8);
+    relationshipMetrics.communication.current += Math.min(5, 5);
   }
-
-  // ── Streak Bonuses ──
+  
+  // Path: Consummation Level 5
+  if (achievements.includes('path_consummation_5')) {
+    Object.keys(relationshipMetrics).forEach(k => 
+      relationshipMetrics[k].current += Math.min(8, 8)
+    );
+  }
+  
+  // Path: Transcendence Level 5
+  if (achievements.includes('path_transcendence_5')) {
+    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += Math.min(10, 10));
+    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += Math.min(10, 10));
+  }
+  
+  // ── STREAK BONUSES (CAPPED) ──
+  // Calculate streak bonus: +2 per week, max +10
+  let streakBonus = Math.min(10, Math.floor(streakData.days / 7) * 2);
+  
   if (streakData.days >= 7) {
-    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 2);
-    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 1);
+    Object.keys(relationshipMetrics).forEach(k => 
+      relationshipMetrics[k].current += streakBonus
+    );
+    Object.keys(personalMetrics).forEach(k => 
+      personalMetrics[k].current += Math.floor(streakBonus / 2)
+    );
   }
+  
+  // Extra bonus for 30+ days
   if (streakData.days >= 30) {
-    Object.keys(relationshipMetrics).forEach(k => relationshipMetrics[k].current += 4);
-    Object.keys(personalMetrics).forEach(k => personalMetrics[k].current += 2);
+    // Additional bonus capped at +4
+    let extraBonus = Math.min(4, Math.floor((streakData.days - 30) / 30) * 2);
+    Object.keys(relationshipMetrics).forEach(k => 
+      relationshipMetrics[k].current += extraBonus
+    );
+    Object.keys(personalMetrics).forEach(k => 
+      personalMetrics[k].current += Math.floor(extraBonus / 2)
+    );
   }
-
-  // ── Personal → Relationship Feedback Loop ──
+  
+  // ── PERSONAL → RELATIONSHIP FEEDBACK LOOP (CAPPED) ──
   // Personal communication feeds into relationship communication
-  let pComm = personalMetrics.communication.current;
-  let rComm = relationshipMetrics.communication.current;
-  relationshipMetrics.communication.current = Math.min(100, Math.round((rComm + pComm * 0.2)));
-
+  let pComm = Math.min(100, personalMetrics.communication.current);
+  let rComm = Math.min(100, relationshipMetrics.communication.current);
+  let commBoost = Math.min(15, Math.round(pComm * 0.2));
+  relationshipMetrics.communication.current = Math.min(100, Math.round(rComm + commBoost));
+  
   // Personal empathy feeds into relationship trust + intimacy
-  let pEmp = personalMetrics.empathy.current;
-  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + pEmp * 0.1));
-  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pEmp * 0.1));
-
+  let pEmp = Math.min(100, personalMetrics.empathy.current);
+  let trustBoost = Math.min(8, Math.round(pEmp * 0.1));
+  let intimacyBoost = Math.min(8, Math.round(pEmp * 0.1));
+  relationshipMetrics.trust.current = Math.min(100, Math.round(relationshipMetrics.trust.current + trustBoost));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + intimacyBoost));
+  
   // Personal vulnerability feeds into relationship intimacy
-  let pVul = personalMetrics.vulnerability.current;
-  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + pVul * 0.1));
-
-  // ── Cap everything at 100 ──
+  let pVul = Math.min(100, personalMetrics.vulnerability.current);
+  let vulBoost = Math.min(8, Math.round(pVul * 0.1));
+  relationshipMetrics.intimacy.current = Math.min(100, Math.round(relationshipMetrics.intimacy.current + vulBoost));
+  
+  // ── RELATIONSHIP → PERSONAL FEEDBACK LOOP (CAPPED) ──
+  // Relationship trust feeds into personal confidence
+  let rTrust = Math.min(100, relationshipMetrics.trust.current);
+  let confidenceBoost = Math.min(8, Math.round(rTrust * 0.08));
+  personalMetrics.confidence.current = Math.min(100, Math.round(personalMetrics.confidence.current + confidenceBoost));
+  
+  // Relationship communication feeds into personal communication
+  let rComm2 = Math.min(100, relationshipMetrics.communication.current);
+  let pCommBoost = Math.min(8, Math.round(rComm2 * 0.08));
+  personalMetrics.communication.current = Math.min(100, Math.round(personalMetrics.communication.current + pCommBoost));
+  
+  // Relationship intimacy feeds into personal vulnerability
+  let rIntim = Math.min(100, relationshipMetrics.intimacy.current);
+  let vulBoost2 = Math.min(8, Math.round(rIntim * 0.06));
+  personalMetrics.vulnerability.current = Math.min(100, Math.round(personalMetrics.vulnerability.current + vulBoost2));
+  
+  // ── FINAL CAP: All metrics max 100, min 10 ──
   Object.keys(personalMetrics).forEach(key => {
-    personalMetrics[key].current = Math.min(100, Math.round(personalMetrics[key].current));
+    personalMetrics[key].current = Math.max(10, Math.min(100, Math.round(personalMetrics[key].current)));
   });
   Object.keys(relationshipMetrics).forEach(key => {
-    relationshipMetrics[key].current = Math.min(100, Math.round(relationshipMetrics[key].current));
+    relationshipMetrics[key].current = Math.max(10, Math.min(100, Math.round(relationshipMetrics[key].current)));
   });
-
-  // Update baby readiness
+  
+  // ── UPDATE BABY READINESS ──
   babyReadiness = getBabyReadiness();
-
-  // Update UI
+  
+  // ── UPDATE UI ──
   renderGrowthBars();
   drawWheel();
   renderCoupleExtras();
   updateWeatherProgress();
   drawTree();
   updateHomeScreen();
+  
+  // ── UPDATE XP DISPLAY ──
+  updateXpDisplay();
+  
+  // ── UPDATE STREAK DISPLAY ──
+  updateStreakDisplay();
+  
+  // ── SAVE STATE (if connected) ──
+  if (sbClient && currentRelationshipId && currentUser) {
+    saveTempleState();
+    savePathProgress();
+    // Save metrics
+    safeRelUpdate({ 
+      personal_metrics: JSON.stringify(personalMetrics),
+      relationship_metrics: JSON.stringify(relationshipMetrics),
+      baby_readiness: babyReadiness
+    });
+  }
 }
 
 
@@ -1352,8 +1549,16 @@ function getPathBadge(pathKey) {
   return PATH_LEVELS[pathKey]?.badge || '🌱';
 }
 
+// MODIFY addPathXP to cap at level 10
 function addPathXP(pathKey, amount) {
   if (!pathProgress[pathKey]) pathProgress[pathKey] = { xp: 0, level: 1, skills: [], rank: 0 };
+  
+  // Cap at level 10
+  if (pathProgress[pathKey].level >= 10) {
+    pathProgress[pathKey].xp = Math.min(pathProgress[pathKey].xp + amount, 9999);
+    return;
+  }
+  
   pathProgress[pathKey].xp += amount;
   let needed = getPathXPNeeded(pathKey);
   while (pathProgress[pathKey].xp >= needed && pathProgress[pathKey].level < 10) {
@@ -1685,6 +1890,8 @@ function startMainApp(relation) {
   recalculateAllMetrics();
   checkDailyLogin();
   checkDecay(); // ADD THIS LINE
+  checkWaterDecay(); // ADD THIS LINE
+
 
 }
 
@@ -2053,18 +2260,39 @@ function loadStreak() {
   } catch(e) {}
 }
 
+// MODIFY the updateStreak function to add decay awareness
 function updateStreak() {
   var today = new Date().toDateString();
+  
+  // Check if we missed a day
+  var yesterday = new Date(); 
+  yesterday.setDate(yesterday.getDate() - 1);
+  var dayBefore = new Date();
+  dayBefore.setDate(dayBefore.getDate() - 2);
+  
   if (streakData.lastDate === today) return;
-  var yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  
   if (streakData.lastDate === yesterday.toDateString()) {
+    // Consecutive day
     streakData.days += 1;
   } else if (streakData.lastDate !== today) {
-    streakData.days = 1;
+    // Missed a day - reset streak
+    if (streakData.lastDate !== dayBefore.toDateString()) {
+      // More than 1 day gap
+      streakData.days = 1;
+      showToast('🔥 Streak reset! Starting fresh.');
+    } else {
+      // Only 1 day gap - keep streak but warn
+      streakData.days = streakData.days; // Keep same
+      showToast('⚠️ Missed a day! Streak preserved but decay applied.');
+    }
   }
+  
   streakData.lastDate = today;
   try { localStorage.setItem('lovebase_streak', JSON.stringify(streakData)); } catch(e) {}
   updateStreakDisplay();
+  
+  // Achievement and bonus logic...
   if (streakData.days >= 3) unlockAchievement('streak_3');
   if (streakData.days >= 7) {
     addAllRelationshipMetrics(2, 'streak: 7 days');
@@ -2075,6 +2303,22 @@ function updateStreak() {
     addAllRelationshipMetrics(4, 'streak: 30 days');
     addAllPersonalMetrics(2, 'streak: 30 days');
     recalculateAllMetrics();
+  }
+}
+
+  // ADD water decay tracking
+function checkWaterDecay() {
+  const today = new Date().toDateString();
+  const lastWater = localStorage.getItem('lovebase_last_water');
+  
+  if (lastWater !== today) {
+    // Water glasses reset daily (user needs to log water each day)
+    // But keep the water_master achievement if already earned
+    if (templeState.waterGlasses > 0 && !achievements.includes('water_master')) {
+      templeState.waterGlasses = 0;
+      showToast('💧 Water reset for today! Log your water intake.');
+    }
+    localStorage.setItem('lovebase_last_water', today);
   }
 }
 
