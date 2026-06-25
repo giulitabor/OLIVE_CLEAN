@@ -3006,39 +3006,6 @@ function initStars() {
 }
   // ==================== MISSING FUNCTIONS FIX ====================
 
-// 2. Override updateAllUI to handle missing functions
-const originalUpdateAllUI = updateAllUI;
-updateAllUI = function() {
-  updateWeatherProgress(); 
-  drawTree(); 
-  renderGrowthBars(); 
-  
-  // Safe call to renderPrivateEntries
-  if (typeof renderPrivateEntries === 'function') {
-    renderPrivateEntries(); 
-  }
-  
-  renderJournal();
-  updatePartnerDisplay(); 
-  updateXpDisplay();
-  
-  let baby = getBabyReadiness();
-  const babyEl = document.getElementById('baby-pct');
-  if (babyEl) babyEl.innerHTML = baby + '%';
-  
-  let avgGrowth = Math.round((getPersonalMetric('empathy') + getPersonalMetric('selfAwareness') + getPersonalMetric('communication')) / 3);
-  const statGrowth = document.getElementById('stat-growth');
-  const statHarmony = document.getElementById('stat-harmony');
-  const statVision = document.getElementById('stat-vision');
-  
-  if (statGrowth) statGrowth.innerHTML = avgGrowth + '%';
-  if (statHarmony) statHarmony.innerHTML = getRelationshipMetric('trust') + '%';
-  if (statVision) statVision.innerHTML = getRelationshipMetric('sharedVision') + '%';
-  
-  updateHomeScreen(); 
-  renderCoupleExtras();
-  recalculateAllMetrics();
-};
 
 // 3. Override savePathProgress to handle missing columns
 savePathProgress = function() {
