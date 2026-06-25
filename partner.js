@@ -3025,8 +3025,9 @@ function initStars() {
 
 // ==================== INIT ====================
 initStars();
+
 // ==================== MAKE FUNCTIONS GLOBAL ====================
-// Add this at the bottom of partner.js
+// This makes all functions accessible to HTML onclick attributes
 
 // Navigation functions
 window.switchScreen = switchScreen;
@@ -3075,38 +3076,10 @@ window.selectIntakeYN = selectIntakeYN;
 window.showForgotPassword = showForgotPassword;
 window.showSignIn = showSignIn;
 window.sendPasswordReset = sendPasswordReset;
-// Make ALL onclick functions globally accessible
-Object.assign(window, {
-  switchScreen,
-  switchGrowthTab,
-  closeAchievement,
-  closeTimerModal,
-  toggleTimerModal,
-  openTimerModal,
-  addJournalEntry,
-  saveDreamEntry,
-  savePrivateNote,
-  saveShadowWork,
-  resetMetrics,
-  logWater,
-  startBreathSession,
-  markGateComplete,
-  markTemplePractice,
-  saveTempleReflection,
-  setFoundation,
-  openFoundationModal,
-  intakeNext,
-  intakeBack,
-  selectIntakeScale,
-  selectIntakeYN,
-  showForgotPassword,
-  showSignIn,
-  sendPasswordReset,
-  completePathActivity,
-  markTaskComplete
-});
 
-console.log('✅ All functions registered globally');
+// ⭐ PATH ACTIVITIES ⭐
+window.completePathActivity = completePathActivity;
+window.markTaskComplete = markTaskComplete;
 
-console.log('✅ All functions registered globally FOR REALLL');
+console.log('✅ completePathActivity registered:', typeof window.completePathActivity);
 console.log('✅ App loaded successfully!');
