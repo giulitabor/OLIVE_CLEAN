@@ -1675,9 +1675,15 @@ function unlockAchievement(id) {
   recalculateAllMetrics();
 }
 
-function closeAchievement() {
+// Make it globally accessible
+window.closeAchievement = function() {
   document.getElementById('achievement-unlock').classList.remove('show');
-}
+};
+
+// Also make other functions global if they're used in onclick
+window.unlockAchievement = unlockAchievement;
+window.spawnConfetti = spawnConfetti;
+window.showToast = showToast;
 
 function spawnConfetti() {
   var colors = ['#c9a84c', '#e8c96a', '#4ecdc4', '#9b6dff', '#e87070', '#ffb7c5'];
