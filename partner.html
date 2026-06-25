@@ -1238,6 +1238,35 @@ function recalculateAllMetrics() {
   updateHomeScreen();
 }
 
+  // ==================== NEW MODULE REGISTRIES ====================
+const NINE_GATES = [
+  { id:'gate_presence', icon:'🚪', name:'Gate of Pure Presence', q:'Am I here inside this flesh, or trapped inside my thoughts?', practice:'Scan your physical vessel from crown to sole. Note structural tightness without bias.' },
+  { id:'gate_vessel', icon:'🏺', name:'Gate of Sacred Nourishment', q:'Am I honoring what fuels my internal fire?', practice:'Consume a whole meal consciously, minimizing screen or environmental distraction.' },
+  { id:'gate_rhythm', icon:'⏳', name:'Gate of Circadian Flow', q:'Does my engine align with light cycles?', practice:'Establish total darkness 30 minutes before sleep tonight.' }
+];
+
+const BREATHING_SESSIONS = [
+  { id: 'solar', icon: '☀️', name: 'Pingala Activation', purpose: 'Invigorate Energy', duration: 300, desc: 'Inhale right, exhale left. Awakens dynamic analysis.' },
+  { id: 'lunar', icon: '🌙', name: 'Ida Softening', purpose: 'Receptive Release', duration: 300, desc: 'Inhale left, exhale right. Cools active processing.' },
+  { id: 'harmony', icon: '☯️', name: 'Sushumna Balance', purpose: ' Hemispheric Unity', duration: 600, desc: 'Dynamic alternate nasal tracking. Synchronizes focus.' }
+];
+
+const WATER_WISDOM = [
+  { icon: '💧', title: 'The Memory Matrix of Water', body: 'Consciously drinking imprints cellular presence into your internal oceans.' },
+  { icon: '🌊', title: 'Dynamic Interception', body: 'Drink clear water before hot standard infusions to filter dynamic toxic stress responses.' }
+];
+
+const ARTS_64_DATABASE = {
+  art_01: { name: 'Vocal Resonance Tuning', cat: 'Acoustic', desc: 'Matching dynamic vocal registers between partners.' },
+  art_02: { name: 'Knot-Tying & Architecture', cat: 'Structural', desc: 'Crafting spatial structural boundaries to organize open spaces.' },
+  art_03: { name: 'Aromatic Matrix Synthesis', cat: 'Alchemical', desc: 'Blending specific environmental oils to ground internal centers.' },
+  art_04: { name: 'Strategic Chrono-Mapping', cat: 'Chrono', desc: 'Architecting long-range multi-generational visions.' }
+};
+
+// Auxiliary UI structural states
+let waterState = { logged_glasses: 0 };
+let breathState = { solar_count: 0, lunar_count: 0 };
+let artsProgress = {};
 // ==================== PATH SYSTEM ====================
 const PATH_ACTIVITIES = {
   variety: [
@@ -1360,7 +1389,10 @@ function addPathXP(pathKey, amount) {
 
 function savePathProgress() {
   if (sbClient && currentRelationshipId && currentUser) {
-    safeRelUpdate({ path_progress: JSON.stringify(pathProgress) });
+    safeRelUpdate({ 
+      path_progress: JSON.stringify(pathProgress),
+      temple_state: JSON.stringify({ templeState, waterState, breathState, artsProgress })
+    });
   }
 }
 
@@ -1368,6 +1400,70 @@ function loadPathProgress(data) {
   if (data && data.path_progress) {
     try { pathProgress = JSON.parse(data.path_progress); } catch(e) {}
   }
+  if (data && data.temple_state) {
+    try {
+      let parsed = JSON.parse(data.temple_state);
+      if (parsed.templeState) templeState = parsed.templeState;
+      if (parsed.waterState) waterState = parsed.waterState;
+      if (parsed.breathState) breathState = parsed.breathState;
+      if (parsed.artsProgress) artsProgress = parsed.artsProgress;
+    } catch(e) {}
+  }
+}
+  // ==================== NEW INTERACTION ACTIONS ====================
+function executeWaterRitual() {
+  waterState.logged_glasses++;
+  if (typeof addRelationshipMetric === 'function') {
+    addRelationshipMetric('intimacy', 2, 'Water Ritual');
+    addRelationshipMetric('vulnerability', 1, 'Water Ritual');
+  }
+  showToast("💧 Water Ritual registered to Consummation!");
+  addPathXP('consummation', 25); 
+}
+
+function triggerBreathingSession(id) {
+  let session = BREATHING_SESSIONS.find(b => b.id === id);
+  if (typeof openTimerModal === 'function') {
+    openTimerModal(session.icon, session.name, session.duration);
+  }
+  if (id === 'solar') breathState.solar_count++;
+  if (id === 'lunar') breathState.lunar_count++;
+  
+  if (typeof addPersonalMetric === 'function') {
+    addPersonalMetric('selfAwareness', 3, 'Breathing Practice');
+  }
+  showToast(`🫁 ${session.name} started! +35 XP towards Transcendence.`);
+  addPathXP('transcendence', 35);
+}
+
+function toggleTempleGate(id) {
+  if (!templeState.completedGates) templeState.completedGates = {};
+  templeState.completedGates[id] = !templeState.completedGates[id];
+  
+  if (templeState.completedGates[id]) {
+    if (typeof addRelationshipMetric === 'function') {
+      addRelationshipMetric('teamwork', 2, 'Vessel Alignment');
+    }
+    showToast("🏺 Temple Gate cleared! +50 XP towards Development.");
+    addPathXP('development', 50);
+  } else {
+    savePathProgress();
+    renderTempleTab();
+  }
+}
+
+function trainArt(key) {
+  if (!artsProgress[key]) artsProgress[key] = { xp: 0, rank: 0 };
+  artsProgress[key].xp += 20;
+  if (artsProgress[key].xp >= 60) {
+    artsProgress[key].xp = 0;
+    artsProgress[key].rank++;
+    showToast(`🎨 Rank Advancement! Mastered Rank ${artsProgress[key].rank} in ${ARTS_64_DATABASE[key].name}!`);
+  }
+  if (typeof addRelationshipMetric === 'function') {
+    addRelationshipMetric('sharedVision', 2, 'Arts Matrix Mastery');
+  }
+  addPathXP('variety', 30);
 }
 
 function renderPathsTab() {
@@ -1445,6 +1541,81 @@ function renderPathsTab() {
 
   container.innerHTML = html;
 }
+  function renderTempleTab() {
+  let container = document.getElementById('temple-container');
+  if (!container) return;
+
+  let currentWisdom = WATER_WISDOM[waterState.logged_glasses % WATER_WISDOM.length];
+
+  let html = `
+    <!-- Water Tracker Component -->
+    <div class="card" style="border-left: 3px solid #e87070;">
+      <div class="card-title">🌊 Water Ritual Tracker <span class="path-badge l3">Consummation Accessory</span></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="font-size:13px; color:var(--text1);">Vessel Intake: <b>${waterState.logged_glasses}</b> units</span>
+        <button onclick="executeWaterRitual()" style="padding:4px 14px; border-radius:20px; background:rgba(201,168,76,0.15); border:0.5px solid var(--gold); color:var(--gold); font-size:11px; cursor:pointer;">Log Glass (+25 XP)</button>
+      </div>
+      <div style="background:var(--glass2); padding:10px; border-radius:8px; border-left:2px solid var(--teal);">
+        <div style="font-size:11px; color:var(--text2); font-style:italic;">"${currentWisdom.body}"</div>
+      </div>
+    </div>
+
+    <!-- Breathing Channels Component -->
+    <div class="card" style="border-left: 3px solid #4ecdc4;">
+      <div class="card-title">🫁 Solar / Lunar Channels <span class="path-badge l4">Transcendence Accessory</span></div>
+      <div style="display:grid; gap:8px;">
+  `;
+
+  BREATHING_SESSIONS.forEach(b => {
+    html += `
+      <div style="background:var(--glass2); padding:10px; border-radius:10px; border:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:12px; font-weight:600; color:var(--text1);">${b.icon} ${b.name}</div>
+          <div style="font-size:10px; color:var(--text2);">${b.desc}</div>
+        </div>
+        <button onclick="triggerBreathingSession('${b.id}')" style="padding:2px 10px; border-radius:20px; background:rgba(255,255,255,0.05); border:0.5px solid var(--border); color:var(--text1); font-size:10px; cursor:pointer;">Begin</button>
+      </div>
+    `;
+  });
+
+  html += `</div></div><!-- Nine Gates Component --><div class="card" style="border-left: 3px solid #9b6dff;"><div class="card-title">🏺 Nine Gates of the Vessel <span class="path-badge l2">Development Accessory</span></div>`;
+  
+  NINE_GATES.forEach(g => {
+    if (!templeState.completedGates) templeState.completedGates = {};
+    let checked = templeState.completedGates[g.id] ? 'checked' : '';
+    html += `
+      <div style="background:var(--glass2); padding:10px; border-radius:10px; margin-bottom:6px; border: 0.5px solid var(--border);">
+        <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer;">
+          <input type="checkbox" ${checked} onchange="toggleTempleGate('${g.id}')" style="margin-top:3px; accent-color:var(--gold);">
+          <div>
+            <div style="font-weight:600; font-size:12px; color:var(--text1);">${g.name}</div>
+            <div style="font-size:11px; color:var(--text2); font-style:italic;">${g.q}</div>
+            <div style="font-size:10px; color:var(--text3); margin-top:3px;">Practice: ${g.practice}</div>
+          </div>
+        </label>
+      </div>
+    `;
+  });
+
+  html += `</div><!-- 64 Arts Framework --><div class="card" style="border-left: 3px solid #ffb7c5;"><div class="card-title">📜 The 64 Arts Matrix <span class="path-badge l1">Variety Accessory</span></div><div style="display:grid; gap:6px;">`;
+  
+  Object.keys(ARTS_64_DATABASE).forEach(key => {
+    let art = ARTS_64_DATABASE[key];
+    let current = artsProgress[key] || { xp: 0, rank: 0 };
+    html += `
+      <div style="background:var(--glass2); padding:8px 10px; border-radius:10px; border:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:12px; font-weight:600; color:var(--text1);">${art.name} <span style="font-size:9px; background:rgba(255,255,255,0.1); padding:1px 5px; border-radius:4px; margin-left:4px;">Rank ${current.rank}</span></div>
+          <div style="font-size:10px; color:var(--text2);">${art.desc}</div>
+        </div>
+        <button onclick="trainArt('${key}')" style="padding:2px 8px; border-radius:20px; background:rgba(255,255,255,0.05); border:0.5px solid var(--border); color:var(--text1); font-size:10px; cursor:pointer;">Train</button>
+      </div>
+    `;
+  });
+  html += `</div></div>`;
+
+  container.innerHTML = html;
+}
 
 async function completePathActivity(pathKey, activityId, xp, btn) {
   let slot = currentMySlot || 'A';
@@ -1480,6 +1651,7 @@ async function completePathActivity(pathKey, activityId, xp, btn) {
     await safeRelUpdate({ completed_tasks: completedTasks });
   }
   renderPathsTab();
+  renderTempleTab();
   savePathProgress();
   recalculateAllMetrics();
 }
