@@ -2003,20 +2003,31 @@ async function safeRelUpdate(updates) {
 
 // ==================== UI ====================
 function updateAllUI() {
-  updateWeatherProgress(); drawTree(); renderGrowthBars(); renderPrivateEntries(); renderJournal();
-  updatePartnerDisplay(); updateXpDisplay();
-
+  updateWeatherProgress(); 
+  drawTree(); 
+  renderGrowthBars(); 
+  
+  // Only call renderPrivateEntries if the function exists
+  if (typeof renderPrivateEntries === 'function') {
+    renderPrivateEntries(); 
+  }
+  
+  renderJournal();
+  updatePartnerDisplay(); 
+  updateXpDisplay();
+  
   // Baby Readiness
   let baby = getBabyReadiness();
   document.getElementById('baby-pct').innerHTML = baby + '%';
-
+  
   // Tree stats - now fully dynamic
   let avgGrowth = Math.round((getPersonalMetric('empathy') + getPersonalMetric('selfAwareness') + getPersonalMetric('communication')) / 3);
   document.getElementById('stat-growth').innerHTML = avgGrowth + '%';
   document.getElementById('stat-harmony').innerHTML = getRelationshipMetric('trust') + '%';
   document.getElementById('stat-vision').innerHTML = getRelationshipMetric('sharedVision') + '%';
-
-  updateHomeScreen(); renderCoupleExtras();
+  
+  updateHomeScreen(); 
+  renderCoupleExtras();
   recalculateAllMetrics();
 }
 
@@ -2521,7 +2532,7 @@ async function saveShadowWork() {
   }
   closeShadowModal();
   showToast('🌑 Shadow work saved privately.');
-  await awardXP(30);
+  await awardXP(3);
   spawnFloatingEmoji('🌑');
   addPathXP('development', 20);
   addPersonalMetric('selfAwareness', 3, 'shadow work');
