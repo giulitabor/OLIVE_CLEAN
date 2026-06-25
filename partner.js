@@ -1129,11 +1129,10 @@ function startMainApp(relation) {
   loadStreak();
   checkAchievements();
   renderPathsTab();
-  recalculateAllMetrics();
+  // REMOVED: recalculateAllMetrics(); - already called in updateAllUI
   checkDailyLogin();
-  checkDecay(); // ADD THIS LINE
-  checkWaterDecay(); // ADD THIS LINE
-
+  checkDecay();
+  checkWaterDecay();
 
 }
 
