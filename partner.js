@@ -3127,6 +3127,9 @@ window.markTemplePractice = markTemplePractice;
 window.saveTempleReflection = saveTempleReflection;
 window.setFoundation = setFoundation;
 window.openFoundationModal = openFoundationModal;
+window.openPathPopup = openPathPopup;
+window.closePathPopup = closePathPopup;
+window.confirmPathActivity = confirmPathActivity;
 
 // Reset
 window.resetMetrics = resetMetrics;
@@ -3145,6 +3148,7 @@ window.sendPasswordReset = sendPasswordReset;
 // ⭐ PATH ACTIVITIES ⭐
 window.completePathActivity = completePathActivity;
 window.markTaskComplete = markTaskComplete;
+
 
 console.log('✅ completePathActivity registered:', typeof window.completePathActivity);
 console.log('✅ App loaded successfully!');
