@@ -3126,26 +3126,88 @@ function renderInsights() {
 }
 
 function drawMountain() {
-  var canvas = document.getElementById('mountain-canvas'); if(!canvas) return;
-  var dpr = window.devicePixelRatio || 1, W = canvas.offsetWidth, H = 200;
-  canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  var ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, W, H);
+  var canvas = document.getElementById('mountain-canvas'); 
+  if(!canvas) return;
+  var rect = canvas.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  var W = rect.width || canvas.offsetWidth || 340;
+  var H = 200;
+  
+  // Set canvas size properly
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  
   var cx = W / 2, top = 20;
-  ctx.beginPath(); ctx.moveTo(W * 0.05, H - 10); ctx.lineTo(cx - 18, top + 30); ctx.lineTo(cx, top); ctx.lineTo(cx + 18, top + 30); ctx.lineTo(W * 0.95, H - 10); ctx.closePath();
-  var mg = ctx.createLinearGradient(0, top, 0, H); mg.addColorStop(0, 'rgba(30,40,70,0.9)'); mg.addColorStop(1, 'rgba(15,21,37,0.4)'); ctx.fillStyle = mg; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx - 18, top + 28); ctx.lineTo(cx + 18, top + 28); ctx.closePath(); ctx.fillStyle = 'rgba(245,245,255,0.85)'; ctx.fill();
-  ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx, H - 15); ctx.bezierCurveTo(cx + 15, H * 0.6, cx - 10, H * 0.3, cx, top + 10); ctx.strokeStyle = 'rgba(201,168,76,0.2)'; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+  // Mountain body
+  ctx.beginPath();
+  ctx.moveTo(W * 0.05, H - 10);
+  ctx.lineTo(cx - 18, top + 30);
+  ctx.lineTo(cx, top);
+  ctx.lineTo(cx + 18, top + 30);
+  ctx.lineTo(W * 0.95, H - 10);
+  ctx.closePath();
+  var mg = ctx.createLinearGradient(0, top, 0, H);
+  mg.addColorStop(0, 'rgba(30,40,70,0.9)');
+  mg.addColorStop(1, 'rgba(15,21,37,0.4)');
+  ctx.fillStyle = mg;
+  ctx.fill();
+  
+  // Snow cap
+  ctx.beginPath();
+  ctx.moveTo(cx, top);
+  ctx.lineTo(cx - 18, top + 28);
+  ctx.lineTo(cx + 18, top + 28);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(245,245,255,0.85)';
+  ctx.fill();
+  
+  // Path line
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx, H - 15);
+  ctx.bezierCurveTo(cx + 15, H * 0.6, cx - 10, H * 0.3, cx, top + 10);
+  ctx.strokeStyle = 'rgba(201,168,76,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Stages with metrics
   var stages = [
     {l:'Friendship', v: getRelationshipMetric('friendship')},
     {l:'Trust', v: getRelationshipMetric('trust')},
     {l:'Intimacy', v: getRelationshipMetric('intimacy')},
     {l:'Vision', v: getRelationshipMetric('sharedVision')}
   ];
+  
   var climbPct = stages.reduce((a,b) => a + b.v, 0) / 4 / 100;
-  var coupleY = top + (H - 30) * (1 - climbPct * 0.88);
-  stages.forEach((sg, i) => { var frac = i / (stages.length - 1), y = H - 15 - (H - 40) * frac; ctx.beginPath(); ctx.arc(cx, y, 4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(201,168,76,0.7)'; ctx.fill(); ctx.font = '10px sans-serif'; ctx.fillStyle = 'rgba(240,232,208,0.6)'; ctx.textAlign = i % 2 === 0 ? 'right' : 'left'; ctx.fillText(sg.l + ' ' + sg.v + '%', i % 2 === 0 ? cx - 12 : cx + 12, y + 4); });
-  ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('💑', cx, coupleY);
-  ctx.fillStyle = 'rgba(245,223,160,0.8)'; ctx.font = '10px sans-serif'; ctx.fillText('🏔 Summit', cx, top - 6);
+  var coupleY = top + (H - 30) * (1 - Math.min(climbPct * 0.88, 0.85));
+  
+  stages.forEach((sg, i) => {
+    var frac = i / (stages.length - 1);
+    var y = H - 15 - (H - 40) * frac;
+    ctx.beginPath();
+    ctx.arc(cx, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(201,168,76,0.7)';
+    ctx.fill();
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = 'rgba(240,232,208,0.6)';
+    ctx.textAlign = i % 2 === 0 ? 'right' : 'left';
+    ctx.fillText(sg.l + ' ' + sg.v + '%', i % 2 === 0 ? cx - 12 : cx + 12, y + 4);
+  });
+  
+  // Couple at current position
+  ctx.font = '18px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('💑', cx, coupleY);
+  ctx.fillStyle = 'rgba(245,223,160,0.8)';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('🏔 Summit', cx, top - 6);
 }
 
 function startGalaxy() { if(galaxyRAF) cancelAnimationFrame(galaxyRAF); drawGalaxyFrame(); }
