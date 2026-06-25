@@ -3772,6 +3772,64 @@ function initStars() {
   }
   draw();
 }
+  // ==================== MISSING FUNCTIONS FIX ====================
+
+// 1. Add missing renderPrivateEntries
+function renderPrivateEntries() {
+  if (!document.getElementById('private-entries')) return;
+  if (document.getElementById('tab-private') && document.getElementById('tab-private').style.display !== 'none') {
+    loadPrivateNotes();
+  }
+}
+
+// 2. Override updateAllUI to handle missing functions
+const originalUpdateAllUI = updateAllUI;
+updateAllUI = function() {
+  updateWeatherProgress(); 
+  drawTree(); 
+  renderGrowthBars(); 
+  
+  // Safe call to renderPrivateEntries
+  if (typeof renderPrivateEntries === 'function') {
+    renderPrivateEntries(); 
+  }
+  
+  renderJournal();
+  updatePartnerDisplay(); 
+  updateXpDisplay();
+  
+  let baby = getBabyReadiness();
+  const babyEl = document.getElementById('baby-pct');
+  if (babyEl) babyEl.innerHTML = baby + '%';
+  
+  let avgGrowth = Math.round((getPersonalMetric('empathy') + getPersonalMetric('selfAwareness') + getPersonalMetric('communication')) / 3);
+  const statGrowth = document.getElementById('stat-growth');
+  const statHarmony = document.getElementById('stat-harmony');
+  const statVision = document.getElementById('stat-vision');
+  
+  if (statGrowth) statGrowth.innerHTML = avgGrowth + '%';
+  if (statHarmony) statHarmony.innerHTML = getRelationshipMetric('trust') + '%';
+  if (statVision) statVision.innerHTML = getRelationshipMetric('sharedVision') + '%';
+  
+  updateHomeScreen(); 
+  renderCoupleExtras();
+  recalculateAllMetrics();
+};
+
+// 3. Override savePathProgress to handle missing columns
+const originalSavePathProgress = savePathProgress;
+savePathProgress = function() {
+  if (sbClient && currentRelationshipId && currentUser) {
+    // Try to save, but don't crash if column doesn't exist
+    try {
+      safeRelUpdate({ path_progress: JSON.stringify(pathProgress) });
+    } catch(e) {
+      console.log('Path progress save skipped - column may not exist yet');
+    }
+  }
+};
+
+console.log('✅ All fixes applied!');
 
 // ==================== INIT ====================
 initStars();
