@@ -1249,7 +1249,6 @@ function updateAllUI() {
   drawTree(); 
   renderGrowthBars(); 
   
-  // Only call renderPrivateEntries if the function exists
   if (typeof renderPrivateEntries === 'function') {
     renderPrivateEntries(); 
   }
@@ -1258,19 +1257,22 @@ function updateAllUI() {
   updatePartnerDisplay(); 
   updateXpDisplay();
   
-  // Baby Readiness
   let baby = getBabyReadiness();
-  document.getElementById('baby-pct').innerHTML = baby + '%';
+  const babyEl = document.getElementById('baby-pct');
+  if (babyEl) babyEl.innerHTML = baby + '%';
   
-  // Tree stats - now fully dynamic
   let avgGrowth = Math.round((getPersonalMetric('empathy') + getPersonalMetric('selfAwareness') + getPersonalMetric('communication')) / 3);
-  document.getElementById('stat-growth').innerHTML = avgGrowth + '%';
-  document.getElementById('stat-harmony').innerHTML = getRelationshipMetric('trust') + '%';
-  document.getElementById('stat-vision').innerHTML = getRelationshipMetric('sharedVision') + '%';
+  const statGrowth = document.getElementById('stat-growth');
+  const statHarmony = document.getElementById('stat-harmony');
+  const statVision = document.getElementById('stat-vision');
+  
+  if (statGrowth) statGrowth.innerHTML = avgGrowth + '%';
+  if (statHarmony) statHarmony.innerHTML = getRelationshipMetric('trust') + '%';
+  if (statVision) statVision.innerHTML = getRelationshipMetric('sharedVision') + '%';
   
   updateHomeScreen(); 
   renderCoupleExtras();
-  recalculateAllMetrics();
+  // REMOVED: recalculateAllMetrics() - this causes recursion
 }
 
 function updateWeatherProgress() {
