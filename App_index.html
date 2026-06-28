@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Olivium DAO — Tuscan Grove</title>
+  <title>Olivium  — Estate Living</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet" />
 
@@ -132,7 +132,7 @@
   <div id="panel-home" class="space-y-6">
     <div class="glass-card p-6 relative overflow-hidden">
       <div class="absolute top-0 right-0 p-4 opacity-20 text-6xl">🌿</div>
-      <h2 class="serif text-3xl mb-2">Tuscan Heritage</h2>
+      <h2 class="serif text-3xl mb-2">Toscagialla Heritage Grove</h2>
       <p class="text-sm text-stone-400 mb-6">240 Organic trees in San Vincenzo. Adopt a piece of the land.</p>
       
       <div id="stats" class="hidden sticky top-16 z-40 bg-white border-b border-stone-200 shadow-sm">
@@ -140,7 +140,7 @@
 
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-          <p class="text-[10px] text-stone-500 uppercase">Share Price</p>
+          <p class="text-[10px] text-stone-500 uppercase">Mignole Price</p>
           <p id="protocol-share-price" class="text-lg font-bold text-[#C5A059]">0.05 SOL</p>
         </div>
         <div class="bg-white/5 p-3 rounded-xl border border-white/10">
@@ -161,7 +161,7 @@
           <h1 class="serif text-3xl font-bold text-stone-100">Your Grove 🌿</h1>
           <p class="text-sm text-stone-500 mt-1">
             You own <span id="grove-tree-count" class="font-semibold text-stone-300">—</span> trees ·
-            <span id="grove-share-count" class="font-semibold text-stone-300">—</span> shares
+            <span id="grove-share-count" class="font-semibold text-stone-300">—</span> Mignole
           </p>
         </div>
 
@@ -218,7 +218,7 @@
 
     <div class="space-y-3">
       <div class="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
-        <span class="text-stone-500">Next: Seed Supporter</span>
+        <span class="text-stone-500">Next: Mignole Supporter</span>
         <span id="tier-percent-label" class="text-[#C5A059]">0%</span>
       </div>
       <div class="w-full bg-white/5 rounded-full h-2.5 overflow-hidden border border-white/5">
@@ -241,14 +241,17 @@
         <div class="flex items-start gap-4">
           <div class="text-3xl filter grayscale">🌱</div>
           <div class="flex-1">
-            <h4 class="font-bold text-white text-lg">Seed Supporter</h4>
-            <p class="text-[10px] text-[#C5A059] font-mono mb-3 uppercase tracking-widest">100-499 Shares</p>
+            <h4 class="font-bold text-white text-lg">Mignole Supporter</h4>
+            <p class="text-[10px] text-[#C5A059] font-mono mb-3 uppercase tracking-widest">100-499 Mignole</p>
             <ul class="space-y-2 text-xs text-stone-400">
               <li class="flex items-center gap-2">
-                <span class="text-stone-600">○</span> Annual olive oil delivery
+                <span class="text-stone-600">○</span> Annual olive oil allocation
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-stone-600">○</span> Harvest updates & photos
+              </li>
+               <li class="flex items-center gap-2">
+                <span class="text-stone-600">○</span> Community and games
               </li>
             </ul>
           </div>
@@ -260,7 +263,7 @@
           <div class="text-3xl filter grayscale">🌳</div>
           <div class="flex-1">
             <h4 class="font-bold text-white text-lg">Tree Guardian</h4>
-            <p class="text-[10px] text-[#C5A059] font-mono mb-3 uppercase tracking-widest">500-999 Shares</p>
+            <p class="text-[10px] text-[#C5A059] font-mono mb-3 uppercase tracking-widest">500-999 Mignole</p>
             <ul class="space-y-2 text-xs text-stone-400">
               <li class="flex items-center gap-2">
                 <span class="text-stone-600">○</span> Personalized tree certificate
@@ -278,7 +281,7 @@
           <div class="text-3xl filter grayscale">👑</div>
           <div class="flex-1">
             <h4 class="font-bold text-white text-lg">Grove Patron</h4>
-            <p class="text-[10px] text-[#C5A059] font-mono mb-3 uppercase tracking-widest">1,000+ Shares</p>
+            <p class="text-[10px] text-[#C5A059] font-mono mb-3 uppercase tracking-widest">1,000+ Mignole</p>
             <ul class="space-y-2 text-xs text-stone-400">
               <li class="flex items-center gap-2">
                 <span class="text-stone-600">○</span> 3-night villa stay
@@ -408,12 +411,12 @@
         </div>
         <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
           <p id="modal-price-per" class="font-bold text-stone-800">—</p>
-          <p class="text-xs text-stone-400">per share</p>
+          <p class="text-xs text-stone-400">per mignole</p>
         </div>
       </div>
 
       <!-- Shares slider -->
-      <label class="block text-sm font-medium text-stone-700 mb-2">How many shares?</label>
+      <label class="block text-sm font-medium text-stone-700 mb-2">How many Mignole?</label>
       <input id="modal-slider" type="range" min="1" max="1000" value="100" step="1"
         class="w-full mb-3 accent-green-700"
         oninput="updateModalCalc()" />
@@ -421,7 +424,7 @@
       <div class="flex justify-between items-baseline mb-5">
         <div>
           <span id="modal-amount-display" class="text-2xl font-bold serif text-stone-900">100</span>
-          <span class="text-sm text-stone-400 ml-1">shares (<span id="modal-pct">10.0</span>%)</span>
+          <span class="text-sm text-stone-400 ml-1">mignole (<span id="modal-pct">10.0</span>%)</span>
         </div>
         <div>
           <span class="text-sm text-stone-400">Cost:</span>
@@ -432,18 +435,18 @@
       <!-- Tier indicator -->
       <div id="modal-tier-row" class="flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium bg-stone-100 text-stone-500">
         <span id="modal-tier-icon">—</span>
-        <span id="modal-tier-label">Select at least 100 shares for Olive Lover tier</span>
+        <span id="modal-tier-label">Select at least 100 shares for Mignole Supporter tier</span>
       </div>
 
       <!-- Disclaimer -->
       <p class="text-xs text-stone-400 leading-relaxed mb-4">
-        ⚖️ Not an investment. Benefits subject to harvest. You may receive less oil than estimated. Shares may have no resale value.
+        ⚖️ Not an investment. Benefits subject to harvest. You may receive less oil than estimated. Mignole may have no resale value.
       </p>
 
       <!-- Legal check -->
       <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-500">
         <input id="modal-agree" type="checkbox" class="mt-0.5 accent-green-700" onchange="toggleModalButton()" />
-        I confirm I am NOT a US/CA/UK resident and I have read the
+        I confirm I know this is NOT an investment, but a lifestyle and a supporter of an Eco.tourism membership participation and I have read the
         <a href="#" class="underline ml-0.5" style="color:var(--olive)">Terms of Service</a>
       </label>
 
@@ -475,10 +478,10 @@
 
     <div class="p-5">
       <div class="flex justify-between items-end mb-4">
-         <p id="sell-modal-tree-meta" class="text-xs text-stone-400">Exit Position</p>
+         <p id="sell-modal-tree-meta" class="text-xs text-stone-400">Exit Adoption</p>
          <div class="text-right">
             <p class="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Ownership</p>
-            <p id="sell-modal-owned" class="text-sm font-bold text-stone-900">— shares</p>
+            <p id="sell-modal-owned" class="text-sm font-bold text-stone-900">— Mignole</p>
          </div>
       </div>
 
@@ -489,8 +492,8 @@
 
       <div class="mb-4">
           <div class="flex justify-between mb-1">
-            <label class="text-xs font-bold text-stone-700 uppercase tracking-wide">Amount to Sell</label>
-            <span class="text-xs font-bold text-amber-700"><span id="sell-modal-shares-val">10</span> shares</span>
+            <label class="text-xs font-bold text-stone-700 uppercase tracking-wide">Amount to Release</label>
+            <span class="text-xs font-bold text-amber-700"><span id="sell-modal-shares-val">10</span> mignole</span>
           </div>
           <input id="sell-modal-slider" type="range" min="1" max="100" value="10" step="1"
             class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-700"
@@ -504,13 +507,13 @@
 
       <div class="bg-red-50/50 border border-red-100 rounded-lg p-2.5 mb-4">
         <p class="text-[10px] text-red-700 leading-tight">
-          <strong>Note:</strong> Selling reduces your yield and may lower your Guardian Tier status. This action is final.
+          <strong>Note:</strong> Releasing mignoles, reduces your yield and may lower your Guardian Tier status. This action is final.
         </p>
       </div>
 
       <label class="flex items-center gap-2 mb-4 cursor-pointer">
         <input id="sell-modal-agree" type="checkbox" class="w-3 h-3 rounded" onchange="checkSellModalBtn()" />
-        <span class="text-[11px] text-stone-500">Confirm share liquidation</span>
+        <span class="text-[11px] text-stone-500">Confirm mignole release</span>
       </label>
 
       <button id="sell-modal-btn" onclick="confirmSell()" disabled
