@@ -1,957 +1,609 @@
-# tree.html (Part 1)
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌳 Live Tree Camera · 4K Drone</title>
+  <!-- Font & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    body {
+      background: linear-gradient(145deg, #0b1a0e 0%, #102a14 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
 
-<title>OLVM | Digital Tree Passport</title>
+    /* main dashboard card – like a live HUD */
+    .dashboard {
+      max-width: 1100px;
+      width: 100%;
+      background: rgba(10, 25, 12, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 48px;
+      padding: 24px;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(80, 200, 120, 0.2);
+      border: 1px solid rgba(60, 180, 100, 0.25);
+      transition: all 0.2s ease;
+    }
 
-<link rel="stylesheet" href="css/tree.css">
+    /* grid layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    /* cards */
+    .card {
+      background: rgba(16, 35, 20, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border-radius: 28px;
+      padding: 20px;
+      border: 1px solid rgba(70, 200, 120, 0.2);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      transition: 0.15s ease;
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    .card:hover {
+      border-color: rgba(100, 255, 150, 0.5);
+      box-shadow: 0 8px 30px rgba(0, 180, 80, 0.15);
+    }
 
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      color: #b0e0b0;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .card-header i {
+      color: #6fcf97;
+      font-size: 1.2rem;
+    }
+
+    /* live camera (drone feed) */
+    .live-feed {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      background: #0f1f12;
+      border-radius: 32px;
+      padding: 16px;
+      position: relative;
+      border: 1px solid #2a6b3a;
+      background-image: radial-gradient(circle at 20% 30%, #1a3a1e 0%, #0a1a0c 90%);
+      box-shadow: inset 0 0 60px rgba(0, 30, 10, 0.6);
+    }
+
+    .camera-top {
+      display: flex;
+      justify-content: space-between;
+      color: #b0f0b0;
+      font-size: 0.8rem;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1f4a28;
+      margin-bottom: 16px;
+    }
+
+    .camera-top .live-badge {
+      background: #e74c3c;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      color: white;
+      box-shadow: 0 0 12px #e74c3c99;
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.96); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .drone-view {
+      aspect-ratio: 16 / 9;
+      background: #0d1f10;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: 
+        linear-gradient(0deg, rgba(10, 30, 10, 0.2) 0%, transparent 60%),
+        repeating-linear-gradient(45deg, #1a3a1e 0px, #1a3a1e 2px, #123016 2px, #123016 6px);
+      border: 1px solid #2b6b3b;
+      position: relative;
+      box-shadow: inset 0 0 40px #0a1f0c;
+    }
+
+    .drone-view .tree-icon {
+      font-size: 5.5rem;
+      filter: drop-shadow(0 0 20px #7ddf9a);
+      animation: float-tree 4s infinite alternate ease-in-out;
+    }
+
+    @keyframes float-tree {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-12px) scale(1.02); }
+    }
+
+    .drone-view .drone-tag {
+      position: absolute;
+      bottom: 16px;
+      right: 20px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      padding: 8px 18px;
+      border-radius: 40px;
+      color: #9fdfb0;
+      font-size: 0.8rem;
+      border: 1px solid #2c8a44;
+      letter-spacing: 0.5px;
+    }
+
+    /* small cards */
+    .small-card {
+      background: rgba(10, 30, 14, 0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 20px;
+      padding: 16px 18px;
+      border: 1px solid #1f4f2a;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-label {
+      color: #87b98a;
+      font-size: 0.8rem;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-value {
+      color: #d4fad4;
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-value small {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #7cb87e;
+      margin-left: 4px;
+    }
+
+    .trend-up { color: #5fdf7f; }
+    .trend-down { color: #f08a7a; }
+
+    .progress-bar {
+      background: #19331e;
+      border-radius: 40px;
+      height: 8px;
+      margin-top: 10px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3dcc6a, #8bf0a0);
+      border-radius: 40px;
+      width: 98%;
+      box-shadow: 0 0 12px #3dcc6a55;
+    }
+
+    /* map card */
+    .map-card {
+      grid-column: 2 / 3;
+      background: #0c1d10;
+      border-radius: 28px;
+      padding: 16px;
+      border: 1px solid #256b35;
+    }
+
+    .map-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .tree-marker {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #1b3a22;
+      padding: 12px 18px;
+      border-radius: 60px;
+      border-left: 4px solid #4cdb7a;
+      transition: 0.1s ease;
+      font-weight: 500;
+      color: #cef0d0;
+    }
+
+    .tree-marker i {
+      color: #6fdf8f;
+      font-size: 1.4rem;
+      width: 28px;
+    }
+
+    .tree-marker span {
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+
+    .tree-marker .badge-id {
+      margin-left: auto;
+      background: #1f4a2a;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      color: #b0e6b0;
+    }
+
+    /* analytics */
+    .analytics-card {
+      grid-column: 2 / 3;
+    }
+
+    .analytics-bar {
+      margin: 8px 0;
+    }
+
+    .analytics-bar .bar-label {
+      display: flex;
+      justify-content: space-between;
+      color: #b0dbb0;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+    }
+
+    .bar-track {
+      background: #1b3a22;
+      height: 10px;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, #3dcc6a, #99f0b0);
+      width: 88%;
+    }
+
+    .bar-fill.co2 { width: 72%; background: linear-gradient(90deg, #cc9f3d, #f0d48b); }
+    .bar-fill.rain { width: 64%; background: linear-gradient(90deg, #3d9fcc, #8bcff0); }
+
+    /* wallet row */
+    .wallet-row {
+      grid-column: 1 / 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: #112a18;
+      padding: 10px 20px;
+      border-radius: 60px;
+      border: 1px solid #2a6b3a;
+      margin-top: 6px;
+    }
+
+    .wallet-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: #d0f0d0;
+    }
+
+    .wallet-info i {
+      font-size: 1.8rem;
+      color: #6fcf97;
+    }
+
+    .wallet-balance {
+      font-weight: 700;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #b0f0b0, #7ddf9a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .connect-btn {
+      background: #2b7a3e;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 60px;
+      color: white;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.15s ease;
+      box-shadow: 0 0 20px #2b7a3e55;
+      border: 1px solid #5fcf7a;
+    }
+
+    .connect-btn i {
+      font-size: 1.2rem;
+    }
+
+    .connect-btn:hover {
+      background: #3d9f55;
+      transform: scale(1.02);
+      box-shadow: 0 0 30px #3dcc6a77;
+    }
+
+    .connect-btn:active { transform: scale(0.97); }
+
+    .status-badge {
+      font-size: 0.8rem;
+      background: #1a3a1e;
+      padding: 6px 18px;
+      border-radius: 40px;
+      color: #9fdfb0;
+      border: 1px solid #3a8a4a;
+    }
+
+    /* misc */
+    .footer-grid {
+      grid-column: 1 / 3;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .footer-item {
+      background: #112a18;
+      border-radius: 60px;
+      padding: 10px 8px;
+      text-align: center;
+      color: #b0e0b0;
+      font-size: 0.8rem;
+      border: 1px solid #1f4f2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .footer-item i {
+      color: #6fcf97;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+      .live-feed { grid-column: 1; grid-row: auto; }
+      .map-card { grid-column: 1; }
+      .analytics-card { grid-column: 1; }
+      .wallet-row { grid-column: 1; flex-direction: column; align-items: stretch; }
+      .footer-grid { grid-column: 1; grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
-
 <body>
+<div class="dashboard">
 
-<div class="background-glow"></div>
+  <div class="grid">
 
-<header class="hero">
-
-    <video autoplay muted loop playsinline class="hero-video">
-        <source src="media/tree.mp4" type="video/mp4">
-    </video>
-
-    <div class="hero-overlay"></div>
-
-    <nav>
-
-        <div class="logo">
-            OLVM
-        </div>
-
-        <div class="nav-links">
-
-            <a href="#">Overview</a>
-            <a href="#">Gallery</a>
-            <a href="#">Dashboard</a>
-            <a href="#">Certificates</a>
-
-            <button id="connectWallet">
-                Connect Wallet
-            </button>
-
-        </div>
-
-    </nav>
-
-    <div class="hero-content">
-
-        <span class="tree-id">
-            TREE ID • TUSC-023
-        </span>
-
-        <h1>
-            Leccino Millenaria
-        </h1>
-
-        <p>
-            Living Digital Passport
-        </p>
-
-        <div class="hero-badges">
-
-            <div class="badge">
-                🌳
-                Heritage Tree
-            </div>
-
-            <div class="badge live">
-                ● LIVE
-            </div>
-
-            <div class="badge">
-                Verified NFT
-            </div>
-
-        </div>
-
+    <!-- LIVE TREE CAMERA 4K DRONE -->
+    <div class="card live-feed">
+      <div class="camera-top">
+        <span><i class="fas fa-broadcast" style="margin-right: 8px; color: #6fcf97;"></i> 4K Drone Feed</span>
+        <span class="live-badge"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 6px;"></i> LIVE</span>
+        <span><i class="fas fa-wind" style="margin-right: 6px; color: #7fbf8f;"></i> Wind 4 km/h</span>
+      </div>
+      <div class="drone-view">
+        <div class="tree-icon">🌳</div>
+        <span style="color: #8fd8a0; font-weight: 300; letter-spacing: 2px; background: #0a1f0c80; padding: 4px 14px; border-radius: 40px; backdrop-filter: blur(4px); border: 1px solid #2d6b3b;">TREE 023 · 4K</span>
+        <div class="drone-tag"><i class="fas fa-drone"></i>  ALT 24m  ·  HD</div>
+      </div>
     </div>
 
-</header>
-
-<section class="stats">
-
-<div class="card">
-
-<h3>Age</h3>
-
-<div class="number" id="treeAge">
-85
-</div>
-
-<p>Years</p>
-
-</div>
-
-<div class="card">
-
-<h3>Annual Harvest</h3>
-
-<div class="number" id="harvest">
-
-32kg
-
-</div>
-
-</div>
-
-<div class="card">
-
-<h3>CO₂ Capture</h3>
-
-<div class="number" id="co2">
-
-108kg
-
-</div>
-
-</div>
-
-<div class="card">
-
-<h3>Tree Health</h3>
-
-<div class="number health">
-
-98%
-
-</div>
-
-</div>
-
-</section>
-
-<section class="dashboard-grid">
-
-<div class="panel tree-panel">
-
-<h2>Tree Information</h2>
-
-<table>
-
-<tr>
-<td>ID</td>
-<td id="treeID">TUSC-023</td>
-</tr>
-
-<tr>
-<td>Variety</td>
-<td id="treeVariety">Leccino</td>
-</tr>
-
-<tr>
-<td>Age</td>
-<td id="treeYears">85 Years</td>
-</tr>
-
-<tr>
-<td>Height</td>
-<td id="treeHeight">5.2 m</td>
-</tr>
-
-<tr>
-<td>Canopy</td>
-<td id="treeCanopy">7.8 m</td>
-</tr>
-
-<tr>
-<td>Status</td>
-<td class="green">
-Excellent
-</td>
-</tr>
-
-</table>
-
-</div>
-
-<div class="panel video-panel">
-
-<h2>Live Tree Camera</h2>
-
-<video
-id="liveVideo"
-controls
-autoplay
-muted
-playsinline>
-
-<source src="" type="application/x-mpegURL">
-
-</video>
-
-<div class="live-footer">
-
-<span class="pulse"></span>
-
-Streaming Live
-
-</div>
-
-</div>
-
-<div class="panel weather-panel">
-
-<h2>Current Weather</h2>
-
-<div class="weather-main">
-
-<div class="temp" id="temperature">
-
---°
-
-</div>
-
-<div class="icon" id="weatherIcon">
-
-☀️
-
-</div>
-
-</div>
-
-<div class="weather-grid">
-
-<div>
-
-Humidity
-
-<strong id="humidity">
---
-</strong>
-
-</div>
-
-<div>
-
-Wind
-
-<strong id="wind">
-
---
-
-</strong>
-
-</div>
-
-<div>
-
-Pressure
-
-<strong id="pressure">
-
---
-
-</strong>
-
-</div>
-
-<div>
-
-Rain
-
-<strong id="rain">
-
---
-
-</strong>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="panel oil-panel">
-
-<h2>Italian EVOO Price</h2>
-
-<div class="oil-price">
-
-<span id="oilPrice">
-
-€--
-
-</span>
-
-<small>/kg</small>
-
-</div>
-
-<div class="price-change positive">
-
-▲
-
-<span id="priceChange">
-
-0%
-
-</span>
-
-</div>
-
-<canvas id="oilChart"></canvas>
-
-</div>
-
-<div class="panel wallet-panel">
-
-<h2>Wallet</h2>
-
-<div class="wallet-address"
-
-id="walletAddress">
-
-Not Connected
-
-</div>
-
-<div class="wallet-grid">
-
-<div>
-
-OLVM
-
-<strong id="olvmBalance">
-
-0
-
-</strong>
-
-</div>
-
-<div>
-
-ETH
-
-<strong id="ethBalance">
-
-0
-
-</strong>
-
-</div>
-
-<div>
-
-Trees
-
-<strong id="ownedTrees">
-
-0
-
-</strong>
-
-</div>
-
-<div>
-
-Rewards
-
-<strong id="rewardBalance">
-
-0
-
-</strong>
-
-</div>
-
-</div>
-
-<button class="walletButton">
-
-Connect Wallet
-
-</button>
-
-</div>
-
-</section>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script type="module" src="dist/dashboard.js"></script>
-
+    <!-- HEALTH + CO2 + WALLET mini -->
+    <div class="small-card">
+      <div class="stat-row">
+        <span class="stat-label"><i class="fas fa-heartbeat" style="margin-right: 8px; color: #4cdb7a;"></i> HEALTH</span>
+        <span class="stat-value">98% <small>+2%</small></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
+    </div>
+
+    <div class="small-card">
+      <div class="stat-row">
+        <span class="stat-label"><i class="fas fa-leaf" style="margin-right: 8px; color: #6fcf97;"></i> CO₂</span>
+        <span class="stat-value">108kg <span class="trend-up"><i class="fas fa-arrow-up"></i> +6%</span></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill co2" style="width:72%"></div></div>
+    </div>
+
+    <div class="small-card" style="grid-column: 2 / 3;">
+      <div class="stat-row">
+        <span class="stat-label"><i class="fas fa-wallet" style="margin-right: 8px; color: #f5cd7a;"></i> WALLET</span>
+        <span class="stat-value" style="font-size:1.6rem;">2450 <small>OLVM</small></span>
+      </div>
+      <div style="display:flex; justify-content: flex-end; margin-top: 6px;">
+        <span style="background:#1f4a2a; padding:2px 14px; border-radius:30px; font-size:0.7rem; color:#b0e6b0;"><i class="fas fa-coins"></i>  on-chain</span>
+      </div>
+    </div>
+
+    <!-- LIVE MAP -->
+    <div class="map-card">
+      <div class="card-header">
+        <span><i class="fas fa-map-pin" style="margin-right: 10px;"></i> LIVE MAP · canopy</span>
+        <i class="fas fa-expand-alt"></i>
+      </div>
+      <div class="map-grid">
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 023 <span class="badge-id">🌳 4.2km</span></div>
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 024 <span class="badge-id">🌳 3.8km</span></div>
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 025 <span class="badge-id">🌳 6.1km</span></div>
+        <div style="margin-top: 6px; color:#6f9f7a; font-size:0.7rem; display:flex; gap:16px; justify-content:center; border-top:1px solid #1f4a2a; padding-top:10px;">
+          <span><i class="fas fa-circle" style="color:#4cdb7a;"></i>  active</span>
+          <span><i class="fas fa-circle" style="color:#c0c0c0;"></i>  synced</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="card analytics-card">
+      <div class="card-header">
+        <span><i class="fas fa-chart-line" style="margin-right: 10px;"></i> ANALYTICS</span>
+        <i class="fas fa-ellipsis-h"></i>
+      </div>
+      <div class="analytics-bar">
+        <div class="bar-label"><span>Yield</span> <span>88%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:88%"></div></div>
+      </div>
+      <div class="analytics-bar">
+        <div class="bar-label"><span>CO₂ offset</span> <span>72%</span></div>
+        <div class="bar-track"><div class="bar-fill co2" style="width:72%"></div></div>
+      </div>
+      <div class="analytics-bar">
+        <div class="bar-label"><span>Rainfall</span> <span>64%</span></div>
+        <div class="bar-track"><div class="bar-fill rain" style="width:64%"></div></div>
+      </div>
+    </div>
+
+    <!-- WALLET CONNECT + supabase/onchain simulation -->
+    <div class="wallet-row">
+      <div class="wallet-info">
+        <i class="fas fa-link"></i>
+        <span><i class="fas fa-database" style="margin-right: 6px; color:#7fbf8f;"></i> Supabase · onchain</span>
+        <span class="status-badge" id="connectionStatus"><i class="fas fa-circle" style="color: #ffbb33; margin-right:6px;"></i>  connecting</span>
+      </div>
+      <button class="connect-btn" id="connectWalletBtn"><i class="fas fa-plug"></i>  Connect Wallet</button>
+      <span style="color:#7fbf8f; font-size:0.8rem;"><i class="fas fa-check-circle" style="color:#4cdb7a;"></i>  data loaded</span>
+    </div>
+
+    <!-- footer meta -->
+    <div class="footer-grid">
+      <div class="footer-item"><i class="fas fa-cloud-sun"></i> 22°C / clear</div>
+      <div class="footer-item"><i class="fas fa-gas-pump"></i> Oil $82.4</div>
+      <div class="footer-item"><i class="fas fa-microchip"></i> Sensors 12</div>
+      <div class="footer-item"><i class="fas fa-palette"></i> NFT · 4 listings</div>
+    </div>
+
+  </div> <!-- end grid -->
+</div> <!-- end dashboard -->
+
+<script>
+  (function() {
+    const connectBtn = document.getElementById('connectWalletBtn');
+    const statusBadge = document.getElementById('connectionStatus');
+
+    // simulate wallet connect + supabase/onchain data load
+    function simulateWalletConnection() {
+      statusBadge.innerHTML = '<i class="fas fa-spinner fa-pulse" style="margin-right:6px;"></i> loading onchain..';
+      connectBtn.disabled = true;
+      connectBtn.style.opacity = '0.6';
+
+      // mock async load from supabase & onchain
+      setTimeout(() => {
+        // update wallet balance with random + onchain data
+        const walletSpan = document.querySelector('.wallet-balance');
+        if (walletSpan) {
+          const newBalance = Math.floor(2450 + Math.random() * 200);
+          walletSpan.innerHTML = newBalance + ' <small>OLVM</small>';
+        }
+
+        // update CO₂ and health as if data from supabase
+        const co2Stat = document.querySelector('.small-card:nth-child(3) .stat-value');
+        if (co2Stat) {
+          const co2Val = 108 + Math.floor(Math.random() * 12);
+          co2Stat.innerHTML = co2Val + 'kg <span class="trend-up"><i class="fas fa-arrow-up"></i> +' + (3 + Math.floor(Math.random() * 6)) + '%</span>';
+        }
+        // health random
+        const healthStat = document.querySelector('.small-card:nth-child(2) .stat-value');
+        if (healthStat) {
+          const healthVal = 94 + Math.floor(Math.random() * 6);
+          healthStat.innerHTML = healthVal + '% <small>+' + (1 + Math.floor(Math.random() * 3)) + '%</small>';
+        }
+
+        // update progress bars (analog)
+        const bars = document.querySelectorAll('.bar-fill');
+        if (bars.length >= 3) {
+          bars[0].style.width = (80 + Math.floor(Math.random() * 15)) + '%';
+          bars[1].style.width = (68 + Math.floor(Math.random() * 18)) + '%';
+          bars[2].style.width = (60 + Math.floor(Math.random() * 20)) + '%';
+        }
+
+        // NFT and sensors update (cosmetic)
+        const nftItem = document.querySelector('.footer-item:last-child');
+        if (nftItem) {
+          const nftCount = 4 + Math.floor(Math.random() * 6);
+          nftItem.innerHTML = '<i class="fas fa-palette"></i> NFT · ' + nftCount + ' listings';
+        }
+
+        // wallet status
+        statusBadge.innerHTML = '<i class="fas fa-circle" style="color: #3dcc6a; margin-right:6px;"></i>  connected · onchain';
+        connectBtn.innerHTML = '<i class="fas fa-check-circle"></i>  Wallet connected';
+        connectBtn.disabled = false;
+        connectBtn.style.opacity = '1';
+        connectBtn.style.background = '#1f6b30';
+
+        // extra: update map marker with dynamic
+        const markers = document.querySelectorAll('.tree-marker .badge-id');
+        if (markers.length) {
+          markers.forEach((el, idx) => {
+            const dist = (3.5 + Math.random() * 4).toFixed(1);
+            el.innerHTML = '🌳 ' + dist + 'km';
+          });
+        }
+
+        console.log('✅ Supabase & onchain data loaded (simulated)');
+      }, 1500);
+    }
+
+    connectBtn.addEventListener('click', simulateWalletConnection);
+
+    // auto-connect on load (to show data loaded)
+    window.addEventListener('load', function() {
+      // initial fake load
+      setTimeout(() => {
+        statusBadge.innerHTML = '<i class="fas fa-circle" style="color: #3dcc6a; margin-right:6px;"></i>  connected · onchain';
+        connectBtn.innerHTML = '<i class="fas fa-check-circle"></i>  Wallet connected';
+        connectBtn.style.background = '#1f6b30';
+        // update initial balance with small variation
+        const walletSpan = document.querySelector('.wallet-balance');
+        if (walletSpan) {
+          const initBal = 2450 + Math.floor(Math.random() * 80);
+          walletSpan.innerHTML = initBal + ' <small>OLVM</small>';
+        }
+      }, 400);
+    });
+
+  })();
+</script>
+
+<!-- subtle extra style for live camera -->
 </body>
-
 </html>
-```
-
----
-
-# css/tree.css (Part 1)
-
-```css
-:root{
-
---gold:#d4b36a;
---gold2:#e7cb89;
---bg:#09110d;
---panel:rgba(18,27,20,.65);
---border:rgba(255,255,255,.08);
-
---text:#ffffff;
---muted:#9ca89c;
-
---radius:22px;
-
---shadow:0 15px 45px rgba(0,0,0,.45);
-
---transition:.35s;
-
-}
-
-*{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-
-}
-
-body{
-
-background:#08100c;
-
-font-family:Inter,sans-serif;
-
-color:white;
-
-overflow-x:hidden;
-
-}
-
-.background-glow{
-
-position:fixed;
-
-inset:0;
-
-background:
-radial-gradient(circle at top,#245a2c33,transparent 55%),
-radial-gradient(circle at bottom,#b18a3030,transparent 40%);
-
-z-index:-2;
-
-}
-
-.hero{
-
-height:100vh;
-
-position:relative;
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-overflow:hidden;
-
-}
-
-.hero-video{
-
-position:absolute;
-
-width:100%;
-height:100%;
-
-object-fit:cover;
-
-}
-
-.hero-overlay{
-
-position:absolute;
-
-inset:0;
-
-background:
-
-linear-gradient(to bottom,
-
-rgba(0,0,0,.3),
-
-rgba(5,10,8,.92));
-
-}
-
-nav{
-
-position:absolute;
-
-top:30px;
-
-left:50%;
-
-transform:translateX(-50%);
-
-width:min(1400px,92%);
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-z-index:20;
-
-}
-
-.logo{
-
-font-size:34px;
-
-letter-spacing:5px;
-
-font-family:"Cormorant Garamond",serif;
-
-color:var(--gold);
-
-}
-
-.nav-links{
-
-display:flex;
-
-align-items:center;
-
-gap:30px;
-
-}
-
-.nav-links a{
-
-color:white;
-
-text-decoration:none;
-
-transition:.3s;
-
-}
-
-.nav-links a:hover{
-
-color:var(--gold);
-
-}
-
-#connectWallet{
-
-padding:12px 26px;
-
-border-radius:50px;
-
-border:none;
-
-background:linear-gradient(135deg,var(--gold),#fff0b0);
-
-cursor:pointer;
-
-font-weight:700;
-
-}
-
-.hero-content{
-
-position:relative;
-
-z-index:10;
-
-text-align:center;
-
-}
-
-.tree-id{
-
-color:var(--gold);
-
-letter-spacing:3px;
-
-font-size:13px;
-
-}
-
-.hero h1{
-
-font-size:72px;
-
-font-family:"Cormorant Garamond",serif;
-
-margin:20px 0;
-
-}
-
-.hero p{
-
-color:var(--muted);
-
-font-size:22px;
-
-}
-
-.hero-badges{
-
-display:flex;
-
-justify-content:center;
-
-gap:18px;
-
-margin-top:45px;
-
-flex-wrap:wrap;
-
-}
-
-.badge{
-
-padding:12px 24px;
-
-background:rgba(255,255,255,.08);
-
-backdrop-filter:blur(20px);
-
-border:1px solid rgba(255,255,255,.1);
-
-border-radius:100px;
-
-}
-
-.live{
-
-color:#3cff7a;
-
-}
-
-.stats{
-
-width:min(1400px,92%);
-
-margin:auto;
-
-display:grid;
-
-grid-template-columns:repeat(4,1fr);
-
-gap:25px;
-
-margin-top:-80px;
-
-position:relative;
-
-z-index:20;
-
-}
-
-.card{
-
-background:var(--panel);
-
-border:1px solid var(--border);
-
-backdrop-filter:blur(20px);
-
-padding:35px;
-
-border-radius:var(--radius);
-
-box-shadow:var(--shadow);
-
-transition:var(--transition);
-
-}
-
-.card:hover{
-
-transform:translateY(-6px);
-
-}
-
-.number{
-
-font-size:46px;
-
-margin:12px 0;
-
-font-weight:700;
-
-color:var(--gold2);
-
-}
-
-.dashboard-grid{
-
-width:min(1400px,92%);
-
-margin:70px auto;
-
-display:grid;
-
-grid-template-columns:repeat(2,1fr);
-
-gap:30px;
-
-}
-
-.panel{
-
-background:var(--panel);
-
-border:1px solid var(--border);
-
-backdrop-filter:blur(18px);
-
-padding:35px;
-
-border-radius:var(--radius);
-
-box-shadow:var(--shadow);
-
-}
-
-.panel h2{
-
-margin-bottom:25px;
-
-font-family:"Cormorant Garamond",serif;
-
-font-size:34px;
-
-color:var(--gold);
-
-}
-
-table{
-
-width:100%;
-
-border-collapse:collapse;
-
-}
-
-td{
-
-padding:16px;
-
-border-bottom:1px solid rgba(255,255,255,.06);
-
-}
-
-.green{
-
-color:#47e78d;
-
-}
-
-.video-panel video{
-
-width:100%;
-
-aspect-ratio:16/9;
-
-border-radius:16px;
-
-background:black;
-
-}
-
-.live-footer{
-
-display:flex;
-
-align-items:center;
-
-gap:10px;
-
-margin-top:20px;
-
-}
-
-.pulse{
-
-width:12px;
-
-height:12px;
-
-border-radius:50%;
-
-background:#39ff7b;
-
-animation:pulse 1.2s infinite;
-
-}
-
-@keyframes pulse{
-
-0%{transform:scale(1);opacity:1;}
-100%{transform:scale(2);opacity:0;}
-
-}
-
-.weather-main{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-}
-
-.temp{
-
-font-size:70px;
-
-color:var(--gold);
-
-}
-
-.weather-grid{
-
-margin-top:30px;
-
-display:grid;
-
-grid-template-columns:repeat(2,1fr);
-
-gap:20px;
-
-}
-
-.oil-price{
-
-font-size:60px;
-
-color:var(--gold);
-
-margin-bottom:10px;
-
-}
-
-.positive{
-
-color:#3cff84;
-
-margin-bottom:25px;
-
-}
-
-.wallet-address{
-
-padding:15px;
-
-background:#111;
-
-border-radius:10px;
-
-margin-bottom:25px;
-
-word-break:break-all;
-
-}
-
-.wallet-grid{
-
-display:grid;
-
-grid-template-columns:repeat(2,1fr);
-
-gap:20px;
-
-margin-bottom:30px;
-
-}
-
-.walletButton{
-
-width:100%;
-
-padding:16px;
-
-background:linear-gradient(135deg,var(--gold),#f6d898);
-
-border:none;
-
-border-radius:50px;
-
-font-size:16px;
-
-font-weight:700;
-
-cursor:pointer;
-
-}
-
-@media(max-width:1000px){
-
-.stats{
-
-grid-template-columns:repeat(2,1fr);
-
-}
-
-.dashboard-grid{
-
-grid-template-columns:1fr;
-
-}
-
-.hero h1{
-
-font-size:50px;
-
-}
-
-}
-
-@media(max-width:700px){
-
-nav{
-
-flex-direction:column;
-
-gap:25px;
-
-}
-
-.stats{
-
-grid-template-columns:1fr;
-
-}
-
-.hero{
-
-height:90vh;
-
-}
-
-.hero h1{
-
-font-size:38px;
-
-}
-
-}
-```
