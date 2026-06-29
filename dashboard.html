@@ -1,1078 +1,957 @@
+# tree.html (Part 1)
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium DAO — Adopt a Tuscan Olive Tree</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <style>
-        :root {
-            --olive:    #5a7a2b;
-            --olive-d:  #3d5a1a;
-            --olive-l:  #e8f0d5;
-            --earth:    #2c1a0e;
-            --sand:     #f5eed8;
-            --gold:     #c9903e;
-            --gold-l:   #fdf3e0;
-        }
-        body { font-family: 'Inter', sans-serif; background: #fafaf7; color: #1a1a14; }
-        .serif { font-family: 'Playfair Display', serif; }
-        .shimmer {
-            background: linear-gradient(90deg,#ede9d8 25%,#ddd8c2 50%,#ede9d8 75%);
-            background-size: 1200px 100%;
-            animation: shimmer 1.6s infinite;
-            border-radius: 6px;
-            color: transparent !important;
-            pointer-events: none;
-            min-height: 1.5rem;
-            display: inline-block;
-            width: 80%;
-        }
-        @keyframes shimmer {
-            0% { background-position: -600px 0; }
-            100% { background-position: 600px 0; }
-        }
-        .toast { animation: slideDown .22s ease; }
-        @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-        .tree-card { transition: transform .22s ease, box-shadow .22s ease; }
-        .tree-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.1); }
-        .tab-btn { border-bottom: 2px solid transparent; transition: all .18s; }
-        .tab-btn.active { border-bottom-color: var(--olive); color: var(--olive); }
-        #admin-log { font-family:'Menlo','Consolas',monospace; font-size:.72rem; line-height:1.6; }
-        .bar-fill { transition: width 1.5s ease-out; }
-        .health-high { background:#4ade80; }
-        .health-medium { background:#facc15; }
-        .health-low { background:#f87171; }
-        .guardian-pulse { animation: gold-pulse 2s infinite; }
-        @keyframes gold-pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 144, 62, 0.4); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(201, 144, 62, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 144, 62, 0); }
-        }
-        #post-connect-content { animation: fadeIn 1s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Debug console styling */
-        .debug-console {
-            background: #1a1a1a;
-            color: #00ff41;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            padding: 12px;
-            border-radius: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 10px;
-            border: 1px solid #333;
-        }
-        .debug-console .debug-line {
-            padding: 2px 0;
-            border-bottom: 1px solid #2a2a2a;
-        }
-        .debug-console .debug-line .label {
-            color: #8888ff;
-        }
-        .debug-console .debug-line .value {
-            color: #00ff41;
-            font-weight: bold;
-        }
-        .debug-console .debug-line .warning {
-            color: #ffaa00;
-        }
-        .debug-console .debug-line .error {
-            color: #ff4444;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>OLVM | Digital Tree Passport</title>
+
+<link rel="stylesheet" href="css/tree.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
 </head>
+
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     NAVIGATION
-══════════════════════════════════════════════════════════════ -->
-<nav class="bg-white border-b border-stone-200 sticky top-0 z-50 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <a href="#" class="flex items-center gap-2.5 group" onclick="switchTab('home'); return false;">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xl shadow-sm" style="background:var(--olive)">🫒</div>
-            <div>
-                <span class="serif font-bold text-lg leading-none" style="color:var(--earth)">Olivium</span>
-                <span class="block text-xs text-stone-400 leading-none mt-0.5">Tuscan Olive DAO</span>
-            </div>
-        </a>
+<div class="background-glow"></div>
 
-        <div id="nav-tabs" class="hidden items-center gap-0.5 bg-stone-100 rounded-xl p-1">
-            <button id="tab-home" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium text-stone-500 hover:text-stone-800 transition" onclick="switchTab('home')">🌿 Field</button>
-            <button id="tab-dash" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium text-stone-500 hover:text-stone-800 transition" onclick="switchTab('dash')">📋 My Grove</button>
-            <button id="tab-rewards" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium text-stone-500 hover:text-stone-800 transition" onclick="switchTab('rewards')">🎁 Rewards</button>
-            <button id="tab-admin" class="tab-btn hidden px-4 py-1.5 rounded-lg text-sm font-medium text-stone-500 hover:text-stone-800 transition" onclick="switchTab('admin')">⚙️ Admin</button>
+<header class="hero">
+
+    <video autoplay muted loop playsinline class="hero-video">
+        <source src="media/tree.mp4" type="video/mp4">
+    </video>
+
+    <div class="hero-overlay"></div>
+
+    <nav>
+
+        <div class="logo">
+            OLVM
         </div>
 
-        <div class="flex items-center gap-2">
-            <span class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 rounded-lg text-xs text-stone-500 font-medium">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Devnet
-            </span>
-            <button id="btn-connect"
-                class="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-xl shadow-sm transition-all active:scale-95"
-                style="background:var(--olive)"
-                onmouseover="this.style.background='var(--olive-d)'"
-                onmouseout="this.style.background='var(--olive)'">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                </svg>
+        <div class="nav-links">
+
+            <a href="#">Overview</a>
+            <a href="#">Gallery</a>
+            <a href="#">Dashboard</a>
+            <a href="#">Certificates</a>
+
+            <button id="connectWallet">
                 Connect Wallet
             </button>
-        </div>
-    </div>
-</nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     HERO (pre-connect)
-══════════════════════════════════════════════════════════════ -->
-<main id="panel-hero" class="bg-[#fafaf7]">
-    <section class="hero-grain relative overflow-hidden flex items-center" style="background:linear-gradient(135deg,#1e2d0f 0%,#2e4414 40%,#3d5a1a 100%); min-height:92vh;">
-        <div class="absolute inset-0 pointer-events-none">
-            <div class="absolute -right-32 -top-32 w-[600px] h-[600px] rounded-full opacity-10" style="background:radial-gradient(circle,#a8c060 0%,transparent 70%)"></div>
         </div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10 text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-8 border" style="background:rgba(255,255,255,.08); color:#a8c060; border-color:rgba(168,192,96,.3)">
-                🌍 240 Certified Organic Trees · San Vincenzo, Tuscany
-            </div>
-            <h1 class="serif text-5xl sm:text-7xl lg:text-8xl font-bold text-white leading-[1.1] mb-8">
-                Own a Living <span style="color:#a8c060">Olive Tree</span><br/>in Tuscany
-            </h1>
-            <p class="text-xl text-stone-300 leading-relaxed mb-10 max-w-2xl mx-auto">
-                Premium olive oil. Regenerative farming. Real-world experiences. <br class="hidden md:block">
-                <span class="text-white font-medium">Not just an investment — a connection to land, food, and time.</span>
-            </p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <button onclick="document.getElementById('btn-connect').click()" class="flex items-center gap-2 px-8 py-4 text-lg font-bold rounded-2xl shadow-xl transition-all active:scale-95" style="background:var(--gold); color:#1a0e00">
-                    🫒 Adopt a Tree
-                </button>
-            </div>
-        </div>
-    </section>
-</main>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MAIN APP
-══════════════════════════════════════════════════════════════ -->
-<div id="app" class="hidden">
+    </nav>
 
-    <!-- Portfolio Banner -->
-    <div id="stats" class="hidden sticky top-16 z-40 bg-white border-b border-stone-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-6 py-3 overflow-x-auto">
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:var(--olive-l)">🌳</div>
-                    <div>
-                        <p class="text-xs text-stone-400 leading-none">Your Trees</p>
-                        <p id="yourTrees" class="font-bold text-sm text-stone-800 shimmer">—</p>
-                    </div>
-                </div>
-                <div class="w-px h-8 bg-stone-200 shrink-0"></div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:var(--olive-l)">📊</div>
-                    <div>
-                        <p class="text-xs text-stone-400 leading-none">Total Shares</p>
-                        <p id="portfolioShares" class="font-bold text-sm text-stone-800 shimmer">—</p>
-                    </div>
-                </div>
-                <div class="w-px h-8 bg-stone-200 shrink-0"></div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:var(--gold-l)">🫙</div>
-                    <div>
-                        <p class="text-xs text-stone-400 leading-none">Annual Oil</p>
-                        <p id="oilLiters" class="font-bold text-sm text-stone-800 shimmer">—</p>
-                    </div>
-                </div>
-                <div class="w-px h-8 bg-stone-200 shrink-0"></div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:var(--gold-l)">🍾</div>
-                    <div>
-                        <p class="text-xs text-stone-400 leading-none">Bottles / yr</p>
-                        <p id="bottles" class="font-bold text-sm text-stone-800 shimmer">—</p>
-                    </div>
-                </div>
-                <div class="w-px h-8 bg-stone-200 shrink-0"></div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:#dcfce7">🌿</div>
-                    <div>
-                        <p class="text-xs text-stone-400 leading-none">Carbon Est.</p>
-                        <p id="carbonEst" class="font-bold text-sm text-stone-800 shimmer">—</p>
-                    </div>
-                </div>
-                <div class="w-px h-8 bg-stone-200 shrink-0"></div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:#f0f4ff">💎</div>
-                    <div>
-                        <p class="text-xs text-stone-400 leading-none">Est. Value</p>
-                        <p id="portfolioValue" class="font-bold text-sm text-stone-800 shimmer">—</p>
-                    </div>
-                </div>
-                <button onclick="window.refreshDashboard && window.refreshDashboard()" class="ml-auto shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs text-stone-400 hover:text-stone-700 border border-stone-200 rounded-lg transition hover:bg-stone-50">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Refresh
-                </button>
+    <div class="hero-content">
+
+        <span class="tree-id">
+            TREE ID • TUSC-023
+        </span>
+
+        <h1>
+            Leccino Millenaria
+        </h1>
+
+        <p>
+            Living Digital Passport
+        </p>
+
+        <div class="hero-badges">
+
+            <div class="badge">
+                🌳
+                Heritage Tree
             </div>
+
+            <div class="badge live">
+                ● LIVE
+            </div>
+
+            <div class="badge">
+                Verified NFT
+            </div>
+
         </div>
+
     </div>
 
-    <!-- ===================== PANEL: HOME (Grove) ===================== -->
-    <div id="panel-home" class="hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
-                <div>
-                    <h2 class="serif text-3xl font-bold" style="color:var(--earth)">🌳 The Grove</h2>
-                    <p class="text-sm text-stone-500 mt-1">240 organic olive trees · San Vincenzo, Tuscany</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3 text-sm">
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 rounded-lg text-stone-500">
-                        <span class="text-xs">Trees:</span>
-                        <span id="totalTrees" class="font-semibold text-stone-800">—</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 rounded-lg text-stone-500">
-                        <span class="text-xs">Share price:</span>
-                        <span id="sharePrice" class="font-semibold text-stone-800">—</span>
-                    </div>
-                </div>
-            </div>
+</header>
 
-            <div class="flex flex-wrap gap-2 mb-6" id="filter-row">
-                <button class="filter-btn active px-3 py-1.5 text-xs font-medium rounded-lg border transition-all" data-filter="all" style="background:var(--olive); color:white; border-color:var(--olive)">All Trees</button>
-                <button class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-stone-200 text-stone-500 hover:border-stone-400 transition-all" data-filter="available">Available</button>
-                <button class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-stone-200 text-stone-500 hover:border-stone-400 transition-all" data-filter="mine">My Trees</button>
-                <button class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-stone-200 text-stone-500 hover:border-stone-400 transition-all" data-filter="guardian">Full Guardian</button>
-            </div>
+<section class="stats">
 
-            <div id="trees-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                <div id="trees-placeholder" class="col-span-full py-20 text-center text-stone-400">
-                    <div class="text-6xl mb-4">🌱</div>
-                    <p class="font-semibold text-stone-500 text-lg">Connecting to the grove…</p>
-                    <p class="text-sm mt-1">Loading on-chain tree data</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="card">
 
-    <!-- ===================== PANEL: DASHBOARD ===================== -->
-    <div id="panel-dash" class="hidden bg-stone-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Header with Wallet Balances -->
-            <div class="mb-6">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                    <div>
-                        <h1 class="serif text-3xl font-bold text-stone-900">Your Grove 🌿</h1>
-                        <p class="text-sm text-stone-500 mt-1">
-                            You own <span id="grove-tree-count" class="font-semibold text-stone-700">—</span> trees ·
-                            <span id="grove-share-count" class="font-semibold text-stone-700">—</span> shares
-                        </p>
-                    </div>
+<h3>Age</h3>
 
-                    <!-- Wallet Balances Card -->
-                    <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
-                        <p class="text-xs text-stone-400 uppercase tracking-wider mb-3">Wallet Balances</p>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="text-center">
-                                <div class="flex items-center justify-center gap-1.5 mb-1">
-                                    <svg class="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M7.5 3.5L2 9l5.5 5.5L9 13l-4-4 4-4-1.5-1.5zm9 0L15 5l4 4-4 4 1.5 1.5L22 9l-5.5-5.5z"/>
-                                    </svg>
-                                    <p class="text-xs font-medium text-stone-400">SOL</p>
-                                </div>
-                                <p id="wallet-sol-balance" class="font-bold text-lg text-purple-600">—</p>
-                                <p id="wallet-sol-usd" class="text-xs text-stone-400 mt-0.5">$—</p>
-                            </div>
-                            <div class="text-center">
-                                <div class="flex items-center justify-center gap-1.5 mb-1">
-                                    <span class="text-base">🫒</span>
-                                    <p class="text-xs font-medium text-stone-400">OLV</p>
-                                </div>
-                                <p id="wallet-olv-balance" class="font-bold text-lg" style="color:var(--olive)">—</p>
-                                <p id="wallet-olv-usd" class="text-xs text-stone-400 mt-0.5">$—</p>
-                            </div>
-                            <div class="text-center">
-                                <div class="flex items-center justify-center gap-1.5 mb-1">
-                                    <span class="text-base">💵</span>
-                                    <p class="text-xs font-medium text-stone-400">Total</p>
-                                </div>
-                                <p id="wallet-total-usd" class="font-bold text-lg text-emerald-600">—</p>
-                                <p class="text-xs text-stone-400 mt-0.5">Portfolio</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white border border-stone-200 rounded-2xl p-4 hover:shadow-md transition">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-2xl">🫙</span>
-                        <p class="text-xs text-stone-400 uppercase tracking-wider">Oil/Year</p>
-                    </div>
-                    <p id="stat-oil" class="font-bold text-2xl" style="color:var(--olive)">—</p>
-                    <p class="text-xs text-stone-500 mt-1">Premium EVOO</p>
-                </div>
-                <div class="bg-white border border-stone-200 rounded-2xl p-4 hover:shadow-md transition">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-2xl">🌍</span>
-                        <p class="text-xs text-stone-400 uppercase tracking-wider">CO₂ Offset</p>
-                    </div>
-                    <p id="stat-carbon" class="font-bold text-2xl text-emerald-600">—</p>
-                    <p class="text-xs text-stone-500 mt-1">Est. per year</p>
-                </div>
-                <div class="bg-white border border-stone-200 rounded-2xl p-4 hover:shadow-md transition">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-2xl">💎</span>
-                        <p class="text-xs text-stone-400 uppercase tracking-wider">Est. Value</p>
-                    </div>
-                    <p id="stat-value-sol" class="font-bold text-2xl text-amber-600">—</p>
-                    <p id="stat-value-usd" class="text-xs text-stone-500 mt-1">—</p>
-                </div>
-                <div class="bg-gradient-to-br from-green-700 to-emerald-600 text-white rounded-2xl p-4 hover:shadow-lg transition">
-                    <p class="text-xs opacity-80 mb-2">Your Status</p>
-                    <div class="flex items-center gap-2">
-                        <span id="tier-status-icon" class="text-2xl">🫒</span>
-                        <div class="flex-1">
-                            <h3 id="tier-status-name" class="font-bold text-lg leading-tight">Olive Enthusiast</h3>
-                        </div>
-                    </div>
-                    <p id="tier-status-progress" class="text-xs mt-2 opacity-80">— shares to next tier</p>
-                </div>
-            </div>
-
-            <!-- Main Content: 2-Column -->
-            <div class="grid lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="font-bold text-xl text-stone-900">Your Trees</h2>
-                        <button onclick="switchTab('home')" class="flex items-center gap-1.5 px-4 py-2 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold rounded-xl transition shadow-sm">
-                            <span>+</span> <span>Adopt More</span>
-                        </button>
-                    </div>
-                    <div id="tree-position-cards" class="space-y-3">
-                        <div id="tree-positions-empty" class="bg-white border-2 border-dashed border-stone-200 rounded-2xl p-12 text-center">
-                            <div class="text-6xl mb-4">🌱</div>
-                            <p class="font-semibold text-stone-600 text-lg mb-2">You haven't adopted any trees yet</p>
-                            <p class="text-sm text-stone-400 mb-6">Start building your Tuscan olive grove portfolio</p>
-                            <button onclick="switchTab('home')" class="px-6 py-3 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-xl transition shadow-md">Explore Trees</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <!-- Harvest Progress -->
-                    <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="text-2xl">🌾</span>
-                            <div>
-                                <h3 class="font-semibold text-stone-900">Harvest 2026</h3>
-                                <p class="text-xs text-stone-500">Next harvest cycle</p>
-                            </div>
-                        </div>
-                        <div class="w-full bg-stone-100 h-2.5 rounded-full mb-2">
-                            <div id="harvest-progress-bar" class="bg-amber-500 h-2.5 rounded-full transition-all" style="width:40%"></div>
-                        </div>
-                        <p class="text-xs text-stone-600"><span class="font-semibold text-amber-600">Growing season</span> · harvest in October</p>
-                        <div class="grid grid-cols-2 gap-3 mt-4">
-                            <div class="bg-amber-50 rounded-lg p-3 text-center">
-                                <p class="text-sm font-bold text-amber-700">24 weeks</p>
-                                <p class="text-xs text-amber-600">until harvest</p>
-                            </div>
-                            <div class="bg-green-50 rounded-lg p-3 text-center">
-                                <p class="text-sm font-bold text-green-700">98%</p>
-                                <p class="text-xs text-green-600">tree health</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Farm Ownership Share -->
-                    <div class="bg-gradient-to-br from-stone-900 to-stone-800 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                        <div class="absolute -right-8 -top-8 w-32 h-32 bg-white opacity-5 rounded-full"></div>
-                        <div class="relative">
-                            <p class="text-xs text-stone-400 uppercase tracking-wider mb-2">Farm Ownership</p>
-                            <p id="farm-ownership-pct" class="serif text-4xl font-bold mb-1">0.00%</p>
-                            <p class="text-xs text-stone-400">of <span class="text-amber-400 font-medium">Toscagialla Heritage Grove</span></p>
-                            <div class="grid grid-cols-2 gap-3 mt-5">
-                                <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                                    <p id="farm-trees-stat" class="font-bold text-xl">—</p>
-                                    <p class="text-xs text-stone-300">Trees</p>
-                                </div>
-                                <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                                    <p id="farm-shares-stat" class="font-bold text-xl">—</p>
-                                    <p class="text-xs text-stone-300">Shares</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Treasury Debug Info -->
-                    <div class="bg-stone-900 rounded-2xl p-5 border border-stone-700">
-                        <h3 class="text-white font-bold text-sm mb-3 flex items-center gap-2">
-                            <span class="text-lg">🏦</span> Treasury & Staking Info
-                        </h3>
-                        <div id="treasury-debug" class="space-y-1.5 text-xs font-mono">
-                            <div class="flex justify-between text-stone-400">
-                                <span>Treasury Address:</span>
-                                <span id="debug-treasury" class="text-green-400 truncate max-w-[180px]">—</span>
-                            </div>
-                            <div class="flex justify-between text-stone-400">
-                                <span>Treasury SOL Balance:</span>
-                                <span id="debug-treasury-sol" class="text-green-400">—</span>
-                            </div>
-                            <div class="flex justify-between text-stone-400">
-                                <span>Staked OLVM (Treasury):</span>
-                                <span id="debug-staked-olv" class="text-yellow-400">—</span>
-                            </div>
-                            <div class="flex justify-between text-stone-400">
-                                <span>OLV Mint Address:</span>
-                                <span id="debug-olv-mint" class="text-blue-400 truncate max-w-[150px]">6C3xwo...</span>
-                            </div>
-                            <div class="flex justify-between text-stone-400">
-                                <span>Total Circulating OLV:</span>
-                                <span id="debug-total-olv" class="text-yellow-400">—</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Disclaimer -->
-            <div class="mt-8 flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50 text-sm text-amber-800">
-                <span class="text-lg mt-0.5 shrink-0">⚖️</span>
-                <p>
-                    <strong>Not an investment.</strong>
-                    Shares represent experiential and physical rights only — quarterly olive oil, farm access, digital tree data.
-                    No guaranteed returns. No land ownership. No financial instrument. Benefits subject to harvest success.
-                    Not available to US/CA/UK residents. Governed by Italian law.
-                    <a href="#" class="underline font-medium ml-1" style="color:var(--gold)">Read full terms →</a>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================== PANEL: REWARDS ===================== -->
-    <div id="panel-rewards" class="hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div class="mb-10">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl guardian-pulse" style="background:var(--gold-l)">🎁</div>
-                    <div>
-                        <h2 class="serif text-3xl font-bold" style="color:var(--earth)">Your Rewards</h2>
-                        <p class="text-sm text-stone-500 mt-1">Unlock exclusive perks as you grow your Olive Grove portfolio</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="current-tier-badge" class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-6 mb-8">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-sm" id="tier-icon">🫒</div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-bold text-stone-900" id="tier-name">Olive Enthusiast</h3>
-                        <p class="text-sm text-stone-600 mt-0.5" id="tier-desc">Earn rewards by owning more shares</p>
-                        <div class="mt-3 bg-white rounded-full h-2 overflow-hidden">
-                            <div id="tier-progress-bar" class="bar-fill h-full transition-all" style="background:var(--gold); width:0%"></div>
-                        </div>
-                        <p class="text-xs text-stone-500 mt-1.5" id="tier-progress-text">0 / 100 shares to unlock Olive Lover</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <div class="bg-white border-2 border-stone-200 rounded-2xl p-6 hover:border-green-300 transition tier-card-item" data-tier="1">
-                    <div class="text-3xl mb-3">🫒</div>
-                    <h4 class="font-bold text-lg text-stone-900 mb-1">Olive Lover</h4>
-                    <p class="text-xs text-stone-500 mb-4">100+ shares</p>
-                    <ul class="space-y-2.5 text-sm text-stone-700">
-                        <li class="flex items-start gap-2"><span class="text-green-500 shrink-0">✓</span><span><strong>Quarterly oil shipments</strong> — 250ml premium EVOO</span></li>
-                        <li class="flex items-start gap-2"><span class="text-green-500 shrink-0">✓</span><span><strong>Harvest reports</strong> — detailed quarterly updates</span></li>
-                        <li class="flex items-start gap-2"><span class="text-green-500 shrink-0">✓</span><span><strong>Member certificate</strong> — digital proof of membership</span></li>
-                    </ul>
-                </div>
-                <div class="bg-white border-2 border-stone-200 rounded-2xl p-6 hover:border-emerald-300 transition tier-card-item" data-tier="2">
-                    <div class="text-3xl mb-3">🌿</div>
-                    <h4 class="font-bold text-lg text-stone-900 mb-1">Eco Guardian</h4>
-                    <p class="text-xs text-stone-500 mb-4">500+ shares</p>
-                    <ul class="space-y-2.5 text-sm text-stone-700">
-                        <li class="flex items-start gap-2"><span class="text-emerald-500 shrink-0">✓</span><span><strong>All Olive Lover perks</strong></span></li>
-                        <li class="flex items-start gap-2"><span class="text-emerald-500 shrink-0">✓</span><span><strong>Carbon credit certificates</strong> — verified sequestration data</span></li>
-                        <li class="flex items-start gap-2"><span class="text-emerald-500 shrink-0">✓</span><span><strong>Early harvest access</strong> — first dibs on annual yields</span></li>
-                        <li class="flex items-start gap-2"><span class="text-emerald-500 shrink-0">✓</span><span><strong>1 complimentary night</strong> at Toscagialla eco-stay</span></li>
-                    </ul>
-                </div>
-                <div class="bg-white border-2 border-stone-200 rounded-2xl p-6 hover:border-amber-300 transition tier-card-item" data-tier="3">
-                    <div class="text-3xl mb-3">👑</div>
-                    <h4 class="font-bold text-lg text-stone-900 mb-1">Grove Patron</h4>
-                    <p class="text-xs text-stone-500 mb-4">1,000+ shares (Full Tree)</p>
-                    <ul class="space-y-2.5 text-sm text-stone-700">
-                        <li class="flex items-start gap-2"><span class="text-amber-500 shrink-0">✓</span><span><strong>All Eco Guardian perks</strong></span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-500 shrink-0">✓</span><span><strong>24 bottles/year</strong> — full tree harvest share</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-500 shrink-0">✓</span><span><strong>3-night villa stay</strong> — Toscagialla premium suite</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-500 shrink-0">✓</span><span><strong>Harvest visit invitation</strong> — join the October harvest</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-500 shrink-0">✓</span><span><strong>Custom tree plaque</strong> — physical nameplate on your tree</span></li>
-                    </ul>
-                </div>
-                <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 hover:shadow-xl transition tier-card-item" data-tier="4">
-                    <div class="text-3xl mb-3">🏛️</div>
-                    <h4 class="font-bold text-lg text-stone-900 mb-1">Legacy Holder</h4>
-                    <p class="text-xs text-stone-500 mb-4">5,000+ shares (5 Full Trees)</p>
-                    <ul class="space-y-2.5 text-sm text-stone-700">
-                        <li class="flex items-start gap-2"><span class="text-amber-600 shrink-0">✓</span><span><strong>All Grove Patron perks</strong></span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-600 shrink-0">✓</span><span><strong>7-night villa stay</strong> — annual luxury week</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-600 shrink-0">✓</span><span><strong>Private olive oil tasting</strong> — sommelier-guided session</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-600 shrink-0">✓</span><span><strong>Governance voting rights</strong> — influence farm decisions</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-600 shrink-0">✓</span><span><strong>Revenue share priority</strong> — first-tier payouts</span></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="bg-white border border-stone-200 rounded-2xl p-8 mb-8">
-                <h3 class="font-bold text-xl text-stone-900 mb-6 flex items-center gap-2">
-                    <span>🎯</span>
-                    <span>Your Active Perks</span>
-                </h3>
-                <div id="active-perks-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <div class="text-center py-12 col-span-full text-stone-400">
-                        <p class="text-sm">Adopt shares to unlock perks</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-r from-stone-900 to-stone-800 rounded-2xl p-8 text-white overflow-hidden relative">
-                <div class="absolute inset-0 opacity-10 hero-grain"></div>
-                <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                        <h3 class="serif text-2xl font-bold mb-3">Toscagialla Villa</h3>
-                        <p class="text-stone-300 text-sm leading-relaxed mb-4">
-                            Experience authentic Tuscan living in our restored farmhouse, nestled in the hills of San Vincenzo.
-                            Enjoy panoramic views, infinity pool, and direct access to the olive groves.
-                        </p>
-                        <ul class="space-y-2 text-sm text-stone-300 mb-5">
-                            <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> 4 bedrooms • Sleeps 8</li>
-                            <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> Infinity pool • Garden terraces</li>
-                            <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> 10 min to beaches • Near Bolgheri wine region</li>
-                        </ul>
-                        <a href="https://toscagialla.com/" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-white font-semibold rounded-xl transition shadow-lg">
-                            <span>View Villa & Booking</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================== PANEL: ADMIN ===================== -->
-    <div id="panel-admin" class="hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div id="admin-dashboard">
-                <div class="flex items-center justify-between mb-8">
-                    <div class="flex items-center gap-3">
-                        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl bg-stone-900 text-white shadow">⚙️</div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-stone-900 serif">Admin Panel</h2>
-                            <p class="text-sm text-stone-400">Protocol management · Genesis sync · On-chain verification</p>
-                        </div>
-                    </div>
-                    <button onclick="switchTab('admin')" class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-stone-500 border border-stone-200 rounded-xl hover:bg-stone-50 transition">
-                        ↺ Refresh
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-stone-900 text-white rounded-2xl p-4">
-                        <p class="text-xs text-stone-400 uppercase tracking-wider mb-1">Program ID</p>
-                        <p id="admin-program-id" class="text-xs font-mono text-green-400 truncate">9ZmtBmw…h9bV</p>
-                    </div>
-                    <div class="bg-stone-900 text-white rounded-2xl p-4">
-                        <p class="text-xs text-stone-400 uppercase tracking-wider mb-1">Authority</p>
-                        <p id="admin-authority" class="text-xs font-mono text-green-400 truncate">—</p>
-                    </div>
-                    <div class="bg-stone-900 text-white rounded-2xl p-4">
-                        <p class="text-xs text-stone-400 uppercase tracking-wider mb-1">Trees On-Chain</p>
-                        <p id="admin-tree-count" class="text-2xl font-bold text-white">—</p>
-                    </div>
-                    <div class="bg-stone-900 text-white rounded-2xl p-4">
-                        <p class="text-xs text-stone-400 uppercase tracking-wider mb-1">Protocol</p>
-                        <p id="admin-paused" class="text-2xl font-bold text-white">—</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700">
-                        <p class="text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Vault Liquidity</p>
-                        <h3 id="admin-treasury-sol" class="text-2xl font-bold text-white">-- SOL</h3>
-                        <p class="text-xs text-stone-400 mt-2">Available for share buy-backs</p>
-                    </div>
-                    <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700">
-                        <p class="text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Total Shares Sold</p>
-                        <h3 id="admin-total-circulation" class="text-2xl font-bold text-emerald-400">--</h3>
-                        <p class="text-xs text-stone-400 mt-2">Total active memberships</p>
-                    </div>
-                    <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700">
-                        <p class="text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Projected Oil Debt</p>
-                        <h3 id="admin-oil-debt" class="text-2xl font-bold text-amber-400">-- Liters</h3>
-                        <p class="text-xs text-stone-400 mt-2">Total seasonal commitment</p>
-                    </div>
-                </div>
-
-                <!-- Treasury Debug Console -->
-                <div class="bg-stone-950 rounded-2xl p-6 border border-stone-800 mb-8">
-                    <h4 class="text-white font-bold mb-4 flex items-center gap-2">
-                        <span class="text-lg">🔍</span>
-                        Treasury & OLV Debug Console
-                        <span class="text-xs text-stone-500 font-normal ml-2">(Real on-chain data)</span>
-                    </h4>
-                    <div id="debug-console" class="debug-console">
-                        <div class="debug-line"><span class="label">[DEBUG]</span> <span class="value">Initializing...</span></div>
-                        <div class="debug-line"><span class="label">[OLV_MINT]</span> <span class="value">6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9</span></div>
-                        <div class="debug-line"><span class="label">[PROGRAM_ID]</span> <span class="value" id="debug-program-id">—</span></div>
-                        <div class="debug-line"><span class="label">[TREASURY_PDA]</span> <span class="value" id="debug-treasury-pda">—</span></div>
-                        <div class="debug-line"><span class="label">[TREASURY_SOL]</span> <span class="value" id="debug-treasury-sol-bal">—</span></div>
-                        <div class="debug-line"><span class="label">[STAKED_OLV]</span> <span class="value" id="debug-staked-olv-bal">—</span></div>
-                        <div class="debug-line"><span class="label">[TOTAL_OLV_SUPPLY]</span> <span class="value" id="debug-olv-supply">—</span></div>
-                        <div class="debug-line"><span class="label">[PROTOCOL_CONFIG]</span> <span class="value" id="debug-protocol-status">—</span></div>
-                    </div>
-                </div>
-
-                <div class="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 mb-6">
-                    <div class="flex items-start justify-between gap-4 mb-4">
-                        <div>
-                            <h3 class="font-semibold text-stone-800 text-lg">🌱 Genesis Sync</h3>
-                            <p class="text-sm text-stone-500 mt-1">
-                                Reads Supabase <code class="bg-stone-100 px-1 rounded text-xs">tree_metadata</code> rows
-                                and re-registers any missing on-chain.
-                            </p>
-                        </div>
-                        <div id="sync-status-badge" class="hidden items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                            Last sync OK
-                        </div>
-                    </div>
-                    <button id="btn-bootstrap" class="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl shadow-sm transition-all active:scale-95 text-white" style="background:var(--olive)" onmouseover="this.style.background='var(--olive-d)'" onmouseout="this.style.background='var(--olive)'">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        Run Genesis Sync
-                    </button>
-                    <button id="btn-setupProtocol" class="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl shadow-sm transition-all active:scale-95 text-white" style="background:var(--olive)" onmouseover="this.style.background='var(--olive)'" onmouseout="this.style.background='var(--olive-d)'">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        Setup Protocol
-                    </button>
-                    <div id="admin-log" class="hidden mt-4 bg-stone-950 rounded-xl p-4 min-h-[100px] max-h-64 overflow-y-auto text-green-400 whitespace-pre-wrap"></div>
-                </div>
-
-                <div class="bg-white border border-stone-200 rounded-2xl shadow-sm p-6">
-                    <div class="flex items-center justify-between mb-5">
-                        <h3 class="font-semibold text-stone-800">Supabase ↔ Chain Status</h3>
-                    </div>
-                    <div class="grid grid-cols-3 gap-4 mb-5">
-                        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-                            <p id="admin-sb-total" class="text-2xl font-bold text-blue-700">—</p>
-                            <p class="text-xs text-blue-500 mt-0.5">In Supabase</p>
-                        </div>
-                        <div class="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
-                            <p id="admin-sb-minted" class="text-2xl font-bold text-green-700">—</p>
-                            <p class="text-xs text-green-500 mt-0.5">Mints Created</p>
-                        </div>
-                        <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
-                            <p id="admin-sb-pending" class="text-2xl font-bold text-amber-700">—</p>
-                            <p class="text-xs text-amber-500 mt-0.5">Need Bootstrap</p>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto rounded-xl border border-stone-100">
-                        <table class="w-full text-xs text-left">
-                            <thead class="bg-stone-50 text-stone-400 uppercase tracking-wider">
-                                <tr>
-                                    <th class="px-4 py-2.5 font-medium">Tree ID</th>
-                                    <th class="px-4 py-2.5 font-medium">Name</th>
-                                    <th class="px-4 py-2.5 font-medium">Variety</th>
-                                    <th class="px-4 py-2.5 font-medium">Mint</th>
-                                    <th class="px-4 py-2.5 font-medium">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-tree-table" class="divide-y divide-stone-100 text-stone-600">
-                                <tr><td colspan="5" class="px-4 py-8 text-center text-stone-400">Click ↺ Refresh to load tree status</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Fixed CTA -->
-    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl border rounded-full px-6 py-3 flex items-center gap-4 z-50">
-        <span class="text-sm text-stone-600">🌿 Your tree is waiting in Tuscany</span>
-        <button onclick="switchTab('home')" class="bg-green-700 text-white px-4 py-2 rounded-full text-sm font-semibold">Adopt Now</button>
-    </div>
+<div class="number" id="treeAge">
+85
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     ADOPT MODAL
-══════════════════════════════════════════════════════════════ -->
-<div id="adopt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(20,15,5,.7); backdrop-filter:blur(6px)">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden" onclick="event.stopPropagation()">
-        <div class="h-20 flex items-center justify-center text-5xl" style="background:linear-gradient(135deg,#1e2d0f,#3d5a1a)">🫒</div>
-        <button onclick="closeAdoptModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition">✕</button>
-        <div class="p-6">
-            <h2 id="modal-tree-name" class="serif text-2xl font-bold text-stone-900 mb-0.5">Tree #1</h2>
-            <p id="modal-tree-meta" class="text-sm text-stone-400 mb-5">Frantoio · 15 yrs · Grove A</p>
-            <div class="flex gap-3 mb-5">
-                <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
-                    <p id="modal-shares-left" class="font-bold text-stone-800">—</p>
-                    <p class="text-xs text-stone-400 mt-0.5">Shares left</p>
-                </div>
-                <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
-                    <p id="modal-health" class="font-bold text-stone-800">—</p>
-                    <p class="text-xs text-stone-400 mt-0.5">Health</p>
-                </div>
-                <div class="flex-1 bg-stone-50 rounded-xl p-3 text-center">
-                    <p id="modal-harvests" class="font-bold text-stone-800">—</p>
-                    <p class="text-xs text-stone-400 mt-0.5">Harvests</p>
-                </div>
-            </div>
-            <label class="block text-sm font-medium text-stone-700 mb-2">How many shares?</label>
-            <input id="modal-slider" type="range" min="1" max="1000" value="100" step="1" class="w-full mb-3 accent-green-700" oninput="updateModalCalc()" />
-            <div class="flex justify-between items-baseline mb-5">
-                <div>
-                    <span id="modal-shares-val" class="text-2xl font-bold serif text-stone-900">100</span>
-                    <span class="text-sm text-stone-400 ml-1">shares (<span id="modal-pct">10.0</span>%)</span>
-                </div>
-                <div>
-                    <span class="text-sm text-stone-400">Cost:</span>
-                    <span id="modal-cost" class="text-xl font-bold ml-1" style="color:var(--olive)">0.100 SOL</span>
-                </div>
-            </div>
-            <div id="modal-tier-row" class="flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium bg-stone-100 text-stone-500">
-                <span id="modal-tier-icon">—</span>
-                <span id="modal-tier-label">Select at least 100 shares for Olive Lover tier</span>
-            </div>
-            <p class="text-xs text-stone-400 leading-relaxed mb-4">⚖️ Not an investment. Benefits subject to harvest. You may receive less oil than estimated.</p>
-            <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-500">
-                <input id="modal-agree" type="checkbox" class="mt-0.5 accent-green-700" />
-                I confirm I am NOT a US/CA/UK resident and I have read the <a href="#" class="underline ml-0.5" style="color:var(--olive)">Terms of Service</a>
-            </label>
-            <button id="modal-buy-btn" disabled onclick="confirmAdopt()" class="w-full py-3 text-base font-bold rounded-xl text-white transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none" style="background:var(--olive)">
-                Adopt — pay <span id="modal-btn-cost">0.100</span> SOL
-            </button>
-        </div>
-    </div>
+<p>Years</p>
+
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════════════════════ -->
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.9/dist/bundle.min.js"></script>
+<div class="card">
 
-<script>
-// ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION - REAL OLV MINT ADDRESS
-// ═══════════════════════════════════════════════════════════════════════════
-const OLV_MINT_ADDRESS = new solanaWeb3.PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
-const PROGRAM_ID = new solanaWeb3.PublicKey("9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV");
+<h3>Annual Harvest</h3>
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GLOBAL STATE
-// ═══════════════════════════════════════════════════════════════════════════
-let connection = null;
-let wallet = null;
-let walletPubKey = null;
-let isConnected = false;
-let protocolData = null;
-let treasuryPDA = null;
-let cachedTrees = [];
+<div class="number" id="harvest">
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DEBUG CONSOLE
-// ═══════════════════════════════════════════════════════════════════════════
-function debugLog(label, value, type = 'info') {
-    const console = document.getElementById('debug-console');
-    if (!console) return;
-    
-    const line = document.createElement('div');
-    line.className = 'debug-line';
-    const color = type === 'warning' ? 'warning' : type === 'error' ? 'error' : 'value';
-    line.innerHTML = `<span class="label">[${label}]</span> <span class="${color}">${value}</span>`;
-    console.appendChild(line);
-    console.scrollTop = console.scrollHeight;
-}
+32kg
 
-// ═══════════════════════════════════════════════════════════════════════════
-// CONNECT WALLET
-// ═══════════════════════════════════════════════════════════════════════════
-async function connectWalletHandler() {
-    try {
-        if (!window.solana || !window.solana.isPhantom) {
-            alert('Please install Phantom wallet!');
-            return;
-        }
+</div>
 
-        const resp = await window.solana.connect();
-        walletPubKey = resp.publicKey;
-        wallet = window.solana;
-        isConnected = true;
-        
-        connection = new solanaWeb3.Connection(
-            'https://api.devnet.solana.com',
-            'confirmed'
-        );
+</div>
 
-        debugLog('CONNECT', `✅ Wallet connected: ${walletPubKey.toBase58().slice(0, 8)}...`);
-        debugLog('OLV_MINT', OLV_MINT_ADDRESS.toBase58());
-        debugLog('PROGRAM_ID', PROGRAM_ID.toBase58());
+<div class="card">
 
-        // Get real OLV balance
-        await getOLVBalance(walletPubKey);
-        
-        // Get treasury info
-        await getTreasuryInfo();
-        
-        // Update UI
-        document.getElementById('panel-hero').style.display = 'none';
-        document.getElementById('app').classList.remove('hidden');
-        document.getElementById('stats').classList.remove('hidden');
-        document.getElementById('nav-tabs').classList.remove('hidden');
-        document.getElementById('btn-connect').textContent = `🔑 ${walletPubKey.toBase58().slice(0, 4)}...${walletPubKey.toBase58().slice(-4)}`;
-        document.getElementById('btn-connect').style.background = '#4a6741';
-        
-        switchTab('home');
+<h3>CO₂ Capture</h3>
 
-    } catch (err) {
-        console.error('Connection error:', err);
-        debugLog('ERROR', err.message, 'error');
-    }
-}
+<div class="number" id="co2">
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET REAL OLV BALANCE
-// ═══════════════════════════════════════════════════════════════════════════
-async function getOLVBalance(pubkey) {
-    try {
-        debugLog('OLV_BALANCE', `Fetching OLV balance for ${pubkey.toBase58().slice(0, 8)}...`);
-        
-        // Get the associated token account for OLV
-        const ata = await solanaWeb3.PublicKey.findProgramAddress(
-            [
-                pubkey.toBuffer(),
-                new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA').toBuffer(),
-                OLV_MINT_ADDRESS.toBuffer()
-            ],
-            new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL')
-        );
-        
-        const tokenAccount = await connection.getTokenAccountBalance(ata[0]);
-        const balance = tokenAccount.value.uiAmount || 0;
-        
-        debugLog('OLV_BALANCE', `${balance.toFixed(2)} OLV`);
-        
-        // Update UI
-        const olvEl = document.getElementById('wallet-olv-balance');
-        if (olvEl) olvEl.textContent = balance.toFixed(2);
-        
-        // Get OLV price (mock for now)
-        const olvUsd = balance * 0.01; // 1 OLV = $0.01 mock
-        const olvUsdEl = document.getElementById('wallet-olv-usd');
-        if (olvUsdEl) olvUsdEl.textContent = `$${olvUsd.toFixed(2)}`;
-        
-        // Update total USD
-        const solEl = document.getElementById('wallet-sol-balance');
-        const solBalance = parseFloat(solEl?.textContent || '0');
-        const totalUsd = (solBalance * 140) + olvUsd;
-        const totalEl = document.getElementById('wallet-total-usd');
-        if (totalEl) totalEl.textContent = `$${totalUsd.toFixed(2)}`;
-        
-        return balance;
-        
-    } catch (err) {
-        console.error('OLV balance fetch failed:', err);
-        debugLog('OLV_BALANCE', '❌ Failed to fetch OLV balance', 'error');
-        return 0;
-    }
-}
+108kg
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET TREASURY INFO
-// ═══════════════════════════════════════════════════════════════════════════
-async function getTreasuryInfo() {
-    try {
-        debugLog('TREASURY', 'Fetching treasury information...');
-        
-        // Derive treasury PDA
-        const [treasuryPda] = await solanaWeb3.PublicKey.findProgramAddress(
-            [Buffer.from('treasury')],
-            PROGRAM_ID
-        );
-        treasuryPDA = treasuryPda;
-        
-        debugLog('TREASURY_PDA', treasuryPda.toBase58());
-        
-        // Get SOL balance
-        const solBalance = await connection.getBalance(treasuryPda);
-        const solDisplay = (solBalance / 1e9).toFixed(4);
-        debugLog('TREASURY_SOL', `${solDisplay} SOL`);
-        
-        // Get OLV balance in treasury (staked tokens)
-        try {
-            const ata = await solanaWeb3.PublicKey.findProgramAddress(
-                [
-                    treasuryPda.toBuffer(),
-                    new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA').toBuffer(),
-                    OLV_MINT_ADDRESS.toBuffer()
-                ],
-                new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL')
-            );
-            
-            const tokenAccount = await connection.getTokenAccountBalance(ata[0]);
-            const stakedOlv = tokenAccount.value.uiAmount || 0;
-            debugLog('STAKED_OLV', `${stakedOlv.toFixed(2)} OLV (in treasury)`);
-            
-            // Update UI
-            const stakedEl = document.getElementById('debug-staked-olv-bal');
-            if (stakedEl) stakedEl.textContent = `${stakedOlv.toFixed(2)} OLV`;
-            
-            // Get total OLV supply
-            try {
-                const mintInfo = await connection.getTokenSupply(OLV_MINT_ADDRESS);
-                const totalSupply = mintInfo.value.uiAmount || 0;
-                debugLog('TOTAL_OLV_SUPPLY', `${totalSupply.toFixed(2)} OLV`);
-                const supplyEl = document.getElementById('debug-olv-supply');
-                if (supplyEl) supplyEl.textContent = `${totalSupply.toFixed(2)} OLV`;
-            } catch (e) {
-                debugLog('TOTAL_OLV_SUPPLY', '⚠️ Could not fetch total supply', 'warning');
-            }
-            
-        } catch (err) {
-            debugLog('STAKED_OLV', '⚠️ No OLV token account found in treasury', 'warning');
-        }
-        
-        // Update UI elements
-        const treasurySolEl = document.getElementById('debug-treasury-sol-bal');
-        if (treasurySolEl) treasurySolEl.textContent = `${solDisplay} SOL`;
-        
-        const treasuryEl = document.getElementById('debug-treasury');
-        if (treasuryEl) treasuryEl.textContent = treasuryPda.toBase58();
-        
-        const treasuryAdminEl = document.getElementById('admin-treasury-sol');
-        if (treasuryAdminEl) treasuryAdminEl.textContent = `${solDisplay} SOL`;
-        
-        // Try to get protocol config
-        try {
-            // This would need the Anchor program loaded
-            // For now, just show a placeholder
-            debugLog('PROTOCOL_CONFIG', '✅ Protocol config available (simulated)');
-            const protocolEl = document.getElementById('debug-protocol-status');
-            if (protocolEl) protocolEl.textContent = '✅ Active';
-        } catch (err) {
-            debugLog('PROTOCOL_CONFIG', '⚠️ Protocol not initialized', 'warning');
-        }
-        
-    } catch (err) {
-        console.error('Treasury info fetch failed:', err);
-        debugLog('TREASURY', '❌ Failed to fetch treasury info', 'error');
-    }
-}
+</div>
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET SOL BALANCE
-// ═══════════════════════════════════════════════════════════════════════════
-async function getSOLBalance(pubkey) {
-    try {
-        const balance = await connection.getBalance(pubkey);
-        const solDisplay = (balance / 1e9).toFixed(4);
-        
-        const solEl = document.getElementById('wallet-sol-balance');
-        if (solEl) solEl.textContent = solDisplay;
-        
-        const solUsdEl = document.getElementById('wallet-sol-usd');
-        if (solUsdEl) solUsdEl.textContent = `$${(balance / 1e9 * 140).toFixed(2)}`;
-        
-        return balance;
-    } catch (err) {
-        console.error('SOL balance fetch failed:', err);
-        return 0;
-    }
-}
+</div>
 
-// ═══════════════════════════════════════════════════════════════════════════
-// TAB SWITCHING
-// ═══════════════════════════════════════════════════════════════════════════
-function switchTab(tab) {
-    const panels = ['home', 'dash', 'rewards', 'admin'];
-    panels.forEach(p => {
-        const el = document.getElementById(`panel-${p}`);
-        if (el) el.classList.add('hidden');
-    });
-    
-    const target = document.getElementById(`panel-${tab}`);
-    if (target) target.classList.remove('hidden');
-    
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const tabBtn = document.getElementById(`tab-${tab}`);
-    if (tabBtn) tabBtn.classList.add('active');
-    
-    // If switching to admin, refresh treasury info
-    if (tab === 'admin' && isConnected) {
-        getTreasuryInfo();
-        getOLVBalance(walletPubKey);
-    }
-}
+<div class="card">
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MODAL FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════
-function closeAdoptModal() {
-    document.getElementById('adopt-modal').classList.add('hidden');
-}
-function closeTreeDetailModal() {
-    document.getElementById('tree-detail-modal')?.classList.add('hidden');
-}
-function updateModalCalc() {
-    // Placeholder
-}
+<h3>Tree Health</h3>
 
-// ═══════════════════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-    // Connect button
-    document.getElementById('btn-connect').addEventListener('click', connectWalletHandler);
-    
-    // Initial debug
-    debugLog('INIT', '🫒 Olivium DAO v2.0');
-    debugLog('OLV_MINT', OLV_MINT_ADDRESS.toBase58());
-    debugLog('PROGRAM_ID', PROGRAM_ID.toBase58());
-    debugLog('STATUS', '✅ Ready - Connect wallet to start');
-    
-    console.log('🫒 Olivium DAO initialized');
-    console.log('📊 OLV Mint:', OLV_MINT_ADDRESS.toBase58());
-    console.log('🔗 Program ID:', PROGRAM_ID.toBase58());
-});
+<div class="number health">
 
-// Expose to window
-window.connectWallet = connectWalletHandler;
-window.switchTab = switchTab;
-window.closeAdoptModal = closeAdoptModal;
-window.closeTreeDetailModal = closeTreeDetailModal;
-window.updateModalCalc = updateModalCalc;
-window.getOLVBalance = getOLVBalance;
-window.getTreasuryInfo = getTreasuryInfo;
+98%
 
-console.log('✅ OLIVIUM loaded with real OLV balance tracking');
-console.log(`📍 OLV Mint: ${OLV_MINT_ADDRESS.toBase58()}`);
-console.log(`📍 Program: ${PROGRAM_ID.toBase58()}`);
-</script>
+</div>
+
+</div>
+
+</section>
+
+<section class="dashboard-grid">
+
+<div class="panel tree-panel">
+
+<h2>Tree Information</h2>
+
+<table>
+
+<tr>
+<td>ID</td>
+<td id="treeID">TUSC-023</td>
+</tr>
+
+<tr>
+<td>Variety</td>
+<td id="treeVariety">Leccino</td>
+</tr>
+
+<tr>
+<td>Age</td>
+<td id="treeYears">85 Years</td>
+</tr>
+
+<tr>
+<td>Height</td>
+<td id="treeHeight">5.2 m</td>
+</tr>
+
+<tr>
+<td>Canopy</td>
+<td id="treeCanopy">7.8 m</td>
+</tr>
+
+<tr>
+<td>Status</td>
+<td class="green">
+Excellent
+</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="panel video-panel">
+
+<h2>Live Tree Camera</h2>
+
+<video
+id="liveVideo"
+controls
+autoplay
+muted
+playsinline>
+
+<source src="" type="application/x-mpegURL">
+
+</video>
+
+<div class="live-footer">
+
+<span class="pulse"></span>
+
+Streaming Live
+
+</div>
+
+</div>
+
+<div class="panel weather-panel">
+
+<h2>Current Weather</h2>
+
+<div class="weather-main">
+
+<div class="temp" id="temperature">
+
+--°
+
+</div>
+
+<div class="icon" id="weatherIcon">
+
+☀️
+
+</div>
+
+</div>
+
+<div class="weather-grid">
+
+<div>
+
+Humidity
+
+<strong id="humidity">
+--
+</strong>
+
+</div>
+
+<div>
+
+Wind
+
+<strong id="wind">
+
+--
+
+</strong>
+
+</div>
+
+<div>
+
+Pressure
+
+<strong id="pressure">
+
+--
+
+</strong>
+
+</div>
+
+<div>
+
+Rain
+
+<strong id="rain">
+
+--
+
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="panel oil-panel">
+
+<h2>Italian EVOO Price</h2>
+
+<div class="oil-price">
+
+<span id="oilPrice">
+
+€--
+
+</span>
+
+<small>/kg</small>
+
+</div>
+
+<div class="price-change positive">
+
+▲
+
+<span id="priceChange">
+
+0%
+
+</span>
+
+</div>
+
+<canvas id="oilChart"></canvas>
+
+</div>
+
+<div class="panel wallet-panel">
+
+<h2>Wallet</h2>
+
+<div class="wallet-address"
+
+id="walletAddress">
+
+Not Connected
+
+</div>
+
+<div class="wallet-grid">
+
+<div>
+
+OLVM
+
+<strong id="olvmBalance">
+
+0
+
+</strong>
+
+</div>
+
+<div>
+
+ETH
+
+<strong id="ethBalance">
+
+0
+
+</strong>
+
+</div>
+
+<div>
+
+Trees
+
+<strong id="ownedTrees">
+
+0
+
+</strong>
+
+</div>
+
+<div>
+
+Rewards
+
+<strong id="rewardBalance">
+
+0
+
+</strong>
+
+</div>
+
+</div>
+
+<button class="walletButton">
+
+Connect Wallet
+
+</button>
+
+</div>
+
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="module" src="dist/dashboard.js"></script>
 
 </body>
+
 </html>
+```
+
+---
+
+# css/tree.css (Part 1)
+
+```css
+:root{
+
+--gold:#d4b36a;
+--gold2:#e7cb89;
+--bg:#09110d;
+--panel:rgba(18,27,20,.65);
+--border:rgba(255,255,255,.08);
+
+--text:#ffffff;
+--muted:#9ca89c;
+
+--radius:22px;
+
+--shadow:0 15px 45px rgba(0,0,0,.45);
+
+--transition:.35s;
+
+}
+
+*{
+
+margin:0;
+padding:0;
+box-sizing:border-box;
+
+}
+
+body{
+
+background:#08100c;
+
+font-family:Inter,sans-serif;
+
+color:white;
+
+overflow-x:hidden;
+
+}
+
+.background-glow{
+
+position:fixed;
+
+inset:0;
+
+background:
+radial-gradient(circle at top,#245a2c33,transparent 55%),
+radial-gradient(circle at bottom,#b18a3030,transparent 40%);
+
+z-index:-2;
+
+}
+
+.hero{
+
+height:100vh;
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+overflow:hidden;
+
+}
+
+.hero-video{
+
+position:absolute;
+
+width:100%;
+height:100%;
+
+object-fit:cover;
+
+}
+
+.hero-overlay{
+
+position:absolute;
+
+inset:0;
+
+background:
+
+linear-gradient(to bottom,
+
+rgba(0,0,0,.3),
+
+rgba(5,10,8,.92));
+
+}
+
+nav{
+
+position:absolute;
+
+top:30px;
+
+left:50%;
+
+transform:translateX(-50%);
+
+width:min(1400px,92%);
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+z-index:20;
+
+}
+
+.logo{
+
+font-size:34px;
+
+letter-spacing:5px;
+
+font-family:"Cormorant Garamond",serif;
+
+color:var(--gold);
+
+}
+
+.nav-links{
+
+display:flex;
+
+align-items:center;
+
+gap:30px;
+
+}
+
+.nav-links a{
+
+color:white;
+
+text-decoration:none;
+
+transition:.3s;
+
+}
+
+.nav-links a:hover{
+
+color:var(--gold);
+
+}
+
+#connectWallet{
+
+padding:12px 26px;
+
+border-radius:50px;
+
+border:none;
+
+background:linear-gradient(135deg,var(--gold),#fff0b0);
+
+cursor:pointer;
+
+font-weight:700;
+
+}
+
+.hero-content{
+
+position:relative;
+
+z-index:10;
+
+text-align:center;
+
+}
+
+.tree-id{
+
+color:var(--gold);
+
+letter-spacing:3px;
+
+font-size:13px;
+
+}
+
+.hero h1{
+
+font-size:72px;
+
+font-family:"Cormorant Garamond",serif;
+
+margin:20px 0;
+
+}
+
+.hero p{
+
+color:var(--muted);
+
+font-size:22px;
+
+}
+
+.hero-badges{
+
+display:flex;
+
+justify-content:center;
+
+gap:18px;
+
+margin-top:45px;
+
+flex-wrap:wrap;
+
+}
+
+.badge{
+
+padding:12px 24px;
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(255,255,255,.1);
+
+border-radius:100px;
+
+}
+
+.live{
+
+color:#3cff7a;
+
+}
+
+.stats{
+
+width:min(1400px,92%);
+
+margin:auto;
+
+display:grid;
+
+grid-template-columns:repeat(4,1fr);
+
+gap:25px;
+
+margin-top:-80px;
+
+position:relative;
+
+z-index:20;
+
+}
+
+.card{
+
+background:var(--panel);
+
+border:1px solid var(--border);
+
+backdrop-filter:blur(20px);
+
+padding:35px;
+
+border-radius:var(--radius);
+
+box-shadow:var(--shadow);
+
+transition:var(--transition);
+
+}
+
+.card:hover{
+
+transform:translateY(-6px);
+
+}
+
+.number{
+
+font-size:46px;
+
+margin:12px 0;
+
+font-weight:700;
+
+color:var(--gold2);
+
+}
+
+.dashboard-grid{
+
+width:min(1400px,92%);
+
+margin:70px auto;
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:30px;
+
+}
+
+.panel{
+
+background:var(--panel);
+
+border:1px solid var(--border);
+
+backdrop-filter:blur(18px);
+
+padding:35px;
+
+border-radius:var(--radius);
+
+box-shadow:var(--shadow);
+
+}
+
+.panel h2{
+
+margin-bottom:25px;
+
+font-family:"Cormorant Garamond",serif;
+
+font-size:34px;
+
+color:var(--gold);
+
+}
+
+table{
+
+width:100%;
+
+border-collapse:collapse;
+
+}
+
+td{
+
+padding:16px;
+
+border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.green{
+
+color:#47e78d;
+
+}
+
+.video-panel video{
+
+width:100%;
+
+aspect-ratio:16/9;
+
+border-radius:16px;
+
+background:black;
+
+}
+
+.live-footer{
+
+display:flex;
+
+align-items:center;
+
+gap:10px;
+
+margin-top:20px;
+
+}
+
+.pulse{
+
+width:12px;
+
+height:12px;
+
+border-radius:50%;
+
+background:#39ff7b;
+
+animation:pulse 1.2s infinite;
+
+}
+
+@keyframes pulse{
+
+0%{transform:scale(1);opacity:1;}
+100%{transform:scale(2);opacity:0;}
+
+}
+
+.weather-main{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+}
+
+.temp{
+
+font-size:70px;
+
+color:var(--gold);
+
+}
+
+.weather-grid{
+
+margin-top:30px;
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:20px;
+
+}
+
+.oil-price{
+
+font-size:60px;
+
+color:var(--gold);
+
+margin-bottom:10px;
+
+}
+
+.positive{
+
+color:#3cff84;
+
+margin-bottom:25px;
+
+}
+
+.wallet-address{
+
+padding:15px;
+
+background:#111;
+
+border-radius:10px;
+
+margin-bottom:25px;
+
+word-break:break-all;
+
+}
+
+.wallet-grid{
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:20px;
+
+margin-bottom:30px;
+
+}
+
+.walletButton{
+
+width:100%;
+
+padding:16px;
+
+background:linear-gradient(135deg,var(--gold),#f6d898);
+
+border:none;
+
+border-radius:50px;
+
+font-size:16px;
+
+font-weight:700;
+
+cursor:pointer;
+
+}
+
+@media(max-width:1000px){
+
+.stats{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+.dashboard-grid{
+
+grid-template-columns:1fr;
+
+}
+
+.hero h1{
+
+font-size:50px;
+
+}
+
+}
+
+@media(max-width:700px){
+
+nav{
+
+flex-direction:column;
+
+gap:25px;
+
+}
+
+.stats{
+
+grid-template-columns:1fr;
+
+}
+
+.hero{
+
+height:90vh;
+
+}
+
+.hero h1{
+
+font-size:38px;
+
+}
+
+}
+```
