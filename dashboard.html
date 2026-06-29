@@ -133,6 +133,17 @@
       .footer-grid{grid-template-columns:1fr 1fr}
     }
     .hidden { display:none !important; }
+    
+    /* Loading state for trees */
+    .loading-trees {
+      text-align:center; padding:20px; color:#6f9f7a;
+    }
+    .loading-trees .spinner {
+      display:inline-block; width:24px; height:24px;
+      border:3px solid #1f4a2a; border-top-color:#4cdb7a;
+      border-radius:50%; animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -188,13 +199,9 @@
     <div class="map-card">
       <div class="card-header"><span><i class="fas fa-map-pin"></i> GPS · owned trees</span> <i class="fas fa-expand-alt"></i></div>
       <div id="map-tree-list" style="display:flex; flex-direction:column; gap:6px;">
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 023 <span class="badge-id">🌳 4.2km · NFT#1023</span></div>
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 024 <span class="badge-id">🌳 3.8km · NFT#1024</span></div>
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 025 <span class="badge-id">🌳 6.1km · NFT#1025</span></div>
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 026 <span class="badge-id">🌳 7.3km · NFT#1026</span></div>
-        <div style="margin-top:4px; color:#6f9f7a; font-size:.7rem; display:flex; gap:12px; justify-content:center; border-top:1px solid #1f4a2a; padding-top:8px;">
-          <span><i class="fas fa-circle" style="color:#4cdb7a;"></i> <span id="map-active-count">4</span> active</span>
-          <span><i class="fas fa-satellite-dish"></i> GPS live</span>
+        <div class="loading-trees" id="tree-loading">
+          <div class="spinner"></div>
+          <p style="margin-top:8px;">Loading trees...</p>
         </div>
       </div>
     </div>
@@ -256,37 +263,37 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
-     SCRIPTS: Supabase Realtime + Phantom Wallet
+     SCRIPTS: Load livedash.ts module
 ═══════════════════════════════════════════════════════════════ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "@solana/web3.js": "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js",
+    "@coral-xyz/anchor": "https://cdn.jsdelivr.net/npm/@coral-xyz/anchor@0.29.0/dist/bundle.min.js",
+    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/module/index.js"
+  }
+}
+</script>
 
-<script>
+<script type="module">
   // ─────────────────────────────────────────────────────────────
   // 1. CONFIG — replace with your actual values
   // ─────────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://your-project.supabase.co';      // ← CHANGE
   const SUPABASE_ANON_KEY = 'your-anon-key';                  // ← CHANGE
 
-  const PROGRAM_ID = new solanaWeb3.PublicKey('9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV');
-  const OLV_MINT = new solanaWeb3.PublicKey('6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9');
+  // Set environment variables for connection.ts
+  window.VITE_SUPABASE_URL = SUPABASE_URL;
+  window.VITE_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+  window.VITE_RPC_URL = 'https://api.devnet.solana.com';
 
   // ─────────────────────────────────────────────────────────────
-  // 2. SUPABASE CLIENT + REALTIME
+  // 2. IMPORT livedash.ts (which imports connection.ts, etc.)
   // ─────────────────────────────────────────────────────────────
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { initLiveDash, refreshDashboard, updateWalletConnectionUI, fetchOLVBalance } = await import('./livedash.ts');
 
   // ─────────────────────────────────────────────────────────────
-  // 3. STATE
-  // ─────────────────────────────────────────────────────────────
-  let wallet = null;
-  let walletPubKey = null;
-  let connection = null;
-  let isConnected = false;
-  let charts = [];
-
-  // ─────────────────────────────────────────────────────────────
-  // 4. DOM REFS
+  // 3. DOM REFS for local UI updates
   // ─────────────────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
   const connStatus = $('connStatus');
@@ -297,11 +304,11 @@
   const olvBalance = $('wallet-olv-balance');
 
   // ─────────────────────────────────────────────────────────────
-  // 5. CHART.JS INIT
+  // 4. CHART.JS INIT (local, kept separate from livedash)
   // ─────────────────────────────────────────────────────────────
   function initChart(id, color, data) {
     const ctx = document.getElementById(id).getContext('2d');
-    const chart = new Chart(ctx, {
+    return new Chart(ctx, {
       type: 'line',
       data: {
         labels: ['','','','','','',''],
@@ -319,63 +326,57 @@
         animation: { duration: 1200, easing: 'easeOutQuad' }
       }
     });
-    return chart;
   }
 
-  charts = [
+  const charts = [
     initChart('chartYield', '#3dcc6a', [10,18,14,22,28,24,30]),
     initChart('chartCO2', '#f0d48b', [60,55,70,65,80,72,78]),
     initChart('chartRain', '#8bcff0', [40,35,50,45,60,55,48]),
     initChart('chartHealth', '#5fdf7f', [85,88,92,90,95,94,98]),
   ];
 
-  // ─────────────────────────────────────────────────────────────
-  // 6. SUPABASE REALTIME SUBSCRIPTIONS
-  // ─────────────────────────────────────────────────────────────
-  function subscribeToSensorData() {
-    const channel = supabase
-      .channel('sensor-updates')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'sensor_readings' },
-        (payload) => {
-          const data = payload.new;
-          updateSensorUI(data);
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'sensor_readings' },
-        (payload) => {
-          const data = payload.new;
-          updateSensorUI(data);
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Sensor subscription status:', status);
-      });
-    return channel;
-  }
-
-  function subscribeToTrees() {
-    const channel = supabase
-      .channel('tree-updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tree_metadata' },
-        (payload) => {
-          console.log('🌳 Tree update:', payload);
-          loadTrees();
-        }
-      )
-      .subscribe();
-    return channel;
-  }
+  // Update charts with random data periodically
+  setInterval(() => {
+    charts.forEach(c => {
+      const newData = c.data.datasets[0].data.map(() => Math.floor(20 + Math.random() * 40));
+      c.data.datasets[0].data = newData;
+      c.update();
+    });
+  }, 5000);
 
   // ─────────────────────────────────────────────────────────────
-  // 7. UI UPDATERS
+  // 5. OVERRIDE LOCAL connectBtn to use livedash
   // ─────────────────────────────────────────────────────────────
-  function updateSensorUI(data) {
+  // Remove any existing listeners by cloning
+  const newConnectBtn = connectBtn.cloneNode(true);
+  connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
+  
+  newConnectBtn.addEventListener('click', async () => {
+    // Use the livedash handleConnectClick logic
+    if (window.isConnected && window.isConnected()) {
+      // Disconnect
+      await window.handleDisconnectWorkflow?.();
+      updateWalletConnectionUI?.();
+      window.updateIdentityBalanceUI?.();
+    } else {
+      // Show connect modal (from livedash)
+      const modal = document.getElementById('connectModal');
+      if (modal) {
+        modal.style.display = 'flex';
+      } else {
+        // Fallback: use Phantom directly
+        await window.connectWallet?.();
+      }
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // 6. LOCAL UI UPDATE FUNCTIONS (override livedash ones if needed)
+  // ─────────────────────────────────────────────────────────────
+  // These match the signatures expected by livedash
+  
+  // Override updateSensorUI if needed (livedash already has it)
+  window.updateSensorUI = (data) => {
     if (data.moisture !== undefined) {
       $('sensor-moisture').textContent = data.moisture + '%';
       $('sensor-moisture-bar').style.width = data.moisture + '%';
@@ -386,144 +387,32 @@
     if (data.altitude !== undefined) $('live-alt').textContent = data.altitude;
     if (data.gps) $('live-gps').textContent = data.gps;
     if (data.sensor_count !== undefined) $('live-sensor-count').textContent = data.sensor_count;
-  }
+  };
 
-  function updateWeatherUI(data) {
+  window.updateWeatherUI = (data) => {
     if (data.temp !== undefined) $('weather-temp').textContent = data.temp;
     if (data.description) $('weather-desc').textContent = data.description;
     if (data.humidity !== undefined) $('weather-humidity').textContent = data.humidity;
     if (data.wind !== undefined) $('weather-wind').textContent = data.wind;
     if (data.uv !== undefined) $('weather-uv').textContent = data.uv;
-  }
-
-  async function loadTrees() {
-    const { data, error } = await supabase
-      .from('tree_metadata')
-      .select('*')
-      .limit(10);
-    if (error) { console.error('Tree load error:', error); return; }
-    renderTreeMap(data);
-  }
-
-  function renderTreeMap(trees) {
-    const container = $('map-tree-list');
-    if (!container) return;
-    if (!trees || trees.length === 0) {
-      container.innerHTML = `<div style="text-align:center;padding:20px;color:#6f9f7a;">🌱 No trees loaded yet</div>`;
-      return;
-    }
-    container.innerHTML = trees.map((t, i) => `
-      <div class="tree-marker">
-        <i class="fas fa-tree"></i>
-        ${t.name || 'Tree #' + (i+1)}
-        <span class="badge-id">🌳 ${t.distance || (3 + i * 1.2).toFixed(1)}km · NFT#${t.nft_id || (1023 + i)}</span>
-      </div>
-    `).join('');
-    // update active count
-    const active = $('map-active-count');
-    if (active) active.textContent = trees.length;
-  }
+  };
 
   // ─────────────────────────────────────────────────────────────
-  // 8. PHANTOM WALLET CONNECT
+  // 7. BOOT: Initialize livedash
   // ─────────────────────────────────────────────────────────────
-  async function connectPhantom() {
-    try {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert('Please install Phantom wallet: https://phantom.app/');
-        return;
-      }
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Initializing LiveDash...');
+    
+    // Initialize the livedash module
+    await initLiveDash();
+    
+    // Set up local event listeners for UI elements
+    setupLocalListeners();
+    
+    console.log('✅ LiveDash initialized successfully');
+  });
 
-      const resp = await window.solana.connect();
-      wallet = window.solana;
-      walletPubKey = resp.publicKey;
-      isConnected = true;
-
-      connection = new solanaWeb3.Connection(
-        'https://api.devnet.solana.com',
-        'confirmed'
-      );
-
-      // Update UI
-      connStatusText.textContent = 'connected';
-      connStatus.querySelector('i').style.color = '#3dcc6a';
-      connectBtnText.textContent = '🔑 ' + walletPubKey.toBase58().slice(0,4)+'…'+walletPubKey.toBase58().slice(-4);
-      connectBtn.style.background = '#4a6741';
-      walletBadge.textContent = 'Phantom';
-
-      // Fetch OLV balance
-      await fetchOLVBalance();
-
-      // Load trees from Supabase
-      await loadTrees();
-
-      console.log('✅ Phantom connected:', walletPubKey.toBase58());
-
-    } catch (err) {
-      console.error('Connect error:', err);
-      alert('Connection failed: ' + err.message);
-    }
-  }
-
-  async function fetchOLVBalance() {
-    if (!walletPubKey || !connection) return;
-    try {
-      const ata = await solanaWeb3.PublicKey.findProgramAddress(
-        [
-          walletPubKey.toBuffer(),
-          new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA').toBuffer(),
-          OLV_MINT.toBuffer()
-        ],
-        new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL')
-      );
-      const tokenAccount = await connection.getTokenAccountBalance(ata[0]);
-      const balance = tokenAccount.value.uiAmount || 0;
-      olvBalance.textContent = balance.toFixed(2);
-    } catch (e) {
-      console.warn('OLV balance fetch failed:', e);
-      olvBalance.textContent = '0.00';
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // 9. DISCONNECT
-  // ─────────────────────────────────────────────────────────────
-  async function disconnectWallet() {
-    if (wallet?.disconnect) {
-      try { await wallet.disconnect(); } catch(e) {}
-    }
-    isConnected = false;
-    wallet = null;
-    walletPubKey = null;
-    connStatusText.textContent = 'disconnected';
-    connStatus.querySelector('i').style.color = '#ffaa33';
-    connectBtnText.textContent = 'Connect Phantom';
-    connectBtn.style.background = '#2b7a3e';
-    walletBadge.textContent = 'Guest';
-    olvBalance.textContent = '0';
-    console.log('🔌 Disconnected');
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // 10. BOOT
-  // ─────────────────────────────────────────────────────────────
-  async function init() {
-    // Load initial trees
-    await loadTrees();
-
-    // Subscribe to realtime updates
-    subscribeToSensorData();
-    subscribeToTrees();
-
-    // Connect button
-    connectBtn.addEventListener('click', () => {
-      if (isConnected) {
-        disconnectWallet();
-      } else {
-        connectPhantom();
-      }
-    });
-
+  function setupLocalListeners() {
     // Dark/Luxury mode
     $('modeToggle').addEventListener('click', function() {
       document.body.classList.toggle('luxury');
@@ -567,23 +456,17 @@
       $('notif-text').textContent = '📬 no new alerts';
       setTimeout(() => { $('notif-text').textContent = 'harvest soon'; }, 3000);
     });
-
-    // Simulate chart updates with random data
-    setInterval(() => {
-      charts.forEach(c => {
-        const newData = c.data.datasets[0].data.map(() => Math.floor(20 + Math.random() * 40));
-        c.data.datasets[0].data = newData;
-        c.update();
-      });
-    }, 5000);
-
-    console.log('🌳 Live Tree Camera · Supabase Realtime + Phantom ready');
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 11. START
+  // 8. EXPOSE FUNCTIONS TO WINDOW for inline handlers
   // ─────────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', init);
+  window.$ = $;
+  window.refreshDashboard = refreshDashboard;
+  window.updateWalletConnectionUI = updateWalletConnectionUI;
+  window.fetchOLVBalance = fetchOLVBalance;
+  
+  console.log('🌳 Live Tree Camera · Using livedash.ts module');
 </script>
 
 </body>
