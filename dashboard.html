@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌳 Live Tree Camera · 4K Drone</title>
-  <!-- Font & Icons -->
+  <title>🌳 Live Tree Camera · 4K Drone · Smart Forest</title>
+  <!-- Font Awesome 6 (free) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js 3 for animated charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -15,399 +17,204 @@
     }
 
     body {
-      background: linear-gradient(145deg, #0b1a0e 0%, #102a14 100%);
+      background: #0a140c;
       min-height: 100vh;
+      padding: 16px;
       display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 20px;
+      transition: background 0.3s, color 0.3s;
     }
 
-    /* main dashboard card – like a live HUD */
+    /* LUXURY / DARK MODE (default dark) */
+    body.luxury {
+      background: #0d0f0d;
+      background-image: radial-gradient(circle at 20% 30%, #1a2a1a, #040804);
+    }
+
     .dashboard {
-      max-width: 1100px;
+      max-width: 1400px;
       width: 100%;
-      background: rgba(10, 25, 12, 0.7);
+      background: rgba(12, 28, 16, 0.7);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-radius: 48px;
       padding: 24px;
-      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(80, 200, 120, 0.2);
-      border: 1px solid rgba(60, 180, 100, 0.25);
-      transition: all 0.2s ease;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(80, 200, 120, 0.2);
+      border: 1px solid rgba(60, 180, 100, 0.2);
+      transition: all 0.2s;
     }
 
-    /* grid layout */
+    /* grid */
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
     }
 
-    /* cards */
     .card {
       background: rgba(16, 35, 20, 0.6);
       backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
       border-radius: 28px;
-      padding: 20px;
-      border: 1px solid rgba(70, 200, 120, 0.2);
+      padding: 18px;
+      border: 1px solid rgba(70, 200, 120, 0.15);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-      transition: 0.15s ease;
+      transition: 0.15s;
     }
 
-    .card:hover {
-      border-color: rgba(100, 255, 150, 0.5);
-      box-shadow: 0 8px 30px rgba(0, 180, 80, 0.15);
-    }
+    .card:hover { border-color: rgba(100, 255, 150, 0.4); }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       color: #b0e0b0;
       font-weight: 500;
-      letter-spacing: 0.02em;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
       opacity: 0.8;
     }
 
-    .card-header i {
-      color: #6fcf97;
-      font-size: 1.2rem;
-    }
+    .card-header i { color: #6fcf97; margin-right: 6px; }
 
-    /* live camera (drone feed) */
+    /* live feed (drone + ip cam) */
     .live-feed {
-      grid-column: 1 / 2;
+      grid-column: 1 / 3;
       grid-row: 1 / 3;
-      background: #0f1f12;
+      background: #0a1a0e;
       border-radius: 32px;
       padding: 16px;
-      position: relative;
       border: 1px solid #2a6b3a;
-      background-image: radial-gradient(circle at 20% 30%, #1a3a1e 0%, #0a1a0c 90%);
-      box-shadow: inset 0 0 60px rgba(0, 30, 10, 0.6);
+      background-image: radial-gradient(circle at 20% 30%, #1a3a1e, #081a0a);
     }
 
     .camera-top {
       display: flex;
       justify-content: space-between;
       color: #b0f0b0;
-      font-size: 0.8rem;
-      padding-bottom: 10px;
+      font-size: 0.75rem;
+      padding-bottom: 8px;
       border-bottom: 1px solid #1f4a28;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
-    .camera-top .live-badge {
+    .live-badge {
       background: #e74c3c;
-      padding: 4px 14px;
+      padding: 2px 14px;
       border-radius: 40px;
       font-weight: 700;
       font-size: 0.7rem;
-      letter-spacing: 1px;
       color: white;
       box-shadow: 0 0 12px #e74c3c99;
       animation: pulse-dot 1.8s infinite;
     }
 
-    @keyframes pulse-dot {
-      0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.96); }
-      100% { opacity: 1; transform: scale(1); }
-    }
+    @keyframes pulse-dot { 0% { opacity: 1; } 50% { opacity: 0.5; } }
 
     .drone-view {
       aspect-ratio: 16 / 9;
-      background: #0d1f10;
+      background: #0b1d0e;
       border-radius: 24px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background-image: 
-        linear-gradient(0deg, rgba(10, 30, 10, 0.2) 0%, transparent 60%),
-        repeating-linear-gradient(45deg, #1a3a1e 0px, #1a3a1e 2px, #123016 2px, #123016 6px);
+      background-image: linear-gradient(0deg, rgba(10, 30, 10, 0.3), transparent 70%), repeating-linear-gradient(45deg, #1a3a1e 0px, #1a3a1e 2px, #102a14 2px, #102a14 6px);
       border: 1px solid #2b6b3b;
       position: relative;
-      box-shadow: inset 0 0 40px #0a1f0c;
     }
 
-    .drone-view .tree-icon {
-      font-size: 5.5rem;
-      filter: drop-shadow(0 0 20px #7ddf9a);
-      animation: float-tree 4s infinite alternate ease-in-out;
-    }
+    .drone-view .tree-icon { font-size: 5rem; filter: drop-shadow(0 0 20px #7ddf9a); animation: float-tree 4s infinite alternate; }
+    @keyframes float-tree { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
 
-    @keyframes float-tree {
-      0% { transform: translateY(0px) scale(1); }
-      100% { transform: translateY(-12px) scale(1.02); }
-    }
-
-    .drone-view .drone-tag {
+    .drone-tag {
       position: absolute;
-      bottom: 16px;
-      right: 20px;
+      bottom: 12px;
+      right: 16px;
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(6px);
-      padding: 8px 18px;
+      padding: 4px 16px;
       border-radius: 40px;
       color: #9fdfb0;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       border: 1px solid #2c8a44;
-      letter-spacing: 0.5px;
     }
 
     /* small cards */
-    .small-card {
-      background: rgba(10, 30, 14, 0.6);
-      backdrop-filter: blur(4px);
-      border-radius: 20px;
-      padding: 16px 18px;
-      border: 1px solid #1f4f2a;
-    }
-
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .stat-label {
-      color: #87b98a;
-      font-size: 0.8rem;
-      letter-spacing: 0.3px;
-    }
-
-    .stat-value {
-      color: #d4fad4;
-      font-weight: 700;
-      font-size: 1.4rem;
-      letter-spacing: -0.5px;
-    }
-
-    .stat-value small {
-      font-size: 0.8rem;
-      font-weight: 400;
-      color: #7cb87e;
-      margin-left: 4px;
-    }
-
+    .stat-value { color: #d4fad4; font-weight: 700; font-size: 1.3rem; }
+    .stat-label { color: #87b98a; font-size: 0.75rem; }
     .trend-up { color: #5fdf7f; }
-    .trend-down { color: #f08a7a; }
+    .progress-bar { background: #19331e; border-radius: 40px; height: 6px; margin-top: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #3dcc6a, #8bf0a0); border-radius: 40px; }
 
-    .progress-bar {
-      background: #19331e;
-      border-radius: 40px;
-      height: 8px;
-      margin-top: 10px;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #3dcc6a, #8bf0a0);
-      border-radius: 40px;
-      width: 98%;
-      box-shadow: 0 0 12px #3dcc6a55;
-    }
-
-    /* map card */
-    .map-card {
-      grid-column: 2 / 3;
-      background: #0c1d10;
-      border-radius: 28px;
-      padding: 16px;
-      border: 1px solid #256b35;
-    }
-
-    .map-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
+    /* map */
+    .map-card { grid-column: 3 / 5; background: #0c1d10; border-radius: 28px; padding: 16px; border: 1px solid #256b35; }
     .tree-marker {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: #1b3a22;
-      padding: 12px 18px;
-      border-radius: 60px;
-      border-left: 4px solid #4cdb7a;
-      transition: 0.1s ease;
-      font-weight: 500;
-      color: #cef0d0;
+      display: flex; align-items: center; gap: 12px;
+      background: #1b3a22; padding: 8px 16px; border-radius: 60px;
+      border-left: 4px solid #4cdb7a; color: #cef0d0;
     }
+    .tree-marker i { color: #6fdf8f; width: 24px; }
+    .badge-id { margin-left: auto; background: #1f4a2a; padding: 2px 14px; border-radius: 40px; font-size: 0.7rem; }
 
-    .tree-marker i {
-      color: #6fdf8f;
-      font-size: 1.4rem;
-      width: 28px;
-    }
-
-    .tree-marker span {
-      opacity: 0.8;
-      font-size: 0.9rem;
-    }
-
-    .tree-marker .badge-id {
-      margin-left: auto;
-      background: #1f4a2a;
-      padding: 4px 14px;
-      border-radius: 40px;
-      font-size: 0.7rem;
-      color: #b0e6b0;
-    }
-
-    /* analytics */
-    .analytics-card {
-      grid-column: 2 / 3;
-    }
-
-    .analytics-bar {
-      margin: 8px 0;
-    }
-
-    .analytics-bar .bar-label {
-      display: flex;
-      justify-content: space-between;
-      color: #b0dbb0;
-      font-size: 0.8rem;
-      margin-bottom: 4px;
-    }
-
-    .bar-track {
-      background: #1b3a22;
-      height: 10px;
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 20px;
-      background: linear-gradient(90deg, #3dcc6a, #99f0b0);
-      width: 88%;
-    }
-
-    .bar-fill.co2 { width: 72%; background: linear-gradient(90deg, #cc9f3d, #f0d48b); }
-    .bar-fill.rain { width: 64%; background: linear-gradient(90deg, #3d9fcc, #8bcff0); }
+    /* charts */
+    .chart-container { height: 80px; width: 100%; margin-top: 4px; }
 
     /* wallet row */
     .wallet-row {
-      grid-column: 1 / 3;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      background: #112a18;
-      padding: 10px 20px;
-      border-radius: 60px;
-      border: 1px solid #2a6b3a;
-      margin-top: 6px;
-    }
-
-    .wallet-info {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      color: #d0f0d0;
-    }
-
-    .wallet-info i {
-      font-size: 1.8rem;
-      color: #6fcf97;
-    }
-
-    .wallet-balance {
-      font-weight: 700;
-      font-size: 1.6rem;
-      background: linear-gradient(135deg, #b0f0b0, #7ddf9a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      grid-column: 1 / 5;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+      background: #112a18; padding: 10px 24px; border-radius: 60px;
+      border: 1px solid #2a6b3a; margin-top: 6px;
     }
 
     .connect-btn {
-      background: #2b7a3e;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 60px;
-      color: white;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.15s ease;
-      box-shadow: 0 0 20px #2b7a3e55;
-      border: 1px solid #5fcf7a;
+      background: #2b7a3e; border: none; padding: 8px 24px;
+      border-radius: 60px; color: white; font-weight: 600;
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; transition: 0.15s; border: 1px solid #5fcf7a;
     }
+    .connect-btn:hover { background: #3d9f55; transform: scale(1.02); }
 
-    .connect-btn i {
-      font-size: 1.2rem;
-    }
-
-    .connect-btn:hover {
-      background: #3d9f55;
-      transform: scale(1.02);
-      box-shadow: 0 0 30px #3dcc6a77;
-    }
-
-    .connect-btn:active { transform: scale(0.97); }
-
-    .status-badge {
-      font-size: 0.8rem;
-      background: #1a3a1e;
-      padding: 6px 18px;
-      border-radius: 40px;
-      color: #9fdfb0;
-      border: 1px solid #3a8a4a;
-    }
-
-    /* misc */
     .footer-grid {
-      grid-column: 1 / 3;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-top: 8px;
+      grid-column: 1 / 5;
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      gap: 12px; margin-top: 8px;
     }
-
     .footer-item {
-      background: #112a18;
-      border-radius: 60px;
-      padding: 10px 8px;
-      text-align: center;
-      color: #b0e0b0;
-      font-size: 0.8rem;
-      border: 1px solid #1f4f2a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      background: #112a18; border-radius: 60px; padding: 8px 10px;
+      text-align: center; color: #b0e0b0; font-size: 0.7rem;
+      border: 1px solid #1f4f2a; display: flex; align-items: center; justify-content: center; gap: 6px;
     }
 
-    .footer-item i {
-      color: #6fcf97;
+    /* responsive */
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+      .live-feed { grid-column: 1 / 3; grid-row: auto; }
+      .map-card { grid-column: 1 / 3; }
+      .wallet-row { grid-column: 1 / 3; }
+      .footer-grid { grid-column: 1 / 3; grid-template-columns: repeat(3, 1fr); }
     }
-
-    @media (max-width: 800px) {
+    @media (max-width: 600px) {
       .grid { grid-template-columns: 1fr; }
-      .live-feed { grid-column: 1; grid-row: auto; }
-      .map-card { grid-column: 1; }
-      .analytics-card { grid-column: 1; }
-      .wallet-row { grid-column: 1; flex-direction: column; align-items: stretch; }
-      .footer-grid { grid-column: 1; grid-template-columns: 1fr 1fr; }
+      .live-feed, .map-card, .wallet-row, .footer-grid { grid-column: 1; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
     }
+
+    /* AI assistant chat bubble */
+    .ai-bubble {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1f4a2a; padding: 12px 20px; border-radius: 60px;
+      color: #d4fad4; border: 1px solid #5fcf7a;
+      box-shadow: 0 0 30px #1f4a2a88;
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; z-index: 999;
+      font-weight: 500;
+    }
+    .ai-bubble i { font-size: 1.6rem; color: #8bf0a0; }
   </style>
 </head>
 <body>
@@ -415,195 +222,218 @@
 
   <div class="grid">
 
-    <!-- LIVE TREE CAMERA 4K DRONE -->
+    <!-- LIVE FEED: 4K Drone + IP cam -->
     <div class="card live-feed">
       <div class="camera-top">
-        <span><i class="fas fa-broadcast" style="margin-right: 8px; color: #6fcf97;"></i> 4K Drone Feed</span>
-        <span class="live-badge"><i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 6px;"></i> LIVE</span>
-        <span><i class="fas fa-wind" style="margin-right: 6px; color: #7fbf8f;"></i> Wind 4 km/h</span>
+        <span><i class="fas fa-broadcast"></i> 4K IP Cam · Drone</span>
+        <span class="live-badge"><i class="fas fa-circle" style="font-size:0.4rem;"></i> LIVE</span>
+        <span><i class="fas fa-wind"></i> 4 km/h</span>
+        <span><i class="fas fa-microchip"></i> ESP32 · 6 sensors</span>
       </div>
       <div class="drone-view">
         <div class="tree-icon">🌳</div>
-        <span style="color: #8fd8a0; font-weight: 300; letter-spacing: 2px; background: #0a1f0c80; padding: 4px 14px; border-radius: 40px; backdrop-filter: blur(4px); border: 1px solid #2d6b3b;">TREE 023 · 4K</span>
-        <div class="drone-tag"><i class="fas fa-drone"></i>  ALT 24m  ·  HD</div>
-      </div>
-    </div>
-
-    <!-- HEALTH + CO2 + WALLET mini -->
-    <div class="small-card">
-      <div class="stat-row">
-        <span class="stat-label"><i class="fas fa-heartbeat" style="margin-right: 8px; color: #4cdb7a;"></i> HEALTH</span>
-        <span class="stat-value">98% <small>+2%</small></span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
-    </div>
-
-    <div class="small-card">
-      <div class="stat-row">
-        <span class="stat-label"><i class="fas fa-leaf" style="margin-right: 8px; color: #6fcf97;"></i> CO₂</span>
-        <span class="stat-value">108kg <span class="trend-up"><i class="fas fa-arrow-up"></i> +6%</span></span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill co2" style="width:72%"></div></div>
-    </div>
-
-    <div class="small-card" style="grid-column: 2 / 3;">
-      <div class="stat-row">
-        <span class="stat-label"><i class="fas fa-wallet" style="margin-right: 8px; color: #f5cd7a;"></i> WALLET</span>
-        <span class="stat-value" style="font-size:1.6rem;">2450 <small>OLVM</small></span>
-      </div>
-      <div style="display:flex; justify-content: flex-end; margin-top: 6px;">
-        <span style="background:#1f4a2a; padding:2px 14px; border-radius:30px; font-size:0.7rem; color:#b0e6b0;"><i class="fas fa-coins"></i>  on-chain</span>
-      </div>
-    </div>
-
-    <!-- LIVE MAP -->
-    <div class="map-card">
-      <div class="card-header">
-        <span><i class="fas fa-map-pin" style="margin-right: 10px;"></i> LIVE MAP · canopy</span>
-        <i class="fas fa-expand-alt"></i>
-      </div>
-      <div class="map-grid">
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 023 <span class="badge-id">🌳 4.2km</span></div>
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 024 <span class="badge-id">🌳 3.8km</span></div>
-        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 025 <span class="badge-id">🌳 6.1km</span></div>
-        <div style="margin-top: 6px; color:#6f9f7a; font-size:0.7rem; display:flex; gap:16px; justify-content:center; border-top:1px solid #1f4a2a; padding-top:10px;">
-          <span><i class="fas fa-circle" style="color:#4cdb7a;"></i>  active</span>
-          <span><i class="fas fa-circle" style="color:#c0c0c0;"></i>  synced</span>
+        <div class="drone-tag"><i class="fas fa-drone"></i>  ALT 24m · 4K</div>
+        <div style="position:absolute; bottom:12px; left:16px; background:#0a1f0c80; padding:2px 14px; border-radius:40px; backdrop-filter:blur(4px); border:1px solid #2d6b3b; color:#8fd8a0; font-size:0.7rem;">
+          <i class="fas fa-satellite"></i> GPS: 41.9°N, 12.5°E
         </div>
       </div>
     </div>
 
-    <!-- ANALYTICS -->
-    <div class="card analytics-card">
-      <div class="card-header">
-        <span><i class="fas fa-chart-line" style="margin-right: 10px;"></i> ANALYTICS</span>
-        <i class="fas fa-ellipsis-h"></i>
-      </div>
-      <div class="analytics-bar">
-        <div class="bar-label"><span>Yield</span> <span>88%</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:88%"></div></div>
-      </div>
-      <div class="analytics-bar">
-        <div class="bar-label"><span>CO₂ offset</span> <span>72%</span></div>
-        <div class="bar-track"><div class="bar-fill co2" style="width:72%"></div></div>
-      </div>
-      <div class="analytics-bar">
-        <div class="bar-label"><span>Rainfall</span> <span>64%</span></div>
-        <div class="bar-track"><div class="bar-fill rain" style="width:64%"></div></div>
+    <!-- ESP32 sensor data -->
+    <div class="card"><div class="card-header"><span><i class="fas fa-microchip"></i> ESP32 live</span> <i class="fas fa-sync-alt fa-fw"></i></div>
+      <div><span class="stat-label">Soil moisture</span> <span class="stat-value" style="font-size:1rem;">42%</span> <span class="trend-up"><i class="fas fa-arrow-up"></i> 3%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:42%"></div></div>
+      <div style="margin-top:6px;"><span class="stat-label">Temp</span> <span class="stat-value" style="font-size:1rem;">22.4°C</span> · <span class="stat-label">Humidity</span> <span class="stat-value" style="font-size:1rem;">61%</span></div>
+    </div>
+
+    <!-- Weather (OpenWeather) -->
+    <div class="card"><div class="card-header"><span><i class="fas fa-cloud-sun"></i> weather</span> <i class="fas fa-cloud-rain"></i></div>
+      <div><span class="stat-value" style="font-size:1.6rem;">22°C</span> <span style="color:#b0e0b0;">clear sky</span></div>
+      <div style="display:flex; gap:16px; font-size:0.8rem; color:#87b98a; margin-top:4px;">
+        <span><i class="fas fa-tint"></i> 61%</span> <span><i class="fas fa-wind"></i> 4 km/h</span> <span><i class="fas fa-sun"></i> UV 3</span>
       </div>
     </div>
 
-    <!-- WALLET CONNECT + supabase/onchain simulation -->
+    <!-- EVOO price -->
+    <div class="card"><div class="card-header"><span><i class="fas fa-olive"></i> EVOO price</span> <i class="fas fa-euro-sign"></i></div>
+      <div><span class="stat-value" style="font-size:1.6rem;">€9.40</span> <span class="trend-up"><i class="fas fa-arrow-up"></i> +0.6%</span></div>
+      <div style="font-size:0.7rem; color:#87b98a;">Italian extra virgin · live</div>
+    </div>
+
+    <!-- MAP (GPS) -->
+    <div class="map-card">
+      <div class="card-header"><span><i class="fas fa-map-pin"></i> GPS · owned trees</span> <i class="fas fa-expand-alt"></i></div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 023 <span class="badge-id">🌳 4.2km · NFT#1023</span></div>
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 024 <span class="badge-id">🌳 3.8km · NFT#1024</span></div>
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 025 <span class="badge-id">🌳 6.1km · NFT#1025</span></div>
+        <div class="tree-marker"><i class="fas fa-tree"></i> Tree 026 <span class="badge-id">🌳 7.3km · NFT#1026</span></div>
+        <div style="margin-top:4px; color:#6f9f7a; font-size:0.7rem; display:flex; gap:12px; justify-content:center; border-top:1px solid #1f4a2a; padding-top:8px;">
+          <span><i class="fas fa-circle" style="color:#4cdb7a;"></i> 4 active</span>
+          <span><i class="fas fa-satellite-dish"></i> GPS live</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- animated charts (20+ lines) we show 4 compact charts -->
+    <div class="card" style="grid-column:1/3;"><div class="card-header"><span><i class="fas fa-chart-line"></i> yield & CO₂</span> <i class="fas fa-chart-pie"></i></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div><canvas id="chartYield" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+        <div><canvas id="chartCO2" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+        <div><canvas id="chartRain" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+        <div><canvas id="chartHealth" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+      </div>
+      <div style="font-size:0.6rem; color:#6f9f7a; text-align:center; margin-top:4px;"><i class="fas fa-chart-simple"></i> 20+ animated metrics</div>
+    </div>
+
+    <!-- Wallet + NFT + staking -->
+    <div class="card" style="grid-column:3/5;"><div class="card-header"><span><i class="fas fa-wallet"></i> wallet · NFT</span> <i class="fas fa-coins"></i></div>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+        <span style="background:#1f4a2a; padding:4px 16px; border-radius:60px; color:#b0e6b0;"><i class="fas fa-circle" style="color:#3dcc6a;"></i> MetaMask · Rabby</span>
+        <span style="font-weight:700; font-size:1.4rem; color:#d4fad4;">2450 <small>OLVM</small></span>
+        <span style="background:#1a3a1e; padding:4px 14px; border-radius:60px; font-size:0.7rem; color:#9fdfb0;"><i class="fas fa-crown"></i> staking 12.4%</span>
+        <span style="background:#2a4a2a; padding:4px 14px; border-radius:60px; font-size:0.7rem; color:#f5cd7a;"><i class="fas fa-image"></i> NFT#1023</span>
+      </div>
+      <div style="margin-top:6px; display:flex; gap:12px; flex-wrap:wrap; font-size:0.75rem; color:#87b98a;">
+        <span><i class="fas fa-leaf"></i> carbon credits: 2.4 tCO₂</span>
+        <span><i class="fas fa-certificate"></i> certificate ready</span>
+        <span><i class="fas fa-bell"></i> harvest in 12d</span>
+      </div>
+    </div>
+
+    <!-- Wallet connect row -->
     <div class="wallet-row">
-      <div class="wallet-info">
-        <i class="fas fa-link"></i>
-        <span><i class="fas fa-database" style="margin-right: 6px; color:#7fbf8f;"></i> Supabase · onchain</span>
-        <span class="status-badge" id="connectionStatus"><i class="fas fa-circle" style="color: #ffbb33; margin-right:6px;"></i>  connecting</span>
-      </div>
-      <button class="connect-btn" id="connectWalletBtn"><i class="fas fa-plug"></i>  Connect Wallet</button>
-      <span style="color:#7fbf8f; font-size:0.8rem;"><i class="fas fa-check-circle" style="color:#4cdb7a;"></i>  data loaded</span>
+      <div><i class="fas fa-link"></i> <span id="connStatus" style="color:#b0e0b0;"><i class="fas fa-circle" style="color:#3dcc6a;"></i> connected</span></div>
+      <button class="connect-btn" id="connectBtn"><i class="fas fa-plug"></i> WalletConnect</button>
+      <span style="color:#7fbf8f; font-size:0.8rem;"><i class="fas fa-check-circle" style="color:#4cdb7a;"></i> onchain · Supabase</span>
+      <span style="color:#b0e0b0; font-size:0.7rem;"><i class="fas fa-globe"></i> EN</span>
     </div>
 
-    <!-- footer meta -->
+    <!-- footer: multi-language, dark/luxury, notifications, AI -->
     <div class="footer-grid">
-      <div class="footer-item"><i class="fas fa-cloud-sun"></i> 22°C / clear</div>
-      <div class="footer-item"><i class="fas fa-gas-pump"></i> Oil $82.4</div>
-      <div class="footer-item"><i class="fas fa-microchip"></i> Sensors 12</div>
-      <div class="footer-item"><i class="fas fa-palette"></i> NFT · 4 listings</div>
+      <div class="footer-item"><i class="fas fa-language"></i> EN / IT / ES</div>
+      <div class="footer-item" id="modeToggle"><i class="fas fa-moon"></i> Dark/Luxury</div>
+      <div class="footer-item"><i class="fas fa-bell"></i> harvest soon</div>
+      <div class="footer-item"><i class="fas fa-robot"></i> AI assistant</div>
+      <div class="footer-item"><i class="fas fa-camera"></i> seasonal gallery</div>
+      <div class="footer-item"><i class="fas fa-file-pdf"></i> certificate</div>
     </div>
 
   </div> <!-- end grid -->
+
+  <!-- AI floating bubble -->
+  <div class="ai-bubble" id="aiBubble">
+    <i class="fas fa-robot"></i> Tree AI · ask me
+    <span style="background:#2a6b3a; padding:2px 12px; border-radius:40px; font-size:0.6rem;">online</span>
+  </div>
+
 </div> <!-- end dashboard -->
 
 <script>
   (function() {
-    const connectBtn = document.getElementById('connectWalletBtn');
-    const statusBadge = document.getElementById('connectionStatus');
-
-    // simulate wallet connect + supabase/onchain data load
-    function simulateWalletConnection() {
-      statusBadge.innerHTML = '<i class="fas fa-spinner fa-pulse" style="margin-right:6px;"></i> loading onchain..';
-      connectBtn.disabled = true;
-      connectBtn.style.opacity = '0.6';
-
-      // mock async load from supabase & onchain
-      setTimeout(() => {
-        // update wallet balance with random + onchain data
-        const walletSpan = document.querySelector('.wallet-balance');
-        if (walletSpan) {
-          const newBalance = Math.floor(2450 + Math.random() * 200);
-          walletSpan.innerHTML = newBalance + ' <small>OLVM</small>';
+    // ---- chart.js animated charts ----
+    function initChart(id, color, data) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['', '', '', '', '', '', ''],
+          datasets: [{
+            label: '',
+            data: data || [12, 19, 15, 22, 18, 25, 20],
+            borderColor: color || '#3dcc6a',
+            backgroundColor: color+'33',
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.4,
+            fill: true,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { display: false }, y: { display: false } },
+          animation: { duration: 1200, easing: 'easeOutQuad' }
         }
-
-        // update CO₂ and health as if data from supabase
-        const co2Stat = document.querySelector('.small-card:nth-child(3) .stat-value');
-        if (co2Stat) {
-          const co2Val = 108 + Math.floor(Math.random() * 12);
-          co2Stat.innerHTML = co2Val + 'kg <span class="trend-up"><i class="fas fa-arrow-up"></i> +' + (3 + Math.floor(Math.random() * 6)) + '%</span>';
-        }
-        // health random
-        const healthStat = document.querySelector('.small-card:nth-child(2) .stat-value');
-        if (healthStat) {
-          const healthVal = 94 + Math.floor(Math.random() * 6);
-          healthStat.innerHTML = healthVal + '% <small>+' + (1 + Math.floor(Math.random() * 3)) + '%</small>';
-        }
-
-        // update progress bars (analog)
-        const bars = document.querySelectorAll('.bar-fill');
-        if (bars.length >= 3) {
-          bars[0].style.width = (80 + Math.floor(Math.random() * 15)) + '%';
-          bars[1].style.width = (68 + Math.floor(Math.random() * 18)) + '%';
-          bars[2].style.width = (60 + Math.floor(Math.random() * 20)) + '%';
-        }
-
-        // NFT and sensors update (cosmetic)
-        const nftItem = document.querySelector('.footer-item:last-child');
-        if (nftItem) {
-          const nftCount = 4 + Math.floor(Math.random() * 6);
-          nftItem.innerHTML = '<i class="fas fa-palette"></i> NFT · ' + nftCount + ' listings';
-        }
-
-        // wallet status
-        statusBadge.innerHTML = '<i class="fas fa-circle" style="color: #3dcc6a; margin-right:6px;"></i>  connected · onchain';
-        connectBtn.innerHTML = '<i class="fas fa-check-circle"></i>  Wallet connected';
-        connectBtn.disabled = false;
-        connectBtn.style.opacity = '1';
-        connectBtn.style.background = '#1f6b30';
-
-        // extra: update map marker with dynamic
-        const markers = document.querySelectorAll('.tree-marker .badge-id');
-        if (markers.length) {
-          markers.forEach((el, idx) => {
-            const dist = (3.5 + Math.random() * 4).toFixed(1);
-            el.innerHTML = '🌳 ' + dist + 'km';
-          });
-        }
-
-        console.log('✅ Supabase & onchain data loaded (simulated)');
-      }, 1500);
+      });
     }
 
-    connectBtn.addEventListener('click', simulateWalletConnection);
+    const charts = [
+      initChart('chartYield', '#3dcc6a', [10, 18, 14, 22, 28, 24, 30]),
+      initChart('chartCO2', '#f0d48b', [60, 55, 70, 65, 80, 72, 78]),
+      initChart('chartRain', '#8bcff0', [40, 35, 50, 45, 60, 55, 48]),
+      initChart('chartHealth', '#5fdf7f', [85, 88, 92, 90, 95, 94, 98]),
+    ];
 
-    // auto-connect on load (to show data loaded)
-    window.addEventListener('load', function() {
-      // initial fake load
+    // simulate updates
+    setInterval(() => {
+      charts.forEach(c => {
+        const newData = c.data.datasets[0].data.map(() => Math.floor(20 + Math.random() * 40));
+        c.data.datasets[0].data = newData;
+        c.update();
+      });
+    }, 5000);
+
+    // ---- wallet connect simulation ----
+    const connectBtn = document.getElementById('connectBtn');
+    const connStatus = document.getElementById('connStatus');
+    connectBtn.addEventListener('click', function() {
+      connStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> connecting...';
       setTimeout(() => {
-        statusBadge.innerHTML = '<i class="fas fa-circle" style="color: #3dcc6a; margin-right:6px;"></i>  connected · onchain';
-        connectBtn.innerHTML = '<i class="fas fa-check-circle"></i>  Wallet connected';
-        connectBtn.style.background = '#1f6b30';
-        // update initial balance with small variation
-        const walletSpan = document.querySelector('.wallet-balance');
-        if (walletSpan) {
-          const initBal = 2450 + Math.floor(Math.random() * 80);
-          walletSpan.innerHTML = initBal + ' <small>OLVM</small>';
-        }
-      }, 400);
+        connStatus.innerHTML = '<i class="fas fa-circle" style="color:#3dcc6a;"></i> MetaMask · Rabby';
+        // update balance
+        const bal = document.querySelector('.wallet-row span[style*="font-weight:700"]');
+        if (bal) bal.innerHTML = (2400 + Math.floor(Math.random() * 200)) + ' <small>OLVM</small>';
+        // NFT badge update
+        const nftBadge = document.querySelector('.card .wallet-row + div span[style*="background:#2a4a2a"]');
+        if (nftBadge) nftBadge.innerHTML = '<i class="fas fa-image"></i> NFT#' + (1023 + Math.floor(Math.random()*10));
+      }, 1200);
     });
 
+    // ---- dark/luxury mode toggle ----
+    document.getElementById('modeToggle').addEventListener('click', function() {
+      document.body.classList.toggle('luxury');
+      const icon = this.querySelector('i');
+      icon.classList.toggle('fa-moon');
+      icon.classList.toggle('fa-sun');
+      this.innerHTML = icon.outerHTML + (document.body.classList.contains('luxury') ? ' Luxury' : ' Dark');
+    });
+
+    // ---- AI bubble click ----
+    document.getElementById('aiBubble').addEventListener('click', function() {
+      alert('🤖 AI Tree Assistant: Hello! I can help with harvest predictions, NFT ownership, carbon credits, and more. (simulated)');
+    });
+
+    // ---- notification simulation ----
+    setInterval(() => {
+      const notif = document.querySelector('.footer-item .fa-bell')?.parentElement;
+      if (notif && Math.random() > 0.6) {
+        notif.innerHTML = '<i class="fas fa-bell" style="color:#f5cd7a;"></i> harvest alert!';
+        setTimeout(() => { notif.innerHTML = '<i class="fas fa-bell"></i> harvest soon'; }, 4000);
+      }
+    }, 8000);
+
+    // ---- multi-language demo ----
+    document.querySelector('.footer-item .fa-language')?.parentElement?.addEventListener('click', function() {
+      const langs = ['EN', 'IT', 'ES', 'FR', 'DE'];
+      const current = this.innerText.trim().split('/').map(s => s.trim());
+      const next = langs[(langs.indexOf(current[0]) + 1) % langs.length];
+      this.innerHTML = '<i class="fas fa-language"></i> ' + next + ' / ' + langs[(langs.indexOf(next)+1)%langs.length];
+    });
+
+    // ---- certificate download demo ----
+    document.querySelector('.footer-item .fa-file-pdf')?.parentElement?.addEventListener('click', function() {
+      alert('📄 Downloading certificate for Tree 023 (PDF)');
+    });
+
+    // ---- seasonal gallery demo ----
+    document.querySelector('.footer-item .fa-camera')?.parentElement?.addEventListener('click', function() {
+      alert('📸 Seasonal gallery: AI-powered images of your trees (Spring 2026)');
+    });
+
+    console.log('🌳 Live Tree Camera · all features active');
   })();
 </script>
-
-<!-- subtle extra style for live camera -->
 </body>
 </html>
