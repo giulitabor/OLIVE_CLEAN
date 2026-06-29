@@ -363,6 +363,33 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+let lastScroll = 0;
+const nav = document.getElementById("mainNav");
+
+window.addEventListener("scroll", () => {
+    const currentScroll = window.pageYOffset;
+
+    // Always show at top
+    if (currentScroll <= 20) {
+        nav.classList.remove("nav-hidden");
+        nav.classList.add("nav-visible");
+        lastScroll = currentScroll;
+        return;
+    }
+
+    // Hide while scrolling down
+    if (currentScroll > lastScroll) {
+        nav.classList.add("nav-hidden");
+        nav.classList.remove("nav-visible");
+    }
+    // Show while scrolling up
+    else {
+        nav.classList.remove("nav-hidden");
+        nav.classList.add("nav-visible");
+    }
+
+    lastScroll = currentScroll;
+});
 // Initialize
 restoreSession();
 window.showTreeDashboard = showTreeDashboard;
