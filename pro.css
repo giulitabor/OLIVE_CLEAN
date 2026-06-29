@@ -30,6 +30,37 @@ body {
   overflow-x: hidden;
 }
 
+/* Navigation */
+#mainNav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+
+    padding: 1rem 2rem;
+    background: rgba(8, 12, 8, 0.85);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(197,160,89,.15);
+
+    transition:
+        transform .35s ease,
+        opacity .35s ease,
+        background .35s ease;
+
+    transform: translateY(0);
+    opacity: 1;
+}
+
+#mainNav.nav-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+#mainNav.nav-visible {
+    transform: translateY(0);
+    opacity: 1;
+}
 /* grain overlay */
 body::after {
   content: '';
