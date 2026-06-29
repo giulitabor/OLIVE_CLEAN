@@ -41,7 +41,7 @@ import {
   closeSellModal,
   confirmSellAction,
   setSellMax,
-} from "./reserve_board";
+} from "./src/reserve_board";
 
 import {
   updateIdentityBalanceUI,
@@ -51,7 +51,7 @@ import {
   closeAgreement,
   closeConnectModal,
   closeSuccess,
-} from "./reserveb";
+} from "./src/reserveb";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. EXPOSE ALL FUNCTIONS TO WINDOW (for inline HTML event handlers)
