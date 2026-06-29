@@ -24,7 +24,7 @@ import {
   getProgram,
   getProvider,
   PROGRAM_ID,
-} from "./connection";
+} from "./src/connection";
 
 import {
   getTrees,
