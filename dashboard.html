@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🌳 Olivium · Live Tree Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <style>
     /* ─── reset & base ─── */
@@ -360,9 +360,10 @@
 
 <script type="module">
 // ─── 0. CONFIG ────────────────────────────────────────────────────────────────
-// ⚠️  Replace these with your real values (or pull from env via your bundler)
+// SUPABASE_ANON_KEY: Supabase Dashboard → Project Settings → API → anon/public
+// It starts with "eyJ" and is ~200 characters. A short/truncated key = 400 error.
 const SUPABASE_URL      = 'https://kqfqryeptkbvlkekocpx.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-'; // ← replace if needed
+const SUPABASE_ANON_KEY = 'PASTE_YOUR_FULL_ANON_KEY_HERE'; // ← only change needed
 const RPC_URL           = 'https://api.devnet.solana.com';
 
 // Inject for connection.ts if you later import it as a module
@@ -387,22 +388,20 @@ window.connection  = connection;
 // Minimal IDL — enough for tree.all() and sharePosition.all()
 // Replace this with your actual IDL import if building with a bundler.
 // For a pure HTML file you need to inline the IDL here:
+// ─── IDL (inlined — no fetch, no 404) ────────────────────────────────────────
+const IDL = {"address":"9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV","metadata":{"name":"olivium_dao","version":"0.1.0","spec":"0.1.0"},"instructions":[{"name":"initialize_protocol","discriminator":[188,233,252,106,134,146,202,91],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"authority","writable":true,"signer":true},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"share_price","type":"u64"},{"name":"buy_fee","type":"u64"},{"name":"sell_fee","type":"u64"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"}]},{"name":"purchase_shares","discriminator":[171,132,3,224,99,69,214,250],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"buyer"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true},{"name":"buyer","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]},{"name":"register_tree","discriminator":[22,52,192,74,201,240,87,252],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"authority","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"age","type":"u8"},{"name":"location","type":"string"},{"name":"total_shares","type":"u64"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"}]},{"name":"sell_shares","discriminator":[184,164,169,16,231,158,199,196],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"seller"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"seller","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]}],"accounts":[{"name":"ProtocolConfig","discriminator":[207,91,250,28,152,179,215,209]},{"name":"SharePosition","discriminator":[239,228,59,88,149,73,218,15]},{"name":"Tree","discriminator":[100,9,213,154,6,136,109,55]}],"errors":[{"code":6000,"name":"Unauthorized","msg":"Unauthorized"},{"code":6001,"name":"InvalidAmount","msg":"Invalid amount"},{"code":6002,"name":"NotEnoughShares","msg":"Not enough shares available"},{"code":6003,"name":"NotEnoughSharesOwned","msg":"Not enough shares owned"},{"code":6004,"name":"Overflow","msg":"Arithmetic overflow"},{"code":6005,"name":"InsufficientTreasuryFunds","msg":"Treasury has insufficient funds for payout"},{"code":6006,"name":"InvalidTreasury","msg":"Treasury address does not match protocol config"}],"types":[{"name":"ProtocolConfig","type":{"kind":"struct","fields":[{"name":"authority","type":"pubkey"},{"name":"treasury","type":"pubkey"},{"name":"share_price_lamports","type":"u64"},{"name":"total_trees","type":"u32"},{"name":"buy_fee_bps","type":"u16"},{"name":"sell_fee_bps","type":"u16"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"},{"name":"bump","type":"u8"}]}},{"name":"SharePosition","type":{"kind":"struct","fields":[{"name":"owner","type":"pubkey"},{"name":"tree_id","type":"string"},{"name":"shares_owned","type":"u64"},{"name":"is_guardian","type":"bool"}]}},{"name":"Tree","type":{"kind":"struct","fields":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"location","type":"string"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"},{"name":"total_shares","type":"u64"},{"name":"shares_sold","type":"u64"},{"name":"last_harvest_yield_ml","type":"u64"},{"name":"total_co2_kg","type":"u64"},{"name":"age","type":"u8"},{"name":"health_status","type":"u8"},{"name":"guardian_count","type":"u8"},{"name":"has_guardian","type":"bool"},{"name":"bump","type":"u8"}]}}]};
+
 let _program = null;
 (async () => {
   try {
-    // Attempt to load IDL from sibling path; adjust as needed
-    const idlRes = await fetch('./SIMPLE/idl/idl.json');
-    if (!idlRes.ok) throw new Error('IDL not found');
-    const idl = await idlRes.json();
     const roProvider = new AnchorProvider(connection, {}, { commitment: 'confirmed' });
-    _program = new Program(idl, roProvider);
+    _program = new Program(IDL, roProvider);
     window._program = _program;
-    console.log('✅ [PROGRAM] Read-only program ready');
+    console.log('✅ [PROGRAM] Read-only Anchor program ready — program ID:', IDL.address);
   } catch (e) {
-    console.warn('⚠️ [PROGRAM] Could not load IDL — on-chain reads disabled:', e.message);
+    console.warn('⚠️ [PROGRAM] Anchor init failed — on-chain reads disabled:', e.message);
     window._program = null;
   }
-  // Boot dashboard after program attempt (succeeds or fails gracefully)
   await bootDashboard();
 })();
 
