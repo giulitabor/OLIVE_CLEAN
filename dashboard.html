@@ -9,7 +9,6 @@
   <!-- Chart.js 3 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <style>
-    /* ─── reset & base ─── */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
     body {
       background:#0a140c; min-height:100vh; padding:16px; display:flex; justify-content:center;
@@ -28,7 +27,6 @@
       box-shadow:0 30px 50px rgba(0,0,0,.9),0 0 0 1px rgba(80,200,120,.2);
       border:1px solid rgba(60,180,100,.2);
     }
-    /* ─── grid ─── */
     .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
     .card {
       background:rgba(16,35,20,.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
@@ -43,7 +41,6 @@
       color:#b0e0b0; font-weight:500; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; opacity:.8;
     }
     .card-header i { color:#6fcf97; margin-right:6px; }
-    /* live feed */
     .live-feed {
       grid-column:1/3; grid-row:1/3;
       background:#0a1a0e; border-radius:32px; padding:16px;
@@ -78,16 +75,16 @@
     .trend-up { color:#5fdf7f; }
     .progress-bar { background:#19331e; border-radius:40px; height:6px; margin-top:6px; overflow:hidden; }
     .progress-fill { height:100%; background:linear-gradient(90deg,#3dcc6a,#8bf0a0); border-radius:40px; }
-    /* map */
     .map-card { grid-column:3/5; background:#0c1d10; border-radius:28px; padding:16px; border:1px solid #256b35; }
     .tree-marker {
       display:flex; align-items:center; gap:12px;
       background:#1b3a22; padding:8px 16px; border-radius:60px;
       border-left:4px solid #4cdb7a; color:#cef0d0;
+      cursor:pointer; transition:.15s;
     }
+    .tree-marker:hover { background:#2a4a32; border-left-color:#6fdf8f; }
     .tree-marker i { color:#6fdf8f; width:24px; }
     .badge-id { margin-left:auto; background:#1f4a2a; padding:2px 14px; border-radius:40px; font-size:.7rem; }
-    /* wallet row */
     .wallet-row {
       grid-column:1/5; display:flex; justify-content:space-between; align-items:center;
       flex-wrap:wrap; gap:12px;
@@ -120,6 +117,15 @@
       cursor:pointer; z-index:999; font-weight:500;
     }
     .ai-bubble i { font-size:1.6rem; color:#8bf0a0; }
+    .loading-trees {
+      text-align:center; padding:20px; color:#6f9f7a;
+    }
+    .loading-trees .spinner {
+      display:inline-block; width:24px; height:24px;
+      border:3px solid #1f4a2a; border-top-color:#4cdb7a;
+      border-radius:50%; animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
     @media (max-width:1000px) {
       .grid{grid-template-columns:1fr 1fr}
       .live-feed{grid-column:1/3;grid-row:auto}
@@ -133,17 +139,6 @@
       .footer-grid{grid-template-columns:1fr 1fr}
     }
     .hidden { display:none !important; }
-    
-    /* Loading state for trees */
-    .loading-trees {
-      text-align:center; padding:20px; color:#6f9f7a;
-    }
-    .loading-trees .spinner {
-      display:inline-block; width:24px; height:24px;
-      border:3px solid #1f4a2a; border-top-color:#4cdb7a;
-      border-radius:50%; animation:spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -263,6 +258,184 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
+     TREE DETAIL MODAL
+═══════════════════════════════════════════════════════════════ -->
+<div id="tree-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" style="background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl relative overflow-hidden" onclick="event.stopPropagation()">
+
+      <!-- Close -->
+      <button onclick="if(window.closeTreeDetailModal) window.closeTreeDetailModal()" class="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-lg transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <!-- Hero image + name -->
+      <div class="relative h-80 overflow-hidden">
+        <div id="tree-detail-hero-img" class="absolute inset-0 bg-cover bg-center transition-all duration-500" style="background-image: url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+          <div class="flex items-end justify-between">
+            <div>
+              <p id="tree-detail-field-id" class="text-xs font-mono text-white/60 mb-1">—</p>
+              <h2 id="tree-detail-name" class="text-3xl font-bold mb-1">—</h2>
+              <p id="tree-detail-location" class="text-sm text-white/80">—</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-white/60 mb-1">Health Score</p>
+              <p id="tree-detail-health" class="text-2xl font-bold text-green-400">—</p>
+            </div>
+          </div>
+        </div>
+        <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full text-white text-xs font-medium shadow-lg">
+          <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>LIVE SENSORS
+        </div>
+        <div id="tree-detail-status-badge" class="absolute top-4 right-20 px-3 py-1.5 bg-green-600 rounded-full text-white text-xs font-medium shadow-lg">
+          <span id="tree-detail-status-text">registered</span>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="p-8">
+        <div class="flex gap-2 mb-6 border-b border-stone-200 overflow-x-auto">
+          <button class="tree-detail-tab active px-4 py-2 text-sm font-medium border-b-2 border-green-600 text-green-600 whitespace-nowrap" data-tab="overview" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('overview')">Overview</button>
+          <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" data-tab="physical" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('physical')">📐 Physical</button>
+          <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" data-tab="environment" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('environment')">🌡️ Live Sensors</button>
+          <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" data-tab="weather" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('weather')">☁️ Weather</button>
+          <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" data-tab="metadata" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('metadata')">⛓ On-Chain</button>
+          <button class="tree-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-800 whitespace-nowrap" data-tab="gallery" onclick="if(window.switchTreeDetailTab) window.switchTreeDetailTab('gallery')">🖼 Gallery</button>
+        </div>
+
+        <!-- OVERVIEW TAB -->
+        <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
+          <div class="grid md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-stone-50 rounded-xl p-4 text-center">
+              <div class="text-2xl mb-1">🌳</div>
+              <p class="text-xs text-stone-400 mb-1">Age</p>
+              <p id="tree-detail-age" class="text-xl font-bold text-stone-900">—</p>
+            </div>
+            <div class="bg-stone-50 rounded-xl p-4 text-center">
+              <div class="text-2xl mb-1">📏</div>
+              <p class="text-xs text-stone-400 mb-1">Height</p>
+              <p id="tree-detail-height" class="text-xl font-bold text-stone-900">—</p>
+            </div>
+            <div class="bg-stone-50 rounded-xl p-4 text-center">
+              <div class="text-2xl mb-1">🫒</div>
+              <p class="text-xs text-stone-400 mb-1">Variety</p>
+              <p id="tree-detail-variety" class="text-lg font-bold text-stone-900">—</p>
+            </div>
+            <div class="bg-stone-50 rounded-xl p-4 text-center">
+              <div class="text-2xl mb-1">📊</div>
+              <p class="text-xs text-stone-400 mb-1">Shares Sold</p>
+              <p id="tree-overview-shares" class="text-xl font-bold text-stone-900">—</p>
+            </div>
+          </div>
+          <!-- Share progress -->
+          <div class="bg-stone-50 rounded-xl p-4 mb-4">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-stone-500">Adoption Progress</span>
+              <span id="tree-overview-pct" class="font-bold text-stone-800">—%</span>
+            </div>
+            <div class="w-full bg-stone-200 rounded-full h-2.5">
+              <div id="tree-overview-bar" class="bg-green-600 h-2.5 rounded-full transition-all" style="width:0%"></div>
+            </div>
+            <div class="flex justify-between text-xs text-stone-400 mt-1">
+              <span id="tree-overview-sold-label">— sold</span>
+              <span id="tree-overview-total-label">— total</span>
+            </div>
+          </div>
+          <!-- Treatment info -->
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="border border-stone-100 rounded-xl p-4">
+              <p class="text-xs text-stone-400 mb-1">Last Treatment</p>
+              <p id="tree-detail-last-treatment" class="font-semibold text-stone-800">—</p>
+              <p id="tree-detail-treatment-type" class="text-xs text-stone-500 mt-0.5">—</p>
+            </div>
+            <div class="border border-stone-100 rounded-xl p-4">
+              <p class="text-xs text-stone-400 mb-1">Last Fertilizer</p>
+              <p id="tree-detail-last-fertilizer" class="font-semibold text-stone-800">—</p>
+              <p id="tree-detail-fertilizer-type" class="text-xs text-stone-500 mt-0.5">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHYSICAL TAB -->
+        <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="border rounded-xl p-4"><p class="text-xs text-stone-400 mb-1">Age</p><p id="phys-age" class="text-2xl font-bold text-stone-900">—</p><p class="text-xs text-stone-400">years</p></div>
+            <div class="border rounded-xl p-4"><p class="text-xs text-stone-400 mb-1">Height</p><p id="phys-height" class="text-2xl font-bold text-stone-900">—</p><p class="text-xs text-stone-400">cm</p></div>
+            <div class="border rounded-xl p-4"><p class="text-xs text-stone-400 mb-1">Circumference</p><p id="phys-circumference" class="text-2xl font-bold text-stone-900">—</p><p class="text-xs text-stone-400">cm</p></div>
+            <div class="border rounded-xl p-4"><p class="text-xs text-stone-400 mb-1">Diameter</p><p id="phys-diameter" class="text-2xl font-bold text-stone-900">—</p><p class="text-xs text-stone-400">cm</p></div>
+            <div class="border rounded-xl p-4"><p class="text-xs text-stone-400 mb-1">Crown Spread</p><p id="phys-crown" class="text-2xl font-bold text-stone-900">—</p><p class="text-xs text-stone-400">cm</p></div>
+            <div class="border rounded-xl p-4"><p class="text-xs text-stone-400 mb-1">Altitude</p><p id="phys-altitude" class="text-2xl font-bold text-stone-900">—</p><p class="text-xs text-stone-400">m</p></div>
+            <div class="border rounded-xl p-4 md:col-span-2"><p class="text-xs text-stone-400 mb-1">GPS Coordinates</p><p id="phys-coords" class="font-mono text-stone-800">—</p></div>
+          </div>
+        </div>
+
+        <!-- ENVIRONMENT TAB -->
+        <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden">
+          <h4 class="font-semibold text-stone-900 mb-3">🌱 Live Field Sensors — <span id="env-field-label" class="text-stone-400 font-normal text-sm">—</span></h4>
+          <div class="grid md:grid-cols-3 gap-4 mb-4">
+            <div class="border rounded-xl p-4">
+              <p class="text-sm text-stone-500 mb-1">💧 Soil Moisture</p>
+              <span id="oracle-soil-moisture" class="text-xl font-bold text-stone-900">—</span>
+              <div class="bg-stone-100 rounded-full h-2 mt-2"><div id="oracle-moisture-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width:0%"></div></div>
+              <p id="oracle-moisture-status" class="text-xs text-stone-400 mt-1">—</p>
+            </div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌡️ Temperature</p><span id="oracle-soil-temp" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🍃 Leaf Wetness</p><span id="oracle-leaf-wetness" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">☀️ UV Index</p><span id="oracle-uv" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌬️ CO₂</p><span id="oracle-co2" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p><span id="oracle-wind" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💧 Humidity</p><span id="oracle-humidity" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌧️ Rain Rate</p><span id="oracle-rain" class="text-xl font-bold text-stone-900">—</span></div>
+          </div>
+          <p class="text-xs text-stone-400">Last reading: <span id="oracle-last-update" class="font-medium">—</span></p>
+        </div>
+
+        <!-- WEATHER TAB -->
+        <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden">
+          <h4 class="font-semibold text-stone-900 mb-3">☁️ Current Conditions — <span id="weather-coords-label" class="text-stone-400 font-normal text-sm">—</span></h4>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌡️ Air Temperature</p><span id="weather-temp" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💨 Wind Speed</p><span id="weather-wind" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">💧 Humidity</p><span id="weather-humidity" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🔵 Pressure</p><span id="weather-pressure" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">🌧️ Rain</p><span id="weather-rain" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">☀️ UV Index</p><span id="weather-uv" class="text-xl font-bold text-stone-900">—</span></div>
+            <div class="border rounded-xl p-4"><p class="text-sm text-stone-500 mb-1">⚡ Solar Radiation</p><span id="weather-solar" class="text-xl font-bold text-stone-900">—</span></div>
+          </div>
+        </div>
+
+        <!-- ON-CHAIN / METADATA TAB -->
+        <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden">
+          <div class="space-y-0 text-sm divide-y divide-stone-100">
+            <div class="flex justify-between py-3"><span class="text-stone-500">Tree ID</span><span id="tree-detail-meta-id" class="font-mono font-medium text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Field ID</span><span id="tree-detail-meta-field" class="font-mono text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Address</span><span id="tree-detail-meta-onchain" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Mint</span><span id="tree-detail-meta-mint" class="font-mono text-xs text-stone-900 break-all max-w-xs text-right">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">On-Chain Status</span><span id="tree-detail-meta-status" class="font-medium text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Total Shares</span><span id="tree-detail-meta-total" class="font-bold text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Shares Sold (live)</span><span id="tree-detail-meta-sold" class="font-bold text-green-700">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Shares Available</span><span id="tree-detail-meta-available" class="font-bold text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Variety</span><span id="tree-detail-meta-variety" class="text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Coordinates</span><span id="tree-detail-meta-coords" class="font-mono text-xs text-stone-900">—</span></div>
+            <div class="flex justify-between py-3"><span class="text-stone-500">Last Updated</span><span id="tree-detail-meta-updated" class="text-stone-900">—</span></div>
+          </div>
+        </div>
+
+        <!-- GALLERY TAB -->
+        <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden">
+          <div id="tree-detail-gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <p class="text-stone-400 text-sm col-span-3">Loading gallery...</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
      SCRIPTS: Load livedash.ts module
 ═══════════════════════════════════════════════════════════════ -->
 <script type="importmap">
@@ -279,8 +452,8 @@
   // ─────────────────────────────────────────────────────────────
   // 1. CONFIG — replace with your actual values
   // ─────────────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://kqfqryeptkbvlkekocpx.supabase.co';      // ← CHANGE
-  const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-';                  // ← CHANGE
+  const SUPABASE_URL = 'https://kqfqryeptkbvlkekocpx.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-';
 
   // Set environment variables for connection.ts
   window.VITE_SUPABASE_URL = SUPABASE_URL;
@@ -304,7 +477,7 @@
   const olvBalance = $('wallet-olv-balance');
 
   // ─────────────────────────────────────────────────────────────
-  // 4. CHART.JS INIT (local, kept separate from livedash)
+  // 4. CHART.JS INIT
   // ─────────────────────────────────────────────────────────────
   function initChart(id, color, data) {
     const ctx = document.getElementById(id).getContext('2d');
@@ -335,7 +508,6 @@
     initChart('chartHealth', '#5fdf7f', [85,88,92,90,95,94,98]),
   ];
 
-  // Update charts with random data periodically
   setInterval(() => {
     charts.forEach(c => {
       const newData = c.data.datasets[0].data.map(() => Math.floor(20 + Math.random() * 40));
@@ -345,37 +517,26 @@
   }, 5000);
 
   // ─────────────────────────────────────────────────────────────
-  // 5. OVERRIDE LOCAL connectBtn to use livedash
+  // 5. CONNECT BUTTON
   // ─────────────────────────────────────────────────────────────
-  // Remove any existing listeners by cloning
   const newConnectBtn = connectBtn.cloneNode(true);
   connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
   
   newConnectBtn.addEventListener('click', async () => {
-    // Use the livedash handleConnectClick logic
     if (window.isConnected && window.isConnected()) {
-      // Disconnect
       await window.handleDisconnectWorkflow?.();
       updateWalletConnectionUI?.();
       window.updateIdentityBalanceUI?.();
     } else {
-      // Show connect modal (from livedash)
       const modal = document.getElementById('connectModal');
-      if (modal) {
-        modal.style.display = 'flex';
-      } else {
-        // Fallback: use Phantom directly
-        await window.connectWallet?.();
-      }
+      if (modal) modal.style.display = 'flex';
+      else await window.connectWallet?.();
     }
   });
 
   // ─────────────────────────────────────────────────────────────
-  // 6. LOCAL UI UPDATE FUNCTIONS (override livedash ones if needed)
+  // 6. UI UPDATE FUNCTIONS
   // ─────────────────────────────────────────────────────────────
-  // These match the signatures expected by livedash
-  
-  // Override updateSensorUI if needed (livedash already has it)
   window.updateSensorUI = (data) => {
     if (data.moisture !== undefined) {
       $('sensor-moisture').textContent = data.moisture + '%';
@@ -398,17 +559,33 @@
   };
 
   // ─────────────────────────────────────────────────────────────
-  // 7. BOOT: Initialize livedash
+  // 7. TREE MAP RENDERER (with click to open detail modal)
+  // ─────────────────────────────────────────────────────────────
+  window.renderTreeMap = (trees) => {
+    const container = $('map-tree-list');
+    if (!container) return;
+    if (!trees || trees.length === 0) {
+      container.innerHTML = `<div style="text-align:center;padding:20px;color:#6f9f7a;">🌱 No trees loaded yet</div>`;
+      return;
+    }
+    container.innerHTML = trees.map((t, i) => `
+      <div class="tree-marker" data-tree-id="${t.tree_id || t.id || i+1}" onclick="window.openTreeDetailModal && window.openTreeDetailModal('${t.tree_id || t.id || i+1}')">
+        <i class="fas fa-tree"></i>
+        ${t.name || 'Tree #' + (i+1)}
+        <span class="badge-id">🌳 ${t.distance || (3 + i * 1.2).toFixed(1)}km · NFT#${t.nft_id || (1023 + i)}</span>
+      </div>
+    `).join('');
+    const active = $('map-active-count');
+    if (active) active.textContent = trees.length;
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // 8. BOOT
   // ─────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Initializing LiveDash...');
-    
-    // Initialize the livedash module
     await initLiveDash();
-    
-    // Set up local event listeners for UI elements
     setupLocalListeners();
-    
     console.log('✅ LiveDash initialized successfully');
   });
 
@@ -424,7 +601,7 @@
 
     // AI bubble
     $('aiBubble').addEventListener('click', () => {
-      alert('🤖 AI Tree Assistant: I have real-time data from Supabase and on-chain OLV balances. How can I help?');
+      alert('🤖 AI Tree Assistant: I have real-time data from Supabase and on-chain OLV balances.');
     });
 
     // Language toggle
@@ -459,7 +636,7 @@
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 8. EXPOSE FUNCTIONS TO WINDOW for inline handlers
+  // 9. EXPOSE FUNCTIONS
   // ─────────────────────────────────────────────────────────────
   window.$ = $;
   window.refreshDashboard = refreshDashboard;
