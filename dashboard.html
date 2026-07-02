@@ -843,39 +843,10 @@ import { AnchorProvider, Program } from '@coral-xyz/anchor';
 // connection.ts sets window.sb, window._program, window._connection at boot.
 // We wait for them rather than duplicating clients (avoids Multiple GoTrueClient
 // warning and the 400 that comes from an empty/wrong key in a second instance).
-async function waitForConnectionTs(maxMs=5000){
-  const start=Date.now();
-  while(Date.now()-start<maxMs){
-    if(window.sb && window._connection) return true;
-    await new Promise(r=>setTimeout(r,50));
-  }
-  console.warn('⚠️ connection.ts did not expose window.sb in time — creating fallback client');
-  return false;
-}
-
-await waitForConnectionTs();
-
-// Use the already-initialised singletons
-const sb = window.sb ?? (() => {
-  // Fallback only: connection.ts wasn't loaded first
-  const { createClient } = await import('@supabase/supabase-js');
-  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.sb = client;
-  return client;
-})();
-
-const connection = window._connection ?? new Connection(RPC_URL,'confirmed');
-window._connection = connection;
-
-let _program = window._program ?? null;
-if(!_program){
-  try{
-    const prov = new AnchorProvider(connection,{},{commitment:'confirmed'});
-    _program = new Program(IDL, prov);
-    window._program = _program;
-    console.log('✅ Anchor program ready (dashboard fallback)');
-  }catch(e){console.warn('⚠️ Anchor init failed:',e.message);window._program=null;}
-}
+// sb, connection, _program are assigned inside the async IIFE below before boot()
+let sb;
+let connection;
+let _program = null;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
@@ -1311,7 +1282,41 @@ async function boot(){
   },60000);
   console.log('✅ Dashboard ready');
 }
-boot();
+(async () => {
+  // Wait up to 5s for connection.ts to expose window.sb
+  const _t0 = Date.now();
+  while(Date.now() - _t0 < 5000){
+    if(window.sb && window._connection) break;
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  // Reuse singleton from connection.ts — avoids duplicate GoTrueClient + 400
+  if(window.sb){
+    sb = window.sb;
+  } else {
+    console.warn('⚠️ window.sb not ready — creating fallback Supabase client');
+    const { createClient } = await import('@supabase/supabase-js');
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.sb = sb;
+  }
+
+  connection = window._connection ?? new Connection(RPC_URL, 'confirmed');
+  window._connection = connection;
+
+  _program = window._program ?? null;
+  if(!_program){
+    try{
+      const prov = new AnchorProvider(connection, {}, {commitment:'confirmed'});
+      _program = new Program(IDL, prov);
+      window._program = _program;
+      console.log('✅ Anchor program ready (fallback)');
+    }catch(e){
+      console.warn('⚠️ Anchor init failed:', e.message);
+    }
+  }
+
+  boot();
+})();
 </script>
 </body>
 </html>
