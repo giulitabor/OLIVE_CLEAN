@@ -792,10 +792,8 @@
 </div>
 
 <!-- ════ SCRIPTS ════ -->
-<!-- connection.ts exposes window.VITE_* — import it first so the dashboard
-     module can read those values even when import.meta.env isn't replaced -->
-<script type="module" src="./src/connection.ts"></script>
-
+<!-- importmap: connection.ts is already loaded by your Vite entry point.
+     dashboard.html reuses window.sb and window._program set by connection.ts. -->
 <script type="importmap">
 {
   "imports":{
@@ -838,23 +836,46 @@ if(!SUPABASE_ANON_KEY||!SUPABASE_URL){
 const IDL={"address":"9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV","metadata":{"name":"olivium_dao","version":"0.1.0","spec":"0.1.0"},"instructions":[{"name":"initialize_protocol","discriminator":[188,233,252,106,134,146,202,91],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"authority","writable":true,"signer":true},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"share_price","type":"u64"},{"name":"buy_fee","type":"u64"},{"name":"sell_fee","type":"u64"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"}]},{"name":"purchase_shares","discriminator":[171,132,3,224,99,69,214,250],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"buyer"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true},{"name":"buyer","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]},{"name":"register_tree","discriminator":[22,52,192,74,201,240,87,252],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"authority","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"age","type":"u8"},{"name":"location","type":"string"},{"name":"total_shares","type":"u64"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"}]},{"name":"sell_shares","discriminator":[184,164,169,16,231,158,199,196],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"seller"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"seller","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]}],"accounts":[{"name":"ProtocolConfig","discriminator":[207,91,250,28,152,179,215,209]},{"name":"SharePosition","discriminator":[239,228,59,88,149,73,218,15]},{"name":"Tree","discriminator":[100,9,213,154,6,136,109,55]}],"errors":[{"code":6000,"name":"Unauthorized","msg":"Unauthorized"},{"code":6001,"name":"InvalidAmount","msg":"Invalid amount"},{"code":6002,"name":"NotEnoughShares","msg":"Not enough shares available"},{"code":6003,"name":"NotEnoughSharesOwned","msg":"Not enough shares owned"},{"code":6004,"name":"Overflow","msg":"Arithmetic overflow"},{"code":6005,"name":"InsufficientTreasuryFunds","msg":"Treasury has insufficient funds for payout"},{"code":6006,"name":"InvalidTreasury","msg":"Treasury address does not match protocol config"}],"types":[{"name":"ProtocolConfig","type":{"kind":"struct","fields":[{"name":"authority","type":"pubkey"},{"name":"treasury","type":"pubkey"},{"name":"share_price_lamports","type":"u64"},{"name":"total_trees","type":"u32"},{"name":"buy_fee_bps","type":"u16"},{"name":"sell_fee_bps","type":"u16"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"},{"name":"bump","type":"u8"}]}},{"name":"SharePosition","type":{"kind":"struct","fields":[{"name":"owner","type":"pubkey"},{"name":"tree_id","type":"string"},{"name":"shares_owned","type":"u64"},{"name":"is_guardian","type":"bool"}]}},{"name":"Tree","type":{"kind":"struct","fields":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"location","type":"string"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"},{"name":"total_shares","type":"u64"},{"name":"shares_sold","type":"u64"},{"name":"last_harvest_yield_ml","type":"u64"},{"name":"total_co2_kg","type":"u64"},{"name":"age","type":"u8"},{"name":"health_status","type":"u8"},{"name":"guardian_count","type":"u8"},{"name":"has_guardian","type":"bool"},{"name":"bump","type":"u8"}]}}]};
 
 // ── IMPORTS ───────────────────────────────────────────────────────────────────
-import { createClient } from '@supabase/supabase-js';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { AnchorProvider, Program } from '@coral-xyz/anchor';
 
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.sb = sb;
+// ── Reuse connection.ts singletons — never create a second Supabase client ──
+// connection.ts sets window.sb, window._program, window._connection at boot.
+// We wait for them rather than duplicating clients (avoids Multiple GoTrueClient
+// warning and the 400 that comes from an empty/wrong key in a second instance).
+async function waitForConnectionTs(maxMs=5000){
+  const start=Date.now();
+  while(Date.now()-start<maxMs){
+    if(window.sb && window._connection) return true;
+    await new Promise(r=>setTimeout(r,50));
+  }
+  console.warn('⚠️ connection.ts did not expose window.sb in time — creating fallback client');
+  return false;
+}
 
-const connection = new Connection(RPC_URL,'confirmed');
+await waitForConnectionTs();
+
+// Use the already-initialised singletons
+const sb = window.sb ?? (() => {
+  // Fallback only: connection.ts wasn't loaded first
+  const { createClient } = await import('@supabase/supabase-js');
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.sb = client;
+  return client;
+})();
+
+const connection = window._connection ?? new Connection(RPC_URL,'confirmed');
 window._connection = connection;
 
-let _program = null;
-try{
-  const prov = new AnchorProvider(connection,{},{commitment:'confirmed'});
-  _program = new Program(IDL, prov);
-  window._program = _program;
-  console.log('✅ Anchor program ready');
-}catch(e){console.warn('⚠️ Anchor init failed:',e.message);window._program=null;}
+let _program = window._program ?? null;
+if(!_program){
+  try{
+    const prov = new AnchorProvider(connection,{},{commitment:'confirmed'});
+    _program = new Program(IDL, prov);
+    window._program = _program;
+    console.log('✅ Anchor program ready (dashboard fallback)');
+  }catch(e){console.warn('⚠️ Anchor init failed:',e.message);window._program=null;}
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
