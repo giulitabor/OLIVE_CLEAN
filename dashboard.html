@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🌳 Olivium · Live Tree Dashboard</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" />
+  <!-- FA SVG+JS: icons render as inline SVG — zero .woff2 requests, no font-src CSP hit -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/js/all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <style>
     /* ─── reset & base ─── */
@@ -363,7 +364,7 @@
 // SUPABASE_ANON_KEY: Supabase Dashboard → Project Settings → API → anon/public
 // It starts with "eyJ" and is ~200 characters. A short/truncated key = 400 error.
 const SUPABASE_URL      = 'https://kqfqryeptkbvlkekocpx.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-'; // ← only change needed
+const SUPABASE_ANON_KEY = 'PASTE_YOUR_FULL_ANON_KEY_HERE'; // ← only change needed
 const RPC_URL           = 'https://api.devnet.solana.com';
 
 // Inject for connection.ts if you later import it as a module
@@ -371,8 +372,25 @@ window.VITE_SUPABASE_URL      = SUPABASE_URL;
 window.VITE_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 window.VITE_RPC_URL           = RPC_URL;
 
-// ─── 1. SUPABASE (inline — no bundler needed) ─────────────────────────────────
+// ─── 1. SUPABASE ──────────────────────────────────────────────────────────────
 import { createClient } from '@supabase/supabase-js';
+
+// Guard: show a visible error before the silent 401 hits
+if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.startsWith('PASTE') || !SUPABASE_ANON_KEY.startsWith('eyJ')) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('map-tree-list');
+    if (el) el.innerHTML = `
+      <div style="background:#3a1a00;border:1px solid #c06000;border-radius:12px;padding:16px;color:#ffcc88;font-size:.82rem;line-height:1.6">
+        <strong>⚠️ Supabase key missing</strong><br>
+        In dashboard.html replace <code>PASTE_YOUR_FULL_ANON_KEY_HERE</code><br>
+        with the real anon key from:<br>
+        Supabase → Project Settings → API → <em>anon public</em><br>
+        (starts with <code>eyJ</code>, ~200 chars)
+      </div>`;
+  });
+  console.error('❌ SUPABASE_ANON_KEY not set. Supabase Dashboard → Project Settings → API → anon public');
+}
+
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.sb = sb;
 
