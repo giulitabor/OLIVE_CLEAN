@@ -792,6 +792,10 @@
 </div>
 
 <!-- ════ SCRIPTS ════ -->
+<!-- connection.ts exposes window.VITE_* — import it first so the dashboard
+     module can read those values even when import.meta.env isn't replaced -->
+<script type="module" src="./connection.ts"></script>
+
 <script type="importmap">
 {
   "imports":{
@@ -801,20 +805,33 @@
   }
 }
 </script>
- 
+
 <script type="module">
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const SUPABASE_URL      = env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY;
-const RPC_URL           = env.VITE_RPC_URL ?? 'https://api.devnet.solana.com';
+// Priority 1: import.meta.env (when this file IS a Vite entry point)
+// Priority 2: window.* (set by connection.ts which Vite DOES process)
+// Priority 3: hard-coded fallback for local dev without a bundler
+const SUPABASE_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL)
+  || window.VITE_SUPABASE_URL
+  || '';
+const SUPABASE_ANON_KEY =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY)
+  || window.VITE_SUPABASE_ANON_KEY
+  || '';
+const RPC_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RPC_URL)
+  || window.VITE_RPC_URL
+  || 'https://api.devnet.solana.com';
 
-window.VITE_SUPABASE_URL=SUPABASE_URL;
-window.VITE_SUPABASE_ANON_KEY=SUPABASE_ANON_KEY;
-window.VITE_RPC_URL=RPC_URL;
+// Always expose so other scripts can read them
+window.VITE_SUPABASE_URL      = SUPABASE_URL;
+window.VITE_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+window.VITE_RPC_URL           = RPC_URL;
 
 if(!SUPABASE_ANON_KEY||!SUPABASE_URL){
-  console.error('❌ Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in .env');
-  document.getElementById('tree-list').innerHTML=`<div style="background:#2a1000;border:1px solid #804000;border-radius:10px;padding:14px;color:#ffcc88;font-size:.8rem">⚠️ Missing .env variables.<br>Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY then restart Vite.</div>`;
+  console.error('❌ Supabase env vars not resolved. Make sure connection.ts runs before this script, or that dashboard.html is a Vite entry point (not in /public/).');
+  document.getElementById('tree-list').innerHTML='<div style="background:#2a1000;border:1px solid #804000;border-radius:10px;padding:14px;color:#ffcc88;font-size:.8rem">⚠️ Supabase config missing. See console.</div>';
 }
 
 // ── INLINE IDL ────────────────────────────────────────────────────────────────
