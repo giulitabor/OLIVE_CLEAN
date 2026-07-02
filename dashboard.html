@@ -1030,6 +1030,8 @@ async function renderTreeList(){
     const{data:trees,error}=await sb.from('tree_metadata')
       .select('tree_id,name,field_id,latitude,longitude,total_shares,shares_sold,status,health_score,variety,age_years,photo_url')
       .order('tree_id',{ascending:true});
+    console.log("DATA:", data);
+console.log("ERROR:", error);
     if(error||!trees?.length){
       c.innerHTML='<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:12px">No trees found</div>';
       return;
