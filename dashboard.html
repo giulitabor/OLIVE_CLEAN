@@ -1028,7 +1028,9 @@ async function renderTreeList(){
   c.innerHTML='<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:12px"><span class="spinner"></span> Loading…</div>';
   try{
     const{data:trees,error}=await sb.from('tree_metadata')
-      .select('tree_id,name,field_id,latitude,longitude,total_shares,shares_sold,status,health_score,variety,age_years,photo_url')
+    .select("*")    .limit(1);
+
+console.log(result);
       .order('tree_id',{ascending:true});
     console.log("DATA:", data);
 console.log("ERROR:", error);
