@@ -3,332 +3,271 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌳 Olivium · Live Tree Dashboard</title>
-  <!-- FA SVG+JS: icons render as inline SVG — zero .woff2 requests, no font-src CSP hit -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/js/all.min.js"></script>
+  <title>🌳 Olivium DAO · Live Tree Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <style>
     /* ─── reset & base ─── */
-    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif}
-    body{background:#0a140c;min-height:100vh;padding:16px;display:flex;justify-content:center;transition:background .3s}
-    body.luxury{background:#0d0f0d;background-image:radial-gradient(circle at 20% 30%,#1a2a1a,#040804)}
-    .dashboard{max-width:1400px;width:100%;background:rgba(12,28,16,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:48px;padding:24px;box-shadow:0 30px 50px rgba(0,0,0,.9),0 0 0 1px rgba(80,200,120,.2);border:1px solid rgba(60,180,100,.2)}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-    .card{background:rgba(16,35,20,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:28px;padding:18px;border:1px solid rgba(70,200,120,.15);box-shadow:0 8px 20px rgba(0,0,0,.4);transition:.15s}
-    .card:hover{border-color:rgba(100,255,150,.4)}
-    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:#b0e0b0;font-weight:500;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;opacity:.8}
-    .card-header i{color:#6fcf97;margin-right:6px}
-    .live-feed{grid-column:1/3;grid-row:1/3;background:#0a1a0e;border-radius:32px;padding:16px;border:1px solid #2a6b3a;background-image:radial-gradient(circle at 20% 30%,#1a3a1e,#081a0a)}
-    .camera-top{display:flex;justify-content:space-between;color:#b0f0b0;font-size:.75rem;padding-bottom:8px;border-bottom:1px solid #1f4a28;margin-bottom:12px;flex-wrap:wrap}
-    .live-badge{background:#e74c3c;padding:2px 14px;border-radius:40px;font-weight:700;font-size:.7rem;color:#fff;box-shadow:0 0 12px #e74c3c99;animation:pulse-dot 1.8s infinite}
-    @keyframes pulse-dot{0%{opacity:1}50%{opacity:.5}}
-    .drone-view{aspect-ratio:16/9;background:#0b1d0e;border-radius:24px;display:flex;align-items:center;justify-content:center;background-image:linear-gradient(0deg,rgba(10,30,10,.3),transparent 70%),repeating-linear-gradient(45deg,#1a3a1e 0,#1a3a1e 2px,#102a14 2px,#102a14 6px);border:1px solid #2b6b3b;position:relative}
-    .drone-view .tree-icon{font-size:5rem;filter:drop-shadow(0 0 20px #7ddf9a);animation:float-tree 4s infinite alternate}
-    @keyframes float-tree{0%{transform:translateY(0)}100%{transform:translateY(-10px)}}
-    .drone-tag{position:absolute;bottom:12px;right:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);padding:4px 16px;border-radius:40px;color:#9fdfb0;font-size:.7rem;border:1px solid #2c8a44}
-    .stat-value{color:#d4fad4;font-weight:700;font-size:1.3rem}
-    .stat-label{color:#87b98a;font-size:.75rem}
-    .trend-up{color:#5fdf7f}
-    .progress-bar{background:#19331e;border-radius:40px;height:6px;margin-top:6px;overflow:hidden}
-    .progress-fill{height:100%;background:linear-gradient(90deg,#3dcc6a,#8bf0a0);border-radius:40px}
-    .map-card{grid-column:3/5;background:#0c1d10;border-radius:28px;padding:16px;border:1px solid #256b35}
-    .tree-marker{display:flex;align-items:center;gap:12px;background:#1b3a22;padding:8px 16px;border-radius:60px;border-left:4px solid #4cdb7a;color:#cef0d0;cursor:pointer;transition:.15s}
-    .tree-marker:hover{background:#243d2a;border-left-color:#6fef9f}
-    .tree-marker i{color:#6fdf8f;width:24px}
-    .badge-id{margin-left:auto;background:#1f4a2a;padding:2px 14px;border-radius:40px;font-size:.7rem}
-    .badge-pct{margin-left:4px;padding:2px 10px;border-radius:40px;font-size:.7rem;background:#0f2e18;color:#4cdb7a}
-    .wallet-row{grid-column:1/5;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:#112a18;padding:10px 24px;border-radius:60px;border:1px solid #2a6b3a;margin-top:6px}
-    .connect-btn{background:#2b7a3e;border:none;padding:8px 24px;border-radius:60px;color:#fff;font-weight:600;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.15s;border:1px solid #5fcf7a}
-    .connect-btn:hover{background:#3d9f55;transform:scale(1.02)}
-    .connect-btn.connected{background:#3a1818;border-color:#d94d4d;color:#ffaaaa}
-    .connect-btn.connected:hover{background:#4a2020}
-    .footer-grid{grid-column:1/5;display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:8px}
-    .footer-item{background:#112a18;border-radius:60px;padding:8px 10px;text-align:center;color:#b0e0b0;font-size:.7rem;border:1px solid #1f4f2a;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:.15s}
-    .footer-item:hover{border-color:#5fcf7a;background:#1a3a1e}
-    .ai-bubble{position:fixed;bottom:24px;right:24px;background:#1f4a2a;padding:12px 20px;border-radius:60px;color:#d4fad4;border:1px solid #5fcf7a;box-shadow:0 0 30px #1f4a2a88;backdrop-filter:blur(8px);display:flex;align-items:center;gap:12px;cursor:pointer;z-index:999;font-weight:500}
-    .ai-bubble i{font-size:1.6rem;color:#8bf0a0}
-    .spinner{display:inline-block;width:18px;height:18px;border:2px solid #1f4a2a;border-top-color:#4cdb7a;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .hidden{display:none!important}
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
+    body {
+      background:#0a140c; min-height:100vh; padding:16px; display:flex; justify-content:center;
+      transition:background .3s;
+    }
+    body.luxury {
+      background:#0d0f0d;
+      background-image:radial-gradient(circle at 20% 30%,#1a2a1a,#040804);
+    }
+    .dashboard {
+      max-width:1400px; width:100%;
+      background:rgba(12,28,16,.7);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:48px; padding:24px;
+      box-shadow:0 30px 50px rgba(0,0,0,.9),0 0 0 1px rgba(80,200,120,.2);
+      border:1px solid rgba(60,180,100,.2);
+    }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+    .card {
+      background:rgba(16,35,20,.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+      border-radius:28px; padding:18px;
+      border:1px solid rgba(70,200,120,.15);
+      box-shadow:0 8px 20px rgba(0,0,0,.4);
+      transition:.15s;
+    }
+    .card:hover { border-color:rgba(100,255,150,.4); }
+    .card-header {
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
+      color:#b0e0b0; font-weight:500; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; opacity:.8;
+    }
+    .card-header i { color:#6fcf97; margin-right:6px; }
+    .live-feed {
+      grid-column:1/3; grid-row:1/3;
+      background:#0a1a0e; border-radius:32px; padding:16px;
+      border:1px solid #2a6b3a;
+      background-image:radial-gradient(circle at 20% 30%,#1a3a1e,#081a0a);
+    }
+    .camera-top {
+      display:flex; justify-content:space-between; color:#b0f0b0; font-size:.75rem;
+      padding-bottom:8px; border-bottom:1px solid #1f4a28; margin-bottom:12px; flex-wrap:wrap;
+    }
+    .live-badge {
+      background:#e74c3c; padding:2px 14px; border-radius:40px; font-weight:700; font-size:.7rem;
+      color:#fff; box-shadow:0 0 12px #e74c3c99; animation:pulse-dot 1.8s infinite;
+    }
+    @keyframes pulse-dot { 0%{opacity:1} 50%{opacity:.5} }
+    .drone-view {
+      aspect-ratio:16/9; background:#0b1d0e; border-radius:24px;
+      display:flex; align-items:center; justify-content:center;
+      background-image:linear-gradient(0deg,rgba(10,30,10,.3),transparent 70%),repeating-linear-gradient(45deg,#1a3a1e 0,#1a3a1e 2px,#102a14 2px,#102a14 6px);
+      border:1px solid #2b6b3b; position:relative;
+    }
+    .drone-view .tree-icon { font-size:5rem; filter:drop-shadow(0 0 20px #7ddf9a); animation:float-tree 4s infinite alternate; }
+    @keyframes float-tree { 0%{transform:translateY(0)} 100%{transform:translateY(-10px)} }
+    .drone-tag {
+      position:absolute; bottom:12px; right:16px;
+      background:rgba(0,0,0,.6); backdrop-filter:blur(6px);
+      padding:4px 16px; border-radius:40px; color:#9fdfb0; font-size:.7rem;
+      border:1px solid #2c8a44;
+    }
+    .stat-value { color:#d4fad4; font-weight:700; font-size:1.3rem; }
+    .stat-label { color:#87b98a; font-size:.75rem; }
+    .trend-up { color:#5fdf7f; }
+    .progress-bar { background:#19331e; border-radius:40px; height:6px; margin-top:6px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,#3dcc6a,#8bf0a0); border-radius:40px; }
+    .map-card { grid-column:3/5; background:#0c1d10; border-radius:28px; padding:16px; border:1px solid #256b35; }
+    .tree-marker {
+      display:flex; align-items:center; gap:12px;
+      background:#1b3a22; padding:8px 16px; border-radius:60px;
+      border-left:4px solid #4cdb7a; color:#cef0d0;
+      cursor:pointer; transition:.15s;
+    }
+    .tree-marker:hover { background:#2a4a32; border-color:#5fdf7f; }
+    .tree-marker i { color:#6fdf8f; width:24px; }
+    .badge-id { margin-left:auto; background:#1f4a2a; padding:2px 14px; border-radius:40px; font-size:.7rem; }
+    .wallet-row {
+      grid-column:1/5; display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:12px;
+      background:#112a18; padding:10px 24px; border-radius:60px;
+      border:1px solid #2a6b3a; margin-top:6px;
+    }
+    .connect-btn {
+      background:#2b7a3e; border:none; padding:8px 24px; border-radius:60px;
+      color:#fff; font-weight:600; display:flex; align-items:center; gap:10px;
+      cursor:pointer; transition:.15s; border:1px solid #5fcf7a;
+    }
+    .connect-btn:hover { background:#3d9f55; transform:scale(1.02); }
+    .footer-grid {
+      grid-column:1/5; display:grid; grid-template-columns:repeat(6,1fr);
+      gap:12px; margin-top:8px;
+    }
+    .footer-item {
+      background:#112a18; border-radius:60px; padding:8px 10px;
+      text-align:center; color:#b0e0b0; font-size:.7rem;
+      border:1px solid #1f4f2a; display:flex; align-items:center; justify-content:center; gap:6px;
+      cursor:pointer; transition:.15s;
+    }
+    .footer-item:hover { border-color:#5fcf7a; background:#1a3a1e; }
+    .ai-bubble {
+      position:fixed; bottom:24px; right:24px;
+      background:#1f4a2a; padding:12px 20px; border-radius:60px;
+      color:#d4fad4; border:1px solid #5fcf7a;
+      box-shadow:0 0 30px #1f4a2a88; backdrop-filter:blur(8px);
+      display:flex; align-items:center; gap:12px;
+      cursor:pointer; z-index:999; font-weight:500;
+    }
+    .ai-bubble i { font-size:1.6rem; color:#8bf0a0; }
+    @media (max-width:1000px) {
+      .grid{grid-template-columns:1fr 1fr}
+      .live-feed{grid-column:1/3;grid-row:auto}
+      .map-card{grid-column:1/3}
+      .wallet-row{grid-column:1/3}
+      .footer-grid{grid-column:1/3;grid-template-columns:repeat(3,1fr)}
+    }
+    @media (max-width:600px) {
+      .grid{grid-template-columns:1fr}
+      .live-feed,.map-card,.wallet-row,.footer-grid{grid-column:1}
+      .footer-grid{grid-template-columns:1fr 1fr}
+    }
+    .hidden { display:none !important; }
+    
+    .loading-trees {
+      text-align:center; padding:20px; color:#6f9f7a;
+    }
+    .loading-trees .spinner {
+      display:inline-block; width:24px; height:24px;
+      border:3px solid #1f4a2a; border-top-color:#4cdb7a;
+      border-radius:50%; animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
     /* ─── TREE DETAIL MODAL ─── */
-    #tree-detail-modal{background:rgba(10,10,5,.85);backdrop-filter:blur(8px)}
-    .modal-inner{background:#fff;border-radius:24px;width:100%;max-width:860px;position:relative;overflow:hidden}
-    .tree-detail-tab{cursor:pointer;white-space:nowrap}
-    .tree-detail-tab.active{border-color:#16a34a!important;color:#16a34a!important}
-
-    /* ─── CONNECT MODAL ─── */
-    #connectModal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
-    .connect-modal-box{background:#0f2218;border:1px solid #2a6b3a;border-radius:24px;padding:32px;width:100%;max-width:400px;color:#d4fad4}
-    .connect-modal-box h3{font-size:1.2rem;margin-bottom:20px;text-align:center}
-    .connect-opt{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;border:1px solid #2a5a30;background:#162d1e;cursor:pointer;transition:.15s;margin-bottom:10px;color:#c4f0c4;font-weight:500}
-    .connect-opt:hover{border-color:#4cdb7a;background:#1e3d26}
-    .connect-opt i{font-size:1.4rem;width:28px;text-align:center;color:#6fcf97}
-    .modal-close-x{position:absolute;top:12px;right:16px;background:none;border:none;color:#6f9f7a;font-size:1.2rem;cursor:pointer}
-
-    @media(max-width:1000px){.grid{grid-template-columns:1fr 1fr}.live-feed{grid-column:1/3;grid-row:auto}.map-card{grid-column:1/3}.wallet-row{grid-column:1/3}.footer-grid{grid-column:1/3;grid-template-columns:repeat(3,1fr)}}
-    @media(max-width:600px){.grid{grid-template-columns:1fr}.live-feed,.map-card,.wallet-row,.footer-grid{grid-column:1}.footer-grid{grid-template-columns:1fr 1fr}}
+    #tree-detail-modal {
+      position: fixed; inset: 0; z-index: 50; overflow-y: auto;
+      background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);
+      display: none;
+    }
+    #tree-detail-modal.open { display: flex; align-items: center; justify-content: center; padding: 16px; }
+    #tree-detail-modal .modal-content {
+      background: #fff; border-radius: 28px; max-width: 900px; width: 100%;
+      max-height: 90vh; overflow-y: auto; position: relative;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+    }
+    .tree-detail-tab { 
+      cursor: pointer; padding: 8px 16px; border: none; background: transparent; 
+      font-weight: 500; border-bottom: 2px solid transparent; color: #71717a; 
+      transition: 0.2s; font-size: 14px;
+    }
+    .tree-detail-tab.active { border-bottom-color: #16a34a; color: #16a34a; }
+    .tree-detail-tab-content { display: block; }
+    .tree-detail-tab-content.hidden { display: none; }
+    .modal-close-btn {
+      position: absolute; top: 16px; right: 16px; z-index: 10;
+      background: #fff; border: none; border-radius: 50%;
+      width: 40px; height: 40px; font-size: 20px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.2s;
+    }
+    .modal-close-btn:hover { background: #f3f4f6; transform: scale(1.05); }
   </style>
 </head>
 <body>
 
-<!-- ═══ CONNECT MODAL ═══ -->
-<div id="connectModal">
-  <div class="connect-modal-box" style="position:relative">
-    <button class="modal-close-x" onclick="document.getElementById('connectModal').style.display='none'"><i class="fas fa-times"></i></button>
-    <h3>🌳 Connect to Olivium</h3>
-    <div class="connect-opt" id="phantomOpt">
-      <i class="fas fa-wallet"></i>
-      <div>
-        <div>Phantom Wallet</div>
-        <div style="font-size:.72rem;color:#7fbf8f;">Connect your Solana wallet</div>
-      </div>
-    </div>
-    <div class="connect-opt" id="emailOpt">
-      <i class="fas fa-envelope"></i>
-      <div>
-        <div>Email / Custodial</div>
-        <div style="font-size:.72rem;color:#7fbf8f;">Sign in with email</div>
-      </div>
-    </div>
-    <div id="emailForm" style="display:none;margin-top:12px">
-      <input id="emailInput" type="email" placeholder="your@email.com"
-        style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #2a6b3a;background:#0f2218;color:#d4fad4;margin-bottom:8px"/>
-      <input id="custodialInput" type="text" placeholder="Custodial wallet address"
-        style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #2a6b3a;background:#0f2218;color:#d4fad4;margin-bottom:8px"/>
-      <button id="emailSubmit"
-        style="width:100%;padding:10px;border-radius:10px;background:#2b7a3e;border:none;color:#fff;font-weight:600;cursor:pointer">
-        Sign In
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ TREE DETAIL MODAL ═══ -->
-<div id="tree-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" style="position:fixed;inset:0;z-index:100;overflow-y:auto;display:none">
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px" onclick="closeModal_detail()">
-    <div class="modal-inner" onclick="event.stopPropagation()">
-
-      <!-- Close -->
-      <button onclick="closeModal_detail()" style="position:absolute;top:16px;right:16px;z-index:10;width:36px;height:36px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:1rem">✕</button>
-
-      <!-- Hero -->
-      <div style="position:relative;height:280px;overflow:hidden">
-        <div id="tree-detail-hero-img" style="position:absolute;inset:0;background-size:cover;background-position:center;background-image:url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg')"></div>
-        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 60%)"></div>
-        <div style="position:absolute;bottom:0;left:0;right:0;padding:20px;color:#fff;display:flex;justify-content:space-between;align-items:flex-end">
-          <div>
-            <p id="tree-detail-field-id" style="font-size:.7rem;opacity:.6;margin-bottom:2px">—</p>
-            <h2 id="tree-detail-name" style="font-size:1.8rem;font-weight:700;margin-bottom:2px">—</h2>
-            <p id="tree-detail-location" style="font-size:.8rem;opacity:.8">—</p>
-          </div>
-          <div style="text-align:right">
-            <p style="font-size:.65rem;opacity:.6;margin-bottom:2px">Health</p>
-            <p id="tree-detail-health" style="font-size:1.4rem;font-weight:700;color:#4ade80">—</p>
-          </div>
-        </div>
-        <div style="position:absolute;top:12px;left:12px;background:#dc2626;padding:3px 12px;border-radius:40px;color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;gap:6px">
-          <span style="width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse-dot 1.8s infinite;display:inline-block"></span>LIVE SENSORS
-        </div>
-        <div id="tree-detail-status-badge" style="position:absolute;top:12px;right:52px;background:#16a34a;padding:3px 12px;border-radius:40px;color:#fff;font-size:.65rem;font-weight:600">
-          <span id="tree-detail-status-text">—</span>
-        </div>
-      </div>
-
-      <!-- Tabs + content -->
-      <div style="padding:24px">
-        <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid #e7e7e7;overflow-x:auto">
-          <button class="tree-detail-tab active" onclick="switchTreeDetailTab('overview')" style="padding:8px 14px;font-size:.82rem;font-weight:500;border:none;border-bottom:2px solid #16a34a;color:#16a34a;background:none;cursor:pointer">Overview</button>
-          <button class="tree-detail-tab" onclick="switchTreeDetailTab('physical')" style="padding:8px 14px;font-size:.82rem;font-weight:500;border:none;border-bottom:2px solid transparent;color:#6b7280;background:none;cursor:pointer">📐 Physical</button>
-          <button class="tree-detail-tab" onclick="switchTreeDetailTab('environment')" style="padding:8px 14px;font-size:.82rem;font-weight:500;border:none;border-bottom:2px solid transparent;color:#6b7280;background:none;cursor:pointer">🌡️ Live Sensors</button>
-          <button class="tree-detail-tab" onclick="switchTreeDetailTab('weather')" style="padding:8px 14px;font-size:.82rem;font-weight:500;border:none;border-bottom:2px solid transparent;color:#6b7280;background:none;cursor:pointer">☁️ Weather</button>
-          <button class="tree-detail-tab" onclick="switchTreeDetailTab('metadata')" style="padding:8px 14px;font-size:.82rem;font-weight:500;border:none;border-bottom:2px solid transparent;color:#6b7280;background:none;cursor:pointer">⛓ On-Chain</button>
-          <button class="tree-detail-tab" onclick="switchTreeDetailTab('gallery')" style="padding:8px 14px;font-size:.82rem;font-weight:500;border:none;border-bottom:2px solid transparent;color:#6b7280;background:none;cursor:pointer">🖼 Gallery</button>
-        </div>
-
-        <!-- OVERVIEW -->
-        <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-            <div style="background:#f9fafb;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5rem">🌳</div><p style="font-size:.65rem;color:#9ca3af;margin:4px 0 2px">Age</p><p id="tree-detail-age" style="font-weight:700;color:#111">—</p></div>
-            <div style="background:#f9fafb;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5rem">📏</div><p style="font-size:.65rem;color:#9ca3af;margin:4px 0 2px">Height</p><p id="tree-detail-height" style="font-weight:700;color:#111">—</p></div>
-            <div style="background:#f9fafb;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5rem">🫒</div><p style="font-size:.65rem;color:#9ca3af;margin:4px 0 2px">Variety</p><p id="tree-detail-variety" style="font-weight:700;color:#111;font-size:.85rem">—</p></div>
-            <div style="background:#f9fafb;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5rem">📊</div><p style="font-size:.65rem;color:#9ca3af;margin:4px 0 2px">Shares Sold</p><p id="tree-overview-shares" style="font-weight:700;color:#111;font-size:.85rem">—</p></div>
-          </div>
-          <div style="background:#f9fafb;border-radius:12px;padding:14px;margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:6px"><span style="color:#6b7280">Adoption Progress</span><span id="tree-overview-pct" style="font-weight:700">—%</span></div>
-            <div style="background:#e5e7eb;border-radius:40px;height:8px"><div id="tree-overview-bar" style="height:100%;background:linear-gradient(90deg,#16a34a,#4ade80);border-radius:40px;width:0%;transition:width .6s"></div></div>
-            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#9ca3af;margin-top:4px"><span id="tree-overview-sold-label">—</span><span id="tree-overview-total-label">—</span></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.65rem;color:#9ca3af;margin-bottom:4px">Last Treatment</p><p id="tree-detail-last-treatment" style="font-weight:600;color:#111">—</p><p id="tree-detail-treatment-type" style="font-size:.7rem;color:#6b7280;margin-top:2px">—</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.65rem;color:#9ca3af;margin-bottom:4px">Last Fertilizer</p><p id="tree-detail-last-fertilizer" style="font-weight:600;color:#111">—</p><p id="tree-detail-fertilizer-type" style="font-size:.7rem;color:#6b7280;margin-top:2px">—</p></div>
-          </div>
-        </div>
-
-        <!-- PHYSICAL -->
-        <div id="tree-detail-tab-physical" class="tree-detail-tab-content" style="display:none">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px"><p style="font-size:.65rem;color:#9ca3af">Age</p><p id="phys-age" style="font-size:1.5rem;font-weight:700;color:#111">—</p><p style="font-size:.65rem;color:#9ca3af">years</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px"><p style="font-size:.65rem;color:#9ca3af">Height</p><p id="phys-height" style="font-size:1.5rem;font-weight:700;color:#111">—</p><p style="font-size:.65rem;color:#9ca3af">cm</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px"><p style="font-size:.65rem;color:#9ca3af">Circumference</p><p id="phys-circumference" style="font-size:1.5rem;font-weight:700;color:#111">—</p><p style="font-size:.65rem;color:#9ca3af">cm</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px"><p style="font-size:.65rem;color:#9ca3af">Diameter</p><p id="phys-diameter" style="font-size:1.5rem;font-weight:700;color:#111">—</p><p style="font-size:.65rem;color:#9ca3af">cm</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px"><p style="font-size:.65rem;color:#9ca3af">Crown Spread</p><p id="phys-crown" style="font-size:1.5rem;font-weight:700;color:#111">—</p><p style="font-size:.65rem;color:#9ca3af">cm</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px"><p style="font-size:.65rem;color:#9ca3af">Altitude</p><p id="phys-altitude" style="font-size:1.5rem;font-weight:700;color:#111">—</p><p style="font-size:.65rem;color:#9ca3af">m</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:14px;grid-column:1/3"><p style="font-size:.65rem;color:#9ca3af;margin-bottom:4px">GPS Coordinates</p><p id="phys-coords" style="font-family:monospace;color:#111">—</p></div>
-          </div>
-        </div>
-
-        <!-- SENSORS -->
-        <div id="tree-detail-tab-environment" class="tree-detail-tab-content" style="display:none">
-          <h4 style="font-weight:600;color:#111;margin-bottom:12px">🌱 Live Field Sensors — <span id="env-field-label" style="font-weight:400;color:#6b7280;font-size:.85rem">—</span></h4>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">💧 Soil Moisture</p><span id="oracle-soil-moisture" style="font-size:1.2rem;font-weight:700;color:#111">—</span><div style="background:#f0f0f0;border-radius:40px;height:6px;margin-top:6px"><div id="oracle-moisture-bar" style="height:100%;background:#3b82f6;border-radius:40px;width:0%;transition:width .5s"></div></div><p id="oracle-moisture-status" style="font-size:.65rem;color:#9ca3af;margin-top:4px">—</p></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🌡️ Temperature</p><span id="oracle-soil-temp" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🍃 Leaf Wetness</p><span id="oracle-leaf-wetness" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">☀️ UV Index</p><span id="oracle-uv" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🌬️ CO₂</p><span id="oracle-co2" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">💨 Wind Speed</p><span id="oracle-wind" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">💧 Humidity</p><span id="oracle-humidity" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🌧️ Rain Rate</p><span id="oracle-rain" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-          </div>
-          <p style="font-size:.65rem;color:#9ca3af">Last reading: <span id="oracle-last-update" style="font-weight:500">—</span></p>
-        </div>
-
-        <!-- WEATHER -->
-        <div id="tree-detail-tab-weather" class="tree-detail-tab-content" style="display:none">
-          <h4 style="font-weight:600;color:#111;margin-bottom:12px">☁️ Current Conditions — <span id="weather-coords-label" style="font-weight:400;color:#6b7280;font-size:.85rem">—</span></h4>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🌡️ Air Temperature</p><span id="weather-temp" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">💨 Wind Speed</p><span id="weather-wind" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">💧 Humidity</p><span id="weather-humidity" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🔵 Pressure</p><span id="weather-pressure" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">🌧️ Rain</p><span id="weather-rain" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">☀️ UV Index</p><span id="weather-uv" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-            <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px;grid-column:1/3"><p style="font-size:.75rem;color:#6b7280;margin-bottom:4px">⚡ Solar Radiation</p><span id="weather-solar" style="font-size:1.2rem;font-weight:700;color:#111">—</span></div>
-          </div>
-        </div>
-
-        <!-- ON-CHAIN -->
-        <div id="tree-detail-tab-metadata" class="tree-detail-tab-content" style="display:none">
-          <div style="font-size:.85rem">
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Tree ID</span><span id="tree-detail-meta-id" style="font-family:monospace;font-weight:500">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Field ID</span><span id="tree-detail-meta-field" style="font-family:monospace">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">On-Chain Address</span><span id="tree-detail-meta-onchain" style="font-family:monospace;font-size:.7rem;text-align:right;max-width:260px;word-break:break-all">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Mint</span><span id="tree-detail-meta-mint" style="font-family:monospace;font-size:.7rem;text-align:right;max-width:260px;word-break:break-all">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Status</span><span id="tree-detail-meta-status" style="font-weight:500">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Total Shares</span><span id="tree-detail-meta-total" style="font-weight:700">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Shares Sold</span><span id="tree-detail-meta-sold" style="font-weight:700;color:#16a34a">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Available</span><span id="tree-detail-meta-available" style="font-weight:700">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Variety</span><span id="tree-detail-meta-variety">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0"><span style="color:#6b7280">Coordinates</span><span id="tree-detail-meta-coords" style="font-family:monospace;font-size:.75rem">—</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0"><span style="color:#6b7280">Last Updated</span><span id="tree-detail-meta-updated">—</span></div>
-          </div>
-        </div>
-
-        <!-- GALLERY -->
-        <div id="tree-detail-tab-gallery" class="tree-detail-tab-content" style="display:none">
-          <div id="tree-detail-gallery-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-            <p style="color:#9ca3af;font-size:.85rem;grid-column:1/4">Loading gallery…</p>
-          </div>
-        </div>
-
-      </div><!-- /padding -->
-    </div><!-- /modal-inner -->
-  </div>
-</div>
-
-<!-- ═══ MAIN DASHBOARD ═══ -->
 <div class="dashboard">
+
   <div class="grid">
 
     <!-- LIVE FEED -->
     <div class="card live-feed">
       <div class="camera-top">
         <span><i class="fas fa-broadcast"></i> 4K IP Cam · Drone</span>
-        <span class="live-badge"><i class="fas fa-circle" style="font-size:.4rem"></i> LIVE</span>
-        <span><i class="fas fa-wind"></i> <span id="live-wind">—</span> km/h</span>
+        <span class="live-badge"><i class="fas fa-circle" style="font-size:0.4rem;"></i> LIVE</span>
+        <span><i class="fas fa-wind"></i> <span id="live-wind">4</span> km/h</span>
         <span><i class="fas fa-microchip"></i> ESP32 · <span id="live-sensor-count">6</span> sensors</span>
       </div>
       <div class="drone-view">
         <div class="tree-icon">🌳</div>
         <div class="drone-tag"><i class="fas fa-drone"></i> ALT <span id="live-alt">24</span>m · 4K</div>
-        <div style="position:absolute;bottom:12px;left:16px;background:#0a1f0c80;padding:2px 14px;border-radius:40px;backdrop-filter:blur(4px);border:1px solid #2d6b3b;color:#8fd8a0;font-size:.7rem">
-          <i class="fas fa-satellite"></i> GPS: <span id="live-gps">—</span>
+        <div style="position:absolute;bottom:12px;left:16px;background:#0a1f0c80;padding:2px 14px;border-radius:40px;backdrop-filter:blur(4px);border:1px solid #2d6b3b;color:#8fd8a0;font-size:.7rem;">
+          <i class="fas fa-satellite"></i> GPS: <span id="live-gps">41.9°N, 12.5°E</span>
         </div>
       </div>
     </div>
 
-    <!-- ESP32 -->
+    <!-- ESP32 sensor data -->
     <div class="card">
-      <div class="card-header"><span><i class="fas fa-microchip"></i> ESP32 live</span><i class="fas fa-sync-alt fa-fw" id="sensor-sync-icon"></i></div>
-      <div><span class="stat-label">Soil moisture</span> <span id="sensor-moisture" class="stat-value" style="font-size:1rem">—</span></div>
-      <div class="progress-bar"><div id="sensor-moisture-bar" class="progress-fill" style="width:0%"></div></div>
-      <div style="margin-top:6px"><span class="stat-label">Temp</span> <span id="sensor-temp" class="stat-value" style="font-size:1rem">—</span>°C · <span class="stat-label">Humidity</span> <span id="sensor-humidity" class="stat-value" style="font-size:1rem">—</span>%</div>
+      <div class="card-header"><span><i class="fas fa-microchip"></i> ESP32 live</span> <i class="fas fa-sync-alt fa-fw"></i></div>
+      <div><span class="stat-label">Soil moisture</span> <span id="sensor-moisture" class="stat-value" style="font-size:1rem;">42%</span> <span class="trend-up"><i class="fas fa-arrow-up"></i> <span id="sensor-moisture-trend">3</span>%</span></div>
+      <div class="progress-bar"><div id="sensor-moisture-bar" class="progress-fill" style="width:42%"></div></div>
+      <div style="margin-top:6px;"><span class="stat-label">Temp</span> <span id="sensor-temp" class="stat-value" style="font-size:1rem;">22.4</span>°C · <span class="stat-label">Humidity</span> <span id="sensor-humidity" class="stat-value" style="font-size:1rem;">61</span>%</div>
     </div>
 
     <!-- Weather -->
     <div class="card">
-      <div class="card-header"><span><i class="fas fa-cloud-sun"></i> weather</span><i class="fas fa-cloud-rain"></i></div>
-      <div><span id="weather-temp-main" class="stat-value" style="font-size:1.6rem">—</span>°C <span id="weather-desc" style="color:#b0e0b0">—</span></div>
-      <div style="display:flex;gap:16px;font-size:.8rem;color:#87b98a;margin-top:4px">
-        <span><i class="fas fa-tint"></i> <span id="weather-humidity-main">—</span>%</span>
-        <span><i class="fas fa-wind"></i> <span id="weather-wind-main">—</span> m/s</span>
-        <span><i class="fas fa-sun"></i> UV <span id="weather-uv-main">—</span></span>
+      <div class="card-header"><span><i class="fas fa-cloud-sun"></i> weather</span> <i class="fas fa-cloud-rain"></i></div>
+      <div><span id="weather-temp" class="stat-value" style="font-size:1.6rem;">22</span>°C <span id="weather-desc" style="color:#b0e0b0;">clear sky</span></div>
+      <div style="display:flex; gap:16px; font-size:.8rem; color:#87b98a; margin-top:4px;">
+        <span><i class="fas fa-tint"></i> <span id="weather-humidity">61</span>%</span>
+        <span><i class="fas fa-wind"></i> <span id="weather-wind">4</span> km/h</span>
+        <span><i class="fas fa-sun"></i> UV <span id="weather-uv">3</span></span>
       </div>
     </div>
 
     <!-- EVOO price -->
     <div class="card">
-      <div class="card-header"><span><i class="fas fa-olive"></i> EVOO price</span><i class="fas fa-euro-sign"></i></div>
-      <div><span id="evoo-price" class="stat-value" style="font-size:1.6rem">€9.40</span> <span id="evoo-trend" class="trend-up"><i class="fas fa-arrow-up"></i> <span id="evoo-trend-val">0.6</span>%</span></div>
-      <div style="font-size:.7rem;color:#87b98a">Italian extra virgin · live</div>
+      <div class="card-header"><span><i class="fas fa-olive"></i> EVOO price</span> <i class="fas fa-euro-sign"></i></div>
+      <div><span id="evoo-price" class="stat-value" style="font-size:1.6rem;">€9.40</span> <span id="evoo-trend" class="trend-up"><i class="fas fa-arrow-up"></i> <span id="evoo-trend-val">0.6</span>%</span></div>
+      <div style="font-size:.7rem; color:#87b98a;">Italian extra virgin · live</div>
     </div>
 
-    <!-- MAP / Tree list -->
+    <!-- MAP -->
     <div class="map-card">
-      <div class="card-header"><span><i class="fas fa-map-pin"></i> GPS · grove trees</span><i class="fas fa-expand-alt"></i></div>
-      <div id="map-tree-list" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto">
-        <div style="color:#6f9f7a;text-align:center;padding:20px"><span class="spinner"></span> Loading trees…</div>
+      <div class="card-header"><span><i class="fas fa-map-pin"></i> GPS · owned trees</span> <i class="fas fa-expand-alt"></i></div>
+      <div id="map-tree-list" style="display:flex; flex-direction:column; gap:6px;">
+        <div class="loading-trees" id="tree-loading">
+          <div class="spinner"></div>
+          <p style="margin-top:8px;">Loading trees...</p>
+        </div>
       </div>
     </div>
 
     <!-- Charts -->
-    <div class="card" style="grid-column:1/3">
-      <div class="card-header"><span><i class="fas fa-chart-line"></i> yield & CO₂</span><i class="fas fa-chart-pie"></i></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <canvas id="chartYield" height="80" style="height:80px;width:100%"></canvas>
-        <canvas id="chartCO2"   height="80" style="height:80px;width:100%"></canvas>
-        <canvas id="chartRain"  height="80" style="height:80px;width:100%"></canvas>
-        <canvas id="chartHealth" height="80" style="height:80px;width:100%"></canvas>
+    <div class="card" style="grid-column:1/3;">
+      <div class="card-header"><span><i class="fas fa-chart-line"></i> yield & CO₂</span> <i class="fas fa-chart-pie"></i></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div><canvas id="chartYield" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+        <div><canvas id="chartCO2" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+        <div><canvas id="chartRain" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
+        <div><canvas id="chartHealth" width="200" height="80" style="height:80px; width:100%;"></canvas></div>
       </div>
-      <div style="font-size:.6rem;color:#6f9f7a;text-align:center;margin-top:4px"><i class="fas fa-chart-simple"></i> live metrics</div>
+      <div style="font-size:.6rem; color:#6f9f7a; text-align:center; margin-top:4px;"><i class="fas fa-chart-simple"></i> 20+ animated metrics</div>
     </div>
 
     <!-- Wallet + NFT -->
-    <div class="card" style="grid-column:3/5">
-      <div class="card-header"><span><i class="fas fa-wallet"></i> wallet · identity</span><i class="fas fa-coins"></i></div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
-        <span id="wallet-badge" style="background:#1f4a2a;padding:4px 16px;border-radius:60px;color:#b0e6b0"><i class="fas fa-circle" id="wallet-dot" style="color:#ffaa33"></i> <span id="wallet-type">Guest</span></span>
-        <span style="font-weight:700;font-size:1.4rem;color:#d4fad4"><span id="wallet-olv-balance">0</span> <small>OLVM</small></span>
-        <span style="background:#1a3a1e;padding:4px 14px;border-radius:60px;font-size:.7rem;color:#9fdfb0"><i class="fas fa-crown"></i> staking <span id="staking-apy">12.4</span>%</span>
-        <span style="background:#2a4a2a;padding:4px 14px;border-radius:60px;font-size:.7rem;color:#f5cd7a"><i class="fas fa-image"></i> NFT#<span id="nft-id">—</span></span>
+    <div class="card" style="grid-column:3/5;">
+      <div class="card-header"><span><i class="fas fa-wallet"></i> wallet · NFT</span> <i class="fas fa-coins"></i></div>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+        <span id="wallet-badge" style="background:#1f4a2a; padding:4px 16px; border-radius:60px; color:#b0e6b0;"><i class="fas fa-circle" style="color:#3dcc6a;"></i> <span id="wallet-type">Guest</span></span>
+        <span style="font-weight:700; font-size:1.4rem; color:#d4fad4;"><span id="wallet-olv-balance">0</span> <small>OLVM</small></span>
+        <span style="background:#1a3a1e; padding:4px 14px; border-radius:60px; font-size:.7rem; color:#9fdfb0;"><i class="fas fa-crown"></i> staking <span id="staking-apy">12.4</span>%</span>
+        <span style="background:#2a4a2a; padding:4px 14px; border-radius:60px; font-size:.7rem; color:#f5cd7a;"><i class="fas fa-image"></i> NFT#<span id="nft-id">1023</span></span>
       </div>
-      <div style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;font-size:.75rem;color:#87b98a">
-        <span><i class="fas fa-leaf"></i> carbon: <span id="carbon-credits">—</span> tCO₂</span>
-        <span><i class="fas fa-certificate"></i> <span id="cert-status">—</span></span>
-        <span><i class="fas fa-bell"></i> harvest in <span id="harvest-days">—</span>d</span>
+      <div style="margin-top:6px; display:flex; gap:12px; flex-wrap:wrap; font-size:.75rem; color:#87b98a;">
+        <span><i class="fas fa-leaf"></i> carbon credits: <span id="carbon-credits">2.4</span> tCO₂</span>
+        <span><i class="fas fa-certificate"></i> <span id="cert-status">certificate ready</span></span>
+        <span><i class="fas fa-bell"></i> harvest in <span id="harvest-days">12</span>d</span>
       </div>
     </div>
 
-    <!-- Wallet row -->
+    <!-- Wallet connect row -->
     <div class="wallet-row">
-      <div><i class="fas fa-link"></i> <span id="connStatus" style="color:#b0e0b0"><i class="fas fa-circle" style="color:#ffaa33"></i> <span id="conn-status-text">disconnected</span></span></div>
-      <button class="connect-btn" id="connectBtn"><i class="fas fa-plug"></i> <span id="connect-btn-text">Connect Wallet</span></button>
-      <span style="color:#7fbf8f;font-size:.8rem"><i class="fas fa-check-circle" style="color:#4cdb7a"></i> Supabase · on-chain</span>
-      <span style="color:#b0e0b0;font-size:.7rem"><i class="fas fa-globe"></i> <span id="lang-display">EN</span></span>
+      <div><i class="fas fa-link"></i> <span id="connStatus" style="color:#b0e0b0;"><i class="fas fa-circle" style="color:#ffaa33;"></i> <span id="conn-status-text">disconnected</span></span></div>
+      <button class="connect-btn" id="connectBtn"><i class="fas fa-plug"></i> <span id="connect-btn-text">Connect Phantom</span></button>
+      <span style="color:#7fbf8f; font-size:.8rem;"><i class="fas fa-check-circle" style="color:#4cdb7a;"></i> <span id="data-source">Supabase · onchain</span></span>
+      <span style="color:#b0e0b0; font-size:.7rem;"><i class="fas fa-globe"></i> <span id="lang-display">EN</span></span>
     </div>
 
-    <!-- Footer -->
+    <!-- footer -->
     <div class="footer-grid">
       <div class="footer-item" id="lang-toggle"><i class="fas fa-language"></i> EN / IT / ES</div>
       <div class="footer-item" id="modeToggle"><i class="fas fa-moon"></i> Dark/Luxury</div>
@@ -338,632 +277,707 @@
       <div class="footer-item" id="cert-btn"><i class="fas fa-file-pdf"></i> certificate</div>
     </div>
 
-  </div><!-- /grid -->
+  </div>
 
+  <!-- AI bubble -->
   <div class="ai-bubble" id="aiBubble">
     <i class="fas fa-robot"></i> Tree AI · ask me
-    <span style="background:#2a6b3a;padding:2px 12px;border-radius:40px;font-size:.6rem">online</span>
+    <span style="background:#2a6b3a; padding:2px 12px; border-radius:40px; font-size:.6rem;">online</span>
   </div>
-</div><!-- /dashboard -->
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     SCRIPTS
-═══════════════════════════════════════════════════════════════════════ -->
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     TREE DETAIL MODAL
+═══════════════════════════════════════════════════════════════ -->
+<div id="tree-detail-modal" class="hidden">
+  <div class="modal-content">
+    <button class="modal-close-btn" onclick="window.closeTreeDetailModal && window.closeTreeDetailModal()">✕</button>
+
+    <!-- Hero -->
+    <div style="position:relative;height:280px;background:#1a3a1e;overflow:hidden;">
+      <div id="tree-detail-hero-img" style="position:absolute;inset:0;background-size:cover;background-position:center;background-image:url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg');"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:24px;color:#fff;">
+        <p id="tree-detail-field-id" style="font-size:12px;opacity:0.6;margin-bottom:4px;">—</p>
+        <h2 id="tree-detail-name" style="font-size:28px;font-weight:700;margin:0;">—</h2>
+        <p id="tree-detail-location" style="opacity:0.8;font-size:14px;">—</p>
+      </div>
+      <div style="position:absolute;top:16px;left:16px;background:#dc2626;padding:4px 16px;border-radius:40px;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse-dot 1.8s infinite;"></span> LIVE SENSORS
+      </div>
+      <div id="tree-detail-status-badge" style="position:absolute;top:16px;right:76px;background:#16a34a;padding:4px 16px;border-radius:40px;color:#fff;font-size:11px;font-weight:600;">registered</div>
+      <div style="position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:40px;color:#fff;font-size:12px;">
+        <span id="tree-detail-health">—</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="padding:20px 24px;">
+      <div style="display:flex;gap:4px;border-bottom:1px solid #e5e7eb;overflow-x:auto;margin-bottom:20px;flex-wrap:wrap;">
+        <button class="tree-detail-tab active" data-tab="overview" onclick="window.switchTreeDetailTab && window.switchTreeDetailTab('overview')">Overview</button>
+        <button class="tree-detail-tab" data-tab="physical" onclick="window.switchTreeDetailTab && window.switchTreeDetailTab('physical')">📐 Physical</button>
+        <button class="tree-detail-tab" data-tab="environment" onclick="window.switchTreeDetailTab && window.switchTreeDetailTab('environment')">🌡️ Live Sensors</button>
+        <button class="tree-detail-tab" data-tab="weather" onclick="window.switchTreeDetailTab && window.switchTreeDetailTab('weather')">☁️ Weather</button>
+        <button class="tree-detail-tab" data-tab="metadata" onclick="window.switchTreeDetailTab && window.switchTreeDetailTab('metadata')">⛓ On-Chain</button>
+        <button class="tree-detail-tab" data-tab="gallery" onclick="window.switchTreeDetailTab && window.switchTreeDetailTab('gallery')">🖼 Gallery</button>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:24px;margin-bottom:4px;">🌳</div>
+            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Age</p>
+            <p id="tree-detail-age" style="font-size:18px;font-weight:700;color:#1a1a1a;">—</p>
+          </div>
+          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:24px;margin-bottom:4px;">📏</div>
+            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Height</p>
+            <p id="tree-detail-height" style="font-size:18px;font-weight:700;color:#1a1a1a;">—</p>
+          </div>
+          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:24px;margin-bottom:4px;">🫒</div>
+            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Variety</p>
+            <p id="tree-detail-variety" style="font-size:16px;font-weight:700;color:#1a1a1a;">—</p>
+          </div>
+          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:24px;margin-bottom:4px;">📊</div>
+            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Shares Sold</p>
+            <p id="tree-overview-shares" style="font-size:18px;font-weight:700;color:#1a1a1a;">—</p>
+          </div>
+        </div>
+        <div style="background:#f8faf8;border-radius:12px;padding:16px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;">
+            <span style="color:#71717a;">Adoption Progress</span>
+            <span id="tree-overview-pct" style="font-weight:700;color:#1a1a1a;">—%</span>
+          </div>
+          <div style="background:#e5e7eb;border-radius:40px;height:10px;overflow:hidden;">
+            <div id="tree-overview-bar" style="height:100%;background:#16a34a;border-radius:40px;transition:width 0.5s;width:0%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a394;margin-top:4px;">
+            <span id="tree-overview-sold-label">— sold</span>
+            <span id="tree-overview-total-label">— total</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;margin-bottom:4px;">Last Treatment</p>
+            <p id="tree-detail-last-treatment" style="font-weight:600;color:#1a1a1a;">—</p>
+            <p id="tree-detail-treatment-type" style="font-size:12px;color:#71717a;">—</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;margin-bottom:4px;">Last Fertilizer</p>
+            <p id="tree-detail-last-fertilizer" style="font-weight:600;color:#1a1a1a;">—</p>
+            <p id="tree-detail-fertilizer-type" style="font-size:12px;color:#71717a;">—</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHYSICAL -->
+      <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;">Age</p>
+            <p id="phys-age" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
+            <p style="font-size:11px;color:#94a394;">years</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;">Height</p>
+            <p id="phys-height" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
+            <p style="font-size:11px;color:#94a394;">cm</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;">Circumference</p>
+            <p id="phys-circumference" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
+            <p style="font-size:11px;color:#94a394;">cm</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;">Diameter</p>
+            <p id="phys-diameter" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
+            <p style="font-size:11px;color:#94a394;">cm</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;">Crown Spread</p>
+            <p id="phys-crown" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
+            <p style="font-size:11px;color:#94a394;">cm</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:11px;color:#94a394;">Altitude</p>
+            <p id="phys-altitude" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
+            <p style="font-size:11px;color:#94a394;">m</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;grid-column:1/-1;">
+            <p style="font-size:11px;color:#94a394;">GPS Coordinates</p>
+            <p id="phys-coords" style="font-family:monospace;color:#1a1a1a;">—</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENVIRONMENT -->
+      <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden">
+        <h4 style="font-weight:600;color:#1a1a1a;margin-bottom:12px;">🌱 Live Field Sensors — <span id="env-field-label" style="font-weight:400;color:#71717a;font-size:14px;">—</span></h4>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">💧 Soil Moisture</p>
+            <span id="oracle-soil-moisture" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+            <div style="background:#e5e7eb;border-radius:40px;height:6px;margin-top:6px;overflow:hidden;">
+              <div id="oracle-moisture-bar" style="height:100%;background:#3b82f6;border-radius:40px;transition:width 0.5s;width:0%;"></div>
+            </div>
+            <p id="oracle-moisture-status" style="font-size:11px;color:#94a394;margin-top:4px;">—</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🌡️ Temperature</p>
+            <span id="oracle-soil-temp" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🍃 Leaf Wetness</p>
+            <span id="oracle-leaf-wetness" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">☀️ UV Index</p>
+            <span id="oracle-uv" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🌬️ CO₂</p>
+            <span id="oracle-co2" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">💨 Wind Speed</p>
+            <span id="oracle-wind" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">💧 Humidity</p>
+            <span id="oracle-humidity" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🌧️ Rain Rate</p>
+            <span id="oracle-rain" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
+          </div>
+        </div>
+        <p style="font-size:11px;color:#94a394;">Last reading: <span id="oracle-last-update" style="font-weight:500;">—</span></p>
+      </div>
+
+      <!-- WEATHER -->
+      <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden">
+        <h4 style="font-weight:600;color:#1a1a1a;margin-bottom:12px;">☁️ Current Conditions — <span id="weather-coords-label" style="font-weight:400;color:#71717a;font-size:14px;">—</span></h4>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">🌡️ Air Temperature</p><span id="weather-temp" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">💨 Wind Speed</p><span id="weather-wind" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">💧 Humidity</p><span id="weather-humidity" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">🔵 Pressure</p><span id="weather-pressure" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">🌧️ Rain</p><span id="weather-rain" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">☀️ UV Index</p><span id="weather-uv" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;grid-column:1/-1;"><p style="font-size:13px;color:#71717a;">⚡ Solar Radiation</p><span id="weather-solar" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
+        </div>
+      </div>
+
+      <!-- METADATA -->
+      <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden">
+        <div style="font-size:14px;border-top:1px solid #e5e7eb;">
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Tree ID</span><span id="tree-detail-meta-id" style="font-family:monospace;font-weight:500;color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Field ID</span><span id="tree-detail-meta-field" style="font-family:monospace;color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">On-Chain Address</span><span id="tree-detail-meta-onchain" style="font-family:monospace;font-size:12px;color:#1a1a1a;max-width:200px;word-break:break-all;text-align:right;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Mint</span><span id="tree-detail-meta-mint" style="font-family:monospace;font-size:12px;color:#1a1a1a;max-width:200px;word-break:break-all;text-align:right;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">On-Chain Status</span><span id="tree-detail-meta-status" style="font-weight:500;color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Total Shares</span><span id="tree-detail-meta-total" style="font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Shares Sold (live)</span><span id="tree-detail-meta-sold" style="font-weight:700;color:#16a34a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Shares Available</span><span id="tree-detail-meta-available" style="font-weight:700;color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Variety</span><span id="tree-detail-meta-variety" style="color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Coordinates</span><span id="tree-detail-meta-coords" style="font-family:monospace;font-size:12px;color:#1a1a1a;">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;"><span style="color:#71717a;">Last Updated</span><span id="tree-detail-meta-updated" style="color:#1a1a1a;">—</span></div>
+        </div>
+      </div>
+
+      <!-- GALLERY -->
+      <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden">
+        <div id="tree-detail-gallery-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <p style="color:#94a394;font-size:14px;grid-column:1/-1;">Loading gallery...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SCRIPTS - All-in-one production build (no IDL import needed)
+═══════════════════════════════════════════════════════════════ -->
 <script type="importmap">
 {
   "imports": {
-    "@solana/web3.js":  "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js",
-    "@coral-xyz/anchor":"https://cdn.jsdelivr.net/npm/@coral-xyz/anchor@0.29.0/dist/bundle.min.js",
-    "@supabase/supabase-js":"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/module/index.js"
+    "@solana/web3.js": "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js",
+    "@coral-xyz/anchor": "https://cdn.jsdelivr.net/npm/@coral-xyz/anchor@0.29.0/dist/bundle.min.js",
+    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/module/index.js"
   }
 }
 </script>
 
 <script type="module">
-// ─── 0. CONFIG — pulled from .env via Vite ───────────────────────────────────
-// Vite replaces import.meta.env.VITE_* at build time from your .env file.
-// Required keys in .env:
-//   VITE_SUPABASE_URL=https://xxxx.supabase.co
-//   VITE_SUPABASE_ANON_KEY=eyJ...
-//   VITE_RPC_URL=https://api.devnet.solana.com   (optional, defaults to devnet)
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const RPC_URL           = import.meta.env.VITE_RPC_URL ?? 'https://api.devnet.solana.com';
+  // ─────────────────────────────────────────────────────────────
+  // IMPORTS
+  // ─────────────────────────────────────────────────────────────
+  import { createClient } from '@supabase/supabase-js';
+  import { Connection, PublicKey } from '@solana/web3.js';
+  import { AnchorProvider, Program, setProvider } from '@coral-xyz/anchor';
 
-// Also expose on window so any other scripts (connection.ts etc.) can read them
-window.VITE_SUPABASE_URL      = SUPABASE_URL;
-window.VITE_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
-window.VITE_RPC_URL           = RPC_URL;
+  // ─────────────────────────────────────────────────────────────
+  // CONFIG
+  // ─────────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://kqfqryeptkbvlkekocpx.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-';
+  const RPC_URL = 'https://api.devnet.solana.com';
+  const PROGRAM_ID = new PublicKey('8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54');
 
-// ─── 1. SUPABASE ──────────────────────────────────────────────────────────────
-import { createClient } from '@supabase/supabase-js';
+  // ─────────────────────────────────────────────────────────────
+  // CLIENTS
+  // ─────────────────────────────────────────────────────────────
+  export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  export const connection = new Connection(RPC_URL, 'confirmed');
 
-// Guard: catch missing .env vars before they cause silent 401s
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  document.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('map-tree-list');
-    if (el) el.innerHTML = `
-      <div style="background:#3a1a00;border:1px solid #c06000;border-radius:12px;padding:16px;color:#ffcc88;font-size:.82rem;line-height:1.6">
-        <strong>⚠️ Missing .env variables</strong><br>
-        Add these to your <code>.env</code> file and restart Vite:<br><br>
-        <code>VITE_SUPABASE_URL=https://xxxx.supabase.co</code><br>
-        <code>VITE_SUPABASE_ANON_KEY=eyJ...</code>
-      </div>`;
-  });
-  console.error('❌ VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not found in import.meta.env. Check your .env file and restart Vite.');
-}
+  // ─────────────────────────────────────────────────────────────
+  // STATE
+  // ─────────────────────────────────────────────────────────────
+  let program = null;
+  let provider = null;
+  let identity = { type: 'guest', wallet: null, label: 'Guest', email: null };
+  let isConnecting = false;
+  let treesCache = null;
 
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.sb = sb;
+  // ─────────────────────────────────────────────────────────────
+  // DOM HELPERS
+  // ─────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
 
-// ─── 2. READ-ONLY ANCHOR PROGRAM ──────────────────────────────────────────────
-// connection.ts would normally do this; we replicate the initReadOnly() pattern.
-import { Connection, PublicKey } from '@solana/web3.js';
-import { AnchorProvider, Program } from '@coral-xyz/anchor';
-
-const connection = new Connection(RPC_URL, 'confirmed');
-window._connection = connection;
-window.connection  = connection;
-
-// Minimal IDL — enough for tree.all() and sharePosition.all()
-// Replace this with your actual IDL import if building with a bundler.
-// For a pure HTML file you need to inline the IDL here:
-// ─── IDL (inlined — no fetch, no 404) ────────────────────────────────────────
-const IDL = {"address":"9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV","metadata":{"name":"olivium_dao","version":"0.1.0","spec":"0.1.0"},"instructions":[{"name":"initialize_protocol","discriminator":[188,233,252,106,134,146,202,91],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"authority","writable":true,"signer":true},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"share_price","type":"u64"},{"name":"buy_fee","type":"u64"},{"name":"sell_fee","type":"u64"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"}]},{"name":"purchase_shares","discriminator":[171,132,3,224,99,69,214,250],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"buyer"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true},{"name":"buyer","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]},{"name":"register_tree","discriminator":[22,52,192,74,201,240,87,252],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"authority","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"age","type":"u8"},{"name":"location","type":"string"},{"name":"total_shares","type":"u64"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"}]},{"name":"sell_shares","discriminator":[184,164,169,16,231,158,199,196],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"seller"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"seller","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]}],"accounts":[{"name":"ProtocolConfig","discriminator":[207,91,250,28,152,179,215,209]},{"name":"SharePosition","discriminator":[239,228,59,88,149,73,218,15]},{"name":"Tree","discriminator":[100,9,213,154,6,136,109,55]}],"errors":[{"code":6000,"name":"Unauthorized","msg":"Unauthorized"},{"code":6001,"name":"InvalidAmount","msg":"Invalid amount"},{"code":6002,"name":"NotEnoughShares","msg":"Not enough shares available"},{"code":6003,"name":"NotEnoughSharesOwned","msg":"Not enough shares owned"},{"code":6004,"name":"Overflow","msg":"Arithmetic overflow"},{"code":6005,"name":"InsufficientTreasuryFunds","msg":"Treasury has insufficient funds for payout"},{"code":6006,"name":"InvalidTreasury","msg":"Treasury address does not match protocol config"}],"types":[{"name":"ProtocolConfig","type":{"kind":"struct","fields":[{"name":"authority","type":"pubkey"},{"name":"treasury","type":"pubkey"},{"name":"share_price_lamports","type":"u64"},{"name":"total_trees","type":"u32"},{"name":"buy_fee_bps","type":"u16"},{"name":"sell_fee_bps","type":"u16"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"},{"name":"bump","type":"u8"}]}},{"name":"SharePosition","type":{"kind":"struct","fields":[{"name":"owner","type":"pubkey"},{"name":"tree_id","type":"string"},{"name":"shares_owned","type":"u64"},{"name":"is_guardian","type":"bool"}]}},{"name":"Tree","type":{"kind":"struct","fields":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"location","type":"string"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"},{"name":"total_shares","type":"u64"},{"name":"shares_sold","type":"u64"},{"name":"last_harvest_yield_ml","type":"u64"},{"name":"total_co2_kg","type":"u64"},{"name":"age","type":"u8"},{"name":"health_status","type":"u8"},{"name":"guardian_count","type":"u8"},{"name":"has_guardian","type":"bool"},{"name":"bump","type":"u8"}]}}]};
-
-let _program = null;
-(async () => {
-  try {
-    const roProvider = new AnchorProvider(connection, {}, { commitment: 'confirmed' });
-    _program = new Program(IDL, roProvider);
-    window._program = _program;
-    console.log('✅ [PROGRAM] Read-only Anchor program ready — program ID:', IDL.address);
-  } catch (e) {
-    console.warn('⚠️ [PROGRAM] Anchor init failed — on-chain reads disabled:', e.message);
-    window._program = null;
+  function setText(id, val) {
+    const el = $(id);
+    if (el) el.textContent = val ?? '—';
   }
-  await bootDashboard();
-})();
 
-// ─── 3. TINY DOM HELPERS ──────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const setText = (id, val) => { const el = $(id); if (el) el.innerText = val; };
-const setWidth = (id, pct) => { const el = $(id); if (el) el.style.width = `${Math.min(100, Math.max(0, pct))}%`; };
-
-// ─── 4. IDENTITY STATE ────────────────────────────────────────────────────────
-let _identity = { type: 'guest', wallet: null, label: 'Guest' };
-
-function getWallet() {
-  return (window.phantom?.solana?.publicKey?.toBase58?.()) ||
-         (window.solana?.publicKey?.toBase58?.()) ||
-         _identity.wallet || null;
-}
-
-function isConnected() { return _identity.type !== 'guest'; }
-
-// ─── 5. WALLET CONNECTION UI ──────────────────────────────────────────────────
-function updateConnectionUI() {
-  const connected = isConnected();
-  const btn       = $('connectBtn');
-  const btnText   = $('connect-btn-text');
-  const dot       = $('wallet-dot');
-
-  setText('conn-status-text', connected ? _identity.label : 'disconnected');
-  setText('wallet-type',      connected ? _identity.label : 'Guest');
-
-  if (dot) dot.style.color = connected ? '#3dcc6a' : '#ffaa33';
-  if (btn) {
-    btn.className = connected ? 'connect-btn connected' : 'connect-btn';
+  // ─────────────────────────────────────────────────────────────
+  // EXPORTED FUNCTIONS
+  // ─────────────────────────────────────────────────────────────
+  export function getTrees() {
+    return treesCache || [];
   }
-  if (btnText) btnText.textContent = connected ? 'Disconnect' : 'Connect Wallet';
-}
 
-// ─── 6. PHANTOM CONNECT ───────────────────────────────────────────────────────
-async function connectPhantom() {
-  const ph = window.phantom?.solana || window.solana;
-  if (!ph?.isPhantom) {
-    alert('Phantom wallet not detected. Install it from phantom.app');
-    return;
+  export function getAllPositions() {
+    return [];
   }
-  try {
-    await ph.connect();
-    const pubkey = ph.publicKey.toBase58();
 
-    // If we have a full program, rebuild with real signer
-    if (window._program) {
-      const { AnchorProvider: AP, Program: P } = await import('@coral-xyz/anchor');
-      const prov = new AP(connection, ph, { commitment: 'confirmed' });
-      const prog = new P(window._program.idl, prov);
-      window._program  = prog;
-      window._provider = prov;
+  export function getIdentity() {
+    return { ...identity };
+  }
+
+  export function isConnected() {
+    return identity.type !== 'guest';
+  }
+
+  export async function loadTrees(filter = 'all') {
+    const container = $('map-tree-list');
+    if (!container) return;
+
+    try {
+      let { data: trees, error } = await sb
+        .from('tree_metadata')
+        .select('*')
+        .order('tree_id', { ascending: true })
+        .limit(20);
+
+      if (error) throw error;
+      treesCache = trees;
+
+      if (!trees || trees.length === 0) {
+        container.innerHTML = `<p style="color:#6f9f7a;text-align:center;">No trees found</p>`;
+        return;
+      }
+
+      if (filter === 'available') {
+        trees = trees.filter(t => (t.shares_sold || 0) < (t.total_shares || 1000));
+      } else if (filter === 'full') {
+        trees = trees.filter(t => (t.shares_sold || 0) >= (t.total_shares || 1000));
+      }
+
+      container.innerHTML = trees.map(t => `
+        <div class="tree-marker" onclick="window.openTreeDetailModal && window.openTreeDetailModal('${t.tree_id}')">
+          <i class="fas fa-tree"></i>
+          <span>${t.name || `Tree #${t.tree_id}`}</span>
+          <span style="font-size:11px;color:#6f9f7a;margin-left:4px;">${t.field_id || ''}</span>
+          <span class="badge-id">${t.shares_sold || 0}/${t.total_shares || 1000}</span>
+          ${t.health_score ? `<span style="font-size:11px;color:#5fdf7f;">${(t.health_score * 100).toFixed(0)}%</span>` : ''}
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error('loadTrees:', err);
+      container.innerHTML = `<p style="color:#6f9f7a;text-align:center;">Error loading trees</p>`;
     }
-
-    _identity = { type: 'wallet', wallet: pubkey, label: `${pubkey.slice(0,4)}…${pubkey.slice(-4)}` };
-    window.OliviumIdentity = { ..._identity };
-    localStorage.setItem('olivium_identity', JSON.stringify(_identity));
-
-    updateConnectionUI();
-    $('connectModal').style.display = 'none';
-    console.log('✅ Phantom connected:', pubkey);
-
-    // Refresh tree list to show "Release" buttons for owned trees
-    await renderTreeList();
-  } catch (err) {
-    console.error('Phantom connect error:', err);
-    alert('Connection failed: ' + err.message);
-  }
-}
-
-// ─── 7. EMAIL CONNECT ─────────────────────────────────────────────────────────
-async function connectEmail(email, custodialWallet) {
-  if (!email || !custodialWallet) { alert('Please enter email and custodial wallet address'); return; }
-  try {
-    new PublicKey(custodialWallet);
-  } catch {
-    alert('Invalid custodial wallet address'); return;
   }
 
-  _identity = { type: 'email', wallet: custodialWallet, label: email, email };
-  window.OliviumIdentity = { ..._identity };
-  localStorage.setItem('olivium_identity', JSON.stringify(_identity));
+  // ─────────────────────────────────────────────────────────────
+  // CONNECTION FUNCTIONS
+  // ─────────────────────────────────────────────────────────────
+  export async function connectWallet(auto = false) {
+    if (isConnecting) return null;
+    isConnecting = true;
 
-  updateConnectionUI();
-  $('connectModal').style.display = 'none';
-  $('emailForm').style.display    = 'none';
-  console.log('✅ Email connected:', email);
-  await renderTreeList();
-}
+    try {
+      const wallet = window.phantom?.solana || window.solana;
+      if (!wallet) throw new Error('Phantom wallet not found');
 
-// ─── 8. DISCONNECT ────────────────────────────────────────────────────────────
-async function disconnect() {
-  const ph = window.phantom?.solana || window.solana;
-  try { if (ph?.disconnect) await ph.disconnect(); } catch {}
+      if (auto) await wallet.connect({ onlyIfTrusted: true });
+      else if (!wallet.publicKey) await wallet.connect();
 
-  _identity = { type: 'guest', wallet: null, label: 'Guest' };
-  window.OliviumIdentity = { ..._identity };
-  localStorage.removeItem('olivium_identity');
+      if (!wallet.publicKey) throw new Error('No public key');
 
-  updateConnectionUI();
-  await renderTreeList();
-}
+      const pubkey = wallet.publicKey.toBase58();
+      localStorage.setItem('walletConnected', 'true');
 
-// ─── 9. SESSION RESTORE ───────────────────────────────────────────────────────
-async function restoreSession() {
-  try {
+      provider = new AnchorProvider(connection, wallet, {
+        preflightCommitment: 'confirmed',
+        commitment: 'confirmed',
+      });
+      setProvider(provider);
+
+      // Create program with IDL (using a minimal IDL for now)
+      // In production, you'd want to load the actual IDL
+      try {
+        // Try to load IDL dynamically
+        const idlModule = await import('./SIMPLE/idl/idl.json');
+        program = new Program(idlModule.default, provider);
+      } catch {
+        // Fallback: create a program with just the program ID
+        // This allows basic account fetching but not full transaction building
+        program = new Program(
+          { 
+            address: PROGRAM_ID.toBase58(),
+            metadata: { name: 'olivium' },
+            instructions: [],
+            accounts: [],
+            types: []
+          },
+          provider
+        );
+        // Override the programId
+        program.programId = PROGRAM_ID;
+      }
+
+      window._program = program;
+      window._provider = provider;
+      window.program = program;
+      window.provider = provider;
+
+      identity = { type: 'wallet', wallet: pubkey, label: `${pubkey.slice(0,4)}...${pubkey.slice(-4)}`, email: null };
+      localStorage.setItem('olivium_identity', JSON.stringify(identity));
+
+      updateUI();
+      await loadTrees();
+      window.dispatchEvent(new CustomEvent('olivium:connected', { detail: { pubkey } }));
+
+      return { provider, program, pubkey };
+    } catch (err) {
+      console.error('connectWallet failed:', err);
+      throw err;
+    } finally {
+      isConnecting = false;
+    }
+  }
+
+  export async function disconnectWallet() {
+    const wallet = window.phantom?.solana || window.solana;
+    if (wallet?.disconnect) await wallet.disconnect().catch(() => {});
+
+    identity = { type: 'guest', wallet: null, label: 'Guest', email: null };
+    localStorage.removeItem('walletConnected');
+    localStorage.removeItem('olivium_identity');
+
+    window._program = null;
+    window._provider = null;
+    window.program = null;
+    window.provider = null;
+
+    updateUI();
+    await loadTrees();
+    window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // UI UPDATE
+  // ─────────────────────────────────────────────────────────────
+  function updateUI() {
+    const connected = identity.type !== 'guest';
+    setText('conn-status-text', connected ? `Connected: ${identity.label}` : 'disconnected');
+    setText('wallet-type', connected ? identity.label : 'Guest');
+    setText('connect-btn-text', connected ? 'Disconnect' : 'Connect Phantom');
+
+    const statusColor = connected ? '#22c55e' : '#ffaa33';
+    const statusEl = document.querySelector('#connStatus i');
+    if (statusEl) statusEl.style.color = statusColor;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // TREE DETAIL MODAL
+  // ─────────────────────────────────────────────────────────────
+  window.openTreeDetailModal = async function(treeId) {
+    const modal = $('tree-detail-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    const set = (id, val) => {
+      const el = $(id);
+      if (el) el.textContent = val ?? '—';
+    };
+
+    try {
+      const { data: d, error } = await sb
+        .from('tree_metadata')
+        .select('*')
+        .eq('tree_id', treeId)
+        .single();
+
+      if (error) throw error;
+
+      let onChain = null;
+      if (window._program) {
+        try {
+          const [pda] = PublicKey.findProgramAddressSync(
+            [Buffer.from('tree'), Buffer.from(String(treeId))],
+            window._program.programId
+          );
+          onChain = await window._program.account.tree.fetch(pda);
+        } catch {}
+      }
+
+      const totalShares = onChain?.totalShares?.toNumber() ?? d?.total_shares ?? 1000;
+      const sharesSold = onChain?.sharesSold?.toNumber() ?? d?.shares_sold ?? 0;
+      const available = totalShares - sharesSold;
+      const pct = totalShares > 0 ? Math.round((sharesSold / totalShares) * 100) : 0;
+      const mintAddress = onChain?.mint?.toBase58?.() ?? d?.mint ?? d?.on_chain_address ?? '—';
+
+      const hero = $('tree-detail-hero-img');
+      if (hero) hero.style.backgroundImage = `url('${d?.photo_url || 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg'}')`;
+
+      set('tree-detail-name', d?.name || `Tree #${treeId}`);
+      set('tree-detail-field-id', d?.field_id || '—');
+      set('tree-detail-location', d?.field_id ? `Field ${d.field_id}` : '—');
+      set('tree-detail-health', d?.health_score != null ? `${(d.health_score * 100).toFixed(0)}%` : '—');
+      set('tree-detail-status-badge', d?.status || 'registered');
+      set('tree-detail-age', d?.age_years != null ? `${d.age_years} yrs` : '—');
+      set('tree-detail-height', d?.height_cm != null ? `${d.height_cm} cm` : '—');
+      set('tree-detail-variety', d?.variety || '—');
+
+      set('tree-overview-shares', `${sharesSold.toLocaleString()} / ${totalShares.toLocaleString()}`);
+      set('tree-overview-pct', `${pct}%`);
+      set('tree-overview-sold-label', `${sharesSold.toLocaleString()} sold`);
+      set('tree-overview-total-label', `${totalShares.toLocaleString()} total`);
+
+      const bar = $('tree-overview-bar');
+      if (bar) bar.style.width = `${pct}%`;
+
+      set('tree-detail-last-treatment', d?.last_treatment ? new Date(d.last_treatment).toLocaleDateString() : '—');
+      set('tree-detail-treatment-type', d?.treatment_type || '—');
+      set('tree-detail-last-fertilizer', d?.last_fertilizer ? new Date(d.last_fertilizer).toLocaleDateString() : '—');
+      set('tree-detail-fertilizer-type', d?.fertilizer_type || '—');
+
+      set('phys-age', d?.age_years != null ? String(d.age_years) : '—');
+      set('phys-height', d?.height_cm != null ? String(d.height_cm) : '—');
+      set('phys-circumference', d?.circumference_cm != null ? String(d.circumference_cm) : '—');
+      set('phys-diameter', d?.diameter_cm != null ? String(d.diameter_cm) : '—');
+      set('phys-crown', d?.crown_spread_cm != null ? String(d.crown_spread_cm) : '—');
+      set('phys-altitude', d?.altitude_m != null ? String(d.altitude_m) : '—');
+      set('phys-coords', d?.latitude != null && d?.longitude != null ? `${d.latitude}, ${d.longitude}` : '—');
+
+      set('tree-detail-meta-id', treeId);
+      set('tree-detail-meta-field', d?.field_id || '—');
+      set('tree-detail-meta-onchain', d?.on_chain_address || '—');
+      set('tree-detail-meta-mint', mintAddress);
+      set('tree-detail-meta-status', d?.status || '—');
+      set('tree-detail-meta-total', totalShares.toLocaleString());
+      set('tree-detail-meta-sold', sharesSold.toLocaleString());
+      set('tree-detail-meta-available', available.toLocaleString());
+      set('tree-detail-meta-variety', d?.variety || '—');
+      set('tree-detail-meta-coords', d?.latitude != null ? `${d.latitude}, ${d.longitude}` : '—');
+      set('tree-detail-meta-updated', d?.updated_at ? new Date(d.updated_at).toLocaleString() : '—');
+
+      const galleryGrid = $('tree-detail-gallery-grid');
+      if (galleryGrid) {
+        const photos = d?.photo_url ? [d.photo_url] : [];
+        if (!photos.length) {
+          const base = 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main';
+          photos.push(`${base}/Tree%20F1-FR-001.jpeg`, `${base}/Tree%20F1-FR-002.jpeg`, `${base}/close1.jpeg`);
+        }
+        galleryGrid.innerHTML = photos.map(url =>
+          `<img src="${url}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;" onerror="this.style.display='none'" />`
+        ).join('');
+      }
+
+      const fieldId = d?.field_id ?? null;
+      if (fieldId) set('env-field-label', fieldId);
+
+      const lat = d?.latitude ?? null;
+      const lon = d?.longitude ?? null;
+      if (lat != null && lon != null) set('weather-coords-label', `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
+
+      if (fieldId) {
+        try {
+          const { data: sensorData } = await sb
+            .from('node_sensors')
+            .select('*')
+            .eq('field_id', fieldId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (sensorData) {
+            const moisture = sensorData.soil_moisture ?? null;
+            set('oracle-soil-moisture', moisture !== null ? `${Number(moisture).toFixed(1)}%` : '—');
+            set('oracle-moisture-status', moisture !== null ? (moisture > 50 ? 'Optimal' : 'Balanced') : 'No data');
+            set('oracle-soil-temp', sensorData.temperature != null ? `${Number(sensorData.temperature).toFixed(1)}°C` : '—');
+            set('oracle-leaf-wetness', sensorData.leaf_wetness != null ? Number(sensorData.leaf_wetness).toFixed(2) : '—');
+            set('oracle-co2', sensorData.co2 != null ? `${Number(sensorData.co2).toFixed(1)} ppm` : '—');
+            set('oracle-wind', sensorData.wind_speed != null ? `${Number(sensorData.wind_speed).toFixed(1)} m/s` : '—');
+            set('oracle-rain', sensorData.rain_rate != null ? `${Number(sensorData.rain_rate).toFixed(2)} mm/hr` : '—');
+            set('oracle-humidity', sensorData.humidity != null ? `${Number(sensorData.humidity).toFixed(1)}%` : '—');
+            set('oracle-uv', sensorData.uv_index != null ? String(sensorData.uv_index) : '—');
+            set('oracle-last-update', sensorData.created_at ? new Date(sensorData.created_at).toLocaleTimeString() : new Date().toLocaleTimeString());
+            
+            const bar = $('oracle-moisture-bar');
+            if (bar) bar.style.width = moisture !== null ? `${Math.min(moisture, 100)}%` : '0%';
+          }
+        } catch {}
+      }
+
+      window.switchTreeDetailTab('overview');
+
+    } catch (err) {
+      console.error('openTreeDetailModal:', err);
+    }
+  };
+
+  window.closeTreeDetailModal = function() {
+    const modal = $('tree-detail-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('open');
+    }
+    document.body.style.overflow = '';
+  };
+
+  window.switchTreeDetailTab = function(tabName) {
+    document.querySelectorAll('.tree-detail-tab-content').forEach(el => el.classList.add('hidden'));
+    const target = $(`tree-detail-tab-${tabName}`);
+    if (target) target.classList.remove('hidden');
+
+    document.querySelectorAll('.tree-detail-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    const active = document.querySelector(`.tree-detail-tab[data-tab="${tabName}"]`);
+    if (active) active.classList.add('active');
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // RESTORE SESSION
+  // ─────────────────────────────────────────────────────────────
+  async function restoreSession() {
     const raw = localStorage.getItem('olivium_identity');
     if (!raw) return;
-    const saved = JSON.parse(raw);
 
-    if (saved.type === 'wallet') {
-      const ph = window.phantom?.solana || window.solana;
-      if (ph?.isConnected && ph.publicKey) {
-        _identity = { type: 'wallet', wallet: ph.publicKey.toBase58(), label: saved.label };
-        updateConnectionUI();
+    try {
+      const saved = JSON.parse(raw);
+      if (saved.type === 'wallet') {
+        await connectWallet(true);
+      } else if (saved.type === 'email' && saved.wallet) {
+        identity = saved;
+        updateUI();
+        await loadTrees();
       }
-    } else if (saved.type === 'email' && saved.wallet) {
-      _identity = { type: 'email', wallet: saved.wallet, label: saved.label || saved.email, email: saved.email };
-      updateConnectionUI();
+    } catch {
+      localStorage.removeItem('olivium_identity');
     }
-  } catch { /* silent */ }
-}
+  }
 
-// ─── 10. SENSOR FETCH ─────────────────────────────────────────────────────────
-async function fetchLatestSensors(fieldId) {
-  if (!fieldId) return null;
-  try {
-    const { data, error } = await sb
-      .from('node_sensors')
-      .select('*')
-      .eq('field_id', fieldId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) { console.error('[SENSORS]', error.message); return null; }
-    return data;
-  } catch (e) { console.error('[SENSORS]', e); return null; }
-}
+  // ─────────────────────────────────────────────────────────────
+  // EVENT LISTENERS
+  // ─────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    const connectBtn = $('connectBtn');
+    if (connectBtn) {
+      connectBtn.addEventListener('click', async () => {
+        if (identity.type !== 'guest') {
+          await disconnectWallet();
+        } else {
+          try {
+            await connectWallet();
+          } catch (err) {
+            alert('Failed to connect wallet. Please ensure Phantom is installed.');
+          }
+        }
+      });
+    }
 
-function applySensorsToMainCard(s) {
-  if (!s) return;
-  const m = s.soil_moisture != null ? Number(s.soil_moisture) : null;
-  setText('sensor-moisture', m !== null ? `${m.toFixed(1)}%` : '—');
-  setWidth('sensor-moisture-bar', m !== null ? m : 0);
-  setText('sensor-temp',    s.temperature != null ? Number(s.temperature).toFixed(1) : '—');
-  setText('sensor-humidity', s.humidity   != null ? Number(s.humidity).toFixed(1)    : '—');
-  setText('live-wind',       s.wind_speed != null ? Number(s.wind_speed).toFixed(1)  : '—');
-  if (s.lat && s.lon) setText('live-gps', `${Number(s.lat).toFixed(4)}°N, ${Number(s.lon).toFixed(4)}°E`);
-}
-
-// ─── 11. WEATHER FETCH (Open-Meteo) ──────────────────────────────────────────
-async function fetchWeather(lat, lon) {
-  if (lat == null || lon == null) return null;
-  try {
-    const p = new URLSearchParams({
-      latitude: String(lat), longitude: String(lon),
-      current: ['temperature_2m','relative_humidity_2m','wind_speed_10m',
-                'surface_pressure','rain','uv_index','shortwave_radiation'].join(','),
-      wind_speed_unit: 'ms', timezone: 'auto'
+    $('modeToggle')?.addEventListener('click', function() {
+      document.body.classList.toggle('luxury');
+      const icon = this.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fa-moon');
+        icon.classList.toggle('fa-sun');
+      }
+      this.innerHTML = (icon?.outerHTML || '') + (document.body.classList.contains('luxury') ? ' Luxury' : ' Dark');
     });
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${p}`);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json?.current ?? null;
-  } catch { return null; }
-}
 
-function applyWeatherToMainCard(w) {
-  if (!w) return;
-  setText('weather-temp-main',     w.temperature_2m    !== undefined ? String(w.temperature_2m)         : '—');
-  setText('weather-humidity-main', w.relative_humidity_2m !== undefined ? String(w.relative_humidity_2m) : '—');
-  setText('weather-wind-main',     w.wind_speed_10m    !== undefined ? String(w.wind_speed_10m)          : '—');
-  setText('weather-uv-main',       w.uv_index          !== undefined ? String(w.uv_index)                : '—');
-}
+    $('aiBubble')?.addEventListener('click', () => {
+      alert('🤖 AI Tree Assistant: I have real-time data from Supabase and on-chain OLV balances. How can I help?');
+    });
 
-// ─── 12. TREE LIST (map card) ─────────────────────────────────────────────────
-async function renderTreeList() {
-  const container = $('map-tree-list');
-  if (!container) return;
-  container.innerHTML = '<div style="color:#6f9f7a;text-align:center;padding:12px"><span class="spinner"></span> Loading…</div>';
+    $('lang-toggle')?.addEventListener('click', function() {
+      const langs = ['EN', 'IT', 'ES', 'FR', 'DE'];
+      const current = this.innerText.trim().split('/').map(s => s.trim());
+      const next = langs[(langs.indexOf(current[0]) + 1) % langs.length];
+      this.innerHTML = '<i class="fas fa-language"></i> ' + next + ' / ' + langs[(langs.indexOf(next) + 1) % langs.length];
+      $('lang-display').textContent = next;
+    });
 
-  try {
-    const { data: trees, error } = await sb
-      .from('tree_metadata')
-      .select('tree_id, name, field_id, latitude, longitude, total_shares, shares_sold, status')
-      .order('tree_id', { ascending: true });
+    $('cert-btn')?.addEventListener('click', () => {
+      alert('📄 Downloading certificate for your trees (PDF) — powered by on-chain data');
+    });
 
-    if (error || !trees?.length) {
-      container.innerHTML = '<div style="color:#6f9f7a;text-align:center;padding:12px">No trees found</div>';
-      return;
-    }
+    $('gallery-btn')?.addEventListener('click', () => {
+      alert('📸 Seasonal gallery: AI-powered images of your trees (Spring 2026)');
+    });
 
-    // Enrich with on-chain share counts if program is ready
-    let onChainTrees = [];
-    if (window._program) {
-      try { onChainTrees = await window._program.account.tree.all(); } catch {}
-    }
+    $('ai-assistant')?.addEventListener('click', () => {
+      $('aiBubble')?.click();
+    });
 
-    container.innerHTML = '';
-    for (const t of trees) {
-      const oc = onChainTrees.find(x => x.account?.treeId === t.tree_id || String(x.account?.treeId) === String(t.tree_id));
-      const total = oc ? oc.account.totalShares.toNumber() : (t.total_shares ?? 1000);
-      const sold  = oc ? oc.account.sharesSold.toNumber()  : (t.shares_sold  ?? 0);
-      const pct   = total > 0 ? Math.round((sold / total) * 100) : 0;
+    $('notif-bell')?.addEventListener('click', function() {
+      $('notif-text').textContent = '📬 no new alerts';
+      setTimeout(() => { $('notif-text').textContent = 'harvest soon'; }, 3000);
+    });
 
-      const row = document.createElement('div');
-      row.className = 'tree-marker';
-      row.innerHTML = `
-        <i class="fas fa-tree"></i>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name || t.tree_id}</div>
-          <div style="font-size:.65rem;color:#7fbf8f;opacity:.8">${t.field_id ? `Field ${t.field_id}` : ''} ${t.latitude ? `· ${Number(t.latitude).toFixed(3)}°N` : ''}</div>
-        </div>
-        <span class="badge-id">#${t.tree_id}</span>
-        <span class="badge-pct">${pct}%</span>
-      `;
-      row.addEventListener('click', () => openTreeDetailModal(t.tree_id));
-      container.appendChild(row);
-    }
+    await restoreSession();
+    await loadTrees();
+    updateUI();
 
-    // Fetch sensor data for the first tree with a field_id to populate main sensor card
-    const firstWithField = trees.find(t => t.field_id);
-    if (firstWithField) {
-      const [sensors, weather] = await Promise.all([
-        fetchLatestSensors(firstWithField.field_id),
-        fetchWeather(firstWithField.latitude, firstWithField.longitude)
-      ]);
-      applySensorsToMainCard(sensors);
-      applyWeatherToMainCard(weather);
-    }
-
-  } catch (err) {
-    console.error('[TREE LIST]', err);
-    container.innerHTML = '<div style="color:#c06060;text-align:center;padding:12px">Failed to load trees</div>';
-  }
-}
-
-// ─── 13. TREE DETAIL MODAL ────────────────────────────────────────────────────
-const LOADING_PLACEHOLDERS = [
-  'tree-detail-name','tree-detail-location','tree-detail-field-id','tree-detail-health',
-  'tree-detail-age','tree-detail-height','tree-detail-variety','tree-overview-shares',
-  'tree-overview-pct','tree-overview-sold-label','tree-overview-total-label',
-  'tree-detail-last-treatment','tree-detail-treatment-type','tree-detail-last-fertilizer',
-  'tree-detail-fertilizer-type','phys-age','phys-height','phys-circumference','phys-diameter',
-  'phys-crown','phys-altitude','phys-coords','tree-detail-meta-id','tree-detail-meta-field',
-  'tree-detail-meta-onchain','tree-detail-meta-mint','tree-detail-meta-status',
-  'tree-detail-meta-total','tree-detail-meta-sold','tree-detail-meta-available',
-  'tree-detail-meta-variety','tree-detail-meta-coords','tree-detail-meta-updated',
-  'tree-detail-status-text',
-];
-
-async function openTreeDetailModal(treeId) {
-  const modal = $('tree-detail-modal');
-  if (!modal) return;
-
-  // Show with loading placeholders
-  modal.style.display = 'flex';
-  LOADING_PLACEHOLDERS.forEach(id => setText(id, '…'));
-  setWidth('tree-overview-bar', 0);
-  switchTreeDetailTab('overview');
-
-  // Parallel fetch: Supabase + on-chain
-  const [sbResult, onChainTrees] = await Promise.all([
-    sb.from('tree_metadata').select('*').eq('tree_id', treeId).single(),
-    (async () => {
-      try { return window._program ? await window._program.account.tree.all() : []; }
-      catch { return []; }
-    })(),
-  ]);
-
-  const d = sbResult?.data ?? null;
-  const oc = onChainTrees.find(t => t.account?.treeId === treeId || String(t.account?.treeId) === String(treeId));
-
-  const total   = oc ? oc.account.totalShares.toNumber() : (d?.total_shares ?? 1000);
-  const sold    = oc ? oc.account.sharesSold.toNumber()  : (d?.shares_sold  ?? 0);
-  const avail   = total - sold;
-  const pct     = total > 0 ? Math.round((sold / total) * 100) : 0;
-  const mint    = oc?.account?.mint?.toBase58?.() ?? d?.mint ?? d?.on_chain_address ?? '—';
-
-  // Hero
-  const hero = $('tree-detail-hero-img');
-  if (hero) hero.style.backgroundImage = `url('${d?.photo_url || 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg'}')`;
-
-  // Overview
-  setText('tree-detail-name',     d?.name || `Tree #${treeId}`);
-  setText('tree-detail-location', d?.field_id ? `Field ${d.field_id} · ${Number(d.latitude).toFixed(4)}, ${Number(d.longitude).toFixed(4)}` : '—');
-  setText('tree-detail-field-id', d?.field_id ?? '—');
-  setText('tree-detail-health',   d?.health_score != null ? `${(d.health_score * 100).toFixed(0)}%` : '—');
-  setText('tree-detail-status-text', d?.status ?? '—');
-  setText('tree-detail-age',      d?.age_years   != null ? `${d.age_years} yrs` : '—');
-  setText('tree-detail-height',   d?.height_cm   != null ? `${d.height_cm} cm`  : '—');
-  setText('tree-detail-variety',  d?.variety ?? '—');
-  setText('tree-overview-shares', `${sold.toLocaleString()} / ${total.toLocaleString()}`);
-  setText('tree-overview-pct',    `${pct}%`);
-  setText('tree-overview-sold-label',  `${sold.toLocaleString()} sold`);
-  setText('tree-overview-total-label', `${total.toLocaleString()} total`);
-  setWidth('tree-overview-bar', pct);
-  setText('tree-detail-last-treatment',  d?.last_treatment  ? new Date(d.last_treatment).toLocaleDateString()  : '—');
-  setText('tree-detail-treatment-type',  d?.treatment_type  ?? '—');
-  setText('tree-detail-last-fertilizer', d?.last_fertilizer ? new Date(d.last_fertilizer).toLocaleDateString() : '—');
-  setText('tree-detail-fertilizer-type', d?.fertilizer_type ?? '—');
-
-  // Physical
-  setText('phys-age',           d?.age_years        != null ? String(d.age_years)        : '—');
-  setText('phys-height',        d?.height_cm        != null ? String(d.height_cm)        : '—');
-  setText('phys-circumference', d?.circumference_cm != null ? String(d.circumference_cm) : '—');
-  setText('phys-diameter',      d?.diameter_cm      != null ? String(d.diameter_cm)      : '—');
-  setText('phys-crown',         d?.crown_spread_cm  != null ? String(d.crown_spread_cm)  : '—');
-  setText('phys-altitude',      d?.altitude_m       != null ? String(d.altitude_m)       : '—');
-  setText('phys-coords', d?.latitude != null ? `${d.latitude}, ${d.longitude}` : '—');
-
-  // On-chain tab
-  setText('tree-detail-meta-id',        treeId);
-  setText('tree-detail-meta-field',     d?.field_id         ?? '—');
-  setText('tree-detail-meta-onchain',   d?.on_chain_address ?? '—');
-  setText('tree-detail-meta-mint',      mint);
-  setText('tree-detail-meta-status',    d?.status           ?? '—');
-  setText('tree-detail-meta-total',     total.toLocaleString());
-  setText('tree-detail-meta-sold',      sold.toLocaleString());
-  setText('tree-detail-meta-available', avail.toLocaleString());
-  setText('tree-detail-meta-variety',   d?.variety ?? '—');
-  setText('tree-detail-meta-coords',    d?.latitude != null ? `${d.latitude}, ${d.longitude}` : '—');
-  setText('tree-detail-meta-updated',   d?.updated_at ? new Date(d.updated_at).toLocaleString() : '—');
-
-  // Gallery
-  const gallery = $('tree-detail-gallery-grid');
-  if (gallery) {
-    const base = 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main';
-    const photos = d?.photo_url ? [d.photo_url] : [
-      `${base}/Tree%20F1-FR-001.jpeg`,
-      `${base}/Tree%20F1-FR-002.jpeg`,
-      `${base}/close1.jpeg`,
-    ];
-    gallery.innerHTML = photos.map(url =>
-      `<div style="border-radius:10px;overflow:hidden;height:130px;background:#f0f0f0">
-         <img src="${url}" style="width:100%;height:100%;object-fit:cover"
-           onerror="this.parentElement.innerHTML='<span style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:.75rem\\'>No image</span>'"/>
-       </div>`
-    ).join('');
-  }
-
-  // Sensors + weather (non-blocking — modal already showing)
-  const fieldId = d?.field_id ?? null;
-  const sensors = await fetchLatestSensors(fieldId);
-  const lat = sensors?.lat ?? d?.latitude ?? null;
-  const lon = sensors?.lon ?? d?.longitude ?? null;
-
-  if (lat != null && lon != null) setText('weather-coords-label', `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
-  if (fieldId) setText('env-field-label', fieldId);
-
-  const weather = await fetchWeather(lat, lon);
-  populateSensorModal(sensors);
-  populateWeatherModal(weather);
-}
-window.openTreeDetailModal = openTreeDetailModal;
-
-function closeModal_detail() {
-  const m = $('tree-detail-modal');
-  if (m) m.style.display = 'none';
-}
-window.closeModal_detail = closeModal_detail;
-
-function switchTreeDetailTab(name) {
-  document.querySelectorAll('.tree-detail-tab-content').forEach(el => el.style.display = 'none');
-  const panel = $(`tree-detail-tab-${name}`);
-  if (panel) panel.style.display = '';
-
-  document.querySelectorAll('.tree-detail-tab').forEach(t => {
-    t.classList.remove('active');
-    t.style.borderBottomColor = 'transparent';
-    t.style.color = '#6b7280';
-  });
-  const match = Array.from(document.querySelectorAll('.tree-detail-tab'))
-    .find(t => t.getAttribute('onclick')?.includes(`'${name}'`));
-  if (match) {
-    match.classList.add('active');
-    match.style.borderBottomColor = '#16a34a';
-    match.style.color = '#16a34a';
-  }
-}
-window.switchTreeDetailTab = switchTreeDetailTab;
-
-function populateSensorModal(s) {
-  const NA = '—';
-  if (!s) {
-    ['oracle-soil-moisture','oracle-soil-temp','oracle-leaf-wetness','oracle-uv',
-     'oracle-co2','oracle-wind','oracle-rain','oracle-humidity'].forEach(id => setText(id, NA));
-    setText('oracle-moisture-status', 'No data');
-    setText('oracle-last-update',     'No sensor data');
-    setWidth('oracle-moisture-bar', 0);
-    return;
-  }
-  const m = s.soil_moisture != null ? Number(s.soil_moisture) : null;
-  setText('oracle-soil-moisture',   m !== null ? `${m.toFixed(1)}%` : NA);
-  setText('oracle-moisture-status', m !== null ? (m > 50 ? 'Optimal' : 'Balanced') : 'No data');
-  setWidth('oracle-moisture-bar',   m !== null ? m : 0);
-  setText('oracle-soil-temp',    s.temperature != null ? `${Number(s.temperature).toFixed(1)}°C` : NA);
-  setText('oracle-leaf-wetness', s.leaf_wetness != null ? Number(s.leaf_wetness).toFixed(2)       : NA);
-  setText('oracle-co2',          s.co2         != null ? `${Number(s.co2).toFixed(1)} ppm`        : NA);
-  setText('oracle-wind',         s.wind_speed  != null ? `${Number(s.wind_speed).toFixed(1)} m/s` : NA);
-  setText('oracle-rain',         s.rain_rate   != null ? `${Number(s.rain_rate).toFixed(2)} mm/hr`: NA);
-  setText('oracle-humidity',     s.humidity    != null ? `${Number(s.humidity).toFixed(1)}%`       : NA);
-  setText('oracle-uv',           s.uv_index    != null ? String(s.uv_index)                        : NA);
-  setText('oracle-last-update',  s.created_at  ? new Date(s.created_at).toLocaleTimeString() : new Date().toLocaleTimeString());
-}
-
-function populateWeatherModal(w) {
-  const NA = '—';
-  if (!w) {
-    ['weather-temp','weather-wind','weather-humidity','weather-pressure','weather-rain','weather-uv','weather-solar']
-      .forEach(id => setText(id, NA));
-    return;
-  }
-  const uvRaw = w.uv_index != null ? Number(w.uv_index) : null;
-  const uvLabel = uvRaw !== null
-    ? `${uvRaw} (${uvRaw<=2?'Low':uvRaw<=5?'Moderate':uvRaw<=7?'High':'Very High'})`
-    : NA;
-  setText('weather-temp',     w.temperature_2m       !== undefined ? `${w.temperature_2m}°C`         : NA);
-  setText('weather-wind',     w.wind_speed_10m       !== undefined ? `${w.wind_speed_10m} m/s`        : NA);
-  setText('weather-humidity', w.relative_humidity_2m !== undefined ? `${w.relative_humidity_2m}%`     : NA);
-  setText('weather-pressure', w.surface_pressure     !== undefined ? `${w.surface_pressure} hPa`      : NA);
-  setText('weather-rain',     w.rain                 !== undefined ? `${w.rain} mm`                   : NA);
-  setText('weather-uv',       uvLabel);
-  setText('weather-solar',    w.shortwave_radiation  !== undefined ? `${w.shortwave_radiation} W/m²`  : NA);
-}
-
-// ─── 14. CHART.JS ─────────────────────────────────────────────────────────────
-function mkChart(id, color, data) {
-  const ctx = $(id)?.getContext('2d');
-  if (!ctx) return null;
-  return new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array(7).fill(''),
-      datasets: [{ data: data || [12,19,15,22,18,25,20], borderColor: color,
-        backgroundColor: color + '33', borderWidth: 2, pointRadius: 0, tension: .4, fill: true }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { display: false }, y: { display: false } },
-      animation: { duration: 1200 }
-    }
-  });
-}
-
-const charts = [
-  mkChart('chartYield',  '#3dcc6a', [10,18,14,22,28,24,30]),
-  mkChart('chartCO2',    '#f0d48b', [60,55,70,65,80,72,78]),
-  mkChart('chartRain',   '#8bcff0', [40,35,50,45,60,55,48]),
-  mkChart('chartHealth', '#5fdf7f', [85,88,92,90,95,94,98]),
-].filter(Boolean);
-
-setInterval(() => {
-  charts.forEach(c => {
-    c.data.datasets[0].data = c.data.datasets[0].data.map(() => 20 + Math.random() * 40);
-    c.update();
-  });
-}, 5000);
-
-// ─── 15. UI EVENT LISTENERS ───────────────────────────────────────────────────
-function bindUI() {
-  // Connect button
-  $('connectBtn').addEventListener('click', async () => {
-    if (isConnected()) {
-      await disconnect();
-    } else {
-      $('connectModal').style.display = 'flex';
-    }
+    $('tree-detail-modal')?.addEventListener('click', function(e) {
+      if (e.target === this) window.closeTreeDetailModal();
+    });
   });
 
-  // Phantom option in modal
-  $('phantomOpt').addEventListener('click', connectPhantom);
+  // ─────────────────────────────────────────────────────────────
+  // EXPOSE TO WINDOW
+  // ─────────────────────────────────────────────────────────────
+  window.sb = sb;
+  window.connection = connection;
+  window.connectWallet = connectWallet;
+  window.disconnectWallet = disconnectWallet;
+  window.loadTrees = loadTrees;
+  window.getTrees = getTrees;
+  window.getAllPositions = getAllPositions;
+  window.getIdentity = getIdentity;
+  window.isConnected = isConnected;
+  window.updateUI = updateUI;
 
-  // Email option in modal
-  $('emailOpt').addEventListener('click', () => {
-    $('emailForm').style.display = $('emailForm').style.display === 'none' ? 'block' : 'none';
-  });
-
-  $('emailSubmit').addEventListener('click', () => {
-    connectEmail($('emailInput').value.trim(), $('custodialInput').value.trim());
-  });
-
-  // Dark/Luxury toggle
-  $('modeToggle').addEventListener('click', function() {
-    document.body.classList.toggle('luxury');
-    this.innerHTML = `<i class="fas fa-${document.body.classList.contains('luxury') ? 'sun' : 'moon'}"></i> ${document.body.classList.contains('luxury') ? 'Luxury' : 'Dark'}`;
-  });
-
-  // AI bubble
-  $('aiBubble').addEventListener('click', () =>
-    alert('🤖 Tree AI: I have live sensor data and on-chain share data. How can I help?'));
-  $('ai-assistant').addEventListener('click', () => $('aiBubble').click());
-
-  // Language toggle
-  $('lang-toggle').addEventListener('click', function() {
-    const langs = ['EN','IT','ES','FR','DE'];
-    const cur = ($('lang-display').textContent || 'EN');
-    const next = langs[(langs.indexOf(cur) + 1) % langs.length];
-    setText('lang-display', next);
-    this.innerHTML = `<i class="fas fa-language"></i> ${next}`;
-  });
-
-  // Notification bell
-  $('notif-bell').addEventListener('click', () => {
-    setText('notif-text', '📬 no new alerts');
-    setTimeout(() => setText('notif-text', 'harvest soon'), 3000);
-  });
-
-  // Certificate
-  $('cert-btn').addEventListener('click', () => alert('📄 Downloading on-chain certificate PDF…'));
-
-  // Gallery
-  $('gallery-btn').addEventListener('click', () => alert('📸 Seasonal gallery: AI tree photos (Spring 2026)'));
-
-  // Close connect modal on backdrop click
-  $('connectModal').addEventListener('click', e => {
-    if (e.target === $('connectModal')) $('connectModal').style.display = 'none';
-  });
-}
-
-// ─── 16. BOOT ────────────────────────────────────────────────────────────────
-async function bootDashboard() {
-  console.log('🚀 Booting Olivium dashboard…');
-  await restoreSession();
-  updateConnectionUI();
-  bindUI();
-  await renderTreeList();
-
-  // Poll sensors every 60 s
-  setInterval(async () => {
-    const { data: first } = await sb.from('tree_metadata').select('field_id,latitude,longitude').not('field_id','is',null).limit(1).maybeSingle();
-    if (!first) return;
-    const [s, w] = await Promise.all([fetchLatestSensors(first.field_id), fetchWeather(first.latitude, first.longitude)]);
-    applySensorsToMainCard(s);
-    applyWeatherToMainCard(w);
-  }, 60_000);
-
-  console.log('✅ Dashboard ready');
-}
+  console.log('🌳 Olivium DAO · Live Tree Dashboard loaded');
 </script>
 
 </body>
