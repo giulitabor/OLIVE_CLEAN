@@ -804,9 +804,9 @@
  
 <script type="module">
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const RPC_URL           = import.meta.env.VITE_RPC_URL ?? 'https://api.devnet.solana.com';
+const SUPABASE_URL      = env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY;
+const RPC_URL           = env.VITE_RPC_URL ?? 'https://api.devnet.solana.com';
 
 window.VITE_SUPABASE_URL=SUPABASE_URL;
 window.VITE_SUPABASE_ANON_KEY=SUPABASE_ANON_KEY;
