@@ -360,14 +360,17 @@
 </script>
 
 <script type="module">
-// ─── 0. CONFIG ────────────────────────────────────────────────────────────────
-// SUPABASE_ANON_KEY: Supabase Dashboard → Project Settings → API → anon/public
-// It starts with "eyJ" and is ~200 characters. A short/truncated key = 400 error.
-const SUPABASE_URL      = 'https://kqfqryeptkbvlkekocpx.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-'; // ← only change needed
-const RPC_URL           = 'https://api.devnet.solana.com';
+// ─── 0. CONFIG — pulled from .env via Vite ───────────────────────────────────
+// Vite replaces import.meta.env.VITE_* at build time from your .env file.
+// Required keys in .env:
+//   VITE_SUPABASE_URL=https://xxxx.supabase.co
+//   VITE_SUPABASE_ANON_KEY=eyJ...
+//   VITE_RPC_URL=https://api.devnet.solana.com   (optional, defaults to devnet)
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const RPC_URL           = import.meta.env.VITE_RPC_URL ?? 'https://api.devnet.solana.com';
 
-// Inject for connection.ts if you later import it as a module
+// Also expose on window so any other scripts (connection.ts etc.) can read them
 window.VITE_SUPABASE_URL      = SUPABASE_URL;
 window.VITE_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 window.VITE_RPC_URL           = RPC_URL;
@@ -375,20 +378,19 @@ window.VITE_RPC_URL           = RPC_URL;
 // ─── 1. SUPABASE ──────────────────────────────────────────────────────────────
 import { createClient } from '@supabase/supabase-js';
 
-// Guard: show a visible error before the silent 401 hits
-if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.startsWith('PASTE') || !SUPABASE_ANON_KEY.startsWith('eyJ')) {
+// Guard: catch missing .env vars before they cause silent 401s
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('map-tree-list');
     if (el) el.innerHTML = `
       <div style="background:#3a1a00;border:1px solid #c06000;border-radius:12px;padding:16px;color:#ffcc88;font-size:.82rem;line-height:1.6">
-        <strong>⚠️ Supabase key missing</strong><br>
-        In dashboard.html replace <code>PASTE_YOUR_FULL_ANON_KEY_HERE</code><br>
-        with the real anon key from:<br>
-        Supabase → Project Settings → API → <em>anon public</em><br>
-        (starts with <code>eyJ</code>, ~200 chars)
+        <strong>⚠️ Missing .env variables</strong><br>
+        Add these to your <code>.env</code> file and restart Vite:<br><br>
+        <code>VITE_SUPABASE_URL=https://xxxx.supabase.co</code><br>
+        <code>VITE_SUPABASE_ANON_KEY=eyJ...</code>
       </div>`;
   });
-  console.error('❌ SUPABASE_ANON_KEY not set. Supabase Dashboard → Project Settings → API → anon public');
+  console.error('❌ VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not found in import.meta.env. Check your .env file and restart Vite.');
 }
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
