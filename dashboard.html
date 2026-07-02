@@ -226,7 +226,7 @@
       <div id="map-tree-list" style="display:flex; flex-direction:column; gap:6px;">
         <div class="loading-trees" id="tree-loading">
           <div class="spinner"></div>
-          <p style="margin-top:8px;">Loading trees...</p>
+          <p style="margin-top:8px;">Loading portfolio...</p>
         </div>
       </div>
     </div>
@@ -500,7 +500,7 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
-     SCRIPTS - All-in-one production build (no IDL import needed)
+     SCRIPTS - Production ready with portfolio loading
 ═══════════════════════════════════════════════════════════════ -->
 <script type="importmap">
 {
@@ -541,7 +541,7 @@
   let provider = null;
   let identity = { type: 'guest', wallet: null, label: 'Guest', email: null };
   let isConnecting = false;
-  let treesCache = null;
+  let portfolioData = null; // Cached portfolio data
 
   // ─────────────────────────────────────────────────────────────
   // DOM HELPERS
@@ -554,14 +554,154 @@
   }
 
   // ─────────────────────────────────────────────────────────────
-  // EXPORTED FUNCTIONS
+  // PORTFOLIO LOADER - The main function that loads everything
+  // ─────────────────────────────────────────────────────────────
+  export async function loadPortfolio() {
+    const walletAddress = identity.wallet;
+    
+    if (!walletAddress) {
+      console.warn('[Portfolio] No wallet connected');
+      return {
+        wallet: null,
+        olvBalance: 0,
+        totalTrees: 0,
+        totalShares: 0,
+        trees: []
+      };
+    }
+
+    console.log('[Portfolio] Loading for wallet:', walletAddress);
+
+    try {
+      // 1. Fetch OLV balance from Supabase
+      let olvBalance = 0;
+      try {
+        const { data: userData } = await sb
+          .from('users')
+          .select('olv_balance')
+          .eq('wallet', walletAddress)
+          .maybeSingle();
+        
+        if (userData) {
+          olvBalance = userData.olv_balance || 0;
+        }
+      } catch (e) {
+        console.warn('[Portfolio] Could not fetch OLV balance:', e);
+      }
+
+      // 2. Fetch on-chain positions from Anchor
+      let onChainPositions = [];
+      if (program) {
+        try {
+          // Find all share positions for this wallet
+          // This assumes you have a sharePosition account type
+          const allPositions = await program.account.sharePosition.all();
+          
+          onChainPositions = allPositions
+            .filter(pos => {
+              const owner = pos.account.authority?.toBase58() || 
+                           pos.account.owner?.toBase58() || 
+                           pos.account.wallet?.toBase58();
+              return owner === walletAddress;
+            })
+            .map(pos => ({
+              treeId: pos.account.treeId?.toString() || '',
+              sharesOwned: pos.account.sharesOwned?.toNumber() || 0,
+              mint: pos.account.mint?.toBase58() || null,
+              positionPda: pos.publicKey.toBase58(),
+              // Store raw account for later use
+              _raw: pos.account
+            }));
+        } catch (e) {
+          console.warn('[Portfolio] Could not fetch on-chain positions:', e);
+        }
+      }
+
+      // 3. Fetch tree metadata from Supabase for all tree IDs
+      const treeIds = onChainPositions.map(p => p.treeId).filter(Boolean);
+      
+      let treeMetadata = {};
+      if (treeIds.length > 0) {
+        try {
+          const { data: trees } = await sb
+            .from('tree_metadata')
+            .select('*')
+            .in('tree_id', treeIds);
+          
+          if (trees) {
+            treeMetadata = trees.reduce((acc, t) => {
+              acc[t.tree_id] = t;
+              return acc;
+            }, {});
+          }
+        } catch (e) {
+          console.warn('[Portfolio] Could not fetch tree metadata:', e);
+        }
+      }
+
+      // 4. Build the portfolio tree objects
+      const trees = onChainPositions
+        .filter(p => p.sharesOwned > 0)
+        .map(p => {
+          const meta = treeMetadata[p.treeId] || {};
+          
+          return {
+            treeId: p.treeId,
+            sharesOwned: p.sharesOwned,
+            mint: p.mint || meta.mint || null,
+            totalShares: meta.total_shares || 1000,
+            photo: meta.photo_url || meta.image_url || null,
+            health: meta.health_score || null,
+            variety: meta.variety || null,
+            age: meta.age_years || null,
+            field: meta.field_id || null,
+            latitude: meta.latitude || null,
+            longitude: meta.longitude || null,
+            name: meta.name || `Tree #${p.treeId}`,
+            // Store raw data for detail view
+            _metadata: meta,
+            _position: p._raw
+          };
+        });
+
+      // 5. Calculate total shares
+      const totalShares = trees.reduce((sum, t) => sum + t.sharesOwned, 0);
+
+      const portfolio = {
+        wallet: walletAddress,
+        olvBalance: olvBalance,
+        totalTrees: trees.length,
+        totalShares: totalShares,
+        trees: trees
+      };
+
+      portfolioData = portfolio;
+      console.log('[Portfolio] Loaded:', portfolio);
+
+      return portfolio;
+
+    } catch (err) {
+      console.error('[Portfolio] Error loading:', err);
+      return {
+        wallet: walletAddress,
+        olvBalance: 0,
+        totalTrees: 0,
+        totalShares: 0,
+        trees: [],
+        error: err.message
+      };
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // EXPORTED FUNCTIONS (for livedash.ts compatibility)
   // ─────────────────────────────────────────────────────────────
   export function getTrees() {
-    return treesCache || [];
+    return portfolioData?.trees || [];
   }
 
   export function getAllPositions() {
-    return [];
+    return portfolioData?.trees || [];
   }
 
   export function getIdentity() {
@@ -573,43 +713,43 @@
   }
 
   export async function loadTrees(filter = 'all') {
+    const portfolio = await loadPortfolio();
     const container = $('map-tree-list');
     if (!container) return;
 
-    try {
-      let { data: trees, error } = await sb
-        .from('tree_metadata')
-        .select('*')
-        .order('tree_id', { ascending: true })
-        .limit(20);
+    let trees = portfolio.trees || [];
 
-      if (error) throw error;
-      treesCache = trees;
-
-      if (!trees || trees.length === 0) {
-        container.innerHTML = `<p style="color:#6f9f7a;text-align:center;">No trees found</p>`;
-        return;
-      }
-
-      if (filter === 'available') {
-        trees = trees.filter(t => (t.shares_sold || 0) < (t.total_shares || 1000));
-      } else if (filter === 'full') {
-        trees = trees.filter(t => (t.shares_sold || 0) >= (t.total_shares || 1000));
-      }
-
-      container.innerHTML = trees.map(t => `
-        <div class="tree-marker" onclick="window.openTreeDetailModal && window.openTreeDetailModal('${t.tree_id}')">
-          <i class="fas fa-tree"></i>
-          <span>${t.name || `Tree #${t.tree_id}`}</span>
-          <span style="font-size:11px;color:#6f9f7a;margin-left:4px;">${t.field_id || ''}</span>
-          <span class="badge-id">${t.shares_sold || 0}/${t.total_shares || 1000}</span>
-          ${t.health_score ? `<span style="font-size:11px;color:#5fdf7f;">${(t.health_score * 100).toFixed(0)}%</span>` : ''}
-        </div>
-      `).join('');
-    } catch (err) {
-      console.error('loadTrees:', err);
-      container.innerHTML = `<p style="color:#6f9f7a;text-align:center;">Error loading trees</p>`;
+    if (filter === 'available') {
+      trees = trees.filter(t => t.sharesOwned < (t.totalShares || 1000));
+    } else if (filter === 'full') {
+      trees = trees.filter(t => t.sharesOwned >= (t.totalShares || 1000));
     }
+
+    // Update stats
+    setText('wallet-olv-balance', portfolio.olvBalance.toFixed(2));
+    setText('wallet-type', identity.label || 'Guest');
+
+    if (trees.length === 0) {
+      container.innerHTML = `
+        <div style="padding:20px;text-align:center;color:#6f9f7a;">
+          <p style="font-size:24px;margin-bottom:8px;">🌿</p>
+          <p>${identity.type === 'guest' ? 'Connect wallet to view your grove' : 'No trees in your grove yet'}</p>
+          ${identity.type !== 'guest' ? '<p style="font-size:12px;opacity:0.6;margin-top:4px;">Adopt shares to get started</p>' : ''}
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = trees.map(t => `
+      <div class="tree-marker" onclick="window.openTreeDetailModal && window.openTreeDetailModal('${t.treeId}')">
+        <i class="fas fa-tree"></i>
+        <span>${t.name || `Tree #${t.treeId}`}</span>
+        <span style="font-size:11px;color:#6f9f7a;margin-left:4px;">${t.field || ''}</span>
+        <span class="badge-id">${t.sharesOwned} owned</span>
+        ${t.health !== null ? `<span style="font-size:11px;color:#5fdf7f;">${(t.health * 100).toFixed(0)}%</span>` : ''}
+        ${t.photo ? `<img src="${t.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-left:4px;" onerror="this.style.display='none'" />` : ''}
+      </div>
+    `).join('');
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -637,15 +777,12 @@
       });
       setProvider(provider);
 
-      // Create program with IDL (using a minimal IDL for now)
-      // In production, you'd want to load the actual IDL
+      // Create program with IDL
       try {
-        // Try to load IDL dynamically
         const idlModule = await import('./SIMPLE/idl/idl.json');
         program = new Program(idlModule.default, provider);
       } catch {
-        // Fallback: create a program with just the program ID
-        // This allows basic account fetching but not full transaction building
+        // Fallback: create a minimal program
         program = new Program(
           { 
             address: PROGRAM_ID.toBase58(),
@@ -656,7 +793,6 @@
           },
           provider
         );
-        // Override the programId
         program.programId = PROGRAM_ID;
       }
 
@@ -688,6 +824,7 @@
     identity = { type: 'guest', wallet: null, label: 'Guest', email: null };
     localStorage.removeItem('walletConnected');
     localStorage.removeItem('olivium_identity');
+    portfolioData = null;
 
     window._program = null;
     window._provider = null;
@@ -729,14 +866,27 @@
     };
 
     try {
-      const { data: d, error } = await sb
-        .from('tree_metadata')
-        .select('*')
-        .eq('tree_id', treeId)
-        .single();
+      // Try to get tree from portfolio cache first
+      let treeData = null;
+      let metaData = null;
 
-      if (error) throw error;
+      if (portfolioData) {
+        treeData = portfolioData.trees.find(t => t.treeId === treeId);
+        metaData = treeData?._metadata || null;
+      }
 
+      // If not in cache, fetch from Supabase
+      if (!metaData) {
+        const { data: d, error } = await sb
+          .from('tree_metadata')
+          .select('*')
+          .eq('tree_id', treeId)
+          .single();
+        
+        if (!error) metaData = d;
+      }
+
+      // Fetch on-chain data
       let onChain = null;
       if (window._program) {
         try {
@@ -748,11 +898,13 @@
         } catch {}
       }
 
+      const d = metaData || {};
       const totalShares = onChain?.totalShares?.toNumber() ?? d?.total_shares ?? 1000;
       const sharesSold = onChain?.sharesSold?.toNumber() ?? d?.shares_sold ?? 0;
       const available = totalShares - sharesSold;
       const pct = totalShares > 0 ? Math.round((sharesSold / totalShares) * 100) : 0;
       const mintAddress = onChain?.mint?.toBase58?.() ?? d?.mint ?? d?.on_chain_address ?? '—';
+      const sharesOwned = treeData?.sharesOwned || 0;
 
       const hero = $('tree-detail-hero-img');
       if (hero) hero.style.backgroundImage = `url('${d?.photo_url || 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg'}')`;
@@ -799,6 +951,7 @@
       set('tree-detail-meta-coords', d?.latitude != null ? `${d.latitude}, ${d.longitude}` : '—');
       set('tree-detail-meta-updated', d?.updated_at ? new Date(d.updated_at).toLocaleString() : '—');
 
+      // Gallery
       const galleryGrid = $('tree-detail-gallery-grid');
       if (galleryGrid) {
         const photos = d?.photo_url ? [d.photo_url] : [];
@@ -818,6 +971,7 @@
       const lon = d?.longitude ?? null;
       if (lat != null && lon != null) set('weather-coords-label', `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
 
+      // Fetch sensor data
       if (fieldId) {
         try {
           const { data: sensorData } = await sb
@@ -971,6 +1125,7 @@
   window.connectWallet = connectWallet;
   window.disconnectWallet = disconnectWallet;
   window.loadTrees = loadTrees;
+  window.loadPortfolio = loadPortfolio;
   window.getTrees = getTrees;
   window.getAllPositions = getAllPositions;
   window.getIdentity = getIdentity;
@@ -978,6 +1133,7 @@
   window.updateUI = updateUI;
 
   console.log('🌳 Olivium DAO · Live Tree Dashboard loaded');
+  console.log('📦 Exported: loadPortfolio, loadTrees, getTrees, getAllPositions, getIdentity, isConnected');
 </script>
 
 </body>
