@@ -1,244 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My Portfolio</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+<title>Olivium Dashboard</title>
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link
+    rel="stylesheet"
+    href="./dashboard.css">
+
 </head>
 
-<body class="bg-stone-100">
+<body>
 
-<div class="max-w-7xl mx-auto py-10 px-6">
+<div id="dashboard">
 
-    <!-- HEADER -->
+    <!-- ================================================= -->
+    <!-- HEADER                                             -->
+    <!-- ================================================= -->
 
-    <div class="flex justify-between items-center mb-10">
+    <header class="header">
 
-        <div>
+        <div class="logo">
+            🌳 OLIVIUM
+        </div>
 
-            <h1 class="text-4xl font-bold">
-                🌳 My Portfolio
-            </h1>
+        <div class="wallet-section">
 
-            <p class="text-stone-500">
-                Trees owned by your connected wallet
-            </p>
+            <button id="connectWallet">
+
+                Connect Wallet
+
+            </button>
+
+            <span id="walletAddress">
+
+                Not Connected
+
+            </span>
 
         </div>
 
-        <button
-            id="refreshPortfolio"
-            class="bg-green-700 text-white px-5 py-3 rounded-xl">
-            Refresh
-        </button>
+    </header>
 
-    </div>
+    <!-- ================================================= -->
+    <!-- PORTFOLIO CARDS                                   -->
+    <!-- ================================================= -->
 
+    <section class="portfolio-grid">
 
-    <!-- SUMMARY -->
+        <div class="card">
 
-    <div class="grid md:grid-cols-4 gap-6 mb-10">
+            <h3>
 
-        <div class="bg-white rounded-2xl shadow p-6">
-
-            <div class="text-stone-500">
-                Wallet
-            </div>
-
-            <div
-                id="walletAddress"
-                class="font-mono text-sm break-all mt-2">
-            </div>
-
-        </div>
-
-
-        <div class="bg-white rounded-2xl shadow p-6">
-
-            <div class="text-stone-500">
                 OLV Balance
-            </div>
 
-            <div
-                id="olvBalance"
-                class="text-3xl font-bold mt-3">
-                0
+            </h3>
+
+            <div id="olvBalance">
+
+                --
+
             </div>
 
         </div>
 
+        <div class="card">
 
-        <div class="bg-white rounded-2xl shadow p-6">
+            <h3>
 
-            <div class="text-stone-500">
                 Trees Owned
-            </div>
 
-            <div
-                id="treeCount"
-                class="text-3xl font-bold mt-3">
-                0
-            </div>
+            </h3>
 
-        </div>
+            <div id="treesOwned">
 
+                --
 
-        <div class="bg-white rounded-2xl shadow p-6">
-
-            <div class="text-stone-500">
-                Total Shares
-            </div>
-
-            <div
-                id="shareCount"
-                class="text-3xl font-bold mt-3">
-                0
             </div>
 
         </div>
 
-    </div>
+        <div class="card">
 
+            <h3>
 
-    <!-- TREE GRID -->
+                Shares Owned
 
-    <div
-        id="treeGrid"
-        class="grid lg:grid-cols-3 gap-8">
+            </h3>
 
-    </div>
+            <div id="sharesOwned">
+
+                --
+
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <h3>
+
+                Portfolio Value
+
+            </h3>
+
+            <div id="portfolioValue">
+
+                --
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ================================================= -->
+    <!-- TREE POSITIONS                                    -->
+    <!-- ================================================= -->
+
+    <section>
+
+        <h2>
+
+            My Trees
+
+        </h2>
+
+        <div id="treePositions">
+
+        </div>
+
+    </section>
 
 </div>
 
-<script type="module">
+<!-- ================================================= -->
+<!-- LIBRARIES                                          -->
+<!-- ================================================= -->
 
-import { loadPortfolio } from "./portfolio.js";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-async function renderPortfolio(){
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-    const p = await loadPortfolio();
+<script src="https://cdn.jsdelivr.net/npm/@coral-xyz/anchor/dist/browser/index.js"></script>
 
-    document.getElementById("walletAddress").innerText =
-        p.wallet;
+<!-- ================================================= -->
+<!-- YOUR SCRIPTS                                       -->
+<!-- ================================================= -->
 
-    document.getElementById("olvBalance").innerText =
-        p.olvBalance.toLocaleString();
-
-    document.getElementById("treeCount").innerText =
-        p.totalTrees;
-
-    document.getElementById("shareCount").innerText =
-        p.totalShares.toLocaleString();
-
-    const grid = document.getElementById("treeGrid");
-
-    grid.innerHTML = "";
-
-    p.trees.forEach(tree=>{
-
-        const card = document.createElement("div");
-
-        card.className =
-            "bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden";
-
-        card.innerHTML = `
-
-            <img
-                src="${tree.metadata?.photo_url ?? 'https://placehold.co/600x400'}"
-                class="h-56 w-full object-cover">
-
-            <div class="p-6">
-
-                <h2 class="text-2xl font-bold">
-                    ${tree.metadata?.name ?? tree.treeId}
-                </h2>
-
-                <div class="mt-3 text-stone-600">
-
-                    ${tree.metadata?.variety ?? ""}
-
-                </div>
-
-                <div class="mt-5">
-
-                    <div class="flex justify-between">
-
-                        <span>Shares</span>
-
-                        <strong>
-
-                            ${tree.sharesOwned}
-
-                        </strong>
-
-                    </div>
-
-                    <div class="flex justify-between mt-2">
-
-                        <span>Ownership</span>
-
-                        <strong>
-
-                            ${tree.ownershipPercent.toFixed(2)}%
-
-                        </strong>
-
-                    </div>
-
-                    <div class="flex justify-between mt-2">
-
-                        <span>Health</span>
-
-                        <strong>
-
-                            ${tree.metadata?.health_score ?? "--"}
-
-                        </strong>
-
-                    </div>
-
-                </div>
-
-                <button
-                    class="mt-6 bg-green-700 text-white rounded-xl w-full py-3 openTree"
-
-                    data-tree="${tree.treeId}">
-
-                    View Tree
-
-                </button>
-
-            </div>
-
-        `;
-
-        grid.appendChild(card);
-
-    });
-
-    document.querySelectorAll(".openTree").forEach(btn=>{
-
-        btn.addEventListener("click",()=>{
-
-            const treeId =
-                btn.getAttribute("data-tree");
-
-            openTreeDetailModal(treeId);
-
-        });
-
-    });
-
-}
-
-document
-.getElementById("refreshPortfolio")
-.addEventListener("click",renderPortfolio);
-
-renderPortfolio();
-
-</script>
+<script type="module" src="./dashboard.js"></script>
 
 </body>
+
 </html>
