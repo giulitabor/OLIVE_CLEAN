@@ -22,7 +22,7 @@
             --card-bg: #141414;
             --border-gold: rgba(197,160,89,0.2);
         }
-        
+
         .tech-card {
             background: rgba(18, 22, 18, 0.6);
             backdrop-filter: blur(16px);
@@ -147,49 +147,49 @@
         .main-content-wrapper { position: relative; z-index: 10; background: transparent; margin-top: 140px; }
         nav { background: rgba(0, 0, 0, 0.5) !important; backdrop-filter: blur(8px); }
         .modal-overlay { z-index: 200; }
-        
+
         /* Mobile-first overrides */
         button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
         input, select, textarea { font-size: 16px !important; color: #fff; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
         html, body { overflow-x: hidden; }
         @media (max-width: 767px) { main.pt-32 { padding-top: 6rem !important; } }
-        
+
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        
+
         @media (max-width: 767px) {
             .tier-cards-wrap { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 8px; scrollbar-width: none; scroll-snap-type: x mandatory; }
             .tier-cards-wrap::-webkit-scrollbar { display: none; }
             .tier-cards-wrap > div { min-width: 240px; scroll-snap-align: start; flex-shrink: 0; }
         }
-        
+
         .activities-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
         @media (min-width: 768px) { .activities-grid { grid-template-columns: repeat(3, 1fr); gap: 32px; } }
         .activity-img { height: 200px; }
         @media (min-width: 768px) { .activity-img { height: 256px; } }
-        
+
         .form-grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
         @media (min-width: 640px) { .form-grid-2 { grid-template-columns: 1fr 1fr; } }
-        
+
         @media (max-width: 639px) { .booking-btn { width: 100% !important; } }
         @media (max-width: 639px) { .card-pad { padding: 20px !important; } }
         @media (max-width: 639px) { h1.hero-title { font-size: clamp(2.2rem, 9vw, 3.5rem) !important; } }
-        
+
         .alloc-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
-        
+
         @media (max-width: 479px) {
             .modal-overlay > div { width: 100% !important; max-width: 100% !important; margin: 0 !important; border-radius: 0 !important; min-height: 100dvh; }
         }
-        
+
         .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 20px; }
-        
+
         /* Mobile menu styles */
         #mobileMenuOverlay {
             position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.97); backdrop-filter: blur(20px);
             display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1);
         }
         #mobileMenuOverlay.open { opacity: 1; pointer-events: all; }
-        
+
         .mob-nav-header { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 72px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
         .mob-nav-links { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 28px; }
         .mob-nav-link { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); text-decoration: none; font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 7vw, 2rem); font-weight: 600; transform: translateY(14px); opacity: 0; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease, color 0.2s; }
@@ -199,25 +199,25 @@
         .mob-nav-link:hover, .mob-nav-link.active-link { color: #C5A059; }
         .mob-arrow { font-size:1rem; opacity:0.25; transition:opacity 0.2s,transform 0.2s; }
         .mob-nav-link:hover .mob-arrow { opacity:1; transform:translateX(4px); }
-        
+
         .mob-nav-footer { padding: 24px 28px max(28px, env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; transform: translateY(14px); opacity: 0; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1) 0.18s, opacity 0.38s ease 0.18s; }
         #mobileMenuOverlay.open .mob-nav-footer { transform:translateY(0); opacity:1; }
-        
+
         .mob-status-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; }
         .mob-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #5a7a2b; flex-shrink: 0; }
         .mob-connect-cta { width: 100%; background: #5a7a2b; color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 16px 0; border-radius: 16px; border: none; cursor: pointer; transition: background 0.2s, transform 0.15s; }
         .mob-connect-cta:hover { background: #6b8e36; }
         .mob-connect-cta:active { transform: scale(0.98); }
-        
+
         #mobileMenuBtn { width: 44px; height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; padding: 0; }
         #mobileMenuBtn span { display: block; width: 22px; height: 1.5px; background: #fff; border-radius: 2px; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; transform-origin: center; }
         #mobileMenuBtn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
         #mobileMenuBtn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
-        
+
         .progress-container { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #5a7a2b, #C5A059); border-radius: 2px; transition: width 0.5s ease; }
-        
+
         @media (min-width: 768px) {
             #nav-desktop-links { display: flex !important; }
             #nav-desktop-right { display: flex !important; }
@@ -228,7 +228,7 @@
             #nav-desktop-right { display: none  !important; }
             #nav-mobile-btn    { display: flex  !important; }
         }
-        
+
         .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
         .status-badge.locked { background: rgba(255,68,68,0.2); color: #ff4444; }
         .status-badge.unlocked { background: rgba(76,175,80,0.2); color: #4caf50; }
@@ -236,7 +236,7 @@
             position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; color: white; padding: 12px 24px;
             border-radius: 8px; border-left: 4px solid var(--gold); z-index: 9999; transition: opacity 0.3s; pointer-events: none; font-size: 14px;
         }
-        
+
         /* Center wrapper for cinematic text */
         .cinematic-wrapper {
             display: flex;
@@ -400,7 +400,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- RESIDENCY REQUEST -->
                     <div class="tech-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl">
                         <div class="activity-img rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-white/5">
@@ -422,7 +422,7 @@
                         <div id="bookingMsg" class="mt-4 text-xs"></div>
                     </div>
                 </div>
-            </div> 
+            </div>
 
             <!-- ACTIVITIES -->
             <div class="mt-12 sm:mt-20">
@@ -472,16 +472,28 @@
         </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- SCRIPTS - CDN version (FIXED for Vercel build) -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js">
+    </script>
+
     <script>
-        // ========== SOLANA CONNECTION (from pro.ts) ==========
+        // ========== SOLANA CONNECTION ==========
         const connection = new solanaWeb3.Connection("https://api.devnet.solana.com", "confirmed");
         const OLVM_TOKEN_MINT = new solanaWeb3.PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
-        
+
         let wallet = null;
         let walletPubKey = null;
         let currentSolBalance = 0;
         let currentOlvmBalance = 0;
-        
+
         // Tier thresholds based on OLVM
         const TIERS = [
             { name: "Visitor", minOlvm: 0, oilLiters: 0, nights: 0, icon: "🔒" },
@@ -490,27 +502,27 @@
             { name: "Estate", minOlvm: 2500000, oilLiters: 15, nights: 21, icon: "👑" },
             { name: "Founder", minOlvm: 10000000, oilLiters: 30, nights: 45, icon: "🌲" }
         ];
-        
+
         function getCurrentTier(olvmBalance) {
             for (let i = TIERS.length - 1; i >= 0; i--) {
                 if (olvmBalance >= TIERS[i].minOlvm) return TIERS[i];
             }
             return TIERS[0];
         }
-        
+
         function getNextTier(olvmBalance) {
             for (let i = 0; i < TIERS.length; i++) {
                 if (olvmBalance < TIERS[i].minOlvm) return TIERS[i];
             }
             return null;
         }
-        
+
         function formatNumber(num) {
             if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num.toFixed(0);
         }
-        
+
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toastMsg');
             if (!toast) return;
@@ -519,11 +531,11 @@
             toast.style.borderLeftColor = isError ? '#d94d4d' : '#C5A059';
             setTimeout(() => { toast.style.opacity = '0'; }, 3000);
         }
-        
+
         async function fetchSolBalance(pubkey) {
-            try { const balance = await connection.getBalance(pubkey); return balance / 1e9; } catch(e) { return 0; }
+            try { const balance = await connection.getBalance(pubkey); return balance / 1e9; } catch (e) { return 0; }
         }
-        
+
         async function fetchOlvmBalance(pubkey) {
             try {
                 const tokenAccounts = await connection.getParsedTokenAccountsByOwner(pubkey, { mint: OLVM_TOKEN_MINT });
@@ -531,18 +543,18 @@
                     return tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
                 }
                 return 0;
-            } catch(e) { return 0; }
+            } catch (e) { return 0; }
         }
-        
+
         async function updateUI() {
             if (walletPubKey) {
-                const short = walletPubKey.toBase58().slice(0,4) + "..." + walletPubKey.toBase58().slice(-4);
+                const short = walletPubKey.toBase58().slice(0, 4) + "..." + walletPubKey.toBase58().slice(-4);
                 currentSolBalance = await fetchSolBalance(walletPubKey);
                 currentOlvmBalance = await fetchOlvmBalance(walletPubKey);
-                
+
                 const currentTier = getCurrentTier(currentOlvmBalance);
                 const nextTier = getNextTier(currentOlvmBalance);
-                
+
                 // Update displays
                 document.getElementById('shares-count-display').innerHTML = `${formatNumber(currentOlvmBalance)} <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
                 document.getElementById('credits-count-display').innerHTML = `${currentTier.nights} <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
@@ -554,7 +566,7 @@
                 document.getElementById('nav-tier-label').innerHTML = currentTier.name;
                 document.getElementById('nav-tier-label-mob').innerHTML = currentTier.name;
                 document.getElementById('mobile-tier-label').innerHTML = currentTier.name;
-                
+
                 // Progress to next tier
                 if (nextTier) {
                     const needed = nextTier.minOlvm - currentOlvmBalance;
@@ -569,13 +581,13 @@
                     document.getElementById('tier-progress-bar').style.width = "100%";
                     document.getElementById('tier-progress-text').innerHTML = "Maximum tier achieved";
                 }
-                
+
                 // Update oil delivery unlock
                 const isUnlocked = currentOlvmBalance >= 50000;
                 const oilCard = document.getElementById('oilDeliveryCard');
                 const oilNotice = document.getElementById('oilDeliveryLockNotice');
                 const allocationAmount = document.getElementById('allocationAmount');
-                
+
                 if (isUnlocked) {
                     oilCard.classList.remove('opacity-40', 'pointer-events-none');
                     oilNotice.innerHTML = '<p class="text-emerald-400 text-sm font-semibold">✓ Olive Oil Deliveries Unlocked</p><p class="text-stone-400 text-xs mt-1">Your allocation is based on your tier.</p>';
@@ -585,7 +597,7 @@
                     oilNotice.innerHTML = '<p class="text-amber-400 text-sm font-semibold">🔒 Olive Oil Deliveries unlock at 50K+ OLVM</p><p class="text-stone-400 text-xs mt-1">Connect your wallet to determine eligibility.</p>';
                     if (allocationAmount) allocationAmount.innerHTML = 'Locked';
                 }
-                
+
                 // Update tier card highlights
                 const tierCards = [
                     { card: document.getElementById('card-tier-1'), minOlvm: 50000 },
@@ -593,342 +605,206 @@
                     { card: document.getElementById('card-tier-3'), minOlvm: 2500000 },
                     { card: document.getElementById('card-tier-4'), minOlvm: 10000000 }
                 ];
-                
+
                 tierCards.forEach(tc => {
                     if (tc.card) {
                         if (currentOlvmBalance >= tc.minOlvm) {
-        <!-- ════════════════════════════════════════════════════════════
-     SCRIPTS - CDN version (FIXED for Vercel build)
-═══════════════════════════════════════════════════════════════ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js">
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
-</script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js">
-</script>
-
-<script>
-    // ========== SOLANA CONNECTION (from pro.ts) ==========
-    const connection = new solanaWeb3.Connection("https://api.devnet.solana.com", "confirmed");
-    const OLVM_TOKEN_MINT = new solanaWeb3.PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
-
-    let wallet = null;
-    let walletPubKey = null;
-    let currentSolBalance = 0;
-    let currentOlvmBalance = 0;
-
-    // Tier thresholds based on OLVM
-    const TIERS = [
-        { name: "Visitor", minOlvm: 0, oilLiters: 0, nights: 0, icon: "🔒" },
-        { name: "Guardian", minOlvm: 50000, oilLiters: 2, nights: 3, icon: "🫒" },
-        { name: "Heritage", minOlvm: 500000, oilLiters: 6, nights: 7, icon: "🌿" },
-        { name: "Estate", minOlvm: 2500000, oilLiters: 15, nights: 21, icon: "👑" },
-        { name: "Founder", minOlvm: 10000000, oilLiters: 30, nights: 45, icon: "🌲" }
-    ];
-
-    function getCurrentTier(olvmBalance) {
-        for (let i = TIERS.length - 1; i >= 0; i--) {
-            if (olvmBalance >= TIERS[i].minOlvm) return TIERS[i];
-        }
-        return TIERS[0];
-    }
-
-    function getNextTier(olvmBalance) {
-        for (let i = 0; i < TIERS.length; i++) {
-            if (olvmBalance < TIERS[i].minOlvm) return TIERS[i];
-        }
-        return null;
-    }
-
-    function formatNumber(num) {
-        if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-        return num.toFixed(0);
-    }
-
-    function showToast(msg, isError = false) {
-        const toast = document.getElementById('toastMsg');
-        if (!toast) return;
-        toast.innerHTML = msg;
-        toast.style.opacity = '1';
-        toast.style.borderLeftColor = isError ? '#d94d4d' : '#C5A059';
-        setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-    }
-
-    async function fetchSolBalance(pubkey) {
-        try { const balance = await connection.getBalance(pubkey); return balance / 1e9; } catch (e) { return 0; }
-    }
-
-    async function fetchOlvmBalance(pubkey) {
-        try {
-            const tokenAccounts = await connection.getParsedTokenAccountsByOwner(pubkey, { mint: OLVM_TOKEN_MINT });
-            if (tokenAccounts.value.length > 0) {
-                return tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
-            }
-            return 0;
-        } catch (e) { return 0; }
-    }
-
-    async function updateUI() {
-        if (walletPubKey) {
-            const short = walletPubKey.toBase58().slice(0, 4) + "..." + walletPubKey.toBase58().slice(-4);
-            currentSolBalance = await fetchSolBalance(walletPubKey);
-            currentOlvmBalance = await fetchOlvmBalance(walletPubKey);
-
-            const currentTier = getCurrentTier(currentOlvmBalance);
-            const nextTier = getNextTier(currentOlvmBalance);
-
-            // Update displays
-            document.getElementById('shares-count-display').innerHTML = `${formatNumber(currentOlvmBalance)} <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
-            document.getElementById('credits-count-display').innerHTML = `${currentTier.nights} <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
-            document.getElementById('tier-name').innerHTML = currentTier.name;
-            document.getElementById('tier-icon').innerHTML = currentTier.icon;
-            document.getElementById('nav-identity-display').innerHTML = short;
-            document.getElementById('nav-identity-display-mob').innerHTML = short;
-            document.getElementById('mobile-identity-display').innerHTML = short;
-            document.getElementById('nav-tier-label').innerHTML = currentTier.name;
-            document.getElementById('nav-tier-label-mob').innerHTML = currentTier.name;
-            document.getElementById('mobile-tier-label').innerHTML = currentTier.name;
-
-            // Progress to next tier
-            if (nextTier) {
-                const needed = nextTier.minOlvm - currentOlvmBalance;
-                const percent = Math.min(100, (currentOlvmBalance / nextTier.minOlvm) * 100);
-                document.getElementById('next-tier-label').innerHTML = `Next: ${nextTier.name} (${formatNumber(needed)} more)`;
-                document.getElementById('tier-percent-label').innerHTML = `${percent.toFixed(1)}%`;
-                document.getElementById('tier-progress-bar').style.width = `${percent}%`;
-                document.getElementById('tier-progress-text').innerHTML = `${formatNumber(currentOlvmBalance)} / ${formatNumber(nextTier.minOlvm)} OLVM`;
-            } else {
-                document.getElementById('next-tier-label').innerHTML = "Max Tier Reached";
-                document.getElementById('tier-percent-label').innerHTML = "100%";
-                document.getElementById('tier-progress-bar').style.width = "100%";
-                document.getElementById('tier-progress-text').innerHTML = "Maximum tier achieved";
-            }
-
-            // Update oil delivery unlock
-            const isUnlocked = currentOlvmBalance >= 50000;
-            const oilCard = document.getElementById('oilDeliveryCard');
-            const oilNotice = document.getElementById('oilDeliveryLockNotice');
-            const allocationAmount = document.getElementById('allocationAmount');
-
-            if (isUnlocked) {
-                oilCard.classList.remove('opacity-40', 'pointer-events-none');
-                oilNotice.innerHTML = '<p class="text-emerald-400 text-sm font-semibold">✓ Olive Oil Deliveries Unlocked</p><p class="text-stone-400 text-xs mt-1">Your allocation is based on your tier.</p>';
-                if (allocationAmount) allocationAmount.innerHTML = `${currentTier.oilLiters} Liters`;
-            } else {
-                oilCard.classList.add('opacity-40', 'pointer-events-none');
-                oilNotice.innerHTML = '<p class="text-amber-400 text-sm font-semibold">🔒 Olive Oil Deliveries unlock at 50K+ OLVM</p><p class="text-stone-400 text-xs mt-1">Connect your wallet to determine eligibility.</p>';
-                if (allocationAmount) allocationAmount.innerHTML = 'Locked';
-            }
-
-            // Update tier card highlights
-            const tierCards = [
-                { card: document.getElementById('card-tier-1'), minOlvm: 50000 },
-                { card: document.getElementById('card-tier-2'), minOlvm: 500000 },
-                { card: document.getElementById('card-tier-3'), minOlvm: 2500000 },
-                { card: document.getElementById('card-tier-4'), minOlvm: 10000000 }
-            ];
-
-            tierCards.forEach(tc => {
-                if (tc.card) {
-                    if (currentOlvmBalance >= tc.minOlvm) {
-                        tc.card.style.borderColor = '#C5A059';
-                        tc.card.style.opacity = '1';
-                    } else {
-                        tc.card.style.borderColor = 'rgba(255,255,255,0.1)';
-                        tc.card.style.opacity = '0.6';
+                            tc.card.style.borderColor = '#C5A059';
+                            tc.card.style.opacity = '1';
+                        } else {
+                            tc.card.style.borderColor = 'rgba(255,255,255,0.1)';
+                            tc.card.style.opacity = '0.6';
+                        }
                     }
-                }
-            });
+                });
 
-            showToast(`Connected: ${short} | ${currentOlvmBalance.toLocaleString()} OLVM - Tier: ${currentTier.name}`);
-        } else {
-            document.getElementById('shares-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
-            document.getElementById('credits-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
-            document.getElementById('tier-name').innerHTML = "Guest Mode";
-            document.getElementById('nav-identity-display').innerHTML = "NOT CONNECTED";
-            document.getElementById('nav-identity-display-mob').innerHTML = "NOT CONNECTED";
-            document.getElementById('mobile-identity-display').innerHTML = "NOT CONNECTED";
+                showToast(`Connected: ${short} | ${currentOlvmBalance.toLocaleString()} OLVM - Tier: ${currentTier.name}`);
+            } else {
+                document.getElementById('shares-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
+                document.getElementById('credits-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
+                document.getElementById('tier-name').innerHTML = "Guest Mode";
+                document.getElementById('nav-identity-display').innerHTML = "NOT CONNECTED";
+                document.getElementById('nav-identity-display-mob').innerHTML = "NOT CONNECTED";
+                document.getElementById('mobile-identity-display').innerHTML = "NOT CONNECTED";
+            }
         }
-    }
 
-    async function connectWallet() {
-        if (window.solana && window.solana.isPhantom) {
-            try {
-                const resp = await window.solana.connect();
-                wallet = window.solana;
-                walletPubKey = wallet.publicKey;
-                await updateUI();
-                localStorage.setItem('olivium_wallet_connected', 'true');
-                const connectBtn = document.getElementById('connectWalletBtn');
-                if (connectBtn) {
-                    connectBtn.innerText = "DISCONNECT";
-                    connectBtn.classList.remove('bg-[#5a7a2b]');
-                    connectBtn.classList.add('bg-stone-700');
-                }
-            } catch (err) { showToast("Connection rejected", true); }
-        } else { showToast("Please install Phantom wallet", true); window.open("https://phantom.app/", "_blank"); }
-    }
+        async function connectWallet() {
+            if (window.solana && window.solana.isPhantom) {
+                try {
+                    const resp = await window.solana.connect();
+                    wallet = window.solana;
+                    walletPubKey = wallet.publicKey;
+                    await updateUI();
+                    localStorage.setItem('olivium_wallet_connected', 'true');
+                    const connectBtn = document.getElementById('connectWalletBtn');
+                    if (connectBtn) {
+                        connectBtn.innerText = "DISCONNECT";
+                        connectBtn.classList.remove('bg-[#5a7a2b]');
+                        connectBtn.classList.add('bg-stone-700');
+                    }
+                } catch (err) { showToast("Connection rejected", true); }
+            } else { showToast("Please install Phantom wallet", true);
+                window.open("https://phantom.app/", "_blank"); }
+        }
 
-    async function disconnectWallet() {
-        if (wallet && wallet.disconnect) await wallet.disconnect();
-        wallet = null;
-        walletPubKey = null;
-        await updateUI();
-        localStorage.removeItem('olivium_wallet_connected');
+        async function disconnectWallet() {
+            if (wallet && wallet.disconnect) await wallet.disconnect();
+            wallet = null;
+            walletPubKey = null;
+            await updateUI();
+            localStorage.removeItem('olivium_wallet_connected');
+            const connectBtn = document.getElementById('connectWalletBtn');
+            if (connectBtn) {
+                connectBtn.innerText = "CONNECT WALLET";
+                connectBtn.classList.remove('bg-stone-700');
+                connectBtn.classList.add('bg-[#5a7a2b]');
+            }
+            showToast("Disconnected");
+        }
+
         const connectBtn = document.getElementById('connectWalletBtn');
+        const mobileConnectBtn = document.getElementById('mobileConnectBtn');
+
         if (connectBtn) {
-            connectBtn.innerText = "CONNECT WALLET";
-            connectBtn.classList.remove('bg-stone-700');
-            connectBtn.classList.add('bg-[#5a7a2b]');
+            connectBtn.addEventListener('click', async () => {
+                if (walletPubKey) await disconnectWallet();
+                else await connectWallet();
+            });
         }
-        showToast("Disconnected");
-    }
-
-    const connectBtn = document.getElementById('connectWalletBtn');
-    const mobileConnectBtn = document.getElementById('mobileConnectBtn');
-
-    if (connectBtn) {
-        connectBtn.addEventListener('click', async () => {
-            if (walletPubKey) await disconnectWallet();
-            else await connectWallet();
-        });
-    }
-    if (mobileConnectBtn) {
-        mobileConnectBtn.addEventListener('click', async () => {
-            const overlay = document.getElementById('mobileMenuOverlay');
-            if (overlay) overlay.classList.remove('open');
-            if (walletPubKey) await disconnectWallet();
-            else await connectWallet();
-        });
-    }
-
-    async function restoreSession() {
-        if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
-            try {
-                await window.solana.connect({ onlyIfTrusted: true });
-                wallet = window.solana;
-                walletPubKey = wallet.publicKey;
-                await updateUI();
-                const connectBtn = document.getElementById('connectWalletBtn');
-                if (connectBtn) {
-                    connectBtn.innerText = "DISCONNECT";
-                    connectBtn.classList.remove('bg-[#5a7a2b]');
-                    connectBtn.classList.add('bg-stone-700');
-                }
-            } catch (e) { localStorage.removeItem('olivium_wallet_connected'); }
+        if (mobileConnectBtn) {
+            mobileConnectBtn.addEventListener('click', async () => {
+                const overlay = document.getElementById('mobileMenuOverlay');
+                if (overlay) overlay.classList.remove('open');
+                if (walletPubKey) await disconnectWallet();
+                else await connectWallet();
+            });
         }
-        await updateUI();
-    }
 
-    // Save Delivery Details
-    document.getElementById('saveDeliveryBtn')?.addEventListener('click', () => {
-        const name = document.getElementById('deliveryName')?.value;
-        const email = document.getElementById('deliveryEmail')?.value;
-        const address = document.getElementById('deliveryAddress')?.value;
-        if (name && email && address) {
-            localStorage.setItem('olivium_delivery', JSON.stringify({ name, email, address }));
-            showToast("✅ Delivery details saved!", false);
-        } else { showToast("Please fill all fields", true); }
-    });
+        async function restoreSession() {
+            if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
+                try {
+                    await window.solana.connect({ onlyIfTrusted: true });
+                    wallet = window.solana;
+                    walletPubKey = wallet.publicKey;
+                    await updateUI();
+                    const connectBtn = document.getElementById('connectWalletBtn');
+                    if (connectBtn) {
+                        connectBtn.innerText = "DISCONNECT";
+                        connectBtn.classList.remove('bg-[#5a7a2b]');
+                        connectBtn.classList.add('bg-stone-700');
+                    }
+                } catch (e) { localStorage.removeItem('olivium_wallet_connected'); }
+            }
+            await updateUI();
+        }
 
-    // Submit Booking
-    document.getElementById('submitBookingBtn')?.addEventListener('click', () => {
-        const dates = document.getElementById('dateRangePicker')?.value;
-        const nights = document.getElementById('nightsSelectionFrame')?.value;
-        const name = document.getElementById('bookingName')?.value;
-        if (name && dates) {
-            showToast(`🏡 Residency request submitted! ${nights} nights requested. Concierge will contact you.`, false);
-        } else { showToast("Please fill all required fields", true); }
-    });
+        // Save Delivery Details
+        document.getElementById('saveDeliveryBtn')?.addEventListener('click', () => {
+            const name = document.getElementById('deliveryName')?.value;
+            const email = document.getElementById('deliveryEmail')?.value;
+            const address = document.getElementById('deliveryAddress')?.value;
+            if (name && email && address) {
+                localStorage.setItem('olivium_delivery', JSON.stringify({ name, email, address }));
+                showToast("✅ Delivery details saved!", false);
+            } else { showToast("Please fill all fields", true); }
+        });
 
-    // Mobile menu
-    const menuBtn = document.getElementById('mobileMenuBtn');
-    const closeBtn = document.getElementById('mobileMenuCloseBtn');
-    const overlay = document.getElementById('mobileMenuOverlay');
-    if (menuBtn) menuBtn.addEventListener('click', () => overlay.classList.add('open'));
-    if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+        // Submit Booking
+        document.getElementById('submitBookingBtn')?.addEventListener('click', () => {
+            const dates = document.getElementById('dateRangePicker')?.value;
+            const nights = document.getElementById('nightsSelectionFrame')?.value;
+            const name = document.getElementById('bookingName')?.value;
+            if (name && dates) {
+                showToast(`🏡 Residency request submitted! ${nights} nights requested. Concierge will contact you.`, false);
+            } else { showToast("Please fill all required fields", true); }
+        });
 
-    // Cinematic script
-    const narrative = [
-        { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 2500 },
-        { text: "Rooted in nature.<br>Growing for generations.", duration: 2500 },
-        { text: "Adopt one or more of these trees.", duration: 2200 },
-        { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 2800 },
-        { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 3500 },
-    ];
-    let currentIndex = 0,
-        currentTimeout = null,
-        progressInterval = null,
-        isPlaying = true;
-    const textDisplay = document.getElementById('cinematicLine');
-    const progressFill = document.getElementById('cinematicProgressFill');
-    const skipBtn = document.getElementById('cinematicSkipBtn');
+        // Mobile menu
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const closeBtn = document.getElementById('mobileMenuCloseBtn');
+        const overlay = document.getElementById('mobileMenuOverlay');
+        if (menuBtn) menuBtn.addEventListener('click', () => overlay.classList.add('open'));
+        if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
 
-    function showText(index) {
-        if (!isPlaying) return;
-        if (index >= narrative.length) {
+        // Cinematic script
+        const narrative = [
+            { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 2500 },
+            { text: "Rooted in nature.<br>Growing for generations.", duration: 2500 },
+            { text: "Adopt one or more of these trees.", duration: 2200 },
+            { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 2800 },
+            { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 3500 },
+        ];
+        let currentIndex = 0,
+            currentTimeout = null,
+            progressInterval = null,
+            isPlaying = true;
+        const textDisplay = document.getElementById('cinematicLine');
+        const progressFill = document.getElementById('cinematicProgressFill');
+        const skipBtn = document.getElementById('cinematicSkipBtn');
+
+        function showText(index) {
+            if (!isPlaying) return;
+            if (index >= narrative.length) {
+                if (textDisplay) textDisplay.style.display = 'none';
+                if (progressFill) progressFill.parentElement.style.display = 'none';
+                if (skipBtn) skipBtn.style.display = 'none';
+                return;
+            }
+            const item = narrative[index];
+            textDisplay.innerHTML = item.text;
+            textDisplay.classList.remove('small');
+            if (index >= 3) textDisplay.classList.add('small');
+
+            setTimeout(() => { if (isPlaying) textDisplay.classList.add('active'); }, 100);
+            startProgress(item.duration);
+
+            currentTimeout = setTimeout(() => {
+                textDisplay.classList.remove('active');
+                textDisplay.classList.add('fade-out');
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    textDisplay.classList.remove('fade-out');
+                    currentIndex++;
+                    showText(currentIndex);
+                }, 300);
+            }, item.duration);
+        }
+
+        function startProgress(duration) {
+            if (progressInterval) clearInterval(progressInterval);
+            progressFill.style.width = '0%';
+            const startTime = Date.now();
+            progressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const percent = (elapsed / duration) * 100;
+                if (percent >= 100) { clearInterval(progressInterval);
+                    progressFill.style.width = '100%'; } else { progressFill.style.width = `${percent}%`; }
+            }, 16);
+        }
+
+        function skipCinematic() {
+            isPlaying = false;
+            if (currentTimeout) clearTimeout(currentTimeout);
+            if (progressInterval) clearInterval(progressInterval);
             if (textDisplay) textDisplay.style.display = 'none';
             if (progressFill) progressFill.parentElement.style.display = 'none';
             if (skipBtn) skipBtn.style.display = 'none';
-            return;
         }
-        const item = narrative[index];
-        textDisplay.innerHTML = item.text;
-        textDisplay.classList.remove('small');
-        if (index >= 3) textDisplay.classList.add('small');
 
-        setTimeout(() => { if (isPlaying) textDisplay.classList.add('active'); }, 100);
-        startProgress(item.duration);
+        if (skipBtn) skipBtn.addEventListener('click', skipCinematic);
+        setTimeout(() => { showText(0); }, 800);
 
-        currentTimeout = setTimeout(() => {
-            textDisplay.classList.remove('active');
-            textDisplay.classList.add('fade-out');
-            setTimeout(() => {
-                if (!isPlaying) return;
-                textDisplay.classList.remove('fade-out');
-                currentIndex++;
-                showText(currentIndex);
-            }, 300);
-        }, item.duration);
-    }
+        // Load saved delivery data
+        const savedDelivery = localStorage.getItem('olivium_delivery');
+        if (savedDelivery) {
+            const { name, email, address } = JSON.parse(savedDelivery);
+            if (document.getElementById('deliveryName')) document.getElementById('deliveryName').value = name;
+            if (document.getElementById('deliveryEmail')) document.getElementById('deliveryEmail').value = email;
+            if (document.getElementById('deliveryAddress')) document.getElementById('deliveryAddress').value = address;
+        }
 
-    function startProgress(duration) {
-        if (progressInterval) clearInterval(progressInterval);
-        progressFill.style.width = '0%';
-        const startTime = Date.now();
-        progressInterval = setInterval(() => {
-            const elapsed = Date.now() - startTime;
-            const percent = (elapsed / duration) * 100;
-            if (percent >= 100) { clearInterval(progressInterval);
-                progressFill.style.width = '100%'; } else { progressFill.style.width = `${percent}%`; }
-        }, 16);
-    }
-
-    function skipCinematic() {
-        isPlaying = false;
-        if (currentTimeout) clearTimeout(currentTimeout);
-        if (progressInterval) clearInterval(progressInterval);
-        if (textDisplay) textDisplay.style.display = 'none';
-        if (progressFill) progressFill.parentElement.style.display = 'none';
-        if (skipBtn) skipBtn.style.display = 'none';
-    }
-
-    if (skipBtn) skipBtn.addEventListener('click', skipCinematic);
-    setTimeout(() => { showText(0); }, 800);
-
-    // Load saved delivery data
-    const savedDelivery = localStorage.getItem('olivium_delivery');
-    if (savedDelivery) {
-        const { name, email, address } = JSON.parse(savedDelivery);
-        if (document.getElementById('deliveryName')) document.getElementById('deliveryName').value = name;
-        if (document.getElementById('deliveryEmail')) document.getElementById('deliveryEmail').value = email;
-        if (document.getElementById('deliveryAddress')) document.getElementById('deliveryAddress').value = address;
-    }
-
-    restoreSession();
-</script>
+        restoreSession();
+    </script>
 </body>
 </html>
