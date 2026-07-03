@@ -835,89 +835,65 @@ if(!SUPABASE_ANON_KEY||!SUPABASE_URL){
 // ── INLINE IDL ────────────────────────────────────────────────────────────────
 const IDL={"address":"9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV","metadata":{"name":"olivium_dao","version":"0.1.0","spec":"0.1.0"},"instructions":[{"name":"initialize_protocol","discriminator":[188,233,252,106,134,146,202,91],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"authority","writable":true,"signer":true},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"share_price","type":"u64"},{"name":"buy_fee","type":"u64"},{"name":"sell_fee","type":"u64"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"}]},{"name":"purchase_shares","discriminator":[171,132,3,224,99,69,214,250],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"buyer"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true},{"name":"buyer","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]},{"name":"register_tree","discriminator":[22,52,192,74,201,240,87,252],"accounts":[{"name":"protocol","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"authority","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"age","type":"u8"},{"name":"location","type":"string"},{"name":"total_shares","type":"u64"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"}]},{"name":"sell_shares","discriminator":[184,164,169,16,231,158,199,196],"accounts":[{"name":"tree","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,101]},{"kind":"arg","path":"tree_id"}]}},{"name":"position","writable":true,"pda":{"seeds":[{"kind":"const","value":[112,111,115,105,116,105,111,110]},{"kind":"account","path":"seller"},{"kind":"arg","path":"tree_id"}]}},{"name":"protocol","pda":{"seeds":[{"kind":"const","value":[112,114,111,116,111,99,111,108]}]}},{"name":"treasury","writable":true,"pda":{"seeds":[{"kind":"const","value":[116,114,101,97,115,117,114,121]}]}},{"name":"seller","writable":true,"signer":true},{"name":"system_program","address":"11111111111111111111111111111111"}],"args":[{"name":"tree_id","type":"string"},{"name":"amount","type":"u64"}]}],"accounts":[{"name":"ProtocolConfig","discriminator":[207,91,250,28,152,179,215,209]},{"name":"SharePosition","discriminator":[239,228,59,88,149,73,218,15]},{"name":"Tree","discriminator":[100,9,213,154,6,136,109,55]}],"errors":[{"code":6000,"name":"Unauthorized","msg":"Unauthorized"},{"code":6001,"name":"InvalidAmount","msg":"Invalid amount"},{"code":6002,"name":"NotEnoughShares","msg":"Not enough shares available"},{"code":6003,"name":"NotEnoughSharesOwned","msg":"Not enough shares owned"},{"code":6004,"name":"Overflow","msg":"Arithmetic overflow"},{"code":6005,"name":"InsufficientTreasuryFunds","msg":"Treasury has insufficient funds for payout"},{"code":6006,"name":"InvalidTreasury","msg":"Treasury address does not match protocol config"}],"types":[{"name":"ProtocolConfig","type":{"kind":"struct","fields":[{"name":"authority","type":"pubkey"},{"name":"treasury","type":"pubkey"},{"name":"share_price_lamports","type":"u64"},{"name":"total_trees","type":"u32"},{"name":"buy_fee_bps","type":"u16"},{"name":"sell_fee_bps","type":"u16"},{"name":"threshold","type":"u64"},{"name":"total_shares","type":"u64"},{"name":"min_purchase","type":"u64"},{"name":"bump","type":"u8"}]}},{"name":"SharePosition","type":{"kind":"struct","fields":[{"name":"owner","type":"pubkey"},{"name":"tree_id","type":"string"},{"name":"shares_owned","type":"u64"},{"name":"is_guardian","type":"bool"}]}},{"name":"Tree","type":{"kind":"struct","fields":[{"name":"tree_id","type":"string"},{"name":"name","type":"string"},{"name":"variety","type":"string"},{"name":"location","type":"string"},{"name":"carbon_credit_id","type":"string"},{"name":"last_inspection_url","type":"string"},{"name":"total_shares","type":"u64"},{"name":"shares_sold","type":"u64"},{"name":"last_harvest_yield_ml","type":"u64"},{"name":"total_co2_kg","type":"u64"},{"name":"age","type":"u8"},{"name":"health_status","type":"u8"},{"name":"guardian_count","type":"u8"},{"name":"has_guardian","type":"bool"},{"name":"bump","type":"u8"}]}}]};
 
-// ── IMPORTS ───────────────────────────────────────────────────────────────────
-import { Connection, PublicKey } from '@solana/web3.js';
+// ── IMPORTS — pull directly from connection.ts (Vite processes it, keys resolved) ──
+import { sb, connection, program as _programImport, isConnected as connIsConnected,
+         connectWallet, disconnectWallet, connectEmail as connConnectEmail,
+         getIdentity } from './connection';
+import { PublicKey } from '@solana/web3.js';
 import { AnchorProvider, Program } from '@coral-xyz/anchor';
 
-// ── Reuse connection.ts singletons — never create a second Supabase client ──
-// connection.ts sets window.sb, window._program, window._connection at boot.
-// We wait for them rather than duplicating clients (avoids Multiple GoTrueClient
-// warning and the 400 that comes from an empty/wrong key in a second instance).
-// sb, connection, _program are assigned inside the async IIFE below before boot()
-let sb;
-let connection;
-let _program = null;
+// Use connection.ts exports directly — no window polling, no duplicate clients
+let _program = _programImport;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
 const set=(id,v)=>{const el=$(id);if(el)el.innerText=v??'—'};
 const setW=(id,p)=>{const el=$(id);if(el)el.style.width=Math.min(100,Math.max(0,p??0))+'%'};
 
-// ── IDENTITY ──────────────────────────────────────────────────────────────────
-let _identity={type:'guest',wallet:null,label:'Guest'};
-const isConn=()=>_identity.type!=='guest';
+// ── IDENTITY — delegates to connection.ts ─────────────────────────────────────
+const isConn = () => connIsConnected();
 
 function updateConnUI(){
-  const c=isConn();
-  $('status-dot')?.classList.toggle('connected',c);
-  set('conn-status-text',c?_identity.label:'Disconnected');
-  const btn=$('connect-btn');
-  if(btn){btn.className='connect-btn'+(c?' disconn':'');$('connect-btn-text').textContent=c?'Disconnect':'Connect wallet';}
-  const wt=$('wallet-type-pill');
-  if(wt){wt.textContent=c?_identity.label:'Guest';wt.className='pill '+(c?'pill-green':'pill-amber');}
-  const addr=$('wallet-addr');
-  if(addr){addr.style.display=c?'block':'none';addr.textContent=_identity.wallet??'';}
-  set('nft-name',c?`${_identity.label} · ${_identity.type}`:'Connect to view your trees');
+  const identity = getIdentity();
+  const c = isConn();
+  const label = identity.label || identity.email || identity.wallet?.slice(0,8) || 'Guest';
+  $('status-dot')?.classList.toggle('connected', c);
+  set('conn-status-text', c ? label : 'Disconnected');
+  const btn = $('connect-btn');
+  if(btn){ btn.className = 'connect-btn' + (c ? ' disconn' : ''); $('connect-btn-text').textContent = c ? 'Disconnect' : 'Connect wallet'; }
+  const wt = $('wallet-type-pill');
+  if(wt){ wt.textContent = c ? label : 'Guest'; wt.className = 'pill ' + (c ? 'pill-green' : 'pill-amber'); }
+  const addr = $('wallet-addr');
+  if(addr){ addr.style.display = c ? 'block' : 'none'; addr.textContent = identity.wallet ?? ''; }
+  set('nft-name', c ? `${label} · ${identity.type}` : 'Connect to view your trees');
 }
 
 async function connectPhantom(){
-  const ph=window.phantom?.solana||window.solana;
-  if(!ph?.isPhantom){alert('Phantom not detected. Install from phantom.app');return;}
   try{
-    await ph.connect();
-    const pk=ph.publicKey.toBase58();
-    if(_program){
-      const {AnchorProvider:AP,Program:P}=await import('@coral-xyz/anchor');
-      const prov=new AP(connection,ph,{commitment:'confirmed'});
-      _program=new P(IDL,prov);window._program=_program;
-    }
-    _identity={type:'wallet',wallet:pk,label:`${pk.slice(0,4)}…${pk.slice(-4)}`};
-    window.OliviumIdentity={..._identity};
-    localStorage.setItem('olivium_identity',JSON.stringify(_identity));
-    updateConnUI();closeConnectModal();
-    await renderTreeList();
-  }catch(e){alert('Connection failed: '+e.message);}
+    await connectWallet(false);
+    updateConnUI(); closeConnectModal(); await renderTreeList();
+    // update _program with signer provider after connect
+    _program = window._program ?? _program;
+  }catch(e){ alert('Connection failed: ' + e.message); }
 }
 
-async function connectEmail(email,cw){
-  if(!email||!cw){alert('Enter email and custodial wallet');return;}
-  try{new PublicKey(cw);}catch{alert('Invalid wallet address');return;}
-  _identity={type:'email',wallet:cw,label:email,email};
-  window.OliviumIdentity={..._identity};
-  localStorage.setItem('olivium_identity',JSON.stringify(_identity));
-  updateConnUI();closeConnectModal();
-  await renderTreeList();
+async function connectEmailLocal(email, cw){
+  if(!email||!cw){ alert('Enter email and custodial wallet'); return; }
+  try{ new PublicKey(cw); }catch{ alert('Invalid wallet address'); return; }
+  try{
+    await connConnectEmail(email, cw);
+    updateConnUI(); closeConnectModal(); await renderTreeList();
+  }catch(e){ alert('Connection failed: ' + e.message); }
 }
 
 async function disconnect(){
-  try{const ph=window.phantom?.solana||window.solana;if(ph?.disconnect)await ph.disconnect();}catch{}
-  _identity={type:'guest',wallet:null,label:'Guest'};
-  window.OliviumIdentity={..._identity};
-  localStorage.removeItem('olivium_identity');
-  updateConnUI();await renderTreeList();
+  try{ await disconnectWallet(); }catch{}
+  updateConnUI(); await renderTreeList();
 }
 
 async function restoreSession(){
-  try{
-    const raw=localStorage.getItem('olivium_identity');if(!raw)return;
-    const s=JSON.parse(raw);
-    if(s.type==='wallet'){
-      const ph=window.phantom?.solana||window.solana;
-      if(ph?.isConnected&&ph.publicKey){_identity={type:'wallet',wallet:ph.publicKey.toBase58(),label:s.label};updateConnUI();}
-    }else if(s.type==='email'&&s.wallet){
-      _identity={type:'email',wallet:s.wallet,label:s.label||s.email,email:s.email};updateConnUI();
-    }
-  }catch{}
+  // connection.ts handles session restore internally via initReadOnly/autoConnect
+  updateConnUI();
 }
 
 // ── SPARKLINES ───────────────────────────────────────────────────────────────
@@ -1028,12 +1004,8 @@ async function renderTreeList(){
   c.innerHTML='<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:12px"><span class="spinner"></span> Loading…</div>';
   try{
     const{data:trees,error}=await sb.from('tree_metadata')
-    .select("*")    .limit(1);
-
-console.log(result);
+      .select('tree_id,name,field_id,latitude,longitude,total_shares,shares_sold,status,health_score,variety,age_years,photo_url')
       .order('tree_id',{ascending:true});
-    console.log("DATA:", data);
-console.log("ERROR:", error);
     if(error||!trees?.length){
       c.innerHTML='<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:12px">No trees found</div>';
       return;
@@ -1245,7 +1217,7 @@ window.switchTab=switchTab;
 function openConnectModal(){document.getElementById('connect-modal')?.classList.add('open');}
 function closeConnectModal(){document.getElementById('connect-modal')?.classList.remove('open');}
 window.closeConnectModal=closeConnectModal;
-window.handleConnect=async function(){if(isConn())await disconnect();else openConnectModal();};
+window.handleConnect=async function(){if(isConn()){await disconnect();}else{openConnectModal();}updateConnUI();};
 
 // ── UI BINDINGS ──────────────────────────────────────────────────────────────
 function bindUI(){
@@ -1254,7 +1226,7 @@ function bindUI(){
     const f=document.getElementById('email-form');if(f)f.style.display=f.style.display==='none'?'block':'none';
   });
   document.getElementById('email-submit')?.addEventListener('click',()=>
-    connectEmail(document.getElementById('email-input')?.value?.trim(),document.getElementById('custodial-input')?.value?.trim()));
+    connectEmailLocal(document.getElementById('email-input')?.value?.trim(),document.getElementById('custodial-input')?.value?.trim()));
   document.getElementById('mode-toggle')?.addEventListener('click',function(){
     document.body.classList.toggle('luxury-mode');
     this.innerHTML=document.body.classList.contains('luxury-mode')?'<i class="fas fa-sun"></i> Light':'<i class="fas fa-moon"></i> Dark / luxury';
@@ -1273,8 +1245,7 @@ function bindUI(){
 async function boot(){
   console.log('🚀 Olivium dashboard booting…');
   initSparklines();
-  await restoreSession();
-  updateConnUI();
+  updateConnUI(); // connection.ts already restored session
   bindUI();
   await renderTreeList();
   // Poll sensors + weather every 60 seconds
@@ -1286,41 +1257,7 @@ async function boot(){
   },60000);
   console.log('✅ Dashboard ready');
 }
-(async () => {
-  // Wait up to 5s for connection.ts to expose window.sb
-  const _t0 = Date.now();
-  while(Date.now() - _t0 < 5000){
-    if(window.sb && window._connection) break;
-    await new Promise(r => setTimeout(r, 50));
-  }
-
-  // Reuse singleton from connection.ts — avoids duplicate GoTrueClient + 400
-  if(window.sb){
-    sb = window.sb;
-  } else {
-    console.warn('⚠️ window.sb not ready — creating fallback Supabase client');
-    const { createClient } = await import('@supabase/supabase-js');
-    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    window.sb = sb;
-  }
-
-  connection = window._connection ?? new Connection(RPC_URL, 'confirmed');
-  window._connection = connection;
-
-  _program = window._program ?? null;
-  if(!_program){
-    try{
-      const prov = new AnchorProvider(connection, {}, {commitment:'confirmed'});
-      _program = new Program(IDL, prov);
-      window._program = _program;
-      console.log('✅ Anchor program ready (fallback)');
-    }catch(e){
-      console.warn('⚠️ Anchor init failed:', e.message);
-    }
-  }
-
-  boot();
-})();
+boot();
 </script>
 </body>
 </html>
