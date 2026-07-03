@@ -1003,9 +1003,23 @@ async function renderTreeList(){
   const c=document.getElementById('tree-list');if(!c)return;
   c.innerHTML='<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:12px"><span class="spinner"></span> Loading…</div>';
   try{
-    const{data:trees,error}=await sb.from('tree_metadata')
-      .select('tree_id,name,field_id,latitude,longitude,total_shares,shares_sold,status,health_score,variety,age_years,photo_url')
-      .order('tree_id',{ascending:true});
+    const { data: trees, error } = await sb
+    .from("tree_metadata")
+    .select(`
+        tree_id,
+        variety,
+        age_years,
+        health_score,
+        latitude,
+        longitude,
+        field_id,
+        photo_url,
+        status,
+        on_chain,
+        on_chain_address,
+        mint
+    `)
+    .order("tree_id",{ascending:true});
     if(error||!trees?.length){
       c.innerHTML='<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:12px">No trees found</div>';
       return;
