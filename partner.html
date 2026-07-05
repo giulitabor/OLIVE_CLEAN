@@ -1,5 +1,5 @@
-what is wrong !! --<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
@@ -535,16 +535,17 @@ what is wrong !! --<!DOCTYPE html>
 </head>
 <body>
 <canvas id="stars-canvas"></canvas>
+<button id="lang-toggle-btn" onclick="toggleLanguage()" style="position:fixed; top:14px; right:14px; z-index:200; background:rgba(20,26,44,0.85); border:0.5px solid var(--border); color:var(--gold); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; backdrop-filter:blur(6px);">🌐 <span id="lang-toggle-label">IT</span></button>
 <div id="app">
 
   <!-- SETUP -->
   <div id="setup-screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:40px 24px; text-align:center;">
     <div style="font-size:60px; margin-bottom:16px;">🌿</div>
-    <div style="font-size:28px; font-family:Georgia, serif; color:var(--gold2); margin-bottom:8px;">Two Paths,<br>One Journey</div>
+    <div style="font-size:28px; font-family:Georgia, serif; color:var(--gold2); margin-bottom:8px;" data-i18n="setup_headline">Two Paths,<br>One Journey</div>
     <div class="card" style="width:100%; text-align:left; margin-top:20px;">
-      <div class="card-title">Welcome to Partners LOVEbase</div>
-      <button class="btn-primary" id="connect-btn">Connect ✨</button>
-      <button class="btn-primary btn-secondary" id="demo-btn" style="margin-top:8px;">Demo Mode</button>
+      <div class="card-title" data-i18n="setup_welcome">Welcome to Partners LOVEbase</div>
+      <button class="btn-primary" id="connect-btn" data-i18n="setup_connect_btn">Connect ✨</button>
+      <button class="btn-primary btn-secondary" id="demo-btn" style="margin-top:8px;" data-i18n="setup_demo_btn">Demo Mode</button>
     </div>
   </div>
 
@@ -552,18 +553,18 @@ what is wrong !! --<!DOCTYPE html>
   <div id="auth-screen" style="display:none; min-height:100vh; padding:40px 20px;">
     <div style="text-align:center; margin-bottom:32px;">
       <div style="font-size:48px;">💑</div>
-      <div style="font-size:24px; font-family:Georgia; color:var(--gold2); margin-top:8px;">Welcome Back</div>
-      <div style="font-size:13px; color:var(--text2); margin-top:4px;">Sign in to continue your journey</div>
+      <div style="font-size:24px; font-family:Georgia; color:var(--gold2); margin-top:8px;" data-i18n="auth_welcome_back">Welcome Back</div>
+      <div style="font-size:13px; color:var(--text2); margin-top:4px;" data-i18n="auth_signin_subtitle">Sign in to continue your journey</div>
     </div>
     <div class="card">
-      <div class="card-title">Authentication</div>
-      <input type="email" id="auth-email" class="input-field" placeholder="Email">
-      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6 characters)">
+      <div class="card-title" data-i18n="auth_card_title">Authentication</div>
+      <input type="email" id="auth-email" class="input-field" placeholder="Email" data-i18n-placeholder="auth_email_ph">
+      <input type="password" id="auth-password" class="input-field" placeholder="Password (min 6 characters)" data-i18n-placeholder="auth_password_ph">
       <div id="auth-error-msg" style="color:var(--rose);font-size:12px;min-height:18px;margin-bottom:4px"></div>
-      <button class="btn-primary" id="login-btn">Sign In</button>
-      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;">Create New Account</button>
+      <button class="btn-primary" id="login-btn" data-i18n="auth_signin_btn">Sign In</button>
+      <button class="btn-primary btn-secondary" id="signup-btn" style="margin-top:8px;" data-i18n="auth_signup_btn">Create New Account</button>
       <div style="text-align:center;margin-top:16px">
-        <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
+        <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;" data-i18n="auth_forgot_btn">Forgot password?</button>
       </div>
     </div>
   </div>
@@ -575,50 +576,67 @@ what is wrong !! --<!DOCTYPE html>
   <div id="forgot-password-screen" style="display:none;min-height:100vh;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px">
       <div style="font-size:48px">🔑</div>
-      <div style="font-size:24px;font-family:Georgia;color:var(--gold2);margin-top:8px">Reset Password</div>
+      <div style="font-size:24px;font-family:Georgia;color:var(--gold2);margin-top:8px" data-i18n="reset_title">Reset Password</div>
     </div>
     <div class="card">
-      <input type="email" id="reset-email" class="input-field" placeholder="Your email address">
+      <input type="email" id="reset-email" class="input-field" placeholder="Your email address" data-i18n-placeholder="reset_email_ph">
       <div id="reset-error" style="color:var(--rose);font-size:12px;min-height:18px;"></div>
       <div id="reset-success" style="color:var(--teal);font-size:13px;min-height:18px;"></div>
-      <button id="reset-btn" onclick="sendPasswordReset()" class="btn-primary">Send Reset Link ✉️</button>
-      <button onclick="showSignIn()" class="btn-primary btn-secondary" style="margin-top:8px;">← Back to Sign In</button>
+      <button id="reset-btn" onclick="sendPasswordReset()" class="btn-primary" data-i18n="reset_send_btn">Send Reset Link ✉️</button>
+      <button onclick="showSignIn()" class="btn-primary btn-secondary" style="margin-top:8px;" data-i18n="reset_back_btn">← Back to Sign In</button>
     </div>
   </div>
+
+  <!-- SET NEW PASSWORD (after clicking the emailed reset link) -->
+  <div id="reset-newpassword-screen" style="display:none;min-height:100vh;padding:40px 20px;">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:48px">🔐</div>
+      <div style="font-size:24px;font-family:Georgia;color:var(--gold2);margin-top:8px" data-i18n="newpw_title">Choose a New Password</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px" data-i18n="newpw_subtitle">Enter and confirm your new password below.</div>
+    </div>
+    <div class="card">
+      <input type="password" id="newpw-password" class="input-field" placeholder="New password (min 6 characters)" data-i18n-placeholder="newpw_password_ph">
+      <input type="password" id="newpw-confirm" class="input-field" placeholder="Confirm new password" data-i18n-placeholder="newpw_confirm_ph">
+      <div id="newpw-error" style="color:var(--rose);font-size:12px;min-height:18px;"></div>
+      <div id="newpw-success" style="color:var(--teal);font-size:13px;min-height:18px;"></div>
+      <button id="newpw-submit-btn" onclick="submitNewPassword()" class="btn-primary" data-i18n="newpw_submit_btn">Set New Password ✅</button>
+    </div>
+  </div>
+
 
   <!-- RELATIONSHIP SETUP -->
   <div id="relationship-setup-screen" style="display:none; min-height:100vh; padding:40px 20px;">
     <div style="text-align:center; margin-bottom:24px;">
       <div style="font-size:48px;">🏠</div>
-      <div style="font-size:22px; font-family:Georgia; color:var(--gold2);">Start Your Journey</div>
+      <div style="font-size:22px; font-family:Georgia; color:var(--gold2);" data-i18n="relsetup_headline">Start Your Journey</div>
     </div>
     <div class="card">
-      <div class="card-title">Create New Relationship</div>
-      <input type="text" id="rel-name-a" class="input-field" placeholder="Your name">
-      <input type="text" id="rel-name-b" class="input-field" placeholder="Partner's name">
-      <button class="btn-primary" id="create-relation-btn">Create Relationship ✨</button>
+      <div class="card-title" data-i18n="relsetup_create_title">Create New Relationship</div>
+      <input type="text" id="rel-name-a" class="input-field" placeholder="Your name" data-i18n-placeholder="relsetup_your_name_ph">
+      <input type="text" id="rel-name-b" class="input-field" placeholder="Partner's name" data-i18n-placeholder="relsetup_partner_name_ph">
+      <button class="btn-primary" id="create-relation-btn" data-i18n="relsetup_create_btn">Create Relationship ✨</button>
     </div>
     <div class="card">
-      <div class="card-title">Join Existing Relationship</div>
-      <input type="text" id="join-code" class="input-field" placeholder="Enter 6-digit invite code">
-      <button class="btn-primary btn-secondary" id="join-relation-btn">Join Relationship</button>
+      <div class="card-title" data-i18n="relsetup_join_title">Join Existing Relationship</div>
+      <input type="text" id="join-code" class="input-field" placeholder="Enter 6-digit invite code" data-i18n-placeholder="relsetup_join_ph">
+      <button class="btn-primary btn-secondary" id="join-relation-btn" data-i18n="relsetup_join_btn">Join Relationship</button>
     </div>
   </div>
 
   <!-- WAITING -->
   <div id="waiting-screen" style="display:none; min-height:100vh; padding:40px 20px; text-align:center;">
     <div style="font-size:60px; margin-bottom:20px;">⏳</div>
-    <div style="font-size:20px; font-family:Georgia; color:var(--gold2);">Waiting for Partner</div>
+    <div style="font-size:20px; font-family:Georgia; color:var(--gold2);" data-i18n="waiting_headline">Waiting for Partner</div>
     <div class="invite-code">
-      <div style="font-size:12px; color:var(--teal);">Your Invite Code</div>
+      <div style="font-size:12px; color:var(--teal);" data-i18n="waiting_invite_label">Your Invite Code</div>
       <div class="code-display" id="invite-code-display">------</div>
-      <button class="btn-primary btn-secondary" id="copy-code-btn" style="margin-top:8px; padding:8px;">📋 Copy Code</button>
+      <button class="btn-primary btn-secondary" id="copy-code-btn" style="margin-top:8px; padding:8px;" data-i18n="waiting_copy_btn">📋 Copy Code</button>
     </div>
   </div>
 
   <!-- MAIN APP -->
   <div id="main-app" style="display:none;">
-    <div class="sync-status" id="sync-status">🟢 Live Synced</div>
+    <div class="sync-status" id="sync-status" data-i18n="sync_status_live">🟢 Live Synced</div>
 
     <!-- HOME -->
     <div id="screen-home" class="screen active">
@@ -629,70 +647,70 @@ what is wrong !! --<!DOCTYPE html>
           <div class="streak-badge" id="streak-badge">🔥 0 day streak</div>
         </div>
       </div>
-      <div class="card"><div class="card-title">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div class="tree-stat-lbl">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div class="tree-stat-lbl">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div class="tree-stat-lbl">Vision</div></div></div></div>
-      <div class="card"><div class="card-title">Relationship Weather</div><div id="weather-progress"></div></div>
-      <div class="card"><div class="card-title">Daily Pulse</div><div id="pulse-theme" style="font-size:15px;color:var(--gold2);font-family:var(--font);font-style:italic;margin-bottom:10px;text-align:center"></div><div id="pulse-tasks"></div></div>
-      <div class="card"><div class="card-title">Archetype</div><div style="display:flex;align-items:center;gap:16px;justify-content:center;padding:8px 0"><span id="arch-symbol" style="font-size:40px">⚒</span><div><div id="arch-name" style="font-size:16px;font-weight:600;color:var(--gold2)">Builders</div><div id="arch-lesson" style="font-size:12px;color:var(--text2);font-style:italic">Create foundations before expansion.</div></div></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_relationship_tree">Relationship Tree</div><canvas id="tree-canvas"></canvas><div class="tree-stats"><div class="tree-stat"><div class="tree-stat-val" id="stat-growth">0%</div><div class="tree-stat-lbl" data-i18n="stat_growth">Growth</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-harmony">0%</div><div class="tree-stat-lbl" data-i18n="stat_harmony">Harmony</div></div><div class="tree-stat"><div class="tree-stat-val" id="stat-vision">0%</div><div class="tree-stat-lbl" data-i18n="stat_vision">Vision</div></div></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_weather">Relationship Weather</div><div id="weather-progress"></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_daily_pulse">Daily Pulse</div><div id="pulse-theme" style="font-size:15px;color:var(--gold2);font-family:var(--font);font-style:italic;margin-bottom:10px;text-align:center"></div><div id="pulse-tasks"></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_archetype">Archetype</div><div style="display:flex;align-items:center;gap:16px;justify-content:center;padding:8px 0"><span id="arch-symbol" style="font-size:40px">⚒</span><div><div id="arch-name" style="font-size:16px;font-weight:600;color:var(--gold2)">Builders</div><div id="arch-lesson" style="font-size:12px;color:var(--text2);font-style:italic">Create foundations before expansion.</div></div></div></div>
     </div>
 
     <!-- COUPLE -->
     <div id="screen-couple" class="screen">
-      <div class="header-strip"><div class="header-date">Our Journey</div><div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div></div>
-      <div class="card"><div class="card-title">Baby Readiness</div><div style="text-align:center;margin-top:8px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">70%</div><div style="font-size:11px;color:var(--text3);margin-top:4px;">Growing with your relationship</div></div></div>
+      <div class="header-strip"><div class="header-date" data-i18n="header_our_journey">Our Journey</div><div class="header-row"><div style="font-size:13px;color:var(--gold2)" id="couple-names">Loading...</div></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_baby_readiness">Baby Readiness</div><div style="text-align:center;margin-top:8px;"><div style="font-size:28px;font-weight:700;color:var(--teal);" id="baby-pct">70%</div><div style="font-size:11px;color:var(--text3);margin-top:4px;" data-i18n="baby_readiness_sub">Growing with your relationship</div></div></div>
       <div id="couple-progress" class="card"></div>
-      <div class="card"><div class="card-title">Insights</div><div id="insights-content"></div></div>
-      <div class="card"><div class="card-title">Mountain</div><canvas id="mountain-canvas" style="width:100%;height:200px;display:block"></canvas></div>
-      <div class="card"><div class="card-title">Galaxy</div><canvas id="galaxy-canvas" style="width:100%;height:240px;display:block"></canvas></div>
+      <div class="card"><div class="card-title" data-i18n="card_insights">Insights</div><div id="insights-content"></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_mountain">Mountain</div><canvas id="mountain-canvas" style="width:100%;height:200px;display:block"></canvas></div>
+      <div class="card"><div class="card-title" data-i18n="card_galaxy">Galaxy</div><canvas id="galaxy-canvas" style="width:100%;height:240px;display:block"></canvas></div>
     </div>
 
     <!-- GROWTH -->
     <div id="screen-growth" class="screen">
       <div style="display:flex; align-items:center; gap:12px; padding:16px; background:var(--glass); margin:12px 16px; border-radius:32px;">
         <div style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;" id="growth-avatar">🌸</div>
-        <div><div id="growth-name" style="font-weight:600;">Loading</div><div style="font-size:11px;color:var(--text2);">Your journey</div></div>
+        <div><div id="growth-name" style="font-weight:600;">Loading</div><div style="font-size:11px;color:var(--text2);" data-i18n="growth_your_journey">Your journey</div></div>
         <div id="growth-xp" style="margin-left:auto;background:rgba(201,168,76,0.15);border-radius:20px;padding:4px 12px;">✨ 0 XP</div>
       </div>
       <div class="tab-row" id="growth-tab-row">
-        <div class="tab active" onclick="switchGrowthTab('radar',this)">Growth</div>
-        <div class="tab" onclick="switchGrowthTab('practices',this)">Daily</div>
-        <div class="tab" onclick="switchGrowthTab('couples',this)">Together</div>
-        <div class="tab" onclick="switchGrowthTab('wheel',this)">Soul</div>
-        <div class="tab" onclick="switchGrowthTab('private',this)">Private</div>
-        <div class="tab" onclick="switchGrowthTab('temple',this)">🌿 Temple</div>
-        <div class="tab" onclick="switchGrowthTab('paths',this)">🌱 Paths</div>
+        <div class="tab active" onclick="switchGrowthTab('radar',this)" data-i18n="tab_growth">Growth</div>
+        <div class="tab" onclick="switchGrowthTab('practices',this)" data-i18n="tab_daily">Daily</div>
+        <div class="tab" onclick="switchGrowthTab('couples',this)" data-i18n="tab_together">Together</div>
+        <div class="tab" onclick="switchGrowthTab('wheel',this)" data-i18n="tab_soul">Soul</div>
+        <div class="tab" onclick="switchGrowthTab('private',this)" data-i18n="tab_private">Private</div>
+        <div class="tab" onclick="switchGrowthTab('temple',this)" data-i18n="tab_temple">🌿 Temple</div>
+        <div class="tab" onclick="switchGrowthTab('paths',this)" data-i18n="tab_paths">🌱 Paths</div>
       </div>
       <div id="tab-radar"><div class="card"><div id="growth-bars"></div></div></div>
-      <div id="tab-practices" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase">Individual Practices</div><div id="practices-list" style="padding:0 16px"></div></div>
-      <div id="tab-couples" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase">Together Exercises</div><div id="couples-list" style="padding:0 16px"></div></div>
-      <div id="tab-wheel" style="display:none;"><div class="card"><div class="card-title">Soul Journey Wheel</div><div class="wheel-container"><canvas id="wheel-canvas" width="200" height="200" style="width:200px;height:200px;display:block;margin:0 auto;"></canvas><div class="wheel-labels-grid" id="wheel-labels"></div></div></div></div>
-      <div id="tab-private" style="display:none;"><div style="padding:12px 16px 0"><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">🔒 Only you can see these.</div><textarea class="journal-textarea" id="private-input" placeholder="Your private truth…" style="margin-bottom:8px"></textarea><label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;margin-bottom:12px"><input type="checkbox" id="private-share-toggle" style="accent-color:var(--gold)"> 🌟 Share with partner</label><button onclick="savePrivateNote()" style="width:100%;padding:12px;border-radius:40px;background:rgba(78,205,196,0.15);border:0.5px solid var(--teal);color:var(--teal);cursor:pointer;font-size:14px">Save Private Note 🔒</button></div><div id="private-entries" style="padding:0 16px;margin-top:12px"></div></div>
+      <div id="tab-practices" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase" data-i18n="individual_practices">Individual Practices</div><div id="practices-list" style="padding:0 16px"></div></div>
+      <div id="tab-couples" style="display:none;"><div style="font-size:11px;color:var(--text3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase" data-i18n="together_exercises">Together Exercises</div><div id="couples-list" style="padding:0 16px"></div></div>
+      <div id="tab-wheel" style="display:none;"><div class="card"><div class="card-title" data-i18n="card_soul_wheel">Soul Journey Wheel</div><div class="wheel-container"><canvas id="wheel-canvas" width="200" height="200" style="width:200px;height:200px;display:block;margin:0 auto;"></canvas><div class="wheel-labels-grid" id="wheel-labels"></div></div></div></div>
+      <div id="tab-private" style="display:none;"><div style="padding:12px 16px 0"><div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic" data-i18n="private_notes_hint">🔒 Only you can see these — unless you check "Share with partner" below.</div><textarea class="journal-textarea" id="private-input" placeholder="Your private truth…" style="margin-bottom:8px" data-i18n-placeholder="private_input_ph"></textarea><label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;margin-bottom:12px"><input type="checkbox" id="private-share-toggle" style="accent-color:var(--gold)"> <span data-i18n="private_share_label">🌟 Share with partner</span></label><button onclick="savePrivateNote()" style="width:100%;padding:12px;border-radius:40px;background:rgba(78,205,196,0.15);border:0.5px solid var(--teal);color:var(--teal);cursor:pointer;font-size:14px" data-i18n="private_save_btn">Save Private Note 🔒</button></div><div id="private-entries" style="padding:0 16px;margin-top:12px"></div></div>
       <div id="tab-temple" style="display:none;"><div id="temple-container" style="padding:0 16px 16px;"></div></div>
       <div id="tab-paths" style="display:none;"><div id="paths-container" style="padding:0 16px 16px;"></div></div>
     </div>
 
     <!-- JOURNAL -->
     <div id="screen-journal" class="screen">
-      <div class="header-strip"><div class="header-date">Shared Journal</div></div>
-      <div class="journal-input-area" style="margin:12px 16px;"><textarea class="journal-textarea" id="journal-input" placeholder="Write freely... Partner sees instantly ✨"></textarea><button class="journal-btn" onclick="addJournalEntry()">Add Entry ✦</button></div>
+      <div class="header-strip"><div class="header-date" data-i18n="header_shared_journal">Shared Journal</div></div>
+      <div class="journal-input-area" style="margin:12px 16px;"><textarea class="journal-textarea" id="journal-input" placeholder="Write freely... Partner sees instantly ✨" data-i18n-placeholder="journal_input_ph"></textarea><button class="journal-btn" onclick="addJournalEntry()" data-i18n="journal_add_btn">Add Entry ✦</button></div>
       <div id="journal-entries" style="padding:0 16px;"></div>
     </div>
 
     <!-- COSMOS -->
     <div id="screen-cosmic" class="screen">
-      <div class="header-strip"><div class="header-date">Cosmic Context</div><div class="header-row"><div style="font-size:12px;color:var(--text2);font-style:italic">The universe holds you both</div></div><div id="cosmic-birth-info" style="font-size:11px;color:var(--gold3);margin-top:4px;font-style:italic"></div></div>
-      <div class="card"><div class="card-title">Moon Wisdom</div><div style="background:linear-gradient(135deg,rgba(15,21,37,0.9),rgba(20,28,48,0.9));border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center"><div style="font-size:48px" id="moon-big-icon">🌔</div><div style="margin-top:8px;color:var(--gold2);font-family:var(--font);font-size:16px" id="moon-big-phase">Moon</div><div style="font-size:13px;color:var(--text2);margin-top:6px" id="moon-release-txt"></div><div style="font-size:13px;color:var(--teal);margin-top:4px;font-style:italic" id="moon-invite-txt"></div><div style="font-size:12px;color:var(--text2);margin-top:10px;padding:8px;background:rgba(255,255,255,0.04);border-radius:10px" id="moon-energy-txt"></div></div></div>
-      <div class="card"><div class="card-title">Daily Horoscope</div><div id="horoscope-content"></div></div>
-      <div class="card"><div class="card-title">Dream Journal ✨</div><input type="text" id="dream-title" class="input-field" placeholder="Dream title…"><textarea class="journal-textarea" id="dream-input" placeholder="What did you dream?" style="height:90px;margin-bottom:8px"></textarea><div style="margin:0 0 12px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">Tag this dream:</div><div id="dream-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div></div><button id="dream-submit-btn" onclick="saveDreamEntry()" style="width:100%;padding:12px;border-radius:40px;background:rgba(155,109,255,0.15);border:0.5px solid var(--purple);color:var(--purple);cursor:pointer;font-size:14px">Record Dream 🌙</button></div><div style="font-size:11px;color:var(--text3);padding:8px 16px;letter-spacing:1px;text-transform:uppercase">Dream Archive</div><div id="dream-entries" style="padding:0 16px 20px"></div>
+      <div class="header-strip"><div class="header-date" data-i18n="header_cosmic">Cosmic Context</div><div class="header-row"><div style="font-size:12px;color:var(--text2);font-style:italic" data-i18n="cosmic_sub">The universe holds you both</div></div><div id="cosmic-birth-info" style="font-size:11px;color:var(--gold3);margin-top:4px;font-style:italic"></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_moon_wisdom">Moon Wisdom</div><div style="background:linear-gradient(135deg,rgba(15,21,37,0.9),rgba(20,28,48,0.9));border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center"><div style="font-size:48px" id="moon-big-icon">🌔</div><div style="margin-top:8px;color:var(--gold2);font-family:var(--font);font-size:16px" id="moon-big-phase">Moon</div><div style="font-size:13px;color:var(--text2);margin-top:6px" id="moon-release-txt"></div><div style="font-size:13px;color:var(--teal);margin-top:4px;font-style:italic" id="moon-invite-txt"></div><div style="font-size:12px;color:var(--text2);margin-top:10px;padding:8px;background:rgba(255,255,255,0.04);border-radius:10px" id="moon-energy-txt"></div></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_daily_horoscope">Daily Horoscope</div><div id="horoscope-content"></div></div>
+      <div class="card"><div class="card-title" data-i18n="card_dream_journal">Dream Journal ✨</div><input type="text" id="dream-title" class="input-field" placeholder="Dream title…" data-i18n-placeholder="dream_title_ph"><textarea class="journal-textarea" id="dream-input" placeholder="What did you dream?" style="height:90px;margin-bottom:8px" data-i18n-placeholder="dream_body_ph"></textarea><div style="margin:0 0 12px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px" data-i18n="dream_tag_label">Tag this dream:</div><div id="dream-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div></div><button id="dream-submit-btn" onclick="saveDreamEntry()" style="width:100%;padding:12px;border-radius:40px;background:rgba(155,109,255,0.15);border:0.5px solid var(--purple);color:var(--purple);cursor:pointer;font-size:14px" data-i18n="dream_record_btn">Record Dream 🌙</button></div><div style="font-size:11px;color:var(--text3);padding:8px 16px;letter-spacing:1px;text-transform:uppercase" data-i18n="dream_archive_label">Dream Archive</div><div id="dream-entries" style="padding:0 16px 20px"></div>
     </div>
   </div>
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav" id="bottom-nav" style="display:none;">
-    <button class="nav-item active" data-nav="home" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span>Home</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="couple" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span>Our Journey</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="growth" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span>My Growth</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="journal" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span>Journal</span><div class="nav-dot"></div></button>
-    <button class="nav-item" data-nav="cosmic" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span>Cosmos</span><div class="nav-dot"></div></button>
+    <button class="nav-item active" data-nav="home" onclick="switchScreen('home',this)"><span class="nav-icon">🌳</span><span data-i18n="nav_home">Home</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="couple" onclick="switchScreen('couple',this)"><span class="nav-icon">🌌</span><span data-i18n="nav_couple">Our Journey</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="growth" onclick="switchScreen('growth',this)"><span class="nav-icon">🌸</span><span data-i18n="nav_growth">My Growth</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="journal" onclick="switchScreen('journal',this)"><span class="nav-icon">📖</span><span data-i18n="nav_journal">Journal</span><div class="nav-dot"></div></button>
+    <button class="nav-item" data-nav="cosmic" onclick="switchScreen('cosmic',this)"><span class="nav-icon">✨</span><span data-i18n="nav_cosmic">Cosmos</span><div class="nav-dot"></div></button>
   </nav>
 </div>
 
