@@ -48,8 +48,8 @@ export async function getTrees() {
 
     return treesPromise;
 }
-//let positionsCache: any[] | null = null;
-//let positionsPromise: Promise<any[]> | null = null;
+let positionsCache: any[] | null = null;
+let positionsPromise: Promise<any[]> | null = null;
 
 
 export async function getAllPositions() {
@@ -717,8 +717,8 @@ console.log('shares---',shares);
   setEl('tier-status-progress', progressText);
 }
 
-const positionsCache: Record<string, any[]> = {};
-const positionsPromise: Record<string, Promise<any[]>> = {};
+//const positionsCache: Record<string, any[]> = {};
+//const positionsPromise: Record<string, Promise<any[]>> = {};
 
 export async function getPositions(wallet: string) {
   if (positionsCache[wallet]) return positionsCache[wallet];
