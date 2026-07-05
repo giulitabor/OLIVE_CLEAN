@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
   build: {
-    target: "es2020",
+    target: "es2022",
     outDir: "dist",
     assetsDir: "assets",
     sourcemap: false,
