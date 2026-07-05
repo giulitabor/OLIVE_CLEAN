@@ -2848,16 +2848,64 @@ function prependDreamRow(d) {
 
 // ==================== PRIVATE NOTES ====================
 async function loadPrivateNotes() {
-  var el = document.getElementById('private-entries'); if(!el) return;
-  if(!sbClient || !currentUser) { el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">Sign in to load private notes.</div>'; return; }
+  var el = document.getElementById('private-entries'); 
+  if(!el) return;
+  
+  if(!sbClient || !currentUser) { 
+    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">Sign in to load private notes.</div>'; 
+    return; 
+  }
+  
   el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">Loading…</div>';
-  var res = await sbClient.from('private_notes').select('id,created_at,body,shared').eq('user_id', currentUser.id).eq('relationship_id', currentRelationshipId).order('created_at', {ascending: false}).limit(30);
-  if(res.error) { el.innerHTML = '<div style="color:var(--rose);padding:16px;">' + escHtml(res.error.message) + '</div>'; return; }
+  
+  // Get the partner's user ID
+  var partnerId = null;
+  if (currentMySlot === 'A') {
+    partnerId = liveData?.partner_b_id;
+  } else {
+    partnerId = liveData?.partner_a_id;
+  }
+  
+  // Fetch notes from both current user AND partner
+  var userIds = [currentUser.id];
+  if (partnerId) {
+    userIds.push(partnerId);
+  }
+  
+  var res = await sbClient.from('private_notes')
+    .select('id,created_at,body,shared,user_id')
+    .eq('relationship_id', currentRelationshipId)
+    .in('user_id', userIds)
+    .order('created_at', {ascending: false})
+    .limit(50);
+  
+  if(res.error) { 
+    el.innerHTML = '<div style="color:var(--rose);padding:16px;">' + escHtml(res.error.message) + '</div>'; 
+    return; 
+  }
+  
   el.innerHTML = '';
-  if(!res.data || res.data.length === 0) { el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">No private notes yet.</div>'; return; }
-  res.data.forEach(n => el.insertAdjacentHTML('beforeend', buildPrivateRow(n)));
+  if(!res.data || res.data.length === 0) { 
+    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">No private notes yet.</div>'; 
+    return; 
+  }
+  
+  // Filter: Show all user's own notes + partner's shared notes
+  var visibleNotes = res.data.filter(n => {
+    // Current user sees all their notes
+    if (n.user_id === currentUser.id) return true;
+    // Current user sees partner's notes ONLY if shared
+    if (n.user_id === partnerId && n.shared === true) return true;
+    return false;
+  });
+  
+  if (visibleNotes.length === 0) {
+    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">No shared notes from partner yet.</div>';
+    return;
+  }
+  
+  visibleNotes.forEach(n => el.insertAdjacentHTML('beforeend', buildPrivateRow(n)));
 }
-
 function buildPrivateRow(n) {
   return '<div style="padding:14px;background:rgba(155,109,255,0.06);border-left:2px solid var(--purple);border-radius:0 16px 16px 0;margin-bottom:10px;" data-note-id="' + n.id + '"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">' + new Date(n.created_at).toLocaleString() + '</div><div style="font-size:13px;color:var(--text1);line-height:1.6;font-style:italic;font-family:var(--font);">' + escHtml(n.body) + '</div><div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--rose);background:rgba(232,112,112,0.1);border:0.5px solid rgba(232,112,112,0.3);border-radius:20px;padding:2px 8px;margin-top:6px;">' + (n.shared ? '👁 Shared' : '🔒 Private') + '</div></div>';
 }
