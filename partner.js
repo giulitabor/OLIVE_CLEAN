@@ -1,4 +1,3 @@
-
 // ==================== COMPLETE APP ====================
 // FULLY INTEGRATED: Personal + Relationship + Baby Readiness + Archetype + Mastery
 // EVERYTHING grows together
@@ -69,6 +68,303 @@ let templeState = {
   dailyQuestion: null,
   questionAnswered: false
 };
+
+// ==================== GROWTH RATE LIMITER ====================
+// FIX (scaling bug): several actions (water logging, breathing sessions,
+// journal entries, private notes, dream entries, shadow work) used to grant
+// XP + metric points EVERY time they were clicked, with no limit. That let
+// someone inflate XP / metrics from 0 to 100 in a few minutes by spamming a
+// button. This ledger caps how many times per real day each action type can
+// award growth. The action itself (saving the note/journal/etc.) still always
+// works — only the bonus XP/metric reward is capped.
+const DAILY_ACTION_CAPS = {
+  water_log: 8,          // matches the daily water goal
+  breath_session: 3,      // per breathing type, per day
+  journal_entry: 3,
+  private_note: 3,
+  dream_entry: 2,
+  shadow_work: 1,
+  temple_reflection: 1,
+  foundation: 3
+};
+
+function _dailyKeyToday() { return new Date().toDateString(); }
+
+function _loadDailyActionLog() {
+  try {
+    var raw = localStorage.getItem('lovebase_daily_actions');
+    var parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || parsed.date !== _dailyKeyToday()) {
+      parsed = { date: _dailyKeyToday(), counts: {} };
+    }
+    return parsed;
+  } catch (e) {
+    return { date: _dailyKeyToday(), counts: {} };
+  }
+}
+
+function _saveDailyActionLog(log) {
+  try { localStorage.setItem('lovebase_daily_actions', JSON.stringify(log)); } catch (e) {}
+}
+
+// Returns true if this action still has "growth reward" budget left today,
+// and consumes one unit of that budget. Call this right before granting
+// XP / metric bonuses for a repeatable action. Saving/writing the content
+// itself should NOT be gated by this — only the reward.
+function consumeDailyGrowthBudget(actionKey, subKey) {
+  var cap = DAILY_ACTION_CAPS[actionKey];
+  if (!cap) return true; // ungated action types always get their reward
+  var log = _loadDailyActionLog();
+  var fullKey = subKey ? (actionKey + ':' + subKey) : actionKey;
+  var used = log.counts[fullKey] || 0;
+  if (used >= cap) return false;
+  log.counts[fullKey] = used + 1;
+  _saveDailyActionLog(log);
+  return true;
+}
+
+// FIX (permanent-lock bug): task/activity "done" keys previously had no date
+// component (e.g. 'A_path_v1'), so the UI said "Already completed today" but
+// actually meant "completed once, ever" — the task could never be redone or
+// re-rewarded on a later day. This helper scopes a base key to the current
+// day so daily practices genuinely reset every day, matching the UI text.
+function dailyTaskKey(baseKey) {
+  return baseKey + '_' + _dailyKeyToday();
+}
+
+function getDailyGrowthRemaining(actionKey, subKey) {
+  var cap = DAILY_ACTION_CAPS[actionKey];
+  if (!cap) return Infinity;
+  var log = _loadDailyActionLog();
+  var fullKey = subKey ? (actionKey + ':' + subKey) : actionKey;
+  var used = log.counts[fullKey] || 0;
+  return Math.max(0, cap - used);
+}
+
+// ==================== I18N (English / Italian) ====================
+// Covers the app's static chrome — screens, nav, card titles, tab labels,
+// buttons, placeholders — via data-i18n / data-i18n-placeholder attributes.
+// NOTE ON SCOPE: the large content arrays defined further down (PATH_ACTIVITIES,
+// NINE_GATES, TEMPLE_PRACTICES, THOUGHT_QUESTIONS, ACHIEVEMENTS, horoscope/
+// archetype text, etc.) are hundreds of separate strings of relationship-coaching
+// copy. They are NOT translated here — translating those well needs a real
+// editorial pass, not a mechanical one, so machine-translating them inline would
+// likely produce awkward Italian. The infrastructure below (LANG, i18nText,
+// applyTranslations) is ready for them to be added incrementally as
+// `content_xx` dictionary entries whenever you're ready to do that pass.
+const I18N = {
+  en: {
+    setup_headline: 'Two Paths,<br>One Journey',
+    setup_welcome: 'Welcome to Partners LOVEbase',
+    setup_connect_btn: 'Connect ✨',
+    setup_demo_btn: 'Demo Mode',
+    auth_welcome_back: 'Welcome Back',
+    auth_signin_subtitle: 'Sign in to continue your journey',
+    auth_card_title: 'Authentication',
+    auth_email_ph: 'Email',
+    auth_password_ph: 'Password (min 6 characters)',
+    auth_signin_btn: 'Sign In',
+    auth_signup_btn: 'Create New Account',
+    auth_forgot_btn: 'Forgot password?',
+    reset_title: 'Reset Password',
+    reset_email_ph: 'Your email address',
+    reset_send_btn: 'Send Reset Link ✉️',
+    reset_back_btn: '← Back to Sign In',
+    newpw_title: 'Choose a New Password',
+    newpw_subtitle: 'Enter and confirm your new password below.',
+    newpw_password_ph: 'New password (min 6 characters)',
+    newpw_confirm_ph: 'Confirm new password',
+    newpw_submit_btn: 'Set New Password ✅',
+    relsetup_headline: 'Start Your Journey',
+    relsetup_create_title: 'Create New Relationship',
+    relsetup_your_name_ph: 'Your name',
+    relsetup_partner_name_ph: "Partner's name",
+    relsetup_create_btn: 'Create Relationship ✨',
+    relsetup_join_title: 'Join Existing Relationship',
+    relsetup_join_ph: 'Enter 6-digit invite code',
+    relsetup_join_btn: 'Join Relationship',
+    waiting_headline: 'Waiting for Partner',
+    waiting_invite_label: 'Your Invite Code',
+    waiting_copy_btn: '📋 Copy Code',
+    sync_status_live: '🟢 Live Synced',
+    card_relationship_tree: 'Relationship Tree',
+    stat_growth: 'Growth',
+    stat_harmony: 'Harmony',
+    stat_vision: 'Vision',
+    card_weather: 'Relationship Weather',
+    card_daily_pulse: 'Daily Pulse',
+    card_archetype: 'Archetype',
+    header_our_journey: 'Our Journey',
+    card_baby_readiness: 'Baby Readiness',
+    baby_readiness_sub: 'Growing with your relationship',
+    card_insights: 'Insights',
+    card_mountain: 'Mountain',
+    card_galaxy: 'Galaxy',
+    growth_your_journey: 'Your journey',
+    tab_growth: 'Growth',
+    tab_daily: 'Daily',
+    tab_together: 'Together',
+    tab_soul: 'Soul',
+    tab_private: 'Private',
+    tab_temple: '🌿 Temple',
+    tab_paths: '🌱 Paths',
+    individual_practices: 'Individual Practices',
+    together_exercises: 'Together Exercises',
+    card_soul_wheel: 'Soul Journey Wheel',
+    private_notes_hint: '🔒 Only you can see these — unless you check "Share with partner" below.',
+    private_input_ph: 'Your private truth…',
+    private_share_label: '🌟 Share with partner',
+    private_save_btn: 'Save Private Note 🔒',
+    header_shared_journal: 'Shared Journal',
+    journal_input_ph: 'Write freely... Partner sees instantly ✨',
+    journal_add_btn: 'Add Entry ✦',
+    header_cosmic: 'Cosmic Context',
+    cosmic_sub: 'The universe holds you both',
+    card_moon_wisdom: 'Moon Wisdom',
+    card_daily_horoscope: 'Daily Horoscope',
+    card_dream_journal: 'Dream Journal ✨',
+    dream_title_ph: 'Dream title…',
+    dream_body_ph: 'What did you dream?',
+    dream_tag_label: 'Tag this dream:',
+    dream_record_btn: 'Record Dream 🌙',
+    dream_archive_label: 'Dream Archive',
+    nav_home: 'Home',
+    nav_couple: 'Our Journey',
+    nav_growth: 'My Growth',
+    nav_journal: 'Journal',
+    nav_cosmic: 'Cosmos',
+    you: 'You',
+    partner: 'Partner'
+  },
+  it: {
+    setup_headline: 'Due Sentieri,<br>Un Viaggio',
+    setup_welcome: 'Benvenuto/a su Partners LOVEbase',
+    setup_connect_btn: 'Connetti ✨',
+    setup_demo_btn: 'Modalità Demo',
+    auth_welcome_back: 'Bentornato/a',
+    auth_signin_subtitle: 'Accedi per continuare il tuo viaggio',
+    auth_card_title: 'Autenticazione',
+    auth_email_ph: 'Email',
+    auth_password_ph: 'Password (min 6 caratteri)',
+    auth_signin_btn: 'Accedi',
+    auth_signup_btn: 'Crea Nuovo Account',
+    auth_forgot_btn: 'Password dimenticata?',
+    reset_title: 'Reimposta Password',
+    reset_email_ph: 'Il tuo indirizzo email',
+    reset_send_btn: 'Invia Link di Reset ✉️',
+    reset_back_btn: '← Torna al Login',
+    newpw_title: 'Scegli una Nuova Password',
+    newpw_subtitle: 'Inserisci e conferma la tua nuova password.',
+    newpw_password_ph: 'Nuova password (min 6 caratteri)',
+    newpw_confirm_ph: 'Conferma nuova password',
+    newpw_submit_btn: 'Imposta Nuova Password ✅',
+    relsetup_headline: 'Inizia il Tuo Viaggio',
+    relsetup_create_title: 'Crea Nuova Relazione',
+    relsetup_your_name_ph: 'Il tuo nome',
+    relsetup_partner_name_ph: 'Nome del partner',
+    relsetup_create_btn: 'Crea Relazione ✨',
+    relsetup_join_title: 'Unisciti a una Relazione Esistente',
+    relsetup_join_ph: 'Inserisci il codice invito a 6 cifre',
+    relsetup_join_btn: 'Unisciti alla Relazione',
+    waiting_headline: 'In Attesa del Partner',
+    waiting_invite_label: 'Il Tuo Codice Invito',
+    waiting_copy_btn: '📋 Copia Codice',
+    sync_status_live: '🟢 Sincronizzato',
+    card_relationship_tree: 'Albero della Relazione',
+    stat_growth: 'Crescita',
+    stat_harmony: 'Armonia',
+    stat_vision: 'Visione',
+    card_weather: 'Meteo della Relazione',
+    card_daily_pulse: 'Impulso Quotidiano',
+    card_archetype: 'Archetipo',
+    header_our_journey: 'Il Nostro Viaggio',
+    card_baby_readiness: 'Prontezza per un Bambino',
+    baby_readiness_sub: 'Cresce insieme alla vostra relazione',
+    card_insights: 'Approfondimenti',
+    card_mountain: 'Montagna',
+    card_galaxy: 'Galassia',
+    growth_your_journey: 'Il tuo viaggio',
+    tab_growth: 'Crescita',
+    tab_daily: 'Quotidiano',
+    tab_together: 'Insieme',
+    tab_soul: 'Anima',
+    tab_private: 'Privato',
+    tab_temple: '🌿 Tempio',
+    tab_paths: '🌱 Sentieri',
+    individual_practices: 'Pratiche Individuali',
+    together_exercises: 'Esercizi Insieme',
+    card_soul_wheel: "Ruota del Viaggio dell'Anima",
+    private_notes_hint: '🔒 Solo tu puoi vederle — a meno che tu non selezioni "Condividi con il partner" qui sotto.',
+    private_input_ph: 'La tua verità privata…',
+    private_share_label: '🌟 Condividi con il partner',
+    private_save_btn: 'Salva Nota Privata 🔒',
+    header_shared_journal: 'Diario Condiviso',
+    journal_input_ph: 'Scrivi liberamente... Il partner lo vede subito ✨',
+    journal_add_btn: 'Aggiungi Voce ✦',
+    header_cosmic: 'Contesto Cosmico',
+    cosmic_sub: 'L\'universo vi accoglie entrambi',
+    card_moon_wisdom: 'Saggezza della Luna',
+    card_daily_horoscope: 'Oroscopo Quotidiano',
+    card_dream_journal: 'Diario dei Sogni ✨',
+    dream_title_ph: 'Titolo del sogno…',
+    dream_body_ph: 'Cosa hai sognato?',
+    dream_tag_label: 'Tagga questo sogno:',
+    dream_record_btn: 'Registra Sogno 🌙',
+    dream_archive_label: 'Archivio dei Sogni',
+    nav_home: 'Home',
+    nav_couple: 'Il Nostro Viaggio',
+    nav_growth: 'La Mia Crescita',
+    nav_journal: 'Diario',
+    nav_cosmic: 'Cosmo',
+    you: 'Tu',
+    partner: 'Partner'
+  }
+};
+
+function getCurrentLang() {
+  try { return localStorage.getItem('lovebase_lang') || 'en'; } catch(e) { return 'en'; }
+}
+
+function setCurrentLang(lang) {
+  try { localStorage.setItem('lovebase_lang', lang); } catch(e) {}
+}
+
+// Small lookup helper used by dynamically-generated JS strings (e.g. the
+// private-notes "You" / "Partner" author label).
+function i18nText(key) {
+  var lang = getCurrentLang();
+  var dict = I18N[lang] || I18N.en;
+  return dict[key] != null ? dict[key] : (I18N.en[key] || '');
+}
+
+function applyTranslations() {
+  var lang = getCurrentLang();
+  var dict = I18N[lang] || I18N.en;
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    if (dict[key] != null) el.innerHTML = dict[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key] != null) el.setAttribute('placeholder', dict[key]);
+  });
+  var htmlRoot = document.getElementById('html-root');
+  if (htmlRoot) htmlRoot.setAttribute('lang', lang);
+  var toggleLabel = document.getElementById('lang-toggle-label');
+  if (toggleLabel) toggleLabel.textContent = lang === 'en' ? 'IT' : 'EN';
+  // Re-render any already-visible dynamic lists so they pick up "You"/"Partner" labels, etc.
+  if (typeof loadPrivateNotes === 'function' && document.getElementById('tab-private') && document.getElementById('tab-private').style.display !== 'none') {
+    loadPrivateNotes();
+  }
+}
+
+function toggleLanguage() {
+  var next = getCurrentLang() === 'en' ? 'it' : 'en';
+  setCurrentLang(next);
+  applyTranslations();
+}
+window.toggleLanguage = toggleLanguage;
+applyTranslations();
 
 // ── Data ──
 const THOUGHT_QUESTIONS = [
@@ -917,7 +1213,7 @@ function renderPathsTab() {
     html += '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Activities</div>';
     activities.forEach(a => {
       let slot = currentMySlot || 'A';
-      let key2 = slot + '_path_' + a.id;
+      let key2 = dailyTaskKey(slot + '_path_' + a.id);
       let done = completedTasks && completedTasks[key2];
       let personalDisplay = '';
       let relationshipDisplay = '';
@@ -950,7 +1246,7 @@ function renderPathsTab() {
 // REPLACE the completePathActivity function
 async function completePathActivity(pathKey, activityId, xp, btn) {
   let slot = currentMySlot || 'A';
-  let key = slot + '_path_' + activityId;
+  let key = dailyTaskKey(slot + '_path_' + activityId);
   if (completedTasks && completedTasks[key]) {
     showToast('Already completed today ✓');
     return;
@@ -1056,10 +1352,25 @@ window.openPathPopup = openPathPopup;
 window.closePathPopup = closePathPopup;
 window.confirmPathActivity = confirmPathActivity;
 // ==================== INIT ====================
+const SUPABASE_URL = "https://eohdfgvebqdxstwdildk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
+
+// FIX (forgot-password bug, part 1 of 2): previously the Supabase client was
+// only ever created inside the connect-btn click handler. If someone clicked
+// the "Reset Link" in their email and landed back on the app in a fresh tab,
+// there was no client yet, so the recovery link could never be exchanged for
+// a session — the reset flow silently dead-ended. This shared factory lets
+// the recovery-detection code below create the client on page load, before
+// the person has clicked anything.
+function getOrCreateSbClient() {
+  if (!sbClient) {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return sbClient;
+}
+
 document.getElementById('connect-btn').onclick = () => {
-  const url = "https://eohdfgvebqdxstwdildk.supabase.co";
-  const key = "sb_publishable_OpCJbA6slz0upKAtwFAiWg_fQTpukHY";
-  sbClient = window.supabase.createClient(url, key);
+  getOrCreateSbClient();
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'block';
 };
@@ -1517,17 +1828,23 @@ async function addJournalEntry() {
   if(error){ alert(error.message); return; }
   input.value = '';
   renderJournal();
-  showToast('📖 Entry shared!');
 
-  // ADDED: XP for journaling
-  await awardXP(5); // Daily journal XP
-  addPathXP('variety', 3); // Contributes to emotional awareness
-  addPathXP('development', 2); // Contributes to communication
-
-  addPersonalMetric('selfAwareness', 1, 'journal entry');
-  addRelationshipMetric('communication', 1, 'journal entry');
-  addRelationshipMetric('friendship', 1, 'journal entry');
-  recalculateAllMetrics();
+  // FIX (scaling bug): journal entries used to grant XP + 3 metric bumps
+  // with no limit, so spamming short entries inflated scores very fast.
+  // Reward is now capped to a few entries per day; entries beyond the cap
+  // still save and appear in the journal, just without extra growth.
+  if (consumeDailyGrowthBudget('journal_entry')) {
+    showToast('📖 Entry shared! +growth');
+    await awardXP(5);
+    addPathXP('variety', 3);
+    addPathXP('development', 2);
+    addPersonalMetric('selfAwareness', 1, 'journal entry');
+    addRelationshipMetric('communication', 1, 'journal entry');
+    addRelationshipMetric('friendship', 1, 'journal entry');
+    recalculateAllMetrics();
+  } else {
+    showToast('📖 Entry shared!');
+  }
 }
 // ADD THIS FUNCTION
 function checkDailyLogin() {
@@ -1897,15 +2214,22 @@ async function saveShadowWork() {
     });
   }
   closeShadowModal();
-  showToast('🌑 Shadow work saved privately.');
-  await awardXP(3);
-  spawnFloatingEmoji('🌑');
-  addPathXP('development', 20);
-  addPersonalMetric('selfAwareness', 3, 'shadow work');
-  addPersonalMetric('vulnerability', 3, 'shadow work');
-  addRelationshipMetric('trust', 3, 'shadow work');
-  addRelationshipMetric('intimacy', 3, 'shadow work');
-  recalculateAllMetrics();
+  // FIX (scaling bug): shadow work is meant to be a deep once-a-day
+  // practice, but previously it could be repeated endlessly for +20 path XP
+  // and 4 metric bumps each time. Capped to once per day.
+  if (consumeDailyGrowthBudget('shadow_work')) {
+    showToast('🌑 Shadow work saved privately. +growth');
+    await awardXP(3);
+    spawnFloatingEmoji('🌑');
+    addPathXP('development', 20);
+    addPersonalMetric('selfAwareness', 3, 'shadow work');
+    addPersonalMetric('vulnerability', 3, 'shadow work');
+    addRelationshipMetric('trust', 3, 'shadow work');
+    addRelationshipMetric('intimacy', 3, 'shadow work');
+    recalculateAllMetrics();
+  } else {
+    showToast('🌑 Shadow work saved privately.');
+  }
 }
 
 document.getElementById('shadow-modal').addEventListener('click', function(e) {
@@ -1927,7 +2251,7 @@ const COUPLE_TASKS = [
 ];
 
 function taskCardHTML(t, isCouple){
-  var slot=currentMySlot||'A'; var key=slot+'_'+t.id; var done=completedTasks && completedTasks[key];
+  var slot=currentMySlot||'A'; var key=dailyTaskKey(slot+'_'+t.id); var done=completedTasks && completedTasks[key];
   let bonusText = '';
   if (isCouple) {
     bonusText = ' <span style="font-size:9px;color:var(--gold);">💑 All Relationship +2</span>';
@@ -1949,7 +2273,7 @@ function taskCardHTML(t, isCouple){
 async function markTaskComplete(taskId, xp, isCouple, btnEl) {
   if(!completedTasks) completedTasks = {};
   var slot = currentMySlot || 'A';
-  var key = slot + '_' + taskId;
+  var key = dailyTaskKey(slot + '_' + taskId);
   if(completedTasks[key]) { showToast('Already completed today ✓'); return; }
   completedTasks[key] = true;
   if(btnEl){ btnEl.innerHTML = '✓ Completed'; btnEl.style.opacity = '0.7'; }
@@ -2061,7 +2385,7 @@ function renderTempleTab() {
     '<div class="card"><div class="card-title">Temple Practices</div>' +
     TEMPLE_PRACTICES.slice(0, 4).map(t => {
       var slot = currentMySlot || 'A';
-      var key = slot + '_tp_' + t.id;
+      var key = dailyTaskKey(slot + '_tp_' + t.id);
       var done = completedTasks && completedTasks[key];
       return '<div class="temple-practice-card" style="padding:12px;margin-bottom:8px;">' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
@@ -2233,40 +2557,55 @@ function setTempleQuestion(qId) {
 }
 
 window.logWater = function() {
+  // FIX (scaling bug): previously XP/metrics were granted on every click even
+  // after templeState.waterGlasses had already hit its cap, and there was no
+  // daily reward limit, so this button alone could inflate scores endlessly.
+  var before = templeState.waterGlasses;
   templeState.waterGlasses = Math.min(templeState.waterGoal + 2, templeState.waterGlasses + 1);
   var bar = document.getElementById('temple-water-bar');
   var cnt = document.getElementById('temple-water-count');
   var pct = Math.min(100, Math.round(templeState.waterGlasses / templeState.waterGoal * 100));
   if (bar) bar.style.width = pct + '%';
   if (cnt) cnt.textContent = templeState.waterGlasses + '/' + templeState.waterGoal + '💧';
-  awardXP(5);
-  spawnFloatingEmoji('💧');
   showToast('💧 Water logged! Nourishing your temple.');
   updateRiverBalance('moon', 2);
   updateRiverBalance('central', 1);
   renderTempleTab();
   saveTempleState();
   if (templeState.waterGlasses >= 10) checkAchievements();
-  addPathXP('variety', 3);
-  addPersonalMetric('selfAwareness', 1, 'water logging');
-  addRelationshipMetric('trust', 1, 'water logging');
-  recalculateAllMetrics();
+
+  var actuallyIncreased = templeState.waterGlasses > before;
+  var withinDailyBudget = consumeDailyGrowthBudget('water_log');
+  if (actuallyIncreased && withinDailyBudget) {
+    awardXP(5);
+    spawnFloatingEmoji('💧');
+    addPathXP('variety', 3);
+    addPersonalMetric('selfAwareness', 1, 'water logging');
+    addRelationshipMetric('trust', 1, 'water logging');
+    recalculateAllMetrics();
+  }
 };
 
 window.startBreathSession = function(type) {
   templeState.breathSessions[type] = (templeState.breathSessions[type] || 0) + 1;
-  awardXP(20);
   var name = type === 'solar' ? 'Solar Breath' : type === 'lunar' ? 'Lunar Breath' : 'Harmony Breath';
   showToast('🌬️ ' + name + ' — settling into stillness…');
   updateRiverBalance(type === 'solar' ? 'sun' : type === 'lunar' ? 'moon' : 'central', 5);
   renderTempleTab();
   saveTempleState();
-  spawnFloatingEmoji('🌬️');
-  addPathXP('transcendence', 10);
-  addPersonalMetric('selfAwareness', 2, 'breath: ' + name);
-  addRelationshipMetric('trust', 2, 'breath: ' + name);
-  addRelationshipMetric('intimacy', 1, 'breath: ' + name);
-  recalculateAllMetrics();
+
+  // FIX (scaling bug): capped to a few rewarded sessions per breath type per day
+  if (consumeDailyGrowthBudget('breath_session', type)) {
+    awardXP(20);
+    spawnFloatingEmoji('🌬️');
+    addPathXP('transcendence', 10);
+    addPersonalMetric('selfAwareness', 2, 'breath: ' + name);
+    addRelationshipMetric('trust', 2, 'breath: ' + name);
+    addRelationshipMetric('intimacy', 1, 'breath: ' + name);
+    recalculateAllMetrics();
+  } else {
+    showToast('🌬️ ' + name + ' complete. (Daily growth bonus already earned for this practice.)');
+  }
 };
 
 window.markGateComplete = function(gateId, btn) {
@@ -2291,7 +2630,7 @@ window.markGateComplete = function(gateId, btn) {
 
 window.markTemplePractice = function(id, xp, btnEl) {
   var slot = currentMySlot || 'A';
-  var key = slot + '_tp_' + id;
+  var key = dailyTaskKey(slot + '_tp_' + id);
   if (completedTasks && completedTasks[key]) { showToast('Already completed today ✓'); return; }
   if (!completedTasks) completedTasks = {};
   completedTasks[key] = true;
@@ -2323,19 +2662,25 @@ window.saveTempleReflection = async function() {
       shared: false, note_type: 'temple_reflection'
     });
   }
-  awardXP(15);
-  showToast('✦ Reflection saved. The sanctuary grows.');
   input.value = '';
   updateRiverBalance('moon', 3);
   updateRiverBalance('central', 2);
   renderTempleTab();
   saveTempleState();
-  spawnFloatingEmoji('📝');
-  addPathXP('transcendence', 10);
-  addPersonalMetric('selfAwareness', 3, 'temple reflection');
-  addRelationshipMetric('trust', 3, 'temple reflection');
-  addRelationshipMetric('intimacy', 2, 'temple reflection');
-  recalculateAllMetrics();
+
+  // FIX (scaling bug): capped to once-a-day reward, matching the "daily question" intent
+  if (consumeDailyGrowthBudget('temple_reflection')) {
+    showToast('✦ Reflection saved. The sanctuary grows.');
+    awardXP(15);
+    spawnFloatingEmoji('📝');
+    addPathXP('transcendence', 10);
+    addPersonalMetric('selfAwareness', 3, 'temple reflection');
+    addRelationshipMetric('trust', 3, 'temple reflection');
+    addRelationshipMetric('intimacy', 2, 'temple reflection');
+    recalculateAllMetrics();
+  } else {
+    showToast('✦ Reflection saved.');
+  }
 };
 
 async function saveTempleState() {
@@ -2375,20 +2720,22 @@ window.setFoundation = async function(key, value, btn) {
     btn.style.color = 'var(--gold)';
   }
   showToast('✦ ' + key + ' updated to ' + value + '%');
-  
-  // ADDED: Small XP for self-care check-ins
-  await awardXP(3); // Small reward for self-awareness
-  addPathXP('variety', 2);
-  
+
   setTimeout(() => { 
     document.getElementById('modal-foundation').remove(); 
     renderTempleTab(); 
     saveTempleState(); 
   }, 500);
-  
-  addPersonalMetric('selfAwareness', 2, 'foundation: ' + key);
-  addRelationshipMetric('trust', 1, 'foundation: ' + key);
-  recalculateAllMetrics();
+
+  // FIX (scaling bug): capped per foundation key per day — this is a check-in
+  // slider, not a one-off action, so it could otherwise be re-clicked endlessly.
+  if (consumeDailyGrowthBudget('foundation', key)) {
+    await awardXP(3);
+    addPathXP('variety', 2);
+    addPersonalMetric('selfAwareness', 2, 'foundation: ' + key);
+    addRelationshipMetric('trust', 1, 'foundation: ' + key);
+    recalculateAllMetrics();
+  }
 };
 function updateRiverBalance(river, delta) {
   templeState.riverBalance[river] = Math.min(100, (templeState.riverBalance[river] || 50) + delta);
@@ -2808,15 +3155,21 @@ async function saveDreamEntry() {
   document.getElementById('dream-input').value = '';
   selectedDreamTags = [];
   document.querySelectorAll('#dream-tags .dream-tag').forEach(el => el.classList.remove('active'));
-  showToast('Dream recorded ✨');
-  await awardXP(20);
-  spawnFloatingEmoji('🌙');
-  addPathXP('transcendence', 10);
-  addPersonalMetric('selfAwareness', 2, 'dream recording');
-  addPersonalMetric('empathy', 2, 'dream recording');
-  addRelationshipMetric('intimacy', 3, 'dream recording');
-  addRelationshipMetric('trust', 2, 'dream recording');
-  recalculateAllMetrics();
+  // FIX (scaling bug): dream entries used to grant XP + 4 metric bumps every
+  // single time with no cap; capped to a couple of rewarded entries per day.
+  if (consumeDailyGrowthBudget('dream_entry')) {
+    showToast('Dream recorded ✨ +growth');
+    await awardXP(20);
+    spawnFloatingEmoji('🌙');
+    addPathXP('transcendence', 10);
+    addPersonalMetric('selfAwareness', 2, 'dream recording');
+    addPersonalMetric('empathy', 2, 'dream recording');
+    addRelationshipMetric('intimacy', 3, 'dream recording');
+    addRelationshipMetric('trust', 2, 'dream recording');
+    recalculateAllMetrics();
+  } else {
+    showToast('Dream recorded ✨');
+  }
 }
 
 async function loadDreams() {
@@ -2847,79 +3200,47 @@ function prependDreamRow(d) {
 }
 
 // ==================== PRIVATE NOTES ====================
+// FIX (sharing bug): this used to filter strictly by `.eq('user_id', currentUser.id)`,
+// which means a partner's toggle-on "🌟 Share with partner" note was NEVER visible
+// to the other person — the query never even asked for anyone else's rows.
+// Now we fetch: (my own notes, shared or not) OR (partner's notes marked shared),
+// both scoped to this relationship. This ALSO requires a matching Supabase RLS
+// policy — see note at the bottom of this file / the audit summary — otherwise
+// the database itself will still silently block the partner's shared rows.
 async function loadPrivateNotes() {
-  var el = document.getElementById('private-entries'); 
-  if(!el) return;
-  
-  if(!sbClient || !currentUser) { 
-    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">Sign in to load private notes.</div>'; 
-    return; 
-  }
-  
+  var el = document.getElementById('private-entries'); if(!el) return;
+  if(!sbClient || !currentUser) { el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">Sign in to load private notes.</div>'; return; }
   el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">Loading…</div>';
-  
-  // Get the partner's user ID
-  var partnerId = null;
-  if (currentMySlot === 'A') {
-    partnerId = liveData?.partner_b_id;
-  } else {
-    partnerId = liveData?.partner_a_id;
-  }
-  
-  // Fetch notes from both current user AND partner
-  var userIds = [currentUser.id];
-  if (partnerId) {
-    userIds.push(partnerId);
-  }
-  
   var res = await sbClient.from('private_notes')
     .select('id,created_at,body,shared,user_id')
     .eq('relationship_id', currentRelationshipId)
-    .in('user_id', userIds)
-    .order('created_at', {ascending: false})
-    .limit(50);
-  
-  if(res.error) { 
-    el.innerHTML = '<div style="color:var(--rose);padding:16px;">' + escHtml(res.error.message) + '</div>'; 
-    return; 
-  }
-  
+    .or('user_id.eq.' + currentUser.id + ',shared.eq.true')
+    .order('created_at', {ascending: false}).limit(50);
+  if(res.error) { el.innerHTML = '<div style="color:var(--rose);padding:16px;">' + escHtml(res.error.message) + '</div>'; return; }
   el.innerHTML = '';
-  if(!res.data || res.data.length === 0) { 
-    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">No private notes yet.</div>'; 
-    return; 
-  }
-  
-  // Filter: Show all user's own notes + partner's shared notes
-  var visibleNotes = res.data.filter(n => {
-    // Current user sees all their notes
-    if (n.user_id === currentUser.id) return true;
-    // Current user sees partner's notes ONLY if shared
-    if (n.user_id === partnerId && n.shared === true) return true;
-    return false;
-  });
-  
-  if (visibleNotes.length === 0) {
-    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">No shared notes from partner yet.</div>';
-    return;
-  }
-  
-  visibleNotes.forEach(n => el.insertAdjacentHTML('beforeend', buildPrivateRow(n)));
+  if(!res.data || res.data.length === 0) { el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;font-style:italic;">No private notes yet.</div>'; return; }
+  res.data.forEach(n => el.insertAdjacentHTML('beforeend', buildPrivateRow(n)));
 }
+
 function buildPrivateRow(n) {
-  return '<div style="padding:14px;background:rgba(155,109,255,0.06);border-left:2px solid var(--purple);border-radius:0 16px 16px 0;margin-bottom:10px;" data-note-id="' + n.id + '"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">' + new Date(n.created_at).toLocaleString() + '</div><div style="font-size:13px;color:var(--text1);line-height:1.6;font-style:italic;font-family:var(--font);">' + escHtml(n.body) + '</div><div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--rose);background:rgba(232,112,112,0.1);border:0.5px solid rgba(232,112,112,0.3);border-radius:20px;padding:2px 8px;margin-top:6px;">' + (n.shared ? '👁 Shared' : '🔒 Private') + '</div></div>';
+  var isMine = currentUser && n.user_id === currentUser.id;
+  var whoLabel = isMine ? (i18nText('you') || 'You') : (i18nText('partner') || 'Partner');
+  return '<div style="padding:14px;background:rgba(155,109,255,0.06);border-left:2px solid var(--purple);border-radius:0 16px 16px 0;margin-bottom:10px;" data-note-id="' + n.id + '"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">' + new Date(n.created_at).toLocaleString() + ' · ' + escHtml(whoLabel) + '</div><div style="font-size:13px;color:var(--text1);line-height:1.6;font-style:italic;font-family:var(--font);">' + escHtml(n.body) + '</div><div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--rose);background:rgba(232,112,112,0.1);border:0.5px solid rgba(232,112,112,0.3);border-radius:20px;padding:2px 8px;margin-top:6px;">' + (n.shared ? '👁 Shared' : '🔒 Private') + '</div></div>';
 }
 
 async function savePrivateNote() {
   var input = document.getElementById('private-input'), shared = document.getElementById('private-share-toggle').checked, body = input ? input.value.trim() : '';
   if(!body) { showToast('Write something first'); return; }
   if(!sbClient || !currentUser || !currentRelationshipId) { showToast('Not connected.'); return; }
-  var res = await sbClient.from('private_notes').insert({user_id: currentUser.id, relationship_id: currentRelationshipId, body: body, shared: shared}).select('id,created_at,body,shared').single();
+  var res = await sbClient.from('private_notes').insert({user_id: currentUser.id, relationship_id: currentRelationshipId, body: body, shared: shared}).select('id,created_at,body,shared,user_id').single();
   if(res.error) { showToast('⚠️ ' + res.error.message); return; }
   if(input) input.value = '';
   var el = document.getElementById('private-entries');
   if(el && res.data) el.insertAdjacentHTML('afterbegin', buildPrivateRow(res.data));
   showToast(shared ? '✨ Saved! Partner can see this.' : '🔒 Saved privately.');
+
+  // FIX (scaling bug): capped rewarded private notes per day
+  if (!consumeDailyGrowthBudget('private_note')) { return; }
   await awardXP(10);
   spawnFloatingEmoji('📝');
   addPathXP('development', 5);
@@ -3079,8 +3400,25 @@ async function completeIntake() {
 }
 
 // ==================== FORGOT PASSWORD ====================
+// AUDIT SUMMARY (forgot-password reset was broken in two ways):
+//  1) sendPasswordReset() required sbClient to already exist, but sbClient
+//     was only created inside the connect-btn click handler — so on a fresh
+//     visit (no click yet) "Send Reset Link" failed with "Not connected".
+//     Fixed by auto-creating the client here via getOrCreateSbClient().
+//  2) The email's reset link sends the person back to the app with a
+//     recovery token, but nothing in the app ever looked for that token or
+//     showed a "choose a new password" screen — clicking the emailed link
+//     just landed back on the normal sign-in screen and the password was
+//     never actually changed. Fixed with initPasswordRecoveryFlow() below,
+//     a new #reset-newpassword-screen, and submitNewPassword().
+const ALL_AUTH_SCREENS = ['setup-screen','auth-screen','relationship-setup-screen','waiting-screen','forgot-password-screen','reset-newpassword-screen','main-app'];
+
+function hideAllAuthScreens() {
+  ALL_AUTH_SCREENS.forEach(id => { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+}
+
 function showForgotPassword() {
-  ['setup-screen','auth-screen','relationship-setup-screen','waiting-screen','forgot-password-screen','main-app'].forEach(id => { var el=document.getElementById(id); if(el) el.style.display='none'; });
+  hideAllAuthScreens();
   document.getElementById('forgot-password-screen').style.display = 'flex';
   var authEmail = document.getElementById('auth-email');
   var resetEmail = document.getElementById('reset-email');
@@ -3088,8 +3426,14 @@ function showForgotPassword() {
 }
 
 function showSignIn() {
-  ['setup-screen','auth-screen','relationship-setup-screen','waiting-screen','forgot-password-screen','main-app'].forEach(id => { var el=document.getElementById(id); if(el) el.style.display='none'; });
+  hideAllAuthScreens();
   document.getElementById('auth-screen').style.display = 'flex';
+}
+
+function showResetNewPasswordScreen() {
+  hideAllAuthScreens();
+  var scr = document.getElementById('reset-newpassword-screen');
+  if (scr) scr.style.display = 'flex';
 }
 
 async function sendPasswordReset() {
@@ -3101,12 +3445,67 @@ async function sendPasswordReset() {
   if(sucEl) sucEl.textContent = '';
   var email = emailEl ? emailEl.value.trim() : '';
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if(errEl) errEl.textContent = 'Enter a valid email address.'; return; }
-  if(!sbClient) { if(errEl) errEl.textContent = 'Not connected to Supabase.'; return; }
+  // FIX: auto-create the client instead of requiring a prior "Connect" click
+  var client = getOrCreateSbClient();
   if(btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
-  var res = await sbClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname + '?mode=reset' });
+  var res = await client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname + '?mode=reset' });
   if(btn) { btn.disabled = false; btn.innerHTML = 'Send Reset Link ✉️'; }
   if(res.error) { if(errEl) errEl.textContent = res.error.message; return; }
   if(sucEl) sucEl.textContent = '✉️ Reset link sent to ' + email + '. Check your inbox.';
+}
+
+// FIX (forgot-password bug, part 2 of 2): detect the recovery link on load.
+// Supabase appends the recovery tokens as a URL hash (#access_token=...&type=recovery)
+// to whatever redirectTo we passed above; the '?mode=reset' query param survives
+// alongside it. When the Supabase client is created with detectSessionInUrl
+// (the default), it exchanges that hash for a real session and fires a
+// 'PASSWORD_RECOVERY' auth event — we listen for that and show the
+// "choose a new password" screen instead of the normal sign-in screen.
+function isPasswordRecoveryUrl() {
+  var qs = window.location.search || '';
+  var hash = window.location.hash || '';
+  return qs.indexOf('mode=reset') !== -1 || hash.indexOf('type=recovery') !== -1;
+}
+
+async function initPasswordRecoveryFlow() {
+  if (!isPasswordRecoveryUrl()) return;
+  var client = getOrCreateSbClient();
+  // Show the new-password screen immediately; the token exchange happens
+  // in the background and only needs to finish before the user submits.
+  showResetNewPasswordScreen();
+  client.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') showResetNewPasswordScreen();
+  });
+  // Fallback in case the event already fired before this listener attached.
+  try {
+    var sess = await client.auth.getSession();
+    if (sess && sess.data && sess.data.session) showResetNewPasswordScreen();
+  } catch(e) {}
+}
+
+async function submitNewPassword() {
+  var pwEl = document.getElementById('newpw-password');
+  var pw2El = document.getElementById('newpw-confirm');
+  var errEl = document.getElementById('newpw-error');
+  var sucEl = document.getElementById('newpw-success');
+  var btn = document.getElementById('newpw-submit-btn');
+  if (errEl) errEl.textContent = '';
+  if (sucEl) sucEl.textContent = '';
+  var pw = pwEl ? pwEl.value : '';
+  var pw2 = pw2El ? pw2El.value : '';
+  if (!pw || pw.length < 6) { if(errEl) errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pw !== pw2) { if(errEl) errEl.textContent = 'Passwords do not match.'; return; }
+  var client = getOrCreateSbClient();
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Saving…'; }
+  var res = await client.auth.updateUser({ password: pw });
+  if (btn) { btn.disabled = false; btn.innerHTML = 'Set New Password ✅'; }
+  if (res.error) { if(errEl) errEl.textContent = res.error.message; return; }
+  if (sucEl) sucEl.textContent = '✅ Password updated! Redirecting to sign in…';
+  setTimeout(() => {
+    // Clear the recovery params so a refresh doesn't loop back to this screen
+    history.replaceState(null, '', window.location.pathname);
+    showSignIn();
+  }, 1500);
 }
 
 // ==================== STARS ====================
@@ -3138,6 +3537,7 @@ function initStars() {
 
 // ==================== INIT ====================
 initStars();
+initPasswordRecoveryFlow();
 
 // ==================== MAKE FUNCTIONS GLOBAL ====================
 // This makes all functions accessible to HTML onclick attributes
@@ -3192,6 +3592,7 @@ window.selectIntakeYN = selectIntakeYN;
 window.showForgotPassword = showForgotPassword;
 window.showSignIn = showSignIn;
 window.sendPasswordReset = sendPasswordReset;
+window.submitNewPassword = submitNewPassword;
 
 // ⭐ PATH ACTIVITIES ⭐
 window.completePathActivity = completePathActivity;
