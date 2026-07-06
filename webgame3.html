@@ -1,1257 +1,3116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>OLIVIUM — The Olive Estate Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="webgame3.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>🌿 Olivium Estate — Full UI</title>
     <style>
         /* ============================================================
-           NEW ENHANCEMENTS - Visual & Interactive
+           COMPLETE STYLESHEET - All UI Components Restored
            ============================================================ */
-
-        /* ── Particle Effects ─────────────────────────────────────────── */
-        .particle-container {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            animation: particleFloat 1.5s ease-out forwards;
-            pointer-events: none;
+        :root {
+            --gold: #C5A059;
+            --gold-dim: #9a7a3a;
+            --gold-bright: #f0c96e;
+            --gold-bg: rgba(197, 160, 89, 0.08);
+            --green: #5ccc7e;
+            --red: #f05555;
+            --purple: #b06bf0;
+            --blue: #4fa3f7;
+            --bg: #090705;
+            --bg-card: #13100b;
+            --border: rgba(197, 160, 89, 0.12);
+            --border-mid: rgba(197, 160, 89, 0.22);
+            --text: #e8dcc8;
+            --text-dim: rgba(232, 220, 200, 0.55);
+            --text-faint: rgba(232, 220, 200, 0.28);
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
         }
-
-        @keyframes particleFloat {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1) rotate(0deg);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-150px) scale(0) rotate(720deg);
-            }
-        }
-
-        .particle-harvest {
-            background: radial-gradient(circle, #f0c96e, #c5a059);
-            box-shadow: 0 0 10px rgba(197, 160, 89, 0.5);
-        }
-        .particle-plant {
-            background: radial-gradient(circle, #5ccc7e, #2d8a4e);
-            box-shadow: 0 0 10px rgba(92, 204, 126, 0.5);
-        }
-        .particle-water {
-            background: radial-gradient(circle, #60a5fa, #2563eb);
-            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-        }
-        .particle-gold {
-            background: radial-gradient(circle, #fbbf24, #d97706);
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
-        }
-        .particle-rare {
-            background: radial-gradient(circle, #a855f7, #7c3aed);
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
-        }
-
-        /* ── Tree Glow Effects ────────────────────────────────────────── */
-        .tree-card .glow-ring {
-            position: absolute;
-            inset: -4px;
-            border-radius: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .tree-card:hover .glow-ring {
-            opacity: 1;
-        }
-
-        .tree-card.ready .glow-ring {
-            opacity: 0.6;
-            animation: glowPulse 2s ease-in-out infinite;
-        }
-
-        .tree-card.legendary .glow-ring {
-            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.3), transparent 70%);
-            animation: glowPulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes glowPulse {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
-        }
-
-        /* ── Tree Sprite Animations ───────────────────────────────────── */
-        .tree-sprite {
-            transition: transform 0.3s ease, filter 0.3s ease;
-        }
-
-        .tree-card:hover .tree-sprite {
-            transform: scale(1.1);
-            filter: brightness(1.2);
-        }
-
-        .tree-card.ready .tree-sprite {
-            animation: readyFloat 2s ease-in-out infinite;
-        }
-
-        @keyframes readyFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        /* ── Legendary Tree Sparkles ──────────────────────────────────── */
-        .sparkle-container {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .sparkle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: #fbbf24;
-            animation: sparkleFloat 2s ease-in-out infinite;
-            box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
-        }
-
-        @keyframes sparkleFloat {
-            0%, 100% {
-                opacity: 0;
-                transform: translateY(0) scale(0);
-            }
-            50% {
-                opacity: 1;
-                transform: translateY(-20px) scale(1);
-            }
-        }
-
-        /* ── Achievement Unlock Animation ────────────────────────────── */
-        .achievement-popup {
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: linear-gradient(135deg, #1a140d, #2a1e08);
-            border: 2px solid #c5a059;
-            border-radius: 16px;
-            padding: 16px 24px;
-            z-index: 9999;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            text-align: center;
-            min-width: 280px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 40px rgba(197, 160, 89, 0.1);
-        }
-
-        .achievement-popup.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .achievement-popup .ach-icon {
-            font-size: 32px;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .achievement-popup .ach-title {
-            font-weight: 700;
-            color: #c5a059;
-            font-size: 14px;
-        }
-        .achievement-popup .ach-desc {
-            font-size: 11px;
-            color: var(--text-dim);
-            margin-top: 2px;
-        }
-        .achievement-popup .ach-reward {
-            font-size: 10px;
-            color: #4ade80;
-            margin-top: 4px;
-        }
-
-        /* ── Tree Card Enhancements ───────────────────────────────────── */
-        .tree-card {
-            position: relative;
-            overflow: visible;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-        }
-
-        .tree-card .rarity-badge {
-            font-size: 8px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            font-weight: 700;
-            z-index: 2;
-        }
-
-        .tree-card .rarity-badge.legendary {
-            border-color: #a855f7;
-            color: #a855f7;
-            background: rgba(168, 85, 247, 0.15);
-        }
-
-        .tree-card .tree-level {
-            position: absolute;
-            bottom: -4px;
-            right: -4px;
-            font-size: 8px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 1px 6px;
-            border-radius: 8px;
-            color: var(--text-faint);
-            border: 1px solid var(--border);
-        }
-
-        /* ── Weather Effects ──────────────────────────────────────────── */
-        .weather-overlay {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        .weather-overlay.active {
-            opacity: 1;
-        }
-
-        .weather-overlay.rain {
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 3px,
-                rgba(100, 149, 237, 0.02) 3px,
-                rgba(100, 149, 237, 0.02) 4px
-            );
-            animation: rainFall 0.5s linear infinite;
-        }
-
-        @keyframes rainFall {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 20px; }
-        }
-
-        .weather-overlay.heatwave {
-            background: radial-gradient(ellipse at center, rgba(255, 200, 50, 0.05), transparent 60%);
-            animation: heatHaze 2s ease-in-out infinite;
-        }
-
-        @keyframes heatHaze {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.8; }
-        }
-
-        /* ── Combo Counter Animation ──────────────────────────────────── */
-        .combo-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 48px;
-            font-weight: 700;
-            color: #fbbf24;
-            text-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
-            pointer-events: none;
-            z-index: 9998;
-            transition: none;
-            font-family: var(--font-serif);
-        }
-
-        .combo-popup.show {
-            animation: comboPop 0.8s ease-out forwards;
-        }
-
-        @keyframes comboPop {
-            0% {
-                transform: translate(-50%, -50%) scale(0);
-                opacity: 1;
-            }
-            30% {
-                transform: translate(-50%, -50%) scale(1.5);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(-50%, -60%) scale(1);
-                opacity: 0;
-            }
-        }
-
-        /* ── Floating Numbers ──────────────────────────────────────────── */
-        .float-text {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9997;
-            font-weight: 700;
-            font-size: 18px;
-            animation: floatUp 1.2s ease-out forwards;
-        }
-
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-80px) scale(0.8);
-            }
-        }
-
-        .float-text.gold { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
-        .float-text.green { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
-        .float-text.purple { color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.3); }
-        .float-text.red { color: #f87171; text-shadow: 0 0 10px rgba(248, 113, 113, 0.3); }
-
-        /* ── Tooltip Enhancements ──────────────────────────────────────── */
-        .tree-card[data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
+        body {
+            font-family: var(--font-mono);
+            background: var(--bg);
             color: var(--text);
+            font-size: 13px;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            background: var(--bg);
+            overflow: hidden;
+        }
+
+        /* ─── TOP BAR ──────────────────────────────────────────────── */
+        .top-bar {
+            background: rgba(9, 7, 5, 0.95);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
             padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 9px;
-            white-space: nowrap;
-            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
             z-index: 10;
+        }
+        .top-bar .title {
+            font-family: var(--font-serif);
+            font-size: 14px;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+        }
+        .top-bar .title small {
+            font-size: 9px;
+            opacity: 0.5;
             font-family: var(--font-mono);
         }
+        .top-bar .connect-btn {
+            background: linear-gradient(135deg, #3a2a10, #2a1e08);
+            border: 1px solid var(--border-mid);
+            color: var(--gold);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.2s;
+        }
+        .top-bar .connect-btn:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 14px rgba(197, 160, 89, 0.15);
+        }
 
-        /* ── Responsive Tree Grid ─────────────────────────────────────── */
+        /* ─── HUD ROW ──────────────────────────────────────────────── */
+        .hud-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+        }
+        .hud-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .hud-item .label {
+            font-size: 7px;
+            letter-spacing: 0.08em;
+            color: var(--text-faint);
+            text-transform: uppercase;
+        }
+        .hud-item .value {
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--gold);
+        }
+        .hud-item .value.green {
+            color: var(--green);
+        }
+        .hud-item .value.purple {
+            color: var(--purple);
+        }
+        .hud-item .value.combo {
+            color: #f09040;
+        }
+
+        /* ─── WEATHER STRIP ────────────────────────────────────────── */
+        .weather-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            background: rgba(19, 16, 11, 0.8);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            font-size: 10px;
+        }
+        .weather-strip .weather-icon {
+            font-size: 18px;
+        }
+        .weather-strip .weather-info {
+            flex: 1;
+            display: flex;
+            gap: 12px;
+            color: var(--text-dim);
+        }
+        .weather-strip .weather-info .main {
+            color: var(--text);
+            font-weight: 600;
+        }
+        .weather-strip .season-badge {
+            background: var(--gold-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 9px;
+            color: var(--gold);
+        }
+        .weather-strip .market-price {
+            font-weight: 700;
+            color: var(--gold-bright);
+            font-size: 14px;
+        }
+
+        /* ─── MAIN CONTENT ─────────────────────────────────────────── */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 8px;
+            scroll-behavior: smooth;
+        }
+        .main-content::-webkit-scrollbar {
+            width: 3px;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--border-mid);
+            border-radius: 3px;
+        }
+
+        /* ─── ACTION BUTTONS ───────────────────────────────────────── */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        .action-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-mono);
+            color: var(--text);
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .action-btn:hover {
+            border-color: var(--border-mid);
+            background: var(--bg-card);
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+        .action-btn .icon {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .action-btn .cost {
+            font-size: 7px;
+            color: var(--text-faint);
+        }
+        .action-btn.primary {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-bg);
+        }
+        .action-btn.green {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(92, 204, 126, 0.08);
+        }
+        .action-btn.purple {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: rgba(176, 107, 240, 0.08);
+        }
+        .action-btn.blue {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: rgba(79, 163, 247, 0.08);
+        }
+        .action-btn.danger {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(240, 85, 85, 0.08);
+        }
+
+        /* ─── GROVE GRID ───────────────────────────────────────────── */
         .grove-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 8px;
         }
-
-        @media (max-width: 480px) {
-            .grove-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 6px;
-            }
-            .tree-card {
-                min-height: 120px;
-                padding: 8px 4px;
-            }
-            .tree-sprite {
-                width: 38px;
-                height: 38px;
-            }
-        }
-
-        @media (min-width: 481px) and (max-width: 768px) {
+        @media (min-width: 400px) {
             .grove-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
         }
-
-        @media (min-width: 769px) {
+        @media (min-width: 500px) {
             .grove-grid {
                 grid-template-columns: repeat(5, 1fr);
             }
         }
 
-        /* ── Haptic Feedback Indication ────────────────────────────────── */
+        .tree-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .tree-card:hover {
+            border-color: var(--border-mid);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
         .tree-card:active {
             transform: scale(0.95);
-            transition: transform 0.05s;
         }
-
-        /* ── Save Status Animation ────────────────────────────────────── */
-        .save-status.saving {
-            animation: savePulse 0.5s ease-in-out infinite;
+        .tree-card .tree-icon {
+            font-size: 28px;
+            line-height: 1;
         }
-
-        @keyframes savePulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        /* ── Chat / Social Panel (Placeholder) ────────────────────────── */
-        .social-panel {
-            position: fixed;
-            bottom: 80px;
-            right: 16px;
-            width: 240px;
-            max-height: 300px;
-            background: rgba(9, 7, 5, 0.95);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            z-index: 70;
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-
-        .social-panel.active {
-            display: block;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .social-panel .social-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 9px;
+        .tree-card .tree-id {
+            font-size: 7px;
             color: var(--text-faint);
-            letter-spacing: 0.1em;
+        }
+        .tree-card .tree-stage {
+            font-size: 7px;
             text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+        }
+        .tree-card .tree-bars {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .tree-card .tree-bars .bar {
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+        .tree-card .tree-bars .bar .fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        .tree-card .tree-bars .bar .fill.water {
+            background: linear-gradient(90deg, #2563eb, #60a5fa);
+        }
+        .tree-card .tree-bars .bar .fill.health {
+            background: linear-gradient(90deg, #16a34a, #4ade80);
+        }
+        .tree-card .tree-bars .bar .fill.pest {
+            background: linear-gradient(90deg, #dc2626, #f87171);
+        }
+        .tree-card .badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 10px;
+        }
+        .tree-card .badge.left {
+            left: 2px;
+            right: auto;
+        }
+        .tree-card.ready {
+            border-color: rgba(197, 160, 89, 0.4);
+            box-shadow: 0 0 16px rgba(197, 160, 89, 0.1);
+        }
+        .tree-card.ready .tree-icon {
+            animation: readyPulse 2s ease-in-out infinite;
+        }
+        @keyframes readyPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        .tree-card.dead {
+            opacity: 0.4;
+            cursor: default;
+        }
+        .tree-card.dead:hover {
+            transform: none;
+        }
+        .tree-card .ready-pip {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 8px var(--gold);
+            animation: pipPulse 1.4s ease-in-out infinite;
+        }
+        @keyframes pipPulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* ─── MILL CARD ────────────────────────────────────────────── */
+        .mill-card {
+            background: linear-gradient(135deg, rgba(20, 16, 11, 0.95), rgba(30, 20, 10, 0.9));
+            border: 1px solid rgba(200, 132, 60, 0.25);
+            border-radius: 10px;
+            padding: 10px;
             margin-bottom: 8px;
         }
-
-        .social-panel .social-close {
-            cursor: pointer;
-            color: var(--text-faint);
-            font-size: 14px;
+        .mill-card .mill-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
-
-        .social-panel .social-message {
+        .mill-card .mill-header .mill-icon {
+            font-size: 28px;
+        }
+        .mill-card .mill-header .mill-info {
+            flex: 1;
+        }
+        .mill-card .mill-header .mill-info .hopper {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .mill-card .mill-header .mill-info .hopper small {
             font-size: 10px;
-            color: var(--text-dim);
-            padding: 4px 0;
-            border-bottom: 1px solid var(--border);
+            opacity: 0.5;
+            font-weight: 400;
         }
-
-        .social-panel .social-message .username {
-            color: var(--gold);
-            font-weight: 600;
+        .mill-gauges {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
         }
-
-        .social-btn {
-            position: fixed;
-            bottom: 74px;
-            right: 80px;
-            width: 44px;
-            height: 44px;
+        .gauge {
+            text-align: center;
+        }
+        .gauge .gauge-label {
+            font-size: 7px;
+            letter-spacing: 0.08em;
+            color: var(--text-faint);
+            text-transform: uppercase;
+        }
+        .gauge .gauge-ring {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: rgba(197, 160, 89, 0.15);
-            border: 1px solid var(--border-mid);
-            color: var(--gold);
-            font-size: 18px;
-            cursor: pointer;
-            z-index: 60;
-            transition: all 0.2s;
+            margin: 2px auto;
+            position: relative;
+            background: conic-gradient(var(--gauge-color, #c5a059) var(--gauge-pct, 0%), rgba(255, 255, 255, 0.05) 0%);
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        .social-btn:hover {
-            background: rgba(197, 160, 89, 0.25);
-            border-color: var(--gold);
-            box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
-        }
-
-        /* ── Online Status Indicator ──────────────────────────────────── */
-        .online-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
+        .gauge .gauge-ring::before {
+            content: '';
+            position: absolute;
+            inset: 5px;
             border-radius: 50%;
-            background: #4ade80;
-            margin-right: 4px;
-            animation: onlinePulse 2s ease-in-out infinite;
+            background: var(--bg-card);
+        }
+        .gauge .gauge-ring .value {
+            position: relative;
+            z-index: 1;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .gauge .gauge-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+            margin-top: 2px;
+        }
+        .gauge .gauge-bar .fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        .gauge .gauge-bar .fill.mash {
+            background: linear-gradient(90deg, #9a6014, #c5a059);
+        }
+        .gauge .gauge-bar .fill.heat {
+            background: linear-gradient(90deg, #c2410c, #fb923c);
+        }
+        .gauge .gauge-bar .fill.gunk {
+            background: linear-gradient(90deg, #6d28d9, #a855f7);
         }
 
-        @keyframes onlinePulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        /* ─── QUEST CARD ───────────────────────────────────────────── */
+        .quest-card {
+            background: linear-gradient(135deg, rgba(29, 78, 216, 0.07), rgba(19, 16, 11, 0.95));
+            border: 1px solid rgba(79, 163, 247, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .quest-card .quest-title {
+            font-size: 8px;
+            letter-spacing: 0.12em;
+            color: var(--blue);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .quest-card .quest-desc {
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+        .quest-card .quest-progress {
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+        .quest-card .quest-progress .fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #1d4ed8, #60a5fa);
+            transition: width 0.3s;
+        }
+        .quest-card .quest-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+            font-size: 9px;
+            color: var(--text-dim);
+        }
+        .quest-card .quest-footer .rewards {
+            display: flex;
+            gap: 6px;
+        }
+        .quest-card .quest-footer .rewards .chip {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            padding: 1px 6px;
+        }
+
+        /* ─── BOOSTS ────────────────────────────────────────────────── */
+        .boosts-row {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+            min-height: 20px;
+        }
+        .boost-chip {
+            font-size: 8px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .boost-chip.green {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(92, 204, 126, 0.08);
+        }
+        .boost-chip.blue {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: rgba(79, 163, 247, 0.08);
+        }
+        .boost-chip.purple {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: rgba(176, 107, 240, 0.08);
+        }
+
+        /* ─── BOTTOM NAV ────────────────────────────────────────────── */
+        .bottom-nav {
+            display: flex;
+            background: rgba(9, 7, 5, 0.96);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            padding: 4px 0 max(env(safe-area-inset-bottom), 4px);
+            z-index: 20;
+            position: relative;
+        }
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 4px 0;
+            font-size: 8px;
+            letter-spacing: 0.05em;
+            color: var(--text-faint);
+            cursor: pointer;
+            transition: color 0.2s;
+            font-family: var(--font-mono);
+            border: none;
+            background: none;
+        }
+        .nav-item .nav-icon {
+            font-size: 16px;
+            display: block;
+            margin-bottom: 1px;
+        }
+        .nav-item:hover {
+            color: var(--text-dim);
+        }
+        .nav-item.active {
+            color: var(--gold);
+        }
+        .nav-item.active::after {
+            content: '';
+            display: block;
+            width: 16px;
+            height: 2px;
+            background: var(--gold);
+            margin: 2px auto 0;
+            border-radius: 1px;
+        }
+
+        /* ─── PANELS ────────────────────────────────────────────────── */
+        .panel-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 50;
+            backdrop-filter: blur(3px);
+        }
+        .panel-overlay.active {
+            display: block;
+        }
+
+        .panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            background: linear-gradient(180deg, #1c1408, #110d06);
+            border-top: 1px solid var(--border-mid);
+            border-radius: 20px 20px 0 0;
+            padding: 16px 16px 80px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .panel.active {
+            transform: translateY(0);
+        }
+        .panel .panel-handle {
+            width: 32px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 2px;
+            margin: 0 auto 12px;
+        }
+        .panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .panel .panel-header h3 {
+            font-family: var(--font-serif);
+            font-size: 16px;
+            color: var(--gold);
+        }
+        .panel .panel-header .close-btn {
+            font-size: 20px;
+            color: var(--text-faint);
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .panel .panel-header .close-btn:hover {
+            color: var(--gold);
+        }
+
+        /* ─── UPGRADE ITEMS ────────────────────────────────────────── */
+        .upgrade-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+            text-align: left;
+            font-family: var(--font-mono);
+            color: var(--text);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .upgrade-item:hover {
+            border-color: var(--border-mid);
+            background: var(--bg-card);
+        }
+        .upgrade-item .icon {
+            font-size: 20px;
+            width: 32px;
+            text-align: center;
+        }
+        .upgrade-item .info {
+            flex: 1;
+        }
+        .upgrade-item .info .name {
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .upgrade-item .info .desc {
+            font-size: 8px;
+            color: var(--text-faint);
+        }
+        .upgrade-item .cost {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+        .upgrade-item .cost.purple {
+            color: var(--purple);
+        }
+        .upgrade-item .cost.green {
+            color: var(--green);
+        }
+        .upgrade-item.purchased {
+            opacity: 0.5;
+            cursor: default;
+            border-style: dashed;
+        }
+        .upgrade-item.purchased:hover {
+            border-color: var(--border);
+        }
+
+        .currency-toggle {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+        .currency-toggle button {
+            flex: 1;
+            padding: 5px;
+            font-size: 9px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-faint);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.15s;
+        }
+        .currency-toggle button.active-sol {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-bg);
+        }
+        .currency-toggle button.active-olv {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: rgba(176, 107, 240, 0.08);
+        }
+
+        /* ─── SKILL ITEMS ──────────────────────────────────────────── */
+        .skill-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(176, 107, 240, 0.04);
+            border: 1px solid rgba(176, 107, 240, 0.15);
+            border-radius: 8px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+            text-align: left;
+            font-family: var(--font-mono);
+            color: var(--text);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .skill-item:hover {
+            border-color: rgba(176, 107, 240, 0.35);
+            background: rgba(176, 107, 240, 0.08);
+        }
+        .skill-item.unlocked {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .skill-item .icon {
+            font-size: 18px;
+            width: 28px;
+            text-align: center;
+        }
+        .skill-item .info {
+            flex: 1;
+        }
+        .skill-item .info .name {
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .skill-item .info .desc {
+            font-size: 8px;
+            color: var(--text-faint);
+        }
+        .skill-item .cost {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--purple);
+            white-space: nowrap;
+        }
+
+        /* ─── STATS ─────────────────────────────────────────────────── */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+        }
+        .stat-row .label {
+            color: var(--text-dim);
+        }
+        .stat-row .value {
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .stat-row .value.green {
+            color: var(--green);
+        }
+        .stat-row .value.purple {
+            color: var(--purple);
+        }
+
+        .achievement-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-size: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .achievement-item .ach-name {
+            color: var(--text-dim);
+        }
+        .achievement-item .ach-status {
+            font-size: 12px;
+        }
+
+        /* ─── SHOP ──────────────────────────────────────────────────── */
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .shop-item:hover {
+            border-color: var(--border-mid);
+        }
+        .shop-item .info .name {
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .shop-item .info .desc {
+            font-size: 8px;
+            color: var(--text-faint);
+        }
+        .shop-item .price {
+            font-weight: 700;
+            color: var(--gold);
+            font-size: 11px;
+        }
+        .shop-item .price.purple {
+            color: var(--purple);
+        }
+        .shop-item .price.danger {
+            color: var(--red);
+        }
+
+        /* ─── TOAST ─────────────────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-mid);
+            font-size: 11px;
+            color: var(--text);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 100;
+            white-space: nowrap;
+            max-width: 90%;
+        }
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.error {
+            border-color: rgba(240, 85, 85, 0.3);
+            color: #f87171;
+        }
+        .toast.success {
+            border-color: rgba(92, 204, 126, 0.3);
+            color: #5ccc7e;
+        }
+
+        /* ─── CONNECT MODAL ────────────────────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: linear-gradient(160deg, #1c140a, #120d06);
+            border: 1px solid var(--border-mid);
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 380px;
+            width: 100%;
+            position: relative;
+        }
+        .modal .close-modal {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 20px;
+            color: var(--text-faint);
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .modal .modal-title {
+            text-align: center;
+            font-family: var(--font-serif);
+            font-size: 20px;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+        .modal .modal-sub {
+            text-align: center;
+            font-size: 9px;
+            color: var(--text-faint);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .modal .option {
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.3);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .modal .option:hover {
+            border-color: var(--border-mid);
+        }
+        .modal .option .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .modal .option .header .name {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--text);
+        }
+        .modal .option .header .badge {
+            font-size: 8px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+        }
+        .modal .option .desc {
+            font-size: 10px;
+            color: var(--text-faint);
+            margin-bottom: 6px;
+        }
+        .modal .option .btn {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.15s;
+        }
+        .modal .option .btn.primary {
+            background: #5a7a2b;
+            color: white;
+        }
+        .modal .option .btn.primary:hover {
+            background: #6a8a3b;
+        }
+        .modal .option .btn.secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .modal .option .btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ─── FAB ───────────────────────────────────────────────────── */
+        .fab-mill {
+            position: fixed;
+            bottom: 70px;
+            right: 12px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 38% 36%, #d89840, #7a4a10);
+            border: 2px solid #c5a059;
+            box-shadow: 0 4px 20px rgba(197, 160, 89, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            font-size: 24px;
+            transition: transform 0.12s, box-shadow 0.2s;
+            animation: millPulse 3.5s ease-in-out infinite;
+        }
+        .fab-mill:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 28px rgba(197, 160, 89, 0.5);
+        }
+        .fab-mill:active {
+            transform: scale(0.9);
+        }
+        @keyframes millPulse {
+            0%,
+            100% {
+                box-shadow: 0 4px 20px rgba(197, 160, 89, 0.3);
+            }
+            50% {
+                box-shadow: 0 4px 28px rgba(197, 160, 89, 0.5), 0 0 0 4px rgba(197, 160, 89, 0.06);
+            }
+        }
+
+        /* ─── ARCHETYPE BANNER ─────────────────────────────────────── */
+        .archetype-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .archetype-banner:hover {
+            border-color: var(--border-mid);
+        }
+        .archetype-banner .arch-icon {
+            font-size: 18px;
+        }
+        .archetype-banner .arch-info {
+            flex: 1;
+        }
+        .archetype-banner .arch-info .name {
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--gold);
+        }
+        .archetype-banner .arch-info .hint {
+            font-size: 8px;
+            color: var(--text-faint);
+        }
+        .archetype-banner .arch-action {
+            font-size: 9px;
+            color: var(--text-dim);
+        }
+
+        /* ─── BLIGHT BANNER ─────────────────────────────────────────── */
+        .blight-banner {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin-bottom: 6px;
+            font-size: 9px;
+            color: #f87171;
+            text-align: center;
+            animation: blightFlash 1.5s ease-in-out infinite;
+        }
+        .blight-banner.visible {
+            display: block;
+        }
+        @keyframes blightFlash {
+            0%,
+            100% {
+                background: rgba(239, 68, 68, 0.06);
+            }
+            50% {
+                background: rgba(239, 68, 68, 0.16);
+            }
+        }
+
+        /* ─── LEDGER ────────────────────────────────────────────────── */
+        .ledger {
+            margin-top: 6px;
+            max-height: 60px;
+            overflow-y: auto;
+            font-size: 8px;
+            color: var(--text-dim);
+            border-top: 1px solid var(--border);
+            padding-top: 6px;
+        }
+        .ledger::-webkit-scrollbar {
+            width: 2px;
+        }
+        .ledger::-webkit-scrollbar-thumb {
+            background: var(--border-mid);
+            border-radius: 2px;
+        }
+        .ledger .entry {
+            padding: 1px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .ledger .entry:first-child {
+            color: var(--text);
+        }
+
+        /* ─── SCROLLBAR ────────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-mid);
+            border-radius: 3px;
+        }
+
+        /* ─── RESPONSIVE ───────────────────────────────────────────── */
+        @media (max-width: 380px) {
+            .grove-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 4px;
+            }
+            .hud-item .value {
+                font-size: 11px;
+            }
+            .action-btn {
+                font-size: 7px;
+                padding: 4px 2px;
+            }
+            .action-btn .icon {
+                font-size: 14px;
+            }
+        }
+        @media (min-width: 500px) {
+            #app {
+                border-left: 1px solid var(--border);
+                border-right: 1px solid var(--border);
+            }
+        }
+
+        /* ─── UTILITY ───────────────────────────────────────────────── */
+        .mb-1 {
+            margin-bottom: 4px;
+        }
+        .mb-2 {
+            margin-bottom: 8px;
+        }
+        .mt-1 {
+            margin-top: 4px;
+        }
+        .mt-2 {
+            margin-top: 8px;
+        }
+        .text-gold {
+            color: var(--gold);
+        }
+        .text-purple {
+            color: var(--purple);
+        }
+        .text-green {
+            color: var(--green);
+        }
+        .text-red {
+            color: var(--red);
+        }
+        .text-sm {
+            font-size: 10px;
+        }
+        .text-xs {
+            font-size: 8px;
+        }
+        .font-bold {
+            font-weight: 700;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gap-1 {
+            gap: 4px;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .opacity-50 {
+            opacity: 0.5;
+        }
+        .mt-10 {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-<!-- ─── WEATHER OVERLAY ─── -->
-<div id="weather-overlay" class="weather-overlay"></div>
-
-<!-- ─── PARTICLE CONTAINER ─── -->
-<div id="particle-container" class="particle-container"></div>
-
-<!-- ─── COMBO POPUP ─── -->
-<div id="combo-popup" class="combo-popup"></div>
-
-<!-- ─── ACHIEVEMENT POPUP ─── -->
-<div id="achievement-popup" class="achievement-popup">
-    <span class="ach-icon" id="ach-popup-icon">🏆</span>
-    <div class="ach-title" id="ach-popup-title">Achievement Unlocked!</div>
-    <div class="ach-desc" id="ach-popup-desc">You did something great</div>
-    <div class="ach-reward" id="ach-popup-reward">+5 SOL</div>
-</div>
-
-<!-- ─── SOCIAL CHAT PANEL ─── -->
-<div id="social-panel" class="social-panel">
-    <div class="social-header">
-        <span>🌍 Estate Chat</span>
-        <span class="social-close" onclick="toggleSocialPanel()">✕</span>
-    </div>
-    <div id="chat-messages">
-        <div class="social-message">
-            <span class="username">🌿 Steward</span>
-            Welcome to Olivium Estate!
+    <div id="app">
+        <!-- ─── TOP BAR ──────────────────────────────────────────── -->
+        <div class="top-bar">
+            <div class="title">🌿 OLIVIUM <small>ESTATE</small></div>
+            <button class="connect-btn" id="connectBtn">Connect Profile</button>
         </div>
-        <div class="social-message">
-            <span class="online-dot"></span>
-            <span class="username" style="color:var(--text-faint);">👤 42 players online</span>
-        </div>
-    </div>
-</div>
 
-<!-- ─── SOCIAL BUTTON ─── -->
-<button id="social-btn" class="social-btn" onclick="toggleSocialPanel()" title="Estate Chat">
-    💬
-</button>
-
-<!-- ─── NAVIGATION ─── -->
-<nav>
-    <div class="nav-container">
-        <div class="flex items-center gap-2">
-            <span class="serif text-xl font-bold text-white tracking-widest">OLIVIUM <span class="italic text-gold">ESTATE</span></span>
-        </div>
-        <div class="nav-links">
-            <a href="index2.html">ADOPTION BOARD</a>
-            <a href="villa_stay.html">VILLA STAY</a>
-            <a href="game_rules.html" class="active">HOW TO PLAY</a>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="wallet-info hidden sm:block">
-                <p id="nav-tier-label" class="wallet-label">Guest Mode</p>
-                <p id="nav-identity-display" class="wallet-address">NOT CONNECTED</p>
+        <!-- ─── HUD ROW ──────────────────────────────────────────── -->
+        <div class="hud-row">
+            <div class="hud-item">
+                <div class="label">SOL</div>
+                <div class="value" id="hud-sol">25.00</div>
             </div>
-            <button id="connectBtn" class="connect-btn">Connect Profile</button>
+            <div class="hud-item">
+                <div class="label">OIL (L)</div>
+                <div class="value green" id="hud-oil">0.0</div>
+            </div>
+            <div class="hud-item">
+                <div class="label">OLV</div>
+                <div class="value purple" id="hud-olv">0</div>
+            </div>
+            <div class="hud-item">
+                <div class="label">COMBO</div>
+                <div class="value combo" id="hud-combo">1.0x</div>
+            </div>
         </div>
-    </div>
-</nav>
 
-<!-- ─── MAIN GAME ─── -->
-<div class="mt-20">
+        <!-- ─── WEATHER STRIP ────────────────────────────────────── -->
+        <div class="weather-strip">
+            <span class="weather-icon" id="weatherIcon">☀️</span>
+            <div class="weather-info">
+                <span class="main" id="weatherMain">Clear</span>
+                <span id="weatherTemp">24°C</span>
+                <span>⏰ <span id="hud-time">08:00</span></span>
+                <span>📈 <span id="hud-demand">Normal</span></span>
+            </div>
+            <span class="season-badge" id="seasonBadge">🌸 Spring</span>
+            <span class="market-price" id="hud-price">2.50</span>
+        </div>
 
-    <!-- HUD Header: Title + weather strip -->
-    <div class="hud-header mb-2">
-        <div>
-            <div class="hud-title">OLIVIUM ESTATE</div>
-            <div class="hud-subtitle" id="estate-tagline">Steward of the Ancient Grove</div>
-        </div>
-        <div class="season-badge">
-            <span class="spr spr-summer" id="season-spr" style="width:18px;height:18px;"></span>
-            <span id="ui-season">Summer</span>
-        </div>
-    </div>
+        <!-- ─── MAIN CONTENT ────────────────────────────────────── -->
+        <div class="main-content" id="mainContent">
 
-    <!-- Weather strip -->
-    <div class="weather-strip mb-2">
-        <span class="spr spr-clear weather-icon" id="weather-icon-spr"></span>
-        <div class="weather-info">
-            <div class="weather-main"><span id="ui-weather">Clear</span> · <span id="ui-temp">24°C</span></div>
-            <div class="weather-meta">⏰ <span id="ui-time">08:00</span> · <span id="ui-demand">Normal</span> demand</div>
-        </div>
-        <div id="ui-trend" class="text-green-500" style="font-size:11px;font-weight:700;">+0%</div>
-    </div>
+            <!-- Archetype Banner -->
+            <div class="archetype-banner" id="archetypeBanner">
+                <span class="arch-icon">🏛️</span>
+                <div class="arch-info">
+                    <div class="name" id="archName">Choose your Path</div>
+                    <div class="hint" id="archHint">Agrarian · Industrialist · Speculator</div>
+                </div>
+                <span class="arch-action">TAP ›</span>
+            </div>
 
-    <!-- Currency chips -->
-    <div class="currency-row mb-2">
-        <div class="currency-chip">
-            <div class="chip-label">SOL</div>
-            <div class="chip-value" id="ui-sol">0.0000</div>
-        </div>
-        <div class="currency-chip chip-oil">
-            <div class="chip-label">OIL (L)</div>
-            <div class="chip-value" id="ui-oil">0.0</div>
-        </div>
-        <div class="currency-chip chip-olv">
-            <div class="chip-label">OLV</div>
-            <div class="chip-value" id="ui-olv">0</div>
-        </div>
-    </div>
+            <!-- Blight Banner -->
+            <div class="blight-banner" id="blightBanner">🚨 BLIGHT ACTIVE — Pests spreading! Spray immediately.</div>
 
-    <!-- Stats row -->
-    <div class="stats-row mb-2">
-        <div class="stat-box"><div class="stat-label">SEEDS</div><div class="stat-value" id="ui-seeds">0</div></div>
-        <div class="stat-box"><div class="stat-label">TREES</div><div class="stat-value" id="tree-count">0</div></div>
-        <div class="stat-box"><div class="stat-label">COMBO</div><div class="stat-value" id="combo-display">1.0x</div></div>
-        <div class="stat-box"><div class="stat-label">LEVEL</div><div class="stat-value" id="ui-level">1</div></div>
-    </div>
+            <!-- Action Buttons -->
+            <div class="action-grid">
+                <button class="action-btn primary" id="btnPlant">
+                    <span class="icon">🌱</span>
+                    PLANT
+                    <span class="cost">5 SOL</span>
+                </button>
+                <button class="action-btn green" id="btnHarvest">
+                    <span class="icon">🫒</span>
+                    HARVEST
+                    <span class="cost" id="harvestCount"></span>
+                </button>
+                <button class="action-btn blue" id="btnWater">
+                    <span class="icon">💧</span>
+                    WATER
+                    <span class="cost">ALL</span>
+                </button>
+                <button class="action-btn danger" id="btnSpray">
+                    <span class="icon">🐛</span>
+                    SPRAY
+                    <span class="cost">0.5 SOL</span>
+                </button>
+            </div>
 
-    <!-- Archetype banner -->
-    <div class="archetype-banner mb-2" id="archetype-badge" onclick="game.openArchetypePanel()">
-        <span class="arch-icon" id="arch-icon-display">🏛️</span>
-        <div>
-            <div class="arch-name" id="arch-name-display">Choose your Path</div>
-            <div style="font-size:8px;color:var(--text-faint);" id="arch-hint-display">Agrarian · Industrialist · Speculator</div>
+            <!-- Stats Row -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px;">
+                <div class="hud-item">
+                    <div class="label">SEEDS</div>
+                    <div class="value purple" id="hud-seeds">0</div>
+                </div>
+                <div class="hud-item">
+                    <div class="label">TREES</div>
+                    <div class="value" id="hud-trees">0</div>
+                </div>
+                <div class="hud-item">
+                    <div class="label">RARE</div>
+                    <div class="value purple" id="hud-rare">0</div>
+                </div>
+                <div class="hud-item">
+                    <div class="label">LEVEL</div>
+                    <div class="value" id="hud-level">1</div>
+                </div>
+            </div>
+
+            <!-- Boosts -->
+            <div class="boosts-row" id="boostsRow"></div>
+
+            <!-- Grove Grid -->
+            <div class="grove-grid" id="groveGrid"></div>
+
+            <!-- Mill Card -->
+            <div class="mill-card">
+                <div class="mill-header">
+                    <span class="mill-icon">🏺</span>
+                    <div class="mill-info">
+                        <div class="hopper">
+                            <span id="millHopper">0.0</span>
+                            <small>kg in hopper</small>
+                        </div>
+                    </div>
+                    <button class="action-btn" id="btnMill" style="padding:4px 12px;font-size:10px;">PRESS</button>
+                </div>
+                <div class="mill-gauges">
+                    <div class="gauge">
+                        <div class="gauge-label">MASH</div>
+                        <div class="gauge-ring" id="gaugeMash" style="--gauge-pct:0%;--gauge-color:#c5a059;">
+                            <span class="value" id="mashPct">0%</span>
+                        </div>
+                        <div class="gauge-bar"><div class="fill mash" id="mashBar" style="width:0%"></div></div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-label">HEAT</div>
+                        <div class="gauge-ring" id="gaugeHeat" style="--gauge-pct:0%;--gauge-color:#fb923c;">
+                            <span class="value" id="heatPct">0%</span>
+                        </div>
+                        <div class="gauge-bar"><div class="fill heat" id="heatBar" style="width:0%"></div></div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-label">GUNK</div>
+                        <div class="gauge-ring" id="gaugeGunk" style="--gauge-pct:0%;--gauge-color:#a855f7;">
+                            <span class="value" id="gunkPct">0%</span>
+                        </div>
+                        <div class="gauge-bar"><div class="fill gunk" id="gunkBar" style="width:0%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quest Card -->
+            <div class="quest-card">
+                <div class="quest-title">📋 DAILY QUEST</div>
+                <div class="quest-desc" id="questDesc">Harvest olives from your grove</div>
+                <div class="quest-progress"><div class="fill" id="questProgress" style="width:0%"></div></div>
+                <div class="quest-footer">
+                    <span><span id="questCurrent">0</span> / <span id="questTarget">50</span> kg</span>
+                    <div class="rewards">
+                        <span class="chip" id="questSolReward">+10 SOL</span>
+                        <span class="chip" id="questSeedReward">+1 🌱</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ledger -->
+            <div class="ledger" id="ledger"></div>
         </div>
-        <span class="arch-hint">TAP ›</span>
-        <button id="futures-btn" onclick="event.stopPropagation();game.openFuturesPanel();" style="display:none;background:rgba(176,107,240,0.12);border:1px solid var(--purple);color:var(--purple);border-radius:7px;padding:4px 10px;font-size:9px;font-weight:700;cursor:pointer;font-family:var(--font-mono);">📜 FUTURES</button>
-    </div>
 
-    <!-- Action buttons row -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
-        <div style="position:relative;display:flex;flex-direction:column;gap:0;">
-            <button class="btn action-btn" id="plant-btn" style="border-radius:9px 9px 0 0;border-bottom:none;">
-                <span class="btn-icon">🌱</span>
-                <span class="btn-label" id="plant-btn-label">PLANT</span>
-                <span class="btn-cost" id="plant-btn-cost">5 SOL</span>
+        <!-- ─── BOTTOM NAV ───────────────────────────────────────── -->
+        <div class="bottom-nav">
+            <button class="nav-item active" data-panel="grove">
+                <span class="nav-icon">🌿</span>GROVE
             </button>
-            <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border-mid);border-radius:0 0 9px 9px;overflow:hidden;">
-                <button id="plant-sol-btn" onclick="window.setTreeCurrency && window.setTreeCurrency('sol')" style="padding:3px 0;font-size:8px;font-weight:700;background:var(--gold-bg);color:var(--gold);border:none;border-right:1px solid var(--border-mid);cursor:pointer;font-family:var(--font-mono);letter-spacing:0.06em;">SOL</button>
-                <button id="plant-olv-btn" onclick="window.setTreeCurrency && window.setTreeCurrency('olv')" style="padding:3px 0;font-size:8px;font-weight:700;background:transparent;color:var(--text-faint);border:none;cursor:pointer;font-family:var(--font-mono);letter-spacing:0.06em;">OLV</button>
-            </div>
+            <button class="nav-item" data-panel="upgrades">
+                <span class="nav-icon">⚙️</span>UPGRADES
+            </button>
+            <button class="nav-item" data-panel="skills">
+                <span class="nav-icon">🧬</span>SKILLS
+            </button>
+            <button class="nav-item" data-panel="shop">
+                <span class="nav-icon">🛒</span>SHOP
+            </button>
+            <button class="nav-item" data-panel="stats">
+                <span class="nav-icon">📊</span>STATS
+            </button>
         </div>
-        <button class="btn btn-success action-btn" id="harvest-all-btn">
-            <span class="btn-icon">🫒</span>
-            <span class="btn-label" id="harvest-btn-label">HARVEST</span>
-            <span class="btn-cost" id="harvest-btn-count"></span>
+    </div>
+
+    <!-- ─── TOAST ─────────────────────────────────────────────────── -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ─── FAB MILL ─────────────────────────────────────────────── -->
+    <button class="fab-mill" id="fabMill">🏺</button>
+
+    <!-- ─── PANEL OVERLAY ────────────────────────────────────────── -->
+    <div class="panel-overlay" id="panelOverlay"></div>
+
+    <!-- ─── UPGRADES PANEL ───────────────────────────────────────── -->
+    <div class="panel" id="panelUpgrades">
+        <div class="panel-handle"></div>
+        <div class="panel-header">
+            <h3>⚙️ Upgrades</h3>
+            <span class="close-btn" data-close="panelUpgrades">&times;</span>
+        </div>
+
+        <div class="currency-toggle">
+            <button class="active-sol" id="upgCurrencySol" data-currency="sol">SOL</button>
+            <button id="upgCurrencyOlv" data-currency="olv">OLV</button>
+        </div>
+        <div class="text-center text-sm text-purple" id="upgOlvBalance" style="display:none;margin-bottom:8px;">
+            Wallet OLV: <span id="upgOlvDisplay">0</span>
+        </div>
+
+        <div class="text-xs text-gold font-bold mb-1">FARM INFRASTRUCTURE</div>
+        <button class="upgrade-item" data-upgrade="irrigation">
+            <span class="icon">💧</span>
+            <div class="info">
+                <div class="name">Auto-Irrigation</div>
+                <div class="desc">Maintains water at 70% automatically</div>
+            </div>
+            <span class="cost" id="costIrrigation">15 SOL</span>
         </button>
-        <button class="btn action-btn" id="water-all-btn" style="border-color:var(--blue);color:var(--blue);background:var(--blue-dim);">
-            <span class="btn-icon">💧</span>
-            <span class="btn-label">WATER</span>
-            <span class="btn-cost">ALL</span>
+        <button class="upgrade-item" data-upgrade="misting">
+            <span class="icon">🌫️</span>
+            <div class="info">
+                <div class="name">Misting System</div>
+                <div class="desc">Reduces pest spread speed</div>
+            </div>
+            <span class="cost" id="costMisting">10 SOL</span>
         </button>
-        <button class="btn btn-danger action-btn" id="spray-btn">
-            <span class="btn-icon">🐛</span>
-            <span class="btn-label">SPRAY</span>
-            <span class="btn-cost">0.5 SOL</span>
+        <button class="upgrade-item" data-upgrade="fertilizer">
+            <span class="icon">🌿</span>
+            <div class="info">
+                <div class="name">Organic Fertilizer</div>
+                <div class="desc">+40% growth rate boost</div>
+            </div>
+            <span class="cost" id="costFertilizer">8 SOL</span>
+        </button>
+        <button class="upgrade-item" data-upgrade="flytraps">
+            <span class="icon">🪰</span>
+            <div class="info">
+                <div class="name">Venus Fly Traps</div>
+                <div class="desc">Pests reduced 3% per tick passively</div>
+            </div>
+            <span class="cost" id="costFlytraps">0.003 SOL</span>
+        </button>
+
+        <div class="text-xs text-purple font-bold mt-2 mb-1">OLV PREMIUM</div>
+        <button class="upgrade-item" data-upgrade="greenhouse">
+            <span class="icon">🏡</span>
+            <div class="info">
+                <div class="name">Greenhouse Dome</div>
+                <div class="desc">Nullifies weather damage to trees</div>
+            </div>
+            <span class="cost purple" id="costGreenhouse">500 OLV</span>
+        </button>
+        <button class="upgrade-item" data-upgrade="coldpress">
+            <span class="icon">❄️</span>
+            <div class="info">
+                <div class="name">Cold Press Chamber</div>
+                <div class="desc">+50% oil extraction, max purity</div>
+            </div>
+            <span class="cost purple" id="costColdpress">800 OLV</span>
+        </button>
+        <button class="upgrade-item" data-upgrade="guardian">
+            <span class="icon">🛡️</span>
+            <div class="info">
+                <div class="name">Grove Guardian</div>
+                <div class="desc">All trees permanently protected</div>
+            </div>
+            <span class="cost purple" id="costGuardian">1200 OLV</span>
+        </button>
+        <button class="upgrade-item" data-upgrade="oracle">
+            <span class="icon">🔮</span>
+            <div class="info">
+                <div class="name">Market Oracle</div>
+                <div class="desc">Predicts price peaks, highlights sell windows</div>
+            </div>
+            <span class="cost purple" id="costOracle">600 OLV</span>
+        </button>
+
+        <div class="text-xs text-gold font-bold mt-2 mb-1">MAINTENANCE</div>
+        <button class="upgrade-item" id="btnCleanMill">
+            <span class="icon">🧼</span>
+            <div class="info">
+                <div class="name">Steam Clean Mill</div>
+                <div class="desc">Clears gunk buildup, resets clog risk</div>
+            </div>
+            <span class="cost">0.2 SOL</span>
+        </button>
+        <button class="upgrade-item" id="btnRemoveDead">
+            <span class="icon">💀</span>
+            <div class="info">
+                <div class="name">Remove Dead Trees</div>
+                <div class="desc">Clear withered trees from the grove</div>
+            </div>
+            <span class="cost green">Free</span>
+        </button>
+        <button class="upgrade-item" id="btnPrestige" style="border-color:rgba(176,107,240,0.25);">
+            <span class="icon">🔄</span>
+            <div class="info">
+                <div class="name">Liquidate Estate (Prestige)</div>
+                <div class="desc">Reset estate, keep seeds &amp; skills</div>
+            </div>
+            <span class="cost purple">40 SOL</span>
         </button>
     </div>
 
-    <!-- Market card -->
-    <div class="market-card mb-2">
-        <div class="flex-between" style="align-items:flex-start;gap:12px;">
-            <div style="flex:1;">
-                <div class="card-title">GLOBAL OIL MARKET</div>
-                <div style="display:flex;align-items:baseline;gap:6px;">
-                    <div class="market-price" id="ui-price">2.50</div>
-                    <div class="market-unit">SOL / L</div>
+    <!-- ─── SKILLS PANEL ──────────────────────────────────────────── -->
+    <div class="panel" id="panelSkills">
+        <div class="panel-handle"></div>
+        <div class="panel-header">
+            <h3 class="text-purple">🧬 Ancient Lab</h3>
+            <span class="close-btn" data-close="panelSkills">&times;</span>
+        </div>
+        <div class="text-center">
+            <div class="text-xs text-purple">Ancient Seeds</div>
+            <div class="text-gold font-bold" style="font-size:24px;" id="skillSeeds">0</div>
+        </div>
+        <button class="skill-item" data-skill="yield">
+            <span class="icon">📈</span>
+            <div class="info">
+                <div class="name">Hyper-Yield</div>
+                <div class="desc">+80% harvest yield per tree</div>
+            </div>
+            <span class="cost" id="skillYieldCost">5 Seeds</span>
+        </button>
+        <button class="skill-item" data-skill="speed">
+            <span class="icon">⚡</span>
+            <div class="info">
+                <div class="name">Rapid Bloom</div>
+                <div class="desc">2.5× faster tree growth</div>
+            </div>
+            <span class="cost" id="skillSpeedCost">5 Seeds</span>
+        </button>
+        <button class="skill-item" data-skill="cold">
+            <span class="icon">❄️</span>
+            <div class="info">
+                <div class="name">Pure Cold</div>
+                <div class="desc">+60% night extraction yield</div>
+            </div>
+            <span class="cost" id="skillColdCost">5 Seeds</span>
+        </button>
+        <button class="skill-item" data-skill="rare">
+            <span class="icon">🧬</span>
+            <div class="info">
+                <div class="name">DNA Grafting</div>
+                <div class="desc">25% chance of rare trees</div>
+            </div>
+            <span class="cost" id="skillRareCost">8 Seeds</span>
+        </button>
+    </div>
+
+    <!-- ─── SHOP PANEL ────────────────────────────────────────────── -->
+    <div class="panel" id="panelShop">
+        <div class="panel-handle"></div>
+        <div class="panel-header">
+            <h3>🛒 OLV Shop</h3>
+            <span class="close-btn" data-close="panelShop">&times;</span>
+        </div>
+        <div class="text-center text-sm mb-2">
+            💰 Your OLV: <span class="text-gold font-bold" id="shopOlvBalance">0</span>
+        </div>
+        <div class="text-xs text-center text-faint mb-2" id="purchaseHistory">Total spent: 0 OLV</div>
+
+        <div class="shop-item" data-shop="seeds">
+            <div class="info">
+                <div class="name">🌱 Ancient Seeds (5)</div>
+                <div class="desc">Unlock Ancient Lab skills</div>
+            </div>
+            <span class="price">100 OLV</span>
+        </div>
+        <div class="shop-item" data-shop="sol">
+            <div class="info">
+                <div class="name">💰 SOL Boost (10)</div>
+                <div class="desc">Add 10 SOL to your balance</div>
+            </div>
+            <span class="price">50 OLV</span>
+        </div>
+        <div class="shop-item" data-shop="fertilizer">
+            <div class="info">
+                <div class="name">🌿 Premium Fertilizer</div>
+                <div class="desc">+50% growth speed for 1 hour</div>
+            </div>
+            <span class="price">200 OLV</span>
+        </div>
+        <div class="shop-item" data-shop="instantHarvest">
+            <div class="info">
+                <div class="name">⚡ Instant Harvest</div>
+                <div class="desc">Harvest all ready trees instantly</div>
+            </div>
+            <span class="price">75 OLV</span>
+        </div>
+        <div class="shop-item" data-shop="protection">
+            <div class="info">
+                <div class="name">🛡️ Tree Protection</div>
+                <div class="desc">Protect trees from pests for 24h</div>
+            </div>
+            <span class="price">150 OLV</span>
+        </div>
+        <div class="shop-item" style="border-color:rgba(176,107,240,0.25);" data-shop="legendary">
+            <div class="info">
+                <div class="name">👑 Legendary Seed</div>
+                <div class="desc">Next tree planted is Legendary (5x yield)</div>
+            </div>
+            <span class="price purple">500 OLV</span>
+        </div>
+        <div class="shop-item" style="border-color:rgba(240,85,85,0.2);margin-top:6px;" id="btnResetGame">
+            <div class="info">
+                <div class="name">⚠️ Reset Estate</div>
+                <div class="desc">Reset your estate (Keeps Seeds &amp; Skills)</div>
+            </div>
+            <span class="price danger">3 SOL / 300 OLV</span>
+        </div>
+    </div>
+
+    <!-- ─── STATS PANEL ───────────────────────────────────────────── -->
+    <div class="panel" id="panelStats">
+        <div class="panel-handle"></div>
+        <div class="panel-header">
+            <h3>📊 Statistics</h3>
+            <span class="close-btn" data-close="panelStats">&times;</span>
+        </div>
+
+        <div class="text-xs text-gold font-bold mb-1">CAREER</div>
+        <div class="stat-row"><span class="label">💰 Lifetime SOL</span><span class="value" id="statLifetime">0.00</span></div>
+        <div class="stat-row"><span class="label">🌳 Trees Planted</span><span class="value" id="statPlanted">0</span></div>
+        <div class="stat-row"><span class="label">🫒 Total Harvests</span><span class="value" id="statHarvests">0</span></div>
+        <div class="stat-row"><span class="label">⚡ Combo Record</span><span class="value" style="color:#f09040;" id="statCombo">×1.0</span></div>
+        <div class="stat-row"><span class="label">💎 Rare Trees</span><span class="value purple" id="statRare">0</span></div>
+
+        <div class="text-xs text-gold font-bold mt-2 mb-1">ACHIEVEMENTS</div>
+        <div class="achievement-item"><span class="ach-name">🌱 First Harvest</span><span class="ach-status" id="achFirst">❌</span></div>
+        <div class="achievement-item"><span class="ach-name">🌳 Grove Master (10 trees)</span><span class="ach-status" id="achGrove">❌</span></div>
+        <div class="achievement-item"><span class="ach-name">💰 Tycoon (100 SOL)</span><span class="ach-status" id="achTycoon">❌</span></div>
+        <div class="achievement-item"><span class="ach-name">⚡ Combo King (×5)</span><span class="ach-status" id="achCombo">❌</span></div>
+        <div class="achievement-item"><span class="ach-name">💎 Rare Collector (5 rare)</span><span class="ach-status" id="achRare">❌</span></div>
+
+        <div class="text-xs text-gold font-bold mt-2 mb-1">UPGRADES</div>
+        <div id="upgradeStatusList"></div>
+    </div>
+
+    <!-- ─── CONNECT MODAL ─────────────────────────────────────────── -->
+    <div class="modal-overlay" id="connectModal">
+        <div class="modal">
+            <button class="close-modal" id="closeModalBtn">&times;</button>
+            <div class="modal-title">🌿 Connect to Olivium</div>
+            <div class="modal-sub">Select Estate Verification Vector</div>
+
+            <div class="option" id="walletOption">
+                <div class="header">
+                    <span class="name">◎ Wallet Authentication</span>
+                    <span class="badge">Web3</span>
                 </div>
-                <!-- Price history sparkline -->
-                <div class="sparkline-bars mt-2" id="price-sparkline">
-                    <div class="sp-bar" style="height:40%"></div>
-                    <div class="sp-bar" style="height:55%"></div>
-                    <div class="sp-bar" style="height:45%"></div>
-                    <div class="sp-bar" style="height:70%"></div>
-                    <div class="sp-bar" style="height:60%"></div>
-                    <div class="sp-bar current" style="height:65%"></div>
+                <div class="desc">Resolve direct web3 asset holdings via browser extension.</div>
+                <button class="btn primary" id="connectWalletBtn">Connect Phantom / Solana</button>
+            </div>
+
+            <div class="option" id="emailOption">
+                <div class="header">
+                    <span class="name">✉ Custodial Profile</span>
+                    <span class="badge" style="background:rgba(59,130,246,0.1);color:#60a5fa;">MFA</span>
                 </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px;min-width:90px;">
-                <button class="btn btn-success" id="sell-btn" style="padding:10px 16px;font-size:12px;">SELL ALL</button>
-                <button class="btn" id="sell-half-btn" style="font-size:10px;padding:6px 10px;opacity:0.7;">SELL HALF</button>
+                <div class="desc">Authorize via your off-chain email profile.</div>
+                <button class="btn secondary" id="emailLoginBtn">Continue with Email</button>
             </div>
         </div>
     </div>
 
-    <!-- Wallet balances -->
-    <div class="card mb-2" style="background:rgba(197,160,89,0.04);border-color:rgba(197,160,89,0.2);">
-        <div class="flex-between">
-            <div>
-                <div class="card-title">WALLET BALANCES</div>
-                <div class="flex gap-3 mt-1" style="font-size:11px;">
-                    <span><span class="text-gold">◎</span> <span id="wallet-sol-balance" class="font-bold">0.00</span> SOL</span>
-                    <span><span class="text-purple">●</span> <span id="wallet-olv-balance" class="font-bold">0</span> OLV</span>
-                </div>
-            </div>
-            <button id="refreshBalanceBtn" style="font-size:9px;color:var(--gold-dim);background:none;border:none;cursor:pointer;">⟳ Refresh</button>
-        </div>
-        <div class="progress-bar mt-2" style="height:4px;"><div id="estate-sync-bar" class="progress-fill fill-gold" style="width:0%"></div></div>
-        <div style="font-size:8px;opacity:0.35;margin-top:3px;" id="estate-value">Estate Value: 0 SOL</div>
-    </div>
+    <script>
+        // ============================================================
+        // COMPLETE GAME LOGIC - All Systems Restored
+        // ============================================================
 
-    <!-- Mill card -->
-    <div class="mill-card mb-2">
-        <div class="mill-header">
-            <div class="mill-icon-wrap">
-                <span class="spr spr-mill" style="width:34px;height:34px;"></span>
-            </div>
-            <div style="flex:1;">
-                <div class="card-title">STONE MILL</div>
-                <div style="font-size:18px;font-weight:700;color:var(--text);">🏺 <span id="ui-hopper">0.0</span> <span style="font-size:10px;opacity:0.5;">kg in hopper</span></div>
-            </div>
-        </div>
-        <!-- Gauge rings -->
-        <div class="mill-gauges">
-            <div class="gauge-wrap">
-                <div class="gauge-label">MASH</div>
-                <div class="gauge-ring gauge-mash" id="gauge-mash-ring" style="--gauge-pct:0%;">
-                    <span class="gauge-value" id="mash-pct">0%</span>
-                </div>
-                <div class="progress-bar" style="height:4px;"><div id="mash-bar" class="progress-fill fill-mash" style="width:0%"></div></div>
-            </div>
-            <div class="gauge-wrap">
-                <div class="gauge-label">HEAT 🌡️</div>
-                <div class="gauge-ring gauge-heat" id="gauge-heat-ring" style="--gauge-pct:0%;">
-                    <span class="gauge-value" id="heat-pct">0%</span>
-                </div>
-                <div class="progress-bar" style="height:4px;"><div id="heat-bar" class="progress-fill fill-heat" style="width:0%"></div></div>
-            </div>
-            <div class="gauge-wrap">
-                <div class="gauge-label">GUNK</div>
-                <div class="gauge-ring gauge-gunk" id="gauge-gunk-ring" style="--gauge-pct:0%;">
-                    <span class="gauge-value" id="gunk-pct">0%</span>
-                </div>
-                <div class="progress-bar" style="height:4px;"><div id="gunk-bar" class="progress-fill fill-gunk" style="width:0%"></div></div>
-            </div>
-        </div>
-    </div>
+        // ─── STATE ──────────────────────────────────────────────────────
+        const STATE = {
+            sol: 25.0,
+            oil: 0,
+            olv: 0,
+            seeds: 0,
+            trees: [],
+            treesPlanted: 3,
+            combo: 1.0,
+            comboRecord: 1.0,
+            totalHarvests: 0,
+            rareCount: 0,
+            lifetimeSol: 25.0,
+            hopper: 0,
+            mill: { mash: 0, heat: 0, gunk: 0 },
+            upgrades: {
+                irrigation: false,
+                misting: false,
+                fertilizer: false,
+                flytraps: false,
+                greenhouse: false,
+                coldpress: false,
+                guardian: false,
+                oracle: false
+            },
+            skills: [],
+            skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 },
+            world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
+            achievements: {
+                firstHarvest: false,
+                groveMaster: false,
+                tycoon: false,
+                comboKing: false,
+                rareCollector: false
+            },
+            fertilizerBoost: false,
+            fertilizerBoostEnd: 0,
+            protectionActive: false,
+            protectionEnd: 0,
+            nextTreeLegendary: false,
+            archetype: null,
+            archetypeLocked: false,
+            blightActive: false,
+            futures: [],
+            marketPool: 2.50,
+            marketVolume: 0,
+            purchases: { seeds: 0, sol: 0, fertilizer: 0, instantHarvest: 0, protection: 0, legendary: 0 },
+            quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
+            comboRef: null
+        };
 
-    <!-- Daily Quest card -->
-    <div class="quest-card mb-2">
-        <div class="quest-title">📋 DAILY QUEST</div>
-        <div class="quest-desc" id="quest-desc">Harvest olives from your grove</div>
-        <div class="progress-bar" style="height:6px;"><div id="quest-progress" class="progress-fill fill-quest" style="width:0%"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
-            <span style="font-size:10px;color:var(--text-faint);"><span id="quest-current">0</span> / <span id="quest-target">50</span> kg</span>
-            <div class="quest-rewards">
-                <span class="quest-reward-chip" id="quest-reward-sol">+10 SOL</span>
-                <span class="quest-reward-chip" id="quest-reward-seed">+1 🌱</span>
-            </div>
-        </div>
-    </div>
+        const RARITIES = {
+            common: { icon: '🌳', bonus: 1.0, name: 'Common', color: '#4daa62' },
+            rare: { icon: '💎', bonus: 2.0, name: 'Rare', color: '#a855f7' },
+            legendary: { icon: '👑', bonus: 5.0, name: 'Legendary', color: '#f0c96e' }
+        };
 
-    <!-- Active boosts -->
-    <div id="active-boosts" class="mb-2" style="display:flex;gap:6px;flex-wrap:wrap;min-height:0;"></div>
+        const ARCHETYPES = {
+            agrarian: {
+                name: 'The Agrarian',
+                icon: '🌿',
+                desc: 'Max grove density, exponential harvest combo',
+                bonuses: ['Grove cap +50%', '+30% combo multiplier'],
+                risks: ['Pests spread contagiously']
+            },
+            industrialist: {
+                name: 'The Industrialist',
+                icon: '⚙️',
+                desc: 'Precise thermal pressing extracts maximum oil',
+                bonuses: ['+30% extraction in precision zone', 'Press faster'],
+                risks: ['Mill pressure builds exponentially']
+            },
+            speculator: {
+                name: 'The Cartel Speculator',
+                icon: '📈',
+                desc: 'Lock futures contracts with OLV, exploit market crashes',
+                bonuses: ['Buy oil price futures with OLV', '+20% sell revenue'],
+                risks: ['Futures can expire worthless']
+            }
+        };
 
-    <!-- Grove section -->
-    <div class="grove-header">
-        <span class="section-title">🌿 YOUR GROVE</span>
-        <div class="flex gap-2" style="font-size:9px;">
-            <span id="grove-density" style="display:none;"></span>
-            <span style="color:var(--text-faint);">⭐ <span id="rare-count">0</span> Rare</span>
-            <span id="dead-tree-badge" style="display:none;color:var(--red);">💀 <span id="dead-count">0</span> Dead</span>
-        </div>
-    </div>
-    <div id="blight-banner">🚨 BLIGHT ACTIVE — Pests spreading! Spray immediately.</div>
-    <div style="font-size:8px;color:var(--text-faint);margin-bottom:6px;text-align:center;">Tap 💧 to water · Tap 🫒 mature trees to harvest</div>
-    <div id="grove-container" class="grove-grid"></div>
+        const OLV_SHOP = {
+            seeds: { name: 'Ancient Seeds', cost: 100, reward: { seeds: 5 } },
+            sol: { name: 'SOL Boost', cost: 50, reward: { sol: 10 } },
+            fertilizer: { name: 'Premium Fertilizer', cost: 200, reward: { fertilizerBoost: true, duration: 3600000 } },
+            instantHarvest: { name: 'Instant Harvest', cost: 75, reward: { instantHarvest: true } },
+            protection: { name: 'Tree Protection', cost: 150, reward: { protection: true, duration: 86400000 } },
+            legendary: { name: 'Legendary Seed', cost: 500, reward: { legendary: true } }
+        };
 
-    <!-- Activity ledger -->
-    <div class="ledger-wrap">
-        <div class="section-title mb-2">📜 LEDGER</div>
-        <div id="ledger" class="max-h-32 overflow-y-auto"></div>
-    </div>
+        const UPGRADE_COSTS = {
+            sol: { irrigation: 15, misting: 10, fertilizer: 8, flytraps: 0.003 },
+            olv: { irrigation: 300, misting: 200, fertilizer: 160, flytraps: 50 }
+        };
 
-</div><!-- /mt-20 -->
+        const OLV_UPGRADES = {
+            greenhouse: { name: 'Greenhouse Dome', cost: 500 },
+            coldpress: { name: 'Cold Press Chamber', cost: 800 },
+            guardian: { name: 'Grove Guardian', cost: 1200 },
+            oracle: { name: 'Market Oracle', cost: 600 }
+        };
 
-<!-- Floating Mill FAB -->
-<button id="fab-mill" class="fab-mill" title="Press the Mill">
-    <span class="spr spr-mill fab-mill-icon"></span>
-</button>
+        // ─── DOM REFS ──────────────────────────────────────────────────
+        const $ = id => document.getElementById(id);
+        const $$ = sel => document.querySelectorAll(sel);
 
-<!-- Save Status -->
-<div id="save-status" class="save-status">💾 Saved</div>
+        // ─── TOAST SYSTEM ─────────────────────────────────────────────
+        let toastTimer = null;
 
-<!-- ─── BOTTOM NAVIGATION ─── -->
-<div class="bottom-nav">
-    <div class="nav-item active" data-panel="grove">
-        <span class="nav-icon">🌿</span>GROVE
-    </div>
-    <div class="nav-item" data-panel="upgrades">
-        <span class="nav-icon">⚙️</span>UPGRADES
-    </div>
-    <div class="nav-item" data-panel="skills">
-        <span class="nav-icon">🧬</span>SKILLS
-    </div>
-    <div class="nav-item" data-panel="stats">
-        <span class="nav-icon">📊</span>STATS
-    </div>
-</div>
-
-<!-- ─── UPGRADES PANEL ─── -->
-<div id="panel-upgrades" class="panel">
-    <div class="panel-handle"></div>
-    <div class="panel-header">
-        <h3 class="serif text-xl text-gold">⚙️ Upgrades</h3>
-        <span class="close-btn" onclick="closePanel()">&times;</span>
-    </div>
-
-    <!-- Currency toggle -->
-    <div style="display:flex;gap:6px;margin-bottom:14px;">
-        <button id="upg-currency-sol" class="btn" style="flex:1;padding:7px;font-size:10px;border-color:var(--gold);color:var(--gold);" onclick="window.setUpgradeCurrency && window.setUpgradeCurrency('sol')">Pay with SOL</button>
-        <button id="upg-currency-olv" class="btn" style="flex:1;padding:7px;font-size:10px;" onclick="window.setUpgradeCurrency && window.setUpgradeCurrency('olv')">Pay with OLV</button>
-    </div>
-    <div id="upg-olv-balance-row" style="text-align:center;font-size:9px;color:var(--purple);margin-bottom:10px;display:none;">
-        Wallet OLV: <span id="upg-olv-balance-display">0</span>
-    </div>
-
-    <!-- Farm upgrades -->
-    <div style="font-size:9px;letter-spacing:0.12em;color:var(--text-faint);margin-bottom:8px;">FARM INFRASTRUCTURE</div>
-    <div class="space-y-2" style="margin-bottom:16px;">
-        <button id="upg-irrigation-btn" class="upgrade-item" onclick="game.upgrade('irrigation')">
-            <div class="upgrade-icon gold">💧</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Auto-Irrigation</div>
-                <div class="upgrade-desc">Maintains water at 70% automatically</div>
-            </div>
-            <div class="upgrade-cost" id="upg-irrigation-cost">15 SOL</div>
-        </button>
-        <button id="upg-misting-btn" class="upgrade-item" onclick="game.upgrade('misting')">
-            <div class="upgrade-icon green">🌫️</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Misting System</div>
-                <div class="upgrade-desc">Reduces pest spread speed</div>
-            </div>
-            <div class="upgrade-cost" id="upg-misting-cost">10 SOL</div>
-        </button>
-        <button id="upg-fertilizer-btn" class="upgrade-item" onclick="game.upgrade('fertilizer')">
-            <div class="upgrade-icon green">🌿</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Organic Fertilizer</div>
-                <div class="upgrade-desc">+40% growth rate boost</div>
-            </div>
-            <div class="upgrade-cost" id="upg-fertilizer-cost">8 SOL</div>
-        </button>
-        <button id="upg-flytraps-btn" class="upgrade-item" onclick="game.upgradeFlyTraps()">
-            <div class="upgrade-icon red">🪰</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Venus Fly Traps</div>
-                <div class="upgrade-desc">Pests reduced 3% per tick passively</div>
-            </div>
-            <div class="upgrade-cost" id="upg-flytraps-cost">0.003 SOL</div>
-        </button>
-    </div>
-
-    <!-- OLV-exclusive upgrades -->
-    <div style="font-size:9px;letter-spacing:0.12em;color:var(--purple);margin-bottom:8px;">OLV PREMIUM — EXCLUSIVE</div>
-    <div class="space-y-2" style="margin-bottom:16px;">
-        <button id="upg-greenhouse-btn" class="upgrade-item" style="border-color:rgba(176,107,240,0.25);" onclick="game.upgradeOlv('greenhouse')">
-            <div class="upgrade-icon purple">🏡</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Greenhouse Dome</div>
-                <div class="upgrade-desc">Nullifies weather damage to trees</div>
-            </div>
-            <div class="upgrade-cost" id="upg-greenhouse-cost" style="color:var(--purple);">500 OLV</div>
-        </button>
-        <button id="upg-coldpress-btn" class="upgrade-item" style="border-color:rgba(176,107,240,0.25);" onclick="game.upgradeOlv('coldpress')">
-            <div class="upgrade-icon purple">❄️</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Cold Press Chamber</div>
-                <div class="upgrade-desc">+50% oil extraction, always max purity</div>
-            </div>
-            <div class="upgrade-cost" id="upg-coldpress-cost" style="color:var(--purple);">800 OLV</div>
-        </button>
-        <button id="upg-guardian-btn" class="upgrade-item" style="border-color:rgba(176,107,240,0.25);" onclick="game.upgradeOlv('guardian')">
-            <div class="upgrade-icon purple">🛡️</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Grove Guardian</div>
-                <div class="upgrade-desc">All trees permanently protected</div>
-            </div>
-            <div class="upgrade-cost" id="upg-guardian-cost" style="color:var(--purple);">1200 OLV</div>
-        </button>
-        <button id="upg-oracle-btn" class="upgrade-item" style="border-color:rgba(176,107,240,0.25);" onclick="game.upgradeOlv('oracle')">
-            <div class="upgrade-icon purple">🔮</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Market Oracle</div>
-                <div class="upgrade-desc">Predicts price peaks, highlights sell windows</div>
-            </div>
-            <div class="upgrade-cost" id="upg-oracle-cost" style="color:var(--purple);">600 OLV</div>
-        </button>
-    </div>
-
-    <!-- Maintenance -->
-    <div style="font-size:9px;letter-spacing:0.12em;color:var(--text-faint);margin-bottom:8px;">MAINTENANCE</div>
-    <div class="space-y-2">
-        <button class="upgrade-item" onclick="game.cleanMill();closePanel()">
-            <div class="upgrade-icon gold">🧼</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Steam Clean Mill</div>
-                <div class="upgrade-desc">Clears gunk buildup, resets clog risk</div>
-            </div>
-            <div class="upgrade-cost">0.2 SOL</div>
-        </button>
-        <button class="upgrade-item" style="border-color:rgba(240,85,85,0.2);" onclick="game.removeDeadTrees();closePanel()">
-            <div class="upgrade-icon red">💀</div>
-            <div style="flex:1;">
-                <div class="upgrade-name">Remove Dead Trees</div>
-                <div class="upgrade-desc">Clear withered trees from the grove</div>
-            </div>
-            <div class="upgrade-cost" style="color:var(--green);">Free</div>
-        </button>
-    </div>
-</div>
-
-<!-- ─── SKILLS PANEL ─── -->
-<div id="panel-skills" class="panel">
-    <div class="panel-handle"></div>
-    <div class="panel-header">
-        <h3 class="serif text-xl text-purple">🧬 Ancient Lab</h3>
-        <span class="close-btn" onclick="closePanel()">&times;</span>
-    </div>
-    <div style="text-align:center;margin-bottom:14px;">
-        <div style="font-size:10px;color:var(--text-faint);">Ancient Seeds</div>
-        <div style="font-size:28px;font-weight:700;color:var(--purple);" id="seeds-display">0</div>
-    </div>
-    <div class="space-y-2" style="margin-bottom:16px;">
-        <button class="skill-item" id="skill-yield-btn" onclick="game.unlockSkill('yield');closePanel()">
-            <div class="skill-icon">📈</div>
-            <div style="flex:1;"><div class="upgrade-name">Hyper-Yield</div><div class="upgrade-desc">+80% harvest yield per tree</div></div>
-            <div class="upgrade-cost" id="skill-yield-cost" style="color:var(--purple);">5 Seeds</div>
-        </button>
-        <button class="skill-item" id="skill-speed-btn" onclick="game.unlockSkill('speed');closePanel()">
-            <div class="skill-icon">⚡</div>
-            <div style="flex:1;"><div class="upgrade-name">Rapid Bloom</div><div class="upgrade-desc">2.5× faster tree growth</div></div>
-            <div class="upgrade-cost" id="skill-speed-cost" style="color:var(--purple);">5 Seeds</div>
-        </button>
-        <button class="skill-item" id="skill-cold-btn" onclick="game.unlockSkill('cold');closePanel()">
-            <div class="skill-icon">❄️</div>
-            <div style="flex:1;"><div class="upgrade-name">Pure Cold</div><div class="upgrade-desc">+60% night extraction yield</div></div>
-            <div class="upgrade-cost" id="skill-cold-cost" style="color:var(--purple);">5 Seeds</div>
-        </button>
-        <button class="skill-item" id="skill-rare-btn" onclick="game.unlockSkill('rare');closePanel()">
-            <div class="skill-icon">🧬</div>
-            <div style="flex:1;"><div class="upgrade-name">DNA Grafting</div><div class="upgrade-desc">25% chance of rare trees</div></div>
-            <div class="upgrade-cost" id="skill-rare-cost" style="color:var(--purple);">8 Seeds</div>
-        </button>
-    </div>
-    <button class="btn w-full" style="background:rgba(176,107,240,0.15);border-color:var(--purple);color:var(--purple);" onclick="game.prestige()">
-        🔄 LIQUIDATE ESTATE (Prestige)
-    </button>
-</div>
-
-<!-- ─── STATS PANEL ─── -->
-<div id="panel-stats" class="panel">
-    <div class="panel-handle"></div>
-    <div class="panel-header">
-        <h3 class="serif text-xl text-gold">📊 Statistics</h3>
-        <span class="close-btn" onclick="closePanel()">&times;</span>
-    </div>
-    <div class="space-y-3">
-        <div class="card">
-            <div class="card-title">CAREER</div>
-            <div class="flex-between" style="padding:4px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">💰 Lifetime SOL</span><span class="text-gold font-bold" id="stats-lifetime">0.00</span></div>
-            <div class="flex-between" style="padding:4px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">🌳 Trees Planted</span><span id="stats-trees-planted">0</span></div>
-            <div class="flex-between" style="padding:4px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">🫒 Total Harvests</span><span id="stats-harvests">0</span></div>
-            <div class="flex-between" style="padding:4px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">⚡ Combo Record</span><span class="text-orange-400 font-bold" id="stats-combo">×1.0</span></div>
-            <div class="flex-between" style="padding:4px 0;"><span style="font-size:12px;">💎 Rare Trees</span><span class="text-purple font-bold" id="stats-rare">0</span></div>
-        </div>
-        <div class="card">
-            <div class="card-title">ACHIEVEMENTS</div>
-            <div class="space-y-2" style="font-size:11px;">
-                <div class="flex-between"><span>🌱 First Harvest</span><span id="ach1">❌</span></div>
-                <div class="flex-between"><span>🌳 Grove Master (10 trees)</span><span id="ach2">❌</span></div>
-                <div class="flex-between"><span>💰 Tycoon (100 SOL earned)</span><span id="ach3">❌</span></div>
-                <div class="flex-between"><span>⚡ Combo King (×5)</span><span id="ach4">❌</span></div>
-                <div class="flex-between"><span>💎 Rare Collector</span><span id="ach5">❌</span></div>
-            </div>
-        </div>
-        <div class="card" id="upg-status-card">
-            <div class="card-title">UPGRADES STATUS</div>
-            <div class="space-y-1" style="font-size:10px;" id="upg-status-list"></div>
-        </div>
-    </div>
-</div>
-
-<div id="panel-overlay" class="panel-overlay" onclick="closePanel()"></div>
-
-<!-- ─── CONNECT MODAL ─── -->
-<div class="modal-overlay" id="connectModal" style="display:none;">
-    <div style="max-width:420px;width:100%;background:linear-gradient(160deg,#1c140a,#120d06);border:1px solid var(--border-mid);border-radius:24px;padding:32px;position:relative;margin:0 16px;">
-        <button id="closeConnectModalBtn" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;color:var(--text-faint);cursor:pointer;">&times;</button>
-        <div style="text-align:center;margin-bottom:24px;">
-            <div style="font-size:32px;margin-bottom:8px;">🌿</div>
-            <h2 class="serif" style="font-size:1.4rem;color:white;margin-bottom:4px;">Connect to Olivium</h2>
-            <p style="font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase;">Select Estate Verification Vector</p>
-        </div>
-        <div class="space-y-3">
-            <div style="padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.3);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <span style="font-size:13px;font-weight:700;color:white;">◎ Wallet Authentication</span>
-                    <span style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(245,158,11,0.1);color:#fbbf24;font-family:var(--font-mono);">Web3</span>
-                </div>
-                <p style="font-size:11px;color:var(--text-faint);margin-bottom:10px;">Resolve direct web3 asset holdings via browser extension.</p>
-                <button id="connectWalletBtn" style="width:100%;background:#5a7a2b;color:white;font-size:11px;font-weight:700;padding:10px;border-radius:10px;border:none;cursor:pointer;">Connect Phantom / Solana</button>
-            </div>
-            <div style="padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.3);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <span style="font-size:13px;font-weight:700;color:white;">✉ Custodial Profile</span>
-                    <span style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(59,130,246,0.1);color:#60a5fa;font-family:var(--font-mono);">MFA</span>
-                </div>
-                <p style="font-size:11px;color:var(--text-faint);margin-bottom:10px;">Authorize via your off-chain email profile.</p>
-                <button id="emailLoginBtn" style="width:100%;background:rgba(255,255,255,0.06);color:white;font-size:11px;font-weight:700;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Continue with Email</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script type="module" src="webgame3.js"></script>
-
-<!-- ─── ENHANCEMENT SCRIPTS ─── -->
-<script>
-// ============================================================
-// ENHANCEMENT FUNCTIONS (Non-breaking additions)
-// ============================================================
-
-// ── Particle System ──────────────────────────────────────────
-function createParticles(x, y, count = 20, type = 'harvest') {
-    const container = document.getElementById('particle-container');
-    const particleClass = {
-        'harvest': 'particle-harvest',
-        'plant': 'particle-plant',
-        'water': 'particle-water',
-        'gold': 'particle-gold',
-        'rare': 'particle-rare'
-    }[type] || 'particle-harvest';
-
-    for (let i = 0; i < count; i++) {
-        const particle = document.createElement('div');
-        particle.className = `particle ${particleClass}`;
-        const size = 4 + Math.random() * 8;
-        particle.style.cssText = `
-            left: ${x + (Math.random() - 0.5) * 60}px;
-            top: ${y + (Math.random() - 0.5) * 60}px;
-            width: ${size}px;
-            height: ${size}px;
-            animation-duration: ${0.8 + Math.random() * 0.8}s;
-            animation-delay: ${Math.random() * 0.3}s;
-        `;
-        container.appendChild(particle);
-        setTimeout(() => particle.remove(), 2000);
-    }
-}
-
-// ── Floating Text ────────────────────────────────────────────
-function showFloatText(x, y, text, color = 'gold') {
-    const el = document.createElement('div');
-    el.className = `float-text ${color}`;
-    el.textContent = text;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-    el.style.fontSize = (16 + Math.random() * 12) + 'px';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1300);
-}
-
-// ── Combo Popup ──────────────────────────────────────────────
-function showComboPopup(combo) {
-    const el = document.getElementById('combo-popup');
-    el.textContent = `🔥 ${combo.toFixed(1)}x COMBO!`;
-    el.className = 'combo-popup show';
-    setTimeout(() => {
-        el.className = 'combo-popup';
-    }, 800);
-}
-
-// ── Achievement Popup ────────────────────────────────────────
-function showAchievement(icon, title, desc, reward) {
-    const popup = document.getElementById('achievement-popup');
-    document.getElementById('ach-popup-icon').textContent = icon;
-    document.getElementById('ach-popup-title').textContent = title;
-    document.getElementById('ach-popup-desc').textContent = desc;
-    document.getElementById('ach-popup-reward').textContent = reward;
-
-    popup.className = 'achievement-popup show';
-    setTimeout(() => {
-        popup.className = 'achievement-popup';
-    }, 4000);
-}
-
-// ── Social Panel Toggle ─────────────────────────────────────
-function toggleSocialPanel() {
-    const panel = document.getElementById('social-panel');
-    panel.classList.toggle('active');
-}
-
-// ── Weather Effects ─────────────────────────────────────────
-function setWeatherEffect(weather) {
-    const overlay = document.getElementById('weather-overlay');
-    overlay.className = 'weather-overlay';
-    if (weather === 'Rainy') {
-        overlay.classList.add('rain', 'active');
-    } else if (weather === 'Heatwave') {
-        overlay.classList.add('heatwave', 'active');
-    } else {
-        overlay.classList.remove('active');
-    }
-}
-
-// ── Hook into existing game actions ─────────────────────────
-// Store original functions
-const originalInteractTree = window.interactTree;
-const originalBuyTree = window.buyTree;
-const originalHarvestAll = window.harvestAll;
-const originalWaterAll = window.waterAll;
-const originalAddCombo = window.addCombo;
-const originalCheckAchievements = window.checkAchievements;
-const originalRender = window.render;
-
-// ── Enhanced Interact Tree ──────────────────────────────────
-window.interactTree = function(index) {
-    const tree = window.state?.trees?.[index];
-    if (!tree) return;
-
-    // Get card position for particles
-    const cards = document.querySelectorAll('.tree-card');
-    const card = cards[index];
-    const rect = card?.getBoundingClientRect();
-    const x = rect?.left + (rect?.width || 0) / 2 || window.innerWidth / 2;
-    const y = rect?.top + (rect?.height || 0) / 2 || window.innerHeight / 2;
-
-    if (tree.stage === 'mature') {
-        createParticles(x, y, 25, 'harvest');
-        showFloatText(x - 20, y - 30, '🫒 +harvest', 'gold');
-        if (tree.rarity === 'legendary') {
-            createParticles(x, y, 40, 'rare');
+        function showToast(msg, type = '') {
+            const el = $('toast');
+            el.textContent = msg;
+            el.className = 'toast visible ' + type;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.className = 'toast';
+            }, 2500);
         }
-        if (window.navigator?.vibrate) window.navigator.vibrate(15);
-    } else {
-        createParticles(x, y, 12, 'water');
-        showFloatText(x - 20, y - 30, '💧 +water', 'blue');
-        if (window.navigator?.vibrate) window.navigator.vibrate(8);
-    }
 
-    // Call original
-    if (originalInteractTree) originalInteractTree(index);
-};
-
-// ── Enhanced Buy Tree ──────────────────────────────────────
-window.buyTree = function() {
-    const result = originalBuyTree ? originalBuyTree() : null;
-
-    // Find last planted tree
-    const cards = document.querySelectorAll('.tree-card');
-    const lastCard = cards[cards.length - 1];
-    if (lastCard) {
-        const rect = lastCard.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        createParticles(x, y, 20, 'plant');
-        showFloatText(x - 20, y - 40, '🌱 planted!', 'green');
-        if (window.navigator?.vibrate) window.navigator.vibrate(10);
-    }
-    return result;
-};
-
-// ── Enhanced Harvest All ────────────────────────────────────
-window.harvestAll = function() {
-    const container = document.getElementById('grove-container');
-    if (container) {
-        const rect = container.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        createParticles(x, y, 40, 'harvest');
-        showFloatText(x - 40, y - 50, '🫒 BULK HARVEST!', 'gold');
-        if (window.navigator?.vibrate) window.navigator.vibrate(20);
-    }
-    if (originalHarvestAll) originalHarvestAll();
-};
-
-// ── Enhanced Water All ─────────────────────────────────────
-window.waterAll = function() {
-    const container = document.getElementById('grove-container');
-    if (container) {
-        const rect = container.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        createParticles(x, y, 30, 'water');
-        showFloatText(x - 30, y - 40, '💧 WATERED ALL', 'blue');
-        if (window.navigator?.vibrate) window.navigator.vibrate(15);
-    }
-    if (originalWaterAll) originalWaterAll();
-};
-
-// ── Enhanced Combo ──────────────────────────────────────────
-window.addCombo = function() {
-    if (originalAddCombo) originalAddCombo();
-    const combo = window.state?.combo || 1;
-    if (combo >= 2 && combo % 0.5 < 0.1) {
-        showComboPopup(combo);
-        if (window.navigator?.vibrate) window.navigator.vibrate(30);
-    }
-};
-
-// ── Enhanced Achievements ────────────────────────────────────
-window.checkAchievements = function() {
-    if (originalCheckAchievements) originalCheckAchievements();
-    const achievements = window.state?.achievements || {};
-
-    // Check for new achievements
-    const achievementMap = {
-        firstHarvest: { icon: '🌱', title: 'First Harvest!', desc: 'Harvested your first olives', reward: '+2 SOL' },
-        groveMaster: { icon: '🌳', title: 'Grove Master!', desc: 'Grew 10 trees', reward: '+10 SOL + Seed' },
-        tycoon: { icon: '💰', title: 'Tycoon!', desc: 'Earned 100 lifetime SOL', reward: '+20 SOL' },
-        comboKing: { icon: '⚡', title: 'Combo King!', desc: 'Reached ×5 combo', reward: '+5 SOL' },
-        rareCollector: { icon: '💎', title: 'Rare Collector!', desc: 'Collected 5 rare trees', reward: '+15 SOL + Seed' }
-    };
-
-    Object.entries(achievementMap).forEach(([key, info]) => {
-        if (achievements[key] && !window._shownAchievements?.[key]) {
-            if (!window._shownAchievements) window._shownAchievements = {};
-            window._shownAchievements[key] = true;
-            showAchievement(info.icon, info.title, info.desc, info.reward);
-
-            // Trigger particles
-            const x = window.innerWidth / 2;
-            const y = window.innerHeight / 2;
-            createParticles(x, y, 50, 'gold');
+        // ─── LEDGER ────────────────────────────────────────────────────
+        function log(msg) {
+            const ledger = $('ledger');
+            if (!ledger) return;
+            const entry = document.createElement('div');
+            entry.className = 'entry';
+            entry.textContent = '> ' + msg;
+            ledger.prepend(entry);
+            if (ledger.children.length > 20) ledger.lastChild.remove();
         }
-    });
-};
 
-// ── Enhanced Render ─────────────────────────────────────────
-window.render = function() {
-    if (originalRender) originalRender();
+        // ─── UI UPDATE ─────────────────────────────────────────────────
+        function updateUI() {
+            // HUD
+            $('hud-sol').textContent = STATE.sol.toFixed(2);
+            $('hud-oil').textContent = STATE.oil.toFixed(1);
+            $('hud-olv').textContent = Math.floor(STATE.olv);
+            $('hud-seeds').textContent = STATE.seeds;
+            $('hud-trees').textContent = STATE.trees.length;
+            $('hud-rare').textContent = STATE.rareCount;
+            $('hud-level').textContent = Math.floor(STATE.lifetimeSol / 20) + 1;
+            $('hud-combo').textContent = STATE.combo.toFixed(1) + 'x';
 
-    // Update weather effect
-    const weather = window.state?.world?.weather || 'Clear';
-    setWeatherEffect(weather);
+            // Weather
+            $('weatherMain').textContent = STATE.world.weather;
+            $('weatherTemp').textContent = STATE.world.temp + '°C';
+            $('hud-demand').textContent = STATE.world.demand;
+            $('hud-price').textContent = STATE.world.price.toFixed(2);
 
-    // Update save status
-    const saveStatus = document.getElementById('save-status');
-    if (saveStatus) {
-        saveStatus.textContent = '💾 Saved';
-        saveStatus.className = 'save-status';
-    }
-};
+            const seasonIcons = { Spring: '🌸', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
+            $('seasonBadge').textContent = seasonIcons[STATE.world.season] + ' ' + STATE.world.season;
 
-// ── Save Status Updates ─────────────────────────────────────
-// Override save function to show status
-if (window.saveGame) {
-    const originalSave = window.saveGame;
-    window.saveGame = async function() {
-        const status = document.getElementById('save-status');
-        if (status) {
-            status.textContent = '💾 Saving...';
-            status.className = 'save-status saving';
+            const weatherIcons = { Clear: '☀️', Rainy: '🌧️', Heatwave: '🔥' };
+            $('weatherIcon').textContent = weatherIcons[STATE.world.weather] || '☀️';
+
+            // Time
+            const h = String(Math.floor(STATE.world.time)).padStart(2, '0');
+            const m = String(Math.floor((STATE.world.time % 1) * 60)).padStart(2, '0');
+            $('hud-time').textContent = h + ':' + m;
+
+            // Mill
+            $('millHopper').textContent = STATE.hopper.toFixed(1);
+            const mash = STATE.mill.mash || 0;
+            const heat = STATE.mill.heat || 0;
+            const gunk = STATE.mill.gunk || 0;
+            $('mashPct').textContent = Math.floor(mash) + '%';
+            $('heatPct').textContent = Math.floor(heat) + '%';
+            $('gunkPct').textContent = Math.floor(gunk) + '%';
+            $('mashBar').style.width = mash + '%';
+            $('heatBar').style.width = heat + '%';
+            $('gunkBar').style.width = gunk + '%';
+
+            const ring = (id, pct, color) => {
+                const el = $(id);
+                if (el) {
+                    el.style.setProperty('--gauge-pct', pct + '%');
+                    el.style.setProperty('--gauge-color', color);
+                }
+            };
+            ring('gaugeMash', mash, '#c5a059');
+            const heatColor = heat > 75 ? '#ef4444' : heat > 50 ? '#f97316' : '#fb923c';
+            ring('gaugeHeat', heat, heatColor);
+            const gunkColor = gunk > 85 ? '#ef4444' : gunk > 60 ? '#f97316' : '#a855f7';
+            ring('gaugeGunk', gunk, gunkColor);
+
+            // Heat color
+            $('heatPct').style.color = heat > 75 ? '#ef4444' : '';
+            $('gunkPct').style.color = gunk > 85 ? '#ef4444' : '';
+
+            // Quest
+            const qPct = Math.min(100, (STATE.quest.current / STATE.quest.target) * 100);
+            $('questProgress').style.width = qPct + '%';
+            $('questCurrent').textContent = STATE.quest.current.toFixed(0);
+            $('questTarget').textContent = STATE.quest.target;
+            $('questSolReward').textContent = '+' + STATE.quest.reward + ' SOL';
+            $('questSeedReward').textContent = '+' + (STATE.quest.seedReward || 1) + ' 🌱';
+
+            // Harvest count
+            const readyCount = STATE.trees.filter(t => t.stage === 'mature' && t.health > 0).length;
+            $('harvestCount').textContent = readyCount > 0 ? `(${readyCount})` : '';
+
+            // Boosts
+            const boostsRow = $('boostsRow');
+            let boostsHTML = '';
+            if (STATE.fertilizerBoost) {
+                const rem = Math.max(0, Math.ceil((STATE.fertilizerBoostEnd - Date.now()) / 60000));
+                boostsHTML += `<span class="boost-chip green">🌿 Fertilizer ${rem}m</span>`;
+            }
+            if (STATE.protectionActive) {
+                const rem = Math.max(0, Math.ceil((STATE.protectionEnd - Date.now()) / 3600000));
+                boostsHTML += `<span class="boost-chip blue">🛡️ Shield ${rem}h</span>`;
+            }
+            if (STATE.upgrades.greenhouse) boostsHTML += `<span class="boost-chip purple">🏡 Greenhouse</span>`;
+            if (STATE.upgrades.oracle) boostsHTML += `<span class="boost-chip purple">🔮 Oracle</span>`;
+            boostsRow.innerHTML = boostsHTML;
+
+            // Archetype
+            const archName = $('archName');
+            const archHint = $('archHint');
+            if (STATE.archetype) {
+                const a = ARCHETYPES[STATE.archetype];
+                archName.textContent = a.icon + ' ' + a.name;
+                archName.style.color = 'var(--gold)';
+                archHint.textContent = '🔒 Locked until prestige';
+            } else {
+                archName.textContent = '🏛️ Choose your Path';
+                archName.style.color = '';
+                archHint.textContent = 'Agrarian · Industrialist · Speculator';
+            }
+
+            // Blight
+            const blight = $('blightBanner');
+            if (STATE.blightActive) {
+                blight.classList.add('visible');
+            } else {
+                blight.classList.remove('visible');
+            }
+
+            // Grove
+            renderGrove();
+
+            // Upgrade panel
+            updateUpgradePanel();
+
+            // Skill panel
+            updateSkillPanel();
+
+            // Shop panel
+            updateShopPanel();
+
+            // Stats panel
+            updateStatsPanel();
+
+            // Skill seeds
+            const skillSeeds = $('skillSeeds');
+            if (skillSeeds) skillSeeds.textContent = STATE.seeds;
+
+            // Shop OLV
+            const shopOlv = $('shopOlvBalance');
+            if (shopOlv) shopOlv.textContent = Math.floor(STATE.olv);
+
+            // Purchase history
+            const ph = $('purchaseHistory');
+            if (ph) {
+                const total = Object.values(STATE.purchases).reduce((a, b) => a + b, 0);
+                ph.textContent = 'Total spent: ' + total + ' OLV';
+            }
+
+            // Upgrade OLV balance
+            const upgOlv = $('upgOlvDisplay');
+            if (upgOlv) upgOlv.textContent = Math.floor(STATE.olv);
+
+            // Stats
+            $('statLifetime').textContent = STATE.lifetimeSol.toFixed(2);
+            $('statPlanted').textContent = STATE.treesPlanted;
+            $('statHarvests').textContent = STATE.totalHarvests;
+            $('statCombo').textContent = '×' + STATE.comboRecord.toFixed(1);
+            $('statRare').textContent = STATE.rareCount;
+
+            // Achievements
+            const achMap = {
+                achFirst: 'firstHarvest',
+                achGrove: 'groveMaster',
+                achTycoon: 'tycoon',
+                achCombo: 'comboKing',
+                achRare: 'rareCollector'
+            };
+            Object.entries(achMap).forEach(([id, key]) => {
+                const el = $(id);
+                if (el) el.textContent = STATE.achievements[key] ? '✅' : '❌';
+            });
         }
-        const result = await originalSave();
-        if (status) {
-            status.textContent = result ? '✅ Saved' : '❌ Save failed';
-            status.className = 'save-status';
-            setTimeout(() => {
-                status.textContent = '💾 Saved';
+
+        // ─── GROVE RENDER ──────────────────────────────────────────────
+        function renderGrove() {
+            const grid = $('groveGrid');
+            if (!grid) return;
+
+            if (STATE.trees.length === 0) {
+                grid.innerHTML =
+                    '<div style="grid-column:1/-1;text-align:center;padding:20px 0;opacity:0.4;font-size:11px;">Plant your first tree to begin</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            STATE.trees.forEach((tree, idx) => {
+                const isDead = tree.health <= 0;
+                const isReady = tree.stage === 'mature' && !isDead;
+                const isRare = tree.rarity === 'rare';
+                const isLeg = tree.rarity === 'legendary';
+
+                const card = document.createElement('div');
+                card.className = 'tree-card';
+                if (isReady) card.classList.add('ready');
+                if (isDead) card.classList.add('dead');
+                if (tree.pests > 30) card.style.borderColor = 'rgba(240,85,85,0.4)';
+
+                let icon = '🌱';
+                if (isDead) icon = '💀';
+                else if (isLeg) icon = '👑';
+                else if (isRare) icon = '💎';
+                else if (isReady) icon = '🫒';
+                else if (tree.stage === 'sapling') icon = '🌿';
+                else if (tree.stage === 'seed') icon = '🌱';
+
+                let stageLabel = isDead ? 'DEAD' : tree.stage.toUpperCase();
+
+                card.innerHTML = `
+                    ${isLeg ? '<span class="badge">👑</span>' : isRare ? '<span class="badge">💎</span>' : ''}
+                    ${tree.protected ? '<span class="badge left">🛡</span>' : ''}
+                    <span class="tree-icon">${icon}</span>
+                    <span class="tree-id">${tree.id}</span>
+                    <span class="tree-stage">${stageLabel}</span>
+                    ${!isDead ? `
+                    <div class="tree-bars">
+                        <div class="bar"><div class="fill water" style="width:${tree.water}%"></div></div>
+                        <div class="bar"><div class="fill health" style="width:${tree.health}%"></div></div>
+                        ${tree.pests > 0 ? `<div class="bar"><div class="fill pest" style="width:${tree.pests}%"></div></div>` : ''}
+                    </div>
+                    ${isReady ? '<div class="ready-pip"></div>' : ''}
+                    ` : ''
+                };
+
+                if (!isDead) {
+                    card.addEventListener('click', () => interactTree(idx));
+                }
+
+                grid.appendChild(card);
+            });
+        }
+
+        // ─── UPGRADE PANEL ─────────────────────────────────────────────
+        let upgradeCurrency = 'sol';
+
+        function updateUpgradePanel() {
+            const upgrades = {
+                irrigation: { label: 'Irrigation', sol: '15 SOL', olv: '300 OLV' },
+                misting: { label: 'Misting', sol: '10 SOL', olv: '200 OLV' },
+                fertilizer: { label: 'Fertilizer', sol: '8 SOL', olv: '160 OLV' },
+                flytraps: { label: 'Fly Traps', sol: '0.003 SOL', olv: '50 OLV' },
+                greenhouse: { label: 'Greenhouse', sol: '500 OLV', olv: '500 OLV' },
+                coldpress: { label: 'Cold Press', sol: '800 OLV', olv: '800 OLV' },
+                guardian: { label: 'Guardian', sol: '1200 OLV', olv: '1200 OLV' },
+                oracle: { label: 'Oracle', sol: '600 OLV', olv: '600 OLV' }
+            };
+
+            const costMap = {
+                irrigation: upgradeCurrency === 'sol' ? '15 SOL' : '300 OLV',
+                misting: upgradeCurrency === 'sol' ? '10 SOL' : '200 OLV',
+                fertilizer: upgradeCurrency === 'sol' ? '8 SOL' : '160 OLV',
+                flytraps: upgradeCurrency === 'sol' ? '0.003 SOL' : '50 OLV',
+                greenhouse: '500 OLV',
+                coldpress: '800 OLV',
+                guardian: '1200 OLV',
+                oracle: '600 OLV'
+            };
+
+            document.querySelectorAll('[data-upgrade]').forEach(el => {
+                const key = el.dataset.upgrade;
+                const costEl = $(`cost${key.charAt(0).toUpperCase() + key.slice(1)}`);
+                if (costEl) {
+                    if (STATE.upgrades[key]) {
+                        costEl.textContent = '✅ Installed';
+                        costEl.style.color = 'var(--green)';
+                        el.classList.add('purchased');
+                    } else {
+                        costEl.textContent = costMap[key] || '—';
+                        costEl.style.color = key === 'greenhouse' || key === 'coldpress' || key === 'guardian' || key ===
+                            'oracle' ? 'var(--purple)' : 'var(--gold)';
+                        el.classList.remove('purchased');
+                    }
+                }
+            });
+
+            // Currency toggle
+            const solBtn = $('upgCurrencySol');
+            const olvBtn = $('upgCurrencyOlv');
+            const olvBal = $('upgOlvBalance');
+            if (solBtn && olvBtn) {
+                if (upgradeCurrency === 'sol') {
+                    solBtn.className = 'active-sol';
+                    olvBtn.className = '';
+                    if (olvBal) olvBal.style.display = 'none';
+                } else {
+                    solBtn.className = '';
+                    olvBtn.className = 'active-olv';
+                    if (olvBal) olvBal.style.display = 'block';
+                }
+            }
+
+            // Upgrade status list
+            const list = $('upgradeStatusList');
+            if (list) {
+                const all = [
+                    { key: 'irrigation', label: 'Auto-Irrigation' },
+                    { key: 'misting', label: 'Misting System' },
+                    { key: 'fertilizer', label: 'Fertilizer' },
+                    { key: 'flytraps', label: 'Fly Traps' },
+                    { key: 'greenhouse', label: 'Greenhouse Dome' },
+                    { key: 'coldpress', label: 'Cold Press' },
+                    { key: 'guardian', label: 'Grove Guardian' },
+                    { key: 'oracle', label: 'Market Oracle' }
+                ];
+                list.innerHTML = all.map(u =>
+                    `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:10px;">
+                        <span style="color:var(--text-dim);">${u.label}</span>
+                        <span>${STATE.upgrades[u.key] ? '✅' : '❌'}</span>
+                    </div>`
+                ).join('');
+            }
+        }
+
+        // ─── SKILL PANEL ──────────────────────────────────────────────
+        function updateSkillPanel() {
+            const skills = [
+                { key: 'yield', cost: 5, label: 'Hyper-Yield' },
+                { key: 'speed', cost: 5, label: 'Rapid Bloom' },
+                { key: 'cold', cost: 5, label: 'Pure Cold' },
+                { key: 'rare', cost: 8, label: 'DNA Grafting' }
+            ];
+
+            skills.forEach(({ key, cost, label }) => {
+                const el = document.querySelector(`[data-skill="${key}"]`);
+                const costEl = $(`skill${key.charAt(0).toUpperCase() + key.slice(1)}Cost`);
+                if (el) {
+                    if (STATE.skills.includes(key)) {
+                        el.classList.add('unlocked');
+                        if (costEl) {
+                            costEl.textContent = '✅ Active';
+                            costEl.style.color = 'var(--green)';
+                        }
+                    } else {
+                        el.classList.remove('unlocked');
+                        if (costEl) {
+                            costEl.textContent = cost + ' Seeds';
+                            costEl.style.color = 'var(--purple)';
+                        }
+                    }
+                }
+            });
+        }
+
+        // ─── SHOP PANEL ────────────────────────────────────────────────
+        function updateShopPanel() {
+            const bal = $('shopOlvBalance');
+            if (bal) bal.textContent = Math.floor(STATE.olv);
+
+            const ph = $('purchaseHistory');
+            if (ph) {
+                const total = Object.values(STATE.purchases).reduce((a, b) => a + b, 0);
+                ph.textContent = 'Total spent: ' + total + ' OLV';
+            }
+        }
+
+        // ─── STATS PANEL ──────────────────────────────────────────────
+        function updateStatsPanel() {
+            $('statLifetime').textContent = STATE.lifetimeSol.toFixed(2);
+            $('statPlanted').textContent = STATE.treesPlanted;
+            $('statHarvests').textContent = STATE.totalHarvests;
+            $('statCombo').textContent = '×' + STATE.comboRecord.toFixed(1);
+            $('statRare').textContent = STATE.rareCount;
+
+            const achMap = {
+                achFirst: 'firstHarvest',
+                achGrove: 'groveMaster',
+                achTycoon: 'tycoon',
+                achCombo: 'comboKing',
+                achRare: 'rareCollector'
+            };
+            Object.entries(achMap).forEach(([id, key]) => {
+                const el = $(id);
+                if (el) el.textContent = STATE.achievements[key] ? '✅' : '❌';
+            });
+        }
+
+        // ─── INTERACTIONS ──────────────────────────────────────────────
+        function interactTree(index) {
+            const tree = STATE.trees[index];
+            if (!tree || tree.health <= 0) return;
+
+            if (tree.stage === 'mature') {
+                // Harvest
+                let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+                let finalYield = baseYield * (RARITIES[tree.rarity]?.bonus || 1) * STATE.skillMultipliers.yield * STATE
+                .combo;
+                if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+
+                STATE.hopper += finalYield;
+                STATE.totalHarvests++;
+                STATE.quest.current += finalYield;
+                tree.age = 0;
+                tree.stage = 'seed';
+                tree.pests = 0;
+
+                addCombo();
+                showToast(`+${finalYield.toFixed(1)}kg`, 'success');
+                log(`🫒 Harvested ${finalYield.toFixed(1)}kg`);
+
+                if (!STATE.achievements.firstHarvest) {
+                    STATE.achievements.firstHarvest = true;
+                    STATE.sol += 2;
+                    showToast('🏆 First Harvest! +2 SOL', 'success');
+                    log('🏆 Achievement: First Harvest!');
+                }
+                checkAchievements();
+
+            } else {
+                // Water
+                tree.water = Math.min(100, tree.water + 30);
+                showToast('💧 +30% Water');
+                log(`💧 Watered ${tree.id}`);
+            }
+
+            updateUI();
+        }
+
+        function plantTree() {
+            const cost = 5;
+            if (STATE.sol < cost) {
+                showToast(`Need ${cost} SOL to plant!`, 'error');
+                return;
+            }
+
+            const rarity = getRarity();
+            STATE.sol -= cost;
+
+            STATE.trees.push({
+                id: '#' + (STATE.treesPlanted + 1),
+                age: 0,
+                health: 100,
+                water: 85,
+                pests: 0,
+                stage: 'seed',
+                rarity: rarity,
+                protected: STATE.protectionActive || STATE.upgrades.guardian || false
+            });
+            STATE.treesPlanted++;
+            if (rarity === 'rare') STATE.rareCount++;
+            if (rarity === 'legendary') STATE.rareCount++;
+
+            showToast(`🌱 ${RARITIES[rarity]?.name} tree planted!`, 'success');
+            log(`🌱 Planted ${rarity} tree`);
+
+            updateUI();
+            checkAchievements();
+        }
+
+        function getRarity() {
+            if (STATE.nextTreeLegendary) {
+                STATE.nextTreeLegendary = false;
+                return 'legendary';
+            }
+            let roll = Math.random();
+            if (roll < STATE.skillMultipliers.rare) return 'rare';
+            return 'common';
+        }
+
+        function harvestAll() {
+            const ready = STATE.trees.filter(t => t.stage === 'mature' && t.health > 0);
+            if (ready.length === 0) {
+                showToast('No mature trees to harvest!', 'error');
+                return;
+            }
+
+            let totalYield = 0;
+            ready.forEach(tree => {
+                let baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+                let finalYield = baseYield * (RARITIES[tree.rarity]?.bonus || 1) * STATE.skillMultipliers.yield * STATE
+                .combo;
+                if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+                STATE.hopper += finalYield;
+                totalYield += finalYield;
+                STATE.totalHarvests++;
+                STATE.quest.current += finalYield;
+                tree.age = 0;
+                tree.stage = 'seed';
+                tree.pests = 0;
+            });
+
+            addCombo();
+            showToast(`🫒 Harvested ${totalYield.toFixed(1)}kg from ${ready.length} trees`, 'success');
+            log(`🫒 Bulk harvest: ${totalYield.toFixed(1)}kg from ${ready.length} trees`);
+
+            updateUI();
+            checkAchievements();
+        }
+
+        function waterAll() {
+            const dry = STATE.trees.filter(t => t.water < 100 && t.health > 0);
+            if (dry.length === 0) {
+                showToast('All trees fully watered!', 'error');
+                return;
+            }
+            dry.forEach(t => t.water = Math.min(100, t.water + 30));
+            showToast(`💧 Watered ${dry.length} trees`, 'success');
+            log(`💧 Bulk watered ${dry.length} trees`);
+            updateUI();
+        }
+
+        function sprayGrove() {
+            if (STATE.sol < 0.5) {
+                showToast('Need 0.5 SOL', 'error');
+                return;
+            }
+            const infested = STATE.trees.filter(t => t.pests > 0).length;
+            if (infested === 0) {
+                showToast('No pests to spray!', 'error');
+                return;
+            }
+            STATE.sol -= 0.5;
+            STATE.trees.forEach(t => t.pests = 0);
+            showToast(`🐛 Pests removed from ${infested} trees`, 'success');
+            log(`🐛 Pest control applied to ${infested} trees`);
+            updateUI();
+        }
+
+        function pressMill() {
+            const now = Date.now();
+            if (window._millCooldown && now < window._millCooldown) {
+                showToast('⏳ Mill cooling down...', 'error');
+                return;
+            }
+            window._millCooldown = now + 800;
+
+            if (STATE.hopper <= 0) {
+                showToast('No fruit in hopper!', 'error');
+                return;
+            }
+            if (STATE.mill.gunk >= 100) {
+                showToast('💥 Mill clogged! Clean it first!', 'error');
+                return;
+            }
+
+            const isIndustrialist = STATE.archetype === 'industrialist';
+            const heatGain = isIndustrialist ? 8 : 5;
+            const gunkGain = 2.0 + (STATE.mill.mash * 0.05);
+
+            STATE.mill.mash = Math.min(100, STATE.mill.mash + (isIndustrialist ? 12 : 10));
+            STATE.mill.heat = Math.min(100, (STATE.mill.heat || 0) + heatGain);
+            STATE.mill.gunk = Math.min(100, STATE.mill.gunk + gunkGain);
+            STATE.hopper = Math.max(0, STATE.hopper - 1.5);
+
+            if (STATE.mill.gunk >= 85 && STATE.mill.gunk < 100) {
+                showToast('⚠️ Mill pressure critical!', 'error');
+                log('⚠️ WARNING: Mill pressure critical!');
+            }
+
+            if (STATE.mill.gunk >= 100) {
+                const hopperLoss = Math.min(STATE.hopper + 50, STATE.hopper + STATE.mill.mash * 0.5);
+                STATE.hopper = Math.max(0, STATE.hopper - hopperLoss);
+                STATE.mill.mash = 0;
+                STATE.mill.heat = 0;
+                STATE.mill.gunk = 80;
+                showToast('💥 THE MILL BLEW UP!', 'error');
+                log('💥 Critical Failure: Mill overheated and ruptured.');
+                updateUI();
+                return;
+            }
+
+            if (STATE.mill.mash >= 100) {
+                const isNight = STATE.world.time > 20 || STATE.world.time < 6;
+                const coldBonus = (isNight && STATE.skillMultipliers.extraction > 1) ? 1.5 : 1.0;
+                const industrialistBonus = (isIndustrialist && STATE.mill.heat < 60) ? 1.3 : 1.0;
+                const purityPenalty = (100 - STATE.mill.gunk) / 100;
+                const oilYield = (STATE.hopper + 15) * 0.22 * purityPenalty * coldBonus *
+                    STATE.skillMultipliers.extraction * industrialistBonus;
+                STATE.oil += oilYield;
+                STATE.hopper = 0;
+                STATE.mill.mash = 0;
+                STATE.mill.heat = Math.max(0, STATE.mill.heat - 20);
+                showToast(`🏺 +${oilYield.toFixed(1)}L Oil`, 'success');
+                log(`🏺 Pressed ${oilYield.toFixed(2)}L EVOO`);
+            }
+
+            updateUI();
+        }
+
+        function sellOil() {
+            if (STATE.oil < 0.1) {
+                showToast('No oil to sell', 'error');
+                return;
+            }
+            const revenue = STATE.oil * STATE.world.price;
+            STATE.sol += revenue;
+            STATE.lifetimeSol += revenue;
+            showToast(`💰 +${revenue.toFixed(2)} SOL`, 'success');
+            log(`💰 Sold ${STATE.oil.toFixed(1)}L for ${revenue.toFixed(2)} SOL`);
+            STATE.oil = 0;
+            updateUI();
+            checkAchievements();
+        }
+
+        function addCombo() {
+            STATE.combo += 0.15;
+            if (STATE.combo > STATE.comboRecord) STATE.comboRecord = STATE.combo;
+            $('hud-combo').textContent = STATE.combo.toFixed(1) + 'x';
+
+            clearTimeout(STATE.comboRef);
+            STATE.comboRef = setTimeout(() => {
+                STATE.combo = 1.0;
+                $('hud-combo').textContent = '1.0x';
             }, 3000);
-        }
-        return result;
-    };
-}
 
-console.log('✨ OLIVIUM Enhancements loaded!');
-console.log('🌟 Features: Particles, Floating Text, Combo Popups, Achievements, Weather Effects, Social Chat');
-</script>
+            if (STATE.comboRecord >= 5 && !STATE.achievements.comboKing) {
+                STATE.achievements.comboKing = true;
+                STATE.sol += 5;
+                showToast('🏆 Combo King! +5 SOL', 'success');
+                log('🏆 Achievement: Combo King!');
+                updateUI();
+            }
+        }
+
+        function checkAchievements() {
+            const a = STATE.achievements;
+
+            if (STATE.trees.length >= 10 && !a.groveMaster) {
+                a.groveMaster = true;
+                STATE.sol += 10;
+                STATE.seeds++;
+                showToast('🏆 Grove Master! +10 SOL + Seed', 'success');
+                log('🏆 Achievement: Grove Master!');
+            }
+            if (STATE.lifetimeSol >= 100 && !a.tycoon) {
+                a.tycoon = true;
+                STATE.sol += 20;
+                showToast('🏆 Tycoon! +20 SOL', 'success');
+                log('🏆 Achievement: Tycoon!');
+            }
+            if (STATE.rareCount >= 5 && !a.rareCollector) {
+                a.rareCollector = true;
+                STATE.sol += 15;
+                STATE.seeds++;
+                showToast('🏆 Rare Collector! +15 SOL + Seed', 'success');
+                log('🏆 Achievement: Rare Collector!');
+            }
+            updateUI();
+        }
+
+        function checkQuest() {
+            if (STATE.quest.current >= STATE.quest.target) {
+                STATE.sol += STATE.quest.reward;
+                STATE.seeds += STATE.quest.seedReward;
+                showToast(`✅ Quest complete! +${STATE.quest.reward} SOL`, 'success');
+                log(`✅ Quest complete! +${STATE.quest.reward} SOL`);
+                STATE.quest.current = 0;
+                STATE.quest.target = Math.floor(Math.random() * 80) + 40;
+                STATE.quest.reward = Math.floor(STATE.quest.target / 5) + 5;
+                updateUI();
+            }
+        }
+
+        // ─── UPGRADE FUNCTIONS ─────────────────────────────────────────
+        function buyUpgrade(key) {
+            if (STATE.upgrades[key]) {
+                showToast('Already installed!', 'error');
+                return;
+            }
+
+            let cost;
+            if (key === 'greenhouse' || key === 'coldpress' || key === 'guardian' || key === 'oracle') {
+                cost = OLV_UPGRADES[key].cost;
+                if (STATE.olv < cost) {
+                    showToast(`Need ${cost} OLV`, 'error');
+                    return;
+                }
+                STATE.olv -= cost;
+            } else {
+                if (upgradeCurrency === 'sol') {
+                    cost = UPGRADE_COSTS.sol[key];
+                    if (STATE.sol < cost) {
+                        showToast(`Need ${cost} SOL`, 'error');
+                        return;
+                    }
+                    STATE.sol -= cost;
+                } else {
+                    cost = UPGRADE_COSTS.olv[key];
+                    if (STATE.olv < cost) {
+                        showToast(`Need ${cost} OLV`, 'error');
+                        return;
+                    }
+                    STATE.olv -= cost;
+                }
+            }
+
+            STATE.upgrades[key] = true;
+
+            // Apply effects
+            if (key === 'guardian') {
+                STATE.trees.forEach(t => t.protected = true);
+            }
+            if (key === 'coldpress') {
+                STATE.skillMultipliers.extraction = Math.max(STATE.skillMultipliers.extraction, 1.5);
+            }
+
+            showToast(`✅ ${key} installed!`, 'success');
+            log(`✅ ${key} upgrade installed`);
+            updateUI();
+        }
+
+        function cleanMill() {
+            if (STATE.sol < 0.2) {
+                showToast('Need 0.2 SOL', 'error');
+                return;
+            }
+            STATE.sol -= 0.2;
+            STATE.mill.gunk = 0;
+            showToast('🧼 Mill cleaned!', 'success');
+            log('🧼 Mill cleaned');
+            updateUI();
+        }
+
+        function removeDeadTrees() {
+            const dead = STATE.trees.filter(t => t.health <= 0).length;
+            if (dead === 0) {
+                showToast('No dead trees to remove!', 'error');
+                return;
+            }
+            STATE.trees = STATE.trees.filter(t => t.health > 0);
+            showToast(`💀 Removed ${dead} dead trees`, 'success');
+            log(`💀 Cleared ${dead} dead trees`);
+            updateUI();
+        }
+
+        function prestige() {
+            let reward = Math.floor(STATE.lifetimeSol / 40);
+            if (reward < 1) {
+                showToast('Earn 40 lifetime SOL first!', 'error');
+                return;
+            }
+            if (!confirm(`Liquidate estate for ${reward} Ancient Seeds?`)) return;
+
+            STATE.legacyAchievements = { ...STATE.achievements };
+            STATE.seeds += reward;
+            STATE.sol = 25;
+            STATE.oil = 0;
+            STATE.hopper = 0;
+            STATE.trees = [];
+            STATE.lifetimeSol = 0;
+            STATE.totalHarvests = 0;
+            STATE.rareCount = 0;
+            STATE.mill = { mash: 0, gunk: 0, heat: 0 };
+            STATE.blightActive = false;
+            STATE.futures = [];
+            STATE.achievements = {
+                firstHarvest: false,
+                groveMaster: false,
+                tycoon: false,
+                comboKing: false,
+                rareCollector: false
+            };
+            STATE.archetype = null;
+            STATE.archetypeLocked = false;
+
+            for (let i = 0; i < 3; i++) {
+                STATE.trees.push({
+                    id: '#' + (STATE.treesPlanted + i + 1),
+                    age: 0,
+                    health: 100,
+                    water: 85,
+                    pests: 0,
+                    stage: 'seed',
+                    rarity: 'common',
+                    protected: false
+                });
+            }
+            STATE.treesPlanted += 3;
+
+            showToast(`✨ Prestiged! +${reward} Ancient Seeds`, 'success');
+            log(`🔄 Prestiged! +${reward} Ancient Seeds`);
+            updateUI();
+        }
+
+        // ─── SHOP FUNCTIONS ────────────────────────────────────────────
+        function buyShopItem(itemId) {
+            const item = OLV_SHOP[itemId];
+            if (!item) return;
+
+            if (STATE.olv < item.cost) {
+                showToast(`Need ${item.cost} OLV`, 'error');
+                return;
+            }
+
+            STATE.olv -= item.cost;
+            STATE.purchases[itemId] = (STATE.purchases[itemId] || 0) + 1;
+
+            if (item.reward.seeds) {
+                STATE.seeds += item.reward.seeds;
+                showToast(`+${item.reward.seeds} Ancient Seeds!`, 'success');
+                log(`🌱 +${item.reward.seeds} Ancient Seeds`);
+            }
+            if (item.reward.sol) {
+                STATE.sol += item.reward.sol;
+                showToast(`+${item.reward.sol} SOL!`, 'success');
+                log(`💰 +${item.reward.sol} SOL`);
+            }
+            if (item.reward.fertilizerBoost) {
+                STATE.fertilizerBoost = true;
+                STATE.fertilizerBoostEnd = Date.now() + item.reward.duration;
+                showToast(`🌿 Fertilizer boost active for 1 hour!`, 'success');
+                log(`🌿 Fertilizer boost active`);
+            }
+            if (item.reward.instantHarvest) {
+                let total = 0;
+                STATE.trees.forEach(tree => {
+                    if (tree.stage === 'mature') {
+                        const yieldAmt = 12 * STATE.skillMultipliers.yield;
+                        STATE.hopper += yieldAmt;
+                        total += yieldAmt;
+                        tree.age = 0;
+                        tree.stage = 'seed';
+                    }
+                });
+                showToast(`⚡ Instant harvest! +${total.toFixed(1)}kg`, 'success');
+                log(`⚡ Instant harvest! +${total.toFixed(1)}kg`);
+            }
+            if (item.reward.protection) {
+                STATE.protectionActive = true;
+                STATE.protectionEnd = Date.now() + item.reward.duration;
+                showToast(`🛡️ Trees protected from pests for 24 hours!`, 'success');
+                log(`🛡️ Tree protection active`);
+            }
+            if (item.reward.legendary) {
+                STATE.nextTreeLegendary = true;
+                showToast(`👑 Next tree will be Legendary!`, 'success');
+                log(`👑 Legendary seed planted`);
+            }
+
+            updateUI();
+        }
+
+        // ─── RESET GAME ────────────────────────────────────────────────
+        function resetGame() {
+            if (!confirm('⚠️ Reset estate? (Keeps Seeds & Skills)')) return;
+
+            if (STATE.sol < 3 && STATE.olv < 300) {
+                showToast('Need 3 SOL or 300 OLV to reset', 'error');
+                return;
+            }
+
+            if (STATE.sol >= 3) {
+                STATE.sol -= 3;
+            } else if (STATE.olv >= 300) {
+                STATE.olv -= 300;
+            } else {
+                showToast('Need 3 SOL or 300 OLV to reset', 'error');
+                return;
+            }
+
+            const preservedSeeds = STATE.seeds;
+            const preservedSkills = [...STATE.skills];
+            const preservedSkillMultipliers = { ...STATE.skillMultipliers };
+            const preservedUpgrades = { ...STATE.upgrades };
+
+            STATE.sol = 25.0;
+            STATE.oil = 0;
+            STATE.hopper = 0;
+            STATE.lifetimeSol = 25.0;
+            STATE.treesPlanted = 0;
+            STATE.totalHarvests = 0;
+            STATE.comboRecord = 1.0;
+            STATE.rareCount = 0;
+            STATE.trees = [];
+            STATE.mill = { mash: 0, gunk: 0, heat: 0 };
+            STATE.combo = 1.0;
+            STATE.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
+            STATE.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false,
+            rareCollector: false };
+            STATE.fertilizerBoost = false;
+            STATE.fertilizerBoostEnd = 0;
+            STATE.protectionActive = false;
+            STATE.protectionEnd = 0;
+            STATE.nextTreeLegendary = false;
+            STATE.blightActive = false;
+            STATE.futures = [];
+            STATE.archetype = null;
+            STATE.archetypeLocked = false;
+
+            STATE.seeds = preservedSeeds;
+            STATE.skills = preservedSkills;
+            STATE.skillMultipliers = preservedSkillMultipliers;
+            STATE.upgrades = preservedUpgrades;
+
+            for (let i = 0; i < 3; i++) {
+                STATE.trees.push({
+                    id: '#' + (STATE.treesPlanted + i + 1),
+                    age: 0,
+                    health: 100,
+                    water: 85,
+                    pests: 0,
+                    stage: 'seed',
+                    rarity: 'common',
+                    protected: false
+                });
+            }
+            STATE.treesPlanted += 3;
+
+            showToast('✅ Estate reset!', 'success');
+            log('🔄 Estate reset! Ancient knowledge preserved.');
+            updateUI();
+        }
+
+        // ─── ARCHETYPE ──────────────────────────────────────────────────
+        function chooseArchetype(type) {
+            if (STATE.archetypeLocked) {
+                showToast('Archetype locked until prestige!', 'error');
+                return;
+            }
+            if (!ARCHETYPES[type]) return;
+            STATE.archetype = type;
+            STATE.archetypeLocked = true;
+
+            if (type === 'agrarian') {
+                STATE.skillMultipliers.yield *= 1.3;
+            }
+
+            const a = ARCHETYPES[type];
+            showToast(`${a.icon} ${a.name} locked!`, 'success');
+            log(`🏛️ Locked in as ${a.name}!`);
+            updateUI();
+        }
+
+        function openArchetypePanel() {
+            if (STATE.archetypeLocked) {
+                showToast('Archetype locked until prestige!', 'error');
+                return;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText =
+                'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+            overlay.innerHTML = `
+                <div style="background:#1a110a;border:1px solid #c9903e;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">
+                    <div style="text-align:center;margin-bottom:16px;">
+                        <div style="font-size:20px;color:#c9903e;font-weight:bold;">🏛️ STEWARD SPECIALIZATION</div>
+                        <div style="font-size:10px;opacity:0.5;margin-top:4px;">Choose your path — locks until prestige</div>
+                    </div>
+                    ${Object.entries(ARCHETYPES).map(([key, a]) => `
+                        <div onclick="chooseArchetype('${key}'); this.closest('div[style]').remove();"
+                             style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;">
+                            <div style="font-weight:bold;color:#c9903e;">${a.icon} ${a.name}</div>
+                            <div style="font-size:10px;opacity:0.7;margin:4px 0;">${a.desc}</div>
+                            <div style="font-size:9px;color:#4ade80;">✓ ${a.bonuses.join(' · ')}</div>
+                            <div style="font-size:9px;color:#ef4444;margin-top:2px;">⚠ ${a.risks[0]}</div>
+                        </div>
+                    `).join('')}
+                    <button onclick="this.closest('div[style]').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;cursor:pointer;">Close</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        // ─── GAME LOOP ──────────────────────────────────────────────────
+        function gameLoop() {
+            const now = Date.now();
+
+            // Boost expiry
+            if (STATE.fertilizerBoost && now > STATE.fertilizerBoostEnd) {
+                STATE.fertilizerBoost = false;
+                log('Fertilizer boost expired');
+            }
+            if (STATE.protectionActive && now > STATE.protectionEnd) {
+                STATE.protectionActive = false;
+                log('Tree protection expired');
+            }
+
+            // Tree updates
+            const isOverSaturated = STATE.archetype === 'agrarian' && STATE.trees.length > 9;
+
+            STATE.trees.forEach((tree, idx) => {
+                if (tree.health <= 0) return;
+
+                if (tree.protected) {
+                    tree.pests = Math.max(0, tree.pests - 5);
+                }
+
+                let waterLoss = STATE.upgrades.greenhouse ? 0 :
+                    (STATE.world.weather === 'Heatwave' ? 12 :
+                        (STATE.world.weather === 'Rainy' ? -8 : 3));
+                if (STATE.upgrades.irrigation && tree.water < 70) waterLoss = -5;
+                tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
+
+                let growthRate = 0.05 * STATE.skillMultipliers.speed;
+                if (STATE.fertilizerBoost) growthRate *= 1.5;
+                if (isOverSaturated) growthRate *= 0.7;
+                if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
+
+                if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
+                if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
+
+                if (!tree.protected && STATE.world.season === 'Summer' && Math.random() < 0.03) {
+                    tree.pests = Math.min(100, tree.pests + 5);
+                }
+
+                if (tree.pests > 50 && !tree.protected) {
+                    const blightSpreadChance = isOverSaturated ? 0.18 : 0.08;
+                    const neighbors = [idx - 1, idx + 1, idx - 5, idx + 5];
+                    neighbors.forEach(nIdx => {
+                        if (STATE.trees[nIdx] && STATE.trees[nIdx].health > 0 &&
+                            Math.random() < blightSpreadChance) {
+                            STATE.trees[nIdx].pests = Math.min(100, STATE.trees[nIdx].pests + 2);
+                        }
+                    });
+                    if (isOverSaturated && !STATE.blightActive) {
+                        STATE.blightActive = true;
+                        showToast('🚨 BLIGHT ALERT!', 'error');
+                        log('🚨 BLIGHT ALERT: Dense grove accelerating pest contagion!');
+                    }
+                }
+
+                if (STATE.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
+                if (STATE.upgrades.flytraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 3);
+
+                if (tree.water < 15) tree.health -= 4;
+                if (tree.pests > 40) tree.health -= 3;
+                if (tree.health <= 0) { tree.health = 0;
+                    tree.stage = 'dead'; }
+            });
+
+            if (STATE.blightActive && STATE.trees.every(t => t.pests < 50)) {
+                STATE.blightActive = false;
+            }
+
+            // Mill decay
+            STATE.mill.mash = Math.max(0, STATE.mill.mash - 4);
+            STATE.mill.heat = Math.max(0, (STATE.mill.heat || 0) - 2);
+            STATE.mill.gunk = Math.max(0, STATE.mill.gunk - 0.2);
+
+            // Market drift
+            STATE.marketPool = Math.min(6.0, STATE.marketPool + 0.01);
+            let drift = (Math.random() - 0.5) * 0.4;
+            STATE.world.price = STATE.world.price + (STATE.marketPool - STATE.world.price) * 0.3 + drift;
+            STATE.world.price = Math.max(0.5, Math.min(6.0, STATE.world.price));
+
+            // Demand
+            const demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
+            const idx = Math.floor(STATE.world.price / 1.2);
+            STATE.world.demand = demandLevels[Math.min(4, idx)];
+
+            // Check quest
+            checkQuest();
+
+            // Update UI
+            updateUI();
+        }
+
+        // ─── WEATHER CYCLE ─────────────────────────────────────────────
+        function weatherCycle() {
+            const weathers = [
+                { type: 'Clear', temp: 24 },
+                { type: 'Rainy', temp: 18 },
+                { type: 'Heatwave', temp: 36 }
+            ];
+            const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
+            STATE.world.weather = newWeather.type;
+            STATE.world.temp = newWeather.temp;
+
+            const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+            const currentIdx = seasons.indexOf(STATE.world.season);
+            STATE.world.season = seasons[(currentIdx + 1) % 4];
+
+            if (newWeather.type === 'Rainy') {
+                STATE.trees.forEach(t => t.water = Math.min(100, t.water + 15));
+            }
+
+            updateUI();
+        }
+
+        // ─── TIME CYCLE ────────────────────────────────────────────────
+        function timeCycle() {
+            STATE.world.time = (STATE.world.time + 0.5) % 24;
+        }
+
+        // ─── PANEL SYSTEM ──────────────────────────────────────────────
+        function openPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            const panel = document.getElementById('panel' + panelId.charAt(0).toUpperCase() + panelId.slice(1));
+            if (panel) panel.classList.add('active');
+
+            const nav = document.querySelector(`.nav-item[data-panel="${panelId}"]`);
+            if (nav) nav.classList.add('active');
+
+            document.getElementById('panelOverlay').classList.add('active');
+        }
+
+        function closePanel() {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('panelOverlay').classList.remove('active');
+
+            const groveNav = document.querySelector('.nav-item[data-panel="grove"]');
+            if (groveNav) groveNav.classList.add('active');
+        }
+
+        // ─── CONNECT MODAL ─────────────────────────────────────────────
+        function showConnectModal() {
+            document.getElementById('connectModal').classList.add('active');
+        }
+
+        function hideConnectModal() {
+            document.getElementById('connectModal').classList.remove('active');
+        }
+
+        function connectWallet() {
+            // Simulate wallet connection
+            STATE.olv = 500;
+            showToast('✅ Wallet connected!', 'success');
+            log('🔗 Wallet connected');
+            hideConnectModal();
+            updateUI();
+        }
+
+        function emailLogin() {
+            STATE.olv = 100;
+            showToast('✅ Email login successful!', 'success');
+            log('✉️ Email login successful');
+            hideConnectModal();
+            updateUI();
+        }
+
+        // ─── INIT ──────────────────────────────────────────────────────
+        function init() {
+            // Initial trees
+            if (STATE.trees.length === 0) {
+                for (let i = 0; i < 3; i++) {
+                    STATE.trees.push({
+                        id: '#' + (STATE.treesPlanted + i + 1),
+                        age: 0,
+                        health: 100,
+                        water: 85,
+                        pests: 0,
+                        stage: 'seed',
+                        rarity: 'common',
+                        protected: false
+                    });
+                }
+                STATE.treesPlanted += 3;
+            }
+
+            // ─── EVENT BINDING ──────────────────────────────────────────
+
+            // Bottom nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const panel = item.dataset.panel;
+                    if (panel === 'grove') {
+                        closePanel();
+                    } else {
+                        openPanel(panel);
+                    }
+                });
+            });
+
+            // Close buttons
+            document.querySelectorAll('[data-close]').forEach(btn => {
+                btn.addEventListener('click', closePanel);
+            });
+            document.getElementById('panelOverlay').addEventListener('click', closePanel);
+
+            // Top bar connect
+            document.getElementById('connectBtn').addEventListener('click', showConnectModal);
+            document.getElementById('closeModalBtn').addEventListener('click', hideConnectModal);
+            document.getElementById('connectModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) hideConnectModal();
+            });
+            document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+            document.getElementById('emailLoginBtn').addEventListener('click', emailLogin);
+
+            // Action buttons
+            document.getElementById('btnPlant').addEventListener('click', plantTree);
+            document.getElementById('btnHarvest').addEventListener('click', harvestAll);
+            document.getElementById('btnWater').addEventListener('click', waterAll);
+            document.getElementById('btnSpray').addEventListener('click', sprayGrove);
+            document.getElementById('btnMill').addEventListener('click', pressMill);
+            document.getElementById('fabMill').addEventListener('click', pressMill);
+
+            // Upgrade items
+            document.querySelectorAll('[data-upgrade]').forEach(el => {
+                el.addEventListener('click', () => {
+                    buyUpgrade(el.dataset.upgrade);
+                });
+            });
+
+            // Currency toggle
+            document.getElementById('upgCurrencySol').addEventListener('click', () => {
+                upgradeCurrency = 'sol';
+                updateUI();
+            });
+            document.getElementById('upgCurrencyOlv').addEventListener('click', () => {
+                upgradeCurrency = 'olv';
+                updateUI();
+            });
+
+            // Maintenance
+            document.getElementById('btnCleanMill').addEventListener('click', () => {
+                cleanMill();
+                closePanel();
+            });
+            document.getElementById('btnRemoveDead').addEventListener('click', () => {
+                removeDeadTrees();
+                closePanel();
+            });
+            document.getElementById('btnPrestige').addEventListener('click', () => {
+                prestige();
+                closePanel();
+            });
+
+            // Skill items
+            document.querySelectorAll('[data-skill]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const skill = el.dataset.skill;
+                    const costs = { yield: 5, speed: 5, cold: 5, rare: 8 };
+                    if (STATE.skills.includes(skill)) {
+                        showToast('Already unlocked!', 'error');
+                        return;
+                    }
+                    if (STATE.seeds < costs[skill]) {
+                        showToast(`Need ${costs[skill]} Ancient Seeds`, 'error');
+                        return;
+                    }
+                    STATE.seeds -= costs[skill];
+                    STATE.skills.push(skill);
+                    if (skill === 'yield') STATE.skillMultipliers.yield = 1.8;
+                    if (skill === 'speed') STATE.skillMultipliers.speed = 2.5;
+                    if (skill === 'cold') STATE.skillMultipliers.extraction = 1.6;
+                    if (skill === 'rare') STATE.skillMultipliers.rare = 0.25;
+                    showToast(`✨ Unlocked ${skill.toUpperCase()}!`, 'success');
+                    log(`✨ Unlocked ${skill.toUpperCase()}!`);
+                    updateUI();
+                    closePanel();
+                });
+            });
+
+            // Shop items
+            document.querySelectorAll('[data-shop]').forEach(el => {
+                el.addEventListener('click', () => {
+                    buyShopItem(el.dataset.shop);
+                });
+            });
+
+            // Reset game
+            document.getElementById('btnResetGame').addEventListener('click', resetGame);
+
+            // Archetype
+            document.getElementById('archetypeBanner').addEventListener('click', openArchetypePanel);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'p' || e.key === 'P') plantTree();
+                if (e.key === 'h' || e.key === 'H') harvestAll();
+                if (e.key === 'w' || e.key === 'W') waterAll();
+                if (e.key === 's' || e.key === 'S') sprayGrove();
+                if (e.key === 'm' || e.key === 'M' || e.key === ' ') {
+                    e.preventDefault();
+                    pressMill();
+                }
+                if (e.key === 'Escape') {
+                    closePanel();
+                    hideConnectModal();
+                }
+            });
+
+            // ─── GAME LOOPS ─────────────────────────────────────────────
+            setInterval(gameLoop, 2000);
+            setInterval(weatherCycle, 20000);
+            setInterval(timeCycle, 30000);
+
+            // ─── INITIAL RENDER ────────────────────────────────────────
+            updateUI();
+            log('🌿 Welcome to Olivium Estate!');
+            log('📖 Tap trees to water/harvest');
+            log('🔐 Click "Connect Profile" to save progress');
+            log('🏛️ Choose your Archetype to specialize');
+
+            console.log('🌿 Olivium Estate — Full UI loaded!');
+            console.log('📖 Keyboard: P=Plant, H=Harvest, W=Water, S=Spray, M/Space=Mill');
+        }
+
+        // ─── START ─────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Expose for console
+        window.STATE = STATE;
+        window.plantTree = plantTree;
+        window.harvestAll = harvestAll;
+        window.waterAll = waterAll;
+        window.sprayGrove = sprayGrove;
+        window.pressMill = pressMill;
+        window.sellOil = sellOil;
+        window.chooseArchetype = chooseArchetype;
+        window.openArchetypePanel = openArchetypePanel;
+        window.buyUpgrade = buyUpgrade;
+        window.buyShopItem = buyShopItem;
+        window.resetGame = resetGame;
+        window.prestige = prestige;
+        window.showToast = showToast;
+        window.log = log;
+        window.updateUI = updateUI;
+    </script>
 </body>
 </html>
