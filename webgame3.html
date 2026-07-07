@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>🌿 Olivium Estate — Full UI</title>
+    <title>🌿 Olivium Estate</title>
     <style>
         /* ============================================================
            COMPLETE STYLESHEET - All UI Components Restored
@@ -1227,33 +1227,21 @@
 <body>
 
     <div id="app">
-        <!-- ─── TOP BAR ──────────────────────────────────────────── -->
+        <!-- TOP BAR -->
         <div class="top-bar">
             <div class="title">🌿 OLIVIUM <small>ESTATE</small></div>
             <button class="connect-btn" id="connectBtn">Connect Profile</button>
         </div>
 
-        <!-- ─── HUD ROW ──────────────────────────────────────────── -->
+        <!-- HUD ROW -->
         <div class="hud-row">
-            <div class="hud-item">
-                <div class="label">SOL</div>
-                <div class="value" id="hud-sol">25.00</div>
-            </div>
-            <div class="hud-item">
-                <div class="label">OIL (L)</div>
-                <div class="value green" id="hud-oil">0.0</div>
-            </div>
-            <div class="hud-item">
-                <div class="label">OLV</div>
-                <div class="value purple" id="hud-olv">0</div>
-            </div>
-            <div class="hud-item">
-                <div class="label">COMBO</div>
-                <div class="value combo" id="hud-combo">1.0x</div>
-            </div>
+            <div class="hud-item"><div class="label">SOL</div><div class="value" id="hud-sol">25.00</div></div>
+            <div class="hud-item"><div class="label">OIL (L)</div><div class="value green" id="hud-oil">0.0</div></div>
+            <div class="hud-item"><div class="label">OLV</div><div class="value purple" id="hud-olv">0</div></div>
+            <div class="hud-item"><div class="label">COMBO</div><div class="value combo" id="hud-combo">1.0x</div></div>
         </div>
 
-        <!-- ─── WEATHER STRIP ────────────────────────────────────── -->
+        <!-- WEATHER STRIP -->
         <div class="weather-strip">
             <span class="weather-icon" id="weatherIcon">☀️</span>
             <div class="weather-info">
@@ -1266,7 +1254,7 @@
             <span class="market-price" id="hud-price">2.50</span>
         </div>
 
-        <!-- ─── MAIN CONTENT ────────────────────────────────────── -->
+        <!-- MAIN CONTENT -->
         <div class="main-content" id="mainContent">
 
             <!-- Archetype Banner -->
@@ -1284,46 +1272,18 @@
 
             <!-- Action Buttons -->
             <div class="action-grid">
-                <button class="action-btn primary" id="btnPlant">
-                    <span class="icon">🌱</span>
-                    PLANT
-                    <span class="cost">5 SOL</span>
-                </button>
-                <button class="action-btn green" id="btnHarvest">
-                    <span class="icon">🫒</span>
-                    HARVEST
-                    <span class="cost" id="harvestCount"></span>
-                </button>
-                <button class="action-btn blue" id="btnWater">
-                    <span class="icon">💧</span>
-                    WATER
-                    <span class="cost">ALL</span>
-                </button>
-                <button class="action-btn danger" id="btnSpray">
-                    <span class="icon">🐛</span>
-                    SPRAY
-                    <span class="cost">0.5 SOL</span>
-                </button>
+                <button class="action-btn primary" id="btnPlant"><span class="icon">🌱</span>PLANT<span class="cost">5 SOL</span></button>
+                <button class="action-btn green" id="btnHarvest"><span class="icon">🫒</span>HARVEST<span class="cost" id="harvestCount"></span></button>
+                <button class="action-btn blue" id="btnWater"><span class="icon">💧</span>WATER<span class="cost">ALL</span></button>
+                <button class="action-btn danger" id="btnSpray"><span class="icon">🐛</span>SPRAY<span class="cost">0.5 SOL</span></button>
             </div>
 
             <!-- Stats Row -->
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px;">
-                <div class="hud-item">
-                    <div class="label">SEEDS</div>
-                    <div class="value purple" id="hud-seeds">0</div>
-                </div>
-                <div class="hud-item">
-                    <div class="label">TREES</div>
-                    <div class="value" id="hud-trees">0</div>
-                </div>
-                <div class="hud-item">
-                    <div class="label">RARE</div>
-                    <div class="value purple" id="hud-rare">0</div>
-                </div>
-                <div class="hud-item">
-                    <div class="label">LEVEL</div>
-                    <div class="value" id="hud-level">1</div>
-                </div>
+                <div class="hud-item"><div class="label">SEEDS</div><div class="value purple" id="hud-seeds">0</div></div>
+                <div class="hud-item"><div class="label">TREES</div><div class="value" id="hud-trees">0</div></div>
+                <div class="hud-item"><div class="label">RARE</div><div class="value purple" id="hud-rare">0</div></div>
+                <div class="hud-item"><div class="label">LEVEL</div><div class="value" id="hud-level">1</div></div>
             </div>
 
             <!-- Boosts -->
@@ -1336,12 +1296,7 @@
             <div class="mill-card">
                 <div class="mill-header">
                     <span class="mill-icon">🏺</span>
-                    <div class="mill-info">
-                        <div class="hopper">
-                            <span id="millHopper">0.0</span>
-                            <small>kg in hopper</small>
-                        </div>
-                    </div>
+                    <div class="mill-info"><div class="hopper"><span id="millHopper">0.0</span> <small>kg in hopper</small></div></div>
                     <button class="action-btn" id="btnMill" style="padding:4px 12px;font-size:10px;">PRESS</button>
                 </div>
                 <div class="mill-gauges">
@@ -1387,301 +1342,123 @@
             <div class="ledger" id="ledger"></div>
         </div>
 
-        <!-- ─── BOTTOM NAV ───────────────────────────────────────── -->
+        <!-- BOTTOM NAV -->
         <div class="bottom-nav">
-            <button class="nav-item active" data-panel="grove">
-                <span class="nav-icon">🌿</span>GROVE
-            </button>
-            <button class="nav-item" data-panel="upgrades">
-                <span class="nav-icon">⚙️</span>UPGRADES
-            </button>
-            <button class="nav-item" data-panel="skills">
-                <span class="nav-icon">🧬</span>SKILLS
-            </button>
-            <button class="nav-item" data-panel="shop">
-                <span class="nav-icon">🛒</span>SHOP
-            </button>
-            <button class="nav-item" data-panel="stats">
-                <span class="nav-icon">📊</span>STATS
-            </button>
+            <button class="nav-item active" data-panel="grove"><span class="nav-icon">🌿</span>GROVE</button>
+            <button class="nav-item" data-panel="upgrades"><span class="nav-icon">⚙️</span>UPGRADES</button>
+            <button class="nav-item" data-panel="skills"><span class="nav-icon">🧬</span>SKILLS</button>
+            <button class="nav-item" data-panel="shop"><span class="nav-icon">🛒</span>SHOP</button>
+            <button class="nav-item" data-panel="stats"><span class="nav-icon">📊</span>STATS</button>
         </div>
     </div>
 
-    <!-- ─── TOAST ─────────────────────────────────────────────────── -->
+    <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!-- ─── FAB MILL ─────────────────────────────────────────────── -->
+    <!-- FAB MILL -->
     <button class="fab-mill" id="fabMill">🏺</button>
 
-    <!-- ─── PANEL OVERLAY ────────────────────────────────────────── -->
+    <!-- PANEL OVERLAY -->
     <div class="panel-overlay" id="panelOverlay"></div>
 
-    <!-- ─── UPGRADES PANEL ───────────────────────────────────────── -->
+    <!-- UPGRADES PANEL -->
     <div class="panel" id="panelUpgrades">
         <div class="panel-handle"></div>
         <div class="panel-header">
             <h3>⚙️ Upgrades</h3>
             <span class="close-btn" data-close="panelUpgrades">&times;</span>
         </div>
-
         <div class="currency-toggle">
-            <button class="active-sol" id="upgCurrencySol" data-currency="sol">SOL</button>
-            <button id="upgCurrencyOlv" data-currency="olv">OLV</button>
+            <button class="active-sol" id="upgCurrencySol">SOL</button>
+            <button id="upgCurrencyOlv">OLV</button>
         </div>
         <div class="text-center text-sm text-purple" id="upgOlvBalance" style="display:none;margin-bottom:8px;">
             Wallet OLV: <span id="upgOlvDisplay">0</span>
         </div>
-
         <div class="text-xs text-gold font-bold mb-1">FARM INFRASTRUCTURE</div>
-        <button class="upgrade-item" data-upgrade="irrigation">
-            <span class="icon">💧</span>
-            <div class="info">
-                <div class="name">Auto-Irrigation</div>
-                <div class="desc">Maintains water at 70% automatically</div>
-            </div>
-            <span class="cost" id="costIrrigation">15 SOL</span>
-        </button>
-        <button class="upgrade-item" data-upgrade="misting">
-            <span class="icon">🌫️</span>
-            <div class="info">
-                <div class="name">Misting System</div>
-                <div class="desc">Reduces pest spread speed</div>
-            </div>
-            <span class="cost" id="costMisting">10 SOL</span>
-        </button>
-        <button class="upgrade-item" data-upgrade="fertilizer">
-            <span class="icon">🌿</span>
-            <div class="info">
-                <div class="name">Organic Fertilizer</div>
-                <div class="desc">+40% growth rate boost</div>
-            </div>
-            <span class="cost" id="costFertilizer">8 SOL</span>
-        </button>
-        <button class="upgrade-item" data-upgrade="flytraps">
-            <span class="icon">🪰</span>
-            <div class="info">
-                <div class="name">Venus Fly Traps</div>
-                <div class="desc">Pests reduced 3% per tick passively</div>
-            </div>
-            <span class="cost" id="costFlytraps">0.003 SOL</span>
-        </button>
-
+        <button class="upgrade-item" data-upgrade="irrigation"><span class="icon">💧</span><div class="info"><div class="name">Auto-Irrigation</div><div class="desc">Maintains water at 70% automatically</div></div><span class="cost" id="costIrrigation">15 SOL</span></button>
+        <button class="upgrade-item" data-upgrade="misting"><span class="icon">🌫️</span><div class="info"><div class="name">Misting System</div><div class="desc">Reduces pest spread speed</div></div><span class="cost" id="costMisting">10 SOL</span></button>
+        <button class="upgrade-item" data-upgrade="fertilizer"><span class="icon">🌿</span><div class="info"><div class="name">Organic Fertilizer</div><div class="desc">+40% growth rate boost</div></div><span class="cost" id="costFertilizer">8 SOL</span></button>
+        <button class="upgrade-item" data-upgrade="flytraps"><span class="icon">🪰</span><div class="info"><div class="name">Venus Fly Traps</div><div class="desc">Pests reduced 3% per tick passively</div></div><span class="cost" id="costFlytraps">0.003 SOL</span></button>
         <div class="text-xs text-purple font-bold mt-2 mb-1">OLV PREMIUM</div>
-        <button class="upgrade-item" data-upgrade="greenhouse">
-            <span class="icon">🏡</span>
-            <div class="info">
-                <div class="name">Greenhouse Dome</div>
-                <div class="desc">Nullifies weather damage to trees</div>
-            </div>
-            <span class="cost purple" id="costGreenhouse">500 OLV</span>
-        </button>
-        <button class="upgrade-item" data-upgrade="coldpress">
-            <span class="icon">❄️</span>
-            <div class="info">
-                <div class="name">Cold Press Chamber</div>
-                <div class="desc">+50% oil extraction, max purity</div>
-            </div>
-            <span class="cost purple" id="costColdpress">800 OLV</span>
-        </button>
-        <button class="upgrade-item" data-upgrade="guardian">
-            <span class="icon">🛡️</span>
-            <div class="info">
-                <div class="name">Grove Guardian</div>
-                <div class="desc">All trees permanently protected</div>
-            </div>
-            <span class="cost purple" id="costGuardian">1200 OLV</span>
-        </button>
-        <button class="upgrade-item" data-upgrade="oracle">
-            <span class="icon">🔮</span>
-            <div class="info">
-                <div class="name">Market Oracle</div>
-                <div class="desc">Predicts price peaks, highlights sell windows</div>
-            </div>
-            <span class="cost purple" id="costOracle">600 OLV</span>
-        </button>
-
+        <button class="upgrade-item" data-upgrade="greenhouse"><span class="icon">🏡</span><div class="info"><div class="name">Greenhouse Dome</div><div class="desc">Nullifies weather damage to trees</div></div><span class="cost purple" id="costGreenhouse">500 OLV</span></button>
+        <button class="upgrade-item" data-upgrade="coldpress"><span class="icon">❄️</span><div class="info"><div class="name">Cold Press Chamber</div><div class="desc">+50% oil extraction, max purity</div></div><span class="cost purple" id="costColdpress">800 OLV</span></button>
+        <button class="upgrade-item" data-upgrade="guardian"><span class="icon">🛡️</span><div class="info"><div class="name">Grove Guardian</div><div class="desc">All trees permanently protected</div></div><span class="cost purple" id="costGuardian">1200 OLV</span></button>
+        <button class="upgrade-item" data-upgrade="oracle"><span class="icon">🔮</span><div class="info"><div class="name">Market Oracle</div><div class="desc">Predicts price peaks, highlights sell windows</div></div><span class="cost purple" id="costOracle">600 OLV</span></button>
         <div class="text-xs text-gold font-bold mt-2 mb-1">MAINTENANCE</div>
-        <button class="upgrade-item" id="btnCleanMill">
-            <span class="icon">🧼</span>
-            <div class="info">
-                <div class="name">Steam Clean Mill</div>
-                <div class="desc">Clears gunk buildup, resets clog risk</div>
-            </div>
-            <span class="cost">0.2 SOL</span>
-        </button>
-        <button class="upgrade-item" id="btnRemoveDead">
-            <span class="icon">💀</span>
-            <div class="info">
-                <div class="name">Remove Dead Trees</div>
-                <div class="desc">Clear withered trees from the grove</div>
-            </div>
-            <span class="cost green">Free</span>
-        </button>
-        <button class="upgrade-item" id="btnPrestige" style="border-color:rgba(176,107,240,0.25);">
-            <span class="icon">🔄</span>
-            <div class="info">
-                <div class="name">Liquidate Estate (Prestige)</div>
-                <div class="desc">Reset estate, keep seeds &amp; skills</div>
-            </div>
-            <span class="cost purple">40 SOL</span>
-        </button>
+        <button class="upgrade-item" id="btnCleanMill"><span class="icon">🧼</span><div class="info"><div class="name">Steam Clean Mill</div><div class="desc">Clears gunk buildup, resets clog risk</div></div><span class="cost">0.2 SOL</span></button>
+        <button class="upgrade-item" id="btnRemoveDead"><span class="icon">💀</span><div class="info"><div class="name">Remove Dead Trees</div><div class="desc">Clear withered trees from the grove</div></div><span class="cost green">Free</span></button>
+        <button class="upgrade-item" id="btnPrestige" style="border-color:rgba(176,107,240,0.25);"><span class="icon">🔄</span><div class="info"><div class="name">Liquidate Estate (Prestige)</div><div class="desc">Reset estate, keep seeds &amp; skills</div></div><span class="cost purple">40 SOL</span></button>
     </div>
 
-    <!-- ─── SKILLS PANEL ──────────────────────────────────────────── -->
+    <!-- SKILLS PANEL -->
     <div class="panel" id="panelSkills">
         <div class="panel-handle"></div>
         <div class="panel-header">
             <h3 class="text-purple">🧬 Ancient Lab</h3>
             <span class="close-btn" data-close="panelSkills">&times;</span>
         </div>
-        <div class="text-center">
-            <div class="text-xs text-purple">Ancient Seeds</div>
-            <div class="text-gold font-bold" style="font-size:24px;" id="skillSeeds">0</div>
-        </div>
-        <button class="skill-item" data-skill="yield">
-            <span class="icon">📈</span>
-            <div class="info">
-                <div class="name">Hyper-Yield</div>
-                <div class="desc">+80% harvest yield per tree</div>
-            </div>
-            <span class="cost" id="skillYieldCost">5 Seeds</span>
-        </button>
-        <button class="skill-item" data-skill="speed">
-            <span class="icon">⚡</span>
-            <div class="info">
-                <div class="name">Rapid Bloom</div>
-                <div class="desc">2.5× faster tree growth</div>
-            </div>
-            <span class="cost" id="skillSpeedCost">5 Seeds</span>
-        </button>
-        <button class="skill-item" data-skill="cold">
-            <span class="icon">❄️</span>
-            <div class="info">
-                <div class="name">Pure Cold</div>
-                <div class="desc">+60% night extraction yield</div>
-            </div>
-            <span class="cost" id="skillColdCost">5 Seeds</span>
-        </button>
-        <button class="skill-item" data-skill="rare">
-            <span class="icon">🧬</span>
-            <div class="info">
-                <div class="name">DNA Grafting</div>
-                <div class="desc">25% chance of rare trees</div>
-            </div>
-            <span class="cost" id="skillRareCost">8 Seeds</span>
-        </button>
+        <div class="text-center"><div class="text-xs text-purple">Ancient Seeds</div><div class="text-gold font-bold" style="font-size:24px;" id="skillSeeds">0</div></div>
+        <button class="skill-item" data-skill="yield"><span class="icon">📈</span><div class="info"><div class="name">Hyper-Yield</div><div class="desc">+80% harvest yield per tree</div></div><span class="cost" id="skillYieldCost">5 Seeds</span></button>
+        <button class="skill-item" data-skill="speed"><span class="icon">⚡</span><div class="info"><div class="name">Rapid Bloom</div><div class="desc">2.5× faster tree growth</div></div><span class="cost" id="skillSpeedCost">5 Seeds</span></button>
+        <button class="skill-item" data-skill="cold"><span class="icon">❄️</span><div class="info"><div class="name">Pure Cold</div><div class="desc">+60% night extraction yield</div></div><span class="cost" id="skillColdCost">5 Seeds</span></button>
+        <button class="skill-item" data-skill="rare"><span class="icon">🧬</span><div class="info"><div class="name">DNA Grafting</div><div class="desc">25% chance of rare trees</div></div><span class="cost" id="skillRareCost">8 Seeds</span></button>
     </div>
 
-    <!-- ─── SHOP PANEL ────────────────────────────────────────────── -->
+    <!-- SHOP PANEL -->
     <div class="panel" id="panelShop">
         <div class="panel-handle"></div>
         <div class="panel-header">
             <h3>🛒 OLV Shop</h3>
             <span class="close-btn" data-close="panelShop">&times;</span>
         </div>
-        <div class="text-center text-sm mb-2">
-            💰 Your OLV: <span class="text-gold font-bold" id="shopOlvBalance">0</span>
-        </div>
+        <div class="text-center text-sm mb-2">💰 Your OLV: <span class="text-gold font-bold" id="shopOlvBalance">0</span></div>
         <div class="text-xs text-center text-faint mb-2" id="purchaseHistory">Total spent: 0 OLV</div>
-
-        <div class="shop-item" data-shop="seeds">
-            <div class="info">
-                <div class="name">🌱 Ancient Seeds (5)</div>
-                <div class="desc">Unlock Ancient Lab skills</div>
-            </div>
-            <span class="price">100 OLV</span>
-        </div>
-        <div class="shop-item" data-shop="sol">
-            <div class="info">
-                <div class="name">💰 SOL Boost (10)</div>
-                <div class="desc">Add 10 SOL to your balance</div>
-            </div>
-            <span class="price">50 OLV</span>
-        </div>
-        <div class="shop-item" data-shop="fertilizer">
-            <div class="info">
-                <div class="name">🌿 Premium Fertilizer</div>
-                <div class="desc">+50% growth speed for 1 hour</div>
-            </div>
-            <span class="price">200 OLV</span>
-        </div>
-        <div class="shop-item" data-shop="instantHarvest">
-            <div class="info">
-                <div class="name">⚡ Instant Harvest</div>
-                <div class="desc">Harvest all ready trees instantly</div>
-            </div>
-            <span class="price">75 OLV</span>
-        </div>
-        <div class="shop-item" data-shop="protection">
-            <div class="info">
-                <div class="name">🛡️ Tree Protection</div>
-                <div class="desc">Protect trees from pests for 24h</div>
-            </div>
-            <span class="price">150 OLV</span>
-        </div>
-        <div class="shop-item" style="border-color:rgba(176,107,240,0.25);" data-shop="legendary">
-            <div class="info">
-                <div class="name">👑 Legendary Seed</div>
-                <div class="desc">Next tree planted is Legendary (5x yield)</div>
-            </div>
-            <span class="price purple">500 OLV</span>
-        </div>
-        <div class="shop-item" style="border-color:rgba(240,85,85,0.2);margin-top:6px;" id="btnResetGame">
-            <div class="info">
-                <div class="name">⚠️ Reset Estate</div>
-                <div class="desc">Reset your estate (Keeps Seeds &amp; Skills)</div>
-            </div>
-            <span class="price danger">3 SOL / 300 OLV</span>
-        </div>
+        <div class="shop-item" data-shop="seeds"><div class="info"><div class="name">🌱 Ancient Seeds (5)</div><div class="desc">Unlock Ancient Lab skills</div></div><span class="price">100 OLV</span></div>
+        <div class="shop-item" data-shop="sol"><div class="info"><div class="name">💰 SOL Boost (10)</div><div class="desc">Add 10 SOL to your balance</div></div><span class="price">50 OLV</span></div>
+        <div class="shop-item" data-shop="fertilizer"><div class="info"><div class="name">🌿 Premium Fertilizer</div><div class="desc">+50% growth speed for 1 hour</div></div><span class="price">200 OLV</span></div>
+        <div class="shop-item" data-shop="instantHarvest"><div class="info"><div class="name">⚡ Instant Harvest</div><div class="desc">Harvest all ready trees instantly</div></div><span class="price">75 OLV</span></div>
+        <div class="shop-item" data-shop="protection"><div class="info"><div class="name">🛡️ Tree Protection</div><div class="desc">Protect trees from pests for 24h</div></div><span class="price">150 OLV</span></div>
+        <div class="shop-item" style="border-color:rgba(176,107,240,0.25);" data-shop="legendary"><div class="info"><div class="name">👑 Legendary Seed</div><div class="desc">Next tree planted is Legendary (5x yield)</div></div><span class="price purple">500 OLV</span></div>
+        <div class="shop-item" style="border-color:rgba(240,85,85,0.2);margin-top:6px;" id="btnResetGame"><div class="info"><div class="name">⚠️ Reset Estate</div><div class="desc">Reset your estate (Keeps Seeds &amp; Skills)</div></div><span class="price danger">3 SOL / 300 OLV</span></div>
     </div>
 
-    <!-- ─── STATS PANEL ───────────────────────────────────────────── -->
+    <!-- STATS PANEL -->
     <div class="panel" id="panelStats">
         <div class="panel-handle"></div>
         <div class="panel-header">
             <h3>📊 Statistics</h3>
             <span class="close-btn" data-close="panelStats">&times;</span>
         </div>
-
         <div class="text-xs text-gold font-bold mb-1">CAREER</div>
         <div class="stat-row"><span class="label">💰 Lifetime SOL</span><span class="value" id="statLifetime">0.00</span></div>
         <div class="stat-row"><span class="label">🌳 Trees Planted</span><span class="value" id="statPlanted">0</span></div>
         <div class="stat-row"><span class="label">🫒 Total Harvests</span><span class="value" id="statHarvests">0</span></div>
         <div class="stat-row"><span class="label">⚡ Combo Record</span><span class="value" style="color:#f09040;" id="statCombo">×1.0</span></div>
         <div class="stat-row"><span class="label">💎 Rare Trees</span><span class="value purple" id="statRare">0</span></div>
-
         <div class="text-xs text-gold font-bold mt-2 mb-1">ACHIEVEMENTS</div>
         <div class="achievement-item"><span class="ach-name">🌱 First Harvest</span><span class="ach-status" id="achFirst">❌</span></div>
         <div class="achievement-item"><span class="ach-name">🌳 Grove Master (10 trees)</span><span class="ach-status" id="achGrove">❌</span></div>
         <div class="achievement-item"><span class="ach-name">💰 Tycoon (100 SOL)</span><span class="ach-status" id="achTycoon">❌</span></div>
         <div class="achievement-item"><span class="ach-name">⚡ Combo King (×5)</span><span class="ach-status" id="achCombo">❌</span></div>
         <div class="achievement-item"><span class="ach-name">💎 Rare Collector (5 rare)</span><span class="ach-status" id="achRare">❌</span></div>
-
         <div class="text-xs text-gold font-bold mt-2 mb-1">UPGRADES</div>
         <div id="upgradeStatusList"></div>
     </div>
 
-    <!-- ─── CONNECT MODAL ─────────────────────────────────────────── -->
+    <!-- CONNECT MODAL -->
     <div class="modal-overlay" id="connectModal">
         <div class="modal">
             <button class="close-modal" id="closeModalBtn">&times;</button>
             <div class="modal-title">🌿 Connect to Olivium</div>
             <div class="modal-sub">Select Estate Verification Vector</div>
-
             <div class="option" id="walletOption">
-                <div class="header">
-                    <span class="name">◎ Wallet Authentication</span>
-                    <span class="badge">Web3</span>
-                </div>
+                <div class="header"><span class="name">◎ Wallet Authentication</span><span class="badge">Web3</span></div>
                 <div class="desc">Resolve direct web3 asset holdings via browser extension.</div>
                 <button class="btn primary" id="connectWalletBtn">Connect Phantom / Solana</button>
             </div>
-
             <div class="option" id="emailOption">
-                <div class="header">
-                    <span class="name">✉ Custodial Profile</span>
-                    <span class="badge" style="background:rgba(59,130,246,0.1);color:#60a5fa;">MFA</span>
-                </div>
+                <div class="header"><span class="name">✉ Custodial Profile</span><span class="badge" style="background:rgba(59,130,246,0.1);color:#60a5fa;">MFA</span></div>
                 <div class="desc">Authorize via your off-chain email profile.</div>
                 <button class="btn secondary" id="emailLoginBtn">Continue with Email</button>
             </div>
@@ -1693,7 +1470,7 @@
         // COMPLETE GAME LOGIC - All Systems Restored
         // ============================================================
 
-        // ─── STATE ──────────────────────────────────────────────────────
+        // STATE
         const STATE = {
             sol: 25.0,
             oil: 0,
@@ -1751,27 +1528,13 @@
         };
 
         const ARCHETYPES = {
-            agrarian: {
-                name: 'The Agrarian',
-                icon: '🌿',
-                desc: 'Max grove density, exponential harvest combo',
-                bonuses: ['Grove cap +50%', '+30% combo multiplier'],
-                risks: ['Pests spread contagiously']
-            },
-            industrialist: {
-                name: 'The Industrialist',
-                icon: '⚙️',
-                desc: 'Precise thermal pressing extracts maximum oil',
-                bonuses: ['+30% extraction in precision zone', 'Press faster'],
-                risks: ['Mill pressure builds exponentially']
-            },
-            speculator: {
-                name: 'The Cartel Speculator',
-                icon: '📈',
-                desc: 'Lock futures contracts with OLV, exploit market crashes',
-                bonuses: ['Buy oil price futures with OLV', '+20% sell revenue'],
-                risks: ['Futures can expire worthless']
-            }
+            agrarian: { name: 'The Agrarian', icon: '🌿', desc: 'Max grove density, exponential harvest combo', bonuses: [
+                    'Grove cap +50%', '+30% combo multiplier'
+                ], risks: ['Pests spread contagiously'] },
+            industrialist: { name: 'The Industrialist', icon: '⚙️', desc: 'Precise thermal pressing extracts maximum oil',
+                bonuses: ['+30% extraction in precision zone', 'Press faster'], risks: ['Mill pressure builds exponentially'] },
+            speculator: { name: 'The Cartel Speculator', icon: '📈', desc: 'Lock futures contracts with OLV, exploit market crashes',
+                bonuses: ['Buy oil price futures with OLV', '+20% sell revenue'], risks: ['Futures can expire worthless'] }
         };
 
         const OLV_SHOP = {
@@ -1795,11 +1558,11 @@
             oracle: { name: 'Market Oracle', cost: 600 }
         };
 
-        // ─── DOM REFS ──────────────────────────────────────────────────
+        // DOM REFS
         const $ = id => document.getElementById(id);
         const $$ = sel => document.querySelectorAll(sel);
 
-        // ─── TOAST SYSTEM ─────────────────────────────────────────────
+        // TOAST
         let toastTimer = null;
 
         function showToast(msg, type) {
@@ -1813,7 +1576,7 @@
             }, 2500);
         }
 
-        // ─── LEDGER ────────────────────────────────────────────────────
+        // LEDGER
         function log(msg) {
             var ledger = $('ledger');
             if (!ledger) return;
@@ -1824,9 +1587,8 @@
             if (ledger.children.length > 20) ledger.lastChild.remove();
         }
 
-        // ─── UI UPDATE ─────────────────────────────────────────────────
+        // UI UPDATE
         function updateUI() {
-            // HUD
             $('hud-sol').textContent = STATE.sol.toFixed(2);
             $('hud-oil').textContent = STATE.oil.toFixed(1);
             $('hud-olv').textContent = Math.floor(STATE.olv);
@@ -1836,7 +1598,6 @@
             $('hud-level').textContent = Math.floor(STATE.lifetimeSol / 20) + 1;
             $('hud-combo').textContent = STATE.combo.toFixed(1) + 'x';
 
-            // Weather
             $('weatherMain').textContent = STATE.world.weather;
             $('weatherTemp').textContent = STATE.world.temp + '°C';
             $('hud-demand').textContent = STATE.world.demand;
@@ -1848,12 +1609,10 @@
             var weatherIcons = { Clear: '☀️', Rainy: '🌧️', Heatwave: '🔥' };
             $('weatherIcon').textContent = weatherIcons[STATE.world.weather] || '☀️';
 
-            // Time
             var h = String(Math.floor(STATE.world.time)).padStart(2, '0');
             var m = String(Math.floor((STATE.world.time % 1) * 60)).padStart(2, '0');
             $('hud-time').textContent = h + ':' + m;
 
-            // Mill
             $('millHopper').textContent = STATE.hopper.toFixed(1);
             var mash = STATE.mill.mash || 0;
             var heat = STATE.mill.heat || 0;
@@ -1881,7 +1640,6 @@
             $('heatPct').style.color = heat > 75 ? '#ef4444' : '';
             $('gunkPct').style.color = gunk > 85 ? '#ef4444' : '';
 
-            // Quest
             var qPct = Math.min(100, (STATE.quest.current / STATE.quest.target) * 100);
             $('questProgress').style.width = qPct + '%';
             $('questCurrent').textContent = STATE.quest.current.toFixed(0);
@@ -1889,11 +1647,9 @@
             $('questSolReward').textContent = '+' + STATE.quest.reward + ' SOL';
             $('questSeedReward').textContent = '+' + (STATE.quest.seedReward || 1) + ' 🌱';
 
-            // Harvest count
             var readyCount = STATE.trees.filter(function(t) { return t.stage === 'mature' && t.health > 0; }).length;
             $('harvestCount').textContent = readyCount > 0 ? '(' + readyCount + ')' : '';
 
-            // Boosts
             var boostsRow = $('boostsRow');
             var boostsHTML = '';
             if (STATE.fertilizerBoost) {
@@ -1908,7 +1664,6 @@
             if (STATE.upgrades.oracle) boostsHTML += '<span class="boost-chip purple">🔮 Oracle</span>';
             boostsRow.innerHTML = boostsHTML;
 
-            // Archetype
             var archName = $('archName');
             var archHint = $('archHint');
             if (STATE.archetype) {
@@ -1922,7 +1677,6 @@
                 archHint.textContent = 'Agrarian · Industrialist · Speculator';
             }
 
-            // Blight
             var blight = $('blightBanner');
             if (STATE.blightActive) {
                 blight.classList.add('visible');
@@ -1930,30 +1684,18 @@
                 blight.classList.remove('visible');
             }
 
-            // Grove
             renderGrove();
-
-            // Upgrade panel
             updateUpgradePanel();
-
-            // Skill panel
             updateSkillPanel();
-
-            // Shop panel
             updateShopPanel();
-
-            // Stats panel
             updateStatsPanel();
 
-            // Skill seeds
             var skillSeeds = $('skillSeeds');
             if (skillSeeds) skillSeeds.textContent = STATE.seeds;
 
-            // Shop OLV
             var shopOlv = $('shopOlvBalance');
             if (shopOlv) shopOlv.textContent = Math.floor(STATE.olv);
 
-            // Purchase history
             var ph = $('purchaseHistory');
             if (ph) {
                 var total = 0;
@@ -1963,18 +1705,15 @@
                 ph.textContent = 'Total spent: ' + total + ' OLV';
             }
 
-            // Upgrade OLV balance
             var upgOlv = $('upgOlvDisplay');
             if (upgOlv) upgOlv.textContent = Math.floor(STATE.olv);
 
-            // Stats
             $('statLifetime').textContent = STATE.lifetimeSol.toFixed(2);
             $('statPlanted').textContent = STATE.treesPlanted;
             $('statHarvests').textContent = STATE.totalHarvests;
             $('statCombo').textContent = '×' + STATE.comboRecord.toFixed(1);
             $('statRare').textContent = STATE.rareCount;
 
-            // Achievements
             var achMap = {
                 achFirst: 'firstHarvest',
                 achGrove: 'groveMaster',
@@ -1988,7 +1727,7 @@
             }
         }
 
-        // ─── GROVE RENDER ──────────────────────────────────────────────
+        // GROVE RENDER
         function renderGrove() {
             var grid = $('groveGrid');
             if (!grid) return;
@@ -2049,7 +1788,7 @@
             });
         }
 
-        // ─── UPGRADE PANEL ─────────────────────────────────────────────
+        // UPGRADE PANEL
         var upgradeCurrency = 'sol';
 
         function updateUpgradePanel() {
@@ -2085,7 +1824,6 @@
                 }
             });
 
-            // Currency toggle
             var solBtn = $('upgCurrencySol');
             var olvBtn = $('upgCurrencyOlv');
             var olvBal = $('upgOlvBalance');
@@ -2101,7 +1839,6 @@
                 }
             }
 
-            // Upgrade status list
             var list = $('upgradeStatusList');
             if (list) {
                 var all = [
@@ -2126,7 +1863,7 @@
             }
         }
 
-        // ─── SKILL PANEL ──────────────────────────────────────────────
+        // SKILL PANEL
         function updateSkillPanel() {
             var skills = [
                 { key: 'yield', cost: 5 },
@@ -2156,7 +1893,7 @@
             });
         }
 
-        // ─── SHOP PANEL ────────────────────────────────────────────────
+        // SHOP PANEL
         function updateShopPanel() {
             var bal = $('shopOlvBalance');
             if (bal) bal.textContent = Math.floor(STATE.olv);
@@ -2171,7 +1908,7 @@
             }
         }
 
-        // ─── STATS PANEL ──────────────────────────────────────────────
+        // STATS PANEL
         function updateStatsPanel() {
             $('statLifetime').textContent = STATE.lifetimeSol.toFixed(2);
             $('statPlanted').textContent = STATE.treesPlanted;
@@ -2192,16 +1929,15 @@
             }
         }
 
-        // ─── INTERACTIONS ──────────────────────────────────────────────
+        // INTERACTIONS
         function interactTree(index) {
             var tree = STATE.trees[index];
             if (!tree || tree.health <= 0) return;
 
             if (tree.stage === 'mature') {
-                // Harvest
                 var baseYield = 10 * (tree.health / 100) * (tree.water / 100);
                 var finalYield = baseYield * (RARITIES[tree.rarity].bonus || 1) * STATE.skillMultipliers.yield * STATE
-                .combo;
+                    .combo;
                 if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
 
                 STATE.hopper += finalYield;
@@ -2224,7 +1960,6 @@
                 checkAchievements();
 
             } else {
-                // Water
                 tree.water = Math.min(100, tree.water + 30);
                 showToast('💧 +30% Water');
                 log('💧 Watered ' + tree.id);
@@ -2285,7 +2020,7 @@
             ready.forEach(function(tree) {
                 var baseYield = 10 * (tree.health / 100) * (tree.water / 100);
                 var finalYield = baseYield * (RARITIES[tree.rarity].bonus || 1) * STATE.skillMultipliers.yield * STATE
-                .combo;
+                    .combo;
                 if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
                 STATE.hopper += finalYield;
                 totalYield += finalYield;
@@ -2468,7 +2203,7 @@
             }
         }
 
-        // ─── UPGRADE FUNCTIONS ─────────────────────────────────────────
+        // UPGRADE FUNCTIONS
         function buyUpgrade(key) {
             if (STATE.upgrades[key]) {
                 showToast('Already installed!', 'error');
@@ -2503,7 +2238,6 @@
 
             STATE.upgrades[key] = true;
 
-            // Apply effects
             if (key === 'guardian') {
                 STATE.trees.forEach(function(t) { t.protected = true; });
             }
@@ -2589,7 +2323,7 @@
             updateUI();
         }
 
-        // ─── SHOP FUNCTIONS ────────────────────────────────────────────
+        // SHOP FUNCTIONS
         function buyShopItem(itemId) {
             var item = OLV_SHOP[itemId];
             if (!item) return;
@@ -2647,7 +2381,7 @@
             updateUI();
         }
 
-        // ─── RESET GAME ────────────────────────────────────────────────
+        // RESET GAME
         function resetGame() {
             if (!confirm('⚠️ Reset estate? (Keeps Seeds & Skills)')) return;
 
@@ -2683,7 +2417,7 @@
             STATE.combo = 1.0;
             STATE.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
             STATE.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false,
-            rareCollector: false };
+                rareCollector: false };
             STATE.fertilizerBoost = false;
             STATE.fertilizerBoostEnd = 0;
             STATE.protectionActive = false;
@@ -2718,7 +2452,7 @@
             updateUI();
         }
 
-        // ─── ARCHETYPE ──────────────────────────────────────────────────
+        // ARCHETYPE
         function chooseArchetype(type) {
             if (STATE.archetypeLocked) {
                 showToast('Archetype locked until prestige!', 'error');
@@ -2774,11 +2508,10 @@
             document.body.appendChild(overlay);
         }
 
-        // ─── GAME LOOP ──────────────────────────────────────────────────
+        // GAME LOOP
         function gameLoop() {
             var now = Date.now();
 
-            // Boost expiry
             if (STATE.fertilizerBoost && now > STATE.fertilizerBoostEnd) {
                 STATE.fertilizerBoost = false;
                 log('Fertilizer boost expired');
@@ -2788,7 +2521,6 @@
                 log('Tree protection expired');
             }
 
-            // Tree updates
             var isOverSaturated = STATE.archetype === 'agrarian' && STATE.trees.length > 9;
 
             STATE.trees.forEach(function(tree, idx) {
@@ -2845,30 +2577,24 @@
                 STATE.blightActive = false;
             }
 
-            // Mill decay
             STATE.mill.mash = Math.max(0, STATE.mill.mash - 4);
             STATE.mill.heat = Math.max(0, (STATE.mill.heat || 0) - 2);
             STATE.mill.gunk = Math.max(0, STATE.mill.gunk - 0.2);
 
-            // Market drift
             STATE.marketPool = Math.min(6.0, STATE.marketPool + 0.01);
             var drift = (Math.random() - 0.5) * 0.4;
             STATE.world.price = STATE.world.price + (STATE.marketPool - STATE.world.price) * 0.3 + drift;
             STATE.world.price = Math.max(0.5, Math.min(6.0, STATE.world.price));
 
-            // Demand
             var demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
             var idx2 = Math.floor(STATE.world.price / 1.2);
             STATE.world.demand = demandLevels[Math.min(4, idx2)];
 
-            // Check quest
             checkQuest();
-
-            // Update UI
             updateUI();
         }
 
-        // ─── WEATHER CYCLE ─────────────────────────────────────────────
+        // WEATHER CYCLE
         function weatherCycle() {
             var weathers = [
                 { type: 'Clear', temp: 24 },
@@ -2890,12 +2616,12 @@
             updateUI();
         }
 
-        // ─── TIME CYCLE ────────────────────────────────────────────────
+        // TIME CYCLE
         function timeCycle() {
             STATE.world.time = (STATE.world.time + 0.5) % 24;
         }
 
-        // ─── PANEL SYSTEM ──────────────────────────────────────────────
+        // PANEL SYSTEM
         function openPanel(panelId) {
             var panels = document.querySelectorAll('.panel');
             for (var i = 0; i < panels.length; i++) {
@@ -2930,7 +2656,7 @@
             if (groveNav) groveNav.classList.add('active');
         }
 
-        // ─── CONNECT MODAL ─────────────────────────────────────────────
+        // CONNECT MODAL
         function showConnectModal() {
             document.getElementById('connectModal').classList.add('active');
         }
@@ -2955,9 +2681,8 @@
             updateUI();
         }
 
-        // ─── INIT ──────────────────────────────────────────────────────
+        // INIT
         function init() {
-            // Initial trees
             if (STATE.trees.length === 0) {
                 for (var i = 0; i < 3; i++) {
                     STATE.trees.push({
@@ -2973,8 +2698,6 @@
                 }
                 STATE.treesPlanted += 3;
             }
-
-            // ─── EVENT BINDING ──────────────────────────────────────────
 
             // Bottom nav
             var navItems = document.querySelectorAll('.nav-item');
@@ -3110,12 +2833,12 @@
                 }
             });
 
-            // ─── GAME LOOPS ─────────────────────────────────────────────
+            // Game loops
             setInterval(gameLoop, 2000);
             setInterval(weatherCycle, 20000);
             setInterval(timeCycle, 30000);
 
-            // ─── INITIAL RENDER ────────────────────────────────────────
+            // Initial render
             updateUI();
             log('🌿 Welcome to Olivium Estate!');
             log('📖 Tap trees to water/harvest');
@@ -3126,7 +2849,7 @@
             console.log('📖 Keyboard: P=Plant, H=Harvest, W=Water, S=Spray, M/Space=Mill');
         }
 
-        // ─── START ─────────────────────────────────────────────────────
+        // START
         document.addEventListener('DOMContentLoaded', init);
 
         // Expose for console
