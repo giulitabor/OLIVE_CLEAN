@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Olivium — Private Tuscan Estate | The Mignole Story</title>
+<title>Olivium — Private Tuscan Estate | Connected Ecosystem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"/>
 <style>
 /* ═══════════════════════════════════════════
-   ROOT & RESET
+   ROOT, CORE SYSTEM & RESET
 ═══════════════════════════════════════════ */
 :root {
   --gold:     #C5A059;
@@ -19,7 +19,7 @@
   --cream:    #F5F0E8;
   --dark:     #080b08;
   --dark2:    #0f130f;
-  --card:     rgba(15,20,15,0.82);
+  --card:     rgba(15,20,15,0.85);
   --border:   rgba(197,160,89,0.22);
   --text:     #edeae4;
   --muted:    #9aab9a;
@@ -49,7 +49,7 @@ body::after{
 }
 
 /* ═══════════════════════════════════════════
-   NAV & CORE LAYOUT
+   NAV & CORE HEADER SYSTEM
 ═══════════════════════════════════════════ */
 #nav{
   position:fixed;top:0;left:0;right:0;z-index:1000;
@@ -86,7 +86,7 @@ body::after{
   font-size:.68rem !important;
 }
 
-/* --- LANGUAGE SELECTOR --- */
+/* Multilingual Lang Selector styling */
 .lang-selector { position: relative; display: inline-block; margin-left: 0.5rem; }
 .lang-select-btn {
   background: rgba(255, 255, 255, 0.06);
@@ -120,15 +120,6 @@ body::after{
   font-weight: 500; letter-spacing: 1px; cursor: pointer; width: 100%;
 }
 .lang-opt:hover, .lang-opt.active { color: var(--gold); background: rgba(197,160,89,0.08); }
-.mobile-lang-wrap {
-  margin-top: auto; display: flex; gap: 1rem; justify-content: center;
-  padding: 1.5rem 0; border-top: 1px solid rgba(255,255,255,0.06);
-}
-.mobile-lang-wrap button {
-  background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6);
-  padding: 0.4rem 0.9rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-}
-.mobile-lang-wrap button.active { border-color: var(--gold); color: var(--gold); background: rgba(197, 160, 89, 0.1); }
 
 #nav-ham{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;}
 #nav-ham span{display:block;width:22px;height:1.5px;background:#fff;border-radius:2px;transition:transform .3s,opacity .3s;transform-origin:center;}
@@ -150,9 +141,18 @@ body::after{
 }
 #mob-overlay.open a { transform:translateY(0); opacity:1; }
 #mob-overlay a:hover{color:var(--gold);}
+.mobile-lang-wrap {
+  margin-top: auto; display: flex; gap: 1rem; justify-content: center;
+  padding: 1.5rem 0; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.mobile-lang-wrap button {
+  background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6);
+  padding: 0.4rem 0.9rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+}
+.mobile-lang-wrap button.active { border-color: var(--gold); color: var(--gold); background: rgba(197, 160, 89, 0.1); }
 
 /* ═══════════════════════════════════════════
-   HERO & DISCOVER CARD
+   HERO DISPLAY & DISCOVER INFOCARD
 ═══════════════════════════════════════════ */
 .hero{position:relative;height:100vh;min-height:740px;display:flex;align-items:center;overflow:hidden;}
 .hero-bg{
@@ -202,7 +202,7 @@ body::after{
 .discover-offer { background: rgba(197,160,89,0.12); border-radius: 24px; padding: 0.8rem; text-align: center; font-size: 0.8rem; color: var(--gold); margin-bottom: 1.4rem; }
 .btn-discover {
   display: block; width: 100%; text-align: center; background: linear-gradient(135deg, var(--green), var(--green-l));
-  color: #fff; padding: 0.9rem 0; border-radius: 60px; font-weight: 600; letter-spacing: 1.5px; font-size: 0.8rem; text-transform: uppercase;
+  color: #fff; padding: 0.9rem 0; border-radius: 60px; font-weight: 600; letter-spacing: 1.5px; font-size: 0.8rem; text-transform: uppercase; border: none; cursor: pointer;
 }
 
 .hero-scroll{position:absolute;bottom:2.5rem;right:3rem;z-index:2;display:flex;flex-direction:column;align-items:center;gap:.5rem;}
@@ -210,7 +210,7 @@ body::after{
 .scroll-line{width:1px;height:48px;background:linear-gradient(180deg,rgba(197,160,89,.6),transparent);}
 
 /* ═══════════════════════════════════════════
-   LAYOUT UTILITIES
+   CORE STRUCTURAL UTILITIES
 ═══════════════════════════════════════════ */
 .wrap{max-width:1320px;margin:0 auto;padding:0 2rem;}
 .section{padding:7rem 0;}
@@ -226,7 +226,7 @@ body::after{
 .stat-lbl{font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:.4rem;}
 
 /* ═══════════════════════════════════════════
-   MIGNOLE STYLING
+   THE MIGNOLE COMPONENT
 ═══════════════════════════════════════════ */
 .mignole-dark-transition { background: var(--dark); padding: 6rem 0; text-align: center; position: relative; }
 .mignole-giant-text { font-size: clamp(3rem, 8vw, 6rem); font-weight: 600; color: var(--gold-l); letter-spacing: 0.02em; font-family: var(--font-serif); }
@@ -237,13 +237,13 @@ body::after{
 .mignole-tip .tip-bubble {
   position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
   background: #080b08; border: 1px solid rgba(197,160,89,0.35); border-radius: 10px;
-  padding: 10px 14px; white-space: nowrap; font-size: 0.78rem; font-style: normal;
-  color: rgba(255,255,255,0.85); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 9999;
+  padding: 10px 14px; width: 280px; white-space: normal; font-size: 0.78rem; font-style: normal;
+  color: rgba(255,255,255,0.85); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 9999; text-align: left;
 }
 .mignole-tip:hover .tip-bubble { opacity: 1; }
 
 /* ═══════════════════════════════════════════
-   FOUNDER & GALLERY
+   FOUNDER, ESTATE STORY & GALLERY
 ═══════════════════════════════════════════ */
 .founder-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;}
 .founder-img-wrap{position:relative;}
@@ -261,7 +261,7 @@ body::after{
 .estate-grid img:first-child{grid-column:span 2;grid-row:span 2;}
 
 /* ═══════════════════════════════════════════
-   APP ACCORDION SHOWCASE
+   APP ACCORDION SHOWCASE ELEMENTS
 ═══════════════════════════════════════════ */
 .app-section{background:linear-gradient(180deg,var(--dark) 0%,#0a110a 50%,var(--dark) 100%);}
 .app-intro{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-bottom:4rem;}
@@ -276,21 +276,8 @@ body::after{
 .sc-progress-fill{height:4px;width:68%;background:var(--green-l);border-radius:2px;}
 
 /* ═══════════════════════════════════════════
-   COMPETITIVE COMPARISON (RESPONSIVE)
+   COMPETITIVE COMPARISON ARRAYS
 ═══════════════════════════════════════════ */
-@media (min-width: 769px) {
-    .comp-cards { display: none; }
-    .comp-table-wrap { display: block; }
-}
-@media (max-width: 768px) {
-    .comp-table-wrap { display: none; }
-    .comp-cards { display: flex; flex-direction: column; gap: 0.75rem; }
-    .comp-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem; border-left: 3px solid #7c9a6e; }
-    .comp-card-label { font-size: 0.7rem; text-transform: uppercase; color: #999; margin-bottom: 0.4rem; }
-    .comp-card-row { display: flex; justify-content: space-between; align-items: center; }
-    .comp-card-old { color: #b0b0b0; text-decoration: line-through; font-size: 0.9rem; }
-    .comp-card-new { color: #c8e6b0; font-weight: bold; font-size: 1.1rem; }
-}
 .comparison-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .comp-table { width: 100%; border-collapse: collapse; min-width: 580px; }
 .comp-table th, .comp-table td { padding: 0.9rem 1.2rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,.05); }
@@ -298,8 +285,19 @@ body::after{
 .comp-check { color: var(--green-l); font-weight: bold; }
 .comp-x { color: rgba(255,255,255,.2); }
 
+@media (min-width: 769px) { .comp-cards { display: none; } .comp-table-wrap { display: block; } }
+@media (max-width: 768px) {
+    .comp-table-wrap { display: none; }
+    .comp-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+    .comp-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem; border-left: 3px solid var(--gold); }
+    .comp-card-label { font-size: 0.7rem; text-transform: uppercase; color: #999; margin-bottom: 0.4rem; }
+    .comp-card-row { display: flex; justify-content: space-between; align-items: center; }
+    .comp-card-old { color: #b0b0b0; text-decoration: line-through; font-size: 0.9rem; }
+    .comp-card-new { color: #c8e6b0; font-weight: bold; font-size: 1.1rem; }
+}
+
 /* ═══════════════════════════════════════════
-   TIERS, TOUR & OTHER SECTIONS
+   TIERS, PANORAMAS & WIDGET CONFIGS
 ═══════════════════════════════════════════ */
 .tiers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-top:3rem;}
 .tier-card{background:rgba(15,20,15,0.7);border:1px solid rgba(197,160,89,.15);border-radius:20px;padding:1.8rem 1.5rem;position:relative;overflow:hidden;transition:transform .3s;}
@@ -318,9 +316,6 @@ body::after{
 .cd-unit{background:rgba(197,160,89,.06);border:1px solid rgba(197,160,89,.15);border-radius:12px;padding:1rem 1.5rem;text-align:center;min-width:90px;}
 .cd-num{font-family:var(--font-serif);font-size:2.5rem;color:var(--gold);}
 
-.gallery-masonry{columns:4;column-gap:12px;}
-.gallery-masonry img{width:100%;margin-bottom:12px;border-radius:12px;cursor:pointer;}
-
 .faq-list{display:flex;flex-direction:column;gap:1rem;max-width:800px;margin:2rem auto 0;}
 .faq-item{background:rgba(15,20,15,.7);border:1px solid rgba(197,160,89,.12);border-radius:12px;overflow:hidden;}
 .faq-q{padding:1.2rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;font-family:var(--font-serif);font-size:1.1rem;}
@@ -332,6 +327,41 @@ body::after{
 #lightbox img{max-width:85vw;max-height:85vh;border-radius:8px;}
 
 /* ═══════════════════════════════════════════
+   WEB3 TRANSACTION & INTEGRATION INFRASTRUCTURE
+═══════════════════════════════════════════ */
+#w3-modal-container {
+  position: fixed; inset: 0; z-index: 20000;
+  background: rgba(4, 6, 4, 0.85); backdrop-filter: blur(16px);
+  display: none; align-items: center; justify-content: center; padding: 1.5rem;
+}
+#w3-modal-container.active { display: flex; }
+.w3-card {
+  background: var(--dark2); border: 1px solid var(--gold); border-radius: 24px;
+  width: 100%; max-width: 420px; padding: 2.2rem 2rem; box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+}
+.w3-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.8rem; }
+.w3-modal-header h3 { font-family: var(--font-serif); font-size: 1.6rem; color: var(--gold); }
+.w3-close-btn { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
+.wallet-opt {
+  width: 100%; padding: 1rem 1.2rem; border-radius: 14px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(197,160,89,0.15); color: #fff; text-align: left; font-family: var(--font-body);
+  font-weight: 500; font-size: 0.9rem; margin-bottom: 0.75rem; display: flex; align-items: center;
+  justify-content: space-between; cursor: pointer; transition: all 0.2s;
+}
+.wallet-opt:hover { border-color: var(--gold); background: rgba(197,160,89,0.08); transform: translateY(-1px); }
+
+/* Progress Feedback Trackers */
+#tx-progress-container {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 15000;
+  width: 340px; background: rgba(15, 22, 15, 0.95); border: 1px solid var(--gold);
+  border-radius: 16px; padding: 1.2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  display: none; transform: translateY(20px); opacity: 0; transition: all 0.3s var(--ease);
+}
+#tx-progress-container.visible { display: block; transform: translateY(0); opacity: 1; }
+.tx-progress-bar-wrap { height: 6px; width: 100%; background: rgba(255,255,255,0.08); border-radius: 3px; margin-top: 0.8rem; overflow: hidden; }
+.tx-progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--green-l)); transition: width 0.4s ease; }
+
+/* ═══════════════════════════════════════════
    RESPONSIVE DESIGN SYSTEM OVERRIDES
 ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
@@ -341,16 +371,25 @@ body::after{
   .hero-left h1 { font-size: clamp(2.2rem, 10vw, 3.2rem); line-height: 1.1; }
   .hero-left h1 br { display: none; }
   .hero-sub { font-size: 1rem; max-width: 100%; margin: 0 auto 1.5rem; padding: 0.8rem 1rem; text-align: left; }
-  .hero-actions { flex-direction: column; width: 100%; }
-  .hero-actions a { width: 100%; justify-content: center; }
+  
+  /* Precision Mobile Button Form Factor Controls */
+  .hero-actions { flex-direction: column; width: 100%; gap: 0.65rem; }
+  .hero-actions .btn-primary, .hero-actions .btn-secondary {
+    width: 100%; justify-content: center; padding: 0.75rem 1.5rem; font-size: 0.72rem; letter-spacing: 1px;
+  }
+  .btn-discover { padding: 0.75rem 0; font-size: 0.75rem; letter-spacing: 1px; }
+  
   .hero-eyebrow { font-size: 0.6rem; justify-content: center; letter-spacing: 4px; }
   .hero-eyebrow::before { display: none; }
   .discover-card { padding: 1.5rem 1.25rem; margin: 0 -0.5rem; border-radius: 20px; }
   .discover-card h3 { font-size: 1.4rem; }
-  .phone-row { flex-direction: column; align-items: center; }
+  .phone-row { flex-direction: column; align-items: center; gap: 1.5rem; }
   .tiers-grid, .founder-grid { grid-template-columns: 1fr; gap: 2rem; }
   .estate-grid { grid-template-columns: repeat(2, 1fr); }
   .estate-grid img:first-child { grid-column: span 2; }
+  #nav-links li:not(.lang-selector) { display: none; }
+  #nav-ham { display: flex; }
+  #tx-progress-container { width: calc(100% - 2rem); left: 1rem; bottom: 1rem; }
 }
 </style>
 </head>
@@ -358,14 +397,14 @@ body::after{
 
 <div id="lightbox" onclick="this.classList.remove('open')"><img id="lightbox-img" src="" alt=""/></div>
 
-<!-- MOBILE GLOBAL OVERLAY -->
+<!-- TRANSLATION ROUTING MENU OVERLAY -->
 <div id="mob-overlay">
   <a href="index2.html" onclick="closeMob()" data-en="Adoption Dashboard" data-it="Cruscotto Adozioni" data-de="Adoptions-Dashboard" data-fr="Tableau d'Adoption">Adoption Dashboard</a>
   <a href="App_index.html" onclick="closeMob()" data-en="Mini App" data-it="Mini App" data-de="Mini-App" data-fr="Mini-Application">Mini App</a>
   <a href="#tiers" onclick="closeMob()" data-en="Membership" data-it="Abbonamento" data-de="Mitgliedschaft" data-fr="Adhésion">Membership</a>
   <a href="#harvest" onclick="closeMob()" data-en="Harvest" data-it="Raccolto" data-de="Ernte" data-fr="Récolte">Harvest</a>
   <a href="#faq" onclick="closeMob()" data-en="FAQ" data-it="Domande Frequenti" data-de="Häufige Fragen" data-fr="FAQ">FAQ</a>
-  <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()" data-en="Download Brochure" data-it="Scarica la Brochure" data-de="Broschüre Herunterladen" data-fr="Télécharger la Brochure">Download Brochure</a>
+  <a href="#" id="mobWalletHook" onclick="openWalletModal(); closeMob();" data-en="Connect Wallet" data-it="Connetti Wallet" data-de="Wallet Verbinden" data-fr="Connecter Wallet">Connect Wallet</a>
   
   <div class="mobile-lang-wrap">
     <button onclick="setLanguage('en')" class="mob-lang-btn active" id="mob-lang-en">EN</button>
@@ -375,7 +414,7 @@ body::after{
   </div>
 </div>
 
-<!-- NAVIGATION BAR -->
+<!-- TOP GLOBAL NAVIGATION SYSTEM -->
 <nav id="nav">
   <div class="nav-inner">
     <div class="nav-logo">OLIVIUM <em data-en="Brochure" data-it="Opuscolo" data-de="Broschüre" data-fr="Brochure">Brochure</em></div>
@@ -384,8 +423,7 @@ body::after{
       <li><a href="#app" data-en="The App" data-it="L'App" data-de="Die App" data-fr="L'Appli">The App</a></li>
       <li><a href="#tiers" data-en="Membership" data-it="Abbonamento" data-de="Mitgliedschaft" data-fr="Adhésion">Membership</a></li>
       <li><a href="#harvest" data-en="Harvest" data-it="Raccolto" data-de="Ernte" data-fr="Récolte">Harvest</a></li>
-      <li><a href="#gallery" data-en="Gallery" data-it="Galleria" data-de="Galerie" data-fr="Galerie">Gallery</a></li>
-      <li><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="nav-cta" data-en="Brochure PDF" data-it="PDF Brochure" data-de="Broschüre-PDF" data-fr="PDF Brochure">Brochure PDF</a></li>
+      <li><a href="#" id="globalWalletHook" onclick="openWalletModal()" class="nav-cta" data-en="Connect Wallet" data-it="Connetti Wallet" data-de="Wallet Verbinden" data-fr="Connecter Wallet">Connect Wallet</a></li>
       
       <li class="lang-selector">
         <button class="lang-select-btn" id="langBtn" onclick="toggleLangDropdown()">
@@ -403,7 +441,7 @@ body::after{
   </div>
 </nav>
 
-<!-- HERO SECTION WITH RIGHT-SIDE CARD -->
+<!-- LANDING WINDOW GRID -->
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-content">
@@ -413,7 +451,7 @@ body::after{
       <p class="hero-sub" data-en="Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency." data-it="Entra a far parte di un uliveto vivo. Vedi la Toscana attraverso la gestione ecologica, le tradizioni del raccolto e una residenza di lusso." data-de="Werden Sie Teil eines lebendigen Olivengutes. Erleben Sie die Toskana durch ökologische Pflege, Erntetraditionen und luxuriöses Wohnen." data-fr="Faites partie d'un domaine oléicole vivant. Découvrez la Toscane à travers l'éco-gestion, les traditions de récolte et une résidence de luxe.">Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency.</p>
       <div class="hero-actions">
         <a href="#tiers" class="btn-primary" data-en="Explore Membership" data-it="Esplora gli Abbonamenti" data-de="Mitgliedschaft Erkunden" data-fr="Explorer l'Adhésion">Explore Membership</a>
-        <a href="/downloads/Olivium-Estate-Brochure.pdf" download class="btn-secondary" data-en="Download PDF Brochure" data-it="Scarica l'Opuscolo PDF" data-de="PDF-Broschüre Herunterladen" data-fr="Télécharger la Brochure PDF">Download PDF Brochure</a>
+        <a href="#" onclick="openWalletModal(); return false;" class="btn-secondary" data-en="Access Grove Engine" data-it="Accedi all'Engine del Bosco" data-de="Hain-Engine Öffnen" data-fr="Accéder au Moteur de Verger">Access Grove Engine</a>
       </div>
     </div>
     
@@ -426,13 +464,13 @@ body::after{
       <div class="discover-feature"><span>🤲</span> <span data-en="Touch the land and traditions behind it" data-it="Tocca la terra e le sue tradizioni" data-de="Berühren Sie das Land und seine Traditionen" data-fr="Touchez la terre et ses traditions">Touch the land and traditions behind it</span></div>
       <div class="discover-divider"></div>
       <div class="discover-offer" data-en="✨ Come see, taste &amp; touch. ✨" data-it="✨ Vieni a vedere, gustare e toccare. ✨" data-de="✨ Kommen Sie sehen, schmecken &amp; fühlen. ✨" data-fr="✨ Venez voir, goûter &amp; toucher. ✨">✨ Come see, taste & touch. ✨</div>
-      <a href="#" class="btn-discover" onclick="alert('Request received! Our hospitality team will organize your tour arrangement details via email.')" data-en="📅 Request Your Visit → Enjoy a complimentary night" data-it="📅 Richiedi la Tua Visita → Notte in omaggio inclusa" data-de="📅 Besuch Anfragen → Inklusive Gratisübernachtung" data-fr="📅 Demander Votre Visite → Une nuitée gratuite incluse">📅 Request Your Visit → Enjoy a complimentary night</a>
+      <button class="btn-discover" onclick="triggerStewardshipFlow()" data-en="📅 Request Your Visit → Enjoy a complimentary night" data-it="📅 Richiedi la Tua Visita → Notte in omaggio inclusa" data-de="📅 Besuch Anfragen → Inklusive Gratisübernachtung" data-fr="📅 Demander Votre Visite → Une nuitée gratuite incluse">📅 Request Your Visit → Enjoy a complimentary night</button>
     </div>
   </div>
   <div class="hero-scroll"><div class="scroll-line"></div><span data-en="Scroll" data-it="Scorri" data-de="Scrollen" data-fr="Défiler">Scroll</span></div>
 </section>
 
-<!-- STATS STRIP -->
+<!-- GENERAL ESTATE METRIC ARRAY -->
 <div class="stat-strip">
   <div class="stat-strip-inner">
     <div class="stat-item"><span class="stat-num">240</span><span class="stat-lbl" data-en="Secular Trees" data-it="Alberi Secolari" data-de="Jahrhundertealte Bäume" data-fr="Arbres Séculaires">Secular Trees</span></div>
@@ -442,12 +480,11 @@ body::after{
   </div>
 </div>
 
-<!-- MIGNOLE MID-WAY TRANSITION -->
+<!-- THE MIGNOLE TRANSLATIONAL INTERCEPT -->
 <section class="mignole-dark-transition">
   <div class="wrap">
     <div class="mignole-giant-text">Mignole</div>
     <div class="mignole-arrow-down">↓</div>
-    <div class="mignole-dark-divider"></div>
     <div class="mignole-quote-block">
       "<span data-en="Rare, fragile, yet holding the ultimate essence of the Tuscan soil." data-it="Rara, fragile, eppure custode dell'essenza definitiva del suolo toscano." data-de="Rar, zerbrechlich und doch die vollendete Essenz des toskanischen Bodens in sich tragend." data-fr="Rare, fragile, mais gardant l'essence ultime du terroir toscan.">Rare, fragile, yet holding the ultimate essence of the Tuscan soil.</span>"
     </div>
@@ -463,7 +500,7 @@ body::after{
   </div>
 </section>
 
-<!-- FOUNDER STORY -->
+<!-- STEWARDSHIP LANDS ARCHITECTURE -->
 <section class="section" id="experience">
   <div class="wrap">
     <div class="founder-grid">
@@ -483,7 +520,7 @@ body::after{
   </div>
 </section>
 
-<!-- ESTATE GALLERY -->
+<!-- LIGHTBOX ATTACHED MEDIA GRID -->
 <section class="section" style="background:var(--dark2);" id="gallery">
   <div class="wrap">
     <p class="eyebrow" style="text-align:center;" data-en="Visual Journey" data-it="Viaggio Visivo" data-de="Visuelle Reise" data-fr="Voyage Visuel">Visual Journey</p>
@@ -498,7 +535,7 @@ body::after{
   </div>
 </section>
 
-<!-- CONNECTED APP SHOWCASE -->
+<!-- APPLICATION HUD SHOWCASE -->
 <section class="section app-section" id="app">
   <div class="wrap">
     <div class="app-intro">
@@ -509,7 +546,6 @@ body::after{
         <p class="section-body" data-en="Every residency member gains access to the exclusive Olivium iOS/Android application. Track tree health metrics, inspect ultra-high-resolution real-time camera feeds, orchestrate direct-to-bottling private reserve options, and coordinate concierge residency scheduling remotely." data-it="Ogni membro residente ottiene l'accesso all'applicazione esclusiva Olivium iOS/Android. Monitora le metriche di salute degli alberi, controlla i flussi video in tempo reale ad altissima risoluzione, gestisci l'imbottigliamento della tua riserva privata e coordina da remoto i servizi di concierge." data-de="Jeder Resident erhält Zugang zur exklusiven Olivium iOS/Android-Anwendung. Verfolgen Sie Baumgesundheitsdaten, prüfen Sie ultrahochauflösende Live-Kamerabilder, steuern Sie die Abfüllung Ihrer privaten Reserve und koordinieren Sie die Concierge-Residenzplanung aus der Ferne." data-fr="Chaque membre résident accède à l'application exclusive Olivium iOS/Android. Suivez les indicateurs de santé des arbres, inspectez les flux caméra en temps réel, gérez la mise en bouteille de votre réserve privée et coordonnez la conciergerie à distance.">Every residency member gains access to the exclusive Olivium iOS/Android application. Track tree health metrics, inspect ultra-high-resolution real-time camera feeds, orchestrate direct-to-bottling private reserve options, and coordinate concierge residency scheduling remotely.</p>
       </div>
       <div class="phone-row">
-        <!-- Phone 1 Dashboard View -->
         <div class="phone">
           <div class="phone-frame">
             <div class="screen-dashboard">
@@ -522,7 +558,6 @@ body::after{
             </div>
           </div>
         </div>
-        <!-- Phone 2 Booking View -->
         <div class="phone">
           <div class="phone-frame">
             <div class="screen-booking">
@@ -537,13 +572,12 @@ body::after{
   </div>
 </section>
 
-<!-- RESPONSIVE COMPARISON SYSTEM -->
+<!-- ADAPTIVE ANALYSIS STRIP -->
 <section class="section" style="background: #050805;">
   <div class="wrap">
     <p class="eyebrow" style="text-align:center;" data-en="Market Alignment" data-it="Allineamento di Mercato" data-de="Marktvergleich" data-fr="Alignement de Marché">Market Alignment</p>
     <h2 class="section-title" style="text-align:center; margin-bottom:4rem;" data-en="The Standard vs. Olivium Experience" data-it="Lo Standard vs. L'Esperienza Olivium" data-de="Der Standard vs. Olivium Erlebnis" data-fr="Le Standard vs. L'Expérience Olivium">The Standard vs. Olivium Experience</h2>
     
-    <!-- Desktop Responsive Table View -->
     <div class="comp-table-wrap">
       <div class="glass" style="padding:1rem;">
         <table class="comp-table">
@@ -575,7 +609,6 @@ body::after{
       </div>
     </div>
 
-    <!-- Mobile Screen Adaptive Stack Cards View -->
     <div class="comp-cards">
       <div class="comp-card">
         <div class="comp-card-label" data-en="Monocultivar Mignole Access" data-it="Accesso Monocultivar Mignole" data-de="Zugang zu Monocultivar Mignole" data-fr="Accès Monocultivar Mignole">Monocultivar Mignole Access</div>
@@ -599,11 +632,10 @@ body::after{
         </div>
       </div>
     </div>
-    
   </div>
 </section>
 
-<!-- MEMBERSHIP TIERS -->
+<!-- ALLOCATION & ACQUISITION TIERS -->
 <section class="section" id="tiers">
   <div class="wrap">
     <p class="eyebrow" style="text-align:center;" data-en="Acquisition" data-it="Acquisizione" data-de="Erwerb" data-fr="Acquisition">Acquisition</p>
@@ -611,7 +643,6 @@ body::after{
     <p style="text-align:center; color:var(--muted); max-width:600px; margin:0 auto 3rem;" data-en="Select your tier of ownership. Every tier represents direct legal stewardship of designated antique olive trees inside the estate boundary walls." data-it="Seleziona il tuo livello di proprietà. Ogni livello rappresenta la gestione legale diretta di alberi secolari designati all'interno delle mura della tenuta." data-de="Wählen Sie Ihre Eigentumsstufe. Jede Stufe steht für eine direkte rechtliche Patenschaft über bestimmte antike Olivenbäume innerhalb der Mauern des Anwesens." data-fr="Sélectionnez votre niveau de propriété. Chaque niveau représente la gestion légale directe d'oliviers anciens désignés dans l'enceinte du domaine.">Select your tier of ownership. Every tier represents direct legal stewardship of designated antique olive trees inside the estate boundary walls.</p>
     
     <div class="tiers-grid">
-      <!-- Tier 1 -->
       <div class="tier-card">
         <div class="tier-icon">🌱</div>
         <div class="tier-name">Terrazza</div>
@@ -623,7 +654,6 @@ body::after{
           <li data-en="Priority Day Visit Rights" data-it="Diritto di Visita Giornaliera Prioritaria" data-de="Prioritäre Tagesbesuchsrechte" data-fr="Droits de Visite d'un Jour Prioritaires">Priority Day Visit Rights</li>
         </ul>
       </div>
-      <!-- Tier 2 -->
       <div class="tier-card featured">
         <div class="tier-icon">🏡</div>
         <div class="tier-name">Uliveto Gold</div>
@@ -635,7 +665,6 @@ body::after{
           <li data-en="Custom Etched Bottling Labels" data-it="Etichette di Imbottigliamento Personalizzate" data-de="Individuell gravierte Flaschenetiketten" data-fr="Étiquettes de Bouteille Personnalisées">Custom Etched Bottling Labels</li>
         </ul>
       </div>
-      <!-- Tier 3 -->
       <div class="tier-card">
         <div class="tier-icon">🏛️</div>
         <div class="tier-name">Marchese Elite</div>
@@ -647,7 +676,6 @@ body::after{
           <li data-en="Private Harvest Event Invitation" data-it="Invito all'Evento di Raccolto Privato" data-de="Einladung zum privaten Ernte-Event" data-fr="Invitation à la Récolte Privée">Private Harvest Event Invitation</li>
         </ul>
       </div>
-      <!-- Tier 4 -->
       <div class="tier-card">
         <div class="tier-icon">👑</div>
         <div class="tier-name">Grand Duke Grand Reserve</div>
@@ -663,7 +691,7 @@ body::after{
   </div>
 </section>
 
-<!-- IMMERSIVE VIRTUAL TOUR CONTAINER -->
+<!-- IMMERSIVE PANORAMIC CONTROLLER -->
 <section class="section" style="background:var(--dark2);">
   <div class="wrap">
     <p class="eyebrow" style="text-align:center;" data-en="Virtual Experience" data-it="Esperienza Virtuale" data-de="Virtuelles Erlebnis" data-fr="Expérience Virtuelle">Virtual Experience</p>
@@ -673,15 +701,11 @@ body::after{
       <div class="tour-overlay" id="tourOver">
         <div class="tour-play" onclick="startVirtualTour()" style="color:#fff;">▶</div>
       </div>
-      <div class="tour-hotspots">
-        <div class="hotspot" style="top:35%; left:60%;" data-label="Main Residence Courtyard"></div>
-        <div class="hotspot" style="top:55%; left:25%;" data-label="Secular Mignole Grove"></div>
-      </div>
     </div>
   </div>
 </section>
 
-<!-- HARVEST TRACKING COUNTDOWN -->
+<!-- CHRONO EXTRACTION HARVEST METERS -->
 <section class="section" id="harvest">
   <div class="wrap">
     <p class="eyebrow" data-en="The Seasonal Clock" data-it="L'Orologio Stagionale" data-de="Die Saisonale Uhr" data-fr="L'Horloge Saisonnière">The Seasonal Clock</p>
@@ -695,7 +719,7 @@ body::after{
   </div>
 </section>
 
-<!-- FAQ INTEGRATION -->
+<!-- INQUIRIES INTERCEPT SYSTEM -->
 <section class="section" style="background:var(--dark2);" id="faq">
   <div class="wrap">
     <p class="eyebrow" style="text-align:center;" data-en="Clearance" data-it="Chiarimenti" data-de="Häufige Fragen" data-fr="Questions Fréquentes">Clearance</p>
@@ -703,38 +727,70 @@ body::after{
     <div class="faq-list">
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span data-en="Can I legally visit my assigned trees during the off-season?" data-it="Posso visitare legalmente i miei alberi assegnati fuori stagione?" data-de="Kann ich meine zugewiesenen Bäume außerhalb der Saison besuchen?" data-fr="Puis-je visiter légalement mes arbres attribués hors saison?">Can I legally visit my assigned trees during the off-season?</span><div class="faq-icon">+</div></div>
-        <div class="faq-a" data-en="Absolutely. Members simply log their intended arrival details inside the Olivium app platform so our grounds security and concierge teams can ensure private estate preparation." data-it="Assolutamente sì. I membri devono semplicemente registrare i dettagli dell'arrivo nell'app Olivium in modo che il nostro team possa garantire la preparazione privata della tenuta." data-de="Absolut. Mitglieder tragen ihre Ankunftsdaten einfach in die Olivium-App ein, damit unser Sicherheits- und Concierge-Team die Vorbereitungen treffen kann." data-fr="Absolument. Les membres enregistrent simplement leurs détails d'arrivée dans l'application Olivium afin que nos équipes de sécurité et de conciergerie puissent préparer le domaine.">Absolutely. Members simply log their intended arrival details inside the Olivium app platform so our grounds security and concierge teams can ensure private estate preparation.</div>
+        <div class="faq-a" data-en="Absolutely. Members simply log their intended arrival details inside the Olivium app platform so our grounds security and concierge teams can ensure private estate preparation." data-it="Assolutamente sì. I membri devono semplicemente registrare i dettagli dell'arrivo nell'app Olivium in modo che il nostro team possa garantire la preparazione privata della tenuta." data-de="Absolut. Mitglieder tragen ihre Ankunftsdaten einfach in die Olivium-App ein, damit unser Sicherheits- und Concierge-Team die Vorbereitungen treffen kann." data-fr="Absolument. Les membres enregistrent simplement leurs détails d'arrivée dans l'application Olivium au sein de la plateforme afin que nos équipes de sécurité et de conciergerie puissent préparer le domaine.">Absolutely. Members simply log their intended arrival details inside the Olivium app platform so our grounds security and concierge teams can ensure private estate preparation.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span data-en="What happens if a severe frost damages my designated sector trees?" data-it="Cosa succede se una forte gelata danneggia gli alberi del mio settore?" data-de="Was passiert, wenn starker Frost meine Bäume beschädigt?" data-fr="Que se passe-t-il si un gel sévère endommage mes arbres ?">What happens if a severe frost damages my designated sector trees?</span><div class="faq-icon">+</div></div>
-        <div class="faq-a" data-en="Our reserve pool safety protocol completely shields your allocation. If emergency weather suppresses yield on your designated trees, your liter quota is completely fulfilled using equivalent backup reserves from our protected private family vault." data-it="Il nostro protocollo di sicurezza protegge completamente la tua allocazione. Se il maltempo riduce la resa, la tua quota viene integrata dalle riserve protette della famiglia." data-de="Unser Reserve-Sicherheitsprotokoll schützt Ihre Zuteilung vollständig. Bei Ernteausfällen wird Ihre Quote aus den geschützten privaten Reserven des Familienbunkers erfüllt." data-fr="Notre protocole de sécurité protège totalement votre allocation. Si des conditions météo réduisent le rendement, votre quota est assuré par les réserves de la famille.">Our reserve pool safety protocol completely shields your allocation. If emergency weather suppresses yield on your designated trees, your liter quota is completely fulfilled using equivalent backup reserves from our protected private family vault.</div>
+        <div class="faq-a" data-en="Our reserve pool safety protocol completely shields your allocation. If emergency weather suppresses yield on your designated trees, your liter quota is completely fulfilled using equivalent backup reserves from our protected private family vault." data-it="Il nostro protocollo di sicurezza protegge completamente la tua allocazione. Se il maltempo riduce la resa, la tua quota viene integrata dalle riserves protette della famiglia." data-de="Unser Reserve-Sicherheitsprotokoll schützt Ihre Zuteilung vollständig. Bei Ernteausfällen wird Ihre Quote aus den geschützten privaten Reserven des Familienbunkers erfüllt." data-fr="Notre protocole de sécurité protège totalement votre allocation. Si des conditions météo réduisent le rendement, votre quota est assuré par les réserves de la famille.">Our reserve pool safety protocol completely shields your allocation. If emergency weather suppresses yield on your designated trees, your liter quota is completely fulfilled using equivalent backup reserves from our protected private family vault.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DYNAMIC FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-logo">OLIVIUM © 2026</div>
-    <div class="footer-links">
-      <a href="#experience" data-en="The Lands" data-it="Le Terre" data-de="Die Ländereien" data-fr="Les Terres">The Lands</a>
-      <a href="#app" data-en="The Code" data-it="Il Codice" data-de="Die App-Technik" data-fr="L'Application">The Code</a>
-      <a href="#tiers" data-en="Terms" data-it="Termini" data-de="Bedingungen" data-fr="Conditions">Terms</a>
+<!-- PERSISTENT OVERLAY MODAL FOR WEB3 CONNECTIONS -->
+<div id="w3-modal-container" onclick="handleOutsideClick(event)">
+  <div class="w3-card">
+    <div class="w3-modal-header">
+      <h3 data-en="Select Provider" data-it="Seleziona Provider" data-de="Provider Auswählen" data-fr="Sélectionner Fournisseur">Select Provider</h3>
+      <button class="w3-close-btn" onclick="closeWalletModal()">✕</button>
     </div>
-    <div class="footer-copy" data-en="Authentic Tuscan Stewardship" data-it="Autentica Gestione Toscana" data-de="Authentische Toskanische Pflege" data-fr="Gestion Toscane Authentique">Authentic Tuscan Stewardship</div>
+    <button class="wallet-opt" onclick="executeWalletConnection('Phantom')">
+      <span>Phantom Wallet</span>
+      <span>⚡</span>
+    </button>
+    <button class="wallet-opt" onclick="executeWalletConnection('Solflare')">
+      <span>Solflare Wallet</span>
+      <span>🔥</span>
+    </button>
+  </div>
+</div>
+
+<!-- TELEMETRY AND TRANSACTION STATE FEEDBACK UNIT -->
+<div id="tx-progress-container">
+  <div style="font-size:0.8rem; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+    <span id="tx-state-title" style="color:var(--gold);">Deriving Tree PDA...</span>
+    <span id="tx-state-pct" style="font-size:0.75rem; color:var(--muted);">0%</span>
+  </div>
+  <div class="tx-progress-bar-wrap">
+    <div class="tx-progress-bar-fill" id="tx-progress-fill-bar"></div>
+  </div>
+</div>
+
+<!-- TERMINAL FOOTER DEPLOYMENT -->
+<footer>
+  <div class="wrap" style="padding: 4rem 2rem 2rem;">
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:2rem; border-top:1px solid rgba(255,255,255,0.06); padding-top:2rem; font-size:0.8rem; color:var(--muted);">
+      <div>OLIVIUM © 2026</div>
+      <div style="display:flex; gap:1.5rem;">
+        <a href="#experience" data-en="The Lands" data-it="Le Terre" data-de="Die Ländereien" data-fr="Les Terres">The Lands</a>
+        <a href="#app" data-en="The Code" data-it="Il Codice" data-de="Die App-Technik" data-fr="L'Application">The Code</a>
+        <a href="#tiers" data-en="Terms" data-it="Termini" data-de="Bedingungen" data-fr="Conditions">Terms</a>
+      </div>
+      <div data-en="Authentic Tuscan Stewardship" data-it="Autentica Gestione Toscana" data-de="Authentische Toskanische Pflege" data-fr="Gestion Toscane Authentique">Authentic Tuscan Stewardship</div>
+    </div>
   </div>
 </footer>
 
 <script>
-// --- MULTILINGUAL STATE CONTROLLER ---
+// --- GLOBAL ECOSYSTEM ENGINE STATE ---
+let connectedWalletAddress = null;
+
 function toggleLangDropdown() {
   document.getElementById('langDropdown').classList.toggle('show');
 }
 
 window.addEventListener('click', function(e) {
   if (!document.getElementById('langBtn').contains(e.target)) {
-    document.getElementById('langDropdown').classList.remove('remove');
     document.getElementById('langDropdown').classList.remove('show');
   }
 });
@@ -763,21 +819,83 @@ function setLanguage(lang) {
   });
 }
 
+// --- WEB3 MODAL & RPC TRACKING SUBSYSTEM ---
+function openWalletModal() {
+  document.getElementById('w3-modal-container').classList.add('active');
+}
+function closeWalletModal() {
+  document.getElementById('w3-modal-container').classList.remove('active');
+}
+function handleOutsideClick(e) {
+  if (e.target.id === 'w3-modal-container') closeWalletModal();
+}
+
+function executeWalletConnection(providerName) {
+  closeWalletModal();
+  const progressContainer = document.getElementById('tx-progress-container');
+  const fillBar = document.getElementById('tx-progress-fill-bar');
+  const stateTitle = document.getElementById('tx-state-title');
+  const statePct = document.getElementById('tx-state-pct');
+  
+  progressContainer.classList.add('visible');
+  
+  const lifecycle = [
+    { pct: 25, title: "Initializing Web3 Provider..." },
+    { pct: 60, title: "Deriving Grove Tree PDA Accounts..." },
+    { pct: 90, title: "Fetching On-Chain States from RPC..." },
+    { pct: 100, title: "Account Sync Complete" }
+  ];
+  
+  lifecycle.forEach((step, index) => {
+    setTimeout(() => {
+      fillBar.style.width = step.pct + "%";
+      stateTitle.innerText = step.title;
+      statePct.innerText = step.pct + "%";
+      
+      if(step.pct === 100) {
+        setTimeout(() => {
+          progressContainer.classList.remove('visible');
+          connectedWalletAddress = "Simulated42069xOLIVIUMxGroveTreeAccountAddress";
+          updateWalletUIAfterConnection();
+        }, 1000);
+      }
+    }, (index + 1) * 650);
+  });
+}
+
+function updateWalletUIAfterConnection() {
+  const shortAddress = "0xOliv...777";
+  document.getElementById('globalWalletHook').innerText = shortAddress;
+  const mobHook = document.getElementById('mobWalletHook');
+  if(mobHook) mobHook.innerText = shortAddress;
+}
+
+function triggerStewardshipFlow() {
+  const currentLang = localStorage.getItem('olivium_lang') || 'en';
+  const notificationMessages = {
+    en: 'Request received! Our hospitality team will organize your tour arrangement details via email.',
+    it: 'Richiesta ricevuta! Il nostro team di accoglienza organizzerà i dettagli della visita via email.',
+    de: 'Anfrage erhalten! Unser Hospitality-Team wird die Details Ihres Besuchs per E-Mail koordinieren.',
+    fr: 'Demande reçue ! Notre équipe d\'accueil organisera les détails de votre visite par e-mail.'
+  };
+  alert(notificationMessages[currentLang]);
+}
+
+// --- UTILITY RUNTIME EVENTS ---
 document.addEventListener('DOMContentLoaded', () => {
   const savedLang = localStorage.getItem('olivium_lang') || 'en';
   setLanguage(savedLang);
   setupCountdown();
 });
 
-// Navigation scroll styling
 window.addEventListener('scroll', () => {
   const nav = document.getElementById('nav');
   if(window.scrollY > 40) nav.classList.add('scrolled');
   else nav.classList.remove('scrolled');
 });
 
-// UI interaction handlers
 function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
+
 const navHam = document.getElementById('nav-ham');
 const mobOverlay = document.getElementById('mob-overlay');
 if(navHam) {
@@ -800,7 +918,6 @@ function startVirtualTour() {
 }
 
 function setupCountdown() {
-  // target late October harvest window for 2026
   const targetDate = new Date("October 25, 2026 08:00:00").getTime();
   setInterval(() => {
     const now = new Date().getTime();
