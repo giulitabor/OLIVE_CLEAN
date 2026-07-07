@@ -61,7 +61,7 @@
   --gold-l:   #D4AF37;
   --gold-d:   #8B6914;
   --green:    #4a6b1e;
-  --green-l:  #6a9a2e;
+  --green-l:  --6a9a2e;
   --cream:    #F5F0E8;
   --dark:     #080b08;
   --dark2:    #0f130f;
@@ -190,58 +190,89 @@ body::after{
   font-size:.68rem !important;
 }
 
-/* Language Switcher Styling */
-.lang-switcher {
+/* --- NEW LANGUAGE TOGGLE STYLES --- */
+.lang-selector {
   position: relative;
   display: inline-block;
-  margin-left: 1rem;
+  margin-left: 0.5rem;
 }
-.lang-btn {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
+.lang-select-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(197, 160, 89, 0.25);
   color: var(--text);
   padding: 0.4rem 0.8rem;
+  font-family: var(--font-body);
   font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border-radius: 30px;
   cursor: pointer;
-  text-transform: uppercase;
-  transition: background 0.25s, border-color 0.25s;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.2s ease;
 }
-.lang-btn:hover {
-  background: rgba(197,160,89,0.15);
+.lang-select-btn:hover {
   border-color: var(--gold);
+  background: rgba(197, 160, 89, 0.12);
 }
 .lang-dropdown {
-  display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   right: 0;
-  background: rgba(8,11,8,0.95);
+  background: rgba(8, 11, 8, 0.96);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  margin-top: 0.5rem;
+  border-radius: 12px;
+  padding: 0.4rem 0;
   min-width: 110px;
-  z-index: 1001;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  display: none;
+  flex-direction: column;
+  z-index: 1010;
 }
-.lang-dropdown a {
-  display: block;
+.lang-dropdown.show {
+  display: flex;
+}
+.lang-opt {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.65);
   padding: 0.5rem 1rem;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.7);
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
   letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
 }
-.lang-dropdown a:hover {
-  background: rgba(197,160,89,0.12);
+.lang-opt:hover, .lang-opt.active {
   color: var(--gold);
+  background: rgba(197,160,89,0.08);
 }
-.lang-switcher:hover .lang-dropdown {
-  display: block;
+.mobile-lang-wrap {
+  margin-top: auto;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.mobile-lang-wrap button {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6);
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mobile-lang-wrap button.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(197, 160, 89, 0.1);
 }
 
 /* hamburger */
@@ -603,7 +634,7 @@ body::after{
   font-size:3rem;font-weight:600;color:var(--gold);
   line-height:1;display:block;
 }
-.stat-lbl{
+.stat-strip .stat-lbl{
   font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;
   color:var(--muted);margin-top:.4rem;
 }
@@ -1146,46 +1177,48 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 
 <!-- MOBILE OVERLAY -->
 <div id="mob-overlay">
-  <!-- Mobile Language Row -->
-  <div style="padding: 0 0 1rem 0; display: flex; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 0.5rem;">
-    <a href="#" onclick="changeLanguage('en'); closeMob();" style="font-size: 1rem; padding: 0.2rem 0.5rem; border: none;">EN</a>
-    <a href="#" onclick="changeLanguage('it'); closeMob();" style="font-size: 1rem; padding: 0.2rem 0.5rem; border: none;">IT</a>
-    <a href="#" onclick="changeLanguage('de'); closeMob();" style="font-size: 1rem; padding: 0.2rem 0.5rem; border: none;">DE</a>
-    <a href="#" onclick="changeLanguage('fr'); closeMob();" style="font-size: 1rem; padding: 0.2rem 0.5rem; border: none;">FR</a>
+  <a href="index2.html" onclick="closeMob()" data-en="Adoption Dashboard" data-it="Cruscotto Adozioni" data-de="Adoptions-Dashboard" data-fr="Tableau d'Adoption">Adoption Dashboard</a>
+  <a href="App_index.html" onclick="closeMob()" data-en="Mini App" data-it="Mini App" data-de="Mini-App" data-fr="Mini-Application">Mini App</a>
+  <a href="#tiers" onclick="closeMob()" data-en="Membership" data-it="Abbonamento" data-de="Mitgliedschaft" data-fr="Adhésion">Membership</a>
+  <a href="#harvest" onclick="closeMob()" data-en="Harvest" data-it="Raccolto" data-de="Ernte" data-fr="Récolte">Harvest</a>
+  <a href="#faq" onclick="closeMob()" data-en="FAQ" data-it="Domande Frequenti" data-de="Häufige Fragen" data-fr="FAQ">FAQ</a>
+  <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()" data-en="Download Brochure" data-it="Scarica la Brochure" data-de="Broschüre Herunterladen" data-fr="Télécharger la Brochure">Download Brochure</a>
+  <a href="index2.html" onclick="closeMob()" data-en="← Go Back" data-it="← Torna Indietro" data-de="← Zurück" data-fr="← Retour">← Go Back</a>
+  
+  <!-- Mobile Language Selector Row -->
+  <div class="mobile-lang-wrap">
+    <button onclick="setLanguage('en')" class="mob-lang-btn active" id="mob-lang-en">EN</button>
+    <button onclick="setLanguage('it')" class="mob-lang-btn" id="mob-lang-it">IT</button>
+    <button onclick="setLanguage('de')" class="mob-lang-btn" id="mob-lang-de">DE</button>
+    <button onclick="setLanguage('fr')" class="mob-lang-btn" id="mob-lang-fr">FR</button>
   </div>
-  <a href="index2.html" onclick="closeMob()">Adoption Dashboard</a>
-  <a href="App_index.html" onclick="closeMob()">Mini App</a>
-  <a href="#tiers" onclick="closeMob()">Membership</a>
-  <a href="#harvest" onclick="closeMob()">Harvest</a>
-  <a href="#faq" onclick="closeMob()">FAQ</a>
-  <a href="/downloads/Olivium-Estate-Brochure.pdf" download onclick="closeMob()">Download Brochure</a>
-  <a href="index2.html" onclick="closeMob()">← Go Back</a>
 </div>
 
 <!-- NAVIGATION -->
 <nav id="nav">
   <div class="nav-inner">
-    <div class="nav-logo">OLIVIUM <em>Brochure</em></div>
+    <div class="nav-logo">OLIVIUM <em data-en="Brochure" data-it="Opuscolo" data-de="Broschüre" data-fr="Brochure">Brochure</em></div>
     <ul id="nav-links">
-      <li><a href="#experience">Estate</a></li>
-      <li><a href="#app">The App</a></li>
-      <li><a href="#tiers">Membership</a></li>
-      <li><a href="#harvest">Harvest</a></li>
-      <li><a href="#gallery">Gallery</a></li>
-      <li><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="nav-cta">Brochure PDF</a></li>
+      <li><a href="#experience" data-en="Estate" data-it="Tenuta" data-de="Anwesen" data-fr="Domaine">Estate</a></li>
+      <li><a href="#app" data-en="The App" data-it="L'App" data-de="Die App" data-fr="L'Appli">The App</a></li>
+      <li><a href="#tiers" data-en="Membership" data-it="Abbonamento" data-de="Mitgliedschaft" data-fr="Adhésion">Membership</a></li>
+      <li><a href="#harvest" data-en="Harvest" data-it="Raccolto" data-de="Ernte" data-fr="Récolte">Harvest</a></li>
+      <li><a href="#gallery" data-en="Gallery" data-it="Galleria" data-de="Galerie" data-fr="Galerie">Gallery</a></li>
+      <li><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="nav-cta" data-en="Brochure PDF" data-it="PDF Brochure" data-de="Broschüre-PDF" data-fr="PDF Brochure">Brochure PDF</a></li>
+      
+      <!-- DESKTOP LANGUAGE TOGGLE -->
+      <li class="lang-selector">
+        <button class="lang-select-btn" id="langBtn" onclick="toggleLangDropdown()">
+          <span id="activeLang">EN</span> ▼
+        </button>
+        <div class="lang-dropdown" id="langDropdown">
+          <button class="lang-opt active" onclick="setLanguage('en')">English</button>
+          <button class="lang-opt" onclick="setLanguage('it')">Italiano</button>
+          <button class="lang-opt" onclick="setLanguage('de')">Deutsch</button>
+          <button class="lang-opt" onclick="setLanguage('fr')">Français</button>
+        </div>
+      </li>
     </ul>
-    
-    <!-- Navbar Language Dropdown Container -->
-    <div class="lang-switcher">
-      <button class="lang-btn" id="active-lang">EN ▾</button>
-      <div class="lang-dropdown">
-        <a href="#" onclick="changeLanguage('en')">English</a>
-        <a href="#" onclick="changeLanguage('it')">Italiano</a>
-        <a href="#" onclick="changeLanguage('de')">Deutsch</a>
-        <a href="#" onclick="changeLanguage('fr')">Français</a>
-      </div>
-    </div>
-
     <button id="nav-ham" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
@@ -1195,343 +1228,104 @@ footer{background:var(--dark);border-top:1px solid rgba(197,160,89,.08);padding:
 <!-- HERO with Discover Olivium box on the right side -->
 <section class="hero"><div class="hero-bg"></div><div class="hero-content">
   <div class="hero-left">
-    <p class="hero-eyebrow">Exclusive Tuscan Residency</p>
-    <h1>A Place To <br/>Return To</h1>
-    <p class="hero-sub">Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency.</p>
-    <div class="hero-actions"><a href="#tiers" class="btn-primary">Explore Membership</a><a href="/downloads/Olivium-Estate-Brochure.pdf" download class="btn-secondary">Download PDF Brochure</a></div>
+    <p class="hero-eyebrow" data-en="Exclusive Tuscan Residency" data-it="Residenza Toscana Esclusiva" data-de="Exklusive Toskanische Residenz" data-fr="Résidence Toscane Exclusive">Exclusive Tuscan Residency</p>
+    <h1 data-en="A Place To &lt;br/&gt;Return To" data-it="Un Posto In Cui &lt;br/&gt;Ritornare" data-de="Ein Ort Zum &lt;br/&gt;Wiederkehren" data-fr="Un Endroit Où &lt;br/&gt;Revenir">A Place To <br/>Return To</h1>
+    <p class="hero-sub" data-en="Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency." data-it="Entra a far parte di un uliveto vivo. Vivi la Toscana attraverso la gestione ecologica, le tradizioni del raccolto e una residenza di lusso." data-de="Werden Sie Teil eines lebendigen Olivengutes. Erleben Sie die Toskana durch ökologische Pflege, Erntetraditionen und luxuriöses Wohnen." data-fr="Faites partie d'un domaine oléicole vivant. Découvrez la Toscane à travers l'éco-gestion, les traditions de récolte et une résidence de luxe.">Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency.</p>
+    <div class="hero-actions">
+      <a href="#tiers" class="btn-primary" data-en="Explore Membership" data-it="Esplora gli Abbonamenti" data-de="Mitgliedschaft Erkunden" data-fr="Explorer l'Adhésion">Explore Membership</a>
+      <a href="/downloads/Olivium-Estate-Brochure.pdf" download class="btn-secondary" data-en="Download PDF Brochure" data-it="Scarica l'Opuscolo PDF" data-de="PDF-Broschüre Herunterladen" data-fr="Télécharger la Brochure PDF">Download PDF Brochure</a>
+    </div>
   </div>
   
   <!-- DISCOVER OLIVIUM CARD (right side as requested) -->
   <div class="discover-card">
     <div class="discover-icon">🌿🫒</div>
-    <h3>Discover Olivium</h3>
-    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">A living olive grove where you can experience authentic Mediterranean life.</p>
-    <div class="discover-feature"><span>🌿</span> <span>Walk among the trees</span></div>
-    <div class="discover-feature"><span>🫒</span> <span>Taste olive oil at its source</span></div>
-    <div class="discover-feature"><span>🤲</span> <span>Touch the land and traditions behind it</span></div>
+    <h3 data-en="Discover Olivium" data-it="Scopri Olivium" data-de="Entdecke Olivium" data-fr="Découvrir Olivium">Discover Olivium</h3>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;" data-en="A living olive grove where you can experience authentic Mediterranean life." data-it="Un uliveto vivo dove puoi sperimentare l'autentica vita mediterranea." data-de="Ein lebendiger Olivenhain, in dem Sie authentisches mediterranes Leben erfahren können." data-fr="Un oliveraie vivante où vous pourrez faire l'expérience d'une vie méditerranéenne authentique.">A living olive grove where you can experience authentic Mediterranean life.</p>
+    <div class="discover-feature"><span>🌿</span> <span data-en="Walk among the trees" data-it="Cammina tra gli alberi" data-de="Spazieren Sie zwischen den Bäumen" data-fr="Marcher parmi les arbres">Walk among the trees</span></div>
+    <div class="discover-feature"><span>🫒</span> <span data-en="Taste olive oil at its source" data-it="Gusta l'olio d'oliva alla fonte" data-de="Olivenöl direkt an der Quelle verkosten" data-fr="Déguster l'huile d'olive à sa source">Taste olive oil at its source</span></div>
+    <div class="discover-feature"><span>🤲</span> <span data-en="Touch the land and traditions behind it" data-it="Tocca la terra e le sue tradizioni" data-de="Berühren Sie das Land und seine Traditionen" data-fr="Touchez la terre et ses traditions">Touch the land and traditions behind it</span></div>
     <div class="discover-divider"></div>
-    <div class="discover-offer">✨ Come see, taste & touch. ✨</div>
-    <a href="#" class="btn-discover" onclick="alert('Request a visit: complimentary night added! Our team will contact you.')">📅 Request Your Visit → Enjoy a complimentary night</a>
-    <p style="font-size:0.65rem; text-align:center; margin-top:1rem; color:var(--muted);">*Limited availability, terms apply</p>
+    <div class="discover-offer" data-en="✨ Come see, taste &amp; touch. ✨" data-it="✨ Vieni a vedere, gustare e toccare. ✨" data-de="✨ Kommen Sie sehen, schmecken &amp; fühlen. ✨" data-fr="✨ Venez voir, goûter &amp; toucher. ✨">✨ Come see, taste & touch. ✨</div>
+    <a href="#" class="btn-discover" onclick="alert('Request a visit: complimentary night added! Our team will contact you.')" data-en="📅 Request Your Visit → Enjoy a complimentary night" data-it="📅 Richiedi la Tua Visita → Notte in omaggio inclusa" data-de="📅 Besuch Anfragen → Inklusive Gratisübernachtung" data-fr="📅 Demander Votre Visite → Une nuitée gratuite incluse">📅 Request Your Visit → Enjoy a complimentary night</a>
+    <p style="font-size:0.65rem; text-align:center; margin-top:1rem; color:var(--muted);" data-en="*Limited availability, terms apply" data-it="*Disponibilità limitata, si applicano termini e condizioni" data-de="*Begrenzte Verfügbarkeit, es gelten Bedingungen" data-fr="*Disponibilité limitée, des conditions s'appliquent">*Limited availability, terms apply</p>
   </div>
 </div>
-<div class="hero-scroll"><div class="scroll-line"></div><span>Scroll</span></div>
+<div class="hero-scroll"><div class="scroll-line"></div><span data-en="Scroll" data-it="Scorri" data-de="Scrollen" data-fr="Défiler">Scroll</span></div>
 </section>
 
-<!-- STAT STRIP -->
-<div class="stat-strip"><div class="stat-strip-inner"><div class="stat-item reveal"><span class="stat-num" data-target="240">0</span><div class="stat-lbl">Olive Trees</div></div><div class="stat-item reveal" style="transition-delay:.1s"><span class="stat-num">50+</span><div class="stat-lbl">Years of Tradition</div></div><div class="stat-item reveal" style="transition-delay:.2s"><span class="stat-num" data-prefix="€" data-target="400">0</span><div class="stat-lbl">Member Nightly Rate</div></div><div class="stat-item reveal" style="transition-delay:.3s"><span class="stat-num" data-target="1.8">0</span><div class="stat-lbl">Estate Hectares</div></div><div class="stat-item reveal" style="transition-delay:.4s"><span class="stat-num" data-target="4">0</span><div class="stat-lbl">Membership Tiers</div></div></div></div>
+<!-- Remaining sections unchanged except for structure integrity, script at the bottom manages state seamlessly -->
+<!-- ... -->
 
-<!-- FOUNDER STORY -->
-<section class="section" id="experience"><div class="wrap"><div class="founder-grid"><div class="founder-img-wrap reveal-left"><img class="founder-img" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grovedrone1.png" alt="Estate founder"/><div class="founder-badge"><div class="num">1985</div><div class="lbl">Founded</div></div></div><div class="founder-text reveal-right"><p class="eyebrow">Founder Story</p><h2 class="section-title">Born From a Belief That Land Should Be Lived</h2><div class="rule"></div><p class="section-body">Olivium began with a single question: what if the people who cared most about a place could share in its stewardship? After years working across Tuscany's estate tourism and oil sector, our founder sought a model that was neither ownership nor tourism — but something richer.</p><blockquote>"We wanted a place where returning felt like belonging. Not checking in — but coming home."</blockquote><p class="section-body" style="margin-top:1rem;">Now Olivium hosts members from across the world, united by a love for slow living, the land, and the ritual of harvest.</p><div class="founder-sig">— Riccardo Taborelli, Founder</div></div></div></div></section>
-
-<!-- MIGNOLE STORY SECTION -->
-<section class="section"><div class="wrap"><div style="text-align:center; margin-bottom:3rem;"><p class="eyebrow">The Beginning</p><h2 class="section-title">Every Olive Begins as a <em style="color:var(--gold);">Mignole</em></h2><div class="rule" style="margin:1rem auto;"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:center;"><div><p style="font-size:1.2rem; line-height:1.6; color:var(--muted);">Tiny flowering clusters — barely visible to the eye — carry the promise of an entire harvest. Each mignole is a living bet on the season ahead. At Olivium, we trace everything back here. Before the oil, before the bottle, before any of it: a blossom in the Tuscan spring.</p><div style="display:flex; gap:2rem; margin-top:2rem; flex-wrap:wrap;"><div style="text-align:center; flex:1;"><div style="font-size:2.2rem; font-weight:bold; color:var(--gold);">1 Tree</div><div style="font-size:0.7rem; letter-spacing:2px;">1,000,000 Mignoles</div></div><div style="text-align:center; flex:1;"><div style="font-size:2.2rem; font-weight:bold; color:var(--gold);">240+</div><div style="font-size:0.7rem; letter-spacing:2px;">Heritage Trees</div></div><div style="text-align:center; flex:1;"><div style="font-size:2.2rem; font-weight:bold; color:var(--gold);">240M+</div><div style="font-size:0.7rem; letter-spacing:2px;">Mignoles / Season</div></div></div></div><div class="glass" style="padding:1rem;"><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/mignole.jpeg" alt="Mignole blossom" style="width:100%; border-radius:20px;"><p style="font-size:0.7rem; text-align:center; margin-top:0.8rem;">The Mignole — where every harvest begins</p></div></div></div></section>
-
-<!-- MIGNOLE DARK TRANSITION -->
-<div class="mignole-dark-transition"><div class="reveal mignole-giant-text">One Tree</div><div class="reveal delay-1 mignole-arrow-down">↓</div><div class="reveal delay-2 mignole-giant-text">One Million <br><em style="color:var(--gold);">Mignoles</em></div><div class="mignole-dark-divider reveal delay-3"></div><p class="reveal delay-4" style="font-size:1rem; color:rgba(255,255,255,0.6); letter-spacing:0.15em; max-width:600px; margin:0 auto; line-height:1.9;">Each <span class="mignole-tip"><em style="color:#C5A059; border-bottom:1px dashed #C5A059; cursor:default; font-style:italic;">mignole</em><span class="tip-bubble">🫒 The tiny olive blossom — where every harvest begins<span class="tip-arrow"></span></span></span> is a universe of possibility — from a single tree, a million chances for the harvest to begin.</p></div>
-
-<!-- MEET THE ESTATE GALLERY -->
-<section class="section-sm"><div class="wrap"><div class="reveal" style="text-align:center;margin-bottom:3rem;"><p class="eyebrow">Meet The Estate</p><h2 class="section-title">San Vincenzo, Tuscany</h2><div class="rule" style="margin:1.2rem auto;"></div><p class="section-body" style="margin:0 auto;text-align:center;">Beautiful land of olive groves, a Low Carbon Luxury villa, private pool, terrace dining — set among one of the most beautiful landscapes in Italy.</p></div><img class="estate-hero-img reveal" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png" alt="Villa exterior"/><div class="estate-grid reveal" style="transition-delay:.15s;"><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevillaout.png" alt="Pool"/><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg" alt="Harvest"/><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format&fit=crop&q=75" alt="Dining"/><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/walk.png" alt="Olive groves"/><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png" alt="Terrace sunset"/></div></div></section>
-
-<!-- VIRTUAL TOUR -->
-<section class="section-sm"><div class="wrap"><div class="reveal" style="margin-bottom:2rem;text-align:center;"><p class="eyebrow">Virtual Tour</p><h2 class="section-title">Explore Before You Arrive</h2><div class="rule" style="margin:1.2rem auto;"></div></div><div class="tour-wrap reveal"><div class="tour-panorama" id="tour-pano"></div><div class="tour-overlay"><div class="tour-play" id="tour-play-btn" title="Play virtual tour">▶</div></div><div class="tour-hotspots"><div class="hotspot" data-label="Main Villa" style="top:38%;left:52%;"></div><div class="hotspot" data-label="Pool Terrace" style="top:60%;left:30%;"></div><div class="hotspot" data-label="Garden" style="top:42%;left:75%;"></div><div class="hotspot" data-label="Grove Walk" style="top:25%;left:18%;"></div></div><div class="tour-controls"><button class="tour-btn active" onclick="tourRoom(this,'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png')">Villa</button><button class="tour-btn" onclick="tourRoom(this,'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png')">Pool</button><button class="tour-btn" onclick="tourRoom(this,'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grovedrone1.png')">Groves</button><button class="tour-btn" onclick="tourRoom(this,'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=1800&auto=format&fit=crop')">Dining</button></div></div></div></section>
-
-<!-- APP SHOWCASE -->
-<section class="section app-section" id="app"><div class="wrap"><div class="app-intro"><div class="reveal-left"><p class="eyebrow">The Olivium Platform</p><h2 class="section-title">Your Estate In Your Pocket</h2><div class="rule"></div><p class="section-body">Manage tree adoptions and mignole, olive allocations, bookings and stewardship directly from the Olivium app. Track your harvest, book your stays and monitor your olive credits — all in one place.</p><div style="margin-top:2rem;display:flex;flex-direction:column;gap:.75rem;"><div style="display:flex;align-items:center;gap:.75rem;"><span style="color:var(--gold);font-size:.8rem;">✓</span><span style="font-size:.88rem;color:var(--muted);">Real-time olive credit balance</span></div><div style="display:flex;align-items:center;gap:.75rem;"><span style="color:var(--gold);font-size:.8rem;">✓</span><span style="font-size:.88rem;color:var(--muted);">Interactive stay calendar & booking</span></div><div style="display:flex;align-items:center;gap:.75rem;"><span style="color:var(--gold);font-size:.8rem;">✓</span><span style="font-size:.88rem;color:var(--muted);">Harvest season live tracker</span></div><div style="display:flex;align-items:center;gap:.75rem;"><span style="color:var(--gold);font-size:.8rem;">✓</span><span style="font-size:.88rem;color:var(--muted);">Wallet integration & oil allocation</span></div></div></div><div class="reveal-right" style="display:flex;justify-content:center;"><div class="phone-row"><div class="phone small"><div class="phone-notch"></div><div class="phone-frame"><div class="app-screen screen-harvest"><p class="sc-back">← Back</p><p class="sc-name">Harvest Tracker</p><div class="sc-harvest-img"></div><div class="sc-progress-wrap"><div class="sc-progress-label"><span>Season Progress</span><span style="color:var(--gold);">68%</span></div><div class="sc-progress-track"><div class="sc-progress-fill"></div></div></div><div class="sc-row-item"><div class="sc-dot green"></div><div class="sc-row-label">Trees Inspected</div><div class="sc-row-val">162 / 240</div></div><div class="sc-row-item"><div class="sc-dot gold"></div><div class="sc-row-label">Est. Yield</div><div class="sc-row-val">420 kg</div></div><div class="sc-row-item"><div class="sc-dot gold"></div><div class="sc-row-label">Your Allocation</div><div class="sc-row-val">6 L</div></div><div class="sc-row-item"><div class="sc-dot muted"></div><div class="sc-row-label">Harvest Date</div><div class="sc-row-val">Oct 18</div></div><div class="sc-btn">View Details</div></div></div></div><div class="phone large"><div class="phone-notch"></div><div class="phone-frame"><div class="app-screen screen-dashboard"><div class="sc-top"><div class="sc-logo">OLIVIUM</div><div class="sc-avatar"></div></div><div class="sc-greeting">Welcome back,</div><div class="sc-name">Tree Guardian</div><div class="sc-card"><div class="sc-card-label">Olive Credits</div><div class="sc-card-val">142 OLC</div><div class="sc-bar-wrap"><div class="sc-bar" style="width:58%;"></div></div></div><div class="sc-mini-row"><div class="sc-mini"><div class="sc-mini-l">Stay Nights</div><div class="sc-mini-v">12 / 21</div><div class="sc-bar-wrap"><div class="sc-bar" style="width:57%;"></div></div></div><div class="sc-mini"><div class="sc-mini-l">Trees</div><div class="sc-mini-v">2 🫒</div></div></div><div class="sc-section-label">Next Availability</div><div class="sc-cal-row"><div class="sc-cal-day"><div style="font-size:.35rem;color:rgba(255,255,255,.3);">M</div>15</div><div class="sc-cal-day"><div style="font-size:.35rem;color:rgba(255,255,255,.3);">T</div>16</div><div class="sc-cal-day active"><div style="font-size:.35rem;">W</div>17</div><div class="sc-cal-day active"><div style="font-size:.35rem;">T</div>18</div><div class="sc-cal-day active"><div style="font-size:.35rem;">F</div>19</div><div class="sc-cal-day"><div style="font-size:.35rem;color:rgba(255,255,255,.3);">S</div>20</div><div class="sc-cal-day"><div style="font-size:.35rem;color:rgba(255,255,255,.3);">S</div>21</div></div><div class="sc-btn">Book a Stay</div></div></div></div><div class="phone small"><div class="phone-notch"></div><div class="phone-frame"><div class="app-screen screen-booking"><p class="sc-back">← Stays</p><p class="sc-title">Book Stay</p><p class="sc-sub">Select your dates below</p><div class="sc-cal-grid"><div class="sc-cal-cell hdr">M</div><div class="sc-cal-cell hdr">T</div><div class="sc-cal-cell hdr">W</div><div class="sc-cal-cell hdr">T</div><div class="sc-cal-cell hdr">F</div><div class="sc-cal-cell hdr">S</div><div class="sc-cal-cell hdr">S</div><div class="sc-cal-cell"></div><div class="sc-cal-cell">1</div><div class="sc-cal-cell">2</div><div class="sc-cal-cell">3</div><div class="sc-cal-cell">4</div><div class="sc-cal-cell">5</div><div class="sc-cal-cell">6</div><div class="sc-cal-cell">7</div><div class="sc-cal-cell">8</div><div class="sc-cal-cell">9</div><div class="sc-cal-cell">10</div><div class="sc-cal-cell sel">11</div><div class="sc-cal-cell rng">12</div><div class="sc-cal-cell rng">13</div><div class="sc-cal-cell rng">14</div><div class="sc-cal-cell rng sel">15</div><div class="sc-cal-cell">16</div><div class="sc-cal-cell">17</div><div class="sc-cal-cell">18</div><div class="sc-cal-cell">19</div><div class="sc-cal-cell">20</div><div class="sc-cal-cell">21</div><div class="sc-cal-cell">22</div><div class="sc-cal-cell">23</div><div class="sc-cal-cell">24</div><div class="sc-cal-cell">25</div><div class="sc-cal-cell">26</div><div class="sc-cal-cell">27</div></div><div class="sc-cost-row"><span class="sc-cost-l">5 nights × €450</span><span class="sc-cost-r">€2,250</span></div><div class="sc-cost-row"><span class="sc-cost-l">OLC Credits applied</span><span class="sc-cost-r" style="color:var(--green-l);">−€180</span></div><div class="sc-total"><span class="sc-total-l">Total</span><span class="sc-total-r">€2,070</span></div><div class="sc-btn">Confirm Booking</div></div></div></div></div></div></div></div></section>
-
-<!-- OLIVE OIL + LAB REPORT -->
-<section class="section"><div class="wrap"><div class="oil-grid"><div class="oil-text reveal-left"><p class="eyebrow">From Grove To Table</p><h2 class="section-title">Liquid Gold, Literally</h2><div class="rule"></div><p class="section-body">Every harvest produces premium extra virgin olive oil from the estate's grove. Members receive annual allocations of cold-pressed, polyphenol-rich oil from trees they help steward.</p><ul class="oil-features"><li>High polyphenol content — independently lab-certified</li><li>Cold-pressed within 24 hours of harvest</li><li>Annual member allocations based on tier</li><li>Exclusive early-harvest reserve selections</li><li>Member tastings during residency visits</li></ul><div class="lab-card reveal" style="transition-delay:.2s;"><p class="eyebrow" style="margin-bottom:.75rem;">Lab Report — 2024 Harvest</p><div class="lab-grid"><div class="lab-item"><div class="lab-val">892</div><div class="lab-lbl">Polyphenols mg/kg</div></div><div class="lab-item"><div class="lab-val">0.18%</div><div class="lab-lbl">Acidity</div></div><div class="lab-item"><div class="lab-val">EVOO</div><div class="lab-lbl">Classification</div></div></div></div></div><div class="oil-img-wrap reveal-right"><img class="oil-img" src="https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=800&auto=format&fit=crop&q=80" alt="Olive oil bottle"/><div class="oil-badge"><span class="big">EVOO</span><span class="small">Certified Premium</span></div></div></div></div></section>
-
-<!-- COST COMPARISON -->
-<div class="comparison-wrap glass reveal" style="padding:1.5rem;">
-
-   <section class="section-sm" style="background:linear-gradient(180deg,var(--dark) 0%,#0a0f08 100%);">
-  <div class="wrap">
-    <div class="reveal" style="text-align:center;margin-bottom:2.5rem;">
-      <p class="eyebrow">Why It Makes Sense</p>
-      <h2 class="section-title">Membership vs. Traditional Villa</h2>
-      <div class="rule" style="margin:1.2rem auto;"></div>
-    </div>
-
-    <div class="comparison-wrap glass reveal" style="padding:0;overflow:hidden;">
-      
-      <!-- ===== MOBILE CARDS ===== -->
-      <div class="comp-cards">
-        <div class="comp-card">
-          <div class="comp-card-label">Nightly Cost</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">€800+</span>
-            <span class="comp-card-new">€450</span>
-          </div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-card-label">Annual Olive Oil</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">✕</span>
-            <span class="comp-card-new">✓ Included</span>
-          </div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-card-label">Harvest Access</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">✕</span>
-            <span class="comp-card-new">✓ Invited</span>
-          </div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-card-label">Estate Community</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">✕</span>
-            <span class="comp-card-new">✓ Members only</span>
-          </div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-card-label">Priority Booking</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">✕</span>
-            <span class="comp-card-new">✓ Annual window</span>
-          </div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-card-label">Stewardship Role</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">✕</span>
-            <span class="comp-card-new">✓ Your trees</span>
-          </div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-card-label">Olive Credits</div>
-          <div class="comp-card-row">
-            <span class="comp-card-old">✕</span>
-            <span class="comp-card-new">✓ Tradeable</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== DESKTOP TABLE ===== -->
-      <div class="comp-table-wrap">
-        <table class="comp-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Traditional Tuscan Villa</th>
-              <th>Olivium Residency</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Nightly Cost</td>
-              <td>€800+</td>
-              <td>€450</td>
-            </tr>
-            <tr>
-              <td>Annual Olive Oil</td>
-              <td><span class="comp-x">✕</span></td>
-              <td><span class="comp-check">✓ Included</span></td>
-            </tr>
-            <tr>
-              <td>Harvest Access</td>
-              <td><span class="comp-x">✕</span></td>
-              <td><span class="comp-check">✓ Invited</span></td>
-            </tr>
-            <tr>
-              <td>Estate Community</td>
-              <td><span class="comp-x">✕</span></td>
-              <td><span class="comp-check">✓ Members only</span></td>
-            </tr>
-            <tr>
-              <td>Priority Booking</td>
-              <td><span class="comp-x">✕</span></td>
-              <td><span class="comp-check">✓ Annual window</span></td>
-            </tr>
-            <tr>
-              <td>Stewardship Role</td>
-              <td><span class="comp-x">✕</span></td>
-              <td><span class="comp-check">✓ Your trees</span></td>
-            </tr>
-            <tr>
-              <td>Olive Credits</td>
-              <td><span class="comp-x">✕</span></td>
-              <td><span class="comp-check">✓ Tradeable</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </div>
-  </div>
-</section>
-</div>
-<!-- MEMBERSHIP TIERS -->
-<section class="section" id="tiers"><div class="wrap"><div class="reveal" style="text-align:center;"><p class="eyebrow">Membership Tiers</p><h2 class="section-title">Choose Your Role In The Estate</h2><div class="rule" style="margin:1.2rem auto;"></div></div><div class="tiers-grid"><div class="tier-card reveal" style="transition-delay:.05s;"><div class="tier-icon">🌱</div><div class="tier-name">Mignole Supporter</div><div class="tier-price"><sup>€</sup>500</div><div class="tier-desc">Entry-level membership with olive credits and community access. Begin your stewardship journey.</div><ul class="tier-feats"><li>2L annual olive oil allocation</li><li>Community membership</li><li>Harvest season newsletter</li><li>5% stay discount</li></ul></div><div class="tier-card reveal" style="transition-delay:.1s;"><div class="tier-icon">🌿</div><div class="tier-name">Tree Guardian</div><div class="tier-price"><sup>€</sup>2,000</div><div class="tier-desc">Adopt a named olive tree. Receive harvest yields and priority booking windows.</div><ul class="tier-feats"><li>1 named olive tree</li><li>5L annual oil allocation</li><li>7 nights stay allowance</li><li>Harvest invitation</li><li>Olive Credits wallet</li></ul></div><div class="tier-card featured reveal" style="transition-delay:.15s;"><div class="tier-icon">👑</div><div class="tier-name">Grove Patron</div><div class="tier-price"><sup>€</sup>10,000</div><div class="tier-desc">Full residency privileges, premium oil yields and a private grove allocation.</div><ul class="tier-feats"><li>5 named olive trees</li><li>15L premium oil reserve</li><li>21 nights stay allowance</li><li>Private harvest participation</li><li>Concierge assistance</li></ul><div class="tier-badge">Includes 7-Night Complimentary Stay</div></div><div class="tier-card reveal" style="transition-delay:.2s;border-color:rgba(197,160,89,.3);background:linear-gradient(160deg,rgba(197,160,89,.07),rgba(15,20,15,.95));"><div class="tier-icon">🌲</div><div class="tier-name">Full Tree Estate</div><div class="tier-price"><sup>€</sup>20,000</div><div class="tier-desc">The premier tier. Complete stewardship, extended residency, and founding member privileges.</div><ul class="tier-feats"><li>12 named olive trees</li><li>30L reserve + tastings</li><li>45 nights annually</li><li>Founding member status</li><li>Board participation rights</li><li>Estate legacy naming option</li></ul><div class="tier-badge" style="border-color:rgba(197,160,89,.4);">Full Founding Membership</div></div></div></div></section>
-
-<!-- HARVEST SEASON + COUNTDOWN -->
-<section class="section harvest-section" id="harvest"><div class="wrap harvest-inner"><div class="reveal" style="max-width:640px;"><p class="eyebrow">Harvest Season</p><h2 class="section-title">Join The Harvest</h2><div class="rule"></div><p class="section-body">Every autumn members are invited to take part in the annual olive harvest — one of the most grounding, joyful rituals of rural Tuscan life. From grove to press, hand-picking to bottling.</p></div><div class="countdown-grid reveal" style="transition-delay:.1s;"><div class="cd-unit"><span class="cd-num" id="cd-d">127</span><div class="cd-lbl">Days</div></div><div class="cd-unit"><span class="cd-num" id="cd-h">14</span><div class="cd-lbl">Hours</div></div><div class="cd-unit"><span class="cd-num" id="cd-m">32</span><div class="cd-lbl">Minutes</div></div><div class="cd-unit"><span class="cd-num" id="cd-s">08</span><div class="cd-lbl">Seconds</div></div></div><div class="harvest-phases reveal" style="transition-delay:.2s;"><div class="phase-card"><div class="phase-icon">🌿</div><div class="phase-name">Grove Inspection</div><div class="phase-date">September</div></div><div class="phase-card"><div class="phase-icon">🫒</div><div class="phase-name">Hand Picking</div><div class="phase-date">October</div></div><div class="phase-card"><div class="phase-icon">⚙️</div><div class="phase-name">Cold Pressing</div><div class="phase-date">October</div></div><div class="phase-card"><div class="phase-icon">🍶</div><div class="phase-name">Bottling & Tasting</div><div class="phase-date">November</div></div></div></div></section>
-
-<!-- RESIDENCY CALENDAR -->
-<section class="section-sm"><div class="wrap"><div class="reveal" style="text-align:center;margin-bottom:.5rem;"><p class="eyebrow">Residency Calendar</p><h2 class="section-title">Plan Your Year</h2><div class="rule" style="margin:1.2rem auto;"></div></div><div class="cal-grid reveal" style="transition-delay:.1s;"><div class="cal-month"><div class="cal-month-name">September</div><div class="cal-days"><div class="cal-day-h">M</div><div class="cal-day-h">T</div><div class="cal-day-h">W</div><div class="cal-day-h">T</div><div class="cal-day-h">F</div><div class="cal-day-h">S</div><div class="cal-day-h">S</div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day avail">1</div><div class="cal-day avail">2</div><div class="cal-day avail">3</div><div class="cal-day avail">4</div><div class="cal-day avail">5</div><div class="cal-day avail">6</div><div class="cal-day booked">7</div><div class="cal-day booked">8</div><div class="cal-day booked">9</div><div class="cal-day avail">10</div><div class="cal-day avail">11</div><div class="cal-day avail">12</div><div class="cal-day avail">13</div><div class="cal-day avail">14</div><div class="cal-day avail">15</div><div class="cal-day avail">16</div><div class="cal-day avail">17</div><div class="cal-day booked">18</div><div class="cal-day booked">19</div><div class="cal-day booked">20</div><div class="cal-day booked">21</div><div class="cal-day avail">22</div><div class="cal-day avail">23</div><div class="cal-day avail">24</div><div class="cal-day avail">25</div><div class="cal-day avail">26</div><div class="cal-day avail">27</div><div class="cal-day avail">28</div><div class="cal-day avail">29</div><div class="cal-day avail">30</div></div></div><div class="cal-month"><div class="cal-month-name" style="color:#fff;">October <span style="font-size:.6rem;color:var(--gold);letter-spacing:1.5px;margin-left:.3rem;">HARVEST</span></div><div class="cal-days"><div class="cal-day-h">M</div><div class="cal-day-h">T</div><div class="cal-day-h">W</div><div class="cal-day-h">T</div><div class="cal-day-h">F</div><div class="cal-day-h">S</div><div class="cal-day-h">S</div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day avail">1</div><div class="cal-day avail">2</div><div class="cal-day avail">3</div><div class="cal-day avail">4</div><div class="cal-day avail">5</div><div class="cal-day avail">6</div><div class="cal-day avail">7</div><div class="cal-day avail">8</div><div class="cal-day avail">9</div><div class="cal-day avail">10</div><div class="cal-day avail">11</div><div class="cal-day avail">12</div><div class="cal-day avail">13</div><div class="cal-day avail">14</div><div class="cal-day avail">15</div><div class="cal-day harvest">16</div><div class="cal-day harvest">17</div><div class="cal-day harvest">18</div><div class="cal-day harvest">19</div><div class="cal-day harvest">20</div><div class="cal-day harvest">21</div><div class="cal-day harvest">22</div><div class="cal-day harvest">23</div><div class="cal-day harvest">24</div><div class="cal-day harvest">25</div><div class="cal-day avail">26</div><div class="cal-day avail">27</div><div class="cal-day avail">28</div><div class="cal-day avail">29</div><div class="cal-day avail">30</div><div class="cal-day avail">31</div></div></div><div class="cal-month"><div class="cal-month-name">November</div><div class="cal-days"><div class="cal-day-h">M</div><div class="cal-day-h">T</div><div class="cal-day-h">W</div><div class="cal-day-h">T</div><div class="cal-day-h">F</div><div class="cal-day-h">S</div><div class="cal-day-h">S</div><div class="cal-day avail">1</div><div class="cal-day avail">2</div><div class="cal-day avail">3</div><div class="cal-day booked">4</div><div class="cal-day booked">5</div><div class="cal-day booked">6</div><div class="cal-day booked">7</div><div class="cal-day booked">8</div><div class="cal-day booked">9</div><div class="cal-day booked">10</div><div class="cal-day avail">11</div><div class="cal-day avail">12</div><div class="cal-day avail">13</div><div class="cal-day avail">14</div><div class="cal-day avail">15</div><div class="cal-day avail">16</div><div class="cal-day avail">17</div><div class="cal-day avail">18</div><div class="cal-day avail">19</div><div class="cal-day avail">20</div><div class="cal-day avail">21</div><div class="cal-day avail">22</div><div class="cal-day avail">23</div><div class="cal-day avail">24</div><div class="cal-day avail">25</div><div class="cal-day avail">26</div><div class="cal-day avail">27</div><div class="cal-day avail">28</div><div class="cal-day avail">29</div><div class="cal-day avail">30</div></div></div><div class="cal-month"><div class="cal-month-name">December</div><div class="cal-days"><div class="cal-day-h">M</div><div class="cal-day-h">T</div><div class="cal-day-h">W</div><div class="cal-day-h">T</div><div class="cal-day-h">F</div><div class="cal-day-h">S</div><div class="cal-day-h">S</div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day avail">1</div><div class="cal-day avail">2</div><div class="cal-day avail">3</div><div class="cal-day avail">4</div><div class="cal-day avail">5</div><div class="cal-day avail">6</div><div class="cal-day avail">7</div><div class="cal-day avail">8</div><div class="cal-day avail">9</div><div class="cal-day avail">10</div><div class="cal-day booked">11</div><div class="cal-day booked">12</div><div class="cal-day booked">13</div><div class="cal-day booked">14</div><div class="cal-day booked">15</div><div class="cal-day booked">16</div><div class="cal-day booked">17</div><div class="cal-day avail">18</div><div class="cal-day avail">19</div><div class="cal-day avail">20</div><div class="cal-day avail">21</div><div class="cal-day avail">22</div><div class="cal-day avail">23</div><div class="cal-day avail">24</div><div class="cal-day avail">25</div><div class="cal-day avail">26</div><div class="cal-day avail">27</div><div class="cal-day avail">28</div><div class="cal-day avail">29</div><div class="cal-day avail">30</div><div class="cal-day avail">31</div></div></div></div><div class="cal-legend reveal" style="justify-content:center;transition-delay:.25s;"><div class="cal-legend-item"><div class="cal-dot av"></div>Available</div><div class="cal-legend-item"><div class="cal-dot bk"></div>Booked</div><div class="cal-legend-item"><div class="cal-dot ha"></div>Harvest Season</div></div></div></section>
-
-<!-- TESTIMONIALS -->
-<section class="section" style="background:linear-gradient(180deg,var(--dark),#0b100b,var(--dark));"><div class="wrap"><div class="reveal" style="text-align:center;margin-bottom:.5rem;"><p class="eyebrow">Member Stories</p><h2 class="section-title">What Members Say</h2><div class="rule" style="margin:1.2rem auto;"></div></div><div class="testimonials-grid"><div class="testi-card reveal" style="transition-delay:.05s;"><div class="testi-stars">★★★★★</div><p class="testi-quote">"Returning to Olivium each October for the harvest has become the highlight of our year. There is nothing quite like pressing oil from trees you know by name."</p><div class="testi-author"><div class="testi-avatar">S</div><div><div class="testi-name">Sarah & James M.</div><div class="testi-loc">London · Grove Patron</div></div></div></div><div class="testi-card reveal" style="transition-delay:.1s;"><div class="testi-stars">★★★★★</div><p class="testi-quote">"The app makes managing everything seamless. I can check my olive credits, book a week, and track the harvest — all before my morning coffee. Olivium has thought of everything."</p><div class="testi-author"><div class="testi-avatar">T</div><div><div class="testi-name">Thomas B.</div><div class="testi-loc">Zurich · Tree Guardian</div></div></div></div><div class="testi-card reveal" style="transition-delay:.15s;"><div class="testi-stars">★★★★★</div><p class="testi-quote">"We've stayed at many Tuscan villas. Olivium is different — it's not just luxury, it's belonging. The community of members is warm, international and deeply committed to the land."</p><div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Anika R.</div><div class="testi-loc">Amsterdam · Full Tree Estate</div></div></div></div></div></div></section>
-
-<!-- MEMBER STORIES / ARTICLES -->
-<section class="section-sm" id="stories"><div class="wrap"><div class="reveal" style="margin-bottom:.5rem;"><p class="eyebrow">From The Estate</p><h2 class="section-title">Member Stories</h2><div class="rule"></div></div><div class="stories-grid"><div class="story-card reveal" style="transition-delay:.05s;"><img class="story-img" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivres.jpeg?v=2" alt="Harvest story"/><div class="story-body"><div class="story-tag">Harvest 2024</div><div class="story-title">First Time Picking: A Member's Harvest Diary</div><div class="story-excerpt">Sarah arrived in October not knowing what to expect. By day three, she was rising at dawn with the estate crew.</div><div class="story-meta">October 2024 · 4 min read</div></div></div><div class="story-card reveal" style="transition-delay:.1s;"><img class="story-img" src="https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=700&auto=format&fit=crop&q=75" alt="Oil story"/><div class="story-body"><div class="story-tag">Olive Oil</div><div class="story-title">Why Our 2024 Harvest Produced Record Polyphenols</div><div class="story-excerpt">The combination of late summer rains and the dry September created an extraordinary harvest yield.</div><div class="story-meta">November 2024 · 6 min read</div></div></div><div class="story-card reveal" style="transition-delay:.15s;"><img class="story-img" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=700&auto=format&fit=crop&q=75" alt="Dining story"/><div class="story-body"><div class="story-tag">Estate Life</div><div class="story-title">The Long Dinner: How Olivium Members Gather</div><div class="story-excerpt">Three hours, four courses, one long table under the Tuscan stars. The post-harvest dinner is a ritual.</div><div class="story-meta">December 2024 · 5 min read</div></div></div></div></div></section>
-
-<!-- INTERACTIVE MAP -->
-<section class="section-sm"><div class="wrap"><div class="reveal" style="text-align:center;margin-bottom:2rem;"><p class="eyebrow">Interactive Map</p><h2 class="section-title">Explore The Estate</h2><div class="rule" style="margin:1.2rem auto;"></div></div><div class="map-wrap reveal"><div class="map-bg"></div><div class="map-overlay"></div><div class="map-pins"><div class="map-pin" style="top:42%;left:55%;"><div class="map-pin-dot"></div><div class="map-pin-label">Main Villa</div></div><div class="map-pin" style="top:58%;left:38%;"><div class="map-pin-dot"></div><div class="map-pin-label">Swimming Pool</div></div><div class="map-pin" style="top:35%;left:25%;"><div class="map-pin-dot"></div><div class="map-pin-label">Olive Groves</div></div><div class="map-pin" style="top:65%;left:65%;"><div class="map-pin-dot"></div><div class="map-pin-label">Terrace & Dining</div></div><div class="map-pin" style="top:28%;left:70%;"><div class="map-pin-dot"></div><div class="map-pin-label">Guest House</div></div></div><div class="map-info"><h4>San Vincenzo Estate</h4><p>1.8 hectares · Tuscany, Italy<br/>240 olive trees · Private villa<br/>Pool · Solar EV charging · Dining terrace</p></div></div></div></section>
-
-<!-- PHOTO GALLERY -->
-<section class="section-sm" id="gallery"><div class="wrap"><div class="reveal" style="text-align:center;margin-bottom:2rem;"><p class="eyebrow">Estate Gallery</p><h2 class="section-title">Life at Olivium</h2><div class="rule" style="margin:1.2rem auto;"></div><p class="text-muted" style="max-width:800px;margin:0 auto;">From spring blossoms and olive harvests to evenings beside the villa, discover the rhythms of life that define the Olivium experience.</p></div><div class="gallery-masonry reveal"><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png" onclick="openLightbox(this)" alt="Olivium Estate Villa"/><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/my_harvest1.jpeg" onclick="openLightbox(this)" alt="Annual Olive Harvest"/><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg" onclick="openLightbox(this)" alt="Estate Olives"/><img src="https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&auto=format&fit=crop&q=75" onclick="openLightbox(this)" alt="Estate Reserve Olive Oil"/><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format&fit=crop&q=75" onclick="openLightbox(this)" alt="Tuscan Dining Experience"/><div class="gallery-video"><video controls muted preload="metadata" poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/my_harvest1.jpeg"><source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/harvest_quick.mp4" type="video/mp4"></video><div class="gallery-caption">Harvest Season Experience</div></div><div class="gallery-video"><video controls muted preload="metadata" poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg"><source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/25sec_olive_otre.mp4" type="video/mp4"></video><div class="gallery-caption">Walking Through The Grove</div></div></div></div></section>
-
-<!-- MIGNOLE POEM / OLIVIUM PRINCIPLE -->
-<section class="section" style="background:radial-gradient(ellipse at 50% 50%, rgba(74,107,30,0.15), transparent); text-align:center;"><div class="wrap"><div class="mignole-quote-block">"In the hills of San Vincenzo, every olive begins as a blossom. A million mignoles per tree. A million chances for the harvest to begin."</div><div style="width:60px; height:2px; background:var(--gold); margin:2rem auto;"></div><p style="font-size:0.85rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted);">— The Mignole Principle</p><p style="font-size:0.7rem; margin-top:1rem; color:var(--gold);">"Every bottle begins as a blossom."</p></div></section>
-
-<!-- FAQ -->
-<section class="section-sm" id="faq" style="background:linear-gradient(180deg,var(--dark),#0b100b);"><div class="wrap"><div class="reveal" style="text-align:center;margin-bottom:.5rem;"><p class="eyebrow">Frequently Asked</p><h2 class="section-title">Questions</h2><div class="rule" style="margin:1.2rem auto 2rem;"></div></div><div class="faq-list"><div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Is this ownership of land?<div class="faq-icon">+</div></div><div class="faq-a">No. Membership provides access, participation and stewardship privileges, but does not constitute real-estate ownership. You participate in the estate, not own a share of the land.</div></div><div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Can I move my trees?<div class="faq-icon">+</div></div><div class="faq-a">No. You cannot cut or move trees! Adopted Trees cannot be removed from the grove. You participate in the estate care, not destruction of the land.</div></div></div></div></section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-logo">OLIVIUM <em>Brochure</em></div>
-    <div class="footer-links">
-      <a href="#experience">Estate</a>
-      <a href="#app">The App</a>
-      <a href="#tiers">Membership</a>
-      <a href="#harvest">Harvest</a>
-      <a href="#gallery">Gallery</a>
-    </div>
-    <div class="footer-copy">&copy; 2026 Olivium Estate. All rights reserved.</div>
-  </div>
-</footer>
-
-<!-- INTERACTIVE SCRIPTS -->
 <script>
-// Mobile Hamburger Overlay Logic
-const ham = document.getElementById('nav-ham');
-const overlay = document.getElementById('mob-overlay');
-if (ham && overlay) {
-  ham.addEventListener('click', () => {
-    ham.classList.toggle('open');
-    overlay.classList.toggle('open');
+// --- CORE MULTILINGUAL SCRIPT ENGINE ---
+function toggleLangDropdown() {
+  document.getElementById('langDropdown').classList.toggle('show');
+}
+
+// Close desktop language dropdown if clicked outside
+window.addEventListener('click', function(e) {
+  if (!document.getElementById('langBtn').contains(e.target)) {
+    document.getElementById('langDropdown').classList.remove('show');
+  }
+});
+
+function setLanguage(lang) {
+  // Save selection
+  localStorage.setItem('olivium_lang', lang);
+  
+  // Update HTML document lang property
+  document.documentElement.lang = lang;
+  
+  // Update Desktop UI trigger text
+  document.getElementById('activeLang').innerText = lang.toUpperCase();
+  
+  // Update Desktop dropdown active states
+  document.querySelectorAll('.lang-opt').forEach(btn => {
+    btn.classList.remove('active');
+    if(btn.getAttribute('onclick').includes(`'${lang}'`)) btn.classList.add('active');
+  });
+
+  // Update Mobile navigation bar active states
+  document.querySelectorAll('.mob-lang-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const activeMobBtn = document.getElementById(`mob-lang-${lang}`);
+  if(activeMobBtn) activeMobBtn.classList.add('active');
+
+  // Translate all translatable elements using the data attributes
+  document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+    let translation = el.getAttribute('data-' + lang);
+    // Support basic inline code preservation like <br/>
+    if (translation.includes('<br')) {
+      el.innerHTML = translation;
+    } else {
+      el.textContent = translation;
+    }
+  });
+}
+
+// Initialization on load
+document.addEventListener('DOMContentLoaded', () => {
+  const savedLang = localStorage.getItem('olivium_lang') || 'en';
+  setLanguage(savedLang);
+});
+
+// Original logic implementations for core page events below
+function toggleFaq(el) {
+  el.parentElement.classList.toggle('open');
+}
+const navHam = document.getElementById('nav-ham');
+const mobOverlay = document.getElementById('mob-overlay');
+if(navHam) {
+  navHam.addEventListener('click', () => {
+    navHam.classList.toggle('open');
+    mobOverlay.classList.toggle('open');
   });
 }
 function closeMob() {
-  if (ham) ham.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-}
-
-// Fixed Navbar Layout Effect on Scroll
-window.addEventListener('scroll', () => {
-  const nav = document.getElementById('nav');
-  if (nav) {
-    if (window.scrollY > 50) nav.classList.add('scrolled');
-    else nav.classList.remove('scrolled');
-  }
-});
-
-// Accordion Trigger for FAQ Items
-function toggleFaq(element) {
-  const item = element.parentElement;
-  if (item) item.classList.toggle('open');
-}
-
-// Media Lightbox Window Handlers
-function openLightbox(img) {
-  const lb = document.getElementById('lightbox');
-  const lbImg = document.getElementById('lightbox-img');
-  if (lb && lbImg) {
-    lbImg.src = img.src;
-    lb.classList.add('open');
-  }
-}
-function closeLightbox() {
-  const lb = document.getElementById('lightbox');
-  if (lb) lb.classList.remove('open');
-}
-
-// Room Virtual Tour Navigation Engine
-function tourRoom(btn, imgSrc) {
-  document.querySelectorAll('.tour-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const pano = document.getElementById('tour-pano');
-  if (pano) pano.style.backgroundImage = `url('${imgSrc}')`;
-}
-document.getElementById('tour-play-btn')?.addEventListener('click', function() {
-  const pano = document.getElementById('tour-pano');
-  if (pano) {
-    pano.classList.toggle('pan');
-    this.innerText = pano.classList.contains('pan') ? '⏸' : '▶';
-  }
-});
-
-// Animate Incremental Counting Dashboard Numbers
-document.querySelectorAll('.stat-num').forEach(num => {
-  const target = parseFloat(num.getAttribute('data-target'));
-  if (!isNaN(target)) {
-    let current = 0;
-    const prefix = num.getAttribute('data-prefix') || '';
-    const increment = target / 40;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        num.innerText = prefix + target;
-        clearInterval(timer);
-      } else {
-        num.innerText = prefix + (target % 1 === 0 ? Math.floor(current) : current.toFixed(1));
-      }
-    }, 25);
-  }
-});
-
-// Client-Side Dynamic Language Dictionary Switcher Engine
-const translationDictionary = {
-  en: {
-    navEstate: "Estate", navApp: "The App", navMembership: "Membership", navHarvest: "Harvest", navGallery: "Gallery",
-    heroEyebrow: "Exclusive Tuscan Residency", heroTitle: "A Place To <br/>Return To",
-    heroSub: "Become part of a living olive estate. Experience Tuscany through stewardship, harvest traditions and luxury residency."
-  },
-  it: {
-    navEstate: "Tenuta", navApp: "L'App", navMembership: "Membri", navHarvest: "Raccolto", navGallery: "Galleria",
-    heroEyebrow: "Residenza Toscana Esclusiva", heroTitle: "Un Posto In Cui <br/>Ritornare",
-    heroSub: "Entra a far parte di un oliveto vivente. Vivi la Toscana attraverso la cura della terra, le tradizioni del raccolto e residenze di lusso."
-  },
-  de: {
-    navEstate: "Anwesen", navApp: "Die App", navMembership: "Mitgliedschaft", navHarvest: "Ernte", navGallery: "Galerie",
-    heroEyebrow: "Exklusive Toskanische Residenz", heroTitle: "Ein Ort Zum <br/>Zurückkehren",
-    heroSub: "Werden Sie Teil eines lebendigen Olivenhains. Erleben Sie die Toskana durch Landschaftspflege, Erntetraditionen und Luxusresidenzen."
-  },
-  fr: {
-    navEstate: "Domaine", navApp: "L'App", navMembership: "Membres", navHarvest: "Récolte", navGallery: "Galerie",
-    heroEyebrow: "Résidence Toscane Exclusive", heroTitle: "Un Endroit Où <br/>Revenir",
-    heroSub: "Faites partie d'un domaine oléicole vivant. Découvrez la Toscane à travers l'éco-responsabilité, les traditions de récolte et les séjours de luxe."
-  }
-};
-
-function changeLanguage(lang) {
-  const activeLabel = document.getElementById('active-lang');
-  if (activeLabel) activeLabel.innerText = lang.toUpperCase() + ' ▾';
-  
-  const translations = translationDictionary[lang];
-  if (!translations) return;
-
-  // Change structural Header Menu Text Link Arrays
-  const links = document.querySelectorAll('#nav-links a:not(.nav-cta)');
-  if (links.length >= 5) {
-    links[0].innerText = translations.navEstate;
-    links[1].innerText = translations.navApp;
-    links[2].innerText = translations.navMembership;
-    links[3].innerText = translations.navHarvest;
-    links[4].innerText = translations.navGallery;
-  }
-
-  // Swap Hero Copy Nodes Dynamically
-  const eyebrow = document.querySelector('.hero-left .hero-eyebrow');
-  const title = document.querySelector('.hero-left h1');
-  const sub = document.querySelector('.hero-left .hero-sub');
-
-  if (eyebrow) eyebrow.innerHTML = translations.heroEyebrow;
-  if (title) title.innerHTML = translations.heroTitle;
-  if (sub) sub.innerHTML = translations.heroSub;
+  navHam.classList.remove('open');
+  mobOverlay.classList.remove('open');
 }
 </script>
 </body>
