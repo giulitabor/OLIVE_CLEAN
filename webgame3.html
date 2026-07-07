@@ -1365,1413 +1365,1431 @@
     </div>
 
     <script>
-        // ============================================================
-        // COMPLETE GAME ENGINE
-        // ============================================================
+       // ============================================================
+// COMPLETE GAME ENGINE — Paste this at the end of your HTML
+// ============================================================
 
-        // ─── STATE ──────────────────────────────────────────────────────
-        const STATE = {
-            sol: 25.0,
-            oil: 0,
-            olv: 0,
-            seeds: 0,
-            trees: [],
-            treesPlanted: 3,
-            combo: 1.0,
-            comboRecord: 1.0,
-            totalHarvests: 0,
-            rareCount: 0,
-            lifetimeSol: 25.0,
-            hopper: 0,
-            mill: { mash: 0, heat: 0, gunk: 0 },
-            upgrades: {
-                irrigation: false,
-                misting: false,
-                fertilizer: false,
-                flytraps: false,
-                greenhouse: false,
-                coldpress: false,
-                guardian: false,
-                oracle: false
-            },
-            skills: [],
-            skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 },
-            world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
-            achievements: {
-                firstHarvest: false,
-                groveMaster: false,
-                tycoon: false,
-                comboKing: false,
-                rareCollector: false
-            },
-            fertilizerBoost: false,
-            fertilizerBoostEnd: 0,
-            protectionActive: false,
-            protectionEnd: 0,
-            nextTreeLegendary: false,
-            archetype: null,
-            archetypeLocked: false,
-            blightActive: false,
-            futures: [],
-            marketPool: 2.50,
-            marketVolume: 0,
-            purchases: { seeds: 0, sol: 0, fertilizer: 0, instantHarvest: 0, protection: 0, legendary: 0 },
-            quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
-            comboRef: null
+// ─── STATE ──────────────────────────────────────────────────────
+const STATE = {
+    sol: 25.0,
+    oil: 0,
+    olv: 0,
+    seeds: 0,
+    trees: [],
+    treesPlanted: 3,
+    combo: 1.0,
+    comboRecord: 1.0,
+    totalHarvests: 0,
+    rareCount: 0,
+    lifetimeSol: 25.0,
+    hopper: 0,
+    mill: { mash: 0, heat: 0, gunk: 0 },
+    upgrades: {
+        irrigation: false,
+        misting: false,
+        fertilizer: false,
+        flytraps: false,
+        greenhouse: false,
+        coldpress: false,
+        guardian: false,
+        oracle: false
+    },
+    skills: [],
+    skillMultipliers: { yield: 1.0, speed: 1.0, extraction: 1.0, rare: 0.1 },
+    world: { time: 8, temp: 24, weather: 'Clear', season: 'Spring', price: 2.50, demand: 'Normal' },
+    achievements: {
+        firstHarvest: false,
+        groveMaster: false,
+        tycoon: false,
+        comboKing: false,
+        rareCollector: false
+    },
+    fertilizerBoost: false,
+    fertilizerBoostEnd: 0,
+    protectionActive: false,
+    protectionEnd: 0,
+    nextTreeLegendary: false,
+    archetype: null,
+    archetypeLocked: false,
+    blightActive: false,
+    futures: [],
+    marketPool: 2.50,
+    marketVolume: 0,
+    purchases: { seeds: 0, sol: 0, fertilizer: 0, instantHarvest: 0, protection: 0, legendary: 0 },
+    quest: { target: 50, current: 0, reward: 10, seedReward: 1 },
+    comboRef: null
+};
+
+const RARITIES = {
+    common: { icon: '🌳', bonus: 1.0, name: 'Common', color: '#4daa62' },
+    rare: { icon: '💎', bonus: 2.0, name: 'Rare', color: '#a855f7' },
+    legendary: { icon: '👑', bonus: 5.0, name: 'Legendary', color: '#f0c96e' }
+};
+
+const ARCHETYPES = {
+    agrarian: { name: 'The Agrarian', icon: '🌿', desc: 'Max grove density, exponential harvest combo', bonuses: ['Grove cap +50%', '+30% combo multiplier'], risks: ['Pests spread contagiously'] },
+    industrialist: { name: 'The Industrialist', icon: '⚙️', desc: 'Precise thermal pressing extracts maximum oil', bonuses: ['+30% extraction in precision zone', 'Press faster'], risks: ['Mill pressure builds exponentially'] },
+    speculator: { name: 'The Cartel Speculator', icon: '📈', desc: 'Lock futures contracts with OLV, exploit market crashes', bonuses: ['Buy oil price futures with OLV', '+20% sell revenue'], risks: ['Futures can expire worthless'] }
+};
+
+const OLV_SHOP = {
+    seeds: { name: 'Ancient Seeds', cost: 100, reward: { seeds: 5 } },
+    sol: { name: 'SOL Boost', cost: 50, reward: { sol: 10 } },
+    fertilizer: { name: 'Premium Fertilizer', cost: 200, reward: { fertilizerBoost: true, duration: 3600000 } },
+    instantHarvest: { name: 'Instant Harvest', cost: 75, reward: { instantHarvest: true } },
+    protection: { name: 'Tree Protection', cost: 150, reward: { protection: true, duration: 86400000 } },
+    legendary: { name: 'Legendary Seed', cost: 500, reward: { legendary: true } }
+};
+
+const UPGRADE_COSTS = {
+    sol: { irrigation: 15, misting: 10, fertilizer: 8, flytraps: 0.003 },
+    olv: { irrigation: 300, misting: 200, fertilizer: 160, flytraps: 50 }
+};
+
+const OLV_UPGRADES = {
+    greenhouse: { name: 'Greenhouse Dome', cost: 500 },
+    coldpress: { name: 'Cold Press Chamber', cost: 800 },
+    guardian: { name: 'Grove Guardian', cost: 1200 },
+    oracle: { name: 'Market Oracle', cost: 600 }
+};
+
+// ─── DOM REFS ──────────────────────────────────────────────────
+const $ = function(id) { return document.getElementById(id); };
+const $$ = function(sel) { return document.querySelectorAll(sel); };
+
+// ─── TOAST ─────────────────────────────────────────────────────
+var toastTimer = null;
+
+function showToast(msg, type) {
+    type = type || '';
+    var el = $('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'toast visible ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() {
+        el.className = 'toast';
+    }, 2500);
+}
+
+// ─── LEDGER ────────────────────────────────────────────────────
+function log(msg) {
+    var ledger = $('ledger');
+    if (!ledger) return;
+    var entry = document.createElement('div');
+    entry.className = 'entry';
+    entry.textContent = '> ' + msg;
+    ledger.prepend(entry);
+    if (ledger.children.length > 20) ledger.lastChild.remove();
+}
+
+// ─── UI UPDATE ─────────────────────────────────────────────────
+function updateUI() {
+    var el;
+    el = $('hud-sol'); if (el) el.textContent = STATE.sol.toFixed(2);
+    el = $('hud-oil'); if (el) el.textContent = STATE.oil.toFixed(1);
+    el = $('hud-olv'); if (el) el.textContent = Math.floor(STATE.olv);
+    el = $('hud-seeds'); if (el) el.textContent = STATE.seeds;
+    el = $('hud-trees'); if (el) el.textContent = STATE.trees.length;
+    el = $('hud-rare'); if (el) el.textContent = STATE.rareCount;
+    el = $('hud-level'); if (el) el.textContent = Math.floor(STATE.lifetimeSol / 20) + 1;
+    el = $('hud-combo'); if (el) el.textContent = STATE.combo.toFixed(1) + 'x';
+
+    el = $('weatherMain'); if (el) el.textContent = STATE.world.weather;
+    el = $('weatherTemp'); if (el) el.textContent = STATE.world.temp + '°C';
+    el = $('hud-demand'); if (el) el.textContent = STATE.world.demand;
+    el = $('hud-price'); if (el) el.textContent = STATE.world.price.toFixed(2);
+
+    var seasonIcons = { Spring: '🌸', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
+    el = $('seasonBadge'); if (el) el.textContent = seasonIcons[STATE.world.season] + ' ' + STATE.world.season;
+
+    var weatherIcons = { Clear: '☀️', Rainy: '🌧️', Heatwave: '🔥' };
+    el = $('weatherIcon'); if (el) el.textContent = weatherIcons[STATE.world.weather] || '☀️';
+
+    var h = String(Math.floor(STATE.world.time)).padStart(2, '0');
+    var m = String(Math.floor((STATE.world.time % 1) * 60)).padStart(2, '0');
+    el = $('hud-time'); if (el) el.textContent = h + ':' + m;
+
+    el = $('millHopper'); if (el) el.textContent = STATE.hopper.toFixed(1);
+    var mash = STATE.mill.mash || 0;
+    var heat = STATE.mill.heat || 0;
+    var gunk = STATE.mill.gunk || 0;
+    el = $('mashPct'); if (el) el.textContent = Math.floor(mash) + '%';
+    el = $('heatPct'); if (el) el.textContent = Math.floor(heat) + '%';
+    el = $('gunkPct'); if (el) el.textContent = Math.floor(gunk) + '%';
+    el = $('mashBar'); if (el) el.style.width = mash + '%';
+    el = $('heatBar'); if (el) el.style.width = heat + '%';
+    el = $('gunkBar'); if (el) el.style.width = gunk + '%';
+
+    function ring(id, pct, color) {
+        var el2 = $(id);
+        if (el2) {
+            el2.style.setProperty('--gauge-pct', pct + '%');
+            el2.style.setProperty('--gauge-color', color);
+        }
+    }
+    ring('gaugeMash', mash, '#C5A059');
+    var heatColor = heat > 75 ? '#EF4444' : heat > 50 ? '#F97316' : '#FB923C';
+    ring('gaugeHeat', heat, heatColor);
+    var gunkColor = gunk > 85 ? '#EF4444' : gunk > 60 ? '#F97316' : '#A855F7';
+    ring('gaugeGunk', gunk, gunkColor);
+
+    el = $('heatPct'); if (el) el.style.color = heat > 75 ? '#EF4444' : '';
+    el = $('gunkPct'); if (el) el.style.color = gunk > 85 ? '#EF4444' : '';
+
+    var qPct = Math.min(100, (STATE.quest.current / STATE.quest.target) * 100);
+    el = $('questProgress'); if (el) el.style.width = qPct + '%';
+    el = $('questCurrent'); if (el) el.textContent = STATE.quest.current.toFixed(0);
+    el = $('questTarget'); if (el) el.textContent = STATE.quest.target;
+    el = $('questSolReward'); if (el) el.textContent = '+' + STATE.quest.reward + ' SOL';
+    el = $('questSeedReward'); if (el) el.textContent = '+' + (STATE.quest.seedReward || 1) + ' 🌱';
+
+    var readyCount = STATE.trees.filter(function(t) { return t.stage === 'mature' && t.health > 0; }).length;
+    el = $('harvestCount'); if (el) el.textContent = readyCount > 0 ? '(' + readyCount + ')' : '';
+
+    var boostsRow = $('boostsRow');
+    if (boostsRow) {
+        var boostsHTML = '';
+        if (STATE.fertilizerBoost) {
+            var rem = Math.max(0, Math.ceil((STATE.fertilizerBoostEnd - Date.now()) / 60000));
+            boostsHTML += '<span class="boost-chip green">🌿 Fertilizer ' + rem + 'm</span>';
+        }
+        if (STATE.protectionActive) {
+            var rem2 = Math.max(0, Math.ceil((STATE.protectionEnd - Date.now()) / 3600000));
+            boostsHTML += '<span class="boost-chip blue">🛡️ Shield ' + rem2 + 'h</span>';
+        }
+        if (STATE.upgrades.greenhouse) boostsHTML += '<span class="boost-chip purple">🏡 Greenhouse</span>';
+        if (STATE.upgrades.oracle) boostsHTML += '<span class="boost-chip gold">🔮 Oracle</span>';
+        boostsRow.innerHTML = boostsHTML;
+    }
+
+    var archName = $('archName');
+    var archHint = $('archHint');
+    if (archName && archHint) {
+        if (STATE.archetype) {
+            var a = ARCHETYPES[STATE.archetype];
+            archName.textContent = a.icon + ' ' + a.name;
+            archName.style.color = 'var(--gold)';
+            archHint.textContent = '🔒 Locked until prestige';
+        } else {
+            archName.textContent = '🏛️ Choose your Path';
+            archName.style.color = '';
+            archHint.textContent = 'Agrarian · Industrialist · Speculator';
+        }
+    }
+
+    var blight = $('blightBanner');
+    if (blight) {
+        if (STATE.blightActive) {
+            blight.classList.add('visible');
+        } else {
+            blight.classList.remove('visible');
+        }
+    }
+
+    renderGrove();
+    updateUpgradePanel();
+    updateSkillPanel();
+    updateShopPanel();
+    updateStatsPanel();
+
+    el = $('skillSeeds'); if (el) el.textContent = STATE.seeds;
+    el = $('shopOlvBalance'); if (el) el.textContent = Math.floor(STATE.olv);
+
+    var ph = $('purchaseHistory');
+    if (ph) {
+        var total = 0;
+        for (var key in STATE.purchases) {
+            total += STATE.purchases[key];
+        }
+        ph.textContent = 'Total spent: ' + total + ' OLV';
+    }
+
+    el = $('upgOlvDisplay'); if (el) el.textContent = Math.floor(STATE.olv);
+
+    el = $('statLifetime'); if (el) el.textContent = STATE.lifetimeSol.toFixed(2);
+    el = $('statPlanted'); if (el) el.textContent = STATE.treesPlanted;
+    el = $('statHarvests'); if (el) el.textContent = STATE.totalHarvests;
+    el = $('statCombo'); if (el) el.textContent = '×' + STATE.comboRecord.toFixed(1);
+    el = $('statRare'); if (el) el.textContent = STATE.rareCount;
+
+    var achMap = {
+        achFirst: 'firstHarvest',
+        achGrove: 'groveMaster',
+        achTycoon: 'tycoon',
+        achCombo: 'comboKing',
+        achRare: 'rareCollector'
+    };
+    for (var id in achMap) {
+        var el2 = $(id);
+        if (el2) el2.textContent = STATE.achievements[achMap[id]] ? '✅' : '❌';
+    }
+}
+
+// ─── GROVE RENDER ──────────────────────────────────────────────
+function renderGrove() {
+    var grid = $('groveGrid');
+    if (!grid) return;
+
+    if (STATE.trees.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px 0;opacity:0.3;font-size:11px;font-weight:300;letter-spacing:0.06em;">Plant your first tree to begin</div>';
+        return;
+    }
+
+    grid.innerHTML = '';
+    STATE.trees.forEach(function(tree, idx) {
+        var isDead = tree.health <= 0;
+        var isReady = tree.stage === 'mature' && !isDead;
+        var isRare = tree.rarity === 'rare';
+        var isLeg = tree.rarity === 'legendary';
+
+        var card = document.createElement('div');
+        card.className = 'tree-card';
+        if (isReady) card.classList.add('ready');
+        if (isDead) card.classList.add('dead');
+        if (isLeg) card.classList.add('legendary-card');
+        if (isRare && !isLeg) card.classList.add('rare-card');
+        if (tree.pests > 30) card.style.borderColor = 'rgba(184,74,58,0.4)';
+
+        var icon = '🌱';
+        if (isDead) icon = '💀';
+        else if (isLeg) icon = '👑';
+        else if (isRare) icon = '💎';
+        else if (isReady) icon = '🫒';
+        else if (tree.stage === 'sapling') icon = '🌿';
+        else if (tree.stage === 'seed') icon = '🌱';
+
+        var stageLabel = isDead ? 'DEAD' : tree.stage.toUpperCase();
+
+        card.innerHTML = `
+            ${isLeg ? '<span class="badge">👑</span>' : isRare ? '<span class="badge">💎</span>' : ''}
+            ${tree.protected ? '<span class="badge left">🛡</span>' : ''}
+            <span class="tree-icon">${icon}</span>
+            <span class="tree-id">${tree.id}</span>
+            <span class="tree-stage">${stageLabel}</span>
+            ${!isDead ? `
+            <div class="tree-bars">
+                <div class="bar"><div class="fill water" style="width:${tree.water}%"></div></div>
+                <div class="bar"><div class="fill health" style="width:${tree.health}%"></div></div>
+                ${tree.pests > 0 ? `<div class="bar"><div class="fill pest" style="width:${tree.pests}%"></div></div>` : ''}
+            </div>
+            ${isReady ? '<div class="ready-pip"></div>' : ''}
+            ` : ''
         };
 
-        const RARITIES = {
-            common: { icon: '🌳', bonus: 1.0, name: 'Common', color: '#4daa62' },
-            rare: { icon: '💎', bonus: 2.0, name: 'Rare', color: '#a855f7' },
-            legendary: { icon: '👑', bonus: 5.0, name: 'Legendary', color: '#f0c96e' }
-        };
-
-        const ARCHETYPES = {
-            agrarian: { name: 'The Agrarian', icon: '🌿', desc: 'Max grove density, exponential harvest combo', bonuses: [
-                    'Grove cap +50%', '+30% combo multiplier'
-                ], risks: ['Pests spread contagiously'] },
-            industrialist: { name: 'The Industrialist', icon: '⚙️', desc: 'Precise thermal pressing extracts maximum oil',
-                bonuses: ['+30% extraction in precision zone', 'Press faster'], risks: ['Mill pressure builds exponentially'] },
-            speculator: { name: 'The Cartel Speculator', icon: '📈', desc: 'Lock futures contracts with OLV, exploit market crashes',
-                bonuses: ['Buy oil price futures with OLV', '+20% sell revenue'], risks: ['Futures can expire worthless'] }
-        };
-
-        const OLV_SHOP = {
-            seeds: { name: 'Ancient Seeds', cost: 100, reward: { seeds: 5 } },
-            sol: { name: 'SOL Boost', cost: 50, reward: { sol: 10 } },
-            fertilizer: { name: 'Premium Fertilizer', cost: 200, reward: { fertilizerBoost: true, duration: 3600000 } },
-            instantHarvest: { name: 'Instant Harvest', cost: 75, reward: { instantHarvest: true } },
-            protection: { name: 'Tree Protection', cost: 150, reward: { protection: true, duration: 86400000 } },
-            legendary: { name: 'Legendary Seed', cost: 500, reward: { legendary: true } }
-        };
-
-        const UPGRADE_COSTS = {
-            sol: { irrigation: 15, misting: 10, fertilizer: 8, flytraps: 0.003 },
-            olv: { irrigation: 300, misting: 200, fertilizer: 160, flytraps: 50 }
-        };
-
-        const OLV_UPGRADES = {
-            greenhouse: { name: 'Greenhouse Dome', cost: 500 },
-            coldpress: { name: 'Cold Press Chamber', cost: 800 },
-            guardian: { name: 'Grove Guardian', cost: 1200 },
-            oracle: { name: 'Market Oracle', cost: 600 }
-        };
-
-        // ─── DOM REFS ──────────────────────────────────────────────────
-        const $ = function(id) { return document.getElementById(id); };
-        const $$ = function(sel) { return document.querySelectorAll(sel); };
-
-        // ─── TOAST ─────────────────────────────────────────────────────
-        var toastTimer = null;
-
-        function showToast(msg, type) {
-            type = type || '';
-            var el = $('toast');
-            el.textContent = msg;
-            el.className = 'toast visible ' + type;
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(function() {
-                el.className = 'toast';
-            }, 2500);
+        if (!isDead) {
+            card.addEventListener('click', function() {
+                interactTree(idx);
+            });
         }
 
-        // ─── LEDGER ────────────────────────────────────────────────────
-        function log(msg) {
-            var ledger = $('ledger');
-            if (!ledger) return;
-            var entry = document.createElement('div');
-            entry.className = 'entry';
-            entry.textContent = '> ' + msg;
-            ledger.prepend(entry);
-            if (ledger.children.length > 20) ledger.lastChild.remove();
+        grid.appendChild(card);
+    });
+}
+
+// ─── UPGRADE PANEL ─────────────────────────────────────────────
+var upgradeCurrency = 'sol';
+
+function updateUpgradePanel() {
+    var costMap = {
+        irrigation: upgradeCurrency === 'sol' ? '15 SOL' : '300 OLV',
+        misting: upgradeCurrency === 'sol' ? '10 SOL' : '200 OLV',
+        fertilizer: upgradeCurrency === 'sol' ? '8 SOL' : '160 OLV',
+        flytraps: upgradeCurrency === 'sol' ? '0.003 SOL' : '50 OLV',
+        greenhouse: '500 OLV',
+        coldpress: '800 OLV',
+        guardian: '1200 OLV',
+        oracle: '600 OLV'
+    };
+
+    var upgrades = ['irrigation', 'misting', 'fertilizer', 'flytraps', 'greenhouse', 'coldpress', 'guardian', 'oracle'];
+    upgrades.forEach(function(key) {
+        var costEl = $('cost' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (costEl) {
+            if (STATE.upgrades[key]) {
+                costEl.textContent = '✅ Installed';
+                costEl.style.color = 'var(--green)';
+                var item = document.querySelector('[data-upgrade="' + key + '"]');
+                if (item) item.classList.add('purchased');
+            } else {
+                costEl.textContent = costMap[key] || '—';
+                costEl.style.color = (key === 'greenhouse' || key === 'coldpress' || key === 'guardian' || key === 'oracle') ? 'var(--purple)' : 'var(--gold)';
+                var item2 = document.querySelector('[data-upgrade="' + key + '"]');
+                if (item2) item2.classList.remove('purchased');
+            }
         }
+    });
 
-        // ─── UI UPDATE ─────────────────────────────────────────────────
-        function updateUI() {
-            $('hud-sol').textContent = STATE.sol.toFixed(2);
-            $('hud-oil').textContent = STATE.oil.toFixed(1);
-            $('hud-olv').textContent = Math.floor(STATE.olv);
-            $('hud-seeds').textContent = STATE.seeds;
-            $('hud-trees').textContent = STATE.trees.length;
-            $('hud-rare').textContent = STATE.rareCount;
-            $('hud-level').textContent = Math.floor(STATE.lifetimeSol / 20) + 1;
-            $('hud-combo').textContent = STATE.combo.toFixed(1) + 'x';
+    var solBtn = $('upgCurrencySol');
+    var olvBtn = $('upgCurrencyOlv');
+    var olvBal = $('upgOlvBalance');
+    if (solBtn && olvBtn) {
+        if (upgradeCurrency === 'sol') {
+            solBtn.className = 'active-sol';
+            olvBtn.className = '';
+            if (olvBal) olvBal.style.display = 'none';
+        } else {
+            solBtn.className = '';
+            olvBtn.className = 'active-olv';
+            if (olvBal) olvBal.style.display = 'block';
+        }
+    }
 
-            $('weatherMain').textContent = STATE.world.weather;
-            $('weatherTemp').textContent = STATE.world.temp + '°C';
-            $('hud-demand').textContent = STATE.world.demand;
-            $('hud-price').textContent = STATE.world.price.toFixed(2);
+    var list = $('upgradeStatusList');
+    if (list) {
+        var all = [
+            { key: 'irrigation', label: 'Auto-Irrigation' },
+            { key: 'misting', label: 'Misting System' },
+            { key: 'fertilizer', label: 'Fertilizer' },
+            { key: 'flytraps', label: 'Fly Traps' },
+            { key: 'greenhouse', label: 'Greenhouse Dome' },
+            { key: 'coldpress', label: 'Cold Press' },
+            { key: 'guardian', label: 'Grove Guardian' },
+            { key: 'oracle', label: 'Market Oracle' }
+        ];
+        var html = '';
+        all.forEach(function(u) {
+            html += '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:10px;">';
+            html += '<span style="color:var(--text-dim);">' + u.label + '</span>';
+            html += '<span>' + (STATE.upgrades[u.key] ? '✅' : '❌') + '</span>';
+            html += '</div>';
+        });
+        list.innerHTML = html;
+    }
+}
 
-            var seasonIcons = { Spring: '🌸', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
-            $('seasonBadge').textContent = seasonIcons[STATE.world.season] + ' ' + STATE.world.season;
+// ─── SKILL PANEL ──────────────────────────────────────────────
+function updateSkillPanel() {
+    var skills = [
+        { key: 'yield', cost: 5 },
+        { key: 'speed', cost: 5 },
+        { key: 'cold', cost: 5 },
+        { key: 'rare', cost: 8 }
+    ];
 
-            var weatherIcons = { Clear: '☀️', Rainy: '🌧️', Heatwave: '🔥' };
-            $('weatherIcon').textContent = weatherIcons[STATE.world.weather] || '☀️';
-
-            var h = String(Math.floor(STATE.world.time)).padStart(2, '0');
-            var m = String(Math.floor((STATE.world.time % 1) * 60)).padStart(2, '0');
-            $('hud-time').textContent = h + ':' + m;
-
-            $('millHopper').textContent = STATE.hopper.toFixed(1);
-            var mash = STATE.mill.mash || 0;
-            var heat = STATE.mill.heat || 0;
-            var gunk = STATE.mill.gunk || 0;
-            $('mashPct').textContent = Math.floor(mash) + '%';
-            $('heatPct').textContent = Math.floor(heat) + '%';
-            $('gunkPct').textContent = Math.floor(gunk) + '%';
-            $('mashBar').style.width = mash + '%';
-            $('heatBar').style.width = heat + '%';
-            $('gunkBar').style.width = gunk + '%';
-
-            function ring(id, pct, color) {
-                var el = $(id);
-                if (el) {
-                    el.style.setProperty('--gauge-pct', pct + '%');
-                    el.style.setProperty('--gauge-color', color);
+    skills.forEach(function(s) {
+        var el = document.querySelector('[data-skill="' + s.key + '"]');
+        var costEl = $('skill' + s.key.charAt(0).toUpperCase() + s.key.slice(1) + 'Cost');
+        if (el) {
+            if (STATE.skills.indexOf(s.key) !== -1) {
+                el.classList.add('unlocked');
+                if (costEl) {
+                    costEl.textContent = '✅ Active';
+                    costEl.style.color = 'var(--green)';
+                }
+            } else {
+                el.classList.remove('unlocked');
+                if (costEl) {
+                    costEl.textContent = s.cost + ' Seeds';
+                    costEl.style.color = 'var(--purple)';
                 }
             }
-            ring('gaugeMash', mash, '#C5A059');
-            var heatColor = heat > 75 ? '#EF4444' : heat > 50 ? '#F97316' : '#FB923C';
-            ring('gaugeHeat', heat, heatColor);
-            var gunkColor = gunk > 85 ? '#EF4444' : gunk > 60 ? '#F97316' : '#A855F7';
-            ring('gaugeGunk', gunk, gunkColor);
-
-            $('heatPct').style.color = heat > 75 ? '#EF4444' : '';
-            $('gunkPct').style.color = gunk > 85 ? '#EF4444' : '';
-
-            var qPct = Math.min(100, (STATE.quest.current / STATE.quest.target) * 100);
-            $('questProgress').style.width = qPct + '%';
-            $('questCurrent').textContent = STATE.quest.current.toFixed(0);
-            $('questTarget').textContent = STATE.quest.target;
-            $('questSolReward').textContent = '+' + STATE.quest.reward + ' SOL';
-            $('questSeedReward').textContent = '+' + (STATE.quest.seedReward || 1) + ' 🌱';
-
-            var readyCount = STATE.trees.filter(function(t) { return t.stage === 'mature' && t.health > 0; }).length;
-            $('harvestCount').textContent = readyCount > 0 ? '(' + readyCount + ')' : '';
-
-            var boostsRow = $('boostsRow');
-            var boostsHTML = '';
-            if (STATE.fertilizerBoost) {
-                var rem = Math.max(0, Math.ceil((STATE.fertilizerBoostEnd - Date.now()) / 60000));
-                boostsHTML += '<span class="boost-chip green">🌿 Fertilizer ' + rem + 'm</span>';
-            }
-            if (STATE.protectionActive) {
-                var rem2 = Math.max(0, Math.ceil((STATE.protectionEnd - Date.now()) / 3600000));
-                boostsHTML += '<span class="boost-chip blue">🛡️ Shield ' + rem2 + 'h</span>';
-            }
-            if (STATE.upgrades.greenhouse) boostsHTML += '<span class="boost-chip purple">🏡 Greenhouse</span>';
-            if (STATE.upgrades.oracle) boostsHTML += '<span class="boost-chip gold">🔮 Oracle</span>';
-            boostsRow.innerHTML = boostsHTML;
-
-            var archName = $('archName');
-            var archHint = $('archHint');
-            if (STATE.archetype) {
-                var a = ARCHETYPES[STATE.archetype];
-                archName.textContent = a.icon + ' ' + a.name;
-                archName.style.color = 'var(--gold)';
-                archHint.textContent = '🔒 Locked until prestige';
-            } else {
-                archName.textContent = '🏛️ Choose your Path';
-                archName.style.color = '';
-                archHint.textContent = 'Agrarian · Industrialist · Speculator';
-            }
-
-            var blight = $('blightBanner');
-            if (STATE.blightActive) {
-                blight.classList.add('visible');
-            } else {
-                blight.classList.remove('visible');
-            }
-
-            renderGrove();
-            updateUpgradePanel();
-            updateSkillPanel();
-            updateShopPanel();
-            updateStatsPanel();
-
-            var skillSeeds = $('skillSeeds');
-            if (skillSeeds) skillSeeds.textContent = STATE.seeds;
-
-            var shopOlv = $('shopOlvBalance');
-            if (shopOlv) shopOlv.textContent = Math.floor(STATE.olv);
-
-            var ph = $('purchaseHistory');
-            if (ph) {
-                var total = 0;
-                for (var key in STATE.purchases) {
-                    total += STATE.purchases[key];
-                }
-                ph.textContent = 'Total spent: ' + total + ' OLV';
-            }
-
-            var upgOlv = $('upgOlvDisplay');
-            if (upgOlv) upgOlv.textContent = Math.floor(STATE.olv);
-
-            $('statLifetime').textContent = STATE.lifetimeSol.toFixed(2);
-            $('statPlanted').textContent = STATE.treesPlanted;
-            $('statHarvests').textContent = STATE.totalHarvests;
-            $('statCombo').textContent = '×' + STATE.comboRecord.toFixed(1);
-            $('statRare').textContent = STATE.rareCount;
-
-            var achMap = {
-                achFirst: 'firstHarvest',
-                achGrove: 'groveMaster',
-                achTycoon: 'tycoon',
-                achCombo: 'comboKing',
-                achRare: 'rareCollector'
-            };
-            for (var id in achMap) {
-                var el = $(id);
-                if (el) el.textContent = STATE.achievements[achMap[id]] ? '✅' : '❌';
-            }
         }
+    });
+}
 
-        // ─── GROVE RENDER ──────────────────────────────────────────────
-        function renderGrove() {
-            var grid = $('groveGrid');
-            if (!grid) return;
+// ─── SHOP PANEL ────────────────────────────────────────────────
+function updateShopPanel() {
+    var bal = $('shopOlvBalance');
+    if (bal) bal.textContent = Math.floor(STATE.olv);
 
-            if (STATE.trees.length === 0) {
-                grid.innerHTML =
-                    '<div style="grid-column:1/-1;text-align:center;padding:30px 0;opacity:0.3;font-size:11px;font-weight:300;letter-spacing:0.06em;">Plant your first tree to begin</div>';
+    var ph = $('purchaseHistory');
+    if (ph) {
+        var total = 0;
+        for (var key in STATE.purchases) {
+            total += STATE.purchases[key];
+        }
+        ph.textContent = 'Total spent: ' + total + ' OLV';
+    }
+}
+
+// ─── STATS PANEL ──────────────────────────────────────────────
+function updateStatsPanel() {
+    var el;
+    el = $('statLifetime'); if (el) el.textContent = STATE.lifetimeSol.toFixed(2);
+    el = $('statPlanted'); if (el) el.textContent = STATE.treesPlanted;
+    el = $('statHarvests'); if (el) el.textContent = STATE.totalHarvests;
+    el = $('statCombo'); if (el) el.textContent = '×' + STATE.comboRecord.toFixed(1);
+    el = $('statRare'); if (el) el.textContent = STATE.rareCount;
+
+    var achMap = {
+        achFirst: 'firstHarvest',
+        achGrove: 'groveMaster',
+        achTycoon: 'tycoon',
+        achCombo: 'comboKing',
+        achRare: 'rareCollector'
+    };
+    for (var id in achMap) {
+        var el2 = $(id);
+        if (el2) el2.textContent = STATE.achievements[achMap[id]] ? '✅' : '❌';
+    }
+}
+
+// ─── INTERACTIONS ──────────────────────────────────────────────
+function interactTree(index) {
+    var tree = STATE.trees[index];
+    if (!tree || tree.health <= 0) return;
+
+    if (tree.stage === 'mature') {
+        var baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+        var finalYield = baseYield * (RARITIES[tree.rarity].bonus || 1) * STATE.skillMultipliers.yield * STATE.combo;
+        if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+
+        STATE.hopper += finalYield;
+        STATE.totalHarvests++;
+        STATE.quest.current += finalYield;
+        tree.age = 0;
+        tree.stage = 'seed';
+        tree.pests = 0;
+
+        addCombo();
+        showToast('+' + finalYield.toFixed(1) + 'kg', 'success');
+        log('🫒 Harvested ' + finalYield.toFixed(1) + 'kg');
+
+        if (!STATE.achievements.firstHarvest) {
+            STATE.achievements.firstHarvest = true;
+            STATE.sol += 2;
+            showToast('🏆 First Harvest! +2 SOL', 'success');
+            log('🏆 Achievement: First Harvest!');
+        }
+        checkAchievements();
+
+    } else {
+        tree.water = Math.min(100, tree.water + 30);
+        showToast('💧 +30% Water');
+        log('💧 Watered ' + tree.id);
+    }
+
+    updateUI();
+}
+
+function plantTree() {
+    var cost = 5;
+    if (STATE.sol < cost) {
+        showToast('Need ' + cost + ' SOL to plant!', 'error');
+        return;
+    }
+
+    var rarity = getRarity();
+    STATE.sol -= cost;
+
+    STATE.trees.push({
+        id: '#' + (STATE.treesPlanted + 1),
+        age: 0,
+        health: 100,
+        water: 85,
+        pests: 0,
+        stage: 'seed',
+        rarity: rarity,
+        protected: STATE.protectionActive || STATE.upgrades.guardian || false
+    });
+    STATE.treesPlanted++;
+    if (rarity === 'rare') STATE.rareCount++;
+    if (rarity === 'legendary') STATE.rareCount++;
+
+    showToast('🌱 ' + (RARITIES[rarity] ? RARITIES[rarity].name : 'Common') + ' tree planted!', 'success');
+    log('🌱 Planted ' + rarity + ' tree');
+
+    updateUI();
+    checkAchievements();
+}
+
+function getRarity() {
+    if (STATE.nextTreeLegendary) {
+        STATE.nextTreeLegendary = false;
+        return 'legendary';
+    }
+    var roll = Math.random();
+    if (roll < STATE.skillMultipliers.rare) return 'rare';
+    return 'common';
+}
+
+function harvestAll() {
+    var ready = STATE.trees.filter(function(t) { return t.stage === 'mature' && t.health > 0; });
+    if (ready.length === 0) {
+        showToast('No mature trees to harvest!', 'error');
+        return;
+    }
+
+    var totalYield = 0;
+    ready.forEach(function(tree) {
+        var baseYield = 10 * (tree.health / 100) * (tree.water / 100);
+        var finalYield = baseYield * (RARITIES[tree.rarity].bonus || 1) * STATE.skillMultipliers.yield * STATE.combo;
+        if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
+        STATE.hopper += finalYield;
+        totalYield += finalYield;
+        STATE.totalHarvests++;
+        STATE.quest.current += finalYield;
+        tree.age = 0;
+        tree.stage = 'seed';
+        tree.pests = 0;
+    });
+
+    addCombo();
+    showToast('🫒 Harvested ' + totalYield.toFixed(1) + 'kg from ' + ready.length + ' trees', 'success');
+    log('🫒 Bulk harvest: ' + totalYield.toFixed(1) + 'kg from ' + ready.length + ' trees');
+
+    updateUI();
+    checkAchievements();
+}
+
+function waterAll() {
+    var dry = STATE.trees.filter(function(t) { return t.water < 100 && t.health > 0; });
+    if (dry.length === 0) {
+        showToast('All trees fully watered!', 'error');
+        return;
+    }
+    dry.forEach(function(t) { t.water = Math.min(100, t.water + 30); });
+    showToast('💧 Watered ' + dry.length + ' trees', 'success');
+    log('💧 Bulk watered ' + dry.length + ' trees');
+    updateUI();
+}
+
+function sprayGrove() {
+    if (STATE.sol < 0.5) {
+        showToast('Need 0.5 SOL', 'error');
+        return;
+    }
+    var infested = STATE.trees.filter(function(t) { return t.pests > 0; }).length;
+    if (infested === 0) {
+        showToast('No pests to spray!', 'error');
+        return;
+    }
+    STATE.sol -= 0.5;
+    STATE.trees.forEach(function(t) { t.pests = 0; });
+    showToast('🐛 Pests removed from ' + infested + ' trees', 'success');
+    log('🐛 Pest control applied to ' + infested + ' trees');
+    updateUI();
+}
+
+function pressMill() {
+    var now = Date.now();
+    if (window._millCooldown && now < window._millCooldown) {
+        showToast('⏳ Mill cooling down...', 'error');
+        return;
+    }
+    window._millCooldown = now + 800;
+
+    if (STATE.hopper <= 0) {
+        showToast('No fruit in hopper!', 'error');
+        return;
+    }
+    if (STATE.mill.gunk >= 100) {
+        showToast('💥 Mill clogged! Clean it first!', 'error');
+        return;
+    }
+
+    var isIndustrialist = STATE.archetype === 'industrialist';
+    var heatGain = isIndustrialist ? 8 : 5;
+    var gunkGain = 2.0 + (STATE.mill.mash * 0.05);
+
+    STATE.mill.mash = Math.min(100, STATE.mill.mash + (isIndustrialist ? 12 : 10));
+    STATE.mill.heat = Math.min(100, (STATE.mill.heat || 0) + heatGain);
+    STATE.mill.gunk = Math.min(100, STATE.mill.gunk + gunkGain);
+    STATE.hopper = Math.max(0, STATE.hopper - 1.5);
+
+    if (STATE.mill.gunk >= 85 && STATE.mill.gunk < 100) {
+        showToast('⚠️ Mill pressure critical!', 'error');
+        log('⚠️ WARNING: Mill pressure critical!');
+    }
+
+    if (STATE.mill.gunk >= 100) {
+        var hopperLoss = Math.min(STATE.hopper + 50, STATE.hopper + STATE.mill.mash * 0.5);
+        STATE.hopper = Math.max(0, STATE.hopper - hopperLoss);
+        STATE.mill.mash = 0;
+        STATE.mill.heat = 0;
+        STATE.mill.gunk = 80;
+        showToast('💥 THE MILL BLEW UP!', 'error');
+        log('💥 Critical Failure: Mill overheated and ruptured.');
+        updateUI();
+        return;
+    }
+
+    if (STATE.mill.mash >= 100) {
+        var isNight = STATE.world.time > 20 || STATE.world.time < 6;
+        var coldBonus = (isNight && STATE.skillMultipliers.extraction > 1) ? 1.5 : 1.0;
+        var industrialistBonus = (isIndustrialist && STATE.mill.heat < 60) ? 1.3 : 1.0;
+        var purityPenalty = (100 - STATE.mill.gunk) / 100;
+        var oilYield = (STATE.hopper + 15) * 0.22 * purityPenalty * coldBonus * STATE.skillMultipliers.extraction * industrialistBonus;
+        STATE.oil += oilYield;
+        STATE.hopper = 0;
+        STATE.mill.mash = 0;
+        STATE.mill.heat = Math.max(0, STATE.mill.heat - 20);
+        showToast('🏺 +' + oilYield.toFixed(1) + 'L Oil', 'success');
+        log('🏺 Pressed ' + oilYield.toFixed(2) + 'L EVOO');
+    }
+
+    updateUI();
+}
+
+function sellOil() {
+    if (STATE.oil < 0.1) {
+        showToast('No oil to sell', 'error');
+        return;
+    }
+    var revenue = STATE.oil * STATE.world.price;
+    STATE.sol += revenue;
+    STATE.lifetimeSol += revenue;
+    showToast('💰 +' + revenue.toFixed(2) + ' SOL', 'success');
+    log('💰 Sold ' + STATE.oil.toFixed(1) + 'L for ' + revenue.toFixed(2) + ' SOL');
+    STATE.oil = 0;
+    updateUI();
+    checkAchievements();
+}
+
+function addCombo() {
+    STATE.combo += 0.15;
+    if (STATE.combo > STATE.comboRecord) STATE.comboRecord = STATE.combo;
+    var el = $('hud-combo');
+    if (el) el.textContent = STATE.combo.toFixed(1) + 'x';
+
+    clearTimeout(STATE.comboRef);
+    STATE.comboRef = setTimeout(function() {
+        STATE.combo = 1.0;
+        var el2 = $('hud-combo');
+        if (el2) el2.textContent = '1.0x';
+    }, 3000);
+
+    if (STATE.comboRecord >= 5 && !STATE.achievements.comboKing) {
+        STATE.achievements.comboKing = true;
+        STATE.sol += 5;
+        showToast('🏆 Combo King! +5 SOL', 'success');
+        log('🏆 Achievement: Combo King!');
+        updateUI();
+    }
+}
+
+function checkAchievements() {
+    var a = STATE.achievements;
+
+    if (STATE.trees.length >= 10 && !a.groveMaster) {
+        a.groveMaster = true;
+        STATE.sol += 10;
+        STATE.seeds++;
+        showToast('🏆 Grove Master! +10 SOL + Seed', 'success');
+        log('🏆 Achievement: Grove Master!');
+    }
+    if (STATE.lifetimeSol >= 100 && !a.tycoon) {
+        a.tycoon = true;
+        STATE.sol += 20;
+        showToast('🏆 Tycoon! +20 SOL', 'success');
+        log('🏆 Achievement: Tycoon!');
+    }
+    if (STATE.rareCount >= 5 && !a.rareCollector) {
+        a.rareCollector = true;
+        STATE.sol += 15;
+        STATE.seeds++;
+        showToast('🏆 Rare Collector! +15 SOL + Seed', 'success');
+        log('🏆 Achievement: Rare Collector!');
+    }
+    updateUI();
+}
+
+function checkQuest() {
+    if (STATE.quest.current >= STATE.quest.target) {
+        STATE.sol += STATE.quest.reward;
+        STATE.seeds += STATE.quest.seedReward;
+        showToast('✅ Quest complete! +' + STATE.quest.reward + ' SOL', 'success');
+        log('✅ Quest complete! +' + STATE.quest.reward + ' SOL');
+        STATE.quest.current = 0;
+        STATE.quest.target = Math.floor(Math.random() * 80) + 40;
+        STATE.quest.reward = Math.floor(STATE.quest.target / 5) + 5;
+        updateUI();
+    }
+}
+
+// ─── UPGRADE FUNCTIONS ─────────────────────────────────────────
+function buyUpgrade(key) {
+    if (STATE.upgrades[key]) {
+        showToast('Already installed!', 'error');
+        return;
+    }
+
+    var cost;
+    if (key === 'greenhouse' || key === 'coldpress' || key === 'guardian' || key === 'oracle') {
+        cost = OLV_UPGRADES[key].cost;
+        if (STATE.olv < cost) {
+            showToast('Need ' + cost + ' OLV', 'error');
+            return;
+        }
+        STATE.olv -= cost;
+    } else {
+        if (upgradeCurrency === 'sol') {
+            cost = UPGRADE_COSTS.sol[key];
+            if (STATE.sol < cost) {
+                showToast('Need ' + cost + ' SOL', 'error');
                 return;
             }
-
-            grid.innerHTML = '';
-            STATE.trees.forEach(function(tree, idx) {
-                var isDead = tree.health <= 0;
-                var isReady = tree.stage === 'mature' && !isDead;
-                var isRare = tree.rarity === 'rare';
-                var isLeg = tree.rarity === 'legendary';
-
-                var card = document.createElement('div');
-                card.className = 'tree-card';
-                if (isReady) card.classList.add('ready');
-                if (isDead) card.classList.add('dead');
-                if (isLeg) card.classList.add('legendary-card');
-                if (isRare && !isLeg) card.classList.add('rare-card');
-                if (tree.pests > 30) card.style.borderColor = 'rgba(184,74,58,0.4)';
-
-                var icon = '🌱';
-                if (isDead) icon = '💀';
-                else if (isLeg) icon = '👑';
-                else if (isRare) icon = '💎';
-                else if (isReady) icon = '🫒';
-                else if (tree.stage === 'sapling') icon = '🌿';
-                else if (tree.stage === 'seed') icon = '🌱';
-
-                var stageLabel = isDead ? 'DEAD' : tree.stage.toUpperCase();
-
-                card.innerHTML =
-                    `
-                    ${isLeg ? '<span class="badge">👑</span>' : isRare ? '<span class="badge">💎</span>' : ''}
-                    ${tree.protected ? '<span class="badge left">🛡</span>' : ''}
-                    <span class="tree-icon">${icon}</span>
-                    <span class="tree-id">${tree.id}</span>
-                    <span class="tree-stage">${stageLabel}</span>
-                    ${!isDead ? `
-                    <div class="tree-bars">
-                        <div class="bar"><div class="fill water" style="width:${tree.water}%"></div></div>
-                        <div class="bar"><div class="fill health" style="width:${tree.health}%"></div></div>
-                        ${tree.pests > 0 ? `<div class="bar"><div class="fill pest" style="width:${tree.pests}%"></div></div>` : ''}
-                    </div>
-                    ${isReady ? '<div class="ready-pip"></div>' : ''}
-                    ` : ''
-                };
-
-                if (!isDead) {
-                    card.addEventListener('click', function() {
-                        interactTree(idx);
-                    });
-                }
-
-                grid.appendChild(card);
-            });
-        }
-
-        // ─── UPGRADE PANEL ─────────────────────────────────────────────
-        var upgradeCurrency = 'sol';
-
-        function updateUpgradePanel() {
-            var costMap = {
-                irrigation: upgradeCurrency === 'sol' ? '15 SOL' : '300 OLV',
-                misting: upgradeCurrency === 'sol' ? '10 SOL' : '200 OLV',
-                fertilizer: upgradeCurrency === 'sol' ? '8 SOL' : '160 OLV',
-                flytraps: upgradeCurrency === 'sol' ? '0.003 SOL' : '50 OLV',
-                greenhouse: '500 OLV',
-                coldpress: '800 OLV',
-                guardian: '1200 OLV',
-                oracle: '600 OLV'
-            };
-
-            var upgrades = ['irrigation', 'misting', 'fertilizer', 'flytraps', 'greenhouse', 'coldpress', 'guardian',
-                'oracle'
-            ];
-            upgrades.forEach(function(key) {
-                var costEl = $('cost' + key.charAt(0).toUpperCase() + key.slice(1));
-                if (costEl) {
-                    if (STATE.upgrades[key]) {
-                        costEl.textContent = '✅ Installed';
-                        costEl.style.color = 'var(--green)';
-                        var item = document.querySelector('[data-upgrade="' + key + '"]');
-                        if (item) item.classList.add('purchased');
-                    } else {
-                        costEl.textContent = costMap[key] || '—';
-                        costEl.style.color = (key === 'greenhouse' || key === 'coldpress' || key === 'guardian' || key ===
-                            'oracle') ? 'var(--purple)' : 'var(--gold)';
-                        var item2 = document.querySelector('[data-upgrade="' + key + '"]');
-                        if (item2) item2.classList.remove('purchased');
-                    }
-                }
-            });
-
-            var solBtn = $('upgCurrencySol');
-            var olvBtn = $('upgCurrencyOlv');
-            var olvBal = $('upgOlvBalance');
-            if (solBtn && olvBtn) {
-                if (upgradeCurrency === 'sol') {
-                    solBtn.className = 'active-sol';
-                    olvBtn.className = '';
-                    if (olvBal) olvBal.style.display = 'none';
-                } else {
-                    solBtn.className = '';
-                    olvBtn.className = 'active-olv';
-                    if (olvBal) olvBal.style.display = 'block';
-                }
+            STATE.sol -= cost;
+        } else {
+            cost = UPGRADE_COSTS.olv[key];
+            if (STATE.olv < cost) {
+                showToast('Need ' + cost + ' OLV', 'error');
+                return;
             }
-
-            var list = $('upgradeStatusList');
-            if (list) {
-                var all = [
-                    { key: 'irrigation', label: 'Auto-Irrigation' },
-                    { key: 'misting', label: 'Misting System' },
-                    { key: 'fertilizer', label: 'Fertilizer' },
-                    { key: 'flytraps', label: 'Fly Traps' },
-                    { key: 'greenhouse', label: 'Greenhouse Dome' },
-                    { key: 'coldpress', label: 'Cold Press' },
-                    { key: 'guardian', label: 'Grove Guardian' },
-                    { key: 'oracle', label: 'Market Oracle' }
-                ];
-                var html = '';
-                all.forEach(function(u) {
-                    html +=
-                        '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:10px;">';
-                    html += '<span style="color:var(--text-dim);">' + u.label + '</span>';
-                    html += '<span>' + (STATE.upgrades[u.key] ? '✅' : '❌') + '</span>';
-                    html += '</div>';
-                });
-                list.innerHTML = html;
-            }
+            STATE.olv -= cost;
         }
+    }
 
-        // ─── SKILL PANEL ──────────────────────────────────────────────
-        function updateSkillPanel() {
-            var skills = [
-                { key: 'yield', cost: 5 },
-                { key: 'speed', cost: 5 },
-                { key: 'cold', cost: 5 },
-                { key: 'rare', cost: 8 }
-            ];
+    STATE.upgrades[key] = true;
 
-            skills.forEach(function(s) {
-                var el = document.querySelector('[data-skill="' + s.key + '"]');
-                var costEl = $('skill' + s.key.charAt(0).toUpperCase() + s.key.slice(1) + 'Cost');
-                if (el) {
-                    if (STATE.skills.indexOf(s.key) !== -1) {
-                        el.classList.add('unlocked');
-                        if (costEl) {
-                            costEl.textContent = '✅ Active';
-                            costEl.style.color = 'var(--green)';
-                        }
-                    } else {
-                        el.classList.remove('unlocked');
-                        if (costEl) {
-                            costEl.textContent = s.cost + ' Seeds';
-                            costEl.style.color = 'var(--purple)';
-                        }
-                    }
-                }
-            });
-        }
+    if (key === 'guardian') {
+        STATE.trees.forEach(function(t) { t.protected = true; });
+    }
+    if (key === 'coldpress') {
+        STATE.skillMultipliers.extraction = Math.max(STATE.skillMultipliers.extraction, 1.5);
+    }
 
-        // ─── SHOP PANEL ────────────────────────────────────────────────
-        function updateShopPanel() {
-            var bal = $('shopOlvBalance');
-            if (bal) bal.textContent = Math.floor(STATE.olv);
+    showToast('✅ ' + key + ' installed!', 'success');
+    log('✅ ' + key + ' upgrade installed');
+    updateUI();
+}
 
-            var ph = $('purchaseHistory');
-            if (ph) {
-                var total = 0;
-                for (var key in STATE.purchases) {
-                    total += STATE.purchases[key];
-                }
-                ph.textContent = 'Total spent: ' + total + ' OLV';
-            }
-        }
+function cleanMill() {
+    if (STATE.sol < 0.2) {
+        showToast('Need 0.2 SOL', 'error');
+        return;
+    }
+    STATE.sol -= 0.2;
+    STATE.mill.gunk = 0;
+    showToast('🧼 Mill cleaned!', 'success');
+    log('🧼 Mill cleaned');
+    updateUI();
+}
 
-        // ─── STATS PANEL ──────────────────────────────────────────────
-        function updateStatsPanel() {
-            $('statLifetime').textContent = STATE.lifetimeSol.toFixed(2);
-            $('statPlanted').textContent = STATE.treesPlanted;
-            $('statHarvests').textContent = STATE.totalHarvests;
-            $('statCombo').textContent = '×' + STATE.comboRecord.toFixed(1);
-            $('statRare').textContent = STATE.rareCount;
+function removeDeadTrees() {
+    var dead = STATE.trees.filter(function(t) { return t.health <= 0; }).length;
+    if (dead === 0) {
+        showToast('No dead trees to remove!', 'error');
+        return;
+    }
+    STATE.trees = STATE.trees.filter(function(t) { return t.health > 0; });
+    showToast('💀 Removed ' + dead + ' dead trees', 'success');
+    log('💀 Cleared ' + dead + ' dead trees');
+    updateUI();
+}
 
-            var achMap = {
-                achFirst: 'firstHarvest',
-                achGrove: 'groveMaster',
-                achTycoon: 'tycoon',
-                achCombo: 'comboKing',
-                achRare: 'rareCollector'
-            };
-            for (var id in achMap) {
-                var el = $(id);
-                if (el) el.textContent = STATE.achievements[achMap[id]] ? '✅' : '❌';
-            }
-        }
+function prestige() {
+    var reward = Math.floor(STATE.lifetimeSol / 40);
+    if (reward < 1) {
+        showToast('Earn 40 lifetime SOL first!', 'error');
+        return;
+    }
+    if (!confirm('Liquidate estate for ' + reward + ' Ancient Seeds?')) return;
 
-        // ─── INTERACTIONS ──────────────────────────────────────────────
-        function interactTree(index) {
-            var tree = STATE.trees[index];
-            if (!tree || tree.health <= 0) return;
+    STATE.legacyAchievements = JSON.parse(JSON.stringify(STATE.achievements));
+    STATE.seeds += reward;
+    STATE.sol = 25;
+    STATE.oil = 0;
+    STATE.hopper = 0;
+    STATE.trees = [];
+    STATE.lifetimeSol = 0;
+    STATE.totalHarvests = 0;
+    STATE.rareCount = 0;
+    STATE.mill = { mash: 0, gunk: 0, heat: 0 };
+    STATE.blightActive = false;
+    STATE.futures = [];
+    STATE.achievements = {
+        firstHarvest: false,
+        groveMaster: false,
+        tycoon: false,
+        comboKing: false,
+        rareCollector: false
+    };
+    STATE.archetype = null;
+    STATE.archetypeLocked = false;
 
+    for (var i = 0; i < 3; i++) {
+        STATE.trees.push({
+            id: '#' + (STATE.treesPlanted + i + 1),
+            age: 0,
+            health: 100,
+            water: 85,
+            pests: 0,
+            stage: 'seed',
+            rarity: 'common',
+            protected: false
+        });
+    }
+    STATE.treesPlanted += 3;
+
+    showToast('✨ Prestiged! +' + reward + ' Ancient Seeds', 'success');
+    log('🔄 Prestiged! +' + reward + ' Ancient Seeds');
+    updateUI();
+}
+
+// ─── SHOP FUNCTIONS ────────────────────────────────────────────
+function buyShopItem(itemId) {
+    var item = OLV_SHOP[itemId];
+    if (!item) return;
+
+    if (STATE.olv < item.cost) {
+        showToast('Need ' + item.cost + ' OLV', 'error');
+        return;
+    }
+
+    STATE.olv -= item.cost;
+    STATE.purchases[itemId] = (STATE.purchases[itemId] || 0) + 1;
+
+    if (item.reward.seeds) {
+        STATE.seeds += item.reward.seeds;
+        showToast('+' + item.reward.seeds + ' Ancient Seeds!', 'success');
+        log('🌱 +' + item.reward.seeds + ' Ancient Seeds');
+    }
+    if (item.reward.sol) {
+        STATE.sol += item.reward.sol;
+        showToast('+' + item.reward.sol + ' SOL!', 'success');
+        log('💰 +' + item.reward.sol + ' SOL');
+    }
+    if (item.reward.fertilizerBoost) {
+        STATE.fertilizerBoost = true;
+        STATE.fertilizerBoostEnd = Date.now() + item.reward.duration;
+        showToast('🌿 Fertilizer boost active for 1 hour!', 'success');
+        log('🌿 Fertilizer boost active');
+    }
+    if (item.reward.instantHarvest) {
+        var total = 0;
+        STATE.trees.forEach(function(tree) {
             if (tree.stage === 'mature') {
-                var baseYield = 10 * (tree.health / 100) * (tree.water / 100);
-                var finalYield = baseYield * (RARITIES[tree.rarity].bonus || 1) * STATE.skillMultipliers.yield * STATE
-                    .combo;
-                if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
-
-                STATE.hopper += finalYield;
-                STATE.totalHarvests++;
-                STATE.quest.current += finalYield;
+                var yieldAmt = 12 * STATE.skillMultipliers.yield;
+                STATE.hopper += yieldAmt;
+                total += yieldAmt;
                 tree.age = 0;
                 tree.stage = 'seed';
-                tree.pests = 0;
-
-                addCombo();
-                showToast('+' + finalYield.toFixed(1) + 'kg', 'success');
-                log('🫒 Harvested ' + finalYield.toFixed(1) + 'kg');
-
-                if (!STATE.achievements.firstHarvest) {
-                    STATE.achievements.firstHarvest = true;
-                    STATE.sol += 2;
-                    showToast('🏆 First Harvest! +2 SOL', 'success');
-                    log('🏆 Achievement: First Harvest!');
-                }
-                checkAchievements();
-
-            } else {
-                tree.water = Math.min(100, tree.water + 30);
-                showToast('💧 +30% Water');
-                log('💧 Watered ' + tree.id);
             }
+        });
+        showToast('⚡ Instant harvest! +' + total.toFixed(1) + 'kg', 'success');
+        log('⚡ Instant harvest! +' + total.toFixed(1) + 'kg');
+    }
+    if (item.reward.protection) {
+        STATE.protectionActive = true;
+        STATE.protectionEnd = Date.now() + item.reward.duration;
+        showToast('🛡️ Trees protected from pests for 24 hours!', 'success');
+        log('🛡️ Tree protection active');
+    }
+    if (item.reward.legendary) {
+        STATE.nextTreeLegendary = true;
+        showToast('👑 Next tree will be Legendary!', 'success');
+        log('👑 Legendary seed planted');
+    }
 
-            updateUI();
+    updateUI();
+}
+
+// ─── RESET GAME ────────────────────────────────────────────────
+function resetGame() {
+    if (!confirm('⚠️ Reset estate? (Keeps Seeds & Skills)')) return;
+
+    if (STATE.sol < 3 && STATE.olv < 300) {
+        showToast('Need 3 SOL or 300 OLV to reset', 'error');
+        return;
+    }
+
+    if (STATE.sol >= 3) {
+        STATE.sol -= 3;
+    } else if (STATE.olv >= 300) {
+        STATE.olv -= 300;
+    } else {
+        showToast('Need 3 SOL or 300 OLV to reset', 'error');
+        return;
+    }
+
+    var preservedSeeds = STATE.seeds;
+    var preservedSkills = STATE.skills.slice();
+    var preservedSkillMultipliers = JSON.parse(JSON.stringify(STATE.skillMultipliers));
+    var preservedUpgrades = JSON.parse(JSON.stringify(STATE.upgrades));
+
+    STATE.sol = 25.0;
+    STATE.oil = 0;
+    STATE.hopper = 0;
+    STATE.lifetimeSol = 25.0;
+    STATE.treesPlanted = 0;
+    STATE.totalHarvests = 0;
+    STATE.comboRecord = 1.0;
+    STATE.rareCount = 0;
+    STATE.trees = [];
+    STATE.mill = { mash: 0, gunk: 0, heat: 0 };
+    STATE.combo = 1.0;
+    STATE.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
+    STATE.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false, rareCollector: false };
+    STATE.fertilizerBoost = false;
+    STATE.fertilizerBoostEnd = 0;
+    STATE.protectionActive = false;
+    STATE.protectionEnd = 0;
+    STATE.nextTreeLegendary = false;
+    STATE.blightActive = false;
+    STATE.futures = [];
+    STATE.archetype = null;
+    STATE.archetypeLocked = false;
+
+    STATE.seeds = preservedSeeds;
+    STATE.skills = preservedSkills;
+    STATE.skillMultipliers = preservedSkillMultipliers;
+    STATE.upgrades = preservedUpgrades;
+
+    for (var i = 0; i < 3; i++) {
+        STATE.trees.push({
+            id: '#' + (STATE.treesPlanted + i + 1),
+            age: 0,
+            health: 100,
+            water: 85,
+            pests: 0,
+            stage: 'seed',
+            rarity: 'common',
+            protected: false
+        });
+    }
+    STATE.treesPlanted += 3;
+
+    showToast('✅ Estate reset!', 'success');
+    log('🔄 Estate reset! Ancient knowledge preserved.');
+    updateUI();
+}
+
+// ─── ARCHETYPE ──────────────────────────────────────────────────
+function chooseArchetype(type) {
+    if (STATE.archetypeLocked) {
+        showToast('Archetype locked until prestige!', 'error');
+        return;
+    }
+    if (!ARCHETYPES[type]) return;
+    STATE.archetype = type;
+    STATE.archetypeLocked = true;
+
+    if (type === 'agrarian') {
+        STATE.skillMultipliers.yield *= 1.3;
+    }
+
+    var a = ARCHETYPES[type];
+    showToast(a.icon + ' ' + a.name + ' locked!', 'success');
+    log('🏛️ Locked in as ' + a.name + '!');
+    updateUI();
+}
+
+function openArchetypePanel() {
+    if (STATE.archetypeLocked) {
+        showToast('Archetype locked until prestige!', 'error');
+        return;
+    }
+
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
+    var html = '';
+    html += '<div style="background:#1A110A;border:1px solid #C9903E;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">';
+    html += '<div style="text-align:center;margin-bottom:16px;"><div style="font-size:20px;color:#C9903E;font-weight:bold;font-family:Playfair Display,serif;">🏛️ STEWARD SPECIALIZATION</div>';
+    html += '<div style="font-size:10px;opacity:0.5;margin-top:4px;font-weight:300;">Choose your path — locks until prestige</div></div>';
+
+    for (var key in ARCHETYPES) {
+        var a = ARCHETYPES[key];
+        html += '<div onclick="chooseArchetype(\'' + key + '\'); this.closest(\'div[style]\').remove();" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all 0.3s;" onmouseover="this.style.borderColor=\'rgba(197,160,89,0.3)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.06)\'">';
+        html += '<div style="font-weight:bold;color:#C9903E;font-family:Playfair Display,serif;font-size:14px;">' + a.icon + ' ' + a.name + '</div>';
+        html += '<div style="font-size:10px;opacity:0.7;margin:4px 0;font-weight:300;">' + a.desc + '</div>';
+        html += '<div style="font-size:9px;color:#4ADE80;">✓ ' + a.bonuses.join(' · ') + '</div>';
+        html += '<div style="font-size:9px;color:#EF4444;margin-top:2px;">⚠ ' + a.risks[0] + '</div>';
+        html += '</div>';
+    }
+
+    html += '<button onclick="this.closest(\'div[style]\').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:white;cursor:pointer;font-family:Inter,sans-serif;font-weight:600;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.3s;" onmouseover="this.style.background=\'rgba(255,255,255,0.08)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.04)\'">Close</button>';
+    html += '</div>';
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+}
+
+// ─── GAME LOOP ──────────────────────────────────────────────────
+function gameLoop() {
+    var now = Date.now();
+
+    if (STATE.fertilizerBoost && now > STATE.fertilizerBoostEnd) {
+        STATE.fertilizerBoost = false;
+        log('Fertilizer boost expired');
+    }
+    if (STATE.protectionActive && now > STATE.protectionEnd) {
+        STATE.protectionActive = false;
+        log('Tree protection expired');
+    }
+
+    var isOverSaturated = STATE.archetype === 'agrarian' && STATE.trees.length > 9;
+
+    STATE.trees.forEach(function(tree, idx) {
+        if (tree.health <= 0) return;
+
+        if (tree.protected) {
+            tree.pests = Math.max(0, tree.pests - 5);
         }
 
-        function plantTree() {
-            var cost = 5;
-            if (STATE.sol < cost) {
-                showToast('Need ' + cost + ' SOL to plant!', 'error');
-                return;
+        var waterLoss = STATE.upgrades.greenhouse ? 0 :
+            (STATE.world.weather === 'Heatwave' ? 12 :
+                (STATE.world.weather === 'Rainy' ? -8 : 3));
+        if (STATE.upgrades.irrigation && tree.water < 70) waterLoss = -5;
+        tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
+
+        var growthRate = 0.05 * STATE.skillMultipliers.speed;
+        if (STATE.fertilizerBoost) growthRate *= 1.5;
+        if (isOverSaturated) growthRate *= 0.7;
+        if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
+
+        if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
+        if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
+
+        if (!tree.protected && STATE.world.season === 'Summer' && Math.random() < 0.03) {
+            tree.pests = Math.min(100, tree.pests + 5);
+        }
+
+        if (tree.pests > 50 && !tree.protected) {
+            var blightSpreadChance = isOverSaturated ? 0.18 : 0.08;
+            var neighbors = [idx - 1, idx + 1, idx - 5, idx + 5];
+            neighbors.forEach(function(nIdx) {
+                if (STATE.trees[nIdx] && STATE.trees[nIdx].health > 0 && Math.random() < blightSpreadChance) {
+                    STATE.trees[nIdx].pests = Math.min(100, STATE.trees[nIdx].pests + 2);
+                }
+            });
+            if (isOverSaturated && !STATE.blightActive) {
+                STATE.blightActive = true;
+                showToast('🚨 BLIGHT ALERT!', 'error');
+                log('🚨 BLIGHT ALERT: Dense grove accelerating pest contagion!');
             }
+        }
 
-            var rarity = getRarity();
-            STATE.sol -= cost;
+        if (STATE.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
+        if (STATE.upgrades.flytraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 3);
 
+        if (tree.water < 15) tree.health -= 4;
+        if (tree.pests > 40) tree.health -= 3;
+        if (tree.health <= 0) { tree.health = 0; tree.stage = 'dead'; }
+    });
+
+    if (STATE.blightActive && STATE.trees.every(function(t) { return t.pests < 50; })) {
+        STATE.blightActive = false;
+    }
+
+    STATE.mill.mash = Math.max(0, STATE.mill.mash - 4);
+    STATE.mill.heat = Math.max(0, (STATE.mill.heat || 0) - 2);
+    STATE.mill.gunk = Math.max(0, STATE.mill.gunk - 0.2);
+
+    STATE.marketPool = Math.min(6.0, STATE.marketPool + 0.01);
+    var drift = (Math.random() - 0.5) * 0.4;
+    STATE.world.price = STATE.world.price + (STATE.marketPool - STATE.world.price) * 0.3 + drift;
+    STATE.world.price = Math.max(0.5, Math.min(6.0, STATE.world.price));
+
+    var demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
+    var idx2 = Math.floor(STATE.world.price / 1.2);
+    STATE.world.demand = demandLevels[Math.min(4, idx2)];
+
+    checkQuest();
+    updateUI();
+}
+
+// ─── WEATHER CYCLE ─────────────────────────────────────────────
+function weatherCycle() {
+    var weathers = [
+        { type: 'Clear', temp: 24 },
+        { type: 'Rainy', temp: 18 },
+        { type: 'Heatwave', temp: 36 }
+    ];
+    var newWeather = weathers[Math.floor(Math.random() * weathers.length)];
+    STATE.world.weather = newWeather.type;
+    STATE.world.temp = newWeather.temp;
+
+    var seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+    var currentIdx = seasons.indexOf(STATE.world.season);
+    STATE.world.season = seasons[(currentIdx + 1) % 4];
+
+    if (newWeather.type === 'Rainy') {
+        STATE.trees.forEach(function(t) { t.water = Math.min(100, t.water + 15); });
+    }
+
+    updateUI();
+}
+
+// ─── TIME CYCLE ────────────────────────────────────────────────
+function timeCycle() {
+    STATE.world.time = (STATE.world.time + 0.5) % 24;
+}
+
+// ─── PANEL SYSTEM ──────────────────────────────────────────────
+function openPanel(panelId) {
+    var panels = document.querySelectorAll('.panel');
+    for (var i = 0; i < panels.length; i++) {
+        panels[i].classList.remove('active');
+    }
+    var navs = document.querySelectorAll('.nav-item');
+    for (var j = 0; j < navs.length; j++) {
+        navs[j].classList.remove('active');
+    }
+
+    var panel = document.getElementById('panel' + panelId.charAt(0).toUpperCase() + panelId.slice(1));
+    if (panel) panel.classList.add('active');
+
+    var nav = document.querySelector('.nav-item[data-panel="' + panelId + '"]');
+    if (nav) nav.classList.add('active');
+
+    var overlay = document.getElementById('panelOverlay');
+    if (overlay) overlay.classList.add('active');
+}
+
+function closePanel() {
+    var panels = document.querySelectorAll('.panel');
+    for (var i = 0; i < panels.length; i++) {
+        panels[i].classList.remove('active');
+    }
+    var navs = document.querySelectorAll('.nav-item');
+    for (var j = 0; j < navs.length; j++) {
+        navs[j].classList.remove('active');
+    }
+    var overlay = document.getElementById('panelOverlay');
+    if (overlay) overlay.classList.remove('active');
+
+    var groveNav = document.querySelector('.nav-item[data-panel="grove"]');
+    if (groveNav) groveNav.classList.add('active');
+}
+
+// ─── CONNECT MODAL ─────────────────────────────────────────────
+function showConnectModal() {
+    var modal = document.getElementById('connectModal');
+    if (modal) modal.classList.add('active');
+}
+
+function hideConnectModal() {
+    var modal = document.getElementById('connectModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function connectWallet() {
+    STATE.olv = 500;
+    showToast('✅ Wallet connected!', 'success');
+    log('🔗 Wallet connected');
+    hideConnectModal();
+    updateUI();
+}
+
+function emailLogin() {
+    STATE.olv = 100;
+    showToast('✅ Email login successful!', 'success');
+    log('✉️ Email login successful');
+    hideConnectModal();
+    updateUI();
+}
+
+// ─── INIT ──────────────────────────────────────────────────────
+function init() {
+    if (STATE.trees.length === 0) {
+        for (var i = 0; i < 3; i++) {
             STATE.trees.push({
-                id: '#' + (STATE.treesPlanted + 1),
+                id: '#' + (STATE.treesPlanted + i + 1),
                 age: 0,
                 health: 100,
                 water: 85,
                 pests: 0,
                 stage: 'seed',
-                rarity: rarity,
-                protected: STATE.protectionActive || STATE.upgrades.guardian || false
+                rarity: 'common',
+                protected: false
             });
-            STATE.treesPlanted++;
-            if (rarity === 'rare') STATE.rareCount++;
-            if (rarity === 'legendary') STATE.rareCount++;
-
-            showToast('🌱 ' + (RARITIES[rarity] ? RARITIES[rarity].name : 'Common') + ' tree planted!', 'success');
-            log('🌱 Planted ' + rarity + ' tree');
-
-            updateUI();
-            checkAchievements();
         }
+        STATE.treesPlanted += 3;
+    }
 
-        function getRarity() {
-            if (STATE.nextTreeLegendary) {
-                STATE.nextTreeLegendary = false;
-                return 'legendary';
-            }
-            var roll = Math.random();
-            if (roll < STATE.skillMultipliers.rare) return 'rare';
-            return 'common';
-        }
-
-        function harvestAll() {
-            var ready = STATE.trees.filter(function(t) { return t.stage === 'mature' && t.health > 0; });
-            if (ready.length === 0) {
-                showToast('No mature trees to harvest!', 'error');
-                return;
-            }
-
-            var totalYield = 0;
-            ready.forEach(function(tree) {
-                var baseYield = 10 * (tree.health / 100) * (tree.water / 100);
-                var finalYield = baseYield * (RARITIES[tree.rarity].bonus || 1) * STATE.skillMultipliers.yield * STATE
-                    .combo;
-                if (tree.pests > 0) finalYield *= (100 - tree.pests) / 100;
-                STATE.hopper += finalYield;
-                totalYield += finalYield;
-                STATE.totalHarvests++;
-                STATE.quest.current += finalYield;
-                tree.age = 0;
-                tree.stage = 'seed';
-                tree.pests = 0;
+    // Bottom nav
+    var navItems = document.querySelectorAll('.nav-item');
+    for (var i = 0; i < navItems.length; i++) {
+        (function(item) {
+            item.addEventListener('click', function() {
+                var panel = item.dataset.panel;
+                if (panel === 'grove') {
+                    closePanel();
+                } else {
+                    openPanel(panel);
+                }
             });
+        })(navItems[i]);
+    }
 
-            addCombo();
-            showToast('🫒 Harvested ' + totalYield.toFixed(1) + 'kg from ' + ready.length + ' trees', 'success');
-            log('🫒 Bulk harvest: ' + totalYield.toFixed(1) + 'kg from ' + ready.length + ' trees');
+    // Close buttons
+    var closeBtns = document.querySelectorAll('[data-close]');
+    for (var j = 0; j < closeBtns.length; j++) {
+        closeBtns[j].addEventListener('click', closePanel);
+    }
+    var overlay = document.getElementById('panelOverlay');
+    if (overlay) overlay.addEventListener('click', closePanel);
 
+    // Top bar connect
+    var connectBtn = document.getElementById('connectBtn');
+    if (connectBtn) connectBtn.addEventListener('click', showConnectModal);
+    var closeModalBtn = document.getElementById('closeModalBtn');
+    if (closeModalBtn) closeModalBtn.addEventListener('click', hideConnectModal);
+    var connectModal = document.getElementById('connectModal');
+    if (connectModal) {
+        connectModal.addEventListener('click', function(e) {
+            if (e.target === e.currentTarget) hideConnectModal();
+        });
+    }
+    var connectWalletBtn = document.getElementById('connectWalletBtn');
+    if (connectWalletBtn) connectWalletBtn.addEventListener('click', connectWallet);
+    var emailLoginBtn = document.getElementById('emailLoginBtn');
+    if (emailLoginBtn) emailLoginBtn.addEventListener('click', emailLogin);
+
+    // Action buttons
+    var btnPlant = document.getElementById('btnPlant');
+    if (btnPlant) btnPlant.addEventListener('click', plantTree);
+    var btnHarvest = document.getElementById('btnHarvest');
+    if (btnHarvest) btnHarvest.addEventListener('click', harvestAll);
+    var btnWater = document.getElementById('btnWater');
+    if (btnWater) btnWater.addEventListener('click', waterAll);
+    var btnSpray = document.getElementById('btnSpray');
+    if (btnSpray) btnSpray.addEventListener('click', sprayGrove);
+    var btnMill = document.getElementById('btnMill');
+    if (btnMill) btnMill.addEventListener('click', pressMill);
+    var fabMill = document.getElementById('fabMill');
+    if (fabMill) fabMill.addEventListener('click', pressMill);
+
+    // Upgrade items
+    var upgradeItems = document.querySelectorAll('[data-upgrade]');
+    for (var k = 0; k < upgradeItems.length; k++) {
+        (function(item) {
+            item.addEventListener('click', function() {
+                buyUpgrade(item.dataset.upgrade);
+            });
+        })(upgradeItems[k]);
+    }
+
+    // Currency toggle
+    var upgSol = document.getElementById('upgCurrencySol');
+    if (upgSol) {
+        upgSol.addEventListener('click', function() {
+            upgradeCurrency = 'sol';
             updateUI();
-            checkAchievements();
-        }
-
-        function waterAll() {
-            var dry = STATE.trees.filter(function(t) { return t.water < 100 && t.health > 0; });
-            if (dry.length === 0) {
-                showToast('All trees fully watered!', 'error');
-                return;
-            }
-            dry.forEach(function(t) { t.water = Math.min(100, t.water + 30); });
-            showToast('💧 Watered ' + dry.length + ' trees', 'success');
-            log('💧 Bulk watered ' + dry.length + ' trees');
+        });
+    }
+    var upgOlv = document.getElementById('upgCurrencyOlv');
+    if (upgOlv) {
+        upgOlv.addEventListener('click', function() {
+            upgradeCurrency = 'olv';
             updateUI();
-        }
+        });
+    }
 
-        function sprayGrove() {
-            if (STATE.sol < 0.5) {
-                showToast('Need 0.5 SOL', 'error');
-                return;
-            }
-            var infested = STATE.trees.filter(function(t) { return t.pests > 0; }).length;
-            if (infested === 0) {
-                showToast('No pests to spray!', 'error');
-                return;
-            }
-            STATE.sol -= 0.5;
-            STATE.trees.forEach(function(t) { t.pests = 0; });
-            showToast('🐛 Pests removed from ' + infested + ' trees', 'success');
-            log('🐛 Pest control applied to ' + infested + ' trees');
-            updateUI();
-        }
+    // Maintenance
+    var cleanMillBtn = document.getElementById('btnCleanMill');
+    if (cleanMillBtn) {
+        cleanMillBtn.addEventListener('click', function() {
+            cleanMill();
+            closePanel();
+        });
+    }
+    var removeDeadBtn = document.getElementById('btnRemoveDead');
+    if (removeDeadBtn) {
+        removeDeadBtn.addEventListener('click', function() {
+            removeDeadTrees();
+            closePanel();
+        });
+    }
+    var prestigeBtn = document.getElementById('btnPrestige');
+    if (prestigeBtn) {
+        prestigeBtn.addEventListener('click', function() {
+            prestige();
+            closePanel();
+        });
+    }
 
-        function pressMill() {
-            var now = Date.now();
-            if (window._millCooldown && now < window._millCooldown) {
-                showToast('⏳ Mill cooling down...', 'error');
-                return;
-            }
-            window._millCooldown = now + 800;
-
-            if (STATE.hopper <= 0) {
-                showToast('No fruit in hopper!', 'error');
-                return;
-            }
-            if (STATE.mill.gunk >= 100) {
-                showToast('💥 Mill clogged! Clean it first!', 'error');
-                return;
-            }
-
-            var isIndustrialist = STATE.archetype === 'industrialist';
-            var heatGain = isIndustrialist ? 8 : 5;
-            var gunkGain = 2.0 + (STATE.mill.mash * 0.05);
-
-            STATE.mill.mash = Math.min(100, STATE.mill.mash + (isIndustrialist ? 12 : 10));
-            STATE.mill.heat = Math.min(100, (STATE.mill.heat || 0) + heatGain);
-            STATE.mill.gunk = Math.min(100, STATE.mill.gunk + gunkGain);
-            STATE.hopper = Math.max(0, STATE.hopper - 1.5);
-
-            if (STATE.mill.gunk >= 85 && STATE.mill.gunk < 100) {
-                showToast('⚠️ Mill pressure critical!', 'error');
-                log('⚠️ WARNING: Mill pressure critical!');
-            }
-
-            if (STATE.mill.gunk >= 100) {
-                var hopperLoss = Math.min(STATE.hopper + 50, STATE.hopper + STATE.mill.mash * 0.5);
-                STATE.hopper = Math.max(0, STATE.hopper - hopperLoss);
-                STATE.mill.mash = 0;
-                STATE.mill.heat = 0;
-                STATE.mill.gunk = 80;
-                showToast('💥 THE MILL BLEW UP!', 'error');
-                log('💥 Critical Failure: Mill overheated and ruptured.');
-                updateUI();
-                return;
-            }
-
-            if (STATE.mill.mash >= 100) {
-                var isNight = STATE.world.time > 20 || STATE.world.time < 6;
-                var coldBonus = (isNight && STATE.skillMultipliers.extraction > 1) ? 1.5 : 1.0;
-                var industrialistBonus = (isIndustrialist && STATE.mill.heat < 60) ? 1.3 : 1.0;
-                var purityPenalty = (100 - STATE.mill.gunk) / 100;
-                var oilYield = (STATE.hopper + 15) * 0.22 * purityPenalty * coldBonus *
-                    STATE.skillMultipliers.extraction * industrialistBonus;
-                STATE.oil += oilYield;
-                STATE.hopper = 0;
-                STATE.mill.mash = 0;
-                STATE.mill.heat = Math.max(0, STATE.mill.heat - 20);
-                showToast('🏺 +' + oilYield.toFixed(1) + 'L Oil', 'success');
-                log('🏺 Pressed ' + oilYield.toFixed(2) + 'L EVOO');
-            }
-
-            updateUI();
-        }
-
-        function sellOil() {
-            if (STATE.oil < 0.1) {
-                showToast('No oil to sell', 'error');
-                return;
-            }
-            var revenue = STATE.oil * STATE.world.price;
-            STATE.sol += revenue;
-            STATE.lifetimeSol += revenue;
-            showToast('💰 +' + revenue.toFixed(2) + ' SOL', 'success');
-            log('💰 Sold ' + STATE.oil.toFixed(1) + 'L for ' + revenue.toFixed(2) + ' SOL');
-            STATE.oil = 0;
-            updateUI();
-            checkAchievements();
-        }
-
-        function addCombo() {
-            STATE.combo += 0.15;
-            if (STATE.combo > STATE.comboRecord) STATE.comboRecord = STATE.combo;
-            $('hud-combo').textContent = STATE.combo.toFixed(1) + 'x';
-
-            clearTimeout(STATE.comboRef);
-            STATE.comboRef = setTimeout(function() {
-                STATE.combo = 1.0;
-                $('hud-combo').textContent = '1.0x';
-            }, 3000);
-
-            if (STATE.comboRecord >= 5 && !STATE.achievements.comboKing) {
-                STATE.achievements.comboKing = true;
-                STATE.sol += 5;
-                showToast('🏆 Combo King! +5 SOL', 'success');
-                log('🏆 Achievement: Combo King!');
-                updateUI();
-            }
-        }
-
-        function checkAchievements() {
-            var a = STATE.achievements;
-
-            if (STATE.trees.length >= 10 && !a.groveMaster) {
-                a.groveMaster = true;
-                STATE.sol += 10;
-                STATE.seeds++;
-                showToast('🏆 Grove Master! +10 SOL + Seed', 'success');
-                log('🏆 Achievement: Grove Master!');
-            }
-            if (STATE.lifetimeSol >= 100 && !a.tycoon) {
-                a.tycoon = true;
-                STATE.sol += 20;
-                showToast('🏆 Tycoon! +20 SOL', 'success');
-                log('🏆 Achievement: Tycoon!');
-            }
-            if (STATE.rareCount >= 5 && !a.rareCollector) {
-                a.rareCollector = true;
-                STATE.sol += 15;
-                STATE.seeds++;
-                showToast('🏆 Rare Collector! +15 SOL + Seed', 'success');
-                log('🏆 Achievement: Rare Collector!');
-            }
-            updateUI();
-        }
-
-        function checkQuest() {
-            if (STATE.quest.current >= STATE.quest.target) {
-                STATE.sol += STATE.quest.reward;
-                STATE.seeds += STATE.quest.seedReward;
-                showToast('✅ Quest complete! +' + STATE.quest.reward + ' SOL', 'success');
-                log('✅ Quest complete! +' + STATE.quest.reward + ' SOL');
-                STATE.quest.current = 0;
-                STATE.quest.target = Math.floor(Math.random() * 80) + 40;
-                STATE.quest.reward = Math.floor(STATE.quest.target / 5) + 5;
-                updateUI();
-            }
-        }
-
-        // ─── UPGRADE FUNCTIONS ─────────────────────────────────────────
-        function buyUpgrade(key) {
-            if (STATE.upgrades[key]) {
-                showToast('Already installed!', 'error');
-                return;
-            }
-
-            var cost;
-            if (key === 'greenhouse' || key === 'coldpress' || key === 'guardian' || key === 'oracle') {
-                cost = OLV_UPGRADES[key].cost;
-                if (STATE.olv < cost) {
-                    showToast('Need ' + cost + ' OLV', 'error');
+    // Skill items
+    var skillItems = document.querySelectorAll('[data-skill]');
+    for (var s = 0; s < skillItems.length; s++) {
+        (function(item) {
+            item.addEventListener('click', function() {
+                var skill = item.dataset.skill;
+                var costs = { yield: 5, speed: 5, cold: 5, rare: 8 };
+                if (STATE.skills.indexOf(skill) !== -1) {
+                    showToast('Already unlocked!', 'error');
                     return;
                 }
-                STATE.olv -= cost;
-            } else {
-                if (upgradeCurrency === 'sol') {
-                    cost = UPGRADE_COSTS.sol[key];
-                    if (STATE.sol < cost) {
-                        showToast('Need ' + cost + ' SOL', 'error');
-                        return;
-                    }
-                    STATE.sol -= cost;
-                } else {
-                    cost = UPGRADE_COSTS.olv[key];
-                    if (STATE.olv < cost) {
-                        showToast('Need ' + cost + ' OLV', 'error');
-                        return;
-                    }
-                    STATE.olv -= cost;
+                if (STATE.seeds < costs[skill]) {
+                    showToast('Need ' + costs[skill] + ' Ancient Seeds', 'error');
+                    return;
                 }
-            }
-
-            STATE.upgrades[key] = true;
-
-            if (key === 'guardian') {
-                STATE.trees.forEach(function(t) { t.protected = true; });
-            }
-            if (key === 'coldpress') {
-                STATE.skillMultipliers.extraction = Math.max(STATE.skillMultipliers.extraction, 1.5);
-            }
-
-            showToast('✅ ' + key + ' installed!', 'success');
-            log('✅ ' + key + ' upgrade installed');
-            updateUI();
-        }
-
-        function cleanMill() {
-            if (STATE.sol < 0.2) {
-                showToast('Need 0.2 SOL', 'error');
-                return;
-            }
-            STATE.sol -= 0.2;
-            STATE.mill.gunk = 0;
-            showToast('🧼 Mill cleaned!', 'success');
-            log('🧼 Mill cleaned');
-            updateUI();
-        }
-
-        function removeDeadTrees() {
-            var dead = STATE.trees.filter(function(t) { return t.health <= 0; }).length;
-            if (dead === 0) {
-                showToast('No dead trees to remove!', 'error');
-                return;
-            }
-            STATE.trees = STATE.trees.filter(function(t) { return t.health > 0; });
-            showToast('💀 Removed ' + dead + ' dead trees', 'success');
-            log('💀 Cleared ' + dead + ' dead trees');
-            updateUI();
-        }
-
-        function prestige() {
-            var reward = Math.floor(STATE.lifetimeSol / 40);
-            if (reward < 1) {
-                showToast('Earn 40 lifetime SOL first!', 'error');
-                return;
-            }
-            if (!confirm('Liquidate estate for ' + reward + ' Ancient Seeds?')) return;
-
-            STATE.legacyAchievements = JSON.parse(JSON.stringify(STATE.achievements));
-            STATE.seeds += reward;
-            STATE.sol = 25;
-            STATE.oil = 0;
-            STATE.hopper = 0;
-            STATE.trees = [];
-            STATE.lifetimeSol = 0;
-            STATE.totalHarvests = 0;
-            STATE.rareCount = 0;
-            STATE.mill = { mash: 0, gunk: 0, heat: 0 };
-            STATE.blightActive = false;
-            STATE.futures = [];
-            STATE.achievements = {
-                firstHarvest: false,
-                groveMaster: false,
-                tycoon: false,
-                comboKing: false,
-                rareCollector: false
-            };
-            STATE.archetype = null;
-            STATE.archetypeLocked = false;
-
-            for (var i = 0; i < 3; i++) {
-                STATE.trees.push({
-                    id: '#' + (STATE.treesPlanted + i + 1),
-                    age: 0,
-                    health: 100,
-                    water: 85,
-                    pests: 0,
-                    stage: 'seed',
-                    rarity: 'common',
-                    protected: false
-                });
-            }
-            STATE.treesPlanted += 3;
-
-            showToast('✨ Prestiged! +' + reward + ' Ancient Seeds', 'success');
-            log('🔄 Prestiged! +' + reward + ' Ancient Seeds');
-            updateUI();
-        }
-
-        // ─── SHOP FUNCTIONS ────────────────────────────────────────────
-        function buyShopItem(itemId) {
-            var item = OLV_SHOP[itemId];
-            if (!item) return;
-
-            if (STATE.olv < item.cost) {
-                showToast('Need ' + item.cost + ' OLV', 'error');
-                return;
-            }
-
-            STATE.olv -= item.cost;
-            STATE.purchases[itemId] = (STATE.purchases[itemId] || 0) + 1;
-
-            if (item.reward.seeds) {
-                STATE.seeds += item.reward.seeds;
-                showToast('+' + item.reward.seeds + ' Ancient Seeds!', 'success');
-                log('🌱 +' + item.reward.seeds + ' Ancient Seeds');
-            }
-            if (item.reward.sol) {
-                STATE.sol += item.reward.sol;
-                showToast('+' + item.reward.sol + ' SOL!', 'success');
-                log('💰 +' + item.reward.sol + ' SOL');
-            }
-            if (item.reward.fertilizerBoost) {
-                STATE.fertilizerBoost = true;
-                STATE.fertilizerBoostEnd = Date.now() + item.reward.duration;
-                showToast('🌿 Fertilizer boost active for 1 hour!', 'success');
-                log('🌿 Fertilizer boost active');
-            }
-            if (item.reward.instantHarvest) {
-                var total = 0;
-                STATE.trees.forEach(function(tree) {
-                    if (tree.stage === 'mature') {
-                        var yieldAmt = 12 * STATE.skillMultipliers.yield;
-                        STATE.hopper += yieldAmt;
-                        total += yieldAmt;
-                        tree.age = 0;
-                        tree.stage = 'seed';
-                    }
-                });
-                showToast('⚡ Instant harvest! +' + total.toFixed(1) + 'kg', 'success');
-                log('⚡ Instant harvest! +' + total.toFixed(1) + 'kg');
-            }
-            if (item.reward.protection) {
-                STATE.protectionActive = true;
-                STATE.protectionEnd = Date.now() + item.reward.duration;
-                showToast('🛡️ Trees protected from pests for 24 hours!', 'success');
-                log('🛡️ Tree protection active');
-            }
-            if (item.reward.legendary) {
-                STATE.nextTreeLegendary = true;
-                showToast('👑 Next tree will be Legendary!', 'success');
-                log('👑 Legendary seed planted');
-            }
-
-            updateUI();
-        }
-
-        // ─── RESET GAME ────────────────────────────────────────────────
-        function resetGame() {
-            if (!confirm('⚠️ Reset estate? (Keeps Seeds & Skills)')) return;
-
-            if (STATE.sol < 3 && STATE.olv < 300) {
-                showToast('Need 3 SOL or 300 OLV to reset', 'error');
-                return;
-            }
-
-            if (STATE.sol >= 3) {
-                STATE.sol -= 3;
-            } else if (STATE.olv >= 300) {
-                STATE.olv -= 300;
-            } else {
-                showToast('Need 3 SOL or 300 OLV to reset', 'error');
-                return;
-            }
-
-            var preservedSeeds = STATE.seeds;
-            var preservedSkills = STATE.skills.slice();
-            var preservedSkillMultipliers = JSON.parse(JSON.stringify(STATE.skillMultipliers));
-            var preservedUpgrades = JSON.parse(JSON.stringify(STATE.upgrades));
-
-            STATE.sol = 25.0;
-            STATE.oil = 0;
-            STATE.hopper = 0;
-            STATE.lifetimeSol = 25.0;
-            STATE.treesPlanted = 0;
-            STATE.totalHarvests = 0;
-            STATE.comboRecord = 1.0;
-            STATE.rareCount = 0;
-            STATE.trees = [];
-            STATE.mill = { mash: 0, gunk: 0, heat: 0 };
-            STATE.combo = 1.0;
-            STATE.quest = { target: 50, current: 0, reward: 10, seedReward: 1 };
-            STATE.achievements = { firstHarvest: false, groveMaster: false, tycoon: false, comboKing: false,
-                rareCollector: false };
-            STATE.fertilizerBoost = false;
-            STATE.fertilizerBoostEnd = 0;
-            STATE.protectionActive = false;
-            STATE.protectionEnd = 0;
-            STATE.nextTreeLegendary = false;
-            STATE.blightActive = false;
-            STATE.futures = [];
-            STATE.archetype = null;
-            STATE.archetypeLocked = false;
-
-            STATE.seeds = preservedSeeds;
-            STATE.skills = preservedSkills;
-            STATE.skillMultipliers = preservedSkillMultipliers;
-            STATE.upgrades = preservedUpgrades;
-
-            for (var i = 0; i < 3; i++) {
-                STATE.trees.push({
-                    id: '#' + (STATE.treesPlanted + i + 1),
-                    age: 0,
-                    health: 100,
-                    water: 85,
-                    pests: 0,
-                    stage: 'seed',
-                    rarity: 'common',
-                    protected: false
-                });
-            }
-            STATE.treesPlanted += 3;
-
-            showToast('✅ Estate reset!', 'success');
-            log('🔄 Estate reset! Ancient knowledge preserved.');
-            updateUI();
-        }
-
-        // ─── ARCHETYPE ──────────────────────────────────────────────────
-        function chooseArchetype(type) {
-            if (STATE.archetypeLocked) {
-                showToast('Archetype locked until prestige!', 'error');
-                return;
-            }
-            if (!ARCHETYPES[type]) return;
-            STATE.archetype = type;
-            STATE.archetypeLocked = true;
-
-            if (type === 'agrarian') {
-                STATE.skillMultipliers.yield *= 1.3;
-            }
-
-            var a = ARCHETYPES[type];
-            showToast(a.icon + ' ' + a.name + ' locked!', 'success');
-            log('🏛️ Locked in as ' + a.name + '!');
-            updateUI();
-        }
-
-        function openArchetypePanel() {
-            if (STATE.archetypeLocked) {
-                showToast('Archetype locked until prestige!', 'error');
-                return;
-            }
-
-            var overlay = document.createElement('div');
-            overlay.style.cssText =
-                'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;';
-            var html = '';
-            html +=
-                '<div style="background:#1A110A;border:1px solid #C9903E;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:90vh;overflow-y:auto;">';
-            html +=
-                '<div style="text-align:center;margin-bottom:16px;"><div style="font-size:20px;color:#C9903E;font-weight:bold;font-family:Playfair Display,serif;">🏛️ STEWARD SPECIALIZATION</div>';
-            html +=
-                '<div style="font-size:10px;opacity:0.5;margin-top:4px;font-weight:300;">Choose your path — locks until prestige</div></div>';
-
-            for (var key in ARCHETYPES) {
-                var a = ARCHETYPES[key];
-                html +=
-                    '<div onclick="chooseArchetype(\'' + key +
-                    '\'); this.closest(\'div[style]\').remove();" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all 0.3s;" onmouseover="this.style.borderColor=\'rgba(197,160,89,0.3)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.06)\'">';
-                html += '<div style="font-weight:bold;color:#C9903E;font-family:Playfair Display,serif;font-size:14px;">' +
-                    a.icon + ' ' + a.name + '</div>';
-                html += '<div style="font-size:10px;opacity:0.7;margin:4px 0;font-weight:300;">' + a.desc + '</div>';
-                html += '<div style="font-size:9px;color:#4ADE80;">✓ ' + a.bonuses.join(' · ') + '</div>';
-                html += '<div style="font-size:9px;color:#EF4444;margin-top:2px;">⚠ ' + a.risks[0] + '</div>';
-                html += '</div>';
-            }
-
-            html +=
-                '<button onclick="this.closest(\'div[style]\').remove()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:white;cursor:pointer;font-family:Inter,sans-serif;font-weight:600;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.3s;" onmouseover="this.style.background=\'rgba(255,255,255,0.08)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.04)\'">Close</button>';
-            html += '</div>';
-            overlay.innerHTML = html;
-            document.body.appendChild(overlay);
-        }
-
-        // ─── GAME LOOP ──────────────────────────────────────────────────
-        function gameLoop() {
-            var now = Date.now();
-
-            if (STATE.fertilizerBoost && now > STATE.fertilizerBoostEnd) {
-                STATE.fertilizerBoost = false;
-                log('Fertilizer boost expired');
-            }
-            if (STATE.protectionActive && now > STATE.protectionEnd) {
-                STATE.protectionActive = false;
-                log('Tree protection expired');
-            }
-
-            var isOverSaturated = STATE.archetype === 'agrarian' && STATE.trees.length > 9;
-
-            STATE.trees.forEach(function(tree, idx) {
-                if (tree.health <= 0) return;
-
-                if (tree.protected) {
-                    tree.pests = Math.max(0, tree.pests - 5);
-                }
-
-                var waterLoss = STATE.upgrades.greenhouse ? 0 :
-                    (STATE.world.weather === 'Heatwave' ? 12 :
-                        (STATE.world.weather === 'Rainy' ? -8 : 3));
-                if (STATE.upgrades.irrigation && tree.water < 70) waterLoss = -5;
-                tree.water = Math.max(0, Math.min(100, tree.water - waterLoss));
-
-                var growthRate = 0.05 * STATE.skillMultipliers.speed;
-                if (STATE.fertilizerBoost) growthRate *= 1.5;
-                if (isOverSaturated) growthRate *= 0.7;
-                if (tree.water > 40 && tree.health > 30) tree.age += growthRate;
-
-                if (tree.age > 5 && tree.stage === 'seed') tree.stage = 'sapling';
-                if (tree.age > 12 && tree.stage === 'sapling') tree.stage = 'mature';
-
-                if (!tree.protected && STATE.world.season === 'Summer' && Math.random() < 0.03) {
-                    tree.pests = Math.min(100, tree.pests + 5);
-                }
-
-                if (tree.pests > 50 && !tree.protected) {
-                    var blightSpreadChance = isOverSaturated ? 0.18 : 0.08;
-                    var neighbors = [idx - 1, idx + 1, idx - 5, idx + 5];
-                    neighbors.forEach(function(nIdx) {
-                        if (STATE.trees[nIdx] && STATE.trees[nIdx].health > 0 &&
-                            Math.random() < blightSpreadChance) {
-                            STATE.trees[nIdx].pests = Math.min(100, STATE.trees[nIdx].pests + 2);
-                        }
-                    });
-                    if (isOverSaturated && !STATE.blightActive) {
-                        STATE.blightActive = true;
-                        showToast('🚨 BLIGHT ALERT!', 'error');
-                        log('🚨 BLIGHT ALERT: Dense grove accelerating pest contagion!');
-                    }
-                }
-
-                if (STATE.upgrades.misting && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 2);
-                if (STATE.upgrades.flytraps && tree.pests > 0) tree.pests = Math.max(0, tree.pests - 3);
-
-                if (tree.water < 15) tree.health -= 4;
-                if (tree.pests > 40) tree.health -= 3;
-                if (tree.health <= 0) { tree.health = 0;
-                    tree.stage = 'dead'; }
-            });
-
-            if (STATE.blightActive && STATE.trees.every(function(t) { return t.pests < 50; })) {
-                STATE.blightActive = false;
-            }
-
-            STATE.mill.mash = Math.max(0, STATE.mill.mash - 4);
-            STATE.mill.heat = Math.max(0, (STATE.mill.heat || 0) - 2);
-            STATE.mill.gunk = Math.max(0, STATE.mill.gunk - 0.2);
-
-            STATE.marketPool = Math.min(6.0, STATE.marketPool + 0.01);
-            var drift = (Math.random() - 0.5) * 0.4;
-            STATE.world.price = STATE.world.price + (STATE.marketPool - STATE.world.price) * 0.3 + drift;
-            STATE.world.price = Math.max(0.5, Math.min(6.0, STATE.world.price));
-
-            var demandLevels = ['Very Low', 'Low', 'Normal', 'High', 'Very High'];
-            var idx2 = Math.floor(STATE.world.price / 1.2);
-            STATE.world.demand = demandLevels[Math.min(4, idx2)];
-
-            checkQuest();
-            updateUI();
-        }
-
-        // ─── WEATHER CYCLE ─────────────────────────────────────────────
-        function weatherCycle() {
-            var weathers = [
-                { type: 'Clear', temp: 24 },
-                { type: 'Rainy', temp: 18 },
-                { type: 'Heatwave', temp: 36 }
-            ];
-            var newWeather = weathers[Math.floor(Math.random() * weathers.length)];
-            STATE.world.weather = newWeather.type;
-            STATE.world.temp = newWeather.temp;
-
-            var seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
-            var currentIdx = seasons.indexOf(STATE.world.season);
-            STATE.world.season = seasons[(currentIdx + 1) % 4];
-
-            if (newWeather.type === 'Rainy') {
-                STATE.trees.forEach(function(t) { t.water = Math.min(100, t.water + 15); });
-            }
-
-            updateUI();
-        }
-
-        // ─── TIME CYCLE ────────────────────────────────────────────────
-        function timeCycle() {
-            STATE.world.time = (STATE.world.time + 0.5) % 24;
-        }
-
-        // ─── PANEL SYSTEM ──────────────────────────────────────────────
-        function openPanel(panelId) {
-            var panels = document.querySelectorAll('.panel');
-            for (var i = 0; i < panels.length; i++) {
-                panels[i].classList.remove('active');
-            }
-            var navs = document.querySelectorAll('.nav-item');
-            for (var j = 0; j < navs.length; j++) {
-                navs[j].classList.remove('active');
-            }
-
-            var panel = document.getElementById('panel' + panelId.charAt(0).toUpperCase() + panelId.slice(1));
-            if (panel) panel.classList.add('active');
-
-            var nav = document.querySelector('.nav-item[data-panel="' + panelId + '"]');
-            if (nav) nav.classList.add('active');
-
-            document.getElementById('panelOverlay').classList.add('active');
-        }
-
-        function closePanel() {
-            var panels = document.querySelectorAll('.panel');
-            for (var i = 0; i < panels.length; i++) {
-                panels[i].classList.remove('active');
-            }
-            var navs = document.querySelectorAll('.nav-item');
-            for (var j = 0; j < navs.length; j++) {
-                navs[j].classList.remove('active');
-            }
-            document.getElementById('panelOverlay').classList.remove('active');
-
-            var groveNav = document.querySelector('.nav-item[data-panel="grove"]');
-            if (groveNav) groveNav.classList.add('active');
-        }
-
-        // ─── CONNECT MODAL ─────────────────────────────────────────────
-        function showConnectModal() {
-            document.getElementById('connectModal').classList.add('active');
-        }
-
-        function hideConnectModal() {
-            document.getElementById('connectModal').classList.remove('active');
-        }
-
-        function connectWallet() {
-            STATE.olv = 500;
-            showToast('✅ Wallet connected!', 'success');
-            log('🔗 Wallet connected');
-            hideConnectModal();
-            updateUI();
-        }
-
-        function emailLogin() {
-            STATE.olv = 100;
-            showToast('✅ Email login successful!', 'success');
-            log('✉️ Email login successful');
-            hideConnectModal();
-            updateUI();
-        }
-
-        // ─── INIT ──────────────────────────────────────────────────────
-        function init() {
-            if (STATE.trees.length === 0) {
-                for (var i = 0; i < 3; i++) {
-                    STATE.trees.push({
-                        id: '#' + (STATE.treesPlanted + i + 1),
-                        age: 0,
-                        health: 100,
-                        water: 85,
-                        pests: 0,
-                        stage: 'seed',
-                        rarity: 'common',
-                        protected: false
-                    });
-                }
-                STATE.treesPlanted += 3;
-            }
-
-            // Bottom nav
-            var navItems = document.querySelectorAll('.nav-item');
-            for (var i = 0; i < navItems.length; i++) {
-                (function(item) {
-                    item.addEventListener('click', function() {
-                        var panel = item.dataset.panel;
-                        if (panel === 'grove') {
-                            closePanel();
-                        } else {
-                            openPanel(panel);
-                        }
-                    });
-                })(navItems[i]);
-            }
-
-            // Close buttons
-            var closeBtns = document.querySelectorAll('[data-close]');
-            for (var j = 0; j < closeBtns.length; j++) {
-                closeBtns[j].addEventListener('click', closePanel);
-            }
-            document.getElementById('panelOverlay').addEventListener('click', closePanel);
-
-            // Top bar connect
-            document.getElementById('connectBtn').addEventListener('click', showConnectModal);
-            document.getElementById('closeModalBtn').addEventListener('click', hideConnectModal);
-            document.getElementById('connectModal').addEventListener('click', function(e) {
-                if (e.target === e.currentTarget) hideConnectModal();
-            });
-            document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
-            document.getElementById('emailLoginBtn').addEventListener('click', emailLogin);
-
-            // Action buttons
-            document.getElementById('btnPlant').addEventListener('click', plantTree);
-            document.getElementById('btnHarvest').addEventListener('click', harvestAll);
-            document.getElementById('btnWater').addEventListener('click', waterAll);
-            document.getElementById('btnSpray').addEventListener('click', sprayGrove);
-            document.getElementById('btnMill').addEventListener('click', pressMill);
-            document.getElementById('fabMill').addEventListener('click', pressMill);
-
-            // Upgrade items
-            var upgradeItems = document.querySelectorAll('[data-upgrade]');
-            for (var k = 0; k < upgradeItems.length; k++) {
-                (function(item) {
-                    item.addEventListener('click', function() {
-                        buyUpgrade(item.dataset.upgrade);
-                    });
-                })(upgradeItems[k]);
-            }
-
-            // Currency toggle
-            document.getElementById('upgCurrencySol').addEventListener('click', function() {
-                upgradeCurrency = 'sol';
+                STATE.seeds -= costs[skill];
+                STATE.skills.push(skill);
+                if (skill === 'yield') STATE.skillMultipliers.yield = 1.8;
+                if (skill === 'speed') STATE.skillMultipliers.speed = 2.5;
+                if (skill === 'cold') STATE.skillMultipliers.extraction = 1.6;
+                if (skill === 'rare') STATE.skillMultipliers.rare = 0.25;
+                showToast('✨ Unlocked ' + skill.toUpperCase() + '!', 'success');
+                log('✨ Unlocked ' + skill.toUpperCase() + '!');
                 updateUI();
-            });
-            document.getElementById('upgCurrencyOlv').addEventListener('click', function() {
-                upgradeCurrency = 'olv';
-                updateUI();
-            });
-
-            // Maintenance
-            document.getElementById('btnCleanMill').addEventListener('click', function() {
-                cleanMill();
                 closePanel();
             });
-            document.getElementById('btnRemoveDead').addEventListener('click', function() {
-                removeDeadTrees();
-                closePanel();
+        })(skillItems[s]);
+    }
+
+    // Shop items
+    var shopItems = document.querySelectorAll('[data-shop]');
+    for (var sh = 0; sh < shopItems.length; sh++) {
+        (function(item) {
+            item.addEventListener('click', function() {
+                buyShopItem(item.dataset.shop);
             });
-            document.getElementById('btnPrestige').addEventListener('click', function() {
-                prestige();
-                closePanel();
-            });
+        })(shopItems[sh]);
+    }
 
-            // Skill items
-            var skillItems = document.querySelectorAll('[data-skill]');
-            for (var s = 0; s < skillItems.length; s++) {
-                (function(item) {
-                    item.addEventListener('click', function() {
-                        var skill = item.dataset.skill;
-                        var costs = { yield: 5, speed: 5, cold: 5, rare: 8 };
-                        if (STATE.skills.indexOf(skill) !== -1) {
-                            showToast('Already unlocked!', 'error');
-                            return;
-                        }
-                        if (STATE.seeds < costs[skill]) {
-                            showToast('Need ' + costs[skill] + ' Ancient Seeds', 'error');
-                            return;
-                        }
-                        STATE.seeds -= costs[skill];
-                        STATE.skills.push(skill);
-                        if (skill === 'yield') STATE.skillMultipliers.yield = 1.8;
-                        if (skill === 'speed') STATE.skillMultipliers.speed = 2.5;
-                        if (skill === 'cold') STATE.skillMultipliers.extraction = 1.6;
-                        if (skill === 'rare') STATE.skillMultipliers.rare = 0.25;
-                        showToast('✨ Unlocked ' + skill.toUpperCase() + '!', 'success');
-                        log('✨ Unlocked ' + skill.toUpperCase() + '!');
-                        updateUI();
-                        closePanel();
-                    });
-                })(skillItems[s]);
-            }
+    // Reset game
+    var resetBtn = document.getElementById('btnResetGame');
+    if (resetBtn) resetBtn.addEventListener('click', resetGame);
 
-            // Shop items
-            var shopItems = document.querySelectorAll('[data-shop]');
-            for (var sh = 0; sh < shopItems.length; sh++) {
-                (function(item) {
-                    item.addEventListener('click', function() {
-                        buyShopItem(item.dataset.shop);
-                    });
-                })(shopItems[sh]);
-            }
+    // Archetype
+    var archetypeBanner = document.getElementById('archetypeBanner');
+    if (archetypeBanner) archetypeBanner.addEventListener('click', openArchetypePanel);
 
-            // Reset game
-            document.getElementById('btnResetGame').addEventListener('click', resetGame);
-
-            // Archetype
-            document.getElementById('archetypeBanner').addEventListener('click', openArchetypePanel);
-
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'p' || e.key === 'P') plantTree();
-                if (e.key === 'h' || e.key === 'H') harvestAll();
-                if (e.key === 'w' || e.key === 'W') waterAll();
-                if (e.key === 's' || e.key === 'S') sprayGrove();
-                if (e.key === 'm' || e.key === 'M' || e.key === ' ') {
-                    e.preventDefault();
-                    pressMill();
-                }
-                if (e.key === 'Escape') {
-                    closePanel();
-                    hideConnectModal();
-                }
-            });
-
-            // Game loops
-            setInterval(gameLoop, 2000);
-            setInterval(weatherCycle, 20000);
-            setInterval(timeCycle, 30000);
-
-            // Initial render
-            updateUI();
-            log('🌿 Welcome to Olivium Estate, Steward.');
-            log('📖 Tap trees to water/harvest · 🔐 Connect to save');
-            log('🏛️ Choose your Archetype to specialize');
-
-            console.log('🌿 Olivium Estate — Tuscan Edition loaded!');
-            console.log('📖 Keyboard: P=Plant, H=Harvest, W=Water, S=Spray, M/Space=Mill');
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'p' || e.key === 'P') plantTree();
+        if (e.key === 'h' || e.key === 'H') harvestAll();
+        if (e.key === 'w' || e.key === 'W') waterAll();
+        if (e.key === 's' || e.key === 'S') sprayGrove();
+        if (e.key === 'm' || e.key === 'M' || e.key === ' ') {
+            e.preventDefault();
+            pressMill();
         }
+        if (e.key === 'Escape') {
+            closePanel();
+            hideConnectModal();
+        }
+    });
 
-        // ─── START ─────────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', init);
+    // Game loops
+    setInterval(gameLoop, 2000);
+    setInterval(weatherCycle, 20000);
+    setInterval(timeCycle, 30000);
 
-        // Expose for console
-        window.STATE = STATE;
-        window.plantTree = plantTree;
-        window.harvestAll = harvestAll;
-        window.waterAll = waterAll;
-        window.sprayGrove = sprayGrove;
-        window.pressMill = pressMill;
-        window.sellOil = sellOil;
-        window.chooseArchetype = chooseArchetype;
-        window.openArchetypePanel = openArchetypePanel;
-        window.buyUpgrade = buyUpgrade;
-        window.buyShopItem = buyShopItem;
-        window.resetGame = resetGame;
-        window.prestige = prestige;
-        window.showToast = showToast;
-        window.log = log;
-        window.updateUI = updateUI;
-        window.closePanel = closePanel;
-        window.openPanel = openPanel;
+    // Initial render
+    updateUI();
+    log('🌿 Welcome to Olivium Estate, Steward.');
+    log('📖 Tap trees to water/harvest · 🔐 Connect to save');
+    log('🏛️ Choose your Archetype to specialize');
+
+    console.log('🌿 Olivium Estate — Tuscan Edition loaded!');
+    console.log('📖 Keyboard: P=Plant, H=Harvest, W=Water, S=Spray, M/Space=Mill');
+}
+
+// ─── START ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+
+// Expose for console
+window.STATE = STATE;
+window.plantTree = plantTree;
+window.harvestAll = harvestAll;
+window.waterAll = waterAll;
+window.sprayGrove = sprayGrove;
+window.pressMill = pressMill;
+window.sellOil = sellOil;
+window.chooseArchetype = chooseArchetype;
+window.openArchetypePanel = openArchetypePanel;
+window.buyUpgrade = buyUpgrade;
+window.buyShopItem = buyShopItem;
+window.resetGame = resetGame;
+window.prestige = prestige;
+window.showToast = showToast;
+window.log = log;
+window.updateUI = updateUI;
+window.closePanel = closePanel;
+window.openPanel = openPanel;
     </script>
 
 </body>
