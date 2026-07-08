@@ -25,6 +25,8 @@ export default defineConfig({
         Tease: resolve(__dirname, "FD_REAL_index.html"),
         game: resolve(__dirname, "landing.html"),
         harvest: resolve(__dirname, "harvest.html"),
+        brochure: resolve(__dirname, "Brochure.html"),
+
 
         debug: resolve(__dirname, "debug2.html"),
                 dashboard: resolve(__dirname, "dashboard.html"),
