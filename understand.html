@@ -479,7 +479,7 @@ async function submitVisitRequest(event){
 
     try {
 
-        const response = await fetch("/api/visit-request", {
+        const response = await fetch("./api/visit-request", {
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
