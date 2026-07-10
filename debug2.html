@@ -1,549 +1,819 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="OLIVIUM DAO dashboard — manage Mignole NFT positions, OLVM staking, oil allocation and villa bookings.">
-<title>OLIVIUM Dashboard</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olivium — Private Villa Estate Rewards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #C5A059;
+            --gold-light: #D4AF37;
+            --olive: #4a6b1e;
+            --olive-light: #6a9a2e;
+            --charcoal: #0A0A0A;
+            --card-bg: #141414;
+            --border-gold: rgba(197,160,89,0.2);
+        }
 
-<style>
+        .tech-card {
+            background: rgba(18, 22, 18, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(197, 160, 89, 0.12);
+        }
+        .text-gold { color: #C5A059; }
+        .bg-gold   { background: #C5A059; }
+        .border-gold { border-color: #C5A059; }
+        .hidden { display: none !important; }
 
-:root{
-  --bg-deep:#050606;
-  --bg-mid:#101512;
-  --accent:#b8ff72;
-  --accent-soft:#93ffa4;
-  --panel:rgba(255,255,255,.06);
-  --panel-hover:rgba(255,255,255,.1);
-  --border:rgba(255,255,255,.08);
-  --text-dim:#9da5a2;
-  --radius-lg:24px;
-  --radius-md:18px;
-  --radius-sm:12px;
-}
+        [id^="card-tier-"] {
+            transition: opacity 0.5s ease, border-color 0.3s ease;
+        }
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Inter,sans-serif;
-}
+        /* ========== CINEMATIC OVERLAY STYLES ========== */
+        .cinematic-overlay-container {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
 
-body{
-  background:
-    radial-gradient(circle at top,#1f3d28 0%,var(--bg-mid) 55%,var(--bg-deep) 100%);
-  color:white;
-  overflow-x:hidden;
-  min-height:100vh;
-}
+        .cinematic-line {
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #fff;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            line-height: 1.3;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Playfair Display', 'Georgia', serif;
+            padding: 0 20px;
+            max-width: 90%;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 0 0 20px 20px;
+            padding-bottom: 15px;
+            padding-top: 15px;
+            display: inline-block;
+            width: auto;
+        }
 
-body::before{
-  content:'';
-  position:fixed;
-  width:700px;
-  height:700px;
-  background:#3ea35a22;
-  filter:blur(140px);
-  top:-250px;
-  right:-180px;
-  pointer-events:none;
-}
+        .cinematic-line.active { opacity: 1; }
+        .cinematic-line.fade-out { opacity: 0; }
+        .cinematic-line.small { font-size: clamp(1rem, 3vw, 1.5rem); letter-spacing: 0.1em; font-weight: 300; }
 
-body::after{
-  content:'';
-  position:fixed;
-  width:600px;
-  height:600px;
-  background:#a6ff8f11;
-  filter:blur(180px);
-  bottom:-300px;
-  left:-200px;
-  pointer-events:none;
-}
+        .cinematic-progress {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 101;
+            pointer-events: none;
+        }
 
-/* accessible focus state everywhere, incl. custom buttons */
-:focus-visible{
-  outline:2px solid var(--accent);
-  outline-offset:3px;
-}
+        .cinematic-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #C5A059;
+            transition: width linear;
+        }
 
-header{
-  padding:24px clamp(20px,5vw,60px);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(20px);
-  position:sticky;
-  top:0;
-  z-index:10;
-  background:rgba(5,6,6,.4);
-}
+        .cinematic-skip {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 101;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
 
-.logo{
-  font-size:clamp(24px,3vw,34px);
-  font-weight:800;
-  letter-spacing:3px;
-  color:#c8ff89;
-}
+        .cinematic-skip:hover { background: rgba(0, 0, 0, 0.7); color: white; border-color: #C5A059; }
 
-.wallet{
-  padding:12px 20px;
-  border-radius:15px;
-  background:var(--panel);
-  backdrop-filter:blur(12px);
-  font-size:14px;
-  line-height:1.5;
-  text-align:right;
-}
+        .luxury-video-hero {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+        }
 
-.wallet .wallet-status{
-  color:var(--accent-soft);
-  font-weight:600;
-}
+        .luxury-video-hero video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.85) contrast(1.05) saturate(1.1);
+        }
 
-.ticker{
-  height:48px;
-  overflow:hidden;
-  background:#0d1713;
-  border-top:1px solid #2e5c40;
-  border-bottom:1px solid #2e5c40;
-  display:flex;
-  align-items:center;
-}
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 40%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+        }
 
-.track{
-  white-space:nowrap;
-  display:inline-flex;
-  animation:scroll 30s linear infinite;
-  font-weight:600;
-  font-size:15px;
-  color:#a7ff90;
-}
+        .main-content-wrapper { position: relative; z-index: 10; background: transparent; margin-top: 140px; }
+        nav { background: rgba(0, 0, 0, 0.5) !important; backdrop-filter: blur(8px); }
+        .modal-overlay { z-index: 200; }
 
-.track span{
-  margin-right:80px;
-}
+        /* Mobile-first overrides */
+        button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+        input, select, textarea { font-size: 16px !important; color: #fff; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
+        html, body { overflow-x: hidden; }
+        @media (max-width: 767px) { main.pt-32 { padding-top: 6rem !important; } }
 
-@keyframes scroll{
-  0%{transform:translateX(0)}
-  100%{transform:translateX(-50%)}
-}
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 
-@media (prefers-reduced-motion: reduce){
-  .track{animation:none;}
-  .panel{transition:none;}
-}
+        @media (max-width: 767px) {
+            .tier-cards-wrap { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 8px; scrollbar-width: none; scroll-snap-type: x mandatory; }
+            .tier-cards-wrap::-webkit-scrollbar { display: none; }
+            .tier-cards-wrap > div { min-width: 240px; scroll-snap-align: start; flex-shrink: 0; }
+        }
 
-.container{
-  padding:clamp(16px,4vw,40px);
-  display:grid;
-  grid-template-columns:320px 1fr;
-  gap:24px;
-  max-width:1400px;
-  margin:0 auto;
-}
+        .activities-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 768px) { .activities-grid { grid-template-columns: repeat(3, 1fr); gap: 32px; } }
+        .activity-img { height: 200px; }
+        @media (min-width: 768px) { .activity-img { height: 256px; } }
 
-.sidebar{
-  display:flex;
-  flex-direction:column;
-  gap:20px;
-}
+        .form-grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 640px) { .form-grid-2 { grid-template-columns: 1fr 1fr; } }
 
-.card{
-  background:var(--panel);
-  backdrop-filter:blur(18px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:24px;
-  box-shadow:0 20px 50px rgba(0,0,0,.3);
-}
+        @media (max-width: 639px) { .booking-btn { width: 100% !important; } }
+        @media (max-width: 639px) { .card-pad { padding: 20px !important; } }
+        @media (max-width: 639px) { h1.hero-title { font-size: clamp(2.2rem, 9vw, 3.5rem) !important; } }
 
-.card h2{
-  margin-bottom:18px;
-  font-size:18px;
-  color:#cbff97;
-}
+        .alloc-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
 
-.metric{
-  margin-bottom:18px;
-}
+        @media (max-width: 479px) {
+            .modal-overlay > div { width: 100% !important; max-width: 100% !important; margin: 0 !important; border-radius: 0 !important; min-height: 100dvh; }
+        }
 
-.metric:last-of-type{
-  margin-bottom:0;
-}
+        .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 20px; }
 
-.metric small{
-  color:var(--text-dim);
-  display:block;
-}
+        /* Mobile menu styles */
+        #mobileMenuOverlay {
+            position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.97); backdrop-filter: blur(20px);
+            display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        #mobileMenuOverlay.open { opacity: 1; pointer-events: all; }
 
-.metric .value{
-  margin-top:5px;
-  font-size:28px;
-  font-weight:700;
-}
+        .mob-nav-header { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 72px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+        .mob-nav-links { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 28px; }
+        .mob-nav-link { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); text-decoration: none; font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 7vw, 2rem); font-weight: 600; transform: translateY(14px); opacity: 0; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease, color 0.2s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(1) { transform:translateY(0); opacity:1; transition-delay:0.05s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(2) { transform:translateY(0); opacity:1; transition-delay:0.10s; }
+        #mobileMenuOverlay.open .mob-nav-link:nth-child(3) { transform:translateY(0); opacity:1; transition-delay:0.15s; }
+        .mob-nav-link:hover, .mob-nav-link.active-link { color: #C5A059; }
+        .mob-arrow { font-size:1rem; opacity:0.25; transition:opacity 0.2s,transform 0.2s; }
+        .mob-nav-link:hover .mob-arrow { opacity:1; transform:translateX(4px); }
 
-.main{
-  display:flex;
-  flex-direction:column;
-  gap:24px;
-  min-width:0; /* prevents grid blowout on narrow viewports */
-}
+        .mob-nav-footer { padding: 24px 28px max(28px, env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; transform: translateY(14px); opacity: 0; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1) 0.18s, opacity 0.38s ease 0.18s; }
+        #mobileMenuOverlay.open .mob-nav-footer { transform:translateY(0); opacity:1; }
 
-.hero{
-  background:linear-gradient(135deg,#23462e,#436b2e,#283526);
-  border-radius:30px;
-  padding:clamp(24px,4vw,35px);
-  position:relative;
-  overflow:hidden;
-}
+        .mob-status-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; }
+        .mob-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #5a7a2b; flex-shrink: 0; }
+        .mob-connect-cta { width: 100%; background: #5a7a2b; color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 16px 0; border-radius: 16px; border: none; cursor: pointer; transition: background 0.2s, transform 0.15s; }
+        .mob-connect-cta:hover { background: #6b8e36; }
+        .mob-connect-cta:active { transform: scale(0.98); }
 
-.hero::before{
-  content:"";
-  position:absolute;
-  width:350px;
-  height:350px;
-  border-radius:50%;
-  background:#ffffff08;
-  top:-120px;
-  right:-100px;
-}
+        #mobileMenuBtn { width: 44px; height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; padding: 0; }
+        #mobileMenuBtn span { display: block; width: 22px; height: 1.5px; background: #fff; border-radius: 2px; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; transform-origin: center; }
+        #mobileMenuBtn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+        #mobileMenuBtn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
-.hero h1{
-  font-size:clamp(28px,4vw,44px);
-  margin-bottom:10px;
-  position:relative;
-}
+        .progress-container { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #5a7a2b, #C5A059); border-radius: 2px; transition: width 0.5s ease; }
 
-.hero p{
-  opacity:.8;
-  font-size:clamp(15px,2vw,18px);
-  max-width:60ch;
-  position:relative;
-}
+        @media (min-width: 768px) {
+            #nav-desktop-links { display: flex !important; }
+            #nav-desktop-right { display: flex !important; }
+            #nav-mobile-btn    { display: none  !important; }
+        }
+        @media (max-width: 767px) {
+            #nav-desktop-links { display: none  !important; }
+            #nav-desktop-right { display: none  !important; }
+            #nav-mobile-btn    { display: flex  !important; }
+        }
 
-.portfolio{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:20px;
-}
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+        .status-badge.locked { background: rgba(255,68,68,0.2); color: #ff4444; }
+        .status-badge.unlocked { background: rgba(76,175,80,0.2); color: #4caf50; }
+        #toastMsg {
+            position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; color: white; padding: 12px 24px;
+            border-radius: 8px; border-left: 4px solid var(--gold); z-index: 9999; transition: opacity 0.3s; pointer-events: none; font-size: 14px;
+        }
 
-.asset{
-  background:#111b16;
-  padding:22px;
-  border-radius:var(--radius-md);
-}
+        .cinematic-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
 
-.asset h3{
-  margin-bottom:8px;
-  font-size:14px;
-  font-weight:600;
-  color:var(--accent-soft);
-}
-
-.asset .value{
-  font-size:32px;
-  font-weight:700;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:22px;
-}
-
-.panel{
-  background:var(--panel);
-  padding:25px;
-  border-radius:var(--radius-lg);
-  transition:.25s ease;
-  display:flex;
-  flex-direction:column;
-}
-
-.panel:hover{
-  transform:translateY(-6px);
-  background:var(--panel-hover);
-}
-
-.panel h2{
-  font-size:20px;
-  margin-bottom:10px;
-}
-
-.panel p{
-  opacity:.75;
-  line-height:1.6;
-  flex:1;
-}
-
-.panel .stat{
-  margin-top:12px;
-  font-size:26px;
-  font-weight:700;
-  color:var(--accent);
-}
-
-button, .btn{
-  margin-top:20px;
-  padding:14px 20px;
-  border:none;
-  border-radius:var(--radius-sm);
-  background:var(--accent);
-  color:#0d170d;
-  font-weight:700;
-  font-size:14px;
-  cursor:pointer;
-  transition:.2s ease;
-  text-align:center;
-  text-decoration:none;
-  display:inline-block;
-  width:100%;
-}
-
-button:hover, .btn:hover{
-  transform:scale(1.03);
-}
-
-.btn-secondary{
-  background:white;
-  color:black;
-}
-
-.btn-outline{
-  background:transparent;
-  border:1px solid var(--border);
-  color:white;
-}
-
-.booking{
-  margin-top:15px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.day{
-  width:48px;
-  height:48px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:var(--panel);
-  border-radius:14px;
-  font-size:13px;
-  cursor:pointer;
-  transition:.15s ease;
-  border:1px solid transparent;
-  flex-direction:column;
-  line-height:1.1;
-  padding:4px;
-}
-
-.day:hover{
-  background:var(--panel-hover);
-}
-
-.day.selected{
-  background:var(--accent);
-  color:#0d170d;
-  font-weight:700;
-  border-color:var(--accent);
-}
-
-.hidden{
-  display:none !important;
-}
-
-.footer{
-  text-align:center;
-  padding:50px 20px;
-  opacity:.45;
-  font-size:14px;
-}
-
-/* ===== Responsive breakpoints ===== */
-
-@media (max-width:980px){
-  .container{
-    grid-template-columns:1fr;
-  }
-  .grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-  .portfolio{
-    grid-template-columns:repeat(3,1fr);
-  }
-}
-
-@media (max-width:640px){
-  header{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:12px;
-  }
-  .wallet{
-    text-align:left;
-  }
-  .grid, .portfolio{
-    grid-template-columns:1fr;
-  }
-}
-
-</style>
-
+        /* Additional spacing for main content */
+        .main-content-wrapper {
+            padding-bottom: 80px;
+        }
+    </style>
 </head>
 
-<body>
+<body class="antialiased min-h-screen" style="background: transparent;">
 
-<header>
-  <div class="logo">OLIVIUM</div>
-  <div style="display:flex;align-items:center;gap:14px;">
-    <div class="wallet" id="wallet-box">
-      <span class="wallet-status" id="wallet-status">Not connected</span><br>
-      <span id="wallet-address">—</span>
-    </div>
-    <button id="btn-wallet" type="button" style="width:auto;margin-top:0;white-space:nowrap;">Connect Wallet</button>
-  </div>
-</header>
-
-<div class="ticker" aria-label="Live market ticker">
-  <!-- Content is duplicated once so the 0%→-50% scroll loops seamlessly with no jump-cut.
-       The second copy is hidden from assistive tech since it's a visual repeat. -->
-  <div class="track" id="ticker-track">
-    <span>🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
-    <span>☀ SOL $188.42 ▲3.2%</span>
-    <span>🌿 CARBON €81.12/t ▲0.6%</span>
-    <span>🫒 DAO Treasury Healthy</span>
-    <span>🌳 Olive Trees Growing</span>
-    <span>💎 OLVM Staking Rewards Live</span>
-    <span aria-hidden="true">🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
-    <span aria-hidden="true">☀ SOL $188.42 ▲3.2%</span>
-    <span aria-hidden="true">🌿 CARBON €81.12/t ▲0.6%</span>
-    <span aria-hidden="true">🫒 DAO Treasury Healthy</span>
-    <span aria-hidden="true">🌳 Olive Trees Growing</span>
-    <span aria-hidden="true">💎 OLVM Staking Rewards Live</span>
-  </div>
-</div>
-
-<div class="container">
-
-  <aside class="sidebar" aria-label="Portfolio and staking summary">
-
-    <div class="card">
-      <h2>Portfolio</h2>
-      <div class="metric">
-        <small>Mignole Positions</small>
-        <div class="value" id="metric-mignole">—</div>
-      </div>
-      <div class="metric">
-        <small>OLVM Tokens</small>
-        <div class="value" id="metric-olvm">—</div>
-      </div>
-      <div class="metric">
-        <small>Solana Balance</small>
-        <div class="value" id="metric-sol">—</div>
-      </div>
+    <!-- VIDEO HERO - BACKGROUND -->
+    <div class="luxury-video-hero">
+        <video id="bgVideo" autoplay loop muted playsinline aria-hidden="true"
+               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
     </div>
 
-    <div class="card">
-      <h2>OLV Token</h2>
-      <div class="metric">
-        <small>OLV Balance</small>
-        <div class="value" id="metric-olv-tier">—</div>
-      </div>
-      <div class="metric">
-        <small>Membership Tier</small>
-        <div class="value" id="metric-tier-name">—</div>
-      </div>
-      <p style="opacity:.55;font-size:13px;line-height:1.5;">Staking isn't live on-chain yet — this shows your current OLV balance and tier only.</p>
-    </div>
-
-  </aside>
-
-  <main class="main">
-
-    <section class="hero">
-      <h1>Welcome back 🌿</h1>
-      <p>Your olive trees are producing value through oil, carbon capture and ecosystem growth. Manage your digital estate below.</p>
-    </section>
-
-    <section class="portfolio" aria-label="Asset summary">
-      <div class="asset">
-        <h3>Mignole NFT</h3>
-        <div class="value" id="asset-mignole">—</div>
-      </div>
-      <div class="asset">
-        <h3>Estimated Oil Allocation</h3>
-        <div class="value" id="asset-oil">—</div>
-      </div>
-      <div class="asset">
-        <h3>Carbon Credits</h3>
-        <div class="value" id="asset-carbon">—</div>
-      </div>
-    </section>
-
-    <section class="grid" aria-label="Actions">
-
-      <div class="panel">
-        <h2>🎮 Web Games</h2>
-        <p>Play seasonal olive harvest games, earn bonus OLVM, unlock rare collectibles.</p>
-        <button id="btn-arcade" type="button">Enter Arcade</button>
-      </div>
-
-      <div class="panel">
-        <h2>🏡 Villa Stay</h2>
-        <p>Available nights (next 30 days) — tap to select</p>
-        <div class="stat" id="villa-nights">—</div>
-        <div class="booking" id="villa-days" aria-label="Selectable available days"></div>
-        <input type="email" id="villa-email" placeholder="Email for booking confirmation" style="margin-top:14px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-size:14px;">
-        <button id="btn-book" type="button">Book Selected Nights</button>
-      </div>
-
-      <div class="panel">
-        <h2>🫒 Oil Allocation</h2>
-        <p>Available to claim or sell</p>
-        <div class="stat" id="oil-claim">—</div>
-        <small style="opacity:.6;display:block;margin-top:4px;" id="oil-entitled-note">—</small>
-
-        <div id="claim-form" class="hidden" style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
-          <input type="number" id="claim-litres" placeholder="Litres to claim" min="0" step="0.1" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;">
-          <input type="text" id="claim-name" placeholder="Recipient name" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;">
-          <textarea id="claim-address" placeholder="Shipping address" rows="2" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-family:inherit;"></textarea>
-          <button id="btn-claim-submit" type="button">Confirm Claim</button>
+    <!-- CINEMATIC TEXT OVERLAY -->
+    <div class="cinematic-overlay-container">
+        <div class="cinematic-wrapper">
+            <div id="cinematicLine" class="cinematic-line"></div>
         </div>
-
-        <div id="sell-form" class="hidden" style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
-          <input type="number" id="sell-litres" placeholder="Litres to sell" min="0" step="0.1" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;">
-          <select id="sell-currency" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#111b16;color:white;">
-            <option value="OLVM">Receive OLVM</option>
-            <option value="SOL">Receive SOL</option>
-          </select>
-          <button id="btn-sell-submit" type="button">Confirm Sell to DAO</button>
+        <div class="cinematic-progress">
+            <div id="cinematicProgressFill" class="cinematic-progress-fill"></div>
         </div>
+        <button id="cinematicSkipBtn" class="cinematic-skip">SKIP →</button>
+    </div>
 
-        <button id="btn-claim" type="button">Claim Delivery</button>
-        <button id="btn-sell" class="btn-secondary" type="button">Sell to DAO</button>
-      </div>
+    <!-- NAVIGATION -->
+    <nav class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
+            <a href="#" class="font-serif text-lg sm:text-xl font-bold text-white tracking-widest flex-shrink-0">
+                OLIVIUM <span class="italic text-[#C5A059]">ESTATE VILLA</span>
+            </a>
+            <div id="nav-desktop-links" style="display:none; align-items:center; gap:2rem; font-size:10px; font-weight:700; letter-spacing:0.2em;">
+                <a href="#" class="hover:text-[#C5A059] text-stone-400 transition">ADOPTION</a>
+                <a href="#" class="text-[#C5A059]">VILLA TOUR</a>
+                <a href="#" class="hover:text-[#C5A059] text-stone-400 transition">HARVEST LOG</a>
+            </div>
+            <div id="nav-desktop-right" style="display:none; align-items:center; gap:1rem;">
+                <div class="text-right">
+                    <p id="nav-tier-label" class="text-[8px] text-stone-500 uppercase">Guest Mode</p>
+                    <p id="nav-identity-display" class="text-[10px] text-[#C5A059] font-mono uppercase">NOT CONNECTED</p>
+                </div>
+                <button id="connectWalletBtn" class="bg-[#5a7a2b] text-white text-[10px] px-5 py-2.5 rounded-xl hover:bg-[#6b8e36] transition">Connect</button>
+            </div>
+            <div id="nav-mobile-btn" style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="text-right">
+                    <p id="nav-tier-label-mob" class="text-[8px] text-stone-500 uppercase leading-none">Guest</p>
+                    <p id="nav-identity-display-mob" class="text-[9px] text-[#C5A059] font-mono">NOT CONNECTED</p>
+                </div>
+                <button id="mobileMenuBtn" aria-label="Open menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
 
-    </section>
+    <!-- MAIN CONTENT -->
+    <div class="main-content-wrapper">
+        <main class="pt-24 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 max-w-7xl mx-auto relative">
+            <!-- HERO STATS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-10 sm:mb-16 relative z-10">
+                <div class="lg:col-span-7">
+                    <p class="text-[11px] text-[#C5A059] font-bold tracking-[0.3em] uppercase mb-2">Exclusive Patron Sanctuary</p>
+                    <h1 class="hero-title font-serif text-5xl md:text-7xl text-white mb-4 sm:mb-6 leading-tight">
+                        Your Stay at <br/>
+                        <span class="italic text-[#C5A059]">The Villa Estate</span>
+                    </h1>
+                    <p class="text-stone-400 text-sm md:text-base leading-relaxed max-w-xl">
+                        As a OLVM holder, you are not a guest — you are a steward. Your OLVM
+                        positions unlock customized milestone levels, structural stay vouchers, and
+                        priority harvest reserves embedded inside our historic Tuscan olive groves.
+                    </p>
+                </div>
+                <div class="lg:col-span-5 stat-grid mt-6 lg:mt-0">
+                    <div class="tech-card p-6 rounded-2xl relative overflow-hidden">
+                        <p class="text-[10px] text-stone-500 uppercase tracking-widest mb-1 font-bold">OLVM Staked</p>
+                        <p id="shares-count-display" class="font-serif text-3xl text-white font-bold">
+                            0 <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>
+                        </p>
+                    </div>
+                    <div class="tech-card p-6 rounded-2xl relative overflow-hidden transition-all duration-500">
+                        <p class="text-[10px] text-stone-500 uppercase tracking-widest mb-1 font-bold">Available Credits</p>
+                        <p id="credits-count-display" class="font-serif text-3xl text-white font-bold">
+                            0 <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-  </main>
+            <!-- MAIN GRID -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 relative z-10">
+                <!-- LEFT COLUMN -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="tech-card p-5 sm:p-6 rounded-2xl sm:rounded-3xl">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div id="tier-icon" class="w-14 h-14 rounded-xl bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-3xl">🫒</div>
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest text-stone-500">Resolved Tier</p>
+                                <h3 id="tier-name" class="font-serif text-2xl text-white">Guest Mode</h3>
+                                <p id="tier-progress-text" class="text-[#C5A059] text-xs">Connect Profile</p>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <div class="flex justify-between text-xs mb-2">
+                                <span id="next-tier-label">Next Tier</span>
+                                <span id="tier-percent-label">0%</span>
+                            </div>
+                            <div class="progress-container">
+                                <div id="tier-progress-bar" class="progress-fill" style="width:0%;"></div>
+                            </div>
+                        </div>
+                        <div class="tier-cards-wrap space-y-0 sm:space-y-4">
+                            <div id="card-tier-1" class="p-5 rounded-2xl border border-white/10">
+                                <h4 class="text-white font-bold">🌱 Guardian (50K OLVM)</h4>
+                                <ul class="mt-4 space-y-2 text-sm"><li>2L annual EVOO</li><li>3 nights villa stay</li><li>Harvest participation</li></ul>
+                            </div>
+                            <div id="card-tier-2" class="p-5 rounded-2xl border border-white/10">
+                                <h4 class="text-white font-bold">🌿 Heritage (500K OLVM)</h4>
+                                <p class="text-emerald-400 text-xs mt-2">✔ 7 Night Villa Stay + Named Tree</p>
+                            </div>
+                            <div id="card-tier-3" class="p-5 rounded-2xl border border-[#C5A059]/20">
+                                <h4 class="text-white font-bold">👑 Estate (2.5M OLVM)</h4>
+                                <p class="text-emerald-400 text-xs mt-2">✔ 21 Night Villa Stay + 3 Trees</p>
+                            </div>
+                            <div id="card-tier-4" class="p-5 rounded-2xl border border-[#5a7a2b]/30">
+                                <h4 class="text-white font-bold">🌲 Founder (10M+ OLVM)</h4>
+                                <p class="text-emerald-400 text-xs mt-2">✔ 45 Nights + DAO Governance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-</div>
+                <!-- RIGHT COLUMN -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- OIL DELIVERY -->
+                    <div class="tech-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl">
+                        <div id="oilDeliveryLockNotice" class="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                            <p class="text-amber-400 text-sm font-semibold">🔒 Olive Oil Deliveries unlock at 50K+ OLVM</p>
+                            <p class="text-stone-400 text-xs mt-1">Connect your wallet to determine eligibility.</p>
+                        </div>
+                        <h2 class="font-serif text-3xl text-white mb-2">Olive Oil Delivery</h2>
+                        <p class="text-stone-400 text-sm mb-8">Manage your annual allocation, delivery details and shipment status.</p>
+                        <div id="oilDeliveryCard" class="opacity-40 pointer-events-none">
+                            <div class="form-grid-2">
+                                <div><label class="text-xs text-stone-500 uppercase">Recipient Name</label><input id="deliveryName" type="text" class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10"></div>
+                                <div><label class="text-xs text-stone-500 uppercase">Email</label><input id="deliveryEmail" type="email" class="w-full mt-2 rounded-xl p-3 bg-black border border-white/10"></div>
+                            </div>
+                            <div class="mt-6"><label class="text-xs text-stone-500 uppercase">Shipping Address</label><textarea id="deliveryAddress" class="w-full mt-2 rounded-xl p-4 bg-black border border-white/10 h-28"></textarea></div>
+                            <button id="saveDeliveryBtn" class="mt-6 bg-[#C5A059] text-black font-bold px-8 py-4 rounded-xl w-full sm:w-auto">Save Delivery Details</button>
+                            <hr class="my-8 border-white/10">
+                            <div class="rounded-2xl bg-black/30 border border-white/5 p-6">
+                                <div class="alloc-header mb-4"><div><h3 class="font-serif text-xl text-white">Annual Estate Allocation</h3><p class="text-stone-400 mt-2 text-sm">Your olive oil allocation based on current stewardship level.</p></div><span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs">In Transit</span></div>
+                                <div class="mb-6"><p class="text-stone-500 text-xs uppercase tracking-widest">Allocation</p><p id="allocationAmount" class="text-white text-lg font-semibold">Locked</p></div>
+                                <div class="space-y-4 mb-6"><div class="flex items-center gap-3"><span class="text-emerald-400">●</span><span class="text-stone-300">Harvest Complete</span></div><div class="flex items-center gap-3"><span class="text-emerald-400">●</span><span class="text-stone-300">Bottling Complete</span></div><div class="flex items-center gap-3"><span class="text-[#C5A059] animate-pulse">●</span><span class="text-stone-300">In Transit</span></div><div class="flex items-center gap-3 opacity-40"><span>○</span><span>Delivered</span></div></div>
+                                <div class="border-t border-white/5 pt-4"><p class="text-xs text-stone-500 uppercase tracking-widest">Tracking Number</p><p id="trackingNumber" class="font-mono text-[#C5A059] text-lg mt-1">OLV-2026-00928</p></div>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="footer">
-  OLIVIUM DAO • The Living Olive Economy
-</div>
+                    <!-- RESIDENCY REQUEST -->
+                    <div class="tech-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl">
+                        <div class="activity-img rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-white/5">
+                            <img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png" class="w-full h-full object-cover transition duration-700 opacity-80">
+                        </div>
+                        <h2 class="font-serif text-2xl text-white mb-2">Request Residency</h2>
+                        <p class="text-stone-400 text-xs mb-8">Reserve villa access using your available credits.</p>
+                        <form id="bookingNotificationForm" onsubmit="return false;" class="space-y-6">
+                            <input type="text" id="dateRangePicker" placeholder="Arrival & Departure" class="w-full rounded-xl p-3">
+                            <select id="nightsSelectionFrame" class="w-full rounded-xl p-3 bg-black border border-white/10">
+                                <option value="3">3 Nights</option>
+                                <option value="5">5 Nights</option>
+                                <option value="7">7 Nights</option>
+                            </select>
+                            <input type="text" id="bookingName" placeholder="Full Name" class="w-full rounded-xl p-3">
+                            <textarea id="bookingNotes" placeholder="Requests" class="w-full rounded-xl p-4 h-32"></textarea>
+                            <button id="submitBookingBtn" type="button" class="booking-btn bg-[#C5A059] text-black px-8 py-4 rounded-xl font-bold">Submit Residency Request</button>
+                        </form>
+                        <div id="bookingMsg" class="mt-4 text-xs"></div>
+                    </div>
+                </div>
+            </div>
 
-<!-- Real data/actions live in dashboard.ts, which imports connection.ts and
-     dashboard-data.ts. Needs a bundler (Vite, matching connection.ts's use
-     of import.meta.env) — this tag won't resolve .ts on its own if opened
-     as a bare static file. -->
-<script type="module" src="./dashboard.ts"></script>
+            <!-- ACTIVITIES -->
+            <div class="mt-12 sm:mt-20">
+                <h2 class="font-serif text-2xl sm:text-3xl text-white mb-6 sm:mb-10 italic text-center">Curated Estate Activities</h2>
+                <div class="activities-grid">
+                    <div class="group cursor-pointer"><div class="activity-img rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-white/5"><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/frantolio.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 opacity-80"></div><h4 class="font-serif text-xl text-white mb-1">Frantoio Workshop</h4></div>
+                    <div class="group cursor-pointer"><div class="activity-img rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-white/5"><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronehills.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 opacity-80"></div><h4 class="font-serif text-xl text-white mb-1">Drone Pathfinding</h4></div>
+                    <div class="group cursor-pointer"><div class="activity-img rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-white/5"><img src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/frantolio.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 opacity-80"></div><h4 class="font-serif text-xl text-white mb-1">Estate Dining</h4></div>
+                </div>
+            </div>
+        </main>
+    </div>
 
+    <!-- FOOTER -->
+    <footer class="border-t border-white/5 py-12 text-center opacity-40 relative z-10">
+        <p class="font-serif text-sm italic">Digital Stewardship &amp; Tuscan Heritage</p>
+        <p class="font-mono text-[8px] mt-2 tracking-widest text-[#C5A059] uppercase">Smart Contract Architecture</p>
+        <div class="mt-4 footer-links text-xs text-stone-500">
+            <a href="#" class="hover:text-white transition">Privacy Policy</a>
+            <a href="#" class="hover:text-white transition">Terms</a>
+            <a href="#" class="hover:text-white transition">Refund Policy</a>
+            <a href="mailto:support@olivium.io" class="hover:text-white transition">Contact</a>
+        </div>
+    </footer>
+
+    <div id="toastMsg"></div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileMenuOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+        <div class="mob-nav-header">
+            <span class="font-serif text-lg font-bold text-white tracking-widest">OLIVIUM <span class="italic text-[#C5A059]">PRIVATE</span></span>
+            <button id="mobileMenuCloseBtn" aria-label="Close menu" style="background:none;border:none;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><line x1="1" y1="1" x2="17" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="1" x2="1" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="mob-nav-links">
+            <a href="#" class="mob-nav-link">ADOPTION <span class="mob-arrow">→</span></a>
+            <a href="#" class="mob-nav-link active-link">VISIT VILLA <span class="mob-arrow">→</span></a>
+            <a href="#" class="mob-nav-link">HARVEST LOGS<span class="mob-arrow">→</span></a>
+        </div>
+        <div class="mob-nav-footer">
+            <div class="mob-status-bar">
+                <div class="mob-status-dot"></div>
+                <div><p id="mobile-tier-label" class="text-[9px] uppercase text-stone-500 leading-none mb-0.5">Guest Mode</p><p id="mobile-identity-display" class="text-xs font-mono text-[#C5A059]">NOT CONNECTED</p></div>
+            </div>
+            <button id="mobileConnectBtn" class="mob-connect-cta">Connect Profile</button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- SCRIPTS -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+
+    <script>
+        // ========== SOLANA CONNECTION ==========
+        const connection = new solanaWeb3.Connection("https://api.devnet.solana.com", "confirmed");
+        const OLVM_TOKEN_MINT = new solanaWeb3.PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
+
+        let wallet = null;
+        let walletPubKey = null;
+        let currentSolBalance = 0;
+        let currentOlvmBalance = 0;
+
+        // Tier thresholds based on OLVM
+        const TIERS = [
+            { name: "Visitor", minOlvm: 0, oilLiters: 0, nights: 0, icon: "🔒" },
+            { name: "Guardian", minOlvm: 50000, oilLiters: 2, nights: 3, icon: "🫒" },
+            { name: "Heritage", minOlvm: 500000, oilLiters: 6, nights: 7, icon: "🌿" },
+            { name: "Estate", minOlvm: 2500000, oilLiters: 15, nights: 21, icon: "👑" },
+            { name: "Founder", minOlvm: 10000000, oilLiters: 30, nights: 45, icon: "🌲" }
+        ];
+
+        function getCurrentTier(olvmBalance) {
+            for (let i = TIERS.length - 1; i >= 0; i--) {
+                if (olvmBalance >= TIERS[i].minOlvm) return TIERS[i];
+            }
+            return TIERS[0];
+        }
+
+        function getNextTier(olvmBalance) {
+            for (let i = 0; i < TIERS.length; i++) {
+                if (olvmBalance < TIERS[i].minOlvm) return TIERS[i];
+            }
+            return null;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toFixed(0);
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toastMsg');
+            if (!toast) return;
+            toast.innerHTML = msg;
+            toast.style.opacity = '1';
+            toast.style.borderLeftColor = isError ? '#d94d4d' : '#C5A059';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+
+        async function fetchSolBalance(pubkey) {
+            try { const balance = await connection.getBalance(pubkey); return balance / 1e9; } catch (e) { return 0; }
+        }
+
+        async function fetchOlvmBalance(pubkey) {
+            try {
+                const tokenAccounts = await connection.getParsedTokenAccountsByOwner(pubkey, { mint: OLVM_TOKEN_MINT });
+                if (tokenAccounts.value.length > 0) {
+                    return tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+                }
+                return 0;
+            } catch (e) { return 0; }
+        }
+
+        async function updateUI() {
+            if (walletPubKey) {
+                const short = walletPubKey.toBase58().slice(0, 4) + "..." + walletPubKey.toBase58().slice(-4);
+                currentSolBalance = await fetchSolBalance(walletPubKey);
+                currentOlvmBalance = await fetchOlvmBalance(walletPubKey);
+
+                const currentTier = getCurrentTier(currentOlvmBalance);
+                const nextTier = getNextTier(currentOlvmBalance);
+
+                // Update displays
+                document.getElementById('shares-count-display').innerHTML = `${formatNumber(currentOlvmBalance)} <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
+                document.getElementById('credits-count-display').innerHTML = `${currentTier.nights} <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
+                document.getElementById('tier-name').innerHTML = currentTier.name;
+                document.getElementById('tier-icon').innerHTML = currentTier.icon;
+                document.getElementById('nav-identity-display').innerHTML = short;
+                document.getElementById('nav-identity-display-mob').innerHTML = short;
+                document.getElementById('mobile-identity-display').innerHTML = short;
+                document.getElementById('nav-tier-label').innerHTML = currentTier.name;
+                document.getElementById('nav-tier-label-mob').innerHTML = currentTier.name;
+                document.getElementById('mobile-tier-label').innerHTML = currentTier.name;
+
+                // Progress to next tier
+                if (nextTier) {
+                    const needed = nextTier.minOlvm - currentOlvmBalance;
+                    const percent = Math.min(100, (currentOlvmBalance / nextTier.minOlvm) * 100);
+                    document.getElementById('next-tier-label').innerHTML = `Next: ${nextTier.name} (${formatNumber(needed)} more)`;
+                    document.getElementById('tier-percent-label').innerHTML = `${percent.toFixed(1)}%`;
+                    document.getElementById('tier-progress-bar').style.width = `${percent}%`;
+                    document.getElementById('tier-progress-text').innerHTML = `${formatNumber(currentOlvmBalance)} / ${formatNumber(nextTier.minOlvm)} OLVM`;
+                } else {
+                    document.getElementById('next-tier-label').innerHTML = "Max Tier Reached";
+                    document.getElementById('tier-percent-label').innerHTML = "100%";
+                    document.getElementById('tier-progress-bar').style.width = "100%";
+                    document.getElementById('tier-progress-text').innerHTML = "Maximum tier achieved";
+                }
+
+                // Update oil delivery unlock
+                const isUnlocked = currentOlvmBalance >= 50000;
+                const oilCard = document.getElementById('oilDeliveryCard');
+                const oilNotice = document.getElementById('oilDeliveryLockNotice');
+                const allocationAmount = document.getElementById('allocationAmount');
+
+                if (isUnlocked) {
+                    oilCard.classList.remove('opacity-40', 'pointer-events-none');
+                    oilNotice.innerHTML = '<p class="text-emerald-400 text-sm font-semibold">✓ Olive Oil Deliveries Unlocked</p><p class="text-stone-400 text-xs mt-1">Your allocation is based on your tier.</p>';
+                    if (allocationAmount) allocationAmount.innerHTML = `${currentTier.oilLiters} Liters`;
+                } else {
+                    oilCard.classList.add('opacity-40', 'pointer-events-none');
+                    oilNotice.innerHTML = '<p class="text-amber-400 text-sm font-semibold">🔒 Olive Oil Deliveries unlock at 50K+ OLVM</p><p class="text-stone-400 text-xs mt-1">Connect your wallet to determine eligibility.</p>';
+                    if (allocationAmount) allocationAmount.innerHTML = 'Locked';
+                }
+
+                // Update tier card highlights
+                const tierCards = [
+                    { card: document.getElementById('card-tier-1'), minOlvm: 50000 },
+                    { card: document.getElementById('card-tier-2'), minOlvm: 500000 },
+                    { card: document.getElementById('card-tier-3'), minOlvm: 2500000 },
+                    { card: document.getElementById('card-tier-4'), minOlvm: 10000000 }
+                ];
+
+                tierCards.forEach(tc => {
+                    if (tc.card) {
+                        if (currentOlvmBalance >= tc.minOlvm) {
+                            tc.card.style.borderColor = '#C5A059';
+                            tc.card.style.opacity = '1';
+                        } else {
+                            tc.card.style.borderColor = 'rgba(255,255,255,0.1)';
+                            tc.card.style.opacity = '0.6';
+                        }
+                    }
+                });
+
+                showToast(`Connected: ${short} | ${currentOlvmBalance.toLocaleString()} OLVM - Tier: ${currentTier.name}`);
+            } else {
+                document.getElementById('shares-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">OLVM Detected</span>`;
+                document.getElementById('credits-count-display').innerHTML = `0 <span class="text-xs text-[#C5A059] font-mono block mt-1">Sanctuary Days</span>`;
+                document.getElementById('tier-name').innerHTML = "Guest Mode";
+                document.getElementById('nav-identity-display').innerHTML = "NOT CONNECTED";
+                document.getElementById('nav-identity-display-mob').innerHTML = "NOT CONNECTED";
+                document.getElementById('mobile-identity-display').innerHTML = "NOT CONNECTED";
+            }
+        }
+
+        async function connectWallet() {
+            if (window.solana && window.solana.isPhantom) {
+                try {
+                    const resp = await window.solana.connect();
+                    wallet = window.solana;
+                    walletPubKey = wallet.publicKey;
+                    await updateUI();
+                    localStorage.setItem('olivium_wallet_connected', 'true');
+                    const connectBtn = document.getElementById('connectWalletBtn');
+                    if (connectBtn) {
+                        connectBtn.innerText = "DISCONNECT";
+                        connectBtn.classList.remove('bg-[#5a7a2b]');
+                        connectBtn.classList.add('bg-stone-700');
+                    }
+                } catch (err) { showToast("Connection rejected", true); }
+            } else { showToast("Please install Phantom wallet", true);
+                window.open("https://phantom.app/", "_blank"); }
+        }
+
+        async function disconnectWallet() {
+            if (wallet && wallet.disconnect) await wallet.disconnect();
+            wallet = null;
+            walletPubKey = null;
+            await updateUI();
+            localStorage.removeItem('olivium_wallet_connected');
+            const connectBtn = document.getElementById('connectWalletBtn');
+            if (connectBtn) {
+                connectBtn.innerText = "CONNECT WALLET";
+                connectBtn.classList.remove('bg-stone-700');
+                connectBtn.classList.add('bg-[#5a7a2b]');
+            }
+            showToast("Disconnected");
+        }
+
+        const connectBtn = document.getElementById('connectWalletBtn');
+        const mobileConnectBtn = document.getElementById('mobileConnectBtn');
+
+        if (connectBtn) {
+            connectBtn.addEventListener('click', async () => {
+                if (walletPubKey) await disconnectWallet();
+                else await connectWallet();
+            });
+        }
+        if (mobileConnectBtn) {
+            mobileConnectBtn.addEventListener('click', async () => {
+                const overlay = document.getElementById('mobileMenuOverlay');
+                if (overlay) overlay.classList.remove('open');
+                if (walletPubKey) await disconnectWallet();
+                else await connectWallet();
+            });
+        }
+
+        async function restoreSession() {
+            if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
+                try {
+                    await window.solana.connect({ onlyIfTrusted: true });
+                    wallet = window.solana;
+                    walletPubKey = wallet.publicKey;
+                    await updateUI();
+                    const connectBtn = document.getElementById('connectWalletBtn');
+                    if (connectBtn) {
+                        connectBtn.innerText = "DISCONNECT";
+                        connectBtn.classList.remove('bg-[#5a7a2b]');
+                        connectBtn.classList.add('bg-stone-700');
+                    }
+                } catch (e) { localStorage.removeItem('olivium_wallet_connected'); }
+            }
+            await updateUI();
+        }
+
+        // Save Delivery Details
+        document.getElementById('saveDeliveryBtn')?.addEventListener('click', () => {
+            const name = document.getElementById('deliveryName')?.value;
+            const email = document.getElementById('deliveryEmail')?.value;
+            const address = document.getElementById('deliveryAddress')?.value;
+            if (name && email && address) {
+                localStorage.setItem('olivium_delivery', JSON.stringify({ name, email, address }));
+                showToast("✅ Delivery details saved!", false);
+            } else { showToast("Please fill all fields", true); }
+        });
+
+        // Submit Booking
+        document.getElementById('submitBookingBtn')?.addEventListener('click', () => {
+            const dates = document.getElementById('dateRangePicker')?.value;
+            const nights = document.getElementById('nightsSelectionFrame')?.value;
+            const name = document.getElementById('bookingName')?.value;
+            if (name && dates) {
+                showToast(`🏡 Residency request submitted! ${nights} nights requested. Concierge will contact you.`, false);
+            } else { showToast("Please fill all required fields", true); }
+        });
+
+        // Mobile menu
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const closeBtn = document.getElementById('mobileMenuCloseBtn');
+        const overlay = document.getElementById('mobileMenuOverlay');
+        if (menuBtn) menuBtn.addEventListener('click', () => overlay.classList.add('open'));
+        if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+
+        // Cinematic script
+        const narrative = [
+            { text: "IN THE HILLS OF<br>SAN VINCENZO, TUSCANY", duration: 2500 },
+            { text: "Rooted in nature.<br>Growing for generations.", duration: 2500 },
+            { text: "Adopt one or more of these trees.", duration: 2200 },
+            { text: "Walk among your trees.<br>Watch them grow.<br>Receive oil from them yearly.", duration: 2800 },
+            { text: "So you can make memories here —<br>in a private villa,<br>by the pool,<br>with friends and family,<br>curated dinners under the Tuscan sky.", duration: 3500 },
+        ];
+        let currentIndex = 0,
+            currentTimeout = null,
+            progressInterval = null,
+            isPlaying = true;
+        const textDisplay = document.getElementById('cinematicLine');
+        const progressFill = document.getElementById('cinematicProgressFill');
+        const skipBtn = document.getElementById('cinematicSkipBtn');
+
+        function showText(index) {
+            if (!isPlaying) return;
+            if (index >= narrative.length) {
+                if (textDisplay) textDisplay.style.display = 'none';
+                if (progressFill) progressFill.parentElement.style.display = 'none';
+                if (skipBtn) skipBtn.style.display = 'none';
+                return;
+            }
+            const item = narrative[index];
+            textDisplay.innerHTML = item.text;
+            textDisplay.classList.remove('small');
+            if (index >= 3) textDisplay.classList.add('small');
+
+            setTimeout(() => { if (isPlaying) textDisplay.classList.add('active'); }, 100);
+            startProgress(item.duration);
+
+            currentTimeout = setTimeout(() => {
+                textDisplay.classList.remove('active');
+                textDisplay.classList.add('fade-out');
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    textDisplay.classList.remove('fade-out');
+                    currentIndex++;
+                    showText(currentIndex);
+                }, 300);
+            }, item.duration);
+        }
+
+        function startProgress(duration) {
+            if (progressInterval) clearInterval(progressInterval);
+            progressFill.style.width = '0%';
+            const startTime = Date.now();
+            progressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const percent = (elapsed / duration) * 100;
+                if (percent >= 100) { clearInterval(progressInterval);
+                    progressFill.style.width = '100%'; } else { progressFill.style.width = `${percent}%`; }
+            }, 16);
+        }
+
+        function skipCinematic() {
+            isPlaying = false;
+            if (currentTimeout) clearTimeout(currentTimeout);
+            if (progressInterval) clearInterval(progressInterval);
+            if (textDisplay) textDisplay.style.display = 'none';
+            if (progressFill) progressFill.parentElement.style.display = 'none';
+            if (skipBtn) skipBtn.style.display = 'none';
+        }
+
+        if (skipBtn) skipBtn.addEventListener('click', skipCinematic);
+        setTimeout(() => { showText(0); }, 800);
+
+        // Load saved delivery data
+        const savedDelivery = localStorage.getItem('olivium_delivery');
+        if (savedDelivery) {
+            const { name, email, address } = JSON.parse(savedDelivery);
+            if (document.getElementById('deliveryName')) document.getElementById('deliveryName').value = name;
+            if (document.getElementById('deliveryEmail')) document.getElementById('deliveryEmail').value = email;
+            if (document.getElementById('deliveryAddress')) document.getElementById('deliveryAddress').value = address;
+        }
+
+        restoreSession();
+
+        // Initialize flatpickr for date range picker
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr("#dateRangePicker", {
+                mode: "range",
+                minDate: "today",
+                dateFormat: "Y-m-d",
+                placeholder: "Arrival & Departure"
+            });
+        }
+    </script>
 </body>
 </html>
