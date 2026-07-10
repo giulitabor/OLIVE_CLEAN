@@ -85,8 +85,15 @@
     <div class="discover-feature"><span>🤲</span> <span data-en="Touch the land and traditions behind it" data-it="Tocca la terra e le sue tradizioni" data-de="Berühren Sie das Land und seine Traditionen" data-fr="Touchez la terre et ses traditions">Touch the land and traditions behind it</span></div>
     <div class="discover-divider"></div>
     <div class="discover-offer" data-en="✨ Come see, taste &amp; touch. ✨" data-it="✨ Vieni a vedere, gustare e toccare. ✨" data-de="✨ Kommen Sie sehen, schmecken &amp; fühlen. ✨" data-fr="✨ Venez voir, goûter &amp; toucher. ✨">✨ Come see, taste & touch. ✨</div>
-    <a href="#" class="btn-discover" onclick="alert('Request a visit: complimentary night added! Our team will contact you.')" data-en="📅 Request Your Visit → Enjoy a complimentary night" data-it="📅 Richiedi la Tua Visita → Notte in omaggio inclusa" data-de="📅 Besuch Anfragen → Inklusive Gratisübernachtung" data-fr="📅 Demander Votre Visite → Une nuitée gratuite incluse">📅 Request Your Visit → Enjoy a complimentary night</a>
-    <p style="font-size:0.65rem; text-align:center; margin-top:1rem; color:var(--muted);" data-en="*Limited availability, terms apply" data-it="*Disponibilità limitata, si applicano termini e condizioni" data-de="*Begrenzte Verfügbarkeit, es gelten Bedingungen" data-fr="*Disponibilité limitée, des conditions s'appliquent">*Limited availability, terms apply</p>
+<a href="#" 
+   class="btn-discover" 
+   onclick="openVisitModal(); return false;"
+   data-en="📅 Request Your Visit → Enjoy a complimentary night"
+   data-it="📅 Richiedi la Tua Visita → Notte in omaggio inclusa"
+   data-de="📅 Besuch Anfragen → Inklusive Gratisübernachtung"
+   data-fr="📅 Demander Votre Visite → Une nuitée gratuite incluse">
+   📅 Request Your Visit → Enjoy a complimentary night
+</a>    <p style="font-size:0.65rem; text-align:center; margin-top:1rem; color:var(--muted);" data-en="*Limited availability, terms apply" data-it="*Disponibilità limitata, si applicano termini e condizioni" data-de="*Begrenzte Verfügbarkeit, es gelten Bedingungen" data-fr="*Disponibilité limitée, des conditions s'appliquent">*Limited availability, terms apply</p>
   </div>
 </div>
 <div class="hero-scroll"><div class="scroll-line"></div><span data-en="Scroll" data-it="Scorri" data-de="Scrollen" data-fr="Défiler">Scroll</span></div>
@@ -447,6 +454,84 @@ function openLightbox(img){ document.getElementById('lightbox-img').src = img.sr
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow = ''; }
 document.getElementById('lightbox').addEventListener('click', function(e){ if(e.target===this) closeLightbox(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeLightbox(); });
+  function openVisitModal(){
+    document.getElementById("visitModal").style.display="flex";
+}
+
+function closeVisitModal(){
+    document.getElementById("visitModal").style.display="none";
+}
+
+function submitVisitRequest(){
+
+    setTimeout(() => {
+        alert("Request Submitted! 🌿\nOur Olivium team will contact you soon.");
+    }, 300);
+
+}
 </script>
+  <!-- Visit Request Modal -->
+<div id="visitModal" class="visit-modal">
+    <div class="visit-modal-content">
+
+        <button class="visit-close" onclick="closeVisitModal()">×</button>
+
+        <h2>Request Your Olivium Visit</h2>
+        <p>Tell us how we can welcome you to the estate.</p>
+
+        <form id="visitForm" action="https://formsubmit.co/olivium@tutamail.com" method="POST">
+
+            <input type="hidden" name="_subject" value="New Olivium Visit Request">
+            <input type="hidden" name="_captcha" value="false">
+
+            <input 
+                type="text" 
+                name="first_name" 
+                placeholder="First Name"
+                required>
+
+            <input 
+                type="text" 
+                name="last_name" 
+                placeholder="Last Name"
+                required>
+
+            <input 
+                type="email" 
+                name="email" 
+                placeholder="Email Address"
+                required>
+
+            <input 
+                type="tel" 
+                name="phone" 
+                placeholder="Phone Number"
+                required>
+
+            <textarea 
+                name="request"
+                placeholder="Your request, preferred dates, number of guests..."
+                rows="4"
+                required></textarea>
+
+
+            <div class="visit-buttons">
+                <button type="button" 
+                        class="cancel-btn"
+                        onclick="closeVisitModal()">
+                    Cancel
+                </button>
+
+                <button type="submit" 
+                        class="request-btn"
+                        onclick="submitVisitRequest()">
+                    Request Visit
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
 </body>
 </html>
