@@ -462,11 +462,50 @@ function closeVisitModal(){
     document.getElementById("visitModal").style.display="none";
 }
 
-function submitVisitRequest(){
+async function submitVisitRequest(event){
 
-    setTimeout(() => {
-        alert("Request Submitted! 🌿\nOur Olivium team will contact you soon.");
-    }, 300);
+    event.preventDefault();
+
+    const form = document.getElementById("visitForm");
+
+    const data = {
+        first_name: form.first_name.value,
+        last_name: form.last_name.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        request: form.request.value
+    };
+
+    try {
+
+        const response = await fetch("/api/visit-request", {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(data)
+        });
+
+
+        if(response.ok){
+
+            alert("Request Submitted! 🌿\nOur Olivium team will contact you soon.");
+
+            form.reset();
+            closeVisitModal();
+
+        } else {
+
+            alert("There was a problem submitting your request.");
+
+        }
+
+
+    } catch(error){
+
+        alert("Unable to send request. Please try again.");
+
+    }
 
 }
 </script>
@@ -479,8 +518,8 @@ function submitVisitRequest(){
         <h2>Request Your Olivium Visit</h2>
         <p>Tell us how we can welcome you to the estate.</p>
 
-        <form id="visitForm" action="https://formsubmit.co/olivium@tutamail.com" method="POST">
-
+<form id="visitForm" onsubmit="submitVisitRequest(event)">
+  
             <input type="hidden" name="_subject" value="New Olivium Visit Request">
             <input type="hidden" name="_captcha" value="false">
 
