@@ -7,6 +7,8 @@
 <title>OLIVIUM Dashboard</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 
 <style>
 
@@ -496,11 +498,13 @@ button:hover, .btn:hover{
 
       <div class="panel">
         <h2>🏡 Villa Stay</h2>
-        <p>Available nights (next 30 days) — tap to select</p>
-        <div class="stat" id="villa-nights">—</div>
-        <div class="booking" id="villa-days" aria-label="Selectable available days"></div>
-        <input type="email" id="villa-email" placeholder="Email for booking confirmation" style="margin-top:14px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-size:14px;">
-        <button id="btn-book" type="button">Book Selected Nights</button>
+        <p>Reserve villa access using your available nights.</p>
+        <input type="text" id="villa-date-range" placeholder="Arrival & Departure" readonly style="margin-top:14px;width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-size:14px;cursor:pointer;">
+        <div class="stat" id="villa-nights-count" style="font-size:18px;margin-top:10px;">Select dates</div>
+        <input type="text" id="villa-name" placeholder="Full Name" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-size:14px;">
+        <input type="email" id="villa-email" placeholder="Email for booking confirmation" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-size:14px;">
+        <textarea id="villa-notes" placeholder="Requests (optional)" rows="2" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#ffffff08;color:white;font-size:14px;font-family:inherit;"></textarea>
+        <button id="btn-book" type="button">Submit Residency Request</button>
       </div>
 
       <div class="panel">
@@ -538,6 +542,8 @@ button:hover, .btn:hover{
 <div class="footer">
   OLIVIUM DAO • The Living Olive Economy
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <!-- Real data/actions live in dashboard.ts, which imports connection.ts and
      dashboard-data.ts. Needs a bundler (Vite, matching connection.ts's use
