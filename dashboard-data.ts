@@ -5,7 +5,7 @@
  */
 
 import { PublicKey } from "@solana/web3.js";
-import { getProgram, getActiveWallet, connection, sb } from "./connection";
+import { getProgram, getActiveWallet, connection, sb } from "./src/connection";
 
 // Same mint pro.js already checks — membership tier is based on this,
 // separate from on-chain tree share positions.
