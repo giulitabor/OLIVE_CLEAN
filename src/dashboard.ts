@@ -1,341 +1,236 @@
-// ============================================================
-// OLIVIUM DASHBOARD
-// ============================================================
+/**
+ * dashboard-data.ts — Olivium DAO
+ * Real replacements for the mock fetch* functions in the dashboard.
+ * Depends on: getProgram(), getActiveWallet(), connection, sb  (from connection.ts)
+ */
 
-import { createClient } from "@supabase/supabase-js";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
+import { getProgram, getActiveWallet, connection, sb } from "./connection";
 
-import {
-    initProgram,
-    getAllTrees,
-    getProtocol
-} from "./anchor";
+// Same mint pro.js already checks — membership tier is based on this,
+// separate from on-chain tree share positions.
+const OLV_TOKEN_MINT = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
-import {
-    connectWallet,
-    getWalletAddress,
-    getOLVBalance
-} from "./wallet";
+/* ── SOL + OLV token balance ─────────────────────────────────────────── */
 
-import {
-    getAllPositions,
-    getPortfolioSummary
-} from "./portfolio";
+export async function fetchWalletBalances() {
+  const wallet = getActiveWallet();
+  if (!wallet) return { sol: 0, olv: 0 };
 
-// ============================================================
-// CONFIG
-// ============================================================
+  const pubkey = new PublicKey(wallet);
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL!;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY!;
+  const [solLamports, tokenAccounts] = await Promise.all([
+    connection.getBalance(pubkey),
+    connection.getParsedTokenAccountsByOwner(pubkey, { mint: OLV_TOKEN_MINT }),
+  ]);
 
-export const sb = createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+  const olv = tokenAccounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount ?? 0;
 
-export const connection = new Connection(
-    import.meta.env.VITE_RPC_URL,
-    "confirmed"
-);
-
-export const PROGRAM_ID = new PublicKey(
-    import.meta.env.VITE_PROGRAM_ID
-);
-
-// ============================================================
-// STATE
-// ============================================================
-
-let metadataTrees: any[] = [];
-
-let chainTrees: any[] = [];
-
-let positions: any[] = [];
-
-let protocol: any = null;
-
-let wallet: string | null = null;
-
-// ============================================================
-// DOM
-// ============================================================
-
-const $ = (id: string) =>
-    document.getElementById(id)!;
-// ============================================================
-// BOOT
-// ============================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    boot
-);
-
-async function boot() {
-
-    console.log("🌳 Dashboard booting...");
-
-    await initProgram();
-
-    await loadMetadata();
-
-    await loadChainTrees();
-
-    await connect();
-
-    renderDashboard();
-
-    subscribeRealtime();
-
-    console.log("✅ Dashboard Ready");
-}
-async function connect() {
-
-    try {
-
-        await connectWallet();
-
-        wallet = getWalletAddress();
-
-        if (!wallet)
-            return;
-
-        $("wallet-address").innerText =
-            wallet.substring(0,4)
-            + "..."
-            + wallet.substring(wallet.length-4);
-
-        const balance =
-            await getOLVBalance();
-
-        $("olv-balance").innerText =
-            balance.toLocaleString()
-            + " OLV";
-
-        positions =
-            await getAllPositions();
-
-        await updatePortfolio();
-
-    }
-
-    catch(err){
-
-        console.warn(err);
-
-    }
-
-}
-async function loadMetadata() {
-
-    console.log("Loading Supabase metadata...");
-
-    const { data, error } =
-        await sb
-            .from("tree_metadata")
-            .select("*")
-            .order("tree_id");
-
-    if(error){
-
-        console.error(error);
-
-        return;
-
-    }
-
-    metadataTrees = data ?? [];
-
-    console.log(
-        metadataTrees.length,
-        "metadata trees"
-    );
-
+  return { sol: solLamports / 1e9, olv };
 }
 
-async function loadChainTrees() {
+/* ── Share positions (the "Mignole" / portfolio card) ───────────────────
+   Uses a memcmp filter on `owner` so we only pull this wallet's accounts,
+   not every SharePosition on the program (offset 8 = past the 8-byte
+   Anchor discriminator, matching the pattern already used in loadPositions()). */
 
-    console.log("Loading on-chain trees...");
+export async function fetchPositions() {
+  const wallet = getActiveWallet();
+  if (!wallet) return [];
 
-    chainTrees =
-        await getAllTrees();
-
-    protocol =
-        await getProtocol();
-
-    console.log(
-        chainTrees.length,
-        "on-chain trees"
-    );
-
-}
-function mergedTrees(){
-
-    return metadataTrees.map(meta=>{
-
-        const chain =
-            chainTrees.find(
-
-                t=>
-
-                String(t.account.treeId)
-                ===
-                String(meta.tree_id)
-
-            );
-
-        return{
-
-            ...meta,
-
-            chain
-
-        };
-
-    });
-
+  const program = getProgram();
+  return program.account.sharePosition.all([
+    { memcmp: { offset: 8, bytes: wallet } },
+  ]);
 }
 
-function renderDashboard(){
+/* ── Trees — needed to turn shares_owned into oil/carbon amounts.
+   Fetches all trees once; for a large collection this should move to a
+   getMultipleAccounts call keyed off the distinct tree_ids in the user's
+   positions instead of program.account.tree.all(). Fine for now. ────── */
 
-    const trees =
-        mergedTrees();
-
-    if(!trees.length)
-        return;
-
-    renderHero(trees[0]);
-
-    renderTreeList(trees);
-
+export async function fetchTrees() {
+  const program = getProgram();
+  return program.account.tree.all();
 }
 
-function renderHero(tree:any){
+/* ── Portfolio card ──────────────────────────────────────────────────── 
+   "Mignole" is the fractional share unit itself, so the portfolio number
+   is the SUM of shares_owned across every position (all tree varieties),
+   not a count of SharePosition accounts and not filtered by variety. */
 
-    $("hero-name").innerText =
-        tree.variety;
+export async function fetchPortfolio() {
+  const [{ sol, olv }, positions] = await Promise.all([
+    fetchWalletBalances(),
+    fetchPositions(),
+  ]);
 
-    $("hero-tree-id").innerText =
-        "#" + tree.tree_id;
+  const mignoleUnits = positions.reduce(
+    (sum, pos) => sum + Number(pos.account.sharesOwned),
+    0
+  );
 
-    $("hero-age").innerText =
-        tree.age_years + " yrs";
-
-    $("hero-variety").innerText =
-        tree.variety;
-
-    $("hero-location").innerText =
-        tree.latitude
-        + ", "
-        + tree.longitude;
-
-    $("hero-health").innerText =
-        Math.round(
-            tree.health_score*100
-        )+"%";
-
-    $("health-fill").style.width =
-        (tree.health_score*100)
-        +"%";
-
-    if(tree.photo_url){
-
-        (
-            $("hero-photo") as HTMLDivElement
-        ).style.backgroundImage=
-            `url(${tree.photo_url})`;
-
-    }
-
-}
-function renderTreeList(
-    trees:any[]
-){
-
-    const div =
-        $("tree-list");
-
-    div.innerHTML="";
-
-    trees.forEach(tree=>{
-
-        const row =
-            document.createElement("div");
-
-        row.className="tree-row";
-
-        const sold =
-            tree.chain
-            ?
-            tree.chain.account.sharesSold.toNumber()
-            :
-            0;
-
-        const total =
-            tree.chain
-            ?
-            tree.chain.account.totalShares.toNumber()
-            :
-            0;
-
-        row.innerHTML=`
-
-        <strong>${tree.variety}</strong>
-
-        <br>
-
-        #${tree.tree_id}
-
-        <br>
-
-        ${sold}/${total} shares
-
-        `;
-
-        div.appendChild(row);
-
-    });
-
+  return {
+    mignoleUnits,
+    olvTokens: olv, // balance only — staking not live on-chain yet
+    solBalance: sol,
+  };
 }
 
-async function updatePortfolio() {
+/* ── On-chain entitlement: oil + carbon, before any claim/sell ──────────
+   Derived, not stored: each position's share of a tree's last harvest
+   and lifetime CO2, scaled by shares_owned / total_shares. This is the
+   *entitlement*; fetchOilAllocation() below nets out what's already been
+   claimed or sold via the Supabase ledger. */
 
-    if (!wallet) return;
+export async function fetchEntitlement() {
+  const [positions, trees] = await Promise.all([fetchPositions(), fetchTrees()]);
 
-    const portfolio = await getPortfolioSummary(wallet);
+  const treeById = new Map(trees.map(t => [t.account.treeId, t.account]));
 
-    $("portfolio-olv").innerText =
-        portfolio.olv.toLocaleString();
+  let oilMl = 0;
+  let co2Kg = 0;
 
-    $("portfolio-positions").innerText =
-        portfolio.positions.toString();
+  for (const pos of positions) {
+    const tree = treeById.get(pos.account.treeId);
+    if (!tree || Number(tree.totalShares) === 0) continue;
 
-    $("portfolio-guardians").innerText =
-        portfolio.guardians.toString();
+    const shareFraction = Number(pos.account.sharesOwned) / Number(tree.totalShares);
+    oilMl += shareFraction * Number(tree.lastHarvestYieldMl);
+    co2Kg += shareFraction * Number(tree.totalCo2Kg);
+  }
 
+  return {
+    oilLitresEntitled: oilMl / 1000,
+    carbonTonnes: co2Kg / 1000, // nothing nets this out yet — carbon isn't claimable/sellable
+  };
 }
-async function loadWeather(tree:any){
 
-    if(
-        tree.latitude==null ||
-        tree.longitude==null
-    ) return;
+/* ── Oil allocation card: entitlement minus what's already fulfilled ──── */
 
-    const url =
-`https://api.open-meteo.com/v1/forecast?latitude=${tree.latitude}&longitude=${tree.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`;
+export async function fetchOilAllocation() {
+  const wallet = getActiveWallet();
+  const { oilLitresEntitled, carbonTonnes } = await fetchEntitlement();
 
-    const r=await fetch(url);
+  if (!wallet) {
+    return { available: 0, entitled: oilLitresEntitled, carbonTonnes, pending: 0 };
+  }
 
-    const j=await r.json();
+  const { data, error } = await sb
+    .from("oil_transactions")
+    .select("litres, status")
+    .eq("wallet", wallet);
 
-    $("weather-temp").innerText =
-        `${j.current.temperature_2m}°C`;
+  if (error) throw error;
 
-    $("weather-humidity").innerText =
-        `${j.current.relative_humidity_2m}%`;
+  const completed = (data ?? [])
+    .filter(t => t.status === "completed")
+    .reduce((sum, t) => sum + Number(t.litres), 0);
 
-    $("weather-wind").innerText =
-        `${j.current.wind_speed_10m} km/h`;
+  const pending = (data ?? [])
+    .filter(t => t.status === "pending" || t.status === "processing")
+    .reduce((sum, t) => sum + Number(t.litres), 0);
 
+  return {
+    available: Math.max(0, oilLitresEntitled - completed - pending),
+    entitled: oilLitresEntitled,
+    carbonTonnes,
+    pending,
+  };
+}
+
+/* ── "Claim Delivery" button → writes a pending oil_transactions row.
+   Actual fulfillment (shipping) happens off this — ops flips status to
+   'processing'/'completed' once the oil ships. */
+
+export async function requestOilClaim(litres: number, shippingName: string, shippingAddress: object) {
+  const wallet = getActiveWallet();
+  if (!wallet) throw new Error("Connect wallet first");
+
+  const { available } = await fetchOilAllocation();
+  if (litres > available) throw new Error(`Only ${available.toFixed(2)}L available to claim`);
+
+  const { error } = await sb.from("oil_transactions").insert({
+    wallet,
+    type: "claim_delivery",
+    litres,
+    shipping_name: shippingName,
+    shipping_address: shippingAddress,
+    status: "pending",
+  });
+
+  if (error) throw error;
+}
+
+/* ── "Sell to DAO" button → writes a pending oil_transactions row.
+   NOTE: payout_amount needs an oil price to convert litres → OLVM/SOL.
+   No price oracle/config for that exists yet in ProtocolConfig or
+   Supabase — flag this back, I'm leaving payout_amount null/pending
+   until there's a rate to compute it from. */
+
+export async function requestSellToDao(litres: number, payoutCurrency: "OLVM" | "SOL") {
+  const wallet = getActiveWallet();
+  if (!wallet) throw new Error("Connect wallet first");
+
+  const { available } = await fetchOilAllocation();
+  if (litres > available) throw new Error(`Only ${available.toFixed(2)}L available to sell`);
+
+  const { error } = await sb.from("oil_transactions").insert({
+    wallet,
+    type: "sell_to_dao",
+    litres,
+    payout_currency: payoutCurrency,
+    payout_amount: null, // TODO: compute once a litres→currency rate exists
+    status: "pending",
+  });
+
+  if (error) throw error;
+}
+
+/* ── Villa booking calendar ──────────────────────────────────────────── */
+
+export async function fetchVillaAvailability(fromDate: string, toDate: string) {
+  const { data, error } = await sb
+    .from("villa_nights")
+    .select("night_date, status")
+    .gte("night_date", fromDate)
+    .lte("night_date", toDate)
+    .order("night_date", { ascending: true });
+
+  if (error) throw error;
+
+  const availableNights = (data ?? []).filter(n => n.status === "available");
+  return {
+    availableNights: availableNights.length,
+    days: availableNights.map(n => n.night_date),
+  };
+}
+
+/* ── "Book Stay" → marks nights as booked for this wallet.
+   Runs as a single request so partial-night races are visible immediately
+   rather than silently overbooking; a stricter version would do this in a
+   Postgres function with a row lock instead of a plain client update. */
+
+export async function requestVillaBooking(nightDates: string[], guestEmail: string) {
+  const wallet = getActiveWallet();
+  if (!wallet) throw new Error("Connect wallet first");
+
+  const { data: existing, error: checkError } = await sb
+    .from("villa_nights")
+    .select("night_date, status")
+    .in("night_date", nightDates);
+
+  if (checkError) throw checkError;
+
+  const unavailable = (existing ?? []).filter(n => n.status !== "available");
+  if (unavailable.length > 0) {
+    throw new Error(`Nights no longer available: ${unavailable.map(n => n.night_date).join(", ")}`);
+  }
+
+  const { error } = await sb
+    .from("villa_nights")
+    .update({ status: "booked", wallet, guest_email: guestEmail })
+    .in("night_date", nightDates);
+
+  if (error) throw error;
 }
