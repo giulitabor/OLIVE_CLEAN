@@ -5,7 +5,7 @@
  * olivium:disconnected instead of assuming a connection at load time.
  */
 
-import { getIdentity, getActiveWallet } from "./connection";
+import { getIdentity, getActiveWallet } from "./src/connection";
 import {
   fetchPortfolio,
   fetchEntitlement,
