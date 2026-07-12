@@ -1,5 +1,49 @@
 
- /* Responsive Design for Principles Grid */
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .principles-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 1.5rem !important;
+      padding: 0 1rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .principles-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.2rem !important;
+      padding: 0 0.5rem;
+    }
+    
+    .principle-card {
+      padding: 1.5rem !important;
+    }
+    
+    .principle-card h3 {
+      font-size: 1.1rem !important;
+    }
+    
+    .section-title {
+      font-size: 2.2rem !important;
+    }
+    
+    .glass-panel {
+      padding: 2rem 1.5rem !important;
+      margin: 3rem 0.5rem 0 !important;
+    }
+    
+    .glass-panel h2 {
+      font-size: 2rem !important;
+    }
+  }
+
+  .principle-card:hover {
+    border-color: rgba(197,160,89,0.3) !important;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+ 
+/* Responsive Design for Principles Grid */
   @media (max-width: 1024px) {
     .principles-grid {
       grid-template-columns: repeat(2, 1fr) !important;
