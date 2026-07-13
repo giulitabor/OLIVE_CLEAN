@@ -1,4 +1,85 @@
+/* Membership Details Section - matching Founder Story aesthetic */
+#membership-details {
+  background: var(--bg-dark);
+  padding: 4rem 0 5rem;
+}
 
+#membership-details .wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.membership-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+/* Principle Cards - matching .principle-card from your original but with Founder Section styling */
+.principle-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(197, 160, 89, 0.12);
+  border-radius: 16px;
+  padding: 1.8rem 1.8rem 2rem;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(4px);
+}
+
+.principle-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(197, 160, 89, 0.25);
+  transform: translateY(-2px);
+}
+
+.principle-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.8rem;
+}
+
+.principle-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.02em;
+}
+
+.principle-body {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0;
+}
+
+.principle-body .gold-highlight {
+  color: var(--gold);
+}
+
+.principle-body .example-note {
+  color: var(--gold);
+  font-size: 0.85rem;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+/* Responsive - matching founder section breakpoints */
+@media (max-width: 992px) {
+  .membership-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .membership-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  #membership-details .wrap {
+    padding: 0 1.25rem;
+  }
+}
   /* Responsive */
   @media (max-width: 1024px) {
     .principles-grid {
