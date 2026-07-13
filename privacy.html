@@ -64,6 +64,7 @@ nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10
   font-weight:600;
   color:#fff;
   letter-spacing:0.06em;
+  white-space:nowrap;
 }
 .nav-logo em {
   font-style:italic;
@@ -76,17 +77,18 @@ nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10
 #nav-links {
   display:flex;
   list-style:none;
-  gap:2rem;
+  gap:1.2rem;
   align-items:center;
 }
 #nav-links a {
   color:var(--muted);
   text-decoration:none;
-  font-size:0.85rem;
+  font-size:0.78rem;
   font-weight:400;
   letter-spacing:0.04em;
   transition:color 0.3s ease;
   position:relative;
+  white-space:nowrap;
 }
 #nav-links a:hover { color:#fff; }
 #nav-links a::after {
@@ -104,7 +106,7 @@ nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10
 .nav-cta {
   background:var(--gold);
   color:#0a0f08 !important;
-  padding:0.5rem 1.5rem;
+  padding:0.4rem 1.2rem;
   border-radius:50px;
   font-weight:500 !important;
 }
@@ -114,50 +116,61 @@ nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10
 /* ===== LANGUAGE SELECTOR ===== */
 .lang-selector {
   position:relative;
-  margin-left:0.5rem;
+  margin-left:0.2rem;
 }
 .lang-select-btn {
   background:rgba(255,255,255,0.06);
   border:1px solid var(--border-gold);
   color:#fff;
-  padding:0.4rem 1rem;
+  padding:0.3rem 0.8rem;
   border-radius:50px;
   cursor:pointer;
-  font-size:0.8rem;
+  font-size:0.7rem;
   font-family:'DM Sans',sans-serif;
   transition:all 0.3s ease;
   display:flex;
   align-items:center;
-  gap:0.4rem;
+  gap:0.3rem;
+  letter-spacing:0.04em;
+  min-width:52px;
+  justify-content:center;
 }
 .lang-select-btn:hover {
   background:rgba(255,255,255,0.1);
   border-color:var(--gold);
 }
+.lang-select-btn .arrow {
+  font-size:0.55rem;
+  opacity:0.6;
+  transition:transform 0.3s ease;
+}
+.lang-select-btn .arrow.open {
+  transform:rotate(180deg);
+}
 .lang-dropdown {
   display:none;
   position:absolute;
-  top:calc(100% + 8px);
+  top:calc(100% + 6px);
   right:0;
   background:rgba(10,15,8,0.96);
   backdrop-filter:blur(16px);
   border:1px solid var(--border-gold);
-  border-radius:12px;
-  padding:0.5rem;
-  min-width:140px;
+  border-radius:10px;
+  padding:0.4rem;
+  min-width:130px;
   box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 .lang-dropdown.show { display:block; }
 .lang-opt {
   display:block;
   width:100%;
-  padding:0.5rem 1rem;
+  padding:0.4rem 0.9rem;
   background:none;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   color:var(--muted);
   font-family:'DM Sans',sans-serif;
-  font-size:0.8rem;
+  font-size:0.75rem;
   cursor:pointer;
   text-align:left;
   transition:all 0.2s ease;
@@ -290,45 +303,6 @@ nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10
 }
 .legal-content .highlight-box p:last-child { margin-bottom:0; }
 
-.legal-content .glass-card {
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--border-gold);
-  border-radius:16px;
-  padding:1.8rem 2rem;
-  margin:1.5rem 0;
-  backdrop-filter:blur(4px);
-}
-.legal-content .glass-card h4 {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.2rem;
-  color:#fff;
-  margin-bottom:0.8rem;
-}
-.legal-content .glass-card p:last-child { margin-bottom:0; }
-
-.legal-content .two-col {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:1.5rem;
-  margin:1.5rem 0;
-}
-.legal-content .two-col .col {
-  background:rgba(255,255,255,0.02);
-  border:1px solid var(--border-gold);
-  border-radius:12px;
-  padding:1.5rem;
-}
-.legal-content .two-col .col h5 {
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.1rem;
-  color:var(--gold);
-  margin-bottom:0.6rem;
-}
-.legal-content .two-col .col p {
-  font-size:0.9rem;
-  margin-bottom:0;
-}
-
 /* ===== TABLE OF CONTENTS ===== */
 .toc {
   display:grid;
@@ -408,10 +382,14 @@ footer {
 }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width:1100px) {
+  #nav-links { gap:0.8rem; }
+  #nav-links a { font-size:0.7rem; }
+  .lang-select-btn { font-size:0.65rem; padding:0.25rem 0.6rem; min-width:44px; }
+}
+
 @media (max-width:992px) {
-  .legal-content .two-col { grid-template-columns:1fr; }
   .legal-hero h1 { font-size:3rem; }
-  .lang-selector { margin-left:0; }
 }
 
 @media (max-width:768px) {
@@ -423,12 +401,13 @@ footer {
     top:72px;
     left:0;
     right:0;
-    padding:2rem;
-    gap:1.5rem;
+    padding:1.5rem 2rem;
+    gap:1.2rem;
     border-bottom:1px solid var(--border-gold);
     align-items:stretch;
   }
   #nav-links.open { display:flex; }
+  #nav-links a { font-size:0.9rem; }
   #nav-ham { display:flex; }
   .legal-hero { padding:120px 1.25rem 60px; }
   .legal-hero h1 { font-size:2.4rem; }
@@ -437,13 +416,21 @@ footer {
   .section-header h2 { font-size:2rem; }
   .toc { grid-template-columns:1fr 1fr; padding:1.5rem; }
   .lang-selector { width:100%; }
-  .lang-select-btn { width:100%; justify-content:center; }
+  .lang-select-btn { 
+    width:100%; 
+    justify-content:center; 
+    padding:0.5rem;
+    font-size:0.85rem;
+  }
+  .lang-dropdown {
+    right:auto;
+    left:0;
+    min-width:100%;
+  }
 }
 
 @media (max-width:480px) {
   .toc { grid-template-columns:1fr; }
-  .legal-content .glass-card { padding:1.2rem; }
-  .legal-content .highlight-box { padding:1rem 1.2rem; }
 }
 </style>
 </head>
@@ -467,16 +454,17 @@ footer {
       <li><a href="#ai" data-en="AI" data-it="IA" data-de="KI" data-fr="IA">AI</a></li>
       <li><a href="index.html" class="nav-cta" data-en="← Home" data-it="← Home" data-de="← Startseite" data-fr="← Accueil">← Home</a></li>
       
-      <!-- LANGUAGE SELECTOR -->
+      <!-- LANGUAGE SELECTOR - Desktop -->
       <li class="lang-selector">
         <button class="lang-select-btn" id="langBtn" onclick="toggleLangDropdown()">
-          <span id="activeLang">EN</span> ▼
+          <span id="activeLang">EN</span>
+          <span class="arrow" id="langArrow">▼</span>
         </button>
         <div class="lang-dropdown" id="langDropdown">
-          <button class="lang-opt active" data-lang="en" onclick="setLanguage('en')">English</button>
-          <button class="lang-opt" data-lang="it" onclick="setLanguage('it')">Italiano</button>
-          <button class="lang-opt" data-lang="de" onclick="setLanguage('de')">Deutsch</button>
-          <button class="lang-opt" data-lang="fr" onclick="setLanguage('fr')">Français</button>
+          <button class="lang-opt active" data-lang="en" onclick="setLanguage('en')">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="it" onclick="setLanguage('it')">🇮🇹 Italiano</button>
+          <button class="lang-opt" data-lang="de" onclick="setLanguage('de')">🇩🇪 Deutsch</button>
+          <button class="lang-opt" data-lang="fr" onclick="setLanguage('fr')">🇫🇷 Français</button>
         </div>
       </li>
     </ul>
@@ -519,7 +507,7 @@ footer {
 </section>
 
 <!-- ============================================================
-     1. PRIVACY POLICY (Abbreviated for space - full version in previous response)
+     1. PRIVACY POLICY
 ============================================================ -->
 <section class="section" id="privacy">
   <div class="wrap">
@@ -544,6 +532,19 @@ footer {
         <li><strong data-en="Identity Data:" data-it="Dati Identificativi:" data-de="Identitätsdaten:" data-fr="Données d'Identité:">Identity Data:</strong> <span data-en="Full name, date of birth, nationality, passport or ID number (for residency verification)." data-it="Nome completo, data di nascita, nazionalità, numero di passaporto o documento d'identità (per verifica della residenza)." data-de="Vollständiger Name, Geburtsdatum, Nationalität, Reisepass- oder Ausweisnummer (zur Residenzverifizierung)." data-fr="Nom complet, date de naissance, nationalité, numéro de passeport ou de pièce d'identité (pour la vérification de la résidence).">Full name, date of birth, nationality, passport or ID number (for residency verification).</span></li>
         <li><strong data-en="Contact Data:" data-it="Dati di Contatto:" data-de="Kontaktdaten:" data-fr="Données de Contact:">Contact Data:</strong> <span data-en="Email address, postal address, telephone number." data-it="Indirizzo email, indirizzo postale, numero di telefono." data-de="E-Mail-Adresse, Postanschrift, Telefonnummer." data-fr="Adresse e-mail, adresse postale, numéro de téléphone.">Email address, postal address, telephone number.</span></li>
         <li><strong data-en="Membership Data:" data-it="Dati di Abbonamento:" data-de="Mitgliedschaftsdaten:" data-fr="Données d'Adhésion:">Membership Data:</strong> <span data-en="Membership tier, tree assignments, olive allocations, residency credits, booking history." data-it="Livello di abbonamento, assegnazioni degli alberi, allocazioni di olio, crediti di residenza, cronologia prenotazioni." data-de="Mitgliedsstufe, Baumzuweisungen, Olivenzuteilungen, Residenz-Credits, Buchungshistorie." data-fr="Niveau d'adhésion, attributions d'arbres, allocations d'huile, crédits de résidence, historique des réservations.">Membership tier, tree assignments, olive allocations, residency credits, booking history.</span></li>
+        <li><strong data-en="Payment Data:" data-it="Dati di Pagamento:" data-de="Zahlungsdaten:" data-fr="Données de Paiement:">Payment Data:</strong> <span data-en="Billing address, payment method details (processed securely through PCI-compliant third parties)." data-it="Indirizzo di fatturazione, dettagli del metodo di pagamento (elaborati in modo sicuro attraverso terze parti conformi PCI)." data-de="Rechnungsadresse, Zahlungsmethodendetails (sicher verarbeitet durch PCI-konforme Dritte)." data-fr="Adresse de facturation, détails du mode de paiement (traités en toute sécurité par des tiers conformes PCI).">Billing address, payment method details (processed securely through PCI-compliant third parties).</span></li>
+        <li><strong data-en="Technical Data:" data-it="Dati Tecnici:" data-de="Technische Daten:" data-fr="Données Techniques:">Technical Data:</strong> <span data-en="IP address, browser type, device information, usage data from our website and app." data-it="Indirizzo IP, tipo di browser, informazioni sul dispositivo, dati di utilizzo del nostro sito web e app." data-de="IP-Adresse, Browsertyp, Geräteinformationen, Nutzungsdaten von unserer Website und App." data-fr="Adresse IP, type de navigateur, informations sur l'appareil, données d'utilisation de notre site Web et application.">IP address, browser type, device information, usage data from our website and app.</span></li>
+        <li><strong data-en="Marketing &amp; Communications Data:" data-it="Dati di Marketing &amp; Comunicazione:" data-de="Marketing- &amp; Kommunikationsdaten:" data-fr="Données de Marketing &amp; Communication:">Marketing &amp; Communications Data:</strong> <span data-en="Your preferences for receiving marketing communications from us." data-it="Le tue preferenze per ricevere comunicazioni di marketing da noi." data-de="Ihre Präferenzen für den Erhalt von Marketingmitteilungen von uns." data-fr="Vos préférences concernant la réception de communications marketing de notre part.">Your preferences for receiving marketing communications from us.</span></li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.2 How We Use Your Data" data-it="1.2 Come Utilizziamo i Tuoi Dati" data-de="1.2 Wie wir Ihre Daten verwenden" data-fr="1.2 Comment Nous Utilisons Vos Données">1.2 How We Use Your Data</h3>
+      <p data-en="We process your personal data for the following purposes, relying on one or more lawful bases under the GDPR:" data-it="Trattiamo i tuoi dati personali per i seguenti scopi, basandoci su una o più basi legali ai sensi del GDPR:" data-de="Wir verarbeiten Ihre personenbezogenen Daten für die folgenden Zwecke, gestützt auf eine oder mehrere rechtmäßige Grundlagen gemäß der DSGVO:" data-fr="Nous traitons vos données personnelles aux fins suivantes, en nous appuyant sur une ou plusieurs bases légales conformément au RGPD:">We process your personal data for the following purposes, relying on one or more lawful bases under the GDPR:</p>
+      <ul>
+        <li><strong data-en="Membership Administration:" data-it="Amministrazione dell'Abbonamento:" data-de="Mitgliedschaftsverwaltung:" data-fr="Administration de l'Adhésion:">Membership Administration:</strong> <span data-en="To manage your membership, allocate trees, process olive oil distributions, and provide member services. (Contractual necessity)" data-it="Per gestire il tuo abbonamento, assegnare alberi, elaborare le distribuzioni di olio d'oliva e fornire servizi per i soci. (Necessità contrattuale)" data-de="Zur Verwaltung Ihrer Mitgliedschaft, Zuweisung von Bäumen, Abwicklung von Olivenölverteilungen und Bereitstellung von Mitgliederdiensten. (Vertragliche Notwendigkeit)" data-fr="Pour gérer votre adhésion, attribuer des arbres, traiter les distributions d'huile d'olive et fournir des services aux membres. (Nécessité contractuelle)">To manage your membership, allocate trees, process olive oil distributions, and provide member services. <em>(Contractual necessity)</em></span></li>
+        <li><strong data-en="Residency Bookings:" data-it="Prenotazioni di Residenza:" data-de="Residenzbuchungen:" data-fr="Réservations de Résidence:">Residency Bookings:</strong> <span data-en="To process stay reservations, handle check-in/out, and provide concierge services. (Contractual necessity)" data-it="Per elaborare le prenotazioni di soggiorno, gestire il check-in/out e fornire servizi di concierge. (Necessità contrattuale)" data-de="Zur Bearbeitung von Aufenthaltsreservierungen, Abwicklung von Check-in/out und Bereitstellung von Concierge-Diensten. (Vertragliche Notwendigkeit)" data-fr="Pour traiter les réservations de séjour, gérer l'enregistrement/le départ et fournir des services de conciergerie. (Nécessité contractuelle)">To process stay reservations, handle check-in/out, and provide concierge services. <em>(Contractual necessity)</em></span></li>
+        <li><strong data-en="Communication:" data-it="Comunicazione:" data-de="Kommunikation:" data-fr="Communication:">Communication:</strong> <span data-en="To send administrative emails, membership updates, harvest notifications, and respond to inquiries. (Legitimate interest)" data-it="Per inviare email amministrative, aggiornamenti dell'abbonamento, notifiche di raccolta e rispondere alle richieste. (Interesse legittimo)" data-de="Zum Versenden administrativer E-Mails, Mitgliedschaftsaktualisierungen, Erntebenachrichtigungen und zur Beantwortung von Anfragen. (Berechtigtes Interesse)" data-fr="Pour envoyer des e-mails administratifs, des mises à jour d'adhésion, des notifications de récolte et répondre aux demandes. (Intérêt légitime)">To send administrative emails, membership updates, harvest notifications, and respond to inquiries. <em>(Legitimate interest)</em></span></li>
+        <li><strong data-en="Marketing:" data-it="Marketing:" data-de="Marketing:" data-fr="Marketing:">Marketing:</strong> <span data-en="To inform you about estate events, new offerings, and member experiences — only where you have consented or where permitted by law. (Consent / Legitimate interest)" data-it="Per informarti sugli eventi della tenuta, nuove offerte ed esperienze per i soci — solo dove hai acconsentito o dove consentito dalla legge. (Consenso / Interesse legittimo)" data-de="Um Sie über Anwesenheitsveranstaltungen, neue Angebote und Mitgliedererlebnisse zu informieren - nur wo Sie eingewilligt haben oder wo gesetzlich zulässig. (Einwilligung / Berechtigtes Interesse)" data-fr="Pour vous informer sur les événements du domaine, les nouvelles offres et les expériences des membres — uniquement lorsque vous avez consenti ou lorsque la loi le permet. (Consentement / Intérêt légitime)">To inform you about estate events, new offerings, and member experiences — only where you have consented or where permitted by law. <em>(Consent / Legitimate interest)</em></span></li>
+        <li><strong data-en="Security &amp; Compliance:" data-it="Sicurezza &amp; Conformità:" data-de="Sicherheit &amp; Compliance:" data-fr="Sécurité &amp; Conformité:">Security &amp; Compliance:</strong> <span data-en="To protect our systems, prevent fraud, and comply with legal obligations. (Legal obligation / Legitimate interest)" data-it="Per proteggere i nostri sistemi, prevenire frodi e rispettare gli obblighi legali. (Obbligo legale / Interesse legittimo)" data-de="Zum Schutz unserer Systeme, zur Betrugsprävention und zur Einhaltung gesetzlicher Verpflichtungen. (Rechtliche Verpflichtung / Berechtigtes Interesse)" data-fr="Pour protéger nos systèmes, prévenir la fraude et respecter les obligations légales. (Obligation légale / Intérêt légitime)">To protect our systems, prevent fraud, and comply with legal obligations. <em>(Legal obligation / Legitimate interest)</em></span></li>
       </ul>
 
       <a href="#" class="back-top" data-en="↑ Back to Top" data-it="↑ Torna su" data-de="↑ Zurück nach oben" data-fr="↑ Retour en haut">↑ Back to Top</a>
@@ -551,9 +552,9 @@ footer {
   </div>
 </section>
 
-<!-- ============================================================
-     2. TERMS & CONDITIONS
-============================================================ -->
+<!-- ===== REMAINING SECTIONS (2-12) - Full content from previous response would go here ===== -->
+<!-- For brevity, sections 2-12 are abbreviated but follow the same pattern -->
+
 <section class="section" id="terms">
   <div class="wrap">
     <div class="section-header">
@@ -568,9 +569,6 @@ footer {
   </div>
 </section>
 
-<!-- ============================================================
-     3-12. REMAINING SECTIONS (Abbreviated - full content from previous response)
-============================================================ -->
 <section class="section" id="membership">
   <div class="wrap">
     <div class="section-header">
@@ -614,8 +612,12 @@ let currentLang = localStorage.getItem('olivium_lang') || 'en';
 // --- Language Dropdown ---
 function toggleLangDropdown() {
   const dropdown = document.getElementById('langDropdown');
+  const arrow = document.getElementById('langArrow');
   if (dropdown) {
     dropdown.classList.toggle('show');
+    if (arrow) {
+      arrow.classList.toggle('open');
+    }
   }
 }
 
@@ -623,8 +625,12 @@ function toggleLangDropdown() {
 window.addEventListener('click', function(e) {
   const btn = document.getElementById('langBtn');
   const dropdown = document.getElementById('langDropdown');
+  const arrow = document.getElementById('langArrow');
   if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
     dropdown.classList.remove('show');
+    if (arrow) {
+      arrow.classList.remove('open');
+    }
   }
 });
 
@@ -634,7 +640,7 @@ function setLanguage(lang) {
   localStorage.setItem('olivium_lang', lang);
   document.documentElement.lang = lang;
   
-  // Update active language button (desktop)
+  // Update active language button
   const activeLang = document.getElementById('activeLang');
   if (activeLang) {
     activeLang.innerText = lang.toUpperCase();
@@ -647,11 +653,20 @@ function setLanguage(lang) {
     }
   });
   
-  // --- Translate all elements with data-* attributes ---
+  // Close dropdown
+  const dropdown = document.getElementById('langDropdown');
+  const arrow = document.getElementById('langArrow');
+  if (dropdown) {
+    dropdown.classList.remove('show');
+  }
+  if (arrow) {
+    arrow.classList.remove('open');
+  }
+  
+  // Translate all elements with data-* attributes
   document.querySelectorAll('[data-en]').forEach(el => {
     const translation = el.getAttribute(`data-${lang}`);
     if (translation !== null && translation !== '') {
-      // Preserve HTML if translation contains tags
       if (translation.includes('<') && translation.includes('>')) {
         el.innerHTML = translation;
       } else {
@@ -660,22 +675,14 @@ function setLanguage(lang) {
     }
   });
   
-  // Close dropdown after selection
-  const dropdown = document.getElementById('langDropdown');
-  if (dropdown) {
-    dropdown.classList.remove('show');
-  }
-  
   // Dispatch custom event
   window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: lang } }));
 }
 
-// --- Initialize Language on Page Load ---
+// --- Initialize Language ---
 document.addEventListener('DOMContentLoaded', function() {
-  // Set initial language
   setLanguage(currentLang);
   
-  // Set active button state
   document.querySelectorAll('.lang-opt').forEach(btn => {
     btn.classList.remove('active');
     if (btn.getAttribute('data-lang') === currentLang) {
@@ -709,7 +716,7 @@ if (ham && links) {
   });
 }
 
-// --- SMOOTH SCROLL FOR TOC LINKS ---
+// --- SMOOTH SCROLL ---
 document.querySelectorAll('.toc a, .back-top').forEach(link => {
   link.addEventListener('click', function(e) {
     const href = this.getAttribute('href');
