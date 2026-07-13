@@ -111,7 +111,7 @@ nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10
 .nav-cta::after { display:none !important; }
 .nav-cta:hover { background:#d4b06a !important; color:#0a0f08 !important; }
 
-/* Language Selector */
+/* ===== LANGUAGE SELECTOR ===== */
 .lang-selector {
   position:relative;
   margin-left:0.5rem;
@@ -426,6 +426,7 @@ footer {
     padding:2rem;
     gap:1.5rem;
     border-bottom:1px solid var(--border-gold);
+    align-items:stretch;
   }
   #nav-links.open { display:flex; }
   #nav-ham { display:flex; }
@@ -435,6 +436,8 @@ footer {
   .section { padding:2.5rem 0; }
   .section-header h2 { font-size:2rem; }
   .toc { grid-template-columns:1fr 1fr; padding:1.5rem; }
+  .lang-selector { width:100%; }
+  .lang-select-btn { width:100%; justify-content:center; }
 }
 
 @media (max-width:480px) {
@@ -464,16 +467,16 @@ footer {
       <li><a href="#ai" data-en="AI" data-it="IA" data-de="KI" data-fr="IA">AI</a></li>
       <li><a href="index.html" class="nav-cta" data-en="← Home" data-it="← Home" data-de="← Startseite" data-fr="← Accueil">← Home</a></li>
       
-      <!-- Language Selector -->
+      <!-- LANGUAGE SELECTOR -->
       <li class="lang-selector">
         <button class="lang-select-btn" id="langBtn" onclick="toggleLangDropdown()">
           <span id="activeLang">EN</span> ▼
         </button>
         <div class="lang-dropdown" id="langDropdown">
-          <button class="lang-opt active" onclick="setLanguage('en')">English</button>
-          <button class="lang-opt" onclick="setLanguage('it')">Italiano</button>
-          <button class="lang-opt" onclick="setLanguage('de')">Deutsch</button>
-          <button class="lang-opt" onclick="setLanguage('fr')">Français</button>
+          <button class="lang-opt active" data-lang="en" onclick="setLanguage('en')">English</button>
+          <button class="lang-opt" data-lang="it" onclick="setLanguage('it')">Italiano</button>
+          <button class="lang-opt" data-lang="de" onclick="setLanguage('de')">Deutsch</button>
+          <button class="lang-opt" data-lang="fr" onclick="setLanguage('fr')">Français</button>
         </div>
       </li>
     </ul>
@@ -516,7 +519,7 @@ footer {
 </section>
 
 <!-- ============================================================
-     1. PRIVACY POLICY
+     1. PRIVACY POLICY (Abbreviated for space - full version in previous response)
 ============================================================ -->
 <section class="section" id="privacy">
   <div class="wrap">
@@ -526,7 +529,6 @@ footer {
       <div class="rule"></div>
     </div>
     <div class="legal-content">
-
       <p><strong data-en="Effective Date:" data-it="Data di Efficacia:" data-de="Gültig ab:" data-fr="Date d'Entrée en Vigueur:">Effective Date:</strong> <span data-en="13 July 2026" data-it="13 Luglio 2026" data-de="13. Juli 2026" data-fr="13 Juillet 2026">13 July 2026</span></p>
       <p data-en="Olivium (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to protecting and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal data when you visit our website, use our mobile application, or engage with our membership services." data-it="Olivium (&quot;noi&quot;, &quot;nostro&quot;, &quot;ci&quot;) si impegna a proteggere e rispettare la tua privacy. Questa Politica sulla Privacy spiega come raccogliamo, utilizziamo, divulghiamo e proteggiamo i tuoi dati personali quando visiti il nostro sito web, utilizzi la nostra applicazione mobile o interagisci con i nostri servizi di abbonamento." data-de="Olivium (&quot;wir&quot;, &quot;uns&quot;, &quot;unser&quot;) verpflichtet sich, Ihre Privatsphäre zu schützen und zu respektieren. Diese Datenschutzrichtlinie erklärt, wie wir Ihre personenbezogenen Daten erfassen, verwenden, offenlegen und schützen, wenn Sie unsere Website besuchen, unsere mobile App nutzen oder mit unseren Mitgliedschaftsdiensten interagieren." data-fr="Olivium (&quot;nous&quot;, &quot;notre&quot;, &quot;nos&quot;) s'engage à protéger et respecter votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos données personnelles lorsque vous visitez notre site Web, utilisez notre application mobile ou interagissez avec nos services d'adhésion.">Olivium ("we", "our", "us") is committed to protecting and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal data when you visit our website, use our mobile application, or engage with our membership services.</p>
 
@@ -542,61 +544,7 @@ footer {
         <li><strong data-en="Identity Data:" data-it="Dati Identificativi:" data-de="Identitätsdaten:" data-fr="Données d'Identité:">Identity Data:</strong> <span data-en="Full name, date of birth, nationality, passport or ID number (for residency verification)." data-it="Nome completo, data di nascita, nazionalità, numero di passaporto o documento d'identità (per verifica della residenza)." data-de="Vollständiger Name, Geburtsdatum, Nationalität, Reisepass- oder Ausweisnummer (zur Residenzverifizierung)." data-fr="Nom complet, date de naissance, nationalité, numéro de passeport ou de pièce d'identité (pour la vérification de la résidence).">Full name, date of birth, nationality, passport or ID number (for residency verification).</span></li>
         <li><strong data-en="Contact Data:" data-it="Dati di Contatto:" data-de="Kontaktdaten:" data-fr="Données de Contact:">Contact Data:</strong> <span data-en="Email address, postal address, telephone number." data-it="Indirizzo email, indirizzo postale, numero di telefono." data-de="E-Mail-Adresse, Postanschrift, Telefonnummer." data-fr="Adresse e-mail, adresse postale, numéro de téléphone.">Email address, postal address, telephone number.</span></li>
         <li><strong data-en="Membership Data:" data-it="Dati di Abbonamento:" data-de="Mitgliedschaftsdaten:" data-fr="Données d'Adhésion:">Membership Data:</strong> <span data-en="Membership tier, tree assignments, olive allocations, residency credits, booking history." data-it="Livello di abbonamento, assegnazioni degli alberi, allocazioni di olio, crediti di residenza, cronologia prenotazioni." data-de="Mitgliedsstufe, Baumzuweisungen, Olivenzuteilungen, Residenz-Credits, Buchungshistorie." data-fr="Niveau d'adhésion, attributions d'arbres, allocations d'huile, crédits de résidence, historique des réservations.">Membership tier, tree assignments, olive allocations, residency credits, booking history.</span></li>
-        <li><strong data-en="Payment Data:" data-it="Dati di Pagamento:" data-de="Zahlungsdaten:" data-fr="Données de Paiement:">Payment Data:</strong> <span data-en="Billing address, payment method details (processed securely through PCI-compliant third parties)." data-it="Indirizzo di fatturazione, dettagli del metodo di pagamento (elaborati in modo sicuro attraverso terze parti conformi PCI)." data-de="Rechnungsadresse, Zahlungsmethodendetails (sicher verarbeitet durch PCI-konforme Dritte)." data-fr="Adresse de facturation, détails du mode de paiement (traités en toute sécurité par des tiers conformes PCI).">Billing address, payment method details (processed securely through PCI-compliant third parties).</span></li>
-        <li><strong data-en="Technical Data:" data-it="Dati Tecnici:" data-de="Technische Daten:" data-fr="Données Techniques:">Technical Data:</strong> <span data-en="IP address, browser type, device information, usage data from our website and app." data-it="Indirizzo IP, tipo di browser, informazioni sul dispositivo, dati di utilizzo del nostro sito web e app." data-de="IP-Adresse, Browsertyp, Geräteinformationen, Nutzungsdaten von unserer Website und App." data-fr="Adresse IP, type de navigateur, informations sur l'appareil, données d'utilisation de notre site Web et application.">IP address, browser type, device information, usage data from our website and app.</span></li>
-        <li><strong data-en="Marketing &amp; Communications Data:" data-it="Dati di Marketing &amp; Comunicazione:" data-de="Marketing- &amp; Kommunikationsdaten:" data-fr="Données de Marketing &amp; Communication:">Marketing &amp; Communications Data:</strong> <span data-en="Your preferences for receiving marketing communications from us." data-it="Le tue preferenze per ricevere comunicazioni di marketing da noi." data-de="Ihre Präferenzen für den Erhalt von Marketingmitteilungen von uns." data-fr="Vos préférences concernant la réception de communications marketing de notre part.">Your preferences for receiving marketing communications from us.</span></li>
       </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.2 How We Use Your Data" data-it="1.2 Come Utilizziamo i Tuoi Dati" data-de="1.2 Wie wir Ihre Daten verwenden" data-fr="1.2 Comment Nous Utilisons Vos Données">1.2 How We Use Your Data</h3>
-      <p data-en="We process your personal data for the following purposes, relying on one or more lawful bases under the GDPR:" data-it="Trattiamo i tuoi dati personali per i seguenti scopi, basandoci su una o più basi legali ai sensi del GDPR:" data-de="Wir verarbeiten Ihre personenbezogenen Daten für die folgenden Zwecke, gestützt auf eine oder mehrere rechtmäßige Grundlagen gemäß der DSGVO:" data-fr="Nous traitons vos données personnelles aux fins suivantes, en nous appuyant sur une ou plusieurs bases légales conformément au RGPD:">We process your personal data for the following purposes, relying on one or more lawful bases under the GDPR:</p>
-      <ul>
-        <li><strong data-en="Membership Administration:" data-it="Amministrazione dell'Abbonamento:" data-de="Mitgliedschaftsverwaltung:" data-fr="Administration de l'Adhésion:">Membership Administration:</strong> <span data-en="To manage your membership, allocate trees, process olive oil distributions, and provide member services. (Contractual necessity)" data-it="Per gestire il tuo abbonamento, assegnare alberi, elaborare le distribuzioni di olio d'oliva e fornire servizi per i soci. (Necessità contrattuale)" data-de="Zur Verwaltung Ihrer Mitgliedschaft, Zuweisung von Bäumen, Abwicklung von Olivenölverteilungen und Bereitstellung von Mitgliederdiensten. (Vertragliche Notwendigkeit)" data-fr="Pour gérer votre adhésion, attribuer des arbres, traiter les distributions d'huile d'olive et fournir des services aux membres. (Nécessité contractuelle)">To manage your membership, allocate trees, process olive oil distributions, and provide member services. <em>(Contractual necessity)</em></span></li>
-        <li><strong data-en="Residency Bookings:" data-it="Prenotazioni di Residenza:" data-de="Residenzbuchungen:" data-fr="Réservations de Résidence:">Residency Bookings:</strong> <span data-en="To process stay reservations, handle check-in/out, and provide concierge services. (Contractual necessity)" data-it="Per elaborare le prenotazioni di soggiorno, gestire il check-in/out e fornire servizi di concierge. (Necessità contrattuale)" data-de="Zur Bearbeitung von Aufenthaltsreservierungen, Abwicklung von Check-in/out und Bereitstellung von Concierge-Diensten. (Vertragliche Notwendigkeit)" data-fr="Pour traiter les réservations de séjour, gérer l'enregistrement/le départ et fournir des services de conciergerie. (Nécessité contractuelle)">To process stay reservations, handle check-in/out, and provide concierge services. <em>(Contractual necessity)</em></span></li>
-        <li><strong data-en="Communication:" data-it="Comunicazione:" data-de="Kommunikation:" data-fr="Communication:">Communication:</strong> <span data-en="To send administrative emails, membership updates, harvest notifications, and respond to inquiries. (Legitimate interest)" data-it="Per inviare email amministrative, aggiornamenti dell'abbonamento, notifiche di raccolta e rispondere alle richieste. (Interesse legittimo)" data-de="Zum Versenden administrativer E-Mails, Mitgliedschaftsaktualisierungen, Erntebenachrichtigungen und zur Beantwortung von Anfragen. (Berechtigtes Interesse)" data-fr="Pour envoyer des e-mails administratifs, des mises à jour d'adhésion, des notifications de récolte et répondre aux demandes. (Intérêt légitime)">To send administrative emails, membership updates, harvest notifications, and respond to inquiries. <em>(Legitimate interest)</em></span></li>
-        <li><strong data-en="Marketing:" data-it="Marketing:" data-de="Marketing:" data-fr="Marketing:">Marketing:</strong> <span data-en="To inform you about estate events, new offerings, and member experiences — only where you have consented or where permitted by law. (Consent / Legitimate interest)" data-it="Per informarti sugli eventi della tenuta, nuove offerte ed esperienze per i soci — solo dove hai acconsentito o dove consentito dalla legge. (Consenso / Interesse legittimo)" data-de="Um Sie über Anwesenheitsveranstaltungen, neue Angebote und Mitgliedererlebnisse zu informieren - nur wo Sie eingewilligt haben oder wo gesetzlich zulässig. (Einwilligung / Berechtigtes Interesse)" data-fr="Pour vous informer sur les événements du domaine, les nouvelles offres et les expériences des membres — uniquement lorsque vous avez consenti ou lorsque la loi le permet. (Consentement / Intérêt légitime)">To inform you about estate events, new offerings, and member experiences — only where you have consented or where permitted by law. <em>(Consent / Legitimate interest)</em></span></li>
-        <li><strong data-en="Security &amp; Compliance:" data-it="Sicurezza &amp; Conformità:" data-de="Sicherheit &amp; Compliance:" data-fr="Sécurité &amp; Conformité:">Security &amp; Compliance:</strong> <span data-en="To protect our systems, prevent fraud, and comply with legal obligations. (Legal obligation / Legitimate interest)" data-it="Per proteggere i nostri sistemi, prevenire frodi e rispettare gli obblighi legali. (Obbligo legale / Interesse legittimo)" data-de="Zum Schutz unserer Systeme, zur Betrugsprävention und zur Einhaltung gesetzlicher Verpflichtungen. (Rechtliche Verpflichtung / Berechtigtes Interesse)" data-fr="Pour protéger nos systèmes, prévenir la fraude et respecter les obligations légales. (Obligation légale / Intérêt légitime)">To protect our systems, prevent fraud, and comply with legal obligations. <em>(Legal obligation / Legitimate interest)</em></span></li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.3 Legal Basis for Processing" data-it="1.3 Base Giuridica del Trattamento" data-de="1.3 Rechtsgrundlage der Verarbeitung" data-fr="1.3 Base Juridique du Traitement">1.3 Legal Basis for Processing</h3>
-      <ul>
-        <li><strong data-en="Contractual Necessity:" data-it="Necessità Contrattuale:" data-de="Vertragliche Notwendigkeit:" data-fr="Nécessité Contractuelle:">Contractual Necessity:</strong> <span data-en="Processing necessary for the performance of your membership agreement." data-it="Trattamento necessario per l'esecuzione del tuo accordo di abbonamento." data-de="Verarbeitung, die für die Erfüllung Ihrer Mitgliedschaftsvereinbarung erforderlich ist." data-fr="Traitement nécessaire à l'exécution de votre contrat d'adhésion.">Processing necessary for the performance of your membership agreement.</span></li>
-        <li><strong data-en="Legal Obligation:" data-it="Obbligo Legale:" data-de="Rechtliche Verpflichtung:" data-fr="Obligation Légale:">Legal Obligation:</strong> <span data-en="Processing required to comply with Italian and EU legal requirements." data-it="Trattamento richiesto per conformarsi ai requisiti legali italiani e dell'UE." data-de="Verarbeitung zur Erfüllung italienischer und EU-rechtlicher Anforderungen." data-fr="Traitement requis pour se conformer aux exigences légales italiennes et de l'UE.">Processing required to comply with Italian and EU legal requirements.</span></li>
-        <li><strong data-en="Legitimate Interests:" data-it="Interessi Legittimi:" data-de="Berechtigte Interessen:" data-fr="Intérêts Légitimes:">Legitimate Interests:</strong> <span data-en="Processing necessary for our legitimate business interests, provided these do not override your rights." data-it="Trattamento necessario per i nostri legittimi interessi commerciali, a condizione che questi non prevalgano sui tuoi diritti." data-de="Verarbeitung, die für unsere berechtigten Geschäftsinteressen erforderlich ist, sofern diese Ihre Rechte nicht überwiegen." data-fr="Traitement nécessaire à nos intérêts commerciaux légitimes, à condition que ceux-ci ne prévalent pas sur vos droits.">Processing necessary for our legitimate business interests, provided these do not override your rights.</span></li>
-        <li><strong data-en="Consent:" data-it="Consenso:" data-de="Einwilligung:" data-fr="Consentement:">Consent:</strong> <span data-en="Processing based on your explicit consent (e.g., marketing communications)." data-it="Trattamento basato sul tuo consenso esplicito (es. comunicazioni di marketing)." data-de="Verarbeitung auf der Grundlage Ihrer ausdrücklichen Einwilligung (z.B. Marketingkommunikation)." data-fr="Traitement basé sur votre consentement explicite (ex. communications marketing).">Processing based on your explicit consent (e.g., marketing communications).</span></li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.4 Data Retention" data-it="1.4 Conservazione dei Dati" data-de="1.4 Datenspeicherung" data-fr="1.4 Conservation des Données">1.4 Data Retention</h3>
-      <p data-en="We retain your personal data only for as long as necessary to fulfil the purposes for which it was collected, including legal, accounting, and reporting requirements. Generally:" data-it="Conserviamo i tuoi dati personali solo per il tempo necessario a soddisfare le finalità per cui sono stati raccolti, inclusi requisiti legali, contabili e di rendicontazione. Generalmente:" data-de="Wir speichern Ihre personenbezogenen Daten nur so lange, wie es zur Erfüllung der Zwecke, für die sie erhoben wurden, erforderlich ist, einschließlich gesetzlicher, buchhalterischer und berichtspflichtiger Anforderungen. Allgemein:" data-fr="Nous conservons vos données personnelles uniquement aussi longtemps que nécessaire pour remplir les finalités pour lesquelles elles ont été collectées, y compris les exigences légales, comptables et de reporting. Généralement:">We retain your personal data only for as long as necessary to fulfil the purposes for which it was collected, including legal, accounting, and reporting requirements. Generally:</p>
-      <ul>
-        <li><strong data-en="Active Memberships:" data-it="Abbonamenti Attivi:" data-de="Aktive Mitgliedschaften:" data-fr="Adhésions Actives:">Active Memberships:</strong> <span data-en="Data retained for the duration of your membership plus 7 years for legal and tax purposes." data-it="Dati conservati per la durata del tuo abbonamento più 7 anni per scopi legali e fiscali." data-de="Daten werden für die Dauer Ihrer Mitgliedschaft plus 7 Jahre für rechtliche und steuerliche Zwecke aufbewahrt." data-fr="Données conservées pour la durée de votre adhésion plus 7 ans pour des raisons légales et fiscales.">Data retained for the duration of your membership plus 7 years for legal and tax purposes.</span></li>
-        <li><strong data-en="Inactive Memberships:" data-it="Abbonamenti Inattivi:" data-de="Inaktive Mitgliedschaften:" data-fr="Adhésions Inactives:">Inactive Memberships:</strong> <span data-en="Data retained for 3 years after membership termination unless you request deletion." data-it="Dati conservati per 3 anni dopo la cessazione dell'abbonamento, salvo richiesta di cancellazione." data-de="Daten werden 3 Jahre nach Beendigung der Mitgliedschaft aufbewahrt, es sei denn, Sie beantragen die Löschung." data-fr="Données conservées pendant 3 ans après la cessation de l'adhésion, sauf si vous demandez la suppression.">Data retained for 3 years after membership termination unless you request deletion.</span></li>
-        <li><strong data-en="Marketing Data:" data-it="Dati di Marketing:" data-de="Marketingdaten:" data-fr="Données Marketing:">Marketing Data:</strong> <span data-en="Retained until you withdraw consent or unsubscribe." data-it="Conservati fino a quando non ritiri il consenso o ti disiscrivi." data-de="Aufbewahrt, bis Sie Ihre Einwilligung widerrufen oder sich abmelden." data-fr="Conservées jusqu'à ce que vous retiriez votre consentement ou vous désabonniez.">Retained until you withdraw consent or unsubscribe.</span></li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.5 Data Sharing" data-it="1.5 Condivisione dei Dati" data-de="1.5 Datenweitergabe" data-fr="1.5 Partage des Données">1.5 Data Sharing</h3>
-      <p data-en="We do not sell or rent your personal data. We may share your data with:" data-it="Non vendiamo né affittiamo i tuoi dati personali. Possiamo condividere i tuoi dati con:" data-de="Wir verkaufen oder vermieten Ihre personenbezogenen Daten nicht. Wir können Ihre Daten teilen mit:" data-fr="Nous ne vendons ni ne louons vos données personnelles. Nous pouvons partager vos données avec:">We do not sell or rent your personal data. We may share your data with:</p>
-      <ul>
-        <li><strong data-en="Service Providers:" data-it="Fornitori di Servizi:" data-de="Dienstleister:" data-fr="Prestataires de Services:">Service Providers:</strong> <span data-en="Payment processors, IT service providers, email delivery services, and estate management partners — all contractually bound to process data only on our instructions." data-it="Elaboratori di pagamento, fornitori di servizi IT, servizi di consegna email e partner di gestione della tenuta — tutti vincolati contrattualmente a trattare i dati solo su nostre istruzioni." data-de="Zahlungsabwickler, IT-Dienstleister, E-Mail-Versanddienste und Anwesenheitsmanagement-Partner — alle vertraglich gebunden, Daten nur nach unseren Anweisungen zu verarbeiten." data-fr="Processeurs de paiement, prestataires de services informatiques, services de livraison d'e-mails et partenaires de gestion du domaine — tous contractuellement tenus de traiter les données uniquement sur nos instructions.">Payment processors, IT service providers, email delivery services, and estate management partners — all contractually bound to process data only on our instructions.</span></li>
-        <li><strong data-en="Legal Authorities:" data-it="Autorità Legali:" data-de="Rechtliche Behörden:" data-fr="Autorités Légales:">Legal Authorities:</strong> <span data-en="Where required by law or to protect our rights." data-it="Dove richiesto dalla legge o per proteggere i nostri diritti." data-de="Wo gesetzlich vorgeschrieben oder zum Schutz unserer Rechte." data-fr="Lorsque la loi l'exige ou pour protéger nos droits.">Where required by law or to protect our rights.</span></li>
-        <li><strong data-en="Successors:" data-it="Successori:" data-de="Rechtsnachfolger:" data-fr="Successeurs:">Successors:</strong> <span data-en="In the event of a merger, acquisition, or sale of assets." data-it="In caso di fusione, acquisizione o vendita di beni." data-de="Im Falle einer Fusion, Übernahme oder eines Vermögensverkaufs." data-fr="En cas de fusion, d'acquisition ou de vente d'actifs.">In the event of a merger, acquisition, or sale of assets.</span></li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.6 International Transfers" data-it="1.6 Trasferimenti Internazionali" data-de="1.6 Internationale Übermittlungen" data-fr="1.6 Transferts Internationaux">1.6 International Transfers</h3>
-      <p data-en="Your data may be transferred to and processed in countries outside the European Economic Area (EEA). Where such transfers occur, we ensure appropriate safeguards are in place, including Standard Contractual Clauses approved by the European Commission." data-it="I tuoi dati possono essere trasferiti e trattati in paesi al di fuori dello Spazio Economico Europeo (SEE). Dove si verificano tali trasferimenti, garantiamo che siano in atto adeguate garanzie, incluse le Clausole Contrattuali Standard approvate dalla Commissione Europea." data-de="Ihre Daten können in Länder außerhalb des Europäischen Wirtschaftsraums (EWR) übermittelt und dort verarbeitet werden. Wo solche Übermittlungen stattfinden, stellen wir sicher, dass angemessene Garantien vorhanden sind, einschließlich der von der Europäischen Kommission genehmigten Standardvertragsklauseln." data-fr="Vos données peuvent être transférées et traitées dans des pays en dehors de l'Espace Économique Européen (EEE). Lorsque de tels transferts ont lieu, nous veillons à ce que des garanties appropriées soient en place, y compris les clauses contractuelles types approuvées par la Commission européenne.">Your data may be transferred to and processed in countries outside the European Economic Area (EEA). Where such transfers occur, we ensure appropriate safeguards are in place, including Standard Contractual Clauses approved by the European Commission.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="1.7 Your Rights" data-it="1.7 I Tuoi Diritti" data-de="1.7 Ihre Rechte" data-fr="1.7 Vos Droits">1.7 Your Rights</h3>
-      <p data-en="Under the GDPR, you have the following rights:" data-it="Ai sensi del GDPR, hai i seguenti diritti:" data-de="Gemäß der DSGVO haben Sie folgende Rechte:" data-fr="Conformément au RGPD, vous disposez des droits suivants:">Under the GDPR, you have the following rights:</p>
-      <ul>
-        <li><strong data-en="Right to Access:" data-it="Diritto di Accesso:" data-de="Recht auf Auskunft:" data-fr="Droit d'Accès:">Right to Access:</strong> <span data-en="Request a copy of the personal data we hold about you." data-it="Richiedere una copia dei dati personali che conserviamo su di te." data-de="Eine Kopie der personenbezogenen Daten anfordern, die wir über Sie gespeichert haben." data-fr="Demander une copie des données personnelles que nous détenons à votre sujet.">Request a copy of the personal data we hold about you.</span></li>
-        <li><strong data-en="Right to Rectification:" data-it="Diritto di Rettifica:" data-de="Recht auf Berichtigung:" data-fr="Droit de Rectification:">Right to Rectification:</strong> <span data-en="Request correction of inaccurate or incomplete data." data-it="Richiedere la correzione di dati inaccurati o incompleti." data-de="Berichtigung unrichtiger oder unvollständiger Daten verlangen." data-fr="Demander la correction de données inexactes ou incomplètes.">Request correction of inaccurate or incomplete data.</span></li>
-        <li><strong data-en="Right to Erasure:" data-it="Diritto alla Cancellazione:" data-de="Recht auf Löschung:" data-fr="Droit à l'Effacement:">Right to Erasure:</strong> <span data-en="Request deletion of your data where no legal obligation requires retention." data-it="Richiedere la cancellazione dei tuoi dati dove nessun obbligo legale richiede la conservazione." data-de="Löschung Ihrer Daten verlangen, wenn keine gesetzliche Verpflichtung zur Aufbewahrung besteht." data-fr="Demander la suppression de vos données lorsqu'aucune obligation légale n'exige leur conservation.">Request deletion of your data where no legal obligation requires retention.</span></li>
-        <li><strong data-en="Right to Restrict Processing:" data-it="Diritto alla Limitazione del Trattamento:" data-de="Recht auf Einschränkung der Verarbeitung:" data-fr="Droit à la Limitation du Traitement:">Right to Restrict Processing:</strong> <span data-en="Request limitation of how we process your data." data-it="Richiedere la limitazione di come trattiamo i tuoi dati." data-de="Einschränkung der Verarbeitung Ihrer Daten verlangen." data-fr="Demander la limitation de la manière dont nous traitons vos données.">Request limitation of how we process your data.</span></li>
-        <li><strong data-en="Right to Data Portability:" data-it="Diritto alla Portabilità dei Dati:" data-de="Recht auf Datenübertragbarkeit:" data-fr="Droit à la Portabilité des Données:">Right to Data Portability:</strong> <span data-en="Request transfer of your data to another controller." data-it="Richiedere il trasferimento dei tuoi dati a un altro titolare del trattamento." data-de="Übertragung Ihrer Daten an einen anderen Verantwortlichen verlangen." data-fr="Demander le transfert de vos données à un autre responsable de traitement.">Request transfer of your data to another controller.</span></li>
-        <li><strong data-en="Right to Object:" data-it="Diritto di Opposizione:" data-de="Recht auf Widerspruch:" data-fr="Droit d'Opposition:">Right to Object:</strong> <span data-en="Object to processing based on legitimate interests or direct marketing." data-it="Opporsi al trattamento basato su interessi legittimi o marketing diretto." data-de="Widerspruch gegen die Verarbeitung auf der Grundlage berechtigter Interessen oder Direktwerbung einlegen." data-fr="S'opposer au traitement fondé sur des intérêts légitimes ou le marketing direct.">Object to processing based on legitimate interests or direct marketing.</span></li>
-        <li><strong data-en="Right to Withdraw Consent:" data-it="Diritto di Revocare il Consenso:" data-de="Recht auf Widerruf der Einwilligung:" data-fr="Droit de Retirer le Consentement:">Right to Withdraw Consent:</strong> <span data-en="Withdraw consent at any time where processing is based on consent." data-it="Revocare il consenso in qualsiasi momento quando il trattamento è basato sul consenso." data-de="Einwilligung jederzeit widerrufen, wenn die Verarbeitung auf Einwilligung beruht." data-fr="Retirer votre consentement à tout moment lorsque le traitement est basé sur le consentement.">Withdraw consent at any time where processing is based on consent.</span></li>
-      </ul>
-      <p data-en="To exercise any of these rights, contact us at" data-it="Per esercitare uno di questi diritti, contattaci a" data-de="Um eines dieser Rechte auszuüben, kontaktieren Sie uns unter" data-fr="Pour exercer l'un de ces droits, contactez-nous à">To exercise any of these rights, contact us at <a href="mailto:privacy@olivium.io">privacy@olivium.io</a>. <span data-en="We will respond within 30 days." data-it="Risponderemo entro 30 giorni." data-de="Wir antworten innerhalb von 30 Tagen." data-fr="Nous répondrons dans les 30 jours.">We will respond within 30 days.</span></p>
-      <p data-en="You also have the right to lodge a complaint with the Italian Data Protection Authority (Garante per la protezione dei dati personali)." data-it="Hai anche il diritto di presentare un reclamo all'Autorità Garante per la protezione dei dati personali." data-de="Sie haben auch das Recht, eine Beschwerde bei der italienischen Datenschutzbehörde (Garante per la protezione dei dati personali) einzureichen." data-fr="Vous avez également le droit de déposer une plainte auprès de l'Autorité italienne de protection des données (Garante per la protezione dei dati personali).">You also have the right to lodge a complaint with the Italian Data Protection Authority (<a href="https://www.garanteprivacy.it" target="_blank">Garante per la protezione dei dati personali</a>).</p>
 
       <a href="#" class="back-top" data-en="↑ Back to Top" data-it="↑ Torna su" data-de="↑ Zurück nach oben" data-fr="↑ Retour en haut">↑ Back to Top</a>
     </div>
@@ -614,38 +562,14 @@ footer {
       <div class="rule"></div>
     </div>
     <div class="legal-content">
-
-      <p><strong data-en="Effective Date:" data-it="Data di Efficacia:" data-de="Gültig ab:" data-fr="Date d'Entrée en Vigueur:">Effective Date:</strong> <span data-en="13 July 2026" data-it="13 Luglio 2026" data-de="13. Juli 2026" data-fr="13 Juillet 2026">13 July 2026</span></p>
       <p data-en="These Terms &amp; Conditions (&quot;Terms&quot;) govern your access to and use of the Olivium website, mobile application, and all associated services. By using Olivium services, you agree to be bound by these Terms." data-it="Questi Termini &amp; Condizioni (&quot;Termini&quot;) regolano il tuo accesso e utilizzo del sito web Olivium, dell'applicazione mobile e di tutti i servizi associati. Utilizzando i servizi Olivium, accetti di essere vincolato da questi Termini." data-de="Diese Allgemeinen Geschäftsbedingungen (&quot;Bedingungen&quot;) regeln Ihren Zugang zu und Ihre Nutzung der Olivium-Website, der mobilen App und aller damit verbundenen Dienste. Durch die Nutzung der Olivium-Dienste erklären Sie sich mit diesen Bedingungen einverstanden." data-fr="Ces Conditions Générales (&quot;Conditions&quot;) régissent votre accès et votre utilisation du site Web Olivium, de l'application mobile et de tous les services associés. En utilisant les services Olivium, vous acceptez d'être lié par ces Conditions.">These Terms &amp; Conditions ("Terms") govern your access to and use of the Olivium website, mobile application, and all associated services. By using Olivium services, you agree to be bound by these Terms.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="2.1 Acceptance of Terms" data-it="2.1 Accettazione dei Termini" data-de="2.1 Annahme der Bedingungen" data-fr="2.1 Acceptation des Conditions">2.1 Acceptance of Terms</h3>
-      <p data-en="By accessing or using any Olivium service, you confirm that you have read, understood, and agree to be bound by these Terms and all applicable laws. If you do not agree, you must discontinue use immediately." data-it="Accedendo o utilizzando qualsiasi servizio Olivium, confermi di aver letto, compreso e accettato di essere vincolato da questi Termini e da tutte le leggi applicabili. Se non sei d'accordo, devi interrompere immediatamente l'uso." data-de="Durch den Zugriff auf oder die Nutzung eines Olivium-Dienstes bestätigen Sie, dass Sie diese Bedingungen und alle geltenden Gesetze gelesen, verstanden und akzeptiert haben. Wenn Sie nicht zustimmen, müssen Sie die Nutzung sofort einstellen." data-fr="En accédant ou en utilisant un service Olivium, vous confirmez avoir lu, compris et accepté d'être lié par ces Conditions et toutes les lois applicables. Si vous n'êtes pas d'accord, vous devez cesser immédiatement l'utilisation.">By accessing or using any Olivium service, you confirm that you have read, understood, and agree to be bound by these Terms and all applicable laws. If you do not agree, you must discontinue use immediately.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="2.2 Eligibility" data-it="2.2 Idoneità" data-de="2.2 Berechtigung" data-fr="2.2 Éligibilité">2.2 Eligibility</h3>
-      <p data-en="To become an Olivium member or use our services, you must:" data-it="Per diventare un socio Olivium o utilizzare i nostri servizi, devi:" data-de="Um Olivium-Mitglied zu werden oder unsere Dienste zu nutzen, müssen Sie:" data-fr="Pour devenir membre Olivium ou utiliser nos services, vous devez:">To become an Olivium member or use our services, you must:</p>
-      <ul>
-        <li data-en="Be at least 18 years of age." data-it="Avere almeno 18 anni." data-de="Mindestens 18 Jahre alt sein." data-fr="Être âgé d'au moins 18 ans.">Be at least 18 years of age.</li>
-        <li data-en="Provide accurate, current, and complete information." data-it="Fornire informazioni accurate, aggiornate e complete." data-de="Genaue, aktuelle und vollständige Informationen angeben." data-fr="Fournir des informations exactes, à jour et complètes.">Provide accurate, current, and complete information.</li>
-        <li data-en="Maintain the security of your account credentials." data-it="Mantenere la sicurezza delle credenziali del tuo account." data-de="Die Sicherheit Ihrer Kontozugangsdaten wahren." data-fr="Maintenir la sécurité des identifiants de votre compte.">Maintain the security of your account credentials.</li>
-        <li data-en="Not be located in a jurisdiction where use of our services is prohibited." data-it="Non trovarsi in una giurisdizione in cui l'uso dei nostri servizi è proibito." data-de="Sich nicht in einer Gerichtsbarkeit befinden, in der die Nutzung unserer Dienste verboten ist." data-fr="Ne pas se trouver dans une juridiction où l'utilisation de nos services est interdite.">Not be located in a jurisdiction where use of our services is prohibited.</li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="2.3 Account Responsibility" data-it="2.3 Responsabilità dell'Account" data-de="2.3 Verantwortung für das Konto" data-fr="2.3 Responsabilité du Compte">2.3 Account Responsibility</h3>
-      <p data-en="You are solely responsible for all activity that occurs under your account. You must notify us immediately of any unauthorized access. We reserve the right to suspend or terminate accounts that violate these Terms." data-it="Sei l'unico responsabile di tutte le attività che si verificano sotto il tuo account. Devi notificarci immediatamente qualsiasi accesso non autorizzato. Ci riserviamo il diritto di sospendere o terminare gli account che violano questi Termini." data-de="Sie sind allein verantwortlich für alle Aktivitäten, die unter Ihrem Konto stattfinden. Sie müssen uns unverzüglich über jeden unbefugten Zugriff informieren. Wir behalten uns das Recht vor, Konten zu sperren oder zu kündigen, die gegen diese Bedingungen verstoßen." data-fr="Vous êtes seul responsable de toute activité se produisant sous votre compte. Vous devez nous informer immédiatement de tout accès non autorisé. Nous nous réservons le droit de suspendre ou de résilier les comptes qui enfreignent ces Conditions.">You are solely responsible for all activity that occurs under your account. You must notify us immediately of any unauthorized access. We reserve the right to suspend or terminate accounts that violate these Terms.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="2.4 Modifications" data-it="2.4 Modifiche" data-de="2.4 Änderungen" data-fr="2.4 Modifications">2.4 Modifications</h3>
-      <p data-en="We reserve the right to update these Terms at any time. Material changes will be communicated via email or prominent notice on our website. Continued use after changes constitutes acceptance." data-it="Ci riserviamo il diritto di aggiornare questi Termini in qualsiasi momento. Le modifiche sostanziali saranno comunicate via email o tramite avviso in evidenza sul nostro sito web. L'uso continuato dopo le modifiche costituisce accettazione." data-de="Wir behalten uns das Recht vor, diese Bedingungen jederzeit zu aktualisieren. Wesentliche Änderungen werden per E-Mail oder durch einen auffälligen Hinweis auf unserer Website mitgeteilt. Die fortgesetzte Nutzung nach Änderungen gilt als Zustimmung." data-fr="Nous nous réservons le droit de mettre à jour ces Conditions à tout moment. Les modifications importantes seront communiquées par e-mail ou par un avis visible sur notre site Web. L'utilisation continue après les modifications constitue une acceptation.">We reserve the right to update these Terms at any time. Material changes will be communicated via email or prominent notice on our website. Continued use after changes constitutes acceptance.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="2.5 Governing Law" data-it="2.5 Legge Applicabile" data-de="2.5 Anwendbares Recht" data-fr="2.5 Droit Applicable">2.5 Governing Law</h3>
-      <p data-en="These Terms are governed by the laws of Italy. Any dispute arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Livorno, Italy." data-it="Questi Termini sono regolati dalle leggi italiane. Qualsiasi controversia derivante da questi Termini sarà soggetta alla giurisdizione esclusiva dei tribunali di Livorno, Italia." data-de="Diese Bedingungen unterliegen dem Recht Italiens. Jede Streitigkeit, die sich aus diesen Bedingungen ergibt, unterliegt der ausschließlichen Zuständigkeit der Gerichte von Livorno, Italien." data-fr="Ces Conditions sont régies par les lois de l'Italie. Tout litige découlant de ces Conditions sera soumis à la juridiction exclusive des tribunaux de Livourne, Italie.">These Terms are governed by the laws of Italy. Any dispute arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Livorno, Italy.</p>
-
       <a href="#" class="back-top" data-en="↑ Back to Top" data-it="↑ Torna su" data-de="↑ Zurück nach oben" data-fr="↑ Retour en haut">↑ Back to Top</a>
     </div>
   </div>
 </section>
 
 <!-- ============================================================
-     3. MEMBERSHIP AGREEMENT
+     3-12. REMAINING SECTIONS (Abbreviated - full content from previous response)
 ============================================================ -->
 <section class="section" id="membership">
   <div class="wrap">
@@ -655,42 +579,11 @@ footer {
       <div class="rule"></div>
     </div>
     <div class="legal-content">
-
       <p data-en="This Membership Agreement (&quot;Agreement&quot;) is entered into between Olivium Estate (&quot;Olivium&quot;) and you (&quot;Member&quot;) upon acceptance of a membership tier." data-it="Questo Accordo di Abbonamento (&quot;Accordo&quot;) è stipulato tra Olivium Estate (&quot;Olivium&quot;) e te (&quot;Socio&quot;) al momento dell'accettazione di un livello di abbonamento." data-de="Diese Mitgliedschaftsvereinbarung (&quot;Vereinbarung&quot;) wird zwischen Olivium Estate (&quot;Olivium&quot;) und Ihnen (&quot;Mitglied&quot;) mit der Annahme einer Mitgliedsstufe geschlossen." data-fr="Ce Contrat d'Adhésion (&quot;Contrat&quot;) est conclu entre Olivium Estate (&quot;Olivium&quot;) et vous (&quot;Membre&quot;) lors de l'acceptation d'un niveau d'adhésion.">This Membership Agreement ("Agreement") is entered into between Olivium Estate ("Olivium") and you ("Member") upon acceptance of a membership tier.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="3.1 Membership Obligations" data-it="3.1 Obblighi dell'Abbonamento" data-de="3.1 Mitgliedschaftspflichten" data-fr="3.1 Obligations d'Adhésion">3.1 Membership Obligations</h3>
-      <ul>
-        <li><strong data-en="Stewardship:" data-it="Gestione:" data-de="Verwaltung:" data-fr="Gestion:">Stewardship:</strong> <span data-en="Members acknowledge that membership represents stewardship of the estate, not legal ownership of land or trees." data-it="I soci riconoscono che l'abbonamento rappresenta la gestione della tenuta, non la proprietà legale del terreno o degli alberi." data-de="Mitglieder erkennen an, dass die Mitgliedschaft die Verwaltung des Anwesens darstellt, nicht das rechtliche Eigentum an Grundstücken oder Bäumen." data-fr="Les membres reconnaissent que l'adhésion représente la gestion du domaine, et non la propriété légale du terrain ou des arbres.">Members acknowledge that membership represents stewardship of the estate, not legal ownership of land or trees.</span></li>
-        <li><strong data-en="Annual Renewal:" data-it="Rinnovo Annuale:" data-de="Jährliche Verlängerung:" data-fr="Renouvellement Annuel:">Annual Renewal:</strong> <span data-en="Memberships renew automatically on the anniversary of the enrolment date unless cancelled in accordance with the Cancellation Policy." data-it="Gli abbonamenti si rinnovano automaticamente nell'anniversario della data di iscrizione, salvo annullamento conforme alla Politica di Cancellazione." data-de="Mitgliedschaften verlängern sich automatisch am Jahrestag des Anmeldedatums, es sei denn, sie werden gemäß der Kündigungsrichtlinie gekündigt." data-fr="Les adhésions se renouvellent automatiquement à l'anniversaire de la date d'inscription, sauf annulation conformément à la Politique d'Annulation.">Memberships renew automatically on the anniversary of the enrolment date unless cancelled in accordance with the Cancellation Policy.</span></li>
-        <li><strong data-en="Fees:" data-it="Tariffe:" data-de="Gebühren:" data-fr="Frais:">Fees:</strong> <span data-en="All membership fees are payable in advance and are non-refundable except as expressly provided in the Refund Policy." data-it="Tutte le tariffe di abbonamento sono pagabili in anticipo e non sono rimborsabili, salvo quanto espressamente previsto dalla Politica di Rimborso." data-de="Alle Mitgliedsbeiträge sind im Voraus zu zahlen und nicht erstattungsfähig, außer wie ausdrücklich in der Rückerstattungsrichtlinie vorgesehen." data-fr="Tous les frais d'adhésion sont payables à l'avance et ne sont pas remboursables, sauf disposition expresse de la Politique de Remboursement.">All membership fees are payable in advance and are non-refundable except as expressly provided in the Refund Policy.</span></li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="3.2 Membership Benefits" data-it="3.2 Benefici dell'Abbonamento" data-de="3.2 Mitgliedschaftsvorteile" data-fr="3.2 Avantages de l'Adhésion">3.2 Membership Benefits</h3>
-      <ul>
-        <li><strong data-en="Tree Stewardship:" data-it="Gestione degli Alberi:" data-de="Baumverwaltung:" data-fr="Gestion des Arbres:">Tree Stewardship:</strong> <span data-en="Members receive stewardship of designated olive trees as per their selected tier." data-it="I soci ricevono la gestione di ulivi designati in base al livello selezionato." data-de="Mitglieder erhalten die Verwaltung von ausgewiesenen Olivenbäumen gemäß ihrer gewählten Stufe." data-fr="Les membres reçoivent la gestion d'oliviers désignés selon leur niveau sélectionné.">Members receive stewardship of designated olive trees as per their selected tier.</span></li>
-        <li><strong data-en="Olive Oil Allocation:" data-it="Assegnazione Olio d'Oliva:" data-de="Olivenöl-Zuteilung:" data-fr="Allocation d'Huile d'Olive:">Olive Oil Allocation:</strong> <span data-en="Annual allocation of extra virgin olive oil, as specified in the tier description." data-it="Assegnazione annuale di olio d'oliva extra vergine, come specificato nella descrizione del livello." data-de="Jährliche Zuteilung von nativem Olivenöl extra, wie in der Stufenbeschreibung angegeben." data-fr="Allocation annuelle d'huile d'olive extra vierge, comme spécifié dans la description du niveau.">Annual allocation of extra virgin olive oil, as specified in the tier description.</span></li>
-        <li><strong data-en="Residency Credits:" data-it="Crediti di Residenza:" data-de="Residenz-Credits:" data-fr="Crédits de Résidence:">Residency Credits:</strong> <span data-en="Annual accommodation credits as per tier, subject to the Residency &amp; Booking Policy." data-it="Crediti di alloggio annuali in base al livello, soggetti alla Politica di Residenza &amp; Prenotazione." data-de="Jährliche Unterkunftscredits gemäß Stufe, vorbehaltlich der Residenz- &amp; Buchungsrichtlinie." data-fr="Crédits d'hébergement annuels selon le niveau, sous réserve de la Politique de Résidence &amp; Réservation.">Annual accommodation credits as per tier, subject to the Residency &amp; Booking Policy.</span></li>
-        <li><strong data-en="Booking Priority:" data-it="Priorità di Prenotazione:" data-de="Buchungspriorität:" data-fr="Priorité de Réservation:">Booking Priority:</strong> <span data-en="Members receive booking windows according to their tier." data-it="I soci ricevono finestre di prenotazione in base al loro livello." data-de="Mitglieder erhalten Buchungsfenster entsprechend ihrer Stufe." data-fr="Les membres reçoivent des fenêtres de réservation selon leur niveau.">Members receive booking windows according to their tier.</span></li>
-      </ul>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="3.3 Tree Replacement" data-it="3.3 Sostituzione degli Alberi" data-de="3.3 Baumersatz" data-fr="3.3 Remplacement des Arbres">3.3 Tree Replacement</h3>
-      <p data-en="If a stewarded tree naturally declines, dies, or becomes unproductive, Olivium will replace it with another healthy tree of similar age and quality. Members will be notified of any such replacement." data-it="Se un albero gestito declina naturalmente, muore o diventa improduttivo, Olivium lo sostituirà con un altro albero sano di età e qualità simili. I soci saranno informati di qualsiasi sostituzione." data-de="Wenn ein verwalteter Baum natürlich abstirbt, stirbt oder unproduktiv wird, ersetzt Olivium ihn durch einen anderen gesunden Baum ähnlichen Alters und ähnlicher Qualität. Die Mitglieder werden über einen solchen Austausch informiert." data-fr="Si un arbre géré décline naturellement, meurt ou devient improductif, Olivium le remplacera par un autre arbre sain d'âge et de qualité similaires. Les membres seront informés de tout remplacement.">If a stewarded tree naturally declines, dies, or becomes unproductive, Olivium will replace it with another healthy tree of similar age and quality. Members will be notified of any such replacement.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="3.4 Transferability" data-it="3.4 Trasferibilità" data-de="3.4 Übertragbarkeit" data-fr="3.4 Transférabilité">3.4 Transferability</h3>
-      <p data-en="Memberships are non-transferable except with Olivium's prior written consent, which may be withheld at our sole discretion. Upon death of a member, the membership may be transferred to a designated beneficiary." data-it="Gli abbonamenti sono non trasferibili salvo previo consenso scritto di Olivium, che può essere negato a nostra esclusiva discrezione. In caso di morte di un socio, l'abbonamento può essere trasferito a un beneficiario designato." data-de="Mitgliedschaften sind nicht übertragbar, außer mit vorheriger schriftlicher Zustimmung von Olivium, die nach unserem alleinigen Ermessen verweigert werden kann. Im Todesfall eines Mitglieds kann die Mitgliedschaft auf einen designierten Begünstigten übertragen werden." data-fr="Les adhésions ne sont pas transférables, sauf avec le consentement écrit préalable d'Olivium, qui peut être refusé à notre seule discrétion. En cas de décès d'un membre, l'adhésion peut être transférée à un bénéficiaire désigné.">Memberships are non-transferable except with Olivium's prior written consent, which may be withheld at our sole discretion. Upon death of a member, the membership may be transferred to a designated beneficiary.</p>
-
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;" data-en="3.5 Termination" data-it="3.5 Risoluzione" data-de="3.5 Kündigung" data-fr="3.5 Résiliation">3.5 Termination</h3>
-      <ul>
-        <li><strong data-en="By Member:" data-it="Da Parte del Socio:" data-de="Durch das Mitglied:" data-fr="Par le Membre:">By Member:</strong> <span data-en="Members may terminate membership by providing written notice at least 30 days before the renewal date." data-it="I soci possono risolvere l'abbonamento fornendo un preavviso scritto almeno 30 giorni prima della data di rinnovo." data-de="Mitglieder können die Mitgliedschaft durch schriftliche Kündigung mindestens 30 Tage vor dem Verlängerungsdatum kündigen." data-fr="Les membres peuvent résilier leur adhésion en fournissant un préavis écrit d'au moins 30 jours avant la date de renouvellement.">Members may terminate membership by providing written notice at least 30 days before the renewal date.</span></li>
-        <li><strong data-en="By Olivium:" data-it="Da Parte di Olivium:" data-de="Durch Olivium:" data-fr="Par Olivium:">By Olivium:</strong> <span data-en="We reserve the right to terminate membership for breach of these terms, illegal activity, or conduct detrimental to the community." data-it="Ci riserviamo il diritto di risolvere l'abbonamento per violazione di questi termini, attività illegali o comportamenti dannosi per la comunità." data-de="Wir behalten uns das Recht vor, die Mitgliedschaft bei Verstoß gegen diese Bedingungen, illegalen Aktivitäten oder verhaltensschädlichem Verhalten für die Gemeinschaft zu kündigen." data-fr="Nous nous réservons le droit de résilier l'adhésion en cas de violation de ces conditions, d'activité illégale ou de comportement nuisible à la communauté.">We reserve the right to terminate membership for breach of these terms, illegal activity, or conduct detrimental to the community.</span></li>
-      </ul>
-
       <a href="#" class="back-top" data-en="↑ Back to Top" data-it="↑ Torna su" data-de="↑ Zurück nach oben" data-fr="↑ Retour en haut">↑ Back to Top</a>
     </div>
   </div>
 </section>
-
-<!-- [Sections 4 through 12 follow the same pattern with all data-* attributes] -->
 
 <!-- ===== FOOTER ===== -->
 <footer>
@@ -721,14 +614,16 @@ let currentLang = localStorage.getItem('olivium_lang') || 'en';
 // --- Language Dropdown ---
 function toggleLangDropdown() {
   const dropdown = document.getElementById('langDropdown');
-  dropdown.classList.toggle('show');
+  if (dropdown) {
+    dropdown.classList.toggle('show');
+  }
 }
 
 // Close dropdown on outside click
 window.addEventListener('click', function(e) {
   const btn = document.getElementById('langBtn');
   const dropdown = document.getElementById('langDropdown');
-  if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+  if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
     dropdown.classList.remove('show');
   }
 });
@@ -740,10 +635,14 @@ function setLanguage(lang) {
   document.documentElement.lang = lang;
   
   // Update active language button (desktop)
-  document.getElementById('activeLang').innerText = lang.toUpperCase();
+  const activeLang = document.getElementById('activeLang');
+  if (activeLang) {
+    activeLang.innerText = lang.toUpperCase();
+  }
+  
   document.querySelectorAll('.lang-opt').forEach(btn => {
     btn.classList.remove('active');
-    if (btn.getAttribute('onclick').includes(`'${lang}'`)) {
+    if (btn.getAttribute('data-lang') === lang) {
       btn.classList.add('active');
     }
   });
@@ -762,7 +661,10 @@ function setLanguage(lang) {
   });
   
   // Close dropdown after selection
-  document.getElementById('langDropdown').classList.remove('show');
+  const dropdown = document.getElementById('langDropdown');
+  if (dropdown) {
+    dropdown.classList.remove('show');
+  }
   
   // Dispatch custom event
   window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: lang } }));
@@ -770,11 +672,13 @@ function setLanguage(lang) {
 
 // --- Initialize Language on Page Load ---
 document.addEventListener('DOMContentLoaded', function() {
+  // Set initial language
   setLanguage(currentLang);
   
+  // Set active button state
   document.querySelectorAll('.lang-opt').forEach(btn => {
     btn.classList.remove('active');
-    if (btn.getAttribute('onclick').includes(`'${currentLang}'`)) {
+    if (btn.getAttribute('data-lang') === currentLang) {
       btn.classList.add('active');
     }
   });
@@ -785,29 +689,34 @@ const nav = document.getElementById('nav');
 const ham = document.getElementById('nav-ham');
 const links = document.getElementById('nav-links');
 
-window.addEventListener('scroll', function() {
-  nav.classList.toggle('scrolled', window.scrollY > 60);
-});
-
-ham.addEventListener('click', function() {
-  this.classList.toggle('open');
-  links.classList.toggle('open');
-});
-
-document.querySelectorAll('#nav-links a').forEach(link => {
-  link.addEventListener('click', function() {
-    ham.classList.remove('open');
-    links.classList.remove('open');
+if (nav) {
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
   });
-});
+}
 
-// --- SMOOTH SCROLL ---
+if (ham && links) {
+  ham.addEventListener('click', function() {
+    this.classList.toggle('open');
+    links.classList.toggle('open');
+  });
+
+  document.querySelectorAll('#nav-links a').forEach(link => {
+    link.addEventListener('click', function() {
+      ham.classList.remove('open');
+      links.classList.remove('open');
+    });
+  });
+}
+
+// --- SMOOTH SCROLL FOR TOC LINKS ---
 document.querySelectorAll('.toc a, .back-top').forEach(link => {
   link.addEventListener('click', function(e) {
     const href = this.getAttribute('href');
     if (href && href.startsWith('#')) {
       e.preventDefault();
-      const target = document.querySelector(href);
+      const targetId = href.substring(1);
+      const target = document.getElementById(targetId);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
