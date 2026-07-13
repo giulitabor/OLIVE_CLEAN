@@ -26,6 +26,8 @@ export default defineConfig({
         game: resolve(__dirname, "landing.html"),
         harvest: resolve(__dirname, "harvest.html"),
         brochure: resolve(__dirname, "Brochure.html"),
+        privacy: resolve(__dirname, "privacy.html"),
+
 
 
         debug: resolve(__dirname, "debug2.html"),
