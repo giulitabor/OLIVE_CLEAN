@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Olivium — Privacy Policy & Legal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --gold: #C5A059;
+  --gold-dim: rgba(197,160,89,0.12);
+  --gold-glow: rgba(197,160,89,0.25);
+  --dark: #0a0f08;
+  --dark-card: rgba(255,255,255,0.03);
+  --muted: rgba(255,255,255,0.65);
+  --muted-dim: rgba(255,255,255,0.3);
+  --bg-dark: #0a0f08;
+  --border-gold: rgba(197,160,89,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior:smooth; }
+
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg-dark);
+  color:#fff;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== NAVIGATION ===== */
+nav {
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:1000;
+  padding:0 2rem;
+  background:rgba(10,15,8,0.75);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid transparent;
+  transition:all 0.4s ease;
+  height:72px;
+  display:flex;
+  align-items:center;
+}
+nav.scrolled { border-bottom:1px solid rgba(197,160,89,0.12); background:rgba(10,15,8,0.92); }
+
+.nav-inner {
+  max-width:1400px;
+  width:100%;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.nav-logo {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.6rem;
+  font-weight:600;
+  color:#fff;
+  letter-spacing:0.06em;
+}
+.nav-logo em {
+  font-style:italic;
+  font-weight:300;
+  font-size:0.85rem;
+  color:rgba(255,255,255,0.4);
+  margin-left:6px;
+}
+
+#nav-links {
+  display:flex;
+  list-style:none;
+  gap:2rem;
+  align-items:center;
+}
+#nav-links a {
+  color:var(--muted);
+  text-decoration:none;
+  font-size:0.85rem;
+  font-weight:400;
+  letter-spacing:0.04em;
+  transition:color 0.3s ease;
+  position:relative;
+}
+#nav-links a:hover { color:#fff; }
+#nav-links a::after {
+  content:'';
+  position:absolute;
+  bottom:-4px;
+  left:0;
+  width:0;
+  height:1px;
+  background:var(--gold);
+  transition:width 0.3s ease;
+}
+#nav-links a:hover::after { width:100%; }
+
+.nav-cta {
+  background:var(--gold);
+  color:#0a0f08 !important;
+  padding:0.5rem 1.5rem;
+  border-radius:50px;
+  font-weight:500 !important;
+}
+.nav-cta::after { display:none !important; }
+.nav-cta:hover { background:#d4b06a !important; color:#0a0f08 !important; }
+
+#nav-ham {
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:8px;
+}
+#nav-ham span {
+  display:block;
+  width:28px;
+  height:2px;
+  background:#fff;
+  transition:all 0.3s ease;
+  border-radius:2px;
+}
+#nav-ham.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+#nav-ham.open span:nth-child(2) { opacity:0; }
+#nav-ham.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+
+/* ===== HERO ===== */
+.legal-hero {
+  padding:140px 2rem 80px;
+  text-align:center;
+  background:radial-gradient(ellipse at 50% 30%, rgba(197,160,89,0.06), transparent 70%);
+  border-bottom:1px solid var(--border-gold);
+}
+.legal-hero h1 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:4.2rem;
+  font-weight:300;
+  letter-spacing:-0.02em;
+  margin-bottom:1rem;
+  background:linear-gradient(135deg,#fff 40%,var(--gold));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.legal-hero .sub {
+  color:var(--muted);
+  font-size:1.1rem;
+  max-width:650px;
+  margin:0 auto;
+  font-weight:300;
+}
+.legal-hero .last-updated {
+  margin-top:1.5rem;
+  font-size:0.8rem;
+  color:var(--muted-dim);
+  letter-spacing:0.08em;
+}
+
+/* ===== WRAP ===== */
+.wrap {
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 2rem;
+}
+
+/* ===== SECTION ===== */
+.section {
+  padding:4rem 0;
+  border-bottom:1px solid var(--border-gold);
+}
+.section:last-of-type { border-bottom:none; }
+
+.section-header {
+  margin-bottom:2.5rem;
+}
+.section-header .eyebrow {
+  font-size:0.7rem;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:0.4rem;
+}
+.section-header h2 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:2.6rem;
+  font-weight:400;
+  color:#fff;
+  letter-spacing:-0.01em;
+}
+.section-header .rule {
+  width:50px;
+  height:2px;
+  background:var(--gold);
+  margin-top:0.8rem;
+}
+
+/* ===== LEGAL CONTENT ===== */
+.legal-content p {
+  color:var(--muted);
+  margin-bottom:1.2rem;
+  font-size:0.95rem;
+  line-height:1.9;
+}
+.legal-content strong { color:#fff; font-weight:500; }
+.legal-content a {
+  color:var(--gold);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+  transition:border-color 0.3s ease;
+}
+.legal-content a:hover { border-bottom-color:var(--gold); }
+
+.legal-content ul, .legal-content ol {
+  color:var(--muted);
+  margin:0 0 1.5rem 1.5rem;
+  font-size:0.95rem;
+  line-height:1.9;
+}
+.legal-content li { margin-bottom:0.4rem; }
+.legal-content li strong { color:#fff; }
+
+.legal-content .highlight-box {
+  background:rgba(197,160,89,0.06);
+  border-left:3px solid var(--gold);
+  padding:1.5rem 2rem;
+  border-radius:0 12px 12px 0;
+  margin:1.5rem 0;
+}
+.legal-content .highlight-box p:last-child { margin-bottom:0; }
+
+.legal-content .glass-card {
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border-gold);
+  border-radius:16px;
+  padding:1.8rem 2rem;
+  margin:1.5rem 0;
+  backdrop-filter:blur(4px);
+}
+.legal-content .glass-card h4 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.2rem;
+  color:#fff;
+  margin-bottom:0.8rem;
+}
+.legal-content .glass-card p:last-child { margin-bottom:0; }
+
+.legal-content .two-col {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;
+  margin:1.5rem 0;
+}
+.legal-content .two-col .col {
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border-gold);
+  border-radius:12px;
+  padding:1.5rem;
+}
+.legal-content .two-col .col h5 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;
+  color:var(--gold);
+  margin-bottom:0.6rem;
+}
+.legal-content .two-col .col p {
+  font-size:0.9rem;
+  margin-bottom:0;
+}
+
+/* ===== TABLE OF CONTENTS ===== */
+.toc {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:0.8rem;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border-gold);
+  border-radius:16px;
+  padding:2rem;
+  margin:2rem 0;
+}
+.toc a {
+  color:var(--muted);
+  text-decoration:none;
+  font-size:0.85rem;
+  transition:color 0.3s ease;
+  padding:0.3rem 0;
+  border-bottom:1px solid transparent;
+}
+.toc a:hover { color:var(--gold); border-bottom-color:var(--gold); }
+
+/* ===== BACK TO TOP ===== */
+.back-top {
+  display:inline-block;
+  margin-top:2rem;
+  color:var(--gold);
+  text-decoration:none;
+  font-size:0.85rem;
+  letter-spacing:0.06em;
+  border-bottom:1px solid transparent;
+  transition:border-color 0.3s ease;
+}
+.back-top:hover { border-bottom-color:var(--gold); }
+
+/* ===== FOOTER ===== */
+footer {
+  padding:3rem 2rem;
+  border-top:1px solid var(--border-gold);
+  text-align:center;
+}
+.footer-inner {
+  max-width:1100px;
+  margin:0 auto;
+}
+.footer-logo {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.6rem;
+  color:#fff;
+  margin-bottom:1rem;
+}
+.footer-logo span {
+  font-style:italic;
+  font-weight:300;
+  font-size:0.85rem;
+  color:rgba(255,255,255,0.3);
+  margin-left:6px;
+}
+.footer-links {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:1.5rem 2.5rem;
+  margin:1rem 0;
+}
+.footer-links a {
+  color:var(--muted-dim);
+  text-decoration:none;
+  font-size:0.8rem;
+  letter-spacing:0.04em;
+  transition:color 0.3s ease;
+}
+.footer-links a:hover { color:#fff; }
+.footer-copy {
+  color:var(--muted-dim);
+  font-size:0.75rem;
+  margin-top:1rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:992px) {
+  .legal-content .two-col { grid-template-columns:1fr; }
+  .legal-hero h1 { font-size:3rem; }
+}
+
+@media (max-width:768px) {
+  #nav-links {
+    display:none;
+    flex-direction:column;
+    background:rgba(10,15,8,0.98);
+    position:absolute;
+    top:72px;
+    left:0;
+    right:0;
+    padding:2rem;
+    gap:1.5rem;
+    border-bottom:1px solid var(--border-gold);
+  }
+  #nav-links.open { display:flex; }
+  #nav-ham { display:flex; }
+  .legal-hero { padding:120px 1.25rem 60px; }
+  .legal-hero h1 { font-size:2.4rem; }
+  .wrap { padding:0 1.25rem; }
+  .section { padding:2.5rem 0; }
+  .section-header h2 { font-size:2rem; }
+  .toc { grid-template-columns:1fr 1fr; padding:1.5rem; }
+}
+
+@media (max-width:480px) {
+  .toc { grid-template-columns:1fr; }
+  .legal-content .glass-card { padding:1.2rem; }
+  .legal-content .highlight-box { padding:1rem 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav id="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">OLIVIUM <em>Legal</em></div>
+    <ul id="nav-links">
+      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="#terms">Terms</a></li>
+      <li><a href="#membership">Membership</a></li>
+      <li><a href="#residency">Residency</a></li>
+      <li><a href="#cookies">Cookies</a></li>
+      <li><a href="#refund">Refund</a></li>
+      <li><a href="#olive-credits">OLC</a></li>
+      <li><a href="#acceptable-use">AUP</a></li>
+      <li><a href="#disclaimer">Disclaimer</a></li>
+      <li><a href="#accessibility">Accessibility</a></li>
+      <li><a href="#ai">AI</a></li>
+      <li><a href="index.html" class="nav-cta">← Home</a></li>
+    </ul>
+    <button id="nav-ham" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="legal-hero">
+  <h1>Legal &amp; Privacy</h1>
+  <p class="sub">Your rights, our commitments, and the framework that governs every interaction with Olivium.</p>
+  <p class="last-updated">Last Updated: 13 July 2026</p>
+</section>
+
+<!-- ===== TABLE OF CONTENTS ===== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Navigate</p>
+      <h2>Table of Contents</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="toc">
+      <a href="#privacy">1. Privacy Policy (GDPR Compliant)</a>
+      <a href="#terms">2. Terms &amp; Conditions</a>
+      <a href="#membership">3. Membership Agreement</a>
+      <a href="#residency">4. Residency &amp; Booking Policy</a>
+      <a href="#cookies">5. Cookie Policy</a>
+      <a href="#refund">6. Refund, Renewal &amp; Cancellation Policy</a>
+      <a href="#olive-credits">7. Olive Credits Terms</a>
+      <a href="#acceptable-use">8. Acceptable Use Policy</a>
+      <a href="#copyright">9. Copyright &amp; Intellectual Property</a>
+      <a href="#disclaimer">10. Disclaimer</a>
+      <a href="#accessibility">11. Accessibility Statement</a>
+      <a href="#ai">12. AI &amp; Digital Services Disclosure</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     1. PRIVACY POLICY
+============================================================ -->
+<section class="section" id="privacy">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 1</p>
+      <h2>Privacy Policy</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <p><strong>Effective Date:</strong> 13 July 2026</p>
+      <p>Olivium ("we", "our", "us") is committed to protecting and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal data when you visit our website, use our mobile application, or engage with our membership services.</p>
+
+      <div class="highlight-box">
+        <p><strong>Data Controller:</strong> Olivium Estate · San Vincenzo, Tuscany, Italy<br>
+        <strong>Contact:</strong> <a href="mailto:privacy@olivium.io">privacy@olivium.io</a><br>
+        <strong>Data Protection Officer (DPO):</strong> Available at <a href="mailto:dpo@olivium.io">dpo@olivium.io</a></p>
+      </div>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.1 Personal Data We Collect</h3>
+      <p>We may collect the following categories of personal data:</p>
+      <ul>
+        <li><strong>Identity Data:</strong> Full name, date of birth, nationality, passport or ID number (for residency verification).</li>
+        <li><strong>Contact Data:</strong> Email address, postal address, telephone number.</li>
+        <li><strong>Membership Data:</strong> Membership tier, tree assignments, olive allocations, residency credits, booking history.</li>
+        <li><strong>Payment Data:</strong> Billing address, payment method details (processed securely through PCI-compliant third parties).</li>
+        <li><strong>Technical Data:</strong> IP address, browser type, device information, usage data from our website and app.</li>
+        <li><strong>Marketing &amp; Communications Data:</strong> Your preferences for receiving marketing communications from us.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.2 How We Use Your Data</h3>
+      <p>We process your personal data for the following purposes, relying on one or more lawful bases under the GDPR:</p>
+      <ul>
+        <li><strong>Membership Administration:</strong> To manage your membership, allocate trees, process olive oil distributions, and provide member services. <em>(Contractual necessity)</em></li>
+        <li><strong>Residency Bookings:</strong> To process stay reservations, handle check-in/out, and provide concierge services. <em>(Contractual necessity)</em></li>
+        <li><strong>Communication:</strong> To send administrative emails, membership updates, harvest notifications, and respond to inquiries. <em>(Legitimate interest)</em></li>
+        <li><strong>Marketing:</strong> To inform you about estate events, new offerings, and member experiences — only where you have consented or where permitted by law. <em>(Consent / Legitimate interest)</em></li>
+        <li><strong>Security &amp; Compliance:</strong> To protect our systems, prevent fraud, and comply with legal obligations. <em>(Legal obligation / Legitimate interest)</em></li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.3 Legal Basis for Processing</h3>
+      <ul>
+        <li><strong>Contractual Necessity:</strong> Processing necessary for the performance of your membership agreement.</li>
+        <li><strong>Legal Obligation:</strong> Processing required to comply with Italian and EU legal requirements.</li>
+        <li><strong>Legitimate Interests:</strong> Processing necessary for our legitimate business interests, provided these do not override your rights.</li>
+        <li><strong>Consent:</strong> Processing based on your explicit consent (e.g., marketing communications).</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.4 Data Retention</h3>
+      <p>We retain your personal data only for as long as necessary to fulfil the purposes for which it was collected, including legal, accounting, and reporting requirements. Generally:</p>
+      <ul>
+        <li><strong>Active Memberships:</strong> Data retained for the duration of your membership plus 7 years for legal and tax purposes.</li>
+        <li><strong>Inactive Memberships:</strong> Data retained for 3 years after membership termination unless you request deletion.</li>
+        <li><strong>Marketing Data:</strong> Retained until you withdraw consent or unsubscribe.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.5 Data Sharing</h3>
+      <p>We do not sell or rent your personal data. We may share your data with:</p>
+      <ul>
+        <li><strong>Service Providers:</strong> Payment processors, IT service providers, email delivery services, and estate management partners — all contractually bound to process data only on our instructions.</li>
+        <li><strong>Legal Authorities:</strong> Where required by law or to protect our rights.</li>
+        <li><strong>Successors:</strong> In the event of a merger, acquisition, or sale of assets.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.6 International Transfers</h3>
+      <p>Your data may be transferred to and processed in countries outside the European Economic Area (EEA). Where such transfers occur, we ensure appropriate safeguards are in place, including Standard Contractual Clauses approved by the European Commission.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.7 Your Rights</h3>
+      <p>Under the GDPR, you have the following rights:</p>
+      <ul>
+        <li><strong>Right to Access:</strong> Request a copy of the personal data we hold about you.</li>
+        <li><strong>Right to Rectification:</strong> Request correction of inaccurate or incomplete data.</li>
+        <li><strong>Right to Erasure (Right to be Forgotten):</strong> Request deletion of your data where no legal obligation requires retention.</li>
+        <li><strong>Right to Restrict Processing:</strong> Request limitation of how we process your data.</li>
+        <li><strong>Right to Data Portability:</strong> Request transfer of your data to another controller.</li>
+        <li><strong>Right to Object:</strong> Object to processing based on legitimate interests or direct marketing.</li>
+        <li><strong>Right to Withdraw Consent:</strong> Withdraw consent at any time where processing is based on consent.</li>
+      </ul>
+      <p>To exercise any of these rights, contact us at <a href="mailto:privacy@olivium.io">privacy@olivium.io</a>. We will respond within 30 days.</p>
+      <p>You also have the right to lodge a complaint with the Italian Data Protection Authority (<a href="https://www.garanteprivacy.it" target="_blank">Garante per la protezione dei dati personali</a>).</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.8 Data Security</h3>
+      <p>We implement appropriate technical and organizational measures to protect your data against unauthorized access, alteration, disclosure, or destruction. These include encryption, access controls, secure hosting, and regular security assessments.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">1.9 Children's Data</h3>
+      <p>Olivium does not knowingly collect personal data from individuals under 18 years of age. If you believe we have collected data from a minor, please contact us immediately.</p>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     2. TERMS & CONDITIONS
+============================================================ -->
+<section class="section" id="terms">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 2</p>
+      <h2>Terms &amp; Conditions</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <p><strong>Effective Date:</strong> 13 July 2026</p>
+      <p>These Terms &amp; Conditions ("Terms") govern your access to and use of the Olivium website, mobile application, and all associated services. By using Olivium services, you agree to be bound by these Terms.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">2.1 Acceptance of Terms</h3>
+      <p>By accessing or using any Olivium service, you confirm that you have read, understood, and agree to be bound by these Terms and all applicable laws. If you do not agree, you must discontinue use immediately.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">2.2 Eligibility</h3>
+      <p>To become an Olivium member or use our services, you must:</p>
+      <ul>
+        <li>Be at least 18 years of age.</li>
+        <li>Provide accurate, current, and complete information.</li>
+        <li>Maintain the security of your account credentials.</li>
+        <li>Not be located in a jurisdiction where use of our services is prohibited.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">2.3 Account Responsibility</h3>
+      <p>You are solely responsible for all activity that occurs under your account. You must notify us immediately of any unauthorized access. We reserve the right to suspend or terminate accounts that violate these Terms.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">2.4 Modifications</h3>
+      <p>We reserve the right to update these Terms at any time. Material changes will be communicated via email or prominent notice on our website. Continued use after changes constitutes acceptance.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">2.5 Governing Law</h3>
+      <p>These Terms are governed by the laws of Italy. Any dispute arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Livorno, Italy.</p>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     3. MEMBERSHIP AGREEMENT
+============================================================ -->
+<section class="section" id="membership">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 3</p>
+      <h2>Membership Agreement</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <p>This Membership Agreement ("Agreement") is entered into between Olivium Estate ("Olivium") and you ("Member") upon acceptance of a membership tier.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">3.1 Membership Obligations</h3>
+      <ul>
+        <li><strong>Stewardship:</strong> Members acknowledge that membership represents stewardship of the estate, not legal ownership of land or trees.</li>
+        <li><strong>Annual Renewal:</strong> Memberships renew automatically on the anniversary of the enrolment date unless cancelled in accordance with the Cancellation Policy.</li>
+        <li><strong>Fees:</strong> All membership fees are payable in advance and are non-refundable except as expressly provided in the Refund Policy.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">3.2 Membership Benefits</h3>
+      <ul>
+        <li><strong>Tree Stewardship:</strong> Members receive stewardship of designated olive trees as per their selected tier.</li>
+        <li><strong>Olive Oil Allocation:</strong> Annual allocation of extra virgin olive oil, as specified in the tier description.</li>
+        <li><strong>Residency Credits:</strong> Annual accommodation credits as per tier, subject to the Residency &amp; Booking Policy.</li>
+        <li><strong>Booking Priority:</strong> Members receive booking windows according to their tier.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">3.3 Tree Replacement</h3>
+      <p>If a stewarded tree naturally declines, dies, or becomes unproductive, Olivium will replace it with another healthy tree of similar age and quality. Members will be notified of any such replacement.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">3.4 Transferability</h3>
+      <p>Memberships are non-transferable except with Olivium's prior written consent, which may be withheld at our sole discretion. Upon death of a member, the membership may be transferred to a designated beneficiary.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">3.5 Termination</h3>
+      <ul>
+        <li><strong>By Member:</strong> Members may terminate membership by providing written notice at least 30 days before the renewal date.</li>
+        <li><strong>By Olivium:</strong> We reserve the right to terminate membership for breach of these terms, illegal activity, or conduct detrimental to the community.</li>
+      </ul>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     4. RESIDENCY & BOOKING POLICY
+============================================================ -->
+<section class="section" id="residency">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 4</p>
+      <h2>Residency &amp; Booking Policy</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:0 0 0.8rem;">4.1 Residency Credits</h3>
+      <ul>
+        <li><strong>1 Residency Credit</strong> = 1 complimentary overnight stay in designated Olivium accommodation.</li>
+        <li>Credits are allocated annually at membership renewal.</li>
+        <li>Credits may be used consecutively for extended stays or divided across multiple visits.</li>
+        <li>Credits have no cash value and cannot be redeemed for monetary refunds.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">4.2 Booking Process</h3>
+      <ul>
+        <li>Bookings must be made through the Olivium app or member portal.</li>
+        <li>Booking windows are determined by membership tier (higher tiers receive priority).</li>
+        <li>All reservations are subject to availability.</li>
+        <li>Members may book accommodation for themselves, family, and invited guests (within maximum occupancy).</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">4.3 Cancellation &amp; No-Show</h3>
+      <ul>
+        <li>Cancellations made more than 30 days before arrival: credits will be returned to your account.</li>
+        <li>Cancellations made 14–30 days before arrival: 50% of credits deducted.</li>
+        <li>Cancellations made less than 14 days before arrival: 100% of credits forfeited.</li>
+        <li>No-shows will result in forfeiture of all credits for that booking.</li>
+        <li>Exemption requests will be considered on a compassionate basis.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">4.4 Guest Responsibility</h3>
+      <ul>
+        <li>Members are responsible for the conduct of their guests.</li>
+        <li>Damage to estate property will be charged to the member's account.</li>
+        <li>Maximum occupancy limits apply and must not be exceeded.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">4.5 Check-in / Check-out</h3>
+      <ul>
+        <li>Check-in: 3:00 PM – 8:00 PM (late arrival by prior arrangement).</li>
+        <li>Check-out: 10:00 AM.</li>
+        <li>Late check-out may be available upon request (subject to availability).</li>
+      </ul>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     5. COOKIE POLICY
+============================================================ -->
+<section class="section" id="cookies">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 5</p>
+      <h2>Cookie Policy</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <p>This Cookie Policy explains how Olivium uses cookies and similar technologies on our website and mobile application.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">5.1 What Are Cookies</h3>
+      <p>Cookies are small text files placed on your device when you visit a website. They help us remember your preferences, understand how you use our site, and improve your experience.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">5.2 Types of Cookies We Use</h3>
+
+      <div class="two-col">
+        <div class="col">
+          <h5>Essential Cookies</h5>
+          <p>Necessary for core functionality, including authentication, security, and session management. Cannot be disabled.</p>
+          <p style="font-size:0.75rem; color:var(--muted-dim); margin-top:0.5rem;">Examples: session_id, auth_token</p>
+        </div>
+        <div class="col">
+          <h5>Preference Cookies</h5>
+          <p>Remember your preferences such as language selection, font size, and region.</p>
+          <p style="font-size:0.75rem; color:var(--muted-dim); margin-top:0.5rem;">Examples: lang, region, theme</p>
+        </div>
+        <div class="col">
+          <h5>Analytics Cookies</h5>
+          <p>Help us understand how visitors interact with our site (anonymous aggregate data).</p>
+          <p style="font-size:0.75rem; color:var(--muted-dim); margin-top:0.5rem;">Examples: _ga, _gid (Google Analytics)</p>
+        </div>
+        <div class="col">
+          <h5>Marketing Cookies</h5>
+          <p>Track your activity to deliver relevant advertising and measure campaign effectiveness.</p>
+          <p style="font-size:0.75rem; color:var(--muted-dim); margin-top:0.5rem;">Examples: _fbp, _gcl_au</p>
+        </div>
+      </div>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">5.3 Your Consent</h3>
+      <p>We obtain your consent for non-essential cookies through our cookie banner. You can manage your preferences at any time through your browser settings or our cookie preferences center.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">5.4 Third-Party Cookies</h3>
+      <p>Some cookies are set by third-party services we integrate, including:</p>
+      <ul>
+        <li><strong>Google Analytics:</strong> For website analytics.</li>
+        <li><strong>Stripe / PayPal:</strong> For secure payment processing.</li>
+        <li><strong>Cloudflare:</strong> For security and performance.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">5.5 Managing Cookies</h3>
+      <p>Most browsers allow you to control cookies through settings. You can:</p>
+      <ul>
+        <li>Delete all cookies stored on your device.</li>
+        <li>Block all cookies (may affect site functionality).</li>
+        <li>Set preferences for specific sites.</li>
+      </ul>
+      <p>For instructions, visit: <a href="https://www.aboutcookies.org" target="_blank">AboutCookies.org</a></p>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     6. REFUND, RENEWAL & CANCELLATION POLICY
+============================================================ -->
+<section class="section" id="refund">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 6</p>
+      <h2>Refund, Renewal &amp; Cancellation Policy</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:0 0 0.8rem;">6.1 Refund Policy</h3>
+      <ul>
+        <li><strong>Membership Fees:</strong> Membership fees are non-refundable once paid, except where required by applicable consumer protection laws.</li>
+        <li><strong>Cooling-Off Period:</strong> Under Italian law, you may cancel your membership within 14 days of purchase (EU consumers only) and receive a full refund, provided no credits or benefits have been used.</li>
+        <li><strong>Residency Bookings:</strong> Refunds for cancellations are governed by the Residency &amp; Booking Policy (Section 4.3).</li>
+        <li><strong>Olive Oil:</strong> Claims regarding quality or condition must be reported within 14 days of receipt.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">6.2 Renewal Policy</h3>
+      <ul>
+        <li>Memberships renew automatically on the anniversary date.</li>
+        <li>Renewal notices will be sent via email 30 days before the renewal date.</li>
+        <li>Membership fees for renewal will be at the current rate (subject to annual adjustment).</li>
+        <li>Members may opt out of automatic renewal by contacting us at least 30 days before renewal.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">6.3 Cancellation Policy</h3>
+      <ul>
+        <li><strong>By Member:</strong> Written notice required at least 30 days before renewal date.</li>
+        <li><strong>By Olivium:</strong> We may cancel membership for breach of terms, non-payment, or conduct detrimental to the community.</li>
+        <li><strong>Effect of Cancellation:</strong> Upon cancellation, all unused credits and allocations are forfeited.</li>
+        <li><strong>Pro-rated Refunds:</strong> Pro-rated refunds are not provided for mid-term cancellations.</li>
+      </ul>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     7. OLIVE CREDITS TERMS
+============================================================ -->
+<section class="section" id="olive-credits">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 7</p>
+      <h2>Olive Credits (OLC) Terms</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:0 0 0.8rem;">7.1 Definition</h3>
+      <p>Olive Credits ("OLC") are a digital representation of value within the Olivium ecosystem. OLC are not a cryptocurrency, security, or financial instrument. They have no monetary value outside the Olivium platform.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">7.2 Earning OLC</h3>
+      <ul>
+        <li>Members receive OLC as part of their membership allocation.</li>
+        <li>OLC may be earned through participation in estate events, referrals, and community contributions.</li>
+        <li>OLC balances are displayed in the Olivium app.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">7.3 Using OLC</h3>
+      <ul>
+        <li>OLC can be used to offset the cost of residency stays.</li>
+        <li>OLC can be used to purchase additional olive oil allocations.</li>
+        <li>OLC can be transferred to other members (subject to verification).</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">7.4 Expiry</h3>
+      <ul>
+        <li>OLC expire 24 months from the date of issuance.</li>
+        <li>Members will be notified before OLC expiry.</li>
+        <li>Expired OLC cannot be reinstated.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">7.5 Limitations</h3>
+      <ul>
+        <li>OLC cannot be exchanged for cash.</li>
+        <li>OLC cannot be used for any purpose outside the Olivium ecosystem.</li>
+        <li>OLC are non-transferable upon membership termination.</li>
+      </ul>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     8. ACCEPTABLE USE POLICY
+============================================================ -->
+<section class="section" id="acceptable-use">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 8</p>
+      <h2>Acceptable Use Policy</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <p>This Acceptable Use Policy ("AUP") applies to all users of Olivium's website, mobile application, and member portal.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">8.1 Prohibited Activities</h3>
+      <p>You may not:</p>
+      <ul>
+        <li>Use the platform for any unlawful purpose or in violation of any applicable law.</li>
+        <li>Post, transmit, or share defamatory, obscene, or harassing content.</li>
+        <li>Attempt to gain unauthorized access to any system or data.</li>
+        <li>Interfere with the security, integrity, or performance of our services.</li>
+        <li>Reverse engineer, decompile, or disassemble any part of the platform.</li>
+        <li>Use automated scripts or bots to scrape or extract data.</li>
+        <li>Impersonate any person or entity.</li>
+        <li>Use the platform to transmit malware, viruses, or harmful code.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">8.2 Content Standards</h3>
+      <ul>
+        <li>All content posted must be accurate, lawful, and respectful.</li>
+        <li>Personal attacks, hate speech, and discrimination are prohibited.</li>
+        <li>Commercial solicitation unrelated to Olivium is not permitted.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">8.3 Enforcement</h3>
+      <p>Violation of this AUP may result in:</p>
+      <ul>
+        <li>Warnings and requests to cease prohibited activity.</li>
+        <li>Suspension or termination of account access.</li>
+        <li>Notification to law enforcement where appropriate.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">8.4 Reporting Violations</h3>
+      <p>Please report any violations to <a href="mailto:abuse@olivium.io">abuse@olivium.io</a>.</p>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     9. COPYRIGHT & INTELLECTUAL PROPERTY
+============================================================ -->
+<section class="section" id="copyright">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 9</p>
+      <h2>Copyright &amp; Intellectual Property</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:0 0 0.8rem;">9.1 Ownership</h3>
+      <p>All content, materials, and intellectual property on the Olivium website, app, and platform — including but not limited to text, images, graphics, logos, trademarks, videos, software, and design — are the exclusive property of Olivium or its licensors and are protected by Italian, EU, and international copyright and trademark laws.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">9.2 Trademarks</h3>
+      <ul>
+        <li>"Olivium" and all associated logos are registered trademarks of Olivium Estate.</li>
+        <li>Use of any trademark without prior written permission is strictly prohibited.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">9.3 Limited License</h3>
+      <p>We grant you a limited, non-exclusive, non-transferable license to access and use the Olivium platform for personal, non-commercial purposes. This license does not include:</p>
+      <ul>
+        <li>Reproducing, distributing, or modifying content without permission.</li>
+        <li>Using content for commercial purposes without explicit written consent.</li>
+        <li>Removing any copyright or proprietary notices.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">9.4 User-Generated Content</h3>
+      <p>By submitting content to Olivium (e.g., reviews, photos, forum posts), you grant us a worldwide, royalty-free, perpetual license to use, reproduce, modify, and distribute that content in connection with our services.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">9.5 Copyright Infringement</h3>
+      <p>If you believe your intellectual property has been infringed, please contact our designated agent:</p>
+      <div class="highlight-box">
+        <p><strong>Copyright Agent:</strong> Olivium Legal Department<br>
+        <strong>Email:</strong> <a href="mailto:legal@olivium.io">legal@olivium.io</a><br>
+        <strong>Address:</strong> Olivium Estate, San Vincenzo, Tuscany, Italy</p>
+      </div>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     10. DISCLAIMER
+============================================================ -->
+<section class="section" id="disclaimer">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 10</p>
+      <h2>Disclaimer</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:0 0 0.8rem;">10.1 General Disclaimer</h3>
+      <p>The Olivium platform and all content are provided "as is" and "as available" without warranties of any kind, either express or implied. We do not warrant that:</p>
+      <ul>
+        <li>The platform will be uninterrupted, error-free, or secure.</li>
+        <li>Information provided is accurate, complete, or current.</li>
+        <li>Any errors will be corrected.</li>
+        <li>The platform is free of viruses or harmful components.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">10.2 Health &amp; Wellness Information</h3>
+      <p>Information about olive oil, health benefits, or wellness is for informational purposes only and does not constitute medical advice. Consult a qualified healthcare professional before making any health-related decisions.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">10.3 Third-Party Links</h3>
+      <p>Our platform may contain links to third-party websites. We do not control or endorse these sites and are not responsible for their content or practices.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">10.4 Limitation of Liability</h3>
+      <p>To the maximum extent permitted by law, Olivium shall not be liable for:</p>
+      <ul>
+        <li>Any indirect, incidental, special, or consequential damages.</li>
+        <li>Loss of profits, revenue, data, or goodwill.</li>
+        <li>Any damages arising from your use of the platform.</li>
+        <li>Agricultural outcomes, including harvest yields and olive oil production.</li>
+      </ul>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     11. ACCESSIBILITY STATEMENT
+============================================================ -->
+<section class="section" id="accessibility">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 11</p>
+      <h2>Accessibility Statement</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <p>Olivium is committed to ensuring digital accessibility for people with disabilities. We are continuously working to improve the user experience for everyone and apply the relevant accessibility standards.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">11.1 Standards</h3>
+      <p>We strive to conform to the <strong>Web Content Accessibility Guidelines (WCAG) 2.1</strong> at Level AA. These guidelines explain how to make web content more accessible for people with disabilities.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">11.2 Features</h3>
+      <ul>
+        <li><strong>Keyboard Navigation:</strong> All functionality is accessible via keyboard.</li>
+        <li><strong>Screen Reader Compatibility:</strong> We use semantic HTML and ARIA labels.</li>
+        <li><strong>Color Contrast:</strong> Text and background have sufficient contrast.</li>
+        <li><strong>Text Resizing:</strong> Content is readable at up to 200% zoom.</li>
+        <li><strong>Alt Text:</strong> Images include descriptive alternative text.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">11.3 Known Limitations</h3>
+      <p>Despite our efforts, some content may not yet fully conform. We are actively working to address:</p>
+      <ul>
+        <li>Older video content without captions.</li>
+        <li>Complex table structures in legacy content.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">11.4 Feedback</h3>
+      <p>We welcome feedback on accessibility. If you encounter any barriers, please contact us:</p>
+      <div class="highlight-box">
+        <p><strong>Email:</strong> <a href="mailto:accessibility@olivium.io">accessibility@olivium.io</a><br>
+        <strong>Phone:</strong> +39 0565 123 456<br>
+        <strong>Address:</strong> Olivium Estate, San Vincenzo, Tuscany, Italy</p>
+      </div>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     12. AI & DIGITAL SERVICES DISCLOSURE
+============================================================ -->
+<section class="section" id="ai">
+  <div class="wrap">
+    <div class="section-header">
+      <p class="eyebrow">Section 12</p>
+      <h2>AI &amp; Digital Services Disclosure</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="legal-content">
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:0 0 0.8rem;">12.1 Use of Artificial Intelligence</h3>
+      <p>Olivium integrates artificial intelligence (AI) and machine learning technologies to enhance our services. These technologies are used for:</p>
+      <ul>
+        <li><strong>Personalization:</strong> Tailoring recommendations and content to member preferences.</li>
+        <li><strong>Chat Support:</strong> AI-powered chatbots for initial support inquiries.</li>
+        <li><strong>Harvest Analytics:</strong> Predictive models for harvest yields and olive oil quality.</li>
+        <li><strong>Booking Optimization:</strong> Suggesting optimal dates and availability.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">12.2 Transparency</h3>
+      <ul>
+        <li>AI-generated content is clearly labeled where appropriate.</li>
+        <li>Members are notified when interacting with AI systems.</li>
+        <li>Human review is available for all automated decisions.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">12.3 Data Used for AI</h3>
+      <ul>
+        <li>AI systems process anonymized and aggregated data where possible.</li>
+        <li>Personal data used for AI is subject to the Privacy Policy (Section 1).</li>
+        <li>Members may opt out of AI-driven personalization.</li>
+      </ul>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">12.4 Human Oversight</h3>
+      <p>All AI-generated recommendations and decisions are subject to human oversight. Members can request human review of any AI-influenced decision by contacting <a href="mailto:ai-review@olivium.io">ai-review@olivium.io</a>.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:#fff; margin:1.5rem 0 0.8rem;">12.5 Limitations</h3>
+      <ul>
+        <li>AI systems are tools to assist, not replace, human judgment.</li>
+        <li>We do not use AI for decisions that have legal or significant financial consequences without human review.</li>
+        <li>AI predictions (e.g., harvest yields) are estimates and not guarantees.</li>
+      </ul>
+
+      <div class="highlight-box">
+        <p><strong>AI Contact:</strong> For questions about our use of AI, contact <a href="mailto:ai@olivium.io">ai@olivium.io</a>.</p>
+      </div>
+
+      <a href="#" class="back-top">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">OLIVIUM <span>Legal</span></div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#terms">Terms</a>
+      <a href="#membership">Membership</a>
+      <a href="#cookies">Cookies</a>
+      <a href="mailto:legal@olivium.io">Legal Contact</a>
+    </div>
+    <div class="footer-copy">© 2026 Olivium Estate · San Vincenzo, Tuscany · All Rights Reserved</div>
+  </div>
+</footer>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// --- NAVIGATION ---
+const nav = document.getElementById('nav');
+const ham = document.getElementById('nav-ham');
+const links = document.getElementById('nav-links');
+
+window.addEventListener('scroll', function() {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+ham.addEventListener('click', function() {
+  this.classList.toggle('open');
+  links.classList.toggle('open');
+});
+
+// Close mobile menu on link click
+document.querySelectorAll('#nav-links a').forEach(link => {
+  link.addEventListener('click', function() {
+    ham.classList.remove('open');
+    links.classList.remove('open');
+  });
+});
+
+// --- SMOOTH SCROLL FOR TOC LINKS ---
+document.querySelectorAll('.toc a, .back-top').forEach(link => {
+  link.addEventListener('click', function(e) {
+    const href = this.getAttribute('href');
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  });
+});
+
+console.log('🌿 Olivium Legal Pages — All Rights Reserved');
+</script>
+</body>
+</html>
