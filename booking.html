@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Your Olivium Villa Stay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --gold: #C5A059;
+            --charcoal: #080b07;
+            --muted: rgba(255,255,255,0.5);
+            --muted-dim: rgba(255,255,255,0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--charcoal);
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .icon { font-size: 4rem; margin-bottom: 1rem; }
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 400;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+        h1 .gold { color: var(--gold); font-style: italic; }
+        p {
+            color: var(--muted);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin: 1rem 0 2rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.9rem 2.5rem;
+            border-radius: 50px;
+            background: var(--gold);
+            color: #0a0f08;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #d4b06a;
+            transform: translateY(-2px);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--gold);
+        }
+        .links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        .back-link {
+            color: var(--muted-dim);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover { color: #fff; }
+
+        footer {
+            margin-top: 3rem;
+            color: var(--muted-dim);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 2rem 1.25rem; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="icon">🏡</div>
+        <h1>Book Your <span class="gold">Villa Stay</span></h1>
+        <p>
+            Experience the Olivium lifestyle — private villa, pool access, and walks
+            among the olive trees. This booking system is coming soon.
+        </p>
+        <div class="links">
+            <a href="join.html" class="btn">Explore Membership</a>
+            <a href="index.html" class="btn btn-outline">← Back to Home</a>
+        </div>
+        <footer>© 2026 Olivium · San Vincenzo, Tuscany</footer>
+    </div>
+
+</body>
+</html>

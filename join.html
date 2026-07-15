@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join Olivium | Tuscany Olive Grove Experience</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --gold: #C5A059;
+            --gold-light: #D4AF37;
+            --olive: #8aa63d;
+            --olive-dark: #5a7a2b;
+            --charcoal: #080b07;
+            --dark-card: #131811;
+            --border-gold: rgba(197,160,89,0.2);
+            --muted: rgba(255,255,255,0.55);
+            --muted-dim: rgba(255,255,255,0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--charcoal);
+            color: #fff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== VIDEO BACKGROUND ===== */
+        .video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .video-bg video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.55) contrast(1.05) saturate(1.1);
+        }
+        .video-bg .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(8,11,7,0.7) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
+            pointer-events: none;
+        }
+
+        /* ===== MAIN WRAP ===== */
+        .main-wrap {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 1100px;
+            margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.06em;
+        }
+        .logo .gold {
+            color: var(--gold);
+            font-style: italic;
+            font-weight: 400;
+            margin-left: 2px;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        nav a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #fff;
+        }
+        nav .nav-cta {
+            background: var(--gold);
+            color: #0a0f08 !important;
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 600 !important;
+        }
+        nav .nav-cta:hover {
+            background: #d4b06a !important;
+            color: #0a0f08 !important;
+        }
+
+        .nav-ham {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .nav-ham span {
+            display: block;
+            width: 26px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+        .nav-ham.open span:nth-child(2) { opacity: 0; }
+        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+        /* ===== HERO ===== */
+        .hero {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+        .hero .eyebrow {
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.2rem;
+            font-weight: 400;
+            color: #fff;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+        .hero h1 .gold {
+            color: var(--gold);
+            font-style: italic;
+        }
+        .hero p {
+            max-width: 650px;
+            margin: 1.2rem auto 0;
+            font-size: 1.1rem;
+            color: var(--muted);
+            line-height: 1.8;
+            font-weight: 300;
+        }
+        .hero .rule {
+            width: 50px;
+            height: 2px;
+            background: var(--gold);
+            margin: 1.2rem auto;
+        }
+
+        /* ===== CARDS ===== */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            padding-bottom: 60px;
+            flex: 1;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 2.2rem 1.8rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(4px);
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: var(--gold);
+            background: rgba(255,255,255,0.05);
+        }
+        .card .card-icon {
+            font-size: 2.8rem;
+            margin-bottom: 0.8rem;
+        }
+        .card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        .card p {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+        .card .button {
+            display: inline-block;
+            padding: 0.7rem 1.8rem;
+            border-radius: 50px;
+            background: var(--olive);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .card .button:hover {
+            background: var(--olive-dark);
+            transform: translateY(-2px);
+        }
+        .card .button.secondary {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
+        .card .button.secondary:hover {
+            background: rgba(197,160,89,0.1);
+            border-color: var(--gold-light);
+        }
+        .card .button.gold {
+            background: var(--gold);
+            color: #0a0f08;
+        }
+        .card .button.gold:hover {
+            background: var(--gold-light);
+        }
+
+        .card.featured {
+            border-color: var(--gold);
+            background: rgba(197,160,89,0.05);
+        }
+
+        .card .badge {
+            display: inline-block;
+            background: var(--gold);
+            color: #0a0f08;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.15rem 0.8rem;
+            border-radius: 50px;
+            margin-bottom: 0.8rem;
+            align-self: center;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            text-align: center;
+            padding: 2rem 0 2.5rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        footer h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        footer p {
+            color: var(--muted-dim);
+            font-size: 0.75rem;
+            letter-spacing: 0.06em;
+        }
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.5rem;
+            margin: 1rem 0 0.5rem;
+        }
+        footer .footer-links a {
+            color: var(--muted-dim);
+            text-decoration: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            transition: color 0.3s ease;
+        }
+        footer .footer-links a:hover {
+            color: #fff;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container { width: 94%; }
+            header { padding: 20px 0; }
+            .logo { font-size: 1.4rem; }
+
+            nav {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background: rgba(8,11,7,0.98);
+                padding: 2rem;
+                gap: 1.5rem;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+            nav.open { display: flex; }
+            .nav-ham { display: flex; }
+
+            .hero { padding: 40px 0 30px; }
+            .hero h1 { font-size: 2.8rem; }
+            .hero p { font-size: 1rem; }
+
+            .cards {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                margin: 0 auto;
+                padding-bottom: 40px;
+                gap: 1.2rem;
+            }
+            .card { padding: 1.8rem 1.5rem; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2.2rem; }
+            .card { padding: 1.5rem; }
+            .card .card-icon { font-size: 2.2rem; }
+            .card h2 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== VIDEO BACKGROUND ===== -->
+    <div class="video-bg">
+        <video autoplay loop muted playsinline aria-hidden="true"
+               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <!-- ===== MAIN WRAP ===== -->
+    <div class="main-wrap">
+
+        <div class="container">
+
+            <!-- ===== HEADER ===== -->
+            <header>
+                <div class="logo">OLIVIUM <span class="gold">Join</span></div>
+                <nav id="navLinks">
+                    <a href="index.html">Home</a>
+                    <a href="userDash.html">Dashboard</a>
+                    <a href="membership.html" class="nav-cta">Membership</a>
+                </nav>
+                <button class="nav-ham" id="navHam" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </header>
+
+            <!-- ===== HERO ===== -->
+            <section class="hero">
+                <p class="eyebrow">🌿 Choose Your Path</p>
+                <h1>Join <span class="gold">Olivium</span></h1>
+                <div class="rule"></div>
+                <p>
+                    Choose how you want to connect with the Olivium ecosystem.
+                    A Tuscany olive grove experience combining nature, hospitality,
+                    olive oil, and digital community.
+                </p>
+            </section>
+
+            <!-- ===== CARDS ===== -->
+            <section class="cards">
+
+                <!-- CARD 1: Membership -->
+                <div class="card featured">
+                    <span class="badge">Recommended</span>
+                    <div class="card-icon">🌿</div>
+                    <h2>Membership</h2>
+                    <p>
+                        Become part of Olivium. Connect with the grove, olive oil journey,
+                        and future Tuscany experiences.
+                    </p>
+                    <a class="button gold" href="membership.html">Explore Membership →</a>
+                </div>
+
+                <!-- CARD 2: OLVM Token -->
+                <div class="card">
+                    <div class="card-icon">🫒</div>
+                    <h2>OLVM Token</h2>
+                    <p>
+                        Explore the OLVM token. Token information, roadmap, contract details,
+                        and ecosystem utility.
+                    </p>
+                    <a class="button secondary" href="token.html">View OLVM →</a>
+                </div>
+
+                <!-- CARD 3: Tuscany Stay -->
+                <div class="card">
+                    <div class="card-icon">🏡</div>
+                    <h2>Tuscany Stay</h2>
+                    <p>
+                        Experience the Olivium lifestyle. Stay, relax, and enjoy the
+                        Tuscan countryside.
+                    </p>
+                    <a class="button" href="booking.html">Plan Your Stay →</a>
+                </div>
+
+                <!-- CARD 4: Ecosystem Dashboard -->
+                <div class="card">
+                    <div class="card-icon">📊</div>
+                    <h2>Ecosystem</h2>
+                    <p>
+                        Explore the live Olivium ecosystem dashboard and future
+                        member features.
+                    </p>
+                    <a class="button secondary" href="userDash.html">View Dashboard →</a>
+                </div>
+
+            </section>
+
+            <!-- ===== FOOTER ===== -->
+            <footer>
+                <h3>OLIVIUM</h3>
+                <p>A living connection to Tuscany</p>
+                <div class="footer-links">
+                    <a href="index.html">Home</a>
+                    <a href="membership.html">Membership</a>
+                    <a href="token.html">OLVM</a>
+                    <a href="privacy.html">Privacy</a>
+                    <a href="mailto:hello@olivium.io">Contact</a>
+                </div>
+                <p style="margin-top:0.8rem; font-size:0.6rem; color:rgba(255,255,255,0.15);">
+                    © 2026 Olivium · San Vincenzo, Tuscany
+                </p>
+            </footer>
+
+        </div>
+        <!-- end container -->
+
+    </div>
+    <!-- end main-wrap -->
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // ===== MOBILE NAV =====
+        const ham = document.getElementById('navHam');
+        const links = document.getElementById('navLinks');
+
+        if (ham && links) {
+            ham.addEventListener('click', function() {
+                this.classList.toggle('open');
+                links.classList.toggle('open');
+            });
+
+            document.querySelectorAll('#navLinks a').forEach(link => {
+                link.addEventListener('click', function() {
+                    ham.classList.remove('open');
+                    links.classList.remove('open');
+                });
+            });
+        }
+
+        // ===== SMOOTH SCROLL =====
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        });
+
+        console.log('🌿 Olivium — Join Gateway');
+        console.log('📋 Choose your path: Membership | OLVM | Tuscany Stay | Dashboard');
+        console.log('🏡 A living connection to Tuscany');
+    </script>
+
+</body>
+</html>
