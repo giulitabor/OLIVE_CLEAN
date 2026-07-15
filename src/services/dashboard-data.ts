@@ -292,7 +292,33 @@ export async function requestSellToDao(litres: number, payoutCurrency: "OLVM" | 
 }
 
 /* ── 9. VILLA BOOKING ────────────────────────────────────────────── */
+// src/services/dashboard-data.ts
 
+// Add this function anywhere in the file (near other villa-related functions)
+
+export async function fetchVillaCalendar(fromDate: string, toDate: string) {
+  const { data, error } = await sb
+    .from("villa_nights")
+    .select("night_date, status")
+    .gte("night_date", fromDate)
+    .lte("night_date", toDate)
+    .order("night_date", { ascending: true });
+
+  if (error) throw error;
+
+  const availableDates = (data ?? [])
+    .filter(n => n.status === "available")
+    .map(n => n.night_date);
+
+  const unavailableDates = (data ?? [])
+    .filter(n => n.status !== "available")
+    .map(n => n.night_date);
+
+  return {
+    availableDates,
+    unavailableDates,
+  };
+}
 export async function fetchVillaAvailability(fromDate?: string, toDate?: string): Promise<VillaAvailability> {
   const start = fromDate || new Date().toISOString().slice(0, 10);
   const end = toDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
