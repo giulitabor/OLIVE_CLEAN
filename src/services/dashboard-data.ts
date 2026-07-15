@@ -11,7 +11,7 @@
  */
 
 import { PublicKey } from "@solana/web3.js";
-import { getProgram, getActiveWallet, connection, sb } from "./src/connection";
+import { getProgram, getActiveWallet, connection, sb } from "./connection";
 
 const OLV_TOKEN_MINT = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
