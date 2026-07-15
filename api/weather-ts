@@ -1,0 +1,51 @@
+// api/weather.ts — Vercel serverless function
+
+import { VercelRequest, VercelResponse } from '@vercel/node';
+
+// Your Tomorrow.io API key is stored in environment variables
+const TOMORROW_API_KEY = process.env.TOMORROW_API_KEY;
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS for development
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+
+  const { lat, lon } = req.query;
+
+  if (!lat || !lon) {
+    return res.status(400).json({ error: 'Missing lat/lon parameters' });
+  }
+
+  try {
+    // Fetch from Tomorrow.io (server-side — key is hidden)
+    const tomorrowRes = await fetch(
+      `https://api.tomorrow.io/v4/weather/realtime?location=${lat},${lon}&apikey=${TOMORROW_API_KEY}`
+    );
+    const tomorrowData = await tomorrowRes.json();
+
+    // Fetch from Open-Meteo (free, no key needed)
+    const meteoRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,uv_index&hourly=precipitation_probability&forecast_days=1`
+    );
+    const meteoData = await meteoRes.json();
+
+    // Build consensus
+    const consensus = {
+      temperature: tomorrowData.data?.values?.temperature || meteoData.current?.temperature_2m || 20,
+      humidity: tomorrowData.data?.values?.humidity || meteoData.current?.relative_humidity_2m || 60,
+      windSpeed: tomorrowData.data?.values?.windSpeed || meteoData.current?.wind_speed_10m || 2,
+      pressure: tomorrowData.data?.values?.pressureSurfaceLevel || meteoData.current?.surface_pressure || 1013,
+      rainProb: tomorrowData.data?.values?.precipitationProbability || meteoData.hourly?.precipitation_probability?.[0] || 0,
+      uvIndex: tomorrowData.data?.values?.uvIndex || meteoData.current?.uv_index || 5,
+      cloudCover: tomorrowData.data?.values?.cloudCover || meteoData.current?.cloud_cover || 30,
+      sources: ['Tomorrow.io', 'Open-Meteo'],
+      confidence: 1.0,
+      timestamp: new Date().toISOString(),
+    };
+
+    return res.status(200).json(consensus);
+  } catch (error) {
+    console.error('Weather API error:', error);
+    return res.status(500).json({ error: 'Failed to fetch weather data' });
+  }
+}
