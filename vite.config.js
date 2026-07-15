@@ -27,6 +27,12 @@ export default defineConfig({
         harvest: resolve(__dirname, "harvest.html"),
         brochure: resolve(__dirname, "Brochure.html"),
         privacy: resolve(__dirname, "privacy.html"),
+                dashboard: resolve(__dirname, "userDash.html"),
+        token: resolve(__dirname, "token.html"),
+                join: resolve(__dirname, "join.html"),
+        membeship: resolve(__dirname, "membership.html"),
+
+
 
 
 
