@@ -3,21 +3,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium Ecosystem Dashboard</title>
+    <title>OLVM Token | Olivium Ecosystem</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 
     <style>
         :root {
             --gold: #C5A059;
             --gold-light: #D4AF37;
-            --olive: #4a6b1e;
-            --olive-light: #6a9a2e;
             --charcoal: #080b07;
-            --card-bg: rgba(255,255,255,0.03);
-            --border-gold: rgba(197,160,89,0.15);
             --muted: rgba(255,255,255,0.5);
             --muted-dim: rgba(255,255,255,0.25);
         }
@@ -32,7 +26,6 @@
             min-height: 100vh;
         }
 
-        /* ===== VIDEO BACKGROUND ===== */
         .video-bg {
             position: fixed;
             top: 0;
@@ -58,7 +51,6 @@
             pointer-events: none;
         }
 
-        /* ===== NAVIGATION ===== */
         nav {
             position: fixed;
             top: 0;
@@ -142,7 +134,6 @@
         .nav-ham.open span:nth-child(2) { opacity: 0; }
         .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
 
-        /* ===== MAIN WRAP ===== */
         .main-wrap {
             position: relative;
             z-index: 10;
@@ -151,247 +142,275 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 2rem 2rem 4rem;
+            padding: 3rem 2rem 4rem;
         }
 
-        /* ===== CONNECT BAR ===== */
-        .connect-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            padding: 0.8rem 1.5rem;
-            margin-bottom: 2rem;
+        .hero-section {
+            text-align: center;
+            padding: 2rem 0 3rem;
         }
-        .connect-bar .status {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-        .connect-bar .status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--olive-light);
-        }
-        .connect-bar .status .dot.inactive {
-            background: #555;
-        }
-        .connect-bar .status span {
-            font-size: 0.8rem;
-            color: var(--muted);
-        }
-        .connect-bar .status .wallet {
-            font-family: 'JetBrains Mono', monospace;
+        .hero-section .eyebrow {
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
             color: var(--gold);
-            font-size: 0.8rem;
-            background: rgba(197,160,89,0.1);
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-        }
-        .btn-connect {
-            background: var(--gold);
-            color: #0a0f08;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            border-radius: 50px;
             font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
         }
-        .btn-connect:hover { background: var(--gold-light); transform: translateY(-2px); }
-        .btn-connect.outline {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.12);
+        .hero-section h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 400;
             color: #fff;
+            letter-spacing: -0.02em;
         }
-        .btn-connect.outline:hover { background: rgba(255,255,255,0.05); border-color: var(--gold); }
-
-        /* ===== DASHBOARD GRID ===== */
-        .dash-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+        .hero-section h1 .gold { color: var(--gold); font-style: italic; }
+        .hero-section p {
+            color: var(--muted);
+            max-width: 600px;
+            margin: 1rem auto 0;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        .hero-section .rule {
+            width: 50px;
+            height: 2px;
+            background: var(--gold);
+            margin: 1.2rem auto;
         }
 
-        .dash-card {
+        .token-box {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 20px;
-            padding: 1.8rem;
-            transition: all 0.4s ease;
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            text-align: center;
         }
-        .dash-card:hover {
-            border-color: var(--border-gold);
-        }
-        .dash-card.full {
-            grid-column: 1 / -1;
-        }
-
-        .dash-card .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .dash-card .card-header h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            color: #fff;
-            font-weight: 600;
-        }
-        .dash-card .card-header .icon {
-            font-size: 1.8rem;
-        }
-        .dash-card .card-header .badge {
-            font-size: 0.6rem;
+        .token-box .label {
+            font-size: 0.7rem;
+            color: var(--muted-dim);
             text-transform: uppercase;
             letter-spacing: 0.08em;
+        }
+        .token-box .address {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
             color: var(--gold);
-            background: rgba(197,160,89,0.1);
+            padding: 0.5rem 0;
+            word-break: break-all;
+        }
+        .token-box .network {
+            font-size: 0.8rem;
+            color: var(--muted);
+            background: rgba(255,255,255,0.05);
             padding: 0.2rem 0.8rem;
             border-radius: 50px;
+            display: inline-block;
+            margin-top: 0.3rem;
         }
 
-        .dash-stat {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 0.3rem;
+        .btn-buy {
+            display: inline-block;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            background: var(--gold);
+            color: #0a0f08;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin-top: 0.5rem;
         }
-        .dash-stat .num {
+        .btn-buy:hover {
+            background: var(--gold-light);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(197,160,89,0.3);
+        }
+        .btn-buy.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+        .info-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        .info-card h3 {
             font-family: 'Playfair Display', serif;
-            font-size: 2.4rem;
-            font-weight: 600;
+            font-size: 1.3rem;
             color: #fff;
+            margin-bottom: 0.8rem;
         }
-        .dash-stat .num.gold { color: var(--gold); }
-        .dash-stat .lbl {
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-        .dash-desc {
-            font-size: 0.85rem;
-            color: var(--muted);
-            line-height: 1.7;
-        }
-
-        .dash-list {
+        .info-card ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        .dash-list li {
-            padding: 0.6rem 0;
+        .info-card ul li {
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 0.4rem 0;
             border-bottom: 1px solid rgba(255,255,255,0.04);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
-            color: var(--muted);
+            gap: 0.5rem;
         }
-        .dash-list li:last-child { border-bottom: none; }
-        .dash-list li .label { color: #fff; }
-        .dash-list li .value { color: var(--gold); font-weight: 500; }
+        .info-card ul li:last-child { border-bottom: none; }
+        .info-card ul li::before {
+            content: "✦";
+            color: var(--gold);
+            font-size: 0.6rem;
+        }
 
-        .dash-tag {
-            display: inline-block;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.05);
-            color: var(--muted);
+        .why-olvm {
+            background: rgba(197,160,89,0.04);
+            border: 1px solid rgba(197,160,89,0.1);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-top: 1.5rem;
+            text-align: center;
         }
-        .dash-tag.active {
+        .why-olvm h4 {
+            font-family: 'Playfair Display', serif;
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .why-olvm p {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .roadmap {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .roadmap-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .roadmap-item .phase {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+            font-weight: 600;
+        }
+        .roadmap-item .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: #fff;
+            margin: 0.3rem 0;
+        }
+        .roadmap-item .desc {
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+        .roadmap-item .status {
+            display: inline-block;
+            font-size: 0.6rem;
+            padding: 0.15rem 0.8rem;
+            border-radius: 50px;
+            background: rgba(255,193,7,0.15);
+            color: #ffc107;
+            margin-top: 0.5rem;
+        }
+        .roadmap-item .status.done {
             background: rgba(76,175,80,0.15);
             color: #4caf50;
         }
-        .dash-tag.pending {
-            background: rgba(255,193,7,0.15);
-            color: #ffc107;
+        .roadmap-item .status.live {
+            background: rgba(197,160,89,0.15);
+            color: var(--gold);
         }
 
-        .btn-dash {
-            display: inline-block;
-            padding: 0.6rem 1.5rem;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
+        .faq-item {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem 0;
+        }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-item .q {
+            font-weight: 600;
             color: #fff;
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
             cursor: pointer;
-        }
-        .btn-dash:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--gold);
-        }
-        .btn-dash.gold {
-            background: var(--gold);
-            color: #0a0f08;
-            border-color: var(--gold);
-        }
-        .btn-dash.gold:hover {
-            background: var(--gold-light);
-        }
-
-        /* ===== UPDATES ===== */
-        .update-item {
             display: flex;
-            gap: 1rem;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            justify-content: space-between;
+            align-items: center;
         }
-        .update-item:last-child { border-bottom: none; }
-        .update-item .date {
-            font-size: 0.7rem;
+        .faq-item .q .arrow {
+            transition: transform 0.3s ease;
             color: var(--muted-dim);
-            min-width: 80px;
-            font-weight: 500;
-            letter-spacing: 0.04em;
         }
-        .update-item .content {
+        .faq-item .q.open .arrow { transform: rotate(180deg); }
+        .faq-item .a {
             color: var(--muted);
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-        .update-item .content strong { color: #fff; font-weight: 500; }
-
-        /* ===== MEMBER VIEW (hidden by default) ===== */
-        #memberView {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            padding-top: 0.5rem;
             display: none;
         }
-        #memberView.active {
-            display: block;
-        }
-        #publicView {
-            display: block;
-        }
-        #publicView.hidden {
-            display: none;
-        }
+        .faq-item .a.open { display: block; }
 
-        /* ===== RESPONSIVE ===== */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        footer p {
+            color: var(--muted-dim);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+        }
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.5rem;
+            margin: 1rem 0;
+        }
+        footer .footer-links a {
+            color: var(--muted-dim);
+            text-decoration: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            transition: color 0.3s ease;
+        }
+        footer .footer-links a:hover { color: #fff; }
+
         @media (max-width: 1024px) {
-            .dash-grid { grid-template-columns: 1fr 1fr; }
+            .info-grid { grid-template-columns: 1fr 1fr; }
+            .roadmap { grid-template-columns: repeat(3, 1fr); }
         }
 
         @media (max-width: 768px) {
-            .container { padding: 1.5rem 1.25rem; }
-            .dash-grid { grid-template-columns: 1fr; }
-            .dash-card.full { grid-column: 1; }
-            .connect-bar { flex-direction: column; align-items: stretch; text-align: center; }
-            .connect-bar .status { justify-content: center; flex-wrap: wrap; }
+            .container { padding: 2rem 1.25rem; }
+            .hero-section h1 { font-size: 2.8rem; }
+            .info-grid { grid-template-columns: 1fr; }
+            .roadmap { grid-template-columns: 1fr; max-width: 400px; margin: 1.5rem auto 0; }
 
             .nav-links {
                 display: none;
@@ -407,21 +426,17 @@
             }
             .nav-links.open { display: flex; }
             .nav-ham { display: flex; }
-
-            .dash-stat .num { font-size: 2rem; }
         }
 
         @media (max-width: 480px) {
-            .container { padding: 1rem 1rem 2rem; }
-            .dash-card { padding: 1.2rem; }
-            .update-item { flex-direction: column; gap: 0.3rem; }
-            .update-item .date { min-width: auto; }
+            .hero-section h1 { font-size: 2.2rem; }
+            .token-box .address { font-size: 0.9rem; }
+            .btn-buy { width: 100%; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ===== VIDEO BACKGROUND ===== -->
     <div class="video-bg">
         <video autoplay loop muted playsinline aria-hidden="true"
                poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
@@ -430,15 +445,16 @@
         <div class="overlay"></div>
     </div>
 
-    <!-- ===== NAVIGATION ===== -->
     <nav>
         <div class="nav-inner">
-            <div class="nav-logo">OLIVIUM <em>Dashboard</em></div>
+            <div class="nav-logo">OLIVIUM <em>Token</em></div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="index.html">Home</a></li>
-                <li><a href="join.html">Join</a></li>
+                <li><a href="discover.html">Discover</a></li>
                 <li><a href="membership.html">Membership</a></li>
-                <li><a href="userDash.html" class="nav-cta">Dashboard</a></li>
+                <li><a href="token.html" class="nav-cta">OLVM</a></li>
+                <li><a href="userDash.html">Dashboard</a></li>
+                <li><a href="join.html">Join</a></li>
             </ul>
             <button class="nav-ham" id="navHam" aria-label="Menu">
                 <span></span><span></span><span></span>
@@ -446,252 +462,125 @@
         </div>
     </nav>
 
-    <!-- ===== MAIN ===== -->
     <div class="main-wrap">
         <div class="container">
 
-            <!-- ===== CONNECT BAR ===== -->
-            <div class="connect-bar">
-                <div class="status">
-                    <span class="dot" id="statusDot"></span>
-                    <span id="statusText">Public Ecosystem View</span>
-                    <span class="wallet" id="walletDisplay">Not Connected</span>
+            <section class="hero-section">
+                <p class="eyebrow">🫒 Ecosystem Token</p>
+                <h1>OLVM <span class="gold">Token</span></h1>
+                <div class="rule"></div>
+                <p>The O-Liv-In Token powers the Olivium ecosystem — connecting members, governance, and real-world experiences.</p>
+            </section>
+
+            <div class="token-box">
+                <div class="label">Network</div>
+                <div class="network">Solana</div>
+                <div style="margin:1rem 0 0.5rem;">
+                    <div class="label">Contract Address</div>
+                    <div class="address" id="contractAddress">COMING SOON</div>
                 </div>
-                <div>
-                    <button class="btn-connect" id="connectBtn">Connect Wallet</button>
+
+                <a href="#" class="btn-buy disabled" id="buyBtn">
+                    BUY OLVM
+                    <span style="display:block; font-size:0.6rem; font-weight:400; opacity:0.6;">Coming Soon</span>
+                </a>
+                <p style="color:var(--muted-dim); font-size:0.7rem; margin-top:0.5rem;">Launching on Pump.fun · Q4 2026</p>
+            </div>
+
+            <div class="why-olvm">
+                <h4>Why Hold OLVM?</h4>
+                <p>OLVM is the digital key to the Olivium ecosystem. Holding OLVM is expected to provide access to future membership opportunities and ecosystem benefits as the project develops.</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📋 Token Details</h3>
+                    <ul>
+                        <li>Name: O-Liv-In Token</li>
+                        <li>Symbol: OLVM</li>
+                        <li>Network: Solana</li>
+                        <li>Type: Utility Token</li>
+                        <li>Total Supply: TBA</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Utility</h3>
+                    <ul>
+                        <li>Membership identity</li>
+                        <li>Community governance</li>
+                        <li>Ecosystem access</li>
+                        <li>Future experiences</li>
+                        <li>Staking &amp; rewards</li>
+                    </ul>
                 </div>
             </div>
 
-            <!-- ===== PUBLIC VIEW ===== -->
-            <div id="publicView">
-                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
-                    🌿 Olivium <span style="color:var(--gold);">Ecosystem</span>
-                </h1>
-                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:1.5rem;">
-                    A living Tuscan olive grove — monitored, stewarded, and growing.
-                </p>
+            <div style="margin-top:3rem;">
+                <h2 style="font-family:'Playfair Display',serif; font-size:2rem; color:#fff; text-align:center; font-weight:400;">Roadmap</h2>
+                <div class="rule" style="margin:1rem auto;"></div>
 
-                <div class="dash-grid">
-
-                    <!-- Grove Status -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🌳 Grove Status</h3>
-                            <span class="badge">Live</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num gold">240</span>
-                            <span class="lbl">Olive Trees</span>
-                        </div>
-                        <p class="dash-desc">San Vincenzo, Tuscany · Historic Estate</p>
-                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <span class="dash-tag active">● Growing Phase</span>
-                            <span class="dash-tag">🌿 2026 Season</span>
-                        </div>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Next Event</span>
-                                <span style="color:#fff;">Harvest · October 2026</span>
-                            </div>
-                        </div>
+                <div class="roadmap">
+                    <div class="roadmap-item">
+                        <div class="phase">Phase 1</div>
+                        <div class="title">Estate Foundation</div>
+                        <div class="desc">Grove established · Villa secured · Community building</div>
+                        <span class="status done">✓ Complete</span>
                     </div>
-
-                    <!-- Harvest -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🫒 Harvest</h3>
-                            <span class="badge">Preparing</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num">—</span>
-                            <span class="lbl">Season Not Started</span>
-                        </div>
-                        <p class="dash-desc">Expected Yield: TBD · Cold-pressed within 24 hours</p>
-                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <span class="dash-tag pending">● Preparing</span>
-                            <span class="dash-tag">📅 October - December</span>
-                        </div>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Status</span>
-                                <span style="color:#ffc107;">Waiting for Autumn</span>
-                            </div>
-                        </div>
+                    <div class="roadmap-item">
+                        <div class="phase">Phase 2</div>
+                        <div class="title">Token Launch</div>
+                        <div class="desc">OLVM token deployment · Ecosystem dashboard · Member onboarding</div>
+                        <span class="status live">● In Progress</span>
                     </div>
-
-                    <!-- Villa Experiences -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🏡 Villa Experience</h3>
-                            <span class="badge">Available</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">Villa Stay</span> <span class="value">Book Now</span></li>
-                            <li><span class="label">Pool Access</span> <span class="value">Seasonal</span></li>
-                            <li><span class="label">Grove Visits</span> <span class="value">By Request</span></li>
-                        </ul>
-                        <div style="margin-top:1rem;">
-                            <a href="booking.html" class="btn-dash gold">Book Experience →</a>
-                        </div>
+                    <div class="roadmap-item">
+                        <div class="phase">Phase 3</div>
+                        <div class="title">Full Ecosystem</div>
+                        <div class="desc">Governance live · Villa experiences · Harvest integration · DAO</div>
+                        <span class="status">Coming Soon</span>
                     </div>
-
-                    <!-- Governance -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🗳 Governance</h3>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <p class="dash-desc">Community decisions about the estate's future — harvesting, improvements, and member experiences.</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Status</span>
-                                <span style="color:var(--muted-dim);">Launching Q4 2026</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Latest Updates - Full Width -->
-                    <div class="dash-card full">
-                        <div class="card-header">
-                            <h3>📢 Latest Olivium Updates</h3>
-                            <span class="badge">Live</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">July 2026</span>
-                            <span class="content"><strong>Summer grove monitoring</strong> — All 240 trees inspected. Healthy growth observed.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">June 2026</span>
-                            <span class="content"><strong>Villa availability updated</strong> — New dates released for Autumn stays.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">May 2026</span>
-                            <span class="content"><strong>New member experiences added</strong> — Private harvest dinners and olive oil tastings.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">April 2026</span>
-                            <span class="content"><strong>Spring blossom</strong> — The mignole are blooming across the grove.</span>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
-            <!-- ===== MEMBER VIEW ===== -->
-            <div id="memberView">
-                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
-                    👋 Welcome Back
-                </h1>
-                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:0.2rem;">
-                    Wallet: <span style="font-family:'JetBrains Mono',monospace; color:var(--gold);" id="memberWalletDisplay">8x72...92KD</span>
-                </p>
-                <p style="color:var(--muted-dim); font-size:0.8rem; margin-bottom:1.5rem;">
-                    <span id="memberTierDisplay">Tree Keeper</span> · Member since 2026
-                </p>
+            <div style="margin-top:3rem;">
+                <h2 style="font-family:'Playfair Display',serif; font-size:2rem; color:#fff; text-align:center; font-weight:400;">Frequently Asked Questions</h2>
+                <div class="rule" style="margin:1rem auto;"></div>
 
-                <div class="dash-grid">
-
-                    <!-- Your Membership -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🌿 Your Membership</h3>
-                            <span class="badge" id="memberBadge">Active</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num gold" id="memberTreeCount">1</span>
-                            <span class="lbl">Tree Connection</span>
-                        </div>
-                        <p class="dash-desc" id="memberTreeName">Tree #124 · Named Olive</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted);">
-                                <span>Experience Credits</span>
-                                <span style="color:#fff;" id="memberCredits">7 / 7</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); margin-top:0.3rem;">
-                                <span>Olive Oil Allocation</span>
-                                <span style="color:#ffc107;" id="memberOilAllocation">5L · Pending Harvest</span>
-                            </div>
-                        </div>
+                <div style="max-width:750px; margin:0 auto;">
+                    <div class="faq-item">
+                        <div class="q" onclick="toggleFaq(this)">What is OLVM? <span class="arrow">▼</span></div>
+                        <div class="a">OLVM is the utility token for the Olivium ecosystem. It powers membership identity, community governance, and access to estate experiences.</div>
                     </div>
-
-                    <!-- Your Benefits -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🎯 Your Benefits</h3>
-                            <span class="badge">2026</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">Olive Oil</span> <span class="value" id="benefitOil">5L EVOO</span></li>
-                            <li><span class="label">Residency Nights</span> <span class="value" id="benefitNights">7 Nights</span></li>
-                            <li><span class="label">Harvest Access</span> <span class="value" id="benefitHarvest">Invited</span></li>
-                            <li><span class="label">Concierge</span> <span class="value" id="benefitConcierge">Available</span></li>
-                        </ul>
+                    <div class="faq-item">
+                        <div class="q" onclick="toggleFaq(this)">How do I buy OLVM? <span class="arrow">▼</span></div>
+                        <div class="a">OLVM will be available on Pump.fun when launched. Connect your Solana wallet and follow the purchase flow. Launch date: Q4 2026.</div>
                     </div>
-
-                    <!-- Governance -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🗳 Governance</h3>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <p class="dash-desc">No active votes at this time. Check back when community proposals are live.</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Your Voting Power</span>
-                                <span style="color:var(--muted-dim);">—</span>
-                            </div>
-                        </div>
+                    <div class="faq-item">
+                        <div class="q" onclick="toggleFaq(this)">What can I do with OLVM? <span class="arrow">▼</span></div>
+                        <div class="a">OLVM unlocks membership tiers, governance participation, villa stays, olive oil allocations, and future ecosystem experiences.</div>
                     </div>
-
-                    <!-- Next Steps -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>📋 Next Steps</h3>
-                            <span class="badge">Action</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">📅 Plan Your Stay</span> <a href="booking.html" style="color:var(--gold); text-decoration:none; font-size:0.8rem;">Book Villa →</a></li>
-                            <li><span class="label">🫒 Harvest Season</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">October 2026</span></li>
-                            <li><span class="label">🌳 Visit Your Tree</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">Plan a visit</span></li>
-                        </ul>
+                    <div class="faq-item">
+                        <div class="q" onclick="toggleFaq(this)">Is OLVM an investment? <span class="arrow">▼</span></div>
+                        <div class="a">OLVM is a utility token designed for ecosystem participation. It is not a financial instrument. Always do your own research.</div>
                     </div>
-
-                    <!-- Latest Updates - Full Width -->
-                    <div class="dash-card full">
-                        <div class="card-header">
-                            <h3>📢 Member Updates</h3>
-                            <span class="badge">Personal</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">July 2026</span>
-                            <span class="content"><strong>Your tree #124</strong> — Summer growth monitored. Healthy and thriving.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">June 2026</span>
-                            <span class="content"><strong>Harvest preparation</strong> — You are invited to the October harvest. Save the date.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">May 2026</span>
-                            <span class="content"><strong>Welcome to Olivium</strong> — Your membership is active. Explore your benefits.</span>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- ===== FOOTER ===== -->
-    <footer style="position:relative; z-index:10; text-align:center; padding:2rem; border-top:1px solid rgba(255,255,255,0.04);">
-        <p style="color:var(--muted-dim); font-size:0.7rem; letter-spacing:0.06em;">
-            © 2026 Olivium · San Vincenzo, Tuscany
-        </p>
+    <footer>
+        <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="discover.html">Discover</a>
+            <a href="membership.html">Membership</a>
+            <a href="token.html">OLVM</a>
+            <a href="userDash.html">Dashboard</a>
+            <a href="join.html">Join</a>
+        </div>
+        <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
     </footer>
 
-    <!-- ===== JAVASCRIPT ===== -->
     <script>
-        // ===== MOBILE NAV =====
         const ham = document.getElementById('navHam');
         const links = document.getElementById('navLinks');
         if (ham && links) {
@@ -707,87 +596,14 @@
             });
         }
 
-        // ===== TOGGLE VIEW (simulated) =====
-        let isConnected = false;
-
-        const publicView = document.getElementById('publicView');
-        const memberView = document.getElementById('memberView');
-        const connectBtn = document.getElementById('connectBtn');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const walletDisplay = document.getElementById('walletDisplay');
-
-        // Simulated member data
-        const memberData = {
-            wallet: '8x72...92KD',
-            tier: 'Tree Keeper',
-            treeCount: 1,
-            treeName: 'Tree #124 · Named Olive',
-            credits: '7 / 7',
-            oilAllocation: '5L · Pending Harvest',
-            benefits: {
-                oil: '5L EVOO',
-                nights: '7 Nights',
-                harvest: 'Invited',
-                concierge: 'Available'
-            }
-        };
-
-        function toggleView(connected) {
-            isConnected = connected;
-            if (connected) {
-                publicView.classList.add('hidden');
-                memberView.classList.add('active');
-                statusDot.className = 'dot';
-                statusText.textContent = 'Member Connected';
-                walletDisplay.textContent = memberData.wallet;
-                connectBtn.textContent = 'Disconnect';
-                connectBtn.className = 'btn-connect outline';
-
-                // Update member data
-                document.getElementById('memberWalletDisplay').textContent = memberData.wallet;
-                document.getElementById('memberTierDisplay').textContent = memberData.tier;
-                document.getElementById('memberTreeCount').textContent = memberData.treeCount;
-                document.getElementById('memberTreeName').textContent = memberData.treeName;
-                document.getElementById('memberCredits').textContent = memberData.credits;
-                document.getElementById('memberOilAllocation').textContent = memberData.oilAllocation;
-                document.getElementById('benefitOil').textContent = memberData.benefits.oil;
-                document.getElementById('benefitNights').textContent = memberData.benefits.nights;
-                document.getElementById('benefitHarvest').textContent = memberData.benefits.harvest;
-                document.getElementById('benefitConcierge').textContent = memberData.benefits.concierge;
-
-            } else {
-                publicView.classList.remove('hidden');
-                memberView.classList.remove('active');
-                statusDot.className = 'dot inactive';
-                statusText.textContent = 'Public Ecosystem View';
-                walletDisplay.textContent = 'Not Connected';
-                connectBtn.textContent = 'Connect Wallet';
-                connectBtn.className = 'btn-connect';
-            }
+        function toggleFaq(el) {
+            el.classList.toggle('open');
+            const answer = el.nextElementSibling;
+            answer.classList.toggle('open');
         }
 
-        connectBtn.addEventListener('click', function() {
-            toggleView(!isConnected);
-        });
-
-        // ===== SMOOTH SCROLL =====
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    e.preventDefault();
-                    const target = document.querySelector(href);
-                    if (target) {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }
-            });
-        });
-
-        console.log('🌿 Olivium Ecosystem Dashboard');
-        console.log('📊 Public view: Grove monitoring, harvest status, villa experiences');
-        console.log('🔐 Connect wallet to see your membership dashboard');
+        console.log('🫒 OLVM Token Page');
+        console.log('🚀 Launching Q4 2026');
     </script>
 </body>
 </html>
