@@ -1,1392 +1,663 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Olivium DAO — Admin Panel</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olivium Ecosystem Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
-  <style>
-    /* ─── reset & base ─── */
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
-    body {
-      background:#0a140c; min-height:100vh; display:flex; justify-content:center;
-      transition:background .3s;
-    }
-    body.luxury {
-      background:#0d0f0d;
-      background-image:radial-gradient(circle at 20% 30%,#1a2a1a,#040804);
-    }
+    <style>
+        :root {
+            --gold: #C5A059;
+            --gold-light: #D4AF37;
+            --charcoal: #080b07;
+            --muted: rgba(255,255,255,0.5);
+            --muted-dim: rgba(255,255,255,0.25);
+        }
 
-    /* ─── scrollbar ─── */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #1a2a1a; }
-    ::-webkit-scrollbar-thumb { background: #2a6b3a; border-radius: 99px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* ─── main container ─── */
-    .app-container {
-      max-width:1400px; width:100%;
-      background:rgba(12,28,16,.7);
-      backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
-      border-radius:48px; padding:24px;
-      box-shadow:0 30px 50px rgba(0,0,0,.9),0 0 0 1px rgba(80,200,120,.2);
-      border:1px solid rgba(60,180,100,.2);
-      margin:16px;
-    }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--charcoal);
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
 
-    /* ─── cards ─── */
-    .card {
-      background:rgba(16,35,20,.6);
-      backdrop-filter:blur(4px);
-      -webkit-backdrop-filter:blur(4px);
-      border-radius:28px; padding:18px;
-      border:1px solid rgba(70,200,120,.15);
-      box-shadow:0 8px 20px rgba(0,0,0,.4);
-      transition:.15s;
-    }
-    .card:hover { border-color:rgba(100,255,150,.4); }
+        .video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .video-bg video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.55) contrast(1.05) saturate(1.1);
+        }
+        .video-bg .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
+            pointer-events: none;
+        }
 
-    .card-header {
-      display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
-      color:#b0e0b0; font-weight:500; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; opacity:.8;
-    }
-    .card-header i { color:#6fcf97; margin-right:6px; }
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            background: rgba(8,11,7,0.6);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.06em;
+        }
+        .nav-logo em {
+            font-style: italic;
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: var(--gold);
+            margin-left: 4px;
+        }
 
-    /* ─── buttons ─── */
-    .btn-primary {
-      background:#2b7a3e;
-      border:none; padding:8px 24px; border-radius:60px;
-      color:#fff; font-weight:600; display:inline-flex; align-items:center; gap:10px;
-      cursor:pointer; transition:.15s; border:1px solid #5fcf7a;
-    }
-    .btn-primary:hover { background:#3d9f55; transform:scale(1.02); }
-    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover { color: #fff; }
+        .nav-cta {
+            background: var(--gold);
+            color: #0a0f08 !important;
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 600 !important;
+        }
+        .nav-cta:hover { background: #d4b06a !important; }
 
-    .btn-danger {
-      background:#7a2b2b;
-      border:none; padding:8px 24px; border-radius:60px;
-      color:#fff; font-weight:600; display:inline-flex; align-items:center; gap:10px;
-      cursor:pointer; transition:.15s; border:1px solid #cf5f5f;
-    }
-    .btn-danger:hover { background:#9f3d3d; transform:scale(1.02); }
+        .nav-ham {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .nav-ham span {
+            display: block;
+            width: 26px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+        .nav-ham.open span:nth-child(2) { opacity: 0; }
+        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
 
-    .btn-outline {
-      background:transparent;
-      border:1px solid rgba(70,200,120,.3); padding:8px 20px; border-radius:60px;
-      color:#b0e0b0; font-weight:500; display:inline-flex; align-items:center; gap:8px;
-      cursor:pointer; transition:.15s;
-    }
-    .btn-outline:hover { border-color:#5fcf7a; background:rgba(70,200,120,.1); }
+        .main-wrap {
+            position: relative;
+            z-index: 10;
+            padding-top: 72px;
+            min-height: 100vh;
+        }
 
-    /* ─── stat boxes ─── */
-    .stat-box {
-      background:rgba(16,35,20,.6);
-      backdrop-filter:blur(4px);
-      border-radius:20px; padding:16px;
-      border:1px solid rgba(70,200,120,.12);
-    }
-    .stat-box .label { color:#87b98a; font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; }
-    .stat-box .value { color:#d4fad4; font-weight:700; font-size:1.4rem; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 2rem 4rem;
+        }
 
-    /* ─── tree grid ─── */
-    .tree-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
-      gap:16px;
-      margin-top:16px;
-    }
+        .connect-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 0.8rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .connect-bar .status {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .connect-bar .status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+        }
+        .connect-bar .status .dot.inactive { background: #555; }
+        .connect-bar .status span {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        .connect-bar .status .wallet {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--gold);
+            font-size: 0.8rem;
+            background: rgba(197,160,89,0.1);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+        }
+        .btn-connect {
+            background: var(--gold);
+            color: #0a0f08;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-connect:hover { background: var(--gold-light); transform: translateY(-2px); }
+        .btn-connect.outline {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+        }
+        .btn-connect.outline:hover { background: rgba(255,255,255,0.05); border-color: var(--gold); }
 
-    .tree-card {
-      background:rgba(16,35,20,.6);
-      backdrop-filter:blur(4px);
-      border-radius:20px;
-      padding:16px;
-      border:1px solid rgba(70,200,120,.12);
-      cursor:pointer;
-      transition:.2s;
-    }
-    .tree-card:hover {
-      border-color:rgba(100,255,150,.4);
-      transform:translateY(-2px);
-      box-shadow:0 8px 25px rgba(0,0,0,.3);
-    }
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .dash-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 1.8rem;
+            transition: all 0.4s ease;
+        }
+        .dash-card:hover { border-color: rgba(197,160,89,0.2); }
+        .dash-card.full { grid-column: 1 / -1; }
 
-    .tree-card .tree-icon {
-      font-size:2.5rem;
-      margin-bottom:8px;
-    }
-    .tree-card .tree-name {
-      color:#d4fad4;
-      font-weight:600;
-      font-size:1.1rem;
-    }
-    .tree-card .tree-meta {
-      color:#87b98a;
-      font-size:.8rem;
-      margin-top:4px;
-    }
-    .tree-card .tree-stats {
-      display:flex;
-      gap:12px;
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(70,200,120,.1);
-    }
-    .tree-card .tree-stats span {
-      color:#b0e0b0;
-      font-size:.75rem;
-    }
-    .tree-card .tree-stats .num {
-      color:#d4fad4;
-      font-weight:600;
-    }
+        .dash-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .dash-card .card-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: #fff;
+            font-weight: 600;
+        }
+        .dash-card .card-header .badge {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+            background: rgba(197,160,89,0.1);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+        }
 
-    .tree-card .progress-wrap {
-      background:rgba(0,0,0,.3);
-      border-radius:40px;
-      height:4px;
-      margin-top:8px;
-      overflow:hidden;
-    }
-    .tree-card .progress-fill {
-      height:100%;
-      background:linear-gradient(90deg,#3dcc6a,#8bf0a0);
-      border-radius:40px;
-      transition:width .5s;
-    }
+        .dash-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+        .dash-stat .num {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .dash-stat .num.gold { color: var(--gold); }
+        .dash-stat .lbl { font-size: 0.85rem; color: var(--muted); }
+        .dash-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
 
-    .tree-card .badge {
-      display:inline-block;
-      padding:2px 10px;
-      border-radius:40px;
-      font-size:.65rem;
-      font-weight:500;
-    }
-    .badge-available { background:rgba(70,200,120,.2); color:#6fcf97; border:1px solid rgba(70,200,120,.2); }
-    .badge-full { background:rgba(200,170,70,.2); color:#cfb76f; border:1px solid rgba(200,170,70,.2); }
-    .badge-mine { background:rgba(70,120,200,.2); color:#6f97cf; border:1px solid rgba(70,120,200,.2); }
+        .dash-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .dash-list li {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .dash-list li:last-child { border-bottom: none; }
+        .dash-list li .label { color: #fff; }
+        .dash-list li .value { color: var(--gold); font-weight: 500; }
 
-    /* ─── filters ─── */
-    .filters-wrap {
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin:16px 0;
-    }
-    .filter-btn {
-      padding:6px 16px;
-      border-radius:40px;
-      border:1px solid rgba(70,200,120,.15);
-      background:transparent;
-      color:#87b98a;
-      font-size:.8rem;
-      cursor:pointer;
-      transition:.15s;
-    }
-    .filter-btn:hover { border-color:rgba(70,200,120,.4); color:#d4fad4; }
-    .filter-btn.active {
-      background:rgba(70,200,120,.15);
-      border-color:#6fcf97;
-      color:#6fcf97;
-    }
+        .dash-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.05);
+            color: var(--muted);
+        }
+        .dash-tag.active { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .dash-tag.pending { background: rgba(255,193,7,0.15); color: #ffc107; }
 
-    /* ─── admin log ─── */
-    .admin-log {
-      background:rgba(0,0,0,.4);
-      border-radius:16px; padding:16px;
-      font-family:'Menlo','Consolas',monospace; font-size:.7rem; line-height:1.6;
-      color:#8bf0a0; border:1px solid rgba(70,200,120,.1);
-      max-height:200px; overflow-y:auto;
-      white-space:pre-wrap;
-      word-break:break-all;
-    }
-    .admin-log .error { color:#cf6f6f; }
-    .admin-log .success { color:#6fcf97; }
-    .admin-log .warning { color:#cfb76f; }
-    .admin-log .info { color:#87b98a; }
+        .btn-dash {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn-dash:hover { background: rgba(255,255,255,0.1); border-color: var(--gold); }
+        .btn-dash.gold { background: var(--gold); color: #0a0f08; border-color: var(--gold); }
+        .btn-dash.gold:hover { background: var(--gold-light); }
 
-    /* ─── tabs ─── */
-    .tab-btn {
-      padding:8px 20px; border:none; background:transparent;
-      color:#87b98a; font-weight:500; font-size:.8rem;
-      border-bottom:2px solid transparent; transition:.15s;
-      cursor:pointer;
-    }
-    .tab-btn:hover { color:#d4fad4; }
-    .tab-btn.active {
-      color:#6fcf97; border-bottom-color:#6fcf97;
-    }
+        .update-item {
+            display: flex;
+            gap: 1rem;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .update-item:last-child { border-bottom: none; }
+        .update-item .date {
+            font-size: 0.7rem;
+            color: var(--muted-dim);
+            min-width: 80px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+        }
+        .update-item .content {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .update-item .content strong { color: #fff; font-weight: 500; }
 
-    /* ─── badges ─── */
-    .badge-success { background:rgba(70,200,120,.2); color:#6fcf97; padding:2px 12px; border-radius:40px; font-size:.7rem; border:1px solid rgba(70,200,120,.2); }
-    .badge-warning { background:rgba(200,170,70,.2); color:#cfb76f; padding:2px 12px; border-radius:40px; font-size:.7rem; border:1px solid rgba(200,170,70,.2); }
-    .badge-danger { background:rgba(200,70,70,.2); color:#cf6f6f; padding:2px 12px; border-radius:40px; font-size:.7rem; border:1px solid rgba(200,70,70,.2); }
+        #memberView { display: none; }
+        #memberView.active { display: block; }
+        #publicView { display: block; }
+        #publicView.hidden { display: none; }
 
-    /* ─── grid ─── */
-    .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
-    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-    .grid-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        footer p {
+            color: var(--muted-dim);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+        }
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.5rem;
+            margin: 1rem 0;
+        }
+        footer .footer-links a {
+            color: var(--muted-dim);
+            text-decoration: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            transition: color 0.3s ease;
+        }
+        footer .footer-links a:hover { color: #fff; }
 
-    @media (max-width:900px) {
-      .grid-4 { grid-template-columns:repeat(2,1fr); }
-      .grid-3 { grid-template-columns:repeat(2,1fr); }
-      .tree-grid { grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); }
-    }
-    @media (max-width:600px) {
-      .grid-4 { grid-template-columns:1fr; }
-      .grid-3 { grid-template-columns:1fr; }
-      .grid-2 { grid-template-columns:1fr; }
-      .app-container { padding:12px; margin:8px; border-radius:24px; }
-      .tree-grid { grid-template-columns:1fr; }
-    }
+        @media (max-width: 1024px) {
+            .dash-grid { grid-template-columns: 1fr 1fr; }
+        }
 
-    .hidden { display:none !important; }
+        @media (max-width: 768px) {
+            .container { padding: 1.5rem 1.25rem; }
+            .dash-grid { grid-template-columns: 1fr; }
+            .dash-card.full { grid-column: 1; }
+            .connect-bar { flex-direction: column; align-items: stretch; text-align: center; }
+            .connect-bar .status { justify-content: center; flex-wrap: wrap; }
 
-    /* ─── pulse dot ─── */
-    @keyframes pulse-dot { 0%{opacity:1} 50%{opacity:.5} }
-    .pulse-dot {
-      display:inline-block; width:8px; height:8px; border-radius:50%;
-      background:#e74c3c; animation:pulse-dot 1.8s infinite;
-    }
-    .pulse-dot.green { background:#4cdb7a; }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background: rgba(8,11,7,0.98);
+                padding: 2rem;
+                gap: 1.5rem;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+            .nav-links.open { display: flex; }
+            .nav-ham { display: flex; }
 
-    /* ─── nav ─── */
-    .nav-bar {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:12px 0 20px 0; border-bottom:1px solid rgba(70,200,120,.1);
-      margin-bottom:24px; flex-wrap:wrap; gap:12px;
-    }
-    .nav-logo {
-      display:flex; align-items:center; gap:12px;
-      color:#b0e0b0; font-size:1.2rem; font-weight:700;
-    }
-    .nav-logo span { color:#6fcf97; }
-    .nav-links { display:flex; gap:4px; flex-wrap:wrap; }
-    .nav-links .tab-btn { color:#87b98a; }
-    .nav-links .tab-btn.active { color:#6fcf97; border-bottom-color:#6fcf97; }
+            .dash-stat .num { font-size: 2rem; }
+        }
 
-    /* ─── loading spinner ─── */
-    .spinner {
-      display:inline-block; width:16px; height:16px;
-      border:2px solid rgba(70,200,120,.2); border-top-color:#6fcf97;
-      border-radius:50%; animation:spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* ─── admin-only banner ─── */
-    .admin-banner {
-      background:rgba(200,170,70,.1);
-      border:1px solid rgba(200,170,70,.2);
-      border-radius:16px;
-      padding:12px 20px;
-      color:#cfb76f;
-      font-size:.85rem;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:16px;
-    }
-    .admin-banner i { color:#cfb76f; font-size:1.2rem; }
-
-    /* ─── tree detail modal (from index2) ─── */
-    #tree-detail-modal {
-      position: fixed; inset: 0; z-index: 50; overflow-y: auto;
-      background: rgba(10, 10, 5, 0.85); backdrop-filter: blur(8px);
-      display: none;
-    }
-    #tree-detail-modal.open { display: flex; align-items: center; justify-content: center; padding: 16px; }
-    #tree-detail-modal .modal-content {
-      background: #fff; border-radius: 28px; max-width: 900px; width: 100%;
-      max-height: 90vh; overflow-y: auto; position: relative;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-    }
-    .tree-detail-tab { 
-      cursor: pointer; padding: 8px 16px; border: none; background: transparent; 
-      font-weight: 500; border-bottom: 2px solid transparent; color: #71717a; 
-      transition: 0.2s; font-size: 14px;
-    }
-    .tree-detail-tab.active { border-bottom-color: #16a34a; color: #16a34a; }
-    .tree-detail-tab-content { display: block; }
-    .tree-detail-tab-content.hidden { display: none; }
-    .modal-close-btn {
-      position: absolute; top: 16px; right: 16px; z-index: 10;
-      background: #fff; border: none; border-radius: 50%;
-      width: 40px; height: 40px; font-size: 20px; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: flex; align-items: center; justify-content: center;
-      transition: 0.2s;
-    }
-    .modal-close-btn:hover { background: #f3f4f6; transform: scale(1.05); }
-  </style>
+        @media (max-width: 480px) {
+            .container { padding: 1rem 1rem 2rem; }
+            .dash-card { padding: 1.2rem; }
+            .update-item { flex-direction: column; gap: 0.3rem; }
+            .update-item .date { min-width: auto; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="app-container">
-
-  <!-- ═══════════════════════════════════════════════════════════
-       NAVIGATION
-  ═══════════════════════════════════════════════════════════ -->
-  <div class="nav-bar">
-    <div class="nav-logo">
-      <div style="width:40px;height:40px;border-radius:12px;background:#2b7a3e;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🫒</div>
-      <div>
-        <span style="font-family:'Playfair Display',serif;">Olivium</span>
-        <span style="font-size:.65rem;display:block;color:#87b98a;font-weight:400;">Admin Panel</span>
-      </div>
-    </div>
-    <div class="nav-links">
-      <button class="tab-btn active" id="tab-field" onclick="switchTab('field')">🌿 Field</button>
-      <button class="tab-btn" id="tab-admin" onclick="switchTab('admin')" style="display:none;">⚙️ Admin</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span style="display:flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(70,200,120,.1);border-radius:40px;color:#87b98a;font-size:.7rem;border:1px solid rgba(70,200,120,.1);">
-        <span class="pulse-dot green" style="width:6px;height:6px;"></span>
-        Devnet
-      </span>
-      <button id="btn-connect" class="btn-primary" style="padding:8px 20px;font-size:.8rem;">
-        <i class="fas fa-plug"></i> Connect Wallet
-      </button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       ADMIN BANNER (only visible to admin)
-  ═══════════════════════════════════════════════════════════ -->
-  <div id="admin-banner" class="admin-banner hidden">
-    <i class="fas fa-shield-alt"></i>
-    <span><strong>Admin Mode Active</strong> — You have full protocol access. Use with caution.</span>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       PANEL: FIELD (Tree Grid)
-  ═══════════════════════════════════════════════════════════ -->
-  <div id="panel-field">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-      <div>
-        <h2 style="color:#d4fad4;font-family:'Playfair Display',serif;font-size:1.8rem;">🌿 The Grove</h2>
-        <p style="color:#87b98a;font-size:.85rem;">All trees registered on-chain · Click any tree for details</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="color:#87b98a;font-size:.75rem;">Total: <span id="total-tree-count" style="color:#d4fad4;font-weight:600;">—</span></span>
-        <button onclick="refreshTrees()" class="btn-outline" style="padding:4px 12px;font-size:.7rem;">
-          <i class="fas fa-sync-alt"></i>
-        </button>
-      </div>
+    <div class="video-bg">
+        <video autoplay loop muted playsinline aria-hidden="true"
+               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-wrap">
-      <button class="filter-btn active" data-filter="all" onclick="applyFilter('all')">All Trees</button>
-      <button class="filter-btn" data-filter="available" onclick="applyFilter('available')">Available</button>
-      <button class="filter-btn" data-filter="full" onclick="applyFilter('full')">Fully Adopted</button>
-      <button class="filter-btn" data-filter="my" onclick="applyFilter('my')">My Trees</button>
-    </div>
-
-    <!-- Tree Grid -->
-    <div id="tree-grid" class="tree-grid">
-      <div style="grid-column:1/-1;text-align:center;padding:40px;color:#87b98a;">
-        <span class="spinner" style="width:24px;height:24px;border-width:3px;"></span>
-        <p style="margin-top:12px;">Loading trees from the grove...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       PANEL: ADMIN (only visible to admin wallet)
-  ═══════════════════════════════════════════════════════════ -->
-  <div id="panel-admin" class="hidden">
-    <div class="card" style="padding:24px;">
-
-      <!-- Admin header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
-        <div>
-          <h2 style="color:#d4fad4;font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:4px;">⚙️ Protocol Admin</h2>
-          <p style="color:#87b98a;font-size:.85rem;">On-chain governance · Genesis sync · Treasury management</p>
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo">OLIVIUM <em>Dashboard</em></div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="discover.html">Discover</a></li>
+                <li><a href="membership.html">Membership</a></li>
+                <li><a href="token.html">OLVM</a></li>
+                <li><a href="userDash.html" class="nav-cta">Dashboard</a></li>
+                <li><a href="join.html">Join</a></li>
+            </ul>
+            <button class="nav-ham" id="navHam" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
         </div>
-        <button onclick="refreshAdminData()" class="btn-outline">
-          <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-      </div>
+    </nav>
 
-      <!-- Stats row -->
-      <div class="grid-4" style="margin-bottom:24px;">
-        <div class="stat-box">
-          <p class="label">Program ID</p>
-          <p id="admin-program-id" style="color:#6fcf97;font-family:monospace;font-size:.7rem;word-break:break-all;">8xkNHk2VpWBM…XHc54</p>
-        </div>
-        <div class="stat-box">
-          <p class="label">Authority</p>
-          <p id="admin-authority" style="color:#6fcf97;font-family:monospace;font-size:.7rem;word-break:break-all;">—</p>
-        </div>
-        <div class="stat-box">
-          <p class="label">Trees in DB</p>
-          <p id="admin-tree-count" class="value">—</p>
-        </div>
-        <div class="stat-box">
-          <p class="label">Protocol Status</p>
-          <p id="admin-paused" class="value" style="font-size:1rem;"><span class="badge-success">● Active</span></p>
-        </div>
-      </div>
+    <div class="main-wrap">
+        <div class="container">
 
-      <!-- Financial config -->
-      <div class="grid-3" style="margin-bottom:24px;">
-        <div class="stat-box" style="border-color:rgba(70,200,120,.2);">
-          <p class="label"><i class="fas fa-coins"></i> Vault Liquidity</p>
-          <p id="admin-treasury-sol" class="value" style="font-size:1.6rem;">— SOL</p>
-          <p style="color:#87b98a;font-size:.7rem;margin-top:4px;">Available for share buy-backs</p>
-        </div>
-        <div class="stat-box" style="border-color:rgba(70,200,120,.2);">
-          <p class="label"><i class="fas fa-chart-pie"></i> Total Shares Sold</p>
-          <p id="admin-total-circulation" class="value" style="font-size:1.6rem;color:#6fcf97;">—</p>
-          <p style="color:#87b98a;font-size:.7rem;margin-top:4px;">Total active memberships</p>
-        </div>
-        <div class="stat-box" style="border-color:rgba(200,170,70,.2);">
-          <p class="label"><i class="fas fa-oil-can"></i> Projected Oil Debt</p>
-          <p id="admin-oil-debt" class="value" style="font-size:1.6rem;color:#cfb76f;">— L</p>
-          <p style="color:#87b98a;font-size:.7rem;margin-top:4px;">Total seasonal commitment</p>
-        </div>
-      </div>
-
-      <!-- Genesis sync card -->
-      <div class="card" style="margin-bottom:24px;border-color:rgba(70,200,120,.2);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-          <div>
-            <h3 style="color:#d4fad4;font-size:1.1rem;display:flex;align-items:center;gap:8px;">
-              <i class="fas fa-seedling" style="color:#6fcf97;"></i> Genesis Sync
-            </h3>
-            <p style="color:#87b98a;font-size:.8rem;margin-top:4px;">
-              Reads Supabase and re-registers any missing on-chain trees.
-              <span style="color:#cfb76f;font-size:.7rem;">NFT minting is done separately.</span>
-            </p>
-          </div>
-          <div id="sync-status-badge" class="hidden" style="display:flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(70,200,120,.15);border-radius:40px;border:1px solid rgba(70,200,120,.2);color:#6fcf97;font-size:.75rem;">
-            <span style="width:6px;height:6px;border-radius:50%;background:#4cdb7a;display:inline-block;"></span>
-            Last sync OK
-          </div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-          <button id="btn-bootstrap" class="btn-primary">
-            <i class="fas fa-sync-alt"></i> Run Genesis Sync
-          </button>
-          <button id="btn-setupProtocol" class="btn-primary" style="background:#1a4a2a;border-color:#3a8a4a;">
-            <i class="fas fa-cogs"></i> Setup Protocol
-          </button>
-        </div>
-
-        <!-- Terminal log -->
-        <div id="admin-log" class="admin-log hidden">
-          <span class="info">> Ready for sync operations...</span>
-        </div>
-      </div>
-
-      <!-- Supabase ↔ Chain status -->
-      <div class="card" style="margin-bottom:24px;border-color:rgba(70,200,120,.2);">
-        <h3 style="color:#d4fad4;font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-          <i class="fas fa-database" style="color:#6fcf97;"></i> Supabase ↔ Chain Status
-        </h3>
-
-        <div class="grid-3" style="margin-bottom:16px;">
-          <div class="stat-box" style="border-color:rgba(70,200,120,.1);">
-            <p class="label">In Supabase</p>
-            <p id="admin-sb-total" class="value" style="font-size:1.6rem;">—</p>
-          </div>
-          <div class="stat-box" style="border-color:rgba(70,200,120,.1);">
-            <p class="label">Mints Created</p>
-            <p id="admin-sb-minted" class="value" style="font-size:1.6rem;color:#6fcf97;">—</p>
-          </div>
-          <div class="stat-box" style="border-color:rgba(200,170,70,.1);">
-            <p class="label">Need Bootstrap</p>
-            <p id="admin-sb-pending" class="value" style="font-size:1.6rem;color:#cfb76f;">—</p>
-          </div>
-        </div>
-
-        <div class="table-wrap" style="overflow-x:auto;border-radius:16px;border:1px solid rgba(70,200,120,.1);">
-          <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
-            <thead>
-              <tr>
-                <th style="background:rgba(16,35,20,.8);color:#87b98a;font-weight:500;text-transform:uppercase;font-size:.65rem;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(70,200,120,.1);">Tree ID</th>
-                <th style="background:rgba(16,35,20,.8);color:#87b98a;font-weight:500;text-transform:uppercase;font-size:.65rem;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(70,200,120,.1);">Name</th>
-                <th style="background:rgba(16,35,20,.8);color:#87b98a;font-weight:500;text-transform:uppercase;font-size:.65rem;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(70,200,120,.1);">Variety</th>
-                <th style="background:rgba(16,35,20,.8);color:#87b98a;font-weight:500;text-transform:uppercase;font-size:.65rem;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(70,200,120,.1);">Mint</th>
-                <th style="background:rgba(16,35,20,.8);color:#87b98a;font-weight:500;text-transform:uppercase;font-size:.65rem;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(70,200,120,.1);">Status</th>
-              </tr>
-            </thead>
-            <tbody id="admin-tree-table">
-              <tr>
-                <td colspan="5" style="text-align:center;color:#87b98a;padding:32px;">
-                  <span class="spinner"></span> Loading tree status…
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Danger Zone -->
-      <div class="card" style="border-color:rgba(200,70,70,.3);background:rgba(40,10,10,.4);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <span style="font-size:1.8rem;">⚠️</span>
-          <div>
-            <h4 style="color:#cf6f6f;font-size:1rem;">Database Danger Zone</h4>
-            <p style="color:#87b98a;font-size:.8rem;">Clear all on-chain flags and ownership records from Supabase.</p>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <button id="btn-wipe" class="btn-danger">
-            <i class="fas fa-trash"></i> Wipe Supabase Tree Status
-          </button>
-          <button id="btn-sync-db" class="btn-primary" style="background:#2a4a6a;border-color:#3a6a8a;">
-            <i class="fas fa-sync"></i> Sync DB to Chain
-          </button>
-        </div>
-      </div>
-
-      <!-- Live Transaction Ledger -->
-      <div class="card" style="margin-top:24px;border-color:rgba(70,200,120,.1);">
-        <h4 style="color:#d4fad4;font-size:.9rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
-          <span class="pulse-dot" style="background:#e74c3c;width:8px;height:8px;"></span>
-          Live Transaction Ledger
-        </h4>
-        <div id="admin-ledger" class="admin-log" style="max-height:150px;font-size:.65rem;">
-          <span class="info">> Waiting for transactions...</span>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(70,200,120,.1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-    <span style="color:#87b98a;font-size:.75rem;">
-      <i class="fas fa-leaf" style="color:#6fcf97;"></i> Olivium DAO · Tuscany, Italy
-    </span>
-    <span style="color:#87b98a;font-size:.7rem;">
-      <span class="pulse-dot green" style="width:6px;height:6px;display:inline-block;margin-right:6px;"></span>
-      Live · Devnet
-    </span>
-  </div>
-
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════
-     TREE DETAIL MODAL (from index2.html)
-═══════════════════════════════════════════════════════════════ -->
-<div id="tree-detail-modal" class="hidden">
-  <div class="modal-content">
-    <button class="modal-close-btn" onclick="closeTreeDetailModal()">✕</button>
-
-    <!-- Hero -->
-    <div style="position:relative;height:280px;background:#1a3a1e;overflow:hidden;">
-      <div id="tree-detail-hero-img" style="position:absolute;inset:0;background-size:cover;background-position:center;background-image:url('https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg');"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;padding:24px;color:#fff;">
-        <p id="tree-detail-field-id" style="font-size:12px;opacity:0.6;margin-bottom:4px;">—</p>
-        <h2 id="tree-detail-name" style="font-size:28px;font-weight:700;margin:0;">—</h2>
-        <p id="tree-detail-location" style="opacity:0.8;font-size:14px;">—</p>
-      </div>
-      <div style="position:absolute;top:16px;left:16px;background:#dc2626;padding:4px 16px;border-radius:40px;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;">
-        <span style="width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse-dot 1.8s infinite;"></span> LIVE SENSORS
-      </div>
-      <div id="tree-detail-status-badge" style="position:absolute;top:16px;right:76px;background:#16a34a;padding:4px 16px;border-radius:40px;color:#fff;font-size:11px;font-weight:600;">registered</div>
-      <div style="position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:40px;color:#fff;font-size:12px;">
-        <span id="tree-detail-health">—</span>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div style="padding:20px 24px;">
-      <div style="display:flex;gap:4px;border-bottom:1px solid #e5e7eb;overflow-x:auto;margin-bottom:20px;flex-wrap:wrap;">
-        <button class="tree-detail-tab active" data-tab="overview" onclick="switchTreeDetailTab('overview')">Overview</button>
-        <button class="tree-detail-tab" data-tab="physical" onclick="switchTreeDetailTab('physical')">📐 Physical</button>
-        <button class="tree-detail-tab" data-tab="environment" onclick="switchTreeDetailTab('environment')">🌡️ Live Sensors</button>
-        <button class="tree-detail-tab" data-tab="weather" onclick="switchTreeDetailTab('weather')">☁️ Weather</button>
-        <button class="tree-detail-tab" data-tab="metadata" onclick="switchTreeDetailTab('metadata')">⛓ On-Chain</button>
-        <button class="tree-detail-tab" data-tab="gallery" onclick="switchTreeDetailTab('gallery')">🖼 Gallery</button>
-      </div>
-
-      <!-- OVERVIEW -->
-      <div id="tree-detail-tab-overview" class="tree-detail-tab-content">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
-          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
-            <div style="font-size:24px;margin-bottom:4px;">🌳</div>
-            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Age</p>
-            <p id="tree-detail-age" style="font-size:18px;font-weight:700;color:#1a1a1a;">—</p>
-          </div>
-          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
-            <div style="font-size:24px;margin-bottom:4px;">📏</div>
-            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Height</p>
-            <p id="tree-detail-height" style="font-size:18px;font-weight:700;color:#1a1a1a;">—</p>
-          </div>
-          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
-            <div style="font-size:24px;margin-bottom:4px;">🫒</div>
-            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Variety</p>
-            <p id="tree-detail-variety" style="font-size:16px;font-weight:700;color:#1a1a1a;">—</p>
-          </div>
-          <div style="background:#f8faf8;border-radius:12px;padding:12px;text-align:center;">
-            <div style="font-size:24px;margin-bottom:4px;">📊</div>
-            <p style="font-size:11px;color:#94a394;margin-bottom:2px;">Shares Sold</p>
-            <p id="tree-overview-shares" style="font-size:18px;font-weight:700;color:#1a1a1a;">—</p>
-          </div>
-        </div>
-        <div style="background:#f8faf8;border-radius:12px;padding:16px;margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;">
-            <span style="color:#71717a;">Adoption Progress</span>
-            <span id="tree-overview-pct" style="font-weight:700;color:#1a1a1a;">—%</span>
-          </div>
-          <div style="background:#e5e7eb;border-radius:40px;height:10px;overflow:hidden;">
-            <div id="tree-overview-bar" style="height:100%;background:#16a34a;border-radius:40px;transition:width 0.5s;width:0%;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a394;margin-top:4px;">
-            <span id="tree-overview-sold-label">— sold</span>
-            <span id="tree-overview-total-label">— total</span>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;margin-bottom:4px;">Last Treatment</p>
-            <p id="tree-detail-last-treatment" style="font-weight:600;color:#1a1a1a;">—</p>
-            <p id="tree-detail-treatment-type" style="font-size:12px;color:#71717a;">—</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;margin-bottom:4px;">Last Fertilizer</p>
-            <p id="tree-detail-last-fertilizer" style="font-weight:600;color:#1a1a1a;">—</p>
-            <p id="tree-detail-fertilizer-type" style="font-size:12px;color:#71717a;">—</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- PHYSICAL -->
-      <div id="tree-detail-tab-physical" class="tree-detail-tab-content hidden">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;">Age</p>
-            <p id="phys-age" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
-            <p style="font-size:11px;color:#94a394;">years</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;">Height</p>
-            <p id="phys-height" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
-            <p style="font-size:11px;color:#94a394;">cm</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;">Circumference</p>
-            <p id="phys-circumference" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
-            <p style="font-size:11px;color:#94a394;">cm</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;">Diameter</p>
-            <p id="phys-diameter" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
-            <p style="font-size:11px;color:#94a394;">cm</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;">Crown Spread</p>
-            <p id="phys-crown" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
-            <p style="font-size:11px;color:#94a394;">cm</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:11px;color:#94a394;">Altitude</p>
-            <p id="phys-altitude" style="font-size:22px;font-weight:700;color:#1a1a1a;">—</p>
-            <p style="font-size:11px;color:#94a394;">m</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;grid-column:1/-1;">
-            <p style="font-size:11px;color:#94a394;">GPS Coordinates</p>
-            <p id="phys-coords" style="font-family:monospace;color:#1a1a1a;">—</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ENVIRONMENT -->
-      <div id="tree-detail-tab-environment" class="tree-detail-tab-content hidden">
-        <h4 style="font-weight:600;color:#1a1a1a;margin-bottom:12px;">🌱 Live Field Sensors — <span id="env-field-label" style="font-weight:400;color:#71717a;font-size:14px;">—</span></h4>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">💧 Soil Moisture</p>
-            <span id="oracle-soil-moisture" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-            <div style="background:#e5e7eb;border-radius:40px;height:6px;margin-top:6px;overflow:hidden;">
-              <div id="oracle-moisture-bar" style="height:100%;background:#3b82f6;border-radius:40px;transition:width 0.5s;width:0%;"></div>
+            <div class="connect-bar">
+                <div class="status">
+                    <span class="dot" id="statusDot"></span>
+                    <span id="statusText">Public Ecosystem View</span>
+                    <span class="wallet" id="walletDisplay">Not Connected</span>
+                </div>
+                <div>
+                    <button class="btn-connect" id="connectBtn">Connect Wallet</button>
+                </div>
             </div>
-            <p id="oracle-moisture-status" style="font-size:11px;color:#94a394;margin-top:4px;">—</p>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🌡️ Temperature</p>
-            <span id="oracle-soil-temp" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🍃 Leaf Wetness</p>
-            <span id="oracle-leaf-wetness" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">☀️ UV Index</p>
-            <span id="oracle-uv" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🌬️ CO₂</p>
-            <span id="oracle-co2" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">💨 Wind Speed</p>
-            <span id="oracle-wind" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">💧 Humidity</p>
-            <span id="oracle-humidity" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-            <p style="font-size:13px;color:#71717a;margin-bottom:4px;">🌧️ Rain Rate</p>
-            <span id="oracle-rain" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span>
-          </div>
-        </div>
-        <p style="font-size:11px;color:#94a394;">Last reading: <span id="oracle-last-update" style="font-weight:500;">—</span></p>
-      </div>
 
-      <!-- WEATHER -->
-      <div id="tree-detail-tab-weather" class="tree-detail-tab-content hidden">
-        <h4 style="font-weight:600;color:#1a1a1a;margin-bottom:12px;">☁️ Current Conditions — <span id="weather-coords-label" style="font-weight:400;color:#71717a;font-size:14px;">—</span></h4>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">🌡️ Air Temperature</p><span id="weather-temp" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">💨 Wind Speed</p><span id="weather-wind" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">💧 Humidity</p><span id="weather-humidity" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">🔵 Pressure</p><span id="weather-pressure" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">🌧️ Rain</p><span id="weather-rain" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;"><p style="font-size:13px;color:#71717a;">☀️ UV Index</p><span id="weather-uv" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;grid-column:1/-1;"><p style="font-size:13px;color:#71717a;">⚡ Solar Radiation</p><span id="weather-solar" style="font-size:20px;font-weight:700;color:#1a1a1a;">—</span></div>
-        </div>
-      </div>
+            <div id="publicView">
+                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
+                    🌿 Olivium <span style="color:var(--gold);">Ecosystem</span>
+                </h1>
+                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:1.5rem;">
+                    A living Tuscan olive grove — monitored, stewarded, and growing.
+                </p>
 
-      <!-- METADATA -->
-      <div id="tree-detail-tab-metadata" class="tree-detail-tab-content hidden">
-        <div style="font-size:14px;border-top:1px solid #e5e7eb;">
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Tree ID</span><span id="tree-detail-meta-id" style="font-family:monospace;font-weight:500;color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Field ID</span><span id="tree-detail-meta-field" style="font-family:monospace;color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">On-Chain Address</span><span id="tree-detail-meta-onchain" style="font-family:monospace;font-size:12px;color:#1a1a1a;max-width:200px;word-break:break-all;text-align:right;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Mint</span><span id="tree-detail-meta-mint" style="font-family:monospace;font-size:12px;color:#1a1a1a;max-width:200px;word-break:break-all;text-align:right;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">On-Chain Status</span><span id="tree-detail-meta-status" style="font-weight:500;color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Total Shares</span><span id="tree-detail-meta-total" style="font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Shares Sold (live)</span><span id="tree-detail-meta-sold" style="font-weight:700;color:#16a34a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Shares Available</span><span id="tree-detail-meta-available" style="font-weight:700;color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Variety</span><span id="tree-detail-meta-variety" style="color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#71717a;">Coordinates</span><span id="tree-detail-meta-coords" style="font-family:monospace;font-size:12px;color:#1a1a1a;">—</span></div>
-          <div style="display:flex;justify-content:space-between;padding:12px 0;"><span style="color:#71717a;">Last Updated</span><span id="tree-detail-meta-updated" style="color:#1a1a1a;">—</span></div>
-        </div>
-      </div>
+                <div class="dash-grid">
 
-      <!-- GALLERY -->
-      <div id="tree-detail-tab-gallery" class="tree-detail-tab-content hidden">
-        <div id="tree-detail-gallery-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-          <p style="color:#94a394;font-size:14px;grid-column:1/-1;">Loading gallery...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🌳 Grove Status</h3><span class="badge">Live</span></div>
+                        <div class="dash-stat"><span class="num gold">240</span><span class="lbl">Olive Trees</span></div>
+                        <p class="dash-desc">San Vincenzo, Tuscany · Historic Estate</p>
+                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <span class="dash-tag active">● Growing Phase</span>
+                            <span class="dash-tag">🌿 2026 Season</span>
+                        </div>
+                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
+                                <span>Next Event</span>
+                                <span style="color:#fff;">Harvest · October 2026</span>
+                            </div>
+                        </div>
+                    </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════════════════════ -->
-<script type="importmap">
-{
-  "imports": {
-    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/module/index.js",
-    "@solana/web3.js": "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/bundle.min.js"
-  }
-}
-</script>
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🫒 Harvest</h3><span class="badge">Preparing</span></div>
+                        <div class="dash-stat"><span class="num">—</span><span class="lbl">Season Not Started</span></div>
+                        <p class="dash-desc">Expected Yield: TBD · Cold-pressed within 24 hours</p>
+                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <span class="dash-tag pending">● Preparing</span>
+                            <span class="dash-tag">📅 October - December</span>
+                        </div>
+                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
+                                <span>Status</span>
+                                <span style="color:#ffc107;">Waiting for Autumn</span>
+                            </div>
+                        </div>
+                    </div>
 
-<script type="module">
-  import { createClient } from '@supabase/supabase-js';
-  import { PublicKey } from '@solana/web3.js';
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🏡 Villa Experience</h3><span class="badge">Available</span></div>
+                        <ul class="dash-list">
+                            <li><span class="label">Villa Stay</span> <span class="value">Book Now</span></li>
+                            <li><span class="label">Pool Access</span> <span class="value">Seasonal</span></li>
+                            <li><span class="label">Grove Visits</span> <span class="value">By Request</span></li>
+                        </ul>
+                        <div style="margin-top:1rem;"><a href="booking.html" class="btn-dash gold">Book Experience →</a></div>
+                    </div>
 
-  // ─────────────────────────────────────────────────────────────
-  // CONFIG
-  // ─────────────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://kqfqryeptkbvlkekocpx.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-';
-  const ADMIN_WALLET = '8xkNHk2VpWBM6Nk3enitFCs7vwh2inCveTNintcXHc54';
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🗳 Governance</h3><span class="badge">Coming Soon</span></div>
+                        <p class="dash-desc">Community decisions about the estate's future — harvesting, improvements, and member experiences.</p>
+                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
+                                <span>Status</span>
+                                <span style="color:var(--muted-dim);">Launching Q4 2026</span>
+                            </div>
+                        </div>
+                    </div>
 
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    <div class="dash-card full">
+                        <div class="card-header"><h3>📢 Latest Olivium Updates</h3><span class="badge">Live</span></div>
+                        <div class="update-item"><span class="date">July 2026</span><span class="content"><strong>Summer grove monitoring</strong> — All 240 trees inspected. Healthy growth observed.</span></div>
+                        <div class="update-item"><span class="date">June 2026</span><span class="content"><strong>Villa availability updated</strong> — New dates released for Autumn stays.</span></div>
+                        <div class="update-item"><span class="date">May 2026</span><span class="content"><strong>New member experiences added</strong> — Private harvest dinners and olive oil tastings.</span></div>
+                        <div class="update-item"><span class="date">April 2026</span><span class="content"><strong>Spring blossom</strong> — The mignole are blooming across the grove.</span></div>
+                    </div>
 
-  // ─────────────────────────────────────────────────────────────
-  // STATE
-  // ─────────────────────────────────────────────────────────────
-  let allTrees = [];
-  let currentFilter = 'all';
-  let currentWallet = null;
-  let isAdmin = false;
-
-  // ─────────────────────────────────────────────────────────────
-  // DOM HELPERS
-  // ─────────────────────────────────────────────────────────────
-  const $ = id => document.getElementById(id);
-
-  function setText(id, val) {
-    const el = $(id);
-    if (el) el.textContent = val ?? '—';
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // CONNECT WALLET
-  // ─────────────────────────────────────────────────────────────
-  const connectBtn = $('btn-connect');
-
-  connectBtn?.addEventListener('click', async () => {
-    if (currentWallet) {
-      // Disconnect
-      try {
-        if (window.solana?.disconnect) await window.solana.disconnect();
-      } catch {}
-      currentWallet = null;
-      isAdmin = false;
-      connectBtn.innerHTML = '<i class="fas fa-plug"></i> Connect Wallet';
-      updateAdminVisibility();
-      renderTrees();
-      return;
-    }
-
-    try {
-      const wallet = window.phantom?.solana || window.solana;
-      if (!wallet) {
-        alert('Phantom wallet not found. Please install Phantom extension.');
-        return;
-      }
-      
-      await wallet.connect();
-      const pubkey = wallet.publicKey.toBase58();
-      currentWallet = pubkey;
-      
-      // Check if admin
-      isAdmin = pubkey === ADMIN_WALLET;
-      
-      connectBtn.innerHTML = `<i class="fas fa-check-circle"></i> ${pubkey.slice(0,4)}...${pubkey.slice(-4)}`;
-      
-      updateAdminVisibility();
-      renderTrees();
-      
-      if (isAdmin) {
-        loadAdminData();
-        console.log('🔑 Admin wallet connected');
-      } else {
-        console.log('👤 User wallet connected');
-      }
-    } catch (err) {
-      console.error('Connection error:', err);
-      alert('Failed to connect wallet. Please ensure Phantom is installed and unlocked.');
-    }
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // ADMIN VISIBILITY
-  // ─────────────────────────────────────────────────────────────
-  function updateAdminVisibility() {
-    const adminTab = $('tab-admin');
-    const adminPanel = $('panel-admin');
-    const adminBanner = $('admin-banner');
-    
-    if (isAdmin) {
-      adminTab.style.display = 'inline-block';
-      adminPanel.classList.remove('hidden');
-      adminBanner.classList.remove('hidden');
-      // Switch to admin tab if on admin page
-      if (window.location.hash === '#admin') {
-        switchTab('admin');
-      }
-    } else {
-      adminTab.style.display = 'none';
-      adminPanel.classList.add('hidden');
-      adminBanner.classList.add('hidden');
-      // If we're on admin tab, switch to field
-      if (!adminPanel.classList.contains('hidden')) {
-        switchTab('field');
-      }
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // TAB SWITCHING
-  // ─────────────────────────────────────────────────────────────
-  window.switchTab = function(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    
-    if (tab === 'field') {
-      $('tab-field').classList.add('active');
-      $('panel-field').classList.remove('hidden');
-      $('panel-admin').classList.add('hidden');
-    } else if (tab === 'admin' && isAdmin) {
-      $('tab-admin').classList.add('active');
-      $('panel-field').classList.add('hidden');
-      $('panel-admin').classList.remove('hidden');
-      loadAdminData();
-    }
-  };
-
-  // ─────────────────────────────────────────────────────────────
-  // LOAD TREES
-  // ─────────────────────────────────────────────────────────────
-  async function loadTrees() {
-    try {
-      const { data: trees, error } = await sb
-        .from('tree_metadata')
-        .select('*')
-        .order('tree_id', { ascending: true });
-
-      if (error) throw error;
-      
-      allTrees = trees || [];
-      setText('total-tree-count', allTrees.length);
-      renderTrees();
-      
-    } catch (err) {
-      console.error('loadTrees error:', err);
-      const grid = $('tree-grid');
-      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#cf6f6f;">
-        <i class="fas fa-exclamation-triangle" style="font-size:2rem;display:block;margin-bottom:12px;"></i>
-        Error loading trees: ${err.message}
-      </div>`;
-    }
-  }
-
-  window.refreshTrees = loadTrees;
-
-  // ─────────────────────────────────────────────────────────────
-  // RENDER TREES
-  // ─────────────────────────────────────────────────────────────
-  function renderTrees() {
-    const grid = $('tree-grid');
-    
-    let filtered = [...allTrees];
-    
-    if (currentFilter === 'available') {
-      filtered = filtered.filter(t => (t.shares_sold || 0) < (t.total_shares || 1000));
-    } else if (currentFilter === 'full') {
-      filtered = filtered.filter(t => (t.shares_sold || 0) >= (t.total_shares || 1000));
-    } else if (currentFilter === 'my' && currentWallet) {
-      // Simple filter - in real app, would check ownership
-      filtered = filtered.filter(t => (t.shares_sold || 0) > 0);
-    }
-
-    if (filtered.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#87b98a;">
-        <i class="fas fa-tree" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.5;"></i>
-        No trees match this filter
-      </div>`;
-      return;
-    }
-
-    grid.innerHTML = filtered.map(t => {
-      const total = t.total_shares || 1000;
-      const sold = t.shares_sold || 0;
-      const pct = total > 0 ? Math.round((sold / total) * 100) : 0;
-      const available = total - sold;
-      
-      let statusBadge = 'badge-available';
-      let statusText = `${available} shares left`;
-      if (available <= 0) {
-        statusBadge = 'badge-full';
-        statusText = 'Fully Adopted';
-      }
-      
-      return `
-        <div class="tree-card" onclick="openTreeDetail('${t.tree_id}')">
-          <div style="display:flex;justify-content:space-between;align-items:start;">
-            <div>
-              <div class="tree-icon">${t.icon || '🌳'}</div>
-              <div class="tree-name">${t.name || `Tree #${t.tree_id}`}</div>
-              <div class="tree-meta">${t.variety || '—'} · ${t.field_id || ''}</div>
+                </div>
             </div>
-            <span class="badge ${statusBadge}">${statusText}</span>
-          </div>
-          <div class="tree-stats">
-            <span>🌿 <span class="num">${sold}</span> sold</span>
-            <span>📊 <span class="num">${pct}%</span></span>
-            <span>🫒 <span class="num">${t.age_years || '?'}y</span></span>
-          </div>
-          <div class="progress-wrap">
-            <div class="progress-fill" style="width:${pct}%"></div>
-          </div>
-          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-            <span style="color:#87b98a;font-size:.65rem;">${t.status || 'registered'}</span>
-            ${t.health_score ? `<span style="color:#6fcf97;font-size:.65rem;">❤️ ${(t.health_score * 100).toFixed(0)}%</span>` : ''}
-          </div>
+
+            <div id="memberView">
+                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">👋 Welcome Back</h1>
+                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:0.2rem;">
+                    Wallet: <span style="font-family:'JetBrains Mono',monospace; color:var(--gold);" id="memberWalletDisplay">8x72...92KD</span>
+                </p>
+                <p style="color:var(--muted-dim); font-size:0.8rem; margin-bottom:1.5rem;">
+                    <span id="memberTierDisplay">Tree Keeper</span> · Member since 2026
+                </p>
+
+                <div class="dash-grid">
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🌿 Your Membership</h3><span class="badge" id="memberBadge">Active</span></div>
+                        <div class="dash-stat"><span class="num gold" id="memberTreeCount">1</span><span class="lbl">Tree Connection</span></div>
+                        <p class="dash-desc" id="memberTreeName">Tree #124 · Named Olive</p>
+                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted);">
+                                <span>Experience Credits</span>
+                                <span style="color:#fff;" id="memberCredits">7 / 7</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); margin-top:0.3rem;">
+                                <span>Olive Oil Allocation</span>
+                                <span style="color:#ffc107;" id="memberOilAllocation">5L · Pending Harvest</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🎯 Your Benefits</h3><span class="badge">2026</span></div>
+                        <ul class="dash-list">
+                            <li><span class="label">Olive Oil</span> <span class="value" id="benefitOil">5L EVOO</span></li>
+                            <li><span class="label">Residency Nights</span> <span class="value" id="benefitNights">7 Nights</span></li>
+                            <li><span class="label">Harvest Access</span> <span class="value" id="benefitHarvest">Invited</span></li>
+                            <li><span class="label">Concierge</span> <span class="value" id="benefitConcierge">Available</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="dash-card">
+                        <div class="card-header"><h3>🗳 Governance</h3><span class="badge">Coming Soon</span></div>
+                        <p class="dash-desc">No active votes at this time. Check back when community proposals are live.</p>
+                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
+                                <span>Your Voting Power</span>
+                                <span style="color:var(--muted-dim);">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dash-card">
+                        <div class="card-header"><h3>📋 Next Steps</h3><span class="badge">Action</span></div>
+                        <ul class="dash-list">
+                            <li><span class="label">📅 Plan Your Stay</span> <a href="booking.html" style="color:var(--gold); text-decoration:none; font-size:0.8rem;">Book Villa →</a></li>
+                            <li><span class="label">🫒 Harvest Season</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">October 2026</span></li>
+                            <li><span class="label">🌳 Visit Your Tree</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">Plan a visit</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="dash-card full">
+                        <div class="card-header"><h3>📢 Member Updates</h3><span class="badge">Personal</span></div>
+                        <div class="update-item"><span class="date">July 2026</span><span class="content"><strong>Your tree #124</strong> — Summer growth monitored. Healthy and thriving.</span></div>
+                        <div class="update-item"><span class="date">June 2026</span><span class="content"><strong>Harvest preparation</strong> — You are invited to the October harvest. Save the date.</span></div>
+                        <div class="update-item"><span class="date">May 2026</span><span class="content"><strong>Welcome to Olivium</strong> — Your membership is active. Explore your benefits.</span></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      `;
-    }).join('');
-  }
+    </div>
 
-  // ─────────────────────────────────────────────────────────────
-  // FILTER
-  // ─────────────────────────────────────────────────────────────
-  window.applyFilter = function(filter) {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.filter === filter);
-    });
-    renderTrees();
-  };
+    <footer>
+        <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="discover.html">Discover</a>
+            <a href="membership.html">Membership</a>
+            <a href="token.html">OLVM</a>
+            <a href="userDash.html">Dashboard</a>
+            <a href="join.html">Join</a>
+        </div>
+        <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
+    </footer>
 
-  // ─────────────────────────────────────────────────────────────
-  // TREE DETAIL MODAL
-  // ─────────────────────────────────────────────────────────────
-  window.openTreeDetail = async function(treeId) {
-    const modal = $('tree-detail-modal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-
-    const set = (id, val) => {
-      const el = $(id);
-      if (el) el.textContent = val ?? '—';
-    };
-
-    try {
-      const { data: d, error } = await sb
-        .from('tree_metadata')
-        .select('*')
-        .eq('tree_id', treeId)
-        .single();
-
-      if (error) throw error;
-
-      const totalShares = d?.total_shares ?? 1000;
-      const sharesSold = d?.shares_sold ?? 0;
-      const available = totalShares - sharesSold;
-      const pct = totalShares > 0 ? Math.round((sharesSold / totalShares) * 100) : 0;
-      const mintAddress = d?.mint ?? d?.on_chain_address ?? '—';
-
-      const hero = $('tree-detail-hero-img');
-      if (hero) hero.style.backgroundImage = `url('${d?.photo_url || 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main/close1.jpeg'}')`;
-
-      set('tree-detail-name', d?.name || `Tree #${treeId}`);
-      set('tree-detail-field-id', d?.field_id || '—');
-      set('tree-detail-location', d?.field_id ? `Field ${d.field_id}` : '—');
-      set('tree-detail-health', d?.health_score != null ? `${(d.health_score * 100).toFixed(0)}%` : '—');
-      set('tree-detail-status-badge', d?.status || 'registered');
-      set('tree-detail-age', d?.age_years != null ? `${d.age_years} yrs` : '—');
-      set('tree-detail-height', d?.height_cm != null ? `${d.height_cm} cm` : '—');
-      set('tree-detail-variety', d?.variety || '—');
-
-      set('tree-overview-shares', `${sharesSold.toLocaleString()} / ${totalShares.toLocaleString()}`);
-      set('tree-overview-pct', `${pct}%`);
-      set('tree-overview-sold-label', `${sharesSold.toLocaleString()} sold`);
-      set('tree-overview-total-label', `${totalShares.toLocaleString()} total`);
-
-      const bar = $('tree-overview-bar');
-      if (bar) bar.style.width = `${pct}%`;
-
-      set('tree-detail-last-treatment', d?.last_treatment ? new Date(d.last_treatment).toLocaleDateString() : '—');
-      set('tree-detail-treatment-type', d?.treatment_type || '—');
-      set('tree-detail-last-fertilizer', d?.last_fertilizer ? new Date(d.last_fertilizer).toLocaleDateString() : '—');
-      set('tree-detail-fertilizer-type', d?.fertilizer_type || '—');
-
-      set('phys-age', d?.age_years != null ? String(d.age_years) : '—');
-      set('phys-height', d?.height_cm != null ? String(d.height_cm) : '—');
-      set('phys-circumference', d?.circumference_cm != null ? String(d.circumference_cm) : '—');
-      set('phys-diameter', d?.diameter_cm != null ? String(d.diameter_cm) : '—');
-      set('phys-crown', d?.crown_spread_cm != null ? String(d.crown_spread_cm) : '—');
-      set('phys-altitude', d?.altitude_m != null ? String(d.altitude_m) : '—');
-      set('phys-coords', d?.latitude != null && d?.longitude != null ? `${d.latitude}, ${d.longitude}` : '—');
-
-      set('tree-detail-meta-id', treeId);
-      set('tree-detail-meta-field', d?.field_id || '—');
-      set('tree-detail-meta-onchain', d?.on_chain_address || '—');
-      set('tree-detail-meta-mint', mintAddress);
-      set('tree-detail-meta-status', d?.status || '—');
-      set('tree-detail-meta-total', totalShares.toLocaleString());
-      set('tree-detail-meta-sold', sharesSold.toLocaleString());
-      set('tree-detail-meta-available', available.toLocaleString());
-      set('tree-detail-meta-variety', d?.variety || '—');
-      set('tree-detail-meta-coords', d?.latitude != null ? `${d.latitude}, ${d.longitude}` : '—');
-      set('tree-detail-meta-updated', d?.updated_at ? new Date(d.updated_at).toLocaleString() : '—');
-
-      const galleryGrid = $('tree-detail-gallery-grid');
-      if (galleryGrid) {
-        const photos = d?.photo_url ? [d.photo_url] : [];
-        if (!photos.length) {
-          const base = 'https://raw.githubusercontent.com/kyngrick/olivium_photos/main';
-          photos.push(`${base}/Tree%20F1-FR-001.jpeg`, `${base}/Tree%20F1-FR-002.jpeg`, `${base}/close1.jpeg`);
+    <script>
+        const ham = document.getElementById('navHam');
+        const links = document.getElementById('navLinks');
+        if (ham && links) {
+            ham.addEventListener('click', function() {
+                this.classList.toggle('open');
+                links.classList.toggle('open');
+            });
+            document.querySelectorAll('#navLinks a').forEach(link => {
+                link.addEventListener('click', function() {
+                    ham.classList.remove('open');
+                    links.classList.remove('open');
+                });
+            });
         }
-        galleryGrid.innerHTML = photos.map(url =>
-          `<img src="${url}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;" onerror="this.style.display='none'" />`
-        ).join('');
-      }
 
-      const fieldId = d?.field_id ?? null;
-      if (fieldId) set('env-field-label', fieldId);
+        let isConnected = false;
+        const publicView = document.getElementById('publicView');
+        const memberView = document.getElementById('memberView');
+        const connectBtn = document.getElementById('connectBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const walletDisplay = document.getElementById('walletDisplay');
 
-      const lat = d?.latitude ?? null;
-      const lon = d?.longitude ?? null;
-      if (lat != null && lon != null) set('weather-coords-label', `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`);
+        const memberData = {
+            wallet: '8x72...92KD',
+            tier: 'Tree Keeper',
+            treeCount: 1,
+            treeName: 'Tree #124 · Named Olive',
+            credits: '7 / 7',
+            oilAllocation: '5L · Pending Harvest',
+            benefits: { oil: '5L EVOO', nights: '7 Nights', harvest: 'Invited', concierge: 'Available' }
+        };
 
-      if (fieldId) {
-        try {
-          const { data: sensorData } = await sb
-            .from('node_sensors')
-            .select('*')
-            .eq('field_id', fieldId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          
-          if (sensorData) {
-            const moisture = sensorData.soil_moisture ?? null;
-            set('oracle-soil-moisture', moisture !== null ? `${Number(moisture).toFixed(1)}%` : '—');
-            set('oracle-moisture-status', moisture !== null ? (moisture > 50 ? 'Optimal' : 'Balanced') : 'No data');
-            set('oracle-soil-temp', sensorData.temperature != null ? `${Number(sensorData.temperature).toFixed(1)}°C` : '—');
-            set('oracle-leaf-wetness', sensorData.leaf_wetness != null ? Number(sensorData.leaf_wetness).toFixed(2) : '—');
-            set('oracle-co2', sensorData.co2 != null ? `${Number(sensorData.co2).toFixed(1)} ppm` : '—');
-            set('oracle-wind', sensorData.wind_speed != null ? `${Number(sensorData.wind_speed).toFixed(1)} m/s` : '—');
-            set('oracle-rain', sensorData.rain_rate != null ? `${Number(sensorData.rain_rate).toFixed(2)} mm/hr` : '—');
-            set('oracle-humidity', sensorData.humidity != null ? `${Number(sensorData.humidity).toFixed(1)}%` : '—');
-            set('oracle-uv', sensorData.uv_index != null ? String(sensorData.uv_index) : '—');
-            set('oracle-last-update', sensorData.created_at ? new Date(sensorData.created_at).toLocaleTimeString() : new Date().toLocaleTimeString());
-            
-            const bar = $('oracle-moisture-bar');
-            if (bar) bar.style.width = moisture !== null ? `${Math.min(moisture, 100)}%` : '0%';
-          }
-        } catch {}
-      }
+        function toggleView(connected) {
+            isConnected = connected;
+            if (connected) {
+                publicView.classList.add('hidden');
+                memberView.classList.add('active');
+                statusDot.className = 'dot';
+                statusText.textContent = 'Member Connected';
+                walletDisplay.textContent = memberData.wallet;
+                connectBtn.textContent = 'Disconnect';
+                connectBtn.className = 'btn-connect outline';
+                document.getElementById('memberWalletDisplay').textContent = memberData.wallet;
+                document.getElementById('memberTierDisplay').textContent = memberData.tier;
+                document.getElementById('memberTreeCount').textContent = memberData.treeCount;
+                document.getElementById('memberTreeName').textContent = memberData.treeName;
+                document.getElementById('memberCredits').textContent = memberData.credits;
+                document.getElementById('memberOilAllocation').textContent = memberData.oilAllocation;
+                document.getElementById('benefitOil').textContent = memberData.benefits.oil;
+                document.getElementById('benefitNights').textContent = memberData.benefits.nights;
+                document.getElementById('benefitHarvest').textContent = memberData.benefits.harvest;
+                document.getElementById('benefitConcierge').textContent = memberData.benefits.concierge;
+            } else {
+                publicView.classList.remove('hidden');
+                memberView.classList.remove('active');
+                statusDot.className = 'dot inactive';
+                statusText.textContent = 'Public Ecosystem View';
+                walletDisplay.textContent = 'Not Connected';
+                connectBtn.textContent = 'Connect Wallet';
+                connectBtn.className = 'btn-connect';
+            }
+        }
 
-      switchTreeDetailTab('overview');
+        connectBtn.addEventListener('click', function() {
+            toggleView(!isConnected);
+        });
 
-    } catch (err) {
-      console.error('openTreeDetail:', err);
-    }
-  };
-
-  window.closeTreeDetailModal = function() {
-    const modal = $('tree-detail-modal');
-    if (modal) {
-      modal.classList.add('hidden');
-      modal.classList.remove('open');
-    }
-    document.body.style.overflow = '';
-  };
-
-  window.switchTreeDetailTab = function(tabName) {
-    document.querySelectorAll('.tree-detail-tab-content').forEach(el => el.classList.add('hidden'));
-    const target = $(`tree-detail-tab-${tabName}`);
-    if (target) target.classList.remove('hidden');
-
-    document.querySelectorAll('.tree-detail-tab').forEach(tab => {
-      tab.classList.remove('active');
-    });
-    const active = document.querySelector(`.tree-detail-tab[data-tab="${tabName}"]`);
-    if (active) active.classList.add('active');
-  };
-
-  // ─────────────────────────────────────────────────────────────
-  // LOAD ADMIN DATA
-  // ─────────────────────────────────────────────────────────────
-  async function loadAdminData() {
-    if (!isAdmin) return;
-    
-    try {
-      const { data: trees, error } = await sb
-        .from('tree_metadata')
-        .select('*')
-        .order('tree_id', { ascending: true });
-
-      if (error) throw error;
-
-      const treeCount = trees?.length || 0;
-      setText('admin-tree-count', treeCount.toString());
-      setText('admin-sb-total', treeCount.toString());
-
-      let totalShares = 0;
-      if (trees) {
-        totalShares = trees.reduce((sum, t) => sum + (t.shares_sold || 0), 0);
-      }
-      setText('admin-total-circulation', totalShares.toLocaleString());
-
-      const minted = trees?.filter(t => t.mint || t.mint_address).length || 0;
-      const pending = treeCount - minted;
-      setText('admin-sb-minted', minted.toString());
-      setText('admin-sb-pending', pending.toString());
-
-      const tbody = $('admin-tree-table');
-      if (trees && trees.length > 0) {
-        tbody.innerHTML = trees.slice(0, 50).map(t => {
-          const mint = t.mint || t.mint_address || '—';
-          const status = t.status || 'pending';
-          const name = t.name || `Tree #${t.tree_id}`;
-          const variety = t.variety || '—';
-          
-          let statusBadge = '<span class="badge-warning">pending</span>';
-          if (status === 'registered' || status === 'active' || mint !== '—') {
-            statusBadge = '<span class="badge-success">registered</span>';
-          }
-
-          return `
-            <tr>
-              <td style="padding:10px 16px;color:#b0e0b0;border-bottom:1px solid rgba(70,200,120,.05);"><span style="color:#6fcf97;font-family:monospace;">#${t.tree_id}</span></td>
-              <td style="padding:10px 16px;color:#b0e0b0;border-bottom:1px solid rgba(70,200,120,.05);">${name}</td>
-              <td style="padding:10px 16px;color:#b0e0b0;border-bottom:1px solid rgba(70,200,120,.05);">${variety}</td>
-              <td style="padding:10px 16px;color:#b0e0b0;border-bottom:1px solid rgba(70,200,120,.05);font-family:monospace;font-size:.65rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                ${mint !== '—' ? mint.slice(0,8)+'…' : '—'}
-              </td>
-              <td style="padding:10px 16px;color:#b0e0b0;border-bottom:1px solid rgba(70,200,120,.05);">${statusBadge}</td>
-            </tr>
-          `;
-        }).join('');
-      } else {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#87b98a;padding:32px;">No trees found in database</td></tr>`;
-      }
-
-      setText('admin-program-id', ADMIN_WALLET.slice(0,8)+'…'+ADMIN_WALLET.slice(-6));
-
-    } catch (err) {
-      console.error('loadAdminData error:', err);
-    }
-  }
-
-  window.refreshAdminData = loadAdminData;
-
-  // ─────────────────────────────────────────────────────────────
-  // GENESIS SYNC
-  // ─────────────────────────────────────────────────────────────
-  $('btn-bootstrap')?.addEventListener('click', async () => {
-    const log = $('admin-log');
-    log.classList.remove('hidden');
-    log.innerHTML = '<span class="info">> Starting Genesis Sync...</span>';
-    
-    if (!isAdmin) {
-      log.innerHTML += '\n<span class="error">> ⚠️ Admin wallet required!</span>';
-      return;
-    }
-
-    try {
-      log.innerHTML += '\n<span class="info">> Fetching trees without mints...</span>';
-      
-      const { data: trees, error } = await sb
-        .from('tree_metadata')
-        .select('*')
-        .is('mint', null)
-        .limit(10);
-
-      if (error) throw new Error(error.message);
-
-      if (!trees || trees.length === 0) {
-        log.innerHTML += '\n<span class="success">> ✅ All trees have mints. No bootstrapping needed.</span>';
-        return;
-      }
-
-      log.innerHTML += `\n<span class="info">> Found ${trees.length} trees without mints.</span>`;
-      log.innerHTML += '\n<span class="warning">> Please run the minting script separately to create NFTs.</span>';
-      
-      trees.forEach(t => {
-        log.innerHTML += `\n<span class="info">>   • Tree #${t.tree_id}: ${t.name || 'unnamed'}</span>`;
-      });
-
-    } catch (err) {
-      log.innerHTML += `\n<span class="error">> ❌ Error: ${err.message}</span>`;
-    }
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // SETUP PROTOCOL
-  // ─────────────────────────────────────────────────────────────
-  $('btn-setupProtocol')?.addEventListener('click', () => {
-    const log = $('admin-log');
-    log.classList.remove('hidden');
-    log.innerHTML = '<span class="info">> Setting up protocol...</span>';
-    
-    if (!isAdmin) {
-      log.innerHTML += '\n<span class="error">> ⚠️ Admin wallet required!</span>';
-      return;
-    }
-
-    log.innerHTML += '\n<span class="info">> Protocol setup would initialize: share price, fee structure, treasury</span>';
-    log.innerHTML += '\n<span class="warning">> ⚠️ This is a placeholder - implement actual on-chain setup.</span>';
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // WIPE DATABASE
-  // ─────────────────────────────────────────────────────────────
-  $('btn-wipe')?.addEventListener('click', async () => {
-    if (!isAdmin) {
-      alert('Admin wallet required!');
-      return;
-    }
-    
-    const confirmed = confirm(
-      '⚠️ EXTREME DANGER: This will clear all ownership and on-chain status in the database.\n\n' +
-      'This action CANNOT be undone.\n\n' +
-      'Are you absolutely sure?'
-    );
-    
-    if (!confirmed) return;
-    
-    const confirmedAgain = confirm(
-      '⚠️ FINAL WARNING: This will permanently delete all tree ownership records.\n\n' +
-      'Are you 100% sure you want to proceed?'
-    );
-    
-    if (!confirmedAgain) return;
-
-    const log = $('admin-log');
-    log.classList.remove('hidden');
-    log.innerHTML = '<span class="error">> 🚨 DANGER: Wiping database records...</span>';
-    log.innerHTML += '\n<span class="warning">> This would clear all ownership and on-chain status from Supabase.</span>';
-    log.innerHTML += '\n<span class="warning">> ⚠️ Placeholder - implement actual database wipe logic.</span>';
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // SYNC DB TO CHAIN
-  // ─────────────────────────────────────────────────────────────
-  $('btn-sync-db')?.addEventListener('click', () => {
-    const log = $('admin-log');
-    log.classList.remove('hidden');
-    log.innerHTML = '<span class="info">> Syncing database to chain...</span>';
-    
-    if (!isAdmin) {
-      log.innerHTML += '\n<span class="error">> ⚠️ Admin wallet required!</span>';
-      return;
-    }
-
-    log.innerHTML += '\n<span class="info">> Fetching on-chain data...</span>';
-    log.innerHTML += '\n<span class="info">> Comparing with Supabase records...</span>';
-    log.innerHTML += '\n<span class="success">> ✅ Sync complete. Database matches chain state.</span>';
-    log.innerHTML += '\n<span class="warning">> ⚠️ This is a placeholder - implement actual chain sync.</span>';
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // KEYBOARD SHORTCUTS
-  // ─────────────────────────────────────────────────────────────
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeTreeDetailModal();
-    }
-    if (e.ctrlKey && e.key === 'l') {
-      document.body.classList.toggle('luxury');
-    }
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // INIT
-  // ─────────────────────────────────────────────────────────────
-  // Check if already connected
-  if (window.solana?.publicKey) {
-    const pubkey = window.solana.publicKey.toBase58();
-    currentWallet = pubkey;
-    isAdmin = pubkey === ADMIN_WALLET;
-    if (isAdmin) {
-      connectBtn.innerHTML = `<i class="fas fa-check-circle"></i> ${pubkey.slice(0,4)}...${pubkey.slice(-4)}`;
-      updateAdminVisibility();
-      loadAdminData();
-    }
-  }
-
-  await loadTrees();
-  updateAdminVisibility();
-
-  console.log('🌳 Olivium DAO · Admin Panel loaded');
-  console.log(`🔑 Admin wallet: ${ADMIN_WALLET}`);
-  console.log(`📊 Connected to Supabase: ${SUPABASE_URL}`);
-</script>
-
+        console.log('🌿 Olivium Ecosystem Dashboard');
+        console.log('📊 Public view: Grove monitoring, harvest status, villa experiences');
+        console.log('🔐 Connect wallet to see your membership dashboard');
+    </script>
 </body>
 </html>
