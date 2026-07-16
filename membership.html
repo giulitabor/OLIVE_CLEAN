@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium Membership — Join the Grove</title>
+    <title>Olivium Membership — Become a Tree Guardian</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
     <style>
         :root {
             --gold: #C5A059;
             --gold-light: #D4AF37;
-            --olive: #4a6b1e;
-            --olive-light: #6a9a2e;
             --charcoal: #080b07;
-            --card-bg: rgba(255,255,255,0.03);
-            --border-gold: rgba(197,160,89,0.15);
             --muted: rgba(255,255,255,0.5);
             --muted-dim: rgba(255,255,255,0.25);
         }
@@ -252,6 +248,14 @@
             color: var(--gold);
             font-weight: 700;
         }
+        .tier-card .tier-feats li .shares-badge {
+            font-size: 0.65rem;
+            color: var(--gold);
+            background: rgba(197,160,89,0.1);
+            padding: 0.1rem 0.6rem;
+            border-radius: 50px;
+            margin-left: 0.3rem;
+        }
         .tier-card .tier-badge {
             display: inline-block;
             background: var(--gold);
@@ -264,6 +268,11 @@
             border-radius: 50px;
             margin-bottom: 0.5rem;
             align-self: flex-start;
+        }
+        .tier-card .tier-badge.founder {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
         }
 
         .tier-btn {
@@ -319,6 +328,21 @@
             font-size: 0.7rem;
             letter-spacing: 0.06em;
         }
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.5rem;
+            margin: 1rem 0;
+        }
+        footer .footer-links a {
+            color: var(--muted-dim);
+            text-decoration: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            transition: color 0.3s ease;
+        }
+        footer .footer-links a:hover { color: #fff; }
 
         @media (max-width: 1024px) {
             .tiers-grid { grid-template-columns: repeat(2, 1fr); }
@@ -353,7 +377,6 @@
 </head>
 <body>
 
-    <!-- ===== VIDEO BACKGROUND ===== -->
     <div class="video-bg">
         <video autoplay loop muted playsinline aria-hidden="true"
                poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
@@ -362,14 +385,16 @@
         <div class="overlay"></div>
     </div>
 
-    <!-- ===== NAVIGATION ===== -->
     <nav>
         <div class="nav-inner">
             <div class="nav-logo">OLIVIUM <em>Membership</em></div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="index.html">Home</a></li>
-                <li><a href="join.html">Join</a></li>
+                <li><a href="discover.html">Discover</a></li>
                 <li><a href="membership.html" class="nav-cta">Membership</a></li>
+                <li><a href="token.html">OLVM</a></li>
+                <li><a href="userDash.html">Dashboard</a></li>
+                <li><a href="join.html">Join</a></li>
             </ul>
             <button class="nav-ham" id="navHam" aria-label="Menu">
                 <span></span><span></span><span></span>
@@ -377,114 +402,135 @@
         </div>
     </nav>
 
-    <!-- ===== MAIN ===== -->
     <div class="main-wrap">
         <div class="container">
 
-            <!-- ===== HERO ===== -->
             <section class="hero-section">
-                <p class="eyebrow">🌿 Join the Grove</p>
+                <p class="eyebrow">🌿 Become a Steward</p>
                 <h1>Olivium <span class="gold">Membership</span></h1>
                 <div class="rule"></div>
-                <p>
-                    Connect to a living Tuscan olive grove. Each membership level deepens
-                    your connection to the trees, the harvest, and Tuscany itself.
-                </p>
+                <p>Membership includes stewardship of selected estate trees. You don't buy a tree — you become part of the grove.</p>
             </section>
 
-            <!-- ===== TIERS ===== -->
             <div class="tiers-grid">
 
-                <!-- TIER 1: Olive Friend -->
+                <!-- Tier 1 -->
                 <div class="tier-card">
                     <div class="tier-icon">🌱</div>
-                    <div class="tier-name">Olive Friend</div>
+                    <div class="tier-name">Mignole Supporter</div>
                     <div class="tier-price">€500 <small>/ year</small></div>
                     <div class="tier-desc">Your first step into the Olivium community.</div>
                     <ul class="tier-feats">
-                        <li>Digital membership</li>
+                        <li>2L annual estate olive oil</li>
+                        <li>Community membership</li>
                         <li>Harvest season updates</li>
-                        <li>Community access</li>
-                        <li>2L olive oil allocation</li>
-                        <li>Priority booking opportunities</li>
+                        <li>Member portal access</li>
+                        <li>5% accommodation savings</li>
+                        <li>Invitations to member events</li>
                     </ul>
-                    <a href="#" class="tier-btn">Become a Friend</a>
+                    <a href="waitlist.html" class="tier-btn">Join Waitlist</a>
                 </div>
 
-                <!-- TIER 2: Tree Keeper -->
+                <!-- Tier 2 -->
                 <div class="tier-card featured">
                     <div class="tier-badge">Most Popular</div>
                     <div class="tier-icon">🌿</div>
-                    <div class="tier-name">Tree Keeper</div>
+                    <div class="tier-name">Tree Guardian</div>
                     <div class="tier-price">€2,000 <small>/ year</small></div>
-                    <div class="tier-desc">Become the steward of your own olive tree.</div>
+                    <div class="tier-desc">Includes stewardship of one olive tree.</div>
                     <ul class="tier-feats">
-                        <li>Everything in Olive Friend</li>
-                        <li>1 named olive tree</li>
-                        <li>Annual tree updates</li>
-                        <li>5L olive oil allocation</li>
+                        <li>Everything in Mignole Supporter</li>
+                        <li>Stewardship of 1 named olive tree</li>
+                        <li>5L annual olive oil</li>
                         <li>7 Annual Residency Credits</li>
+                        <li>Priority booking window</li>
                         <li>Harvest participation invitation</li>
+                        <li>Olive Credits wallet</li>
+                        <li>Live harvest tracking in the App</li>
+                        <li style="color:var(--gold); font-size:0.75rem; border-bottom: none; padding-top:0.3rem;">
+                            ✦ Includes <strong>100 complimentary digital shares</strong>
+                            <span class="shares-badge">Digital Collector</span>
+                        </li>
                     </ul>
-                    <a href="#" class="tier-btn primary">Become a Keeper</a>
+                    <a href="waitlist.html" class="tier-btn primary">Join Waitlist</a>
                 </div>
 
-                <!-- TIER 3: Tree Lover -->
+                <!-- Tier 3 -->
                 <div class="tier-card">
+                    <div class="tier-badge">Most Popular</div>
                     <div class="tier-icon">👑</div>
-                    <div class="tier-name">Tree Lover</div>
+                    <div class="tier-name">Grove Patron</div>
                     <div class="tier-price">€5,000 <small>/ year</small></div>
-                    <div class="tier-desc">For those who wish to make Olivium part of their yearly rhythm.</div>
+                    <div class="tier-desc">For those who make Olivium part of their yearly rhythm.</div>
                     <ul class="tier-feats">
-                        <li>Everything in Tree Keeper</li>
-                        <li>3 named olive trees</li>
+                        <li>Everything in Tree Guardian</li>
+                        <li>Stewardship of 5 named olive trees</li>
                         <li>15L Premium Early Harvest Reserve</li>
                         <li>21 Annual Residency Credits</li>
                         <li>Private harvest experience</li>
+                        <li>Priority reservation windows</li>
                         <li>Dedicated concierge service</li>
                         <li>7-night welcome residency</li>
+                        <li style="color:var(--gold); font-size:0.75rem; border-bottom: none; padding-top:0.3rem;">
+                            ✦ Includes <strong>500 complimentary digital shares</strong>
+                            <span class="shares-badge">Digital Collector</span>
+                        </li>
                     </ul>
-                    <a href="#" class="tier-btn">Become a Lover</a>
+                    <a href="waitlist.html" class="tier-btn">Join Waitlist</a>
                 </div>
 
-                <!-- TIER 4: Full Tree -->
+                <!-- Tier 4 -->
                 <div class="tier-card" style="border-color: var(--gold); background: rgba(197,160,89,0.06);">
-                    <div class="tier-badge" style="background: var(--gold); color: #0a0f08;">Flagship</div>
+                    <div class="tier-badge founder">Founder Circle</div>
                     <div class="tier-icon">🌳</div>
-                    <div class="tier-name">Full Tree</div>
+                    <div class="tier-name">Full Tree Estate</div>
                     <div class="tier-price">€10,000 <small>/ year</small></div>
-                    <div class="tier-desc">The highest level of Olivium stewardship.</div>
+                    <div class="tier-desc">The highest level of stewardship.</div>
                     <ul class="tier-feats">
-                        <li>Everything in Tree Lover</li>
-                        <li>12 named olive trees</li>
+                        <li>Everything in Grove Patron</li>
+                        <li>Stewardship of 12 named olive trees</li>
                         <li>30L Reserve Collection olive oil</li>
                         <li>45 Annual Residency Credits</li>
                         <li>Heritage Tree Dedication</li>
                         <li>Founder Circle Membership</li>
                         <li>Estate Advisory Circle invitation</li>
                         <li>Highest booking priority</li>
+                        <li>Dedicated concierge</li>
+                        <li style="color:var(--gold); font-size:0.75rem; border-bottom: none; padding-top:0.3rem;">
+                            ✦ Includes <strong>1,000 complimentary digital shares</strong>
+                            <span class="shares-badge">Complete Representation</span>
+                        </li>
                     </ul>
-                    <a href="#" class="tier-btn primary">Join the Estate</a>
+                    <a href="waitlist.html" class="tier-btn primary">Join Waitlist</a>
                 </div>
 
             </div>
 
-            <!-- ===== CTA ===== -->
             <div class="membership-cta">
-                <h3>Ready to Join?</h3>
-                <p>Choose your membership tier and begin your connection to a living Tuscan olive grove.</p>
-                <a href="join.html" class="tier-btn primary" style="display:inline-block; padding:0.8rem 2.5rem;">Explore All Paths →</a>
+                <h3>Membership Opening Soon</h3>
+                <p>Register your interest and be the first to know when membership becomes available.</p>
+                <a href="waitlist.html" class="tier-btn primary" style="display:inline-block; padding:0.8rem 2.5rem;">Join the Waitlist →</a>
+            </div>
+
+            <div style="text-align:center; margin-top:1.5rem;">
+                <a href="token.html" style="color:var(--gold); text-decoration:none; font-size:0.9rem;">Explore OLVM →</a>
             </div>
 
         </div>
     </div>
 
-    <!-- ===== FOOTER ===== -->
     <footer>
+        <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="discover.html">Discover</a>
+            <a href="membership.html">Membership</a>
+            <a href="token.html">OLVM</a>
+            <a href="userDash.html">Dashboard</a>
+            <a href="join.html">Join</a>
+        </div>
         <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
     </footer>
 
-    <!-- ===== JAVASCRIPT ===== -->
     <script>
         const ham = document.getElementById('navHam');
         const links = document.getElementById('navLinks');
@@ -500,9 +546,7 @@
                 });
             });
         }
-
-        console.log('🌿 Olivium Membership');
-        console.log('📋 Four tiers: Olive Friend → Tree Keeper → Tree Lover → Full Tree');
+        console.log('🌿 Olivium Membership — Stewardship, not ownership');
     </script>
 </body>
 </html>
