@@ -16,6 +16,8 @@ export default defineConfig({
 
     rollupOptions: {
       input: {
+                home: resolve(__dirname, "home.html"),
+
         landing: resolve(__dirname, "index.html"),
         spray: resolve(__dirname, "spray.html"),
         Main: resolve(__dirname, "App_index.html"),
