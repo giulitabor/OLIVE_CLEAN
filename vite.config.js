@@ -21,7 +21,7 @@ export default defineConfig({
         Main: resolve(__dirname, "App_index.html"),
         crypto: resolve(__dirname, "crypto41.html"),
         fiat: resolve(__dirname, "index2.html"),
-                waitlist: resolve(__dirname, "waitlist.html"),
+        waitlist: resolve(__dirname, "waitlist.html"),
 
         Original: resolve(__dirname, "Original-App.html"),
         Tease: resolve(__dirname, "FD_REAL_index.html"),
@@ -29,9 +29,9 @@ export default defineConfig({
         harvest: resolve(__dirname, "harvest.html"),
         brochure: resolve(__dirname, "Brochure.html"),
         privacy: resolve(__dirname, "privacy.html"),
-                dashboard: resolve(__dirname, "userDash.html"),
+        dashboard: resolve(__dirname, "userDash.html"),
         token: resolve(__dirname, "token.html"),
-                join: resolve(__dirname, "join.html"),
+        join: resolve(__dirname, "join.html"),
         membeship: resolve(__dirname, "membership.html"),
 
 
@@ -39,7 +39,7 @@ export default defineConfig({
 
 
         debug: resolve(__dirname, "debug2.html"),
-                dashboard: resolve(__dirname, "dashboard.html"),
+        dash1: resolve(__dirname, "dashboard.html"),
 
         Map: resolve(__dirname, "map.html"),
         Game: resolve(__dirname, "webgame3.html"),
@@ -49,12 +49,12 @@ export default defineConfig({
 
 
         grow: resolve(__dirname, "grow.html"),
-                sancarlo: resolve(__dirname, "sancarlo.html"),
+        sancarlo: resolve(__dirname, "sancarlo.html"),
 
 
         partner: resolve(__dirname, "partner.html"),
 
-        more: resolve(__dirname, "understand.html"),
+        more: resolve(__dirname, "discover.html"),
 
       },
 
