@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olivium — A Living Tuscan Olive Grove</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --gold: #C5A059;
+            --gold-light: #D4AF37;
+            --charcoal: #080b07;
+            --muted: rgba(255,255,255,0.5);
+            --muted-dim: rgba(255,255,255,0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--charcoal);
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .video-bg video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.55) contrast(1.05) saturate(1.1);
+        }
+        .video-bg .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
+            pointer-events: none;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            background: rgba(8,11,7,0.6);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.06em;
+        }
+        .nav-logo em {
+            font-style: italic;
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: var(--gold);
+            margin-left: 4px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover { color: #fff; }
+        .nav-cta {
+            background: var(--gold);
+            color: #0a0f08 !important;
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 600 !important;
+        }
+        .nav-cta:hover { background: #d4b06a !important; }
+
+        .nav-ham {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .nav-ham span {
+            display: block;
+            width: 26px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+        .nav-ham.open span:nth-child(2) { opacity: 0; }
+        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+        .main-wrap {
+            position: relative;
+            z-index: 10;
+            padding-top: 72px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+            width: 100%;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 2rem 0 1rem;
+        }
+        .hero .eyebrow {
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 400;
+            color: #fff;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+        .hero h1 .gold { color: var(--gold); font-style: italic; }
+        .hero p {
+            color: var(--muted);
+            max-width: 550px;
+            margin: 1rem auto 0;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        .hero .rule {
+            width: 50px;
+            height: 2px;
+            background: var(--gold);
+            margin: 1.2rem auto;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background: var(--gold);
+            color: #0a0f08;
+            padding: 0.9rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            display: inline-block;
+        }
+        .btn-primary:hover { background: #d4b06a; transform: translateY(-2px); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+            padding: 0.9rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            display: inline-block;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--gold); }
+
+        .layers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+        .layer-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+        .layer-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: var(--gold);
+            transform: translateY(-4px);
+        }
+        .layer-card .number {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            color: var(--gold);
+            opacity: 0.4;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+        .layer-card .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .layer-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        .layer-card p {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+        .layer-card .badge {
+            display: inline-block;
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+            background: rgba(197,160,89,0.1);
+            padding: 0.15rem 0.8rem;
+            border-radius: 50px;
+            margin-top: 0.5rem;
+        }
+
+        .connect-section {
+            margin-top: 3rem;
+            padding: 2.5rem;
+            background: rgba(197,160,89,0.04);
+            border: 1px solid rgba(197,160,89,0.1);
+            border-radius: 24px;
+            text-align: center;
+        }
+        .connect-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #fff;
+            font-weight: 400;
+        }
+        .connect-section h2 .gold { color: var(--gold); font-style: italic; }
+        .connect-section p {
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0.5rem auto 1rem;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+        .connect-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .connect-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .connect-item .tier { font-size: 0.7rem; color: var(--muted); }
+        .connect-item .shares {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: var(--gold);
+        }
+        .connect-item .label { font-size: 0.6rem; color: var(--muted-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 3rem 2rem;
+            background: rgba(197,160,89,0.04);
+            border: 1px solid rgba(197,160,89,0.1);
+            border-radius: 24px;
+        }
+        .cta-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem;
+            color: #fff;
+            font-weight: 400;
+        }
+        .cta-section h2 .gold { color: var(--gold); font-style: italic; }
+        .cta-section p {
+            color: var(--muted);
+            max-width: 500px;
+            margin: 0.8rem auto 1.5rem;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            margin-top: 2rem;
+        }
+        footer p {
+            color: var(--muted-dim);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+        }
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.5rem;
+            margin: 1rem 0;
+        }
+        footer .footer-links a {
+            color: var(--muted-dim);
+            text-decoration: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            transition: color 0.3s ease;
+        }
+        footer .footer-links a:hover { color: #fff; }
+
+        @media (max-width: 1024px) {
+            .layers { grid-template-columns: repeat(2, 1fr); }
+            .connect-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 2rem 1.25rem; }
+            .hero h1 { font-size: 3rem; }
+            .layers { grid-template-columns: 1fr; max-width: 400px; margin: 2rem auto 0; }
+            .connect-grid { grid-template-columns: 1fr; max-width: 300px; margin: 1rem auto 0; }
+            .cta-section h2 { font-size: 1.8rem; }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background: rgba(8,11,7,0.98);
+                padding: 2rem;
+                gap: 1.5rem;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+            .nav-links.open { display: flex; }
+            .nav-ham { display: flex; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2.2rem; }
+            .cta-section h2 { font-size: 1.5rem; }
+            .connect-item .shares { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-bg">
+        <video autoplay loop muted playsinline aria-hidden="true"
+               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo">OLIVIUM <em>Home</em></div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="discover.html">Discover</a></li>
+                <li><a href="membership.html">Membership</a></li>
+                <li><a href="token.html">OLVM</a></li>
+                <li><a href="userDash.html">Dashboard</a></li>
+                <li><a href="join.html" class="nav-cta">Join</a></li>
+            </ul>
+            <button class="nav-ham" id="navHam" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-wrap">
+        <div class="container">
+
+            <section class="hero">
+                <p class="eyebrow">🌿 A Living Tuscan Olive Grove</p>
+                <h1>Olivium <span class="gold">Membership</span></h1>
+                <div class="rule"></div>
+                <p>A connection to a real Tuscan olive grove, authentic olive oil, and exclusive countryside experiences. This is not a hotel stay — it's a return.</p>
+                <div class="hero-actions">
+                    <a href="discover.html" class="btn-secondary">Discover Olivium</a>
+                    <a href="join.html" class="btn-primary">Join Olivium</a>
+                </div>
+            </section>
+
+            <section class="layers">
+                <div class="layer-card">
+                    <div class="number">01</div>
+                    <div class="icon">🏡</div>
+                    <h3>Visitor</h3>
+                    <p>Book a villa stay. Experience Tuscany. Nothing else.</p>
+                    <span class="badge">Book a stay →</span>
+                </div>
+                <div class="layer-card" style="border-color: var(--gold);">
+                    <div class="number">02</div>
+                    <div class="icon">🌿</div>
+                    <h3>Member</h3>
+                    <p>Join Olivium. Residency, oil, harvest, stewardship.</p>
+                    <span class="badge" style="background:var(--gold); color:#0a0f08;">Most Popular</span>
+                </div>
+                <div class="layer-card">
+                    <div class="number">03</div>
+                    <div class="icon">🪙</div>
+                    <h3>Digital Collector</h3>
+                    <p>Own digital tree shares. Trade Olive Credits. Use blockchain.</p>
+                    <span class="badge">Explore OLVM</span>
+                </div>
+            </section>
+
+            <section class="connect-section">
+                <h2>Where <span class="gold">Membership</span> Meets <span class="gold">Digital</span></h2>
+                <p>Membership and blockchain reinforce each other. Every membership includes complimentary digital shares of the trees you steward.</p>
+                <div class="connect-grid">
+                    <div class="connect-item">
+                        <div class="tier">Tree Guardian</div>
+                        <div class="shares">100</div>
+                        <div class="label">Digital Shares</div>
+                    </div>
+                    <div class="connect-item">
+                        <div class="tier">Grove Patron</div>
+                        <div class="shares">500</div>
+                        <div class="label">Digital Shares</div>
+                    </div>
+                    <div class="connect-item" style="border-color:var(--gold);">
+                        <div class="tier">Full Tree Estate</div>
+                        <div class="shares">1,000</div>
+                        <div class="label">Digital Shares</div>
+                    </div>
+                    <div class="connect-item">
+                        <div class="tier" style="color:var(--gold);">Included</div>
+                        <div class="shares" style="color:#fff; font-size:0.9rem;">Complimentary</div>
+                        <div class="label">With Membership</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cta-section">
+                <h2>Become a <span class="gold">Tree Guardian</span></h2>
+                <p>Membership includes stewardship of selected estate trees. You don't buy a tree — you become part of the grove.</p>
+                <a href="membership.html" class="btn-primary" style="font-size:1rem; padding:1rem 2.5rem;">Explore Membership →</a>
+            </section>
+
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="discover.html">Discover</a>
+            <a href="membership.html">Membership</a>
+            <a href="token.html">OLVM</a>
+            <a href="userDash.html">Dashboard</a>
+            <a href="join.html">Join</a>
+            <a href="privacy.html">Privacy</a>
+        </div>
+        <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
+    </footer>
+
+    <script>
+        const ham = document.getElementById('navHam');
+        const links = document.getElementById('navLinks');
+        if (ham && links) {
+            ham.addEventListener('click', function() {
+                this.classList.toggle('open');
+                links.classList.toggle('open');
+            });
+            document.querySelectorAll('#navLinks a').forEach(link => {
+                link.addEventListener('click', function() {
+                    ham.classList.remove('open');
+                    links.classList.remove('open');
+                });
+            });
+        }
+        console.log('🌿 Olivium — Three Layers: Visitor · Member · Digital Collector');
+    </script>
+</body>
+</html>
