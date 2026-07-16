@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join the Olivium Waitlist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --gold: #C5A059;
+            --gold-light: #D4AF37;
+            --charcoal: #080b07;
+            --muted: rgba(255,255,255,0.5);
+            --muted-dim: rgba(255,255,255,0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--charcoal);
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .video-bg video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.55) contrast(1.05) saturate(1.1);
+        }
+        .video-bg .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
+            pointer-events: none;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            background: rgba(8,11,7,0.6);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.06em;
+        }
+        .nav-logo em {
+            font-style: italic;
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: var(--gold);
+            margin-left: 4px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover { color: #fff; }
+        .nav-cta {
+            background: var(--gold);
+            color: #0a0f08 !important;
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 600 !important;
+        }
+        .nav-cta:hover { background: #d4b06a !important; }
+
+        .nav-ham {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .nav-ham span {
+            display: block;
+            width: 26px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+        .nav-ham.open span:nth-child(2) { opacity: 0; }
+        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+        .main-wrap {
+            position: relative;
+            z-index: 10;
+            padding-top: 72px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            padding: 2rem 2rem 3rem;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .header .eyebrow {
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 400;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+        .header h1 .gold { color: var(--gold); font-style: italic; }
+        .header p {
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.8;
+            margin-top: 0.8rem;
+        }
+        .header .rule {
+            width: 50px;
+            height: 2px;
+            background: var(--gold);
+            margin: 1.2rem auto;
+        }
+
+        .form-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.4rem;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            cursor: pointer;
+        }
+        .form-group select option {
+            background: #141414;
+            color: #fff;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.3rem;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: rgba(255,255,255,0.7);
+            text-transform: none;
+            letter-spacing: 0;
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--gold);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 50px;
+            background: var(--gold);
+            color: #0a0f08;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+        .btn-primary:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            display: inline-block;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--gold);
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .success-message .icon { font-size: 4rem; margin-bottom: 1rem; }
+        .success-message h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #fff;
+        }
+        .success-message p {
+            color: var(--muted);
+            line-height: 1.8;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            position: relative;
+            z-index: 10;
+        }
+        footer p {
+            color: var(--muted-dim);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1.5rem 1.25rem; }
+            .header h1 { font-size: 2.2rem; }
+            .form-card { padding: 1.5rem; }
+            .checkbox-group { grid-template-columns: 1fr; }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background: rgba(8,11,7,0.98);
+                padding: 2rem;
+                gap: 1.5rem;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+            .nav-links.open { display: flex; }
+            .nav-ham { display: flex; }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.8rem; }
+            .form-card { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-bg">
+        <video autoplay loop muted playsinline aria-hidden="true"
+               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo">OLIVIUM <em>Waitlist</em></div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="discover.html">Discover</a></li>
+                <li><a href="membership.html">Membership</a></li>
+                <li><a href="join.html" class="nav-cta">Join</a></li>
+            </ul>
+            <button class="nav-ham" id="navHam" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-wrap">
+        <div class="container">
+
+            <div id="waitlistForm">
+                <div class="header">
+                    <p class="eyebrow">🌿 Secure Your Place</p>
+                    <h1>Join the <span class="gold">Waitlist</span></h1>
+                    <div class="rule"></div>
+                    <p>Membership is opening soon. Register your interest and be the first to know when Olivium membership becomes available.</p>
+                </div>
+
+                <div class="form-card">
+                    <form id="waitlistFormElement" onsubmit="submitWaitlist(event)">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="fullName" placeholder="e.g., Alessandro Rossi" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="email" placeholder="you@example.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Country</label>
+                            <input type="text" id="country" placeholder="e.g., Italy, United States">
+                        </div>
+
+                        <div class="form-group">
+                            <label>I'm interested in...</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="membership"> 🌿 Membership</label>
+                                <label><input type="checkbox" value="olvm"> 🪙 OLVM</label>
+                                <label><input type="checkbox" value="stay"> 🏡 Tuscany Stays</label>
+                                <label><input type="checkbox" value="oil"> 🫒 Olive Oil</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Do you currently own OLVM?</label>
+                            <select id="ownsOlvm">
+                                <option value="">Select...</option>
+                                <option value="yes">Yes, I own OLVM</option>
+                                <option value="no">No, I don't own OLVM</option>
+                                <option value="plan">Plan to</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Anything else you'd like us to know?</label>
+                            <textarea id="notes" placeholder="Tell us about yourself, why you're interested in Olivium..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Join the Waitlist →</button>
+                    </form>
+
+                    <div style="margin-top:1rem; text-align:center;">
+                        <p style="font-size:0.75rem; color:var(--muted-dim);">
+                            By joining, you agree to receive updates about Olivium. You can unsubscribe at any time.
+                        </p>
+                    </div>
+
+                    <div style="margin-top:1rem; text-align:center;">
+                        <a href="join.html" class="btn-secondary">← Back to Join Olivium</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="successMessage" class="success-message" style="display:none;">
+                <div class="icon">🌿</div>
+                <h2>You're on the <span class="gold">Waitlist</span></h2>
+                <div class="rule" style="margin:1.2rem auto;"></div>
+                <p>Thank you for registering your interest in Olivium. We'll keep you updated on membership availability.</p>
+                <div style="margin-top:2rem; display:flex; gap:1rem; flex-direction:column;">
+                    <a href="discover.html" class="btn-primary">Discover Olivium</a>
+                    <a href="index.html" class="btn-secondary">← Back to Home</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
+    </footer>
+
+    <script>
+        const ham = document.getElementById('navHam');
+        const links = document.getElementById('navLinks');
+        if (ham && links) {
+            ham.addEventListener('click', function() {
+                this.classList.toggle('open');
+                links.classList.toggle('open');
+            });
+            document.querySelectorAll('#navLinks a').forEach(link => {
+                link.addEventListener('click', function() {
+                    ham.classList.remove('open');
+                    links.classList.remove('open');
+                });
+            });
+        }
+
+        function submitWaitlist(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const country = document.getElementById('country').value.trim();
+            const interests = document.querySelectorAll('#waitlistFormElement input[type="checkbox"]:checked');
+            const interestsList = Array.from(interests).map(cb => cb.value);
+            const ownsOlvm = document.getElementById('ownsOlvm').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!name || !email) {
+                alert('Please fill in your name and email.');
+                return;
+            }
+
+            console.log('📋 Waitlist Submission:', { name, email, country, interests: interestsList, ownsOlvm, notes });
+
+            document.getElementById('waitlistForm').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        console.log('🌿 Olivium Waitlist — Join the Waitlist');
+    </script>
+</body>
+</html>
