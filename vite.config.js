@@ -24,6 +24,8 @@ export default defineConfig({
         crypto: resolve(__dirname, "crypto41.html"),
         fiat: resolve(__dirname, "index2.html"),
         waitlist: resolve(__dirname, "waitlist.html"),
+                booking: resolve(__dirname, "booking.html"),
+
 
         Original: resolve(__dirname, "Original-App.html"),
         Tease: resolve(__dirname, "FD_REAL_index.html"),
