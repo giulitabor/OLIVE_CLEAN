@@ -11,7 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
@@ -615,10 +617,9 @@
                 <!-- Honeypot -->
                 <input type="text" class="honeypot" name="honeypot" tabindex="-1" autocomplete="off" />
 
-                <div class="form-row">
-                    <input type="date" id="arrivalDate" placeholder="Arrival Date" required />
-                    <input type="date" id="departureDate" placeholder="Departure Date" required />
-                </div>
+               <div class="form-row">
+    <input id="dateRange" placeholder="Select your stay dates" required>
+</div>
                 <div class="form-row">
                     <select id="adultsSelect" required>
                         <option value="1">1 Adult</option>
@@ -663,8 +664,9 @@
     <span><i class="fas fa-calendar-alt" style="color: var(--gold);"></i> Book your stay</span>
     <a href="#booking" class="btn-sm">Request a Stay</a>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+    
     (function() {
         const btn = document.getElementById('submitBookingBtn');
         const msg = document.getElementById('bookingMsg');
@@ -717,6 +719,12 @@
             });
         }
     })();
+    flatpickr("#dateRange", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    minRange: 3
+});
 </script>
 
 </body>
