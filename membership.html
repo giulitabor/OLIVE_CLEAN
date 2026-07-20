@@ -1,552 +1,616 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium Membership — Become a Tree Guardian</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Olivium Estate Circle — Founding Stewardship</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <style>
-        :root {
-            --gold: #C5A059;
-            --gold-light: #D4AF37;
-            --charcoal: #080b07;
-            --muted: rgba(255,255,255,0.5);
-            --muted-dim: rgba(255,255,255,0.25);
-        }
+    :root {
+      --gold: #C5A059;
+      --gold-light: #D4AF37;
+      --charcoal: #080b07;
+      --muted: rgba(255, 255, 255, 0.5);
+      --muted-dim: rgba(255, 255, 255, 0.25);
+    }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--charcoal);
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--charcoal);
-            color: #fff;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-        }
+    /* video background */
+    .video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.55) contrast(1.05) saturate(1.1);
+    }
+    .video-bg .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(8, 11, 7, 0.75) 0%, rgba(8, 11, 7, 0.4) 50%, rgba(8, 11, 7, 0.85) 100%);
+      pointer-events: none;
+    }
 
-        .video-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-            z-index: 0;
-        }
-        .video-bg video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(0.55) contrast(1.05) saturate(1.1);
-        }
-        .video-bg .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
-            pointer-events: none;
-        }
+    /* navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      background: rgba(8, 11, 7, 0.6);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.06em;
+    }
+    .nav-logo em {
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: var(--gold);
+      margin-left: 4px;
+    }
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .nav-links a {
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta {
+      background: var(--gold);
+      color: #0a0f08 !important;
+      padding: 0.4rem 1.2rem;
+      border-radius: 50px;
+      font-weight: 600 !important;
+    }
+    .nav-cta:hover { background: #d4b06a !important; }
+    .nav-ham {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+    .nav-ham span {
+      display: block;
+      width: 26px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .nav-ham.open span:nth-child(2) { opacity: 0; }
+    .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 0 2rem;
-            height: 72px;
-            display: flex;
-            align-items: center;
-            background: rgba(8,11,7,0.6);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .nav-inner {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .nav-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 0.06em;
-        }
-        .nav-logo em {
-            font-style: italic;
-            font-weight: 400;
-            font-size: 0.8rem;
-            color: var(--gold);
-            margin-left: 4px;
-        }
+    /* main */
+    .main-wrap {
+      position: relative;
+      z-index: 10;
+      padding-top: 72px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 2rem 4rem;
+    }
 
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            color: rgba(255,255,255,0.5);
-            text-decoration: none;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            transition: color 0.3s ease;
-        }
-        .nav-links a:hover { color: #fff; }
-        .nav-cta {
-            background: var(--gold);
-            color: #0a0f08 !important;
-            padding: 0.4rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600 !important;
-        }
-        .nav-cta:hover { background: #d4b06a !important; }
+    /* hero */
+    .hero-section {
+      text-align: center;
+      padding: 2rem 0 2rem;
+    }
+    .hero-section .eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .hero-section h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.8rem;
+      font-weight: 400;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .hero-section h1 .gold { color: var(--gold); font-style: italic; }
+    .hero-section .rule {
+      width: 50px;
+      height: 2px;
+      background: var(--gold);
+      margin: 1.2rem auto;
+    }
+    .hero-section p {
+      color: var(--muted);
+      max-width: 600px;
+      margin: 1rem auto 0;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
 
-        .nav-ham {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-        .nav-ham span {
-            display: block;
-            width: 26px;
-            height: 2px;
-            background: #fff;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
-        .nav-ham.open span:nth-child(2) { opacity: 0; }
-        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+    /* tiers grid */
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+    .tier-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 2rem 1.8rem;
+      transition: all 0.4s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .tier-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateY(-4px);
+    }
+    .tier-card.featured {
+      border-color: var(--gold);
+      background: rgba(197, 160, 89, 0.06);
+    }
+    .tier-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .tier-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: #fff;
+      font-weight: 600;
+    }
+    .tier-price {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin: 0.5rem 0 0.2rem;
+    }
+    .tier-price small {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--muted-dim);
+    }
+    .tier-desc {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.7;
+      margin: 0.5rem 0 1rem;
+      flex: 1;
+    }
+    .tier-feats {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.5rem;
+    }
+    .tier-feats li {
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tier-feats li::before {
+      content: "✓";
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .tier-feats li .shares-badge {
+      font-size: 0.65rem;
+      color: var(--gold);
+      background: rgba(197, 160, 89, 0.1);
+      padding: 0.1rem 0.6rem;
+      border-radius: 50px;
+      margin-left: 0.3rem;
+    }
+    .tier-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: #0a0f08;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.8rem;
+      border-radius: 50px;
+      margin-bottom: 0.5rem;
+      align-self: flex-start;
+    }
+    .tier-badge.founder {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
 
-        .main-wrap {
-            position: relative;
-            z-index: 10;
-            padding-top: 72px;
-            min-height: 100vh;
-        }
+    .tier-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 0.7rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      margin-top: auto;
+    }
+    .tier-btn:hover { background: rgba(255, 255, 255, 0.12); }
+    .tier-btn.primary {
+      background: var(--gold);
+      color: #0a0f08;
+      border-color: var(--gold);
+    }
+    .tier-btn.primary:hover { background: var(--gold-light); }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 3rem 2rem 4rem;
-        }
+    /* CTA block */
+    .membership-cta {
+      text-align: center;
+      margin-top: 3rem;
+      padding: 2rem;
+      background: rgba(197, 160, 89, 0.04);
+      border: 1px solid rgba(197, 160, 89, 0.1);
+      border-radius: 20px;
+    }
+    .membership-cta h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: #fff;
+    }
+    .membership-cta p {
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0.5rem auto 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
 
-        .hero-section {
-            text-align: center;
-            padding: 2rem 0 2rem;
-        }
-        .hero-section .eyebrow {
-            font-size: 0.65rem;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--gold);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .hero-section h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 3.8rem;
-            font-weight: 400;
-            color: #fff;
-            letter-spacing: -0.02em;
-        }
-        .hero-section h1 .gold { color: var(--gold); font-style: italic; }
-        .hero-section p {
-            color: var(--muted);
-            max-width: 600px;
-            margin: 1rem auto 0;
-            font-size: 1.1rem;
-            line-height: 1.8;
-        }
-        .hero-section .rule {
-            width: 50px;
-            height: 2px;
-            background: var(--gold);
-            margin: 1.2rem auto;
-        }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    footer p {
+      color: var(--muted-dim);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.5rem 2.5rem;
+      margin: 1rem 0;
+    }
+    .footer-links a {
+      color: var(--muted-dim);
+      text-decoration: none;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      transition: color 0.3s ease;
+    }
+    .footer-links a:hover { color: #fff; }
 
-        .tiers-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            margin-top: 2.5rem;
-        }
-        .tier-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 2rem 1.8rem;
-            transition: all 0.4s ease;
-            display: flex;
-            flex-direction: column;
-        }
-        .tier-card:hover {
-            background: rgba(255,255,255,0.06);
-            transform: translateY(-4px);
-        }
-        .tier-card.featured {
-            border-color: var(--gold);
-            background: rgba(197,160,89,0.06);
-        }
-        .tier-card .tier-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-        .tier-card .tier-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.4rem;
-            color: #fff;
-            font-weight: 600;
-        }
-        .tier-card .tier-price {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--gold);
-            margin: 0.5rem 0 0.2rem;
-        }
-        .tier-card .tier-price small {
-            font-size: 0.8rem;
-            font-weight: 400;
-            color: var(--muted-dim);
-        }
-        .tier-card .tier-desc {
-            color: var(--muted);
-            font-size: 0.85rem;
-            line-height: 1.7;
-            margin: 0.5rem 0 1rem;
-            flex: 1;
-        }
-        .tier-card .tier-feats {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 1.5rem;
-        }
-        .tier-card .tier-feats li {
-            color: var(--muted);
-            font-size: 0.8rem;
-            padding: 0.4rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .tier-card .tier-feats li::before {
-            content: "✓";
-            color: var(--gold);
-            font-weight: 700;
-        }
-        .tier-card .tier-feats li .shares-badge {
-            font-size: 0.65rem;
-            color: var(--gold);
-            background: rgba(197,160,89,0.1);
-            padding: 0.1rem 0.6rem;
-            border-radius: 50px;
-            margin-left: 0.3rem;
-        }
-        .tier-card .tier-badge {
-            display: inline-block;
-            background: var(--gold);
-            color: #0a0f08;
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-            margin-bottom: 0.5rem;
-            align-self: flex-start;
-        }
-        .tier-card .tier-badge.founder {
-            background: transparent;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-        }
-
-        .tier-btn {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            padding: 0.7rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-decoration: none;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-top: auto;
-        }
-        .tier-btn:hover { background: rgba(255,255,255,0.12); }
-        .tier-btn.primary {
-            background: var(--gold);
-            color: #0a0f08;
-            border-color: var(--gold);
-        }
-        .tier-btn.primary:hover { background: var(--gold-light); }
-
-        .membership-cta {
-            text-align: center;
-            margin-top: 3rem;
-            padding: 2rem;
-            background: rgba(197,160,89,0.04);
-            border: 1px solid rgba(197,160,89,0.1);
-            border-radius: 20px;
-        }
-        .membership-cta h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.6rem;
-            color: #fff;
-        }
-        .membership-cta p {
-            color: var(--muted);
-            max-width: 500px;
-            margin: 0.5rem auto 1.5rem;
-            font-size: 0.95rem;
-            line-height: 1.8;
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem;
-            border-top: 1px solid rgba(255,255,255,0.04);
-        }
-        footer p {
-            color: var(--muted-dim);
-            font-size: 0.7rem;
-            letter-spacing: 0.06em;
-        }
-        footer .footer-links {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 1.5rem 2.5rem;
-            margin: 1rem 0;
-        }
-        footer .footer-links a {
-            color: var(--muted-dim);
-            text-decoration: none;
-            font-size: 0.7rem;
-            letter-spacing: 0.04em;
-            transition: color 0.3s ease;
-        }
-        footer .footer-links a:hover { color: #fff; }
-
-        @media (max-width: 1024px) {
-            .tiers-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 768px) {
-            .container { padding: 2rem 1.25rem; }
-            .hero-section h1 { font-size: 2.8rem; }
-            .tiers-grid { grid-template-columns: 1fr; max-width: 420px; margin: 2rem auto 0; }
-
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 72px;
-                left: 0;
-                right: 0;
-                background: rgba(8,11,7,0.98);
-                padding: 2rem;
-                gap: 1.5rem;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .nav-links.open { display: flex; }
-            .nav-ham { display: flex; }
-        }
-
-        @media (max-width: 480px) {
-            .hero-section h1 { font-size: 2.2rem; }
-            .tier-card { padding: 1.5rem; }
-        }
-    </style>
+    /* responsive */
+    @media (max-width: 1024px) {
+      .tiers-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .container { padding: 2rem 1.25rem; }
+      .hero-section h1 { font-size: 2.8rem; }
+      .tiers-grid { grid-template-columns: 1fr; max-width: 420px; margin: 2rem auto 0; }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 72px;
+        left: 0;
+        right: 0;
+        background: rgba(8, 11, 7, 0.98);
+        padding: 2rem;
+        gap: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .nav-links.open { display: flex; }
+      .nav-ham { display: flex; }
+    }
+    @media (max-width: 480px) {
+      .hero-section h1 { font-size: 2.2rem; }
+      .tier-card { padding: 1.5rem; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="video-bg">
-        <video autoplay loop muted playsinline aria-hidden="true"
-               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
-            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
-        </video>
-        <div class="overlay"></div>
+  <!-- video background -->
+  <div class="video-bg">
+    <video autoplay loop muted playsinline aria-hidden="true"
+           poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
+      <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+  </div>
+
+  <!-- navigation -->
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-logo">OLIVIUM <em>Estate Circle</em></div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="discover.html">Discover</a></li>
+        <li><a href="membership.html" class="nav-cta">Membership</a></li>
+        <li><a href="token.html">OLVM</a></li>
+        <li><a href="userDash.html">Dashboard</a></li>
+        <li><a href="join.html">Join</a></li>
+      </ul>
+      <button class="nav-ham" id="navHam" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
+  </nav>
 
-    <nav>
-        <div class="nav-inner">
-            <div class="nav-logo">OLIVIUM <em>Membership</em></div>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="discover.html">Discover</a></li>
-                <li><a href="membership.html" class="nav-cta">Membership</a></li>
-                <li><a href="token.html">OLVM</a></li>
-                <li><a href="userDash.html">Dashboard</a></li>
-                <li><a href="join.html">Join</a></li>
-            </ul>
-            <button class="nav-ham" id="navHam" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+  <div class="main-wrap">
+    <div class="container">
+
+      <!-- hero section (exact content from request) -->
+      <section class="hero-section">
+        <p class="eyebrow">🌿 Founding Stewardship</p>
+        <h1>Olivium <span class="gold">Estate Circle</span></h1>
+        <div class="rule"></div>
+        <p>
+          Become part of a living Tuscan olive estate. 
+          Your founding stewardship creates your connection to the grove, 
+          the harvest, and a private community built around Mediterranean living.
+        </p>
+      </section>
+
+      <!-- tiers grid (exact copy from request) -->
+      <div class="tiers-grid">
+
+        <!-- Tier 1 -->
+        <div class="tier-card">
+          <div class="tier-icon">🌱</div>
+          <div class="tier-name">Mignole Supporter</div>
+          <div class="tier-price">
+            €500 <small>founding contribution</small>
+          </div>
+          <div class="tier-desc">
+            Your first connection to the Olivium Estate community.
+          </div>
+          <ul class="tier-feats">
+            <li>2L estate olive oil annually for 3 years</li>
+            <li>Community membership recognition</li>
+            <li>Harvest season updates</li>
+            <li>Member portal access</li>
+            <li>5% accommodation savings</li>
+            <li>Invitations to selected estate events</li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Annual Estate Circle Renewal:
+              <strong>€150/year</strong>
+            </li>
+          </ul>
+          <a href="waitlist.html" class="tier-btn">
+            Join Founding Circle
+          </a>
         </div>
-    </nav>
 
-    <div class="main-wrap">
-        <div class="container">
-
-            <section class="hero-section">
-                <p class="eyebrow">🌿 Become a Steward</p>
-                <h1>Olivium <span class="gold">Membership</span></h1>
-                <div class="rule"></div>
-                <p>Membership includes stewardship of selected estate trees. You don't buy a tree — you become part of the grove.</p>
-            </section>
-
-            <div class="tiers-grid">
-
-                <!-- Tier 1 -->
-                <div class="tier-card">
-                    <div class="tier-icon">🌱</div>
-                    <div class="tier-name">Mignole Supporter</div>
-                    <div class="tier-price">€500 <small>/ year</small></div>
-                    <div class="tier-desc">Your first step into the Olivium community.</div>
-                    <ul class="tier-feats">
-                        <li>2L annual estate olive oil</li>
-                        <li>Community membership</li>
-                        <li>Harvest season updates</li>
-                        <li>Member portal access</li>
-                        <li>5% accommodation savings</li>
-                        <li>Invitations to member events</li>
-                    </ul>
-                    <a href="waitlist.html" class="tier-btn">Join Waitlist</a>
-                </div>
-
-                <!-- Tier 2 -->
-                <div class="tier-card featured">
-                    <div class="tier-badge">Most Popular</div>
-                    <div class="tier-icon">🌿</div>
-                    <div class="tier-name">Tree Guardian</div>
-                    <div class="tier-price">€2,000 <small>/ year</small></div>
-                    <div class="tier-desc">Includes stewardship of one olive tree.</div>
-                    <ul class="tier-feats">
-                        <li>Everything in Mignole Supporter</li>
-                        <li>Stewardship of 1 named olive tree</li>
-                        <li>5L annual olive oil</li>
-                        <li>7 Annual Residency Credits</li>
-                        <li>Priority booking window</li>
-                        <li>Harvest participation invitation</li>
-                        <li>Olive Credits wallet</li>
-                        <li>Live harvest tracking in the App</li>
-                        <li style="color:var(--gold); font-size:0.75rem; border-bottom: none; padding-top:0.3rem;">
-                            ✦ Includes <strong>100 complimentary digital shares</strong>
-                            <span class="shares-badge">Digital Collector</span>
-                        </li>
-                    </ul>
-                    <a href="waitlist.html" class="tier-btn primary">Join Waitlist</a>
-                </div>
-
-                <!-- Tier 3 -->
-                <div class="tier-card">
-                    <div class="tier-badge">Most Popular</div>
-                    <div class="tier-icon">👑</div>
-                    <div class="tier-name">Grove Patron</div>
-                    <div class="tier-price">€5,000 <small>/ year</small></div>
-                    <div class="tier-desc">For those who make Olivium part of their yearly rhythm.</div>
-                    <ul class="tier-feats">
-                        <li>Everything in Tree Guardian</li>
-                        <li>Stewardship of 5 named olive trees</li>
-                        <li>15L Premium Early Harvest Reserve</li>
-                        <li>21 Annual Residency Credits</li>
-                        <li>Private harvest experience</li>
-                        <li>Priority reservation windows</li>
-                        <li>Dedicated concierge service</li>
-                        <li>7-night welcome residency</li>
-                        <li style="color:var(--gold); font-size:0.75rem; border-bottom: none; padding-top:0.3rem;">
-                            ✦ Includes <strong>500 complimentary digital shares</strong>
-                            <span class="shares-badge">Digital Collector</span>
-                        </li>
-                    </ul>
-                    <a href="waitlist.html" class="tier-btn">Join Waitlist</a>
-                </div>
-
-                <!-- Tier 4 -->
-                <div class="tier-card" style="border-color: var(--gold); background: rgba(197,160,89,0.06);">
-                    <div class="tier-badge founder">Founder Circle</div>
-                    <div class="tier-icon">🌳</div>
-                    <div class="tier-name">Full Tree Estate</div>
-                    <div class="tier-price">€10,000 <small>/ year</small></div>
-                    <div class="tier-desc">The highest level of stewardship.</div>
-                    <ul class="tier-feats">
-                        <li>Everything in Grove Patron</li>
-                        <li>Stewardship of 12 named olive trees</li>
-                        <li>30L Reserve Collection olive oil</li>
-                        <li>45 Annual Residency Credits</li>
-                        <li>Heritage Tree Dedication</li>
-                        <li>Founder Circle Membership</li>
-                        <li>Estate Advisory Circle invitation</li>
-                        <li>Highest booking priority</li>
-                        <li>Dedicated concierge</li>
-                        <li style="color:var(--gold); font-size:0.75rem; border-bottom: none; padding-top:0.3rem;">
-                            ✦ Includes <strong>1,000 complimentary digital shares</strong>
-                            <span class="shares-badge">Complete Representation</span>
-                        </li>
-                    </ul>
-                    <a href="waitlist.html" class="tier-btn primary">Join Waitlist</a>
-                </div>
-
-            </div>
-
-            <div class="membership-cta">
-                <h3>Membership Opening Soon</h3>
-                <p>Register your interest and be the first to know when membership becomes available.</p>
-                <a href="waitlist.html" class="tier-btn primary" style="display:inline-block; padding:0.8rem 2.5rem;">Join the Waitlist →</a>
-            </div>
-
-            <div style="text-align:center; margin-top:1.5rem;">
-                <a href="token.html" style="color:var(--gold); text-decoration:none; font-size:0.9rem;">Explore OLVM →</a>
-            </div>
-
+        <!-- Tier 2 -->
+        <div class="tier-card featured">
+          <div class="tier-badge">Most Popular</div>
+          <div class="tier-icon">🌿</div>
+          <div class="tier-name">Tree Guardian</div>
+          <div class="tier-price">
+            €2,000 <small>founding stewardship</small>
+          </div>
+          <div class="tier-desc">
+            Become a recognized steward of a living olive tree within the Olivium grove.
+          </div>
+          <ul class="tier-feats">
+            <li>Named olive tree stewardship recognition</li>
+            <li>Digital grove map placement</li>
+            <li>Personal stewardship certificate</li>
+            <li>5L estate olive oil annually</li>
+            <li>7 Residency Credits annually for 3 years</li>
+            <li>Priority booking window</li>
+            <li>Harvest participation invitation</li>
+            <li>Olive Credits wallet</li>
+            <li>Live harvest tracking in the App</li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Includes 
+              <strong>100 Digital Grove Shares</strong>
+              <span class="shares-badge">Digital Collector</span>
+            </li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Annual Estate Circle Renewal:
+              <strong>€250/year</strong>
+            </li>
+          </ul>
+          <a href="waitlist.html" class="tier-btn primary">
+            Join Founding Circle
+          </a>
         </div>
+
+        <!-- Tier 3 -->
+        <div class="tier-card">
+          <div class="tier-badge">Founder Circle</div>
+          <div class="tier-icon">👑</div>
+          <div class="tier-name">Grove Patron</div>
+          <div class="tier-price">
+            €5,000 <small>founding stewardship</small>
+          </div>
+          <div class="tier-desc">
+            For those who want Olivium to become part of their Mediterranean lifestyle.
+          </div>
+          <ul class="tier-feats">
+            <li>Stewardship recognition of 5 olive trees</li>
+            <li>Private grove identity</li>
+            <li>15L Premium Early Harvest Reserve</li>
+            <li>21 Residency Credits annually for 3 years</li>
+            <li>Private harvest experience</li>
+            <li>Priority reservation windows</li>
+            <li>Dedicated concierge access</li>
+            <li>Founder Circle membership</li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Includes 
+              <strong>500 Digital Grove Shares</strong>
+              <span class="shares-badge">Digital Collector</span>
+            </li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Annual Estate Circle Renewal:
+              <strong>€750/year</strong>
+            </li>
+          </ul>
+          <a href="waitlist.html" class="tier-btn">
+            Join Founding Circle
+          </a>
+        </div>
+
+        <!-- Tier 4 -->
+        <div class="tier-card" style="border-color:var(--gold); background:rgba(197,160,89,0.06);">
+          <div class="tier-badge founder">
+            Founder Circle
+          </div>
+          <div class="tier-icon">🌳</div>
+          <div class="tier-name">
+            Full Tree Estate
+          </div>
+          <div class="tier-price">
+            €10,000 <small>founding stewardship</small>
+          </div>
+          <div class="tier-desc">
+            The highest expression of Olivium legacy and estate connection.
+          </div>
+          <ul class="tier-feats">
+            <li>Heritage recognition across 12 olive trees</li>
+            <li>Heritage tree dedication</li>
+            <li>30L Reserve Collection olive oil</li>
+            <li>45 Residency Credits annually for 3 years</li>
+            <li>Founder Circle membership</li>
+            <li>Estate Advisory Circle invitation</li>
+            <li>Highest booking priority</li>
+            <li>Dedicated concierge relationship</li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Includes 
+              <strong>1,000 Digital Grove Shares</strong>
+              <span class="shares-badge">Complete Representation</span>
+            </li>
+            <li style="color:var(--gold); font-size:0.75rem; border-bottom:none;">
+              ✦ Annual Estate Circle Renewal:
+              <strong>€1,500/year</strong>
+            </li>
+          </ul>
+          <a href="waitlist.html" class="tier-btn primary">
+            Join Founding Circle
+          </a>
+        </div>
+
+      </div>
+
+      <!-- membership CTA (exact copy) -->
+      <div class="membership-cta">
+        <h3>Founding Membership Opening Soon</h3>
+        <p>
+          Secure your place within the Olivium Estate.
+          Founding members receive permanent recognition within the grove,
+          with annual renewal maintaining access to Estate Circle privileges.
+        </p>
+        <a href="waitlist.html" class="tier-btn primary" 
+           style="display:inline-block; padding:0.8rem 2.5rem;">
+          Join the Founding Circle →
+        </a>
+      </div>
+
     </div>
+  </div>
 
-    <footer>
-        <div class="footer-links">
-            <a href="index.html">Home</a>
-            <a href="discover.html">Discover</a>
-            <a href="membership.html">Membership</a>
-            <a href="token.html">OLVM</a>
-            <a href="userDash.html">Dashboard</a>
-            <a href="join.html">Join</a>
-        </div>
-        <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
-    </footer>
+  <!-- footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="discover.html">Discover</a>
+      <a href="membership.html">Membership</a>
+      <a href="token.html">OLVM</a>
+      <a href="userDash.html">Dashboard</a>
+      <a href="join.html">Join</a>
+    </div>
+    <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
+  </footer>
 
-    <script>
-        const ham = document.getElementById('navHam');
-        const links = document.getElementById('navLinks');
-        if (ham && links) {
-            ham.addEventListener('click', function() {
-                this.classList.toggle('open');
-                links.classList.toggle('open');
-            });
-            document.querySelectorAll('#navLinks a').forEach(link => {
-                link.addEventListener('click', function() {
-                    ham.classList.remove('open');
-                    links.classList.remove('open');
-                });
-            });
-        }
-        console.log('🌿 Olivium Membership — Stewardship, not ownership');
-    </script>
+  <script>
+    const ham = document.getElementById('navHam');
+    const links = document.getElementById('navLinks');
+    if (ham && links) {
+      ham.addEventListener('click', function() {
+        this.classList.toggle('open');
+        links.classList.toggle('open');
+      });
+      document.querySelectorAll('#navLinks a').forEach(link => {
+        link.addEventListener('click', function() {
+          ham.classList.remove('open');
+          links.classList.remove('open');
+        });
+      });
+    }
+    console.log('🌿 Olivium Estate Circle — Founding Stewardship');
+  </script>
 </body>
 </html>
