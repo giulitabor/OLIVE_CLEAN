@@ -7,53 +7,51 @@
     {
       "source": "/api/(.*)",
       "destination": "https://indecipherably-trifurcate-rhea.ngrok-free.dev/admin/api/$1"
-    }
-  ],
+    },
 
-  "routes": [
     {
-      "src": "/",
-      "dest": "/index.html"
+      "source": "/",
+      "destination": "/index.html"
     },
     {
-      "src": "/villa_stay",
-      "dest": "/villa_stay.html"
+      "source": "/villa_stay",
+      "destination": "/villa_stay.html"
     },
     {
-      "src": "/rewards",
-      "dest": "/villa_stay.html"
+      "source": "/rewards",
+      "destination": "/villa_stay.html"
     },
     {
-      "src": "/about",
-      "dest": "/understand.html"
+      "source": "/about",
+      "destination": "/understand.html"
     },
     {
-      "src": "/map",
-      "dest": "/map.html"
+      "source": "/map",
+      "destination": "/map.html"
     },
     {
-      "src": "/game",
-      "dest": "/webgame3.html"
+      "source": "/game",
+      "destination": "/webgame3.html"
     },
     {
-      "src": "/harvest",
-      "dest": "/harvest.html"
+      "source": "/harvest",
+      "destination": "/harvest.html"
     },
     {
-      "src": "/privacy",
-      "dest": "/privacy.html"
+      "source": "/privacy",
+      "destination": "/privacy.html"
     },
     {
-      "src": "/terms",
-      "dest": "/terms.html"
+      "source": "/terms",
+      "destination": "/terms.html"
     },
     {
-      "src": "/refunds",
-      "dest": "/refunds.html"
+      "source": "/refunds",
+      "destination": "/refunds.html"
     },
     {
-      "src": "/reserve",
-      "dest": "/index2.html"
+      "source": "/reserve",
+      "destination": "/index2.html"
     }
   ],
 
@@ -63,7 +61,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://raw.githubusercontent.com https://*.githubusercontent.com; connect-src 'self' https://api.devnet.solana.com https://api.mainnet-beta.solana.com https://devnet.helius-rpc.com https://*.helius-rpc.com https://*.supabase.co https://api.coingecko.com https://api.open-meteo.com  https://api.tomorrow.io https://price.jup.ag https://esm.sh wss://*.solana.com wss://*.helius-rpc.com https://*.vercel.app; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://esm.sh https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; media-src 'self' https://raw.githubusercontent.com https://*.githubusercontent.com https://www.toscagialla.com; connect-src 'self' https://api.devnet.solana.com https://api.mainnet-beta.solana.com https://devnet.helius-rpc.com https://*.helius-rpc.com https://*.supabase.co https://api.coingecko.com https://api.open-meteo.com https://api.tomorrow.io https://price.jup.ag https://esm.sh https://maps.googleapis.com https://maps.gstatic.com https://www.toscagialla.com https://*.vercel.app wss://*.solana.com wss://*.helius-rpc.com; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self';"
         },
         {
           "key": "X-Content-Type-Options",
@@ -71,7 +69,7 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
         },
         {
           "key": "X-XSS-Protection",
