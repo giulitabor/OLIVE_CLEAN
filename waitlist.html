@@ -461,7 +461,7 @@
                 <p>Thank you for registering your interest in Olivium. We'll keep you updated on membership availability.</p>
                 <div style="margin-top:2rem; display:flex; gap:1rem; flex-direction:column;">
                     <a href="discover.html" class="btn-primary">Discover Olivium</a>
-                    <a href="index.html" class="btn-secondary">← Back to Home</a>
+                    <a href="home.html" class="btn-secondary">← Back to Home</a>
                 </div>
             </div>
 
@@ -471,7 +471,7 @@
     <footer>
         <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
     </footer>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const ham = document.getElementById('navHam');
         const links = document.getElementById('navLinks');
@@ -488,28 +488,87 @@
             });
         }
 
-        function submitWaitlist(event) {
-            event.preventDefault();
+       async function submitWaitlist(event) {
 
-            const name = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const country = document.getElementById('country').value.trim();
-            const interests = document.querySelectorAll('#waitlistFormElement input[type="checkbox"]:checked');
-            const interestsList = Array.from(interests).map(cb => cb.value);
-            const ownsOlvm = document.getElementById('ownsOlvm').value;
-            const notes = document.getElementById('notes').value.trim();
+    event.preventDefault();
 
-            if (!name || !email) {
-                alert('Please fill in your name and email.');
-                return;
-            }
+    const name =
+        document.getElementById('fullName').value.trim();
 
-            console.log('📋 Waitlist Submission:', { name, email, country, interests: interestsList, ownsOlvm, notes });
+    const email =
+        document.getElementById('email').value.trim();
 
-            document.getElementById('waitlistForm').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    const country =
+        document.getElementById('country').value.trim();
+
+    const interests =
+        Array.from(
+            document.querySelectorAll(
+                '#waitlistFormElement input[type="checkbox"]:checked'
+            )
+        ).map(cb => cb.value);
+
+    const ownsOlvm =
+        document.getElementById('ownsOlvm').value;
+
+    const notes =
+        document.getElementById('notes').value.trim();
+
+    if (!name || !email) {
+
+        alert("Please enter your name and email.");
+
+        return;
+
+    }
+
+    const { error } =
+        await supabase
+            .from('waitlist')
+            .insert([{
+
+                full_name: name,
+
+                email,
+
+                country,
+
+                interests,
+
+                owns_olvm: ownsOlvm,
+
+                notes
+
+            }]);
+
+    if (error) {
+
+        if (error.code === '23505') {
+
+            alert("This email is already on the waitlist.");
+
+            return;
+
         }
+
+        console.error(error);
+
+        alert("Something went wrong.");
+
+        return;
+
+    }
+
+    document.getElementById('waitlistForm').style.display = 'none';
+
+    document.getElementById('successMessage').style.display = 'block';
+
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+
+}
 
         console.log('🌿 Olivium Waitlist — Join the Waitlist');
     </script>
