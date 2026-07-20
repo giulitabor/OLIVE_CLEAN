@@ -472,105 +472,187 @@
         <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
     </footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const ham = document.getElementById('navHam');
-        const links = document.getElementById('navLinks');
-        if (ham && links) {
-            ham.addEventListener('click', function() {
-                this.classList.toggle('open');
-                links.classList.toggle('open');
+
+<script>
+    // ===============================
+    // Supabase Configuration
+    // ===============================
+
+    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+
+    const { createClient } = window.supabase;
+
+    const supabase = createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+    // ===============================
+    // Mobile Navigation
+    // ===============================
+
+    const ham = document.getElementById('navHam');
+    const links = document.getElementById('navLinks');
+
+    if (ham && links) {
+
+        ham.addEventListener('click', () => {
+            ham.classList.toggle('open');
+            links.classList.toggle('open');
+        });
+
+        document.querySelectorAll('#navLinks a').forEach(link => {
+
+            link.addEventListener('click', () => {
+
+                ham.classList.remove('open');
+                links.classList.remove('open');
+
             });
-            document.querySelectorAll('#navLinks a').forEach(link => {
-                link.addEventListener('click', function() {
-                    ham.classList.remove('open');
-                    links.classList.remove('open');
-                });
-            });
-        }
 
-       async function submitWaitlist(event) {
-
-    event.preventDefault();
-
-    const name =
-        document.getElementById('fullName').value.trim();
-
-    const email =
-        document.getElementById('email').value.trim();
-
-    const country =
-        document.getElementById('country').value.trim();
-
-    const interests =
-        Array.from(
-            document.querySelectorAll(
-                '#waitlistFormElement input[type="checkbox"]:checked'
-            )
-        ).map(cb => cb.value);
-
-    const ownsOlvm =
-        document.getElementById('ownsOlvm').value;
-
-    const notes =
-        document.getElementById('notes').value.trim();
-
-    if (!name || !email) {
-
-        alert("Please enter your name and email.");
-
-        return;
+        });
 
     }
 
-    const { error } =
-        await supabase
-            .from('waitlist')
-            .insert([{
+    // ===============================
+    // Waitlist Submission
+    // ===============================
 
-                full_name: name,
+    async function submitWaitlist(event) {
 
-                email,
+        event.preventDefault();
 
-                country,
+        const form = document.getElementById("waitlistFormElement");
+        const submitBtn = form.querySelector("button[type='submit']");
 
-                interests,
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "Joining...";
 
-                owns_olvm: ownsOlvm,
+        const full_name = document.getElementById("fullName").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const country = document.getElementById("country").value.trim();
 
-                notes
+        const interests = Array.from(
+            document.querySelectorAll(
+                "#waitlistFormElement input[type='checkbox']:checked"
+            )
+        ).map(cb => cb.value);
 
-            }]);
+        const owns_olvm = document.getElementById("ownsOlvm").value;
 
-    if (error) {
+        const notes = document
+            .getElementById("notes")
+            .value
+            .trim()
+            .substring(0,1000);
 
-        if (error.code === '23505') {
+        if (!full_name || !email) {
 
-            alert("This email is already on the waitlist.");
+            alert("Please enter your name and email.");
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Join the Waitlist →";
 
             return;
 
         }
 
-        console.error(error);
+        const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        alert("Something went wrong.");
+        if (!emailRegex.test(email)) {
 
-        return;
+            alert("Please enter a valid email address.");
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Join the Waitlist →";
+
+            return;
+
+        }
+
+        try {
+
+            const { error } = await supabase
+
+                .from("waitlist")
+
+                .insert([{
+
+                    full_name,
+
+                    email,
+
+                    country,
+
+                    interests,
+
+                    owns_olvm,
+
+                    notes
+
+                }]);
+
+            if (error) {
+
+                if (error.code === "23505") {
+
+                    alert(
+                        "This email is already registered on the waitlist."
+                    );
+
+                } else {
+
+                    console.error(error);
+
+                    alert(
+                        "Unable to join the waitlist.\n\n" +
+                        error.message
+                    );
+
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = "Join the Waitlist →";
+
+                return;
+
+            }
+
+            form.reset();
+
+            document.getElementById("waitlistForm").style.display = "none";
+
+            document.getElementById("successMessage").style.display = "block";
+
+            window.scrollTo({
+
+                top: 0,
+
+                behavior: "smooth"
+
+            });
+
+        }
+
+        catch(err) {
+
+            console.error(err);
+
+            alert(
+                "Unexpected error.\nPlease try again later."
+            );
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Join the Waitlist →";
+
+        }
 
     }
 
-    document.getElementById('waitlistForm').style.display = 'none';
+    console.log("🌿 Olivium Waitlist Ready");
 
-    document.getElementById('successMessage').style.display = 'block';
-
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-
-}
-
-        console.log('🌿 Olivium Waitlist — Join the Waitlist');
-    </script>
+</script>
 </body>
 </html>
