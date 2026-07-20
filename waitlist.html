@@ -471,23 +471,19 @@
     <footer>
         <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
     </footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+/
 <script>
     // ===============================
     // Supabase Configuration
     // ===============================
 
-    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+// src/lib/supabase.js
+import { createClient } from '@supabase/supabase-js';
 
-    const { createClient } = window.supabase;
-
-    const supabase = createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-    );
-
+export const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
     // ===============================
     // Mobile Navigation
     // ===============================
