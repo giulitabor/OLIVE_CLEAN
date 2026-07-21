@@ -1,814 +1,1608 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium Ecosystem Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="OLIVIUM — your living Tuscan olive grove on-chain." />
+<title>OLIVIUM · My Estate</title>
 
-    <style>
-        :root {
-            --gold: #C5A059;
-            --gold-light: #D4AF37;
-            --olive: #4a6b1e;
-            --olive-light: #6a9a2e;
-            --charcoal: #080b07;
-            --card-bg: rgba(255,255,255,0.03);
-            --border-gold: rgba(197,160,89,0.15);
-            --muted: rgba(255,255,255,0.5);
-            --muted-dim: rgba(255,255,255,0.25);
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<style>
+/* =========================================================================
+   TOKEN SYSTEM — Estate Edition
+   ========================================================================= */
+:root {
+  --charcoal: #070905;
+  --charcoal-2: #0d1109;
+  --panel: rgba(255,255,255,.035);
+  --panel-hover: rgba(255,255,255,.06);
+  --card-border: rgba(197,160,89,.14);
+  --card-border-hover: rgba(197,160,89,.34);
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--charcoal);
-            color: #fff;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-        }
+  --gold: #c5a059;
+  --gold-light: #ddbd7c;
+  --olive-deep: #233416;
+  --olive: #4a6b1e;
+  --olive-light: #8ec24a;
 
-        /* ===== VIDEO BACKGROUND ===== */
-        .video-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-            z-index: 0;
-        }
-        .video-bg video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(0.55) contrast(1.05) saturate(1.1);
-        }
-        .video-bg .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
-            pointer-events: none;
-        }
+  --cream: #f3efe6;
+  --muted: rgba(243,239,230,.56);
+  --muted-dim: rgba(243,239,230,.30);
 
-        /* ===== NAVIGATION ===== */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 0 2rem;
-            height: 72px;
-            display: flex;
-            align-items: center;
-            background: rgba(8,11,7,0.6);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .nav-inner {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .nav-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 0.06em;
-        }
-        .nav-logo em {
-            font-style: italic;
-            font-weight: 400;
-            font-size: 0.8rem;
-            color: var(--gold);
-            margin-left: 4px;
-        }
+  --good: #8ec24a;
+  --amber: #e0a83e;
+  --danger: #e2574c;
 
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            color: rgba(255,255,255,0.5);
-            text-decoration: none;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            transition: color 0.3s ease;
-        }
-        .nav-links a:hover { color: #fff; }
-        .nav-cta {
-            background: var(--gold);
-            color: #0a0f08 !important;
-            padding: 0.4rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600 !important;
-        }
-        .nav-cta:hover { background: #d4b06a !important; }
+  --r-lg: 22px;
+  --r-md: 16px;
+  --r-sm: 10px;
+  --ease: cubic-bezier(.4,0,.2,1);
+}
 
-        .nav-ham {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-        .nav-ham span {
-            display: block;
-            width: 26px;
-            height: 2px;
-            background: #fff;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
-        .nav-ham.open span:nth-child(2) { opacity: 0; }
-        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
 
-        /* ===== MAIN WRAP ===== */
-        .main-wrap {
-            position: relative;
-            z-index: 10;
-            padding-top: 72px;
-            min-height: 100vh;
-        }
+body {
+  font-family:'Inter',sans-serif;
+  background:
+    radial-gradient(ellipse 100% 60% at 15% -10%, rgba(74,107,30,.18), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(197,160,89,.08), transparent 55%),
+    var(--charcoal);
+  color:var(--cream);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 2rem 4rem;
-        }
+a{color:inherit;}
+button{font-family:inherit;}
 
-        /* ===== CONNECT BAR ===== */
-        .connect-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            padding: 0.8rem 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .connect-bar .status {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-        .connect-bar .status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--olive-light);
-        }
-        .connect-bar .status .dot.inactive {
-            background: #555;
-        }
-        .connect-bar .status span {
-            font-size: 0.8rem;
-            color: var(--muted);
-        }
-        .connect-bar .status .wallet {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--gold);
-            font-size: 0.8rem;
-            background: rgba(197,160,89,0.1);
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-        }
-        .btn-connect {
-            background: var(--gold);
-            color: #0a0f08;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .btn-connect:hover { background: var(--gold-light); transform: translateY(-2px); }
-        .btn-connect.outline {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.12);
-            color: #fff;
-        }
-        .btn-connect.outline:hover { background: rgba(255,255,255,0.05); border-color: var(--gold); }
+:focus-visible{outline:2px solid var(--gold); outline-offset:3px; border-radius:4px;}
 
-        /* ===== DASHBOARD GRID ===== */
-        .dash-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
+.serif{font-family:'Playfair Display',serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
 
-        .dash-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 1.8rem;
-            transition: all 0.4s ease;
-        }
-        .dash-card:hover {
-            border-color: var(--border-gold);
-        }
-        .dash-card.full {
-            grid-column: 1 / -1;
-        }
+/* ===== AMBIENT PARTICLES ===== */
+#ambient {
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.leaf {
+  position:absolute;
+  font-size:16px;
+  opacity:0.04;
+  animation:float-leaf linear infinite;
+  pointer-events:none;
+  transform-origin:center;
+}
+@keyframes float-leaf {
+  0% { transform:translateY(0) rotate(0deg) scale(1); opacity:0; }
+  10% { opacity:0.06; }
+  90% { opacity:0.06; }
+  100% { transform:translateY(-100vh) rotate(720deg) scale(0.5); opacity:0; }
+}
 
-        .dash-card .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .dash-card .card-header h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            color: #fff;
-            font-weight: 600;
-        }
-        .dash-card .card-header .icon {
-            font-size: 1.8rem;
-        }
-        .dash-card .card-header .badge {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--gold);
-            background: rgba(197,160,89,0.1);
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-        }
+/* ===== NAV ===== */
+nav {
+  position:sticky; top:0; z-index:100;
+  padding:0 clamp(16px,4vw,2rem);
+  height:68px;
+  display:flex; align-items:center;
+  background:rgba(7,9,5,.85);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.nav-inner{max-width:1280px; width:100%; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+.nav-logo{font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700;}
+.nav-logo em{font-style:italic; font-weight:400; font-size:.7rem; color:var(--gold); margin-left:6px;}
+.nav-links{display:flex; list-style:none; gap:1.6rem; align-items:center;}
+.nav-links a{text-decoration:none; color:var(--muted); font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; transition:color .2s var(--ease);}
+.nav-links a:hover{color:var(--cream);}
+.nav-ham{display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:8px;}
+.nav-ham span{display:block; width:24px; height:2px; background:var(--cream); border-radius:2px; transition:.25s var(--ease);}
+.nav-ham.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+.nav-ham.open span:nth-child(2){opacity:0;}
+.nav-ham.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
 
-        .dash-stat {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 0.3rem;
-        }
-        .dash-stat .num {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.4rem;
-            font-weight: 600;
-            color: #fff;
-        }
-        .dash-stat .num.gold { color: var(--gold); }
-        .dash-stat .lbl {
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-        .dash-desc {
-            font-size: 0.85rem;
-            color: var(--muted);
-            line-height: 1.7;
-        }
+/* ===== ESTATE PULSE TICKER ===== */
+.pulse-bar {
+  background:var(--charcoal-2);
+  border-bottom:1px solid rgba(197,160,89,.08);
+  padding:6px clamp(16px,4vw,2rem);
+  display:flex;
+  align-items:center;
+  gap:1.8rem;
+  overflow-x:auto;
+  font-size:.7rem;
+  font-weight:500;
+  letter-spacing:.02em;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.pulse-bar .pulse-item{display:flex;align-items:center;gap:.4rem;}
+.pulse-bar .pulse-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;}
+.pulse-bar .pulse-dot.good{background:var(--good);box-shadow:0 0 6px var(--good);}
+.pulse-bar .pulse-dot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+.pulse-bar .pulse-dot.danger{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+.pulse-bar .pulse-value{color:var(--cream);font-weight:600;}
 
-        .dash-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .dash-list li {
-            padding: 0.6rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-        .dash-list li:last-child { border-bottom: none; }
-        .dash-list li .label { color: #fff; }
-        .dash-list li .value { color: var(--gold); font-weight: 500; }
+/* ===== LAYOUT ===== */
+.main-wrap{max-width:1280px; margin:0 auto; padding:1rem clamp(16px,4vw,2rem) 3rem; position:relative; z-index:1;}
 
-        .dash-tag {
-            display: inline-block;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.05);
-            color: var(--muted);
-        }
-        .dash-tag.active {
-            background: rgba(76,175,80,0.15);
-            color: #4caf50;
-        }
-        .dash-tag.pending {
-            background: rgba(255,193,7,0.15);
-            color: #ffc107;
-        }
+.connect-bar{
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.8rem;
+  background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:14px;
+  padding:.7rem 1.2rem; margin:1rem 0 1.4rem;
+}
+.connect-bar .status{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+.status .dot{width:8px;height:8px;border-radius:50%;background:var(--olive-light);box-shadow:0 0 8px var(--olive-light);}
+.status .dot.inactive{background:#555;box-shadow:none;}
+.status .label{font-size:.75rem;color:var(--muted);}
+.status .wallet{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:.72rem;background:rgba(197,160,89,.1);padding:.15rem .7rem;border-radius:50px;}
 
-        .btn-dash {
-            display: inline-block;
-            padding: 0.6rem 1.5rem;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: #fff;
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .btn-dash:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--gold);
-        }
-        .btn-dash.gold {
-            background: var(--gold);
-            color: #0a0f08;
-            border-color: var(--gold);
-        }
-        .btn-dash.gold:hover {
-            background: var(--gold-light);
-        }
+.btn-connect{background:var(--gold);color:#0a0f08;border:none;padding:.45rem 1.3rem;border-radius:50px;font-weight:700;font-size:.75rem;cursor:pointer;transition:.2s var(--ease);}
+.btn-connect:hover{background:var(--gold-light);transform:translateY(-2px);}
+.btn-connect.outline{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--cream);}
+.btn-connect.outline:hover{background:rgba(255,255,255,.06);border-color:var(--gold);}
+.btn-connect:disabled{opacity:.6;cursor:wait;transform:none;}
 
-        /* ===== UPDATES ===== */
-        .update-item {
-            display: flex;
-            gap: 1rem;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .update-item:last-child { border-bottom: none; }
-        .update-item .date {
-            font-size: 0.7rem;
-            color: var(--muted-dim);
-            min-width: 80px;
-            font-weight: 500;
-            letter-spacing: 0.04em;
-        }
-        .update-item .content {
-            color: var(--muted);
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-        .update-item .content strong { color: #fff; font-weight: 500; }
+.hidden{display:none !important;}
 
-        /* ===== MEMBER VIEW (hidden by default) ===== */
-        #memberView {
-            display: none;
-        }
-        #memberView.active {
-            display: block;
-        }
-        #publicView {
-            display: block;
-        }
-        #publicView.hidden {
-            display: none;
-        }
+/* ===== ORACLE INTELLIGENCE CENTER — HERO ===== */
+.oracle-hero {
+  background:linear-gradient(135deg, rgba(35,52,22,0.5), rgba(7,9,5,0.7));
+  border:1px solid var(--card-border-hover);
+  border-radius:var(--r-lg);
+  padding:1.8rem 2rem;
+  margin-bottom:1.6rem;
+  position:relative;
+  overflow:hidden;
+}
+.oracle-hero::before {
+  content:'';
+  position:absolute;
+  top:-30%;right:-10%;
+  width:40%;height:160%;
+  background:radial-gradient(ellipse, rgba(197,160,89,0.04), transparent 70%);
+  pointer-events:none;
+}
+.oracle-hero .greeting{font-size:.75rem;color:var(--muted-dim);letter-spacing:.06em;}
+.oracle-hero h2{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,2.6vw,2rem);font-weight:500;margin:.1rem 0 .4rem;}
+.oracle-hero .oracle-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1rem;}
+@media(max-width:680px){.oracle-hero .oracle-grid{grid-template-columns:1fr;}}
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            .dash-grid { grid-template-columns: 1fr 1fr; }
-        }
+.oracle-analysis{display:flex;flex-direction:column;gap:.3rem;}
+.oracle-analysis .row{display:flex;justify-content:space-between;font-size:.78rem;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.oracle-analysis .row .label{color:var(--muted);}
+.oracle-analysis .row .value{color:var(--cream);}
+.oracle-analysis .row .value.gold{color:var(--gold);}
 
-        @media (max-width: 768px) {
-            .container { padding: 1.5rem 1.25rem; }
-            .dash-grid { grid-template-columns: 1fr; }
-            .dash-card.full { grid-column: 1; }
-            .connect-bar { flex-direction: column; align-items: stretch; text-align: center; }
-            .connect-bar .status { justify-content: center; flex-wrap: wrap; }
+.oracle-insight{padding:.6rem 0;}
+.oracle-insight .insight-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-dim);}
+.oracle-insight .insight-text{font-size:1rem;font-weight:500;color:var(--cream);margin:.15rem 0;}
+.oracle-insight .insight-reason{font-size:.78rem;color:var(--muted);}
+.oracle-insight .insight-impact{display:flex;gap:1.2rem;margin-top:.4rem;font-size:.72rem;color:var(--muted);flex-wrap:wrap;}
+.oracle-insight .insight-impact strong{color:var(--gold);}
 
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 72px;
-                left: 0;
-                right: 0;
-                background: rgba(8,11,7,0.98);
-                padding: 2rem;
-                gap: 1.5rem;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .nav-links.open { display: flex; }
-            .nav-ham { display: flex; }
+/* ===== WHAT THE ORACLE IS THINKING ===== */
+.oracle-thinking-section {
+  background:rgba(255,255,255,.02);
+  border-radius:var(--r-md);
+  padding:.8rem 1rem;
+  margin-top:.8rem;
+  border:1px solid rgba(255,255,255,.04);
+}
+.oracle-thinking-section .think-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-dim);}
+.oracle-thinking-section .think-items{display:flex;flex-wrap:wrap;gap:.3rem .1rem;margin-top:.3rem;}
+.oracle-thinking-section .think-item{font-size:.72rem;color:var(--muted);padding:.2rem .6rem;background:rgba(255,255,255,.03);border-radius:12px;white-space:nowrap;}
+.oracle-thinking-section .think-item .emoji{margin-right:.2rem;}
 
-            .dash-stat .num { font-size: 2rem; }
-        }
+/* ===== ORACLE CONFIDENCE ===== */
+.confidence-wrap{display:flex;align-items:center;gap:.8rem;margin-top:.4rem;}
+.confidence-bar{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
+.confidence-bar .fill{height:100%;background:linear-gradient(90deg,var(--olive-light),var(--gold));border-radius:2px;transition:width .6s var(--ease);}
+.confidence-label{font-size:.7rem;color:var(--muted-dim);font-weight:600;min-width:44px;text-align:right;}
 
-        @media (max-width: 480px) {
-            .container { padding: 1rem 1rem 2rem; }
-            .dash-card { padding: 1.2rem; }
-            .update-item { flex-direction: column; gap: 0.3rem; }
-            .update-item .date { min-width: auto; }
-        }
-    </style>
+/* ===== ORACLE NEXT ACTIONS ===== */
+.next-actions{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;}
+.next-actions .action{
+  font-size:.68rem;
+  padding:.2rem .7rem;
+  border-radius:12px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.04);
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:.3rem;
+  cursor:pointer;
+  transition:.15s var(--ease);
+}
+.next-actions .action:hover{border-color:var(--gold);color:var(--cream);}
+.next-actions .action .check{color:var(--good);}
+
+/* ===== ORACLE WORKING ON ===== */
+.working-on{display:flex;align-items:center;gap:.8rem;margin-top:.4rem;padding:.4rem .6rem;background:rgba(255,255,255,.02);border-radius:8px;}
+.working-on .label{font-size:.65rem;color:var(--muted-dim);}
+.working-on .task{font-size:.72rem;color:var(--cream);}
+.working-on .progress{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;min-width:60px;}
+.working-on .progress .fill{height:100%;background:linear-gradient(90deg,var(--olive-light),var(--gold));border-radius:2px;transition:width .8s var(--ease);}
+
+/* ===== ESTATE PULSE CARDS ===== */
+.pulse-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;margin:.8rem 0 1.2rem;}
+.pulse-card{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.04);
+  border-radius:var(--r-md);
+  padding:.6rem .8rem;
+  text-align:center;
+}
+.pulse-card .icon{font-size:1.2rem;display:block;margin-bottom:.1rem;}
+.pulse-card .value{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:600;color:var(--gold);}
+.pulse-card .label{font-size:.6rem;color:var(--muted-dim);text-transform:uppercase;letter-spacing:.05em;display:block;}
+
+/* ===== GROVE HERO ===== */
+.grove-hero {
+  background:linear-gradient(135deg, rgba(35,52,22,0.4), rgba(7,9,5,0.6));
+  border:1px solid var(--card-border);
+  border-radius:var(--r-lg);
+  padding:1.6rem 2rem;
+  position:relative;
+  overflow:hidden;
+  margin-bottom:1.4rem;
+}
+.grove-hero::after {
+  content:'';
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:60%;
+  background:linear-gradient(0deg, rgba(7,9,5,0.2), transparent);
+  pointer-events:none;
+}
+.grove-hero .greeting{font-size:.7rem;color:var(--muted-dim);letter-spacing:.06em;}
+.grove-hero h2{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3vw,2.4rem);font-weight:500;margin:.1rem 0 .6rem;}
+.grove-hero .stats{display:flex;gap:1.8rem;flex-wrap:wrap;}
+.grove-hero .stat .num{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--gold);}
+.grove-hero .stat .lbl{font-size:.65rem;color:var(--muted);display:block;margin-top:1px;}
+.grove-hero .weather{position:absolute;top:1.4rem;right:2rem;text-align:right;font-size:.8rem;color:var(--muted);}
+.grove-hero .weather .temp{font-size:1.6rem;font-weight:300;color:var(--cream);display:block;}
+
+/* ===== DASH GRID ===== */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+.dash-card{
+  background:var(--panel);border:1px solid var(--card-border);border-radius:var(--r-lg);
+  padding:1.2rem 1.4rem;transition:border-color .3s var(--ease);
+}
+.dash-card:hover{border-color:var(--card-border-hover);}
+.dash-card.full{grid-column:1/-1;}
+.dash-card.span2{grid-column:span 2;}
+
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
+.card-header h3{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;}
+.badge{font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);background:rgba(197,160,89,.1);padding:.15rem .6rem;border-radius:50px;white-space:nowrap;}
+.badge.live{color:var(--good);background:rgba(142,194,74,.1);}
+.badge.pending{color:var(--amber);background:rgba(224,168,62,.1);}
+
+.dash-stat{display:flex;align-items:baseline;gap:.4rem;}
+.dash-stat .num{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;}
+.dash-stat .num.gold{color:var(--gold);}
+.dash-stat .lbl{font-size:.7rem;color:var(--muted);}
+.dash-desc{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+/* ===== ESTATE VALUE ===== */
+.value-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.3rem;}
+.value-item{display:flex;justify-content:space-between;padding:.3rem .4rem;background:rgba(255,255,255,.02);border-radius:6px;font-size:.75rem;}
+.value-item .label{color:var(--muted);}
+.value-item .val{color:var(--cream);font-weight:500;}
+.value-total{margin-top:.4rem;padding-top:.4rem;border-top:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between;font-family:'Playfair Display',serif;font-size:1.1rem;}
+.value-total .label{color:var(--muted);}
+.value-total .val{color:var(--gold);}
+
+/* ===== CONDITIONS ===== */
+.conditions-grid{display:grid;grid-template-columns:1fr 1fr;gap:.3rem .8rem;margin-top:.3rem;}
+.cond-item{display:flex;justify-content:space-between;font-size:.75rem;padding:.15rem 0;border-bottom:1px solid rgba(255,255,255,.02);}
+.cond-item .label{color:var(--muted);}
+.cond-item .val{color:var(--cream);font-weight:500;}
+
+/* ===== HARVEST / SEASON PROGRESS ===== */
+.progress-track{height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin:.3rem 0;overflow:hidden;}
+.progress-track .fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--olive-light),var(--gold));transition:width .6s var(--ease);}
+.progress-label{display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted-dim);}
+
+/* ===== ESTATE JOURNAL ===== */
+.journal-item{display:flex;gap:.6rem;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.72rem;}
+.journal-item:last-child{border-bottom:none;}
+.journal-item .time{color:var(--muted-dim);min-width:42px;font-weight:500;font-size:.65rem;}
+.journal-item .event{color:var(--muted);}
+.journal-item .event .highlight{color:var(--cream);}
+.journal-item .event .done{color:var(--good);}
+.journal-item .event .running{color:var(--amber);}
+
+/* ===== STEWARD ===== */
+.steward-row{display:flex;align-items:center;gap:.8rem;}
+.steward-row .level{font-size:1.6rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold);line-height:1;}
+.steward-row .info{flex:1;}
+.steward-row .info .name{font-weight:600;font-size:.85rem;}
+.steward-row .info .next{font-size:.65rem;color:var(--muted-dim);}
+.achievements{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem;}
+.ach{font-size:.55rem;padding:.15rem .5rem;border-radius:10px;background:rgba(255,255,255,.03);color:var(--muted);border:1px solid rgba(255,255,255,.04);}
+.ach.unlocked{color:var(--gold);border-color:rgba(197,160,89,.2);background:rgba(197,160,89,.06);}
+
+/* ===== OIL ===== */
+.oil-display{display:flex;align-items:baseline;gap:.3rem;}
+.oil-display .num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:600;color:var(--gold);}
+.oil-display .lbl{font-size:.7rem;color:var(--muted);}
+.oil-equivalent{font-size:.65rem;color:var(--muted-dim);margin-top:.1rem;}
+
+/* ===== GENERAL ===== */
+.btn-dash{display:inline-block;padding:.5rem 1.2rem;border-radius:50px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--cream);text-decoration:none;font-size:.7rem;font-weight:600;text-align:center;transition:.2s var(--ease);cursor:pointer;}
+.btn-dash:hover{background:rgba(255,255,255,.08);border-color:var(--gold);}
+.btn-dash.gold{background:var(--gold);color:#0a0f08;border-color:var(--gold);}
+.btn-dash.gold:hover{background:var(--gold-light);}
+.btn-dash.block{width:100%;margin-top:.6rem;}
+.btn-dash:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ===== TOAST ===== */
+#toast-region{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:10px;max-width:320px;}
+.toast{background:#12160d;border:1px solid var(--card-border-hover);border-left:3px solid var(--gold);border-radius:12px;padding:.7rem 1rem;font-size:.75rem;color:var(--cream);box-shadow:0 12px 30px rgba(0,0,0,.4);animation:toast-in .25s var(--ease);}
+.toast.error{border-left-color:var(--danger);}
+.toast.success{border-left-color:var(--good);}
+@keyframes toast-in{from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);}}
+
+footer{text-align:center;padding:1.8rem;border-top:1px solid rgba(255,255,255,.04);}
+footer p{color:var(--muted-dim);font-size:.65rem;letter-spacing:.06em;}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:980px){
+  .nav-links{position:fixed;top:68px;left:0;right:0;flex-direction:column;background:rgba(7,9,5,.97);padding:1rem 0;gap:0;transform:translateY(-8px);opacity:0;pointer-events:none;transition:.25s var(--ease);}
+  .nav-links.open{transform:translateY(0);opacity:1;pointer-events:auto;}
+  .nav-links a{padding:.6rem 1.4rem;width:100%;display:block;font-size:.7rem;}
+  .nav-ham{display:flex;}
+  .dash-grid,.dash-grid.two{grid-template-columns:1fr;}
+  .dash-card.span2{grid-column:auto;}
+  .oracle-hero .oracle-grid{grid-template-columns:1fr;}
+  .grove-hero .weather{position:static;text-align:left;margin-top:.4rem;}
+  .pulse-grid{grid-template-columns:repeat(3,1fr);}
+  .value-grid{grid-template-columns:1fr;}
+}
+@media (max-width:560px){
+  .pulse-grid{grid-template-columns:1fr 1fr;}
+  .connect-bar{flex-direction:column;align-items:flex-start;}
+  .grove-hero .stats{gap:1rem;}
+}
+
+/* ===== CONSOLE LOG STYLES ===== */
+.log-status {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.55rem;
+  padding:2px 8px;
+  border-radius:4px;
+  display:inline-block;
+}
+.log-status.success{background:rgba(142,194,74,.2);color:var(--good);}
+.log-status.error{background:rgba(226,87,76,.2);color:var(--danger);}
+.log-status.info{background:rgba(197,160,89,.15);color:var(--gold);}
+</style>
 </head>
+
 <body>
 
-    <!-- ===== VIDEO BACKGROUND ===== -->
-    <div class="video-bg">
-        <video autoplay loop muted playsinline aria-hidden="true"
-               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
-            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
-        </video>
-        <div class="overlay"></div>
-    </div>
+<!-- AMBIENT -->
+<div id="ambient"></div>
 
-    <!-- ===== NAVIGATION ===== -->
-    <nav>
-        <div class="nav-inner">
-            <div class="nav-logo">OLIVIUM <em>Dashboard</em></div>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="home.html">Home</a></li>
-                <li><a href="join.html">Join</a></li>
-                <li><a href="membership.html">Membership</a></li>
-                <li><a href="userDash.html" class="nav-cta">Dashboard</a></li>
-            </ul>
-            <button class="nav-ham" id="navHam" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
-        </div>
-    </nav>
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">OLIVIUM<em>· estate</em></div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#oracle">Oracle</a></li>
+      <li><a href="#estate">My Estate</a></li>
+      <li><a href="#journal">Journal</a></li>
+    </ul>
+    <button class="nav-ham" id="navHam" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
 
-    <!-- ===== MAIN ===== -->
-    <div class="main-wrap">
-        <div class="container">
-
-            <!-- ===== CONNECT BAR ===== -->
-            <div class="connect-bar">
-                <div class="status">
-                    <span class="dot" id="statusDot"></span>
-                    <span id="statusText">Public Ecosystem View</span>
-                    <span class="wallet" id="walletDisplay">Not Connected</span>
-                </div>
-                <div>
-                    <button class="btn-connect" id="connectBtn">Connect Wallet</button>
-                </div>
-            </div>
-
-            <!-- ===== PUBLIC VIEW ===== -->
-            <div id="publicView">
-                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
-                    🌿 Olivium <span style="color:var(--gold);">Ecosystem</span>
-                </h1>
-                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:1.5rem;">
-                    A living Tuscan olive grove — monitored, stewarded, and growing.
-                </p>
-
-                <div class="dash-grid">
-
-                    <!-- Grove Status -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🌳 Grove Status</h3>
-                            <span class="badge">Live</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num gold">240</span>
-                            <span class="lbl">Olive Trees</span>
-                        </div>
-                        <p class="dash-desc">San Vincenzo, Tuscany · Historic Estate</p>
-                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <span class="dash-tag active">● Growing Phase</span>
-                            <span class="dash-tag">🌿 2026 Season</span>
-                        </div>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Next Event</span>
-                                <span style="color:#fff;">Harvest · October 2026</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Harvest -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🫒 Harvest</h3>
-                            <span class="badge">Preparing</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num">—</span>
-                            <span class="lbl">Season Not Started</span>
-                        </div>
-                        <p class="dash-desc">Expected Yield: TBD · Cold-pressed within 24 hours</p>
-                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <span class="dash-tag pending">● Preparing</span>
-                            <span class="dash-tag">📅 October - December</span>
-                        </div>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Status</span>
-                                <span style="color:#ffc107;">Waiting for Autumn</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Villa Experiences -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🏡 Villa Experience</h3>
-                            <span class="badge">Available</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">Villa Stay</span> <span class="value">Book Now</span></li>
-                            <li><span class="label">Pool Access</span> <span class="value">Seasonal</span></li>
-                            <li><span class="label">Grove Visits</span> <span class="value">By Request</span></li>
-                        </ul>
-                        <div style="margin-top:1rem;">
-                            <a href="booking.html" class="btn-dash gold">Book Experience →</a>
-                        </div>
-                    </div>
-
-                    <!-- Governance -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🗳 Governance</h3>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <p class="dash-desc">Community decisions about the estate's future — harvesting, improvements, and member experiences.</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Status</span>
-                                <span style="color:var(--muted-dim);">Launching Q4 2026</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Latest Updates - Full Width -->
-                    <div class="dash-card full">
-                        <div class="card-header">
-                            <h3>📢 Latest Olivium Updates</h3>
-                            <span class="badge">Live</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">July 2026</span>
-                            <span class="content"><strong>Summer grove monitoring</strong> — All 240 trees inspected. Healthy growth observed.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">June 2026</span>
-                            <span class="content"><strong>Villa availability updated</strong> — New dates released for Autumn stays.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">May 2026</span>
-                            <span class="content"><strong>New member experiences added</strong> — Private harvest dinners and olive oil tastings.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">April 2026</span>
-                            <span class="content"><strong>Spring blossom</strong> — The mignole are blooming across the grove.</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- ===== MEMBER VIEW ===== -->
-            <div id="memberView">
-                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
-                    👋 Welcome Back
-                </h1>
-                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:0.2rem;">
-                    Wallet: <span style="font-family:'JetBrains Mono',monospace; color:var(--gold);" id="memberWalletDisplay">8x72...92KD</span>
-                </p>
-                <p style="color:var(--muted-dim); font-size:0.8rem; margin-bottom:1.5rem;">
-                    <span id="memberTierDisplay">Tree Keeper</span> · Member since 2026
-                </p>
-
-                <div class="dash-grid">
-
-                    <!-- Your Membership -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🌿 Your Membership</h3>
-                            <span class="badge" id="memberBadge">Active</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num gold" id="memberTreeCount">1</span>
-                            <span class="lbl">Tree Connection</span>
-                        </div>
-                        <p class="dash-desc" id="memberTreeName">Tree #124 · Named Olive</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted);">
-                                <span>Experience Credits</span>
-                                <span style="color:#fff;" id="memberCredits">7 / 7</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); margin-top:0.3rem;">
-                                <span>Olive Oil Allocation</span>
-                                <span style="color:#ffc107;" id="memberOilAllocation">5L · Pending Harvest</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Your Benefits -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🎯 Your Benefits</h3>
-                            <span class="badge">2026</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">Olive Oil</span> <span class="value" id="benefitOil">5L EVOO</span></li>
-                            <li><span class="label">Residency Nights</span> <span class="value" id="benefitNights">7 Nights</span></li>
-                            <li><span class="label">Harvest Access</span> <span class="value" id="benefitHarvest">Invited</span></li>
-                            <li><span class="label">Concierge</span> <span class="value" id="benefitConcierge">Available</span></li>
-                        </ul>
-                    </div>
-
-                    <!-- Governance -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🗳 Governance</h3>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <p class="dash-desc">No active votes at this time. Check back when community proposals are live.</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Your Voting Power</span>
-                                <span style="color:var(--muted-dim);">—</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Next Steps -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>📋 Next Steps</h3>
-                            <span class="badge">Action</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">📅 Plan Your Stay</span> <a href="booking.html" style="color:var(--gold); text-decoration:none; font-size:0.8rem;">Book Villa →</a></li>
-                            <li><span class="label">🫒 Harvest Season</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">October 2026</span></li>
-                            <li><span class="label">🌳 Visit Your Tree</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">Plan a visit</span></li>
-                        </ul>
-                    </div>
-
-                    <!-- Latest Updates - Full Width -->
-                    <div class="dash-card full">
-                        <div class="card-header">
-                            <h3>📢 Member Updates</h3>
-                            <span class="badge">Personal</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">July 2026</span>
-                            <span class="content"><strong>Your tree #124</strong> — Summer growth monitored. Healthy and thriving.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">June 2026</span>
-                            <span class="content"><strong>Harvest preparation</strong> — You are invited to the October harvest. Save the date.</span>
-                        </div>
-                        <div class="update-item">
-                            <span class="date">May 2026</span>
-                            <span class="content"><strong>Welcome to Olivium</strong> — Your membership is active. Explore your benefits.</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-        <!-- ... inside the dashboard content area ... -->
-
-<!-- Web Games Section -->
-<div class="dashboard-card">
-    <h3><i class="fas fa-gamepad"></i> Estate Games</h3>
-    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">Enjoy these complimentary games while you wait for your stay.</p>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <a href="https://puzzle-deploy.vercel.app" target="_blank" rel="noopener noreferrer" style="background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 1rem; text-align: center; text-decoration: none; transition: 0.3s; border: 1px solid rgba(255,255,255,0.04);">
-            <i class="fas fa-puzzle-piece" style="font-size: 2rem; color: var(--gold); margin-bottom: 0.3rem;"></i>
-            <span style="display: block; color: #f2efe8; font-weight: 500;">Harvest Puzzle</span>
-            <span style="font-size: 0.7rem; color: var(--muted);">Match & collect</span>
-        </a>
-        <a href="https://olive-clean.vercel.app/webgame3.html" target="_blank" rel="noopener noreferrer" style="background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 1rem; text-align: center; text-decoration: none; transition: 0.3s; border: 1px solid rgba(255,255,255,0.04);">
-            <i class="fas fa-tree" style="font-size: 2rem; color: var(--gold); margin-bottom: 0.3rem;"></i>
-            <span style="display: block; color: #f2efe8; font-weight: 500;">Olivium Estate</span>
-            <span style="font-size: 0.7rem; color: var(--muted);">Grow & harvest</span>
-        </a>
-    </div>
+<!-- ===== ESTATE PULSE ===== -->
+<div class="pulse-bar" id="pulseBar">
+  <span class="pulse-item"><span class="pulse-dot good"></span> Grove Health <span class="pulse-value" id="pulse-health">—</span></span>
+  <span class="pulse-item">🌳 Trees <span class="pulse-value" id="pulse-trees">—</span></span>
+  <span class="pulse-item">💧 Soil Moisture <span class="pulse-value" id="pulse-moisture">—</span></span>
+  <span class="pulse-item"><span class="pulse-dot good"></span> Fly Risk <span class="pulse-value" id="pulse-fly">—</span></span>
+  <span class="pulse-item">🌧 Rain <span class="pulse-value" id="pulse-rain">—</span></span>
+  <span class="pulse-item"><span class="pulse-dot good"></span> Oracle Confidence <span class="pulse-value" id="pulse-confidence">—</span></span>
 </div>
 
-<!-- ... rest of the dashboard ... -->
+<div class="main-wrap">
+
+  <!-- CONNECT BAR -->
+  <div class="connect-bar">
+    <div class="status">
+      <span class="dot inactive" id="statusDot"></span>
+      <span class="label" id="statusText">Public Grove View</span>
+      <span class="wallet" id="walletDisplay">Not connected</span>
+    </div>
+    <button class="btn-connect" id="connectBtn" type="button">Connect Wallet</button>
+  </div>
+
+  <!-- ===== PUBLIC VIEW ===== -->
+  <div id="publicView">
+    <div class="grove-hero">
+      <div class="greeting">🌿 Olivium Estate</div>
+      <h2>A living Tuscan grove</h2>
+      <div class="stats">
+        <div class="stat"><span class="num" id="pub-trees">—</span><span class="lbl">Olive Trees</span></div>
+        <div class="stat"><span class="num" id="pub-harvest">—</span><span class="lbl">Estimated Harvest</span></div>
+        <div class="stat"><span class="num" id="pub-villa">—</span><span class="lbl">Villa Nights</span></div>
+        <div class="stat"><span class="num" id="pub-temp">—</span><span class="lbl">Today</span></div>
+      </div>
+      <div class="weather">
+        <span class="temp" id="pub-temp-large">—</span>
+        <span style="font-size:.65rem;">San Vincenzo · Tuscany</span>
+      </div>
+    </div>
+    <button class="btn-dash gold block" style="max-width:300px;margin:0 auto;" id="btn-enter-estate">Connect to walk onto your estate →</button>
+  </div>
+
+  <!-- ===== MEMBER VIEW ===== -->
+  <div id="memberView" class="hidden">
+
+    <!-- ===== ORACLE INTELLIGENCE CENTER ===== -->
+    <div class="oracle-hero" id="oracle">
+      <div class="greeting">🌿 THE ORACLE</div>
+      <h2 id="oracle-greeting">Good morning.</h2>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.4rem;" id="oracle-status-line">Awaiting data…</div>
+
+      <div class="oracle-grid">
+        <!-- LEFT: Analysis -->
+        <div>
+          <div class="oracle-analysis" id="oracle-analysis">
+            <div class="row"><span class="label">⏳ Loading</span><span class="value">Fetching estate data…</span></div>
+          </div>
+          <div class="confidence-wrap">
+            <span style="font-size:.65rem;color:var(--muted-dim);">Confidence</span>
+            <div class="confidence-bar"><div class="fill" id="oracle-confidence-bar" style="width:0%;"></div></div>
+            <span class="confidence-label" id="oracle-confidence-label">—</span>
+          </div>
+        </div>
+
+        <!-- RIGHT: Insight -->
+        <div>
+          <div class="oracle-insight">
+            <div class="insight-label">Today's Insight</div>
+            <div class="insight-text" id="oracle-insight-text">Analyzing estate data…</div>
+            <div class="insight-reason" id="oracle-insight-reason">Please wait while the Oracle consults the sensors.</div>
+            <div class="insight-impact">
+              <span>💧 Water saved <strong id="oracle-water">—</strong></span>
+              <span>📈 Yield <strong id="oracle-yield">—</strong></span>
+            </div>
+          </div>
+
+          <!-- What I'm Thinking -->
+          <div class="oracle-thinking-section">
+            <div class="think-label">What I'm Thinking</div>
+            <div class="think-items" id="oracle-think-items">
+              <span class="think-item">⏳ Loading observations…</span>
+            </div>
+          </div>
+
+          <!-- Next Actions -->
+          <div style="margin-top:.6rem;">
+            <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-dim);">Next Actions</div>
+            <div class="next-actions" id="oracle-actions">
+              <span class="action"><span class="check">☐</span> Loading…</span>
+            </div>
+          </div>
+
+          <!-- Currently Working On -->
+          <div class="working-on">
+            <span class="label">⚡ Working on</span>
+            <span class="task" id="oracle-working-task">Connecting to estate sensors…</span>
+            <div class="progress"><div class="fill" id="oracle-working-progress" style="width:10%;"></div></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- ===== FOOTER ===== -->
-    <footer style="position:relative; z-index:10; text-align:center; padding:2rem; border-top:1px solid rgba(255,255,255,0.04);">
-        <p style="color:var(--muted-dim); font-size:0.7rem; letter-spacing:0.06em;">
-            © 2026 Olivium · San Vincenzo, Tuscany
-        </p>
-    </footer>
+    <!-- ===== GROVE HERO ===== -->
+    <div class="grove-hero" id="estate">
+      <div class="greeting">🌳 YOUR ESTATE</div>
+      <h2 id="estate-greeting">Welcome.</h2>
+      <div class="stats">
+        <div class="stat"><span class="num" id="estate-trees">—</span><span class="lbl">Trees</span></div>
+        <div class="stat"><span class="num" id="estate-equivalent">—</span><span class="lbl">Tree Equivalents</span></div>
+        <div class="stat"><span class="num" id="estate-harvest">—</span><span class="lbl">Estimated Harvest</span></div>
+        <div class="stat"><span class="num" id="estate-nights">—</span><span class="lbl">Villa Nights</span></div>
+      </div>
+      <div class="weather">
+        <span class="temp" id="estate-temp">—</span>
+        <span style="font-size:.65rem;">San Vincenzo · Tuscany</span>
+      </div>
+    </div>
 
-    <!-- ===== JAVASCRIPT ===== -->
-    <script>
-        // ===== MOBILE NAV =====
-        const ham = document.getElementById('navHam');
-        const links = document.getElementById('navLinks');
-        if (ham && links) {
-            ham.addEventListener('click', function() {
-                this.classList.toggle('open');
-                links.classList.toggle('open');
-            });
-            document.querySelectorAll('#navLinks a').forEach(link => {
-                link.addEventListener('click', function() {
-                    ham.classList.remove('open');
-                    links.classList.remove('open');
-                });
-            });
+    <!-- ===== PULSE CARDS ===== -->
+    <div class="pulse-grid">
+      <div class="pulse-card"><span class="icon">🟢</span><span class="value" id="pulse-card-health">—</span><span class="label">Grove Health</span></div>
+      <div class="pulse-card"><span class="icon">🌳</span><span class="value" id="pulse-card-trees">—</span><span class="label">Your Trees</span></div>
+      <div class="pulse-card"><span class="icon">💧</span><span class="value" id="pulse-card-moisture">—</span><span class="label">Soil Moisture</span></div>
+      <div class="pulse-card"><span class="icon">🪰</span><span class="value" id="pulse-card-fly">—</span><span class="label">Fly Risk</span></div>
+      <div class="pulse-card"><span class="icon">🌧</span><span class="value" id="pulse-card-rain">—</span><span class="label">Rain</span></div>
+      <div class="pulse-card"><span class="icon">📊</span><span class="value" id="pulse-card-confidence">—</span><span class="label">Oracle Confidence</span></div>
+    </div>
+
+    <!-- ===== DASHBOARD GRID ===== -->
+    <div class="dash-grid">
+
+      <!-- Estate Value -->
+      <div class="dash-card">
+        <div class="card-header"><h3>Estate Value</h3><span class="badge live">Live</span></div>
+        <div class="value-grid">
+          <div class="value-item"><span class="label">🫒 Oil</span><span class="val" id="val-oil">—</span></div>
+          <div class="value-item"><span class="label">🌿 Carbon</span><span class="val" id="val-carbon">—</span></div>
+          <div class="value-item"><span class="label">🏡 Villa Credits</span><span class="val" id="val-villa">—</span></div>
+          <div class="value-item"><span class="label">◎ OLVM</span><span class="val" id="val-olvm">—</span></div>
+        </div>
+        <div class="value-total">
+          <span class="label">Total Estate</span>
+          <span class="val" id="val-total">—</span>
+        </div>
+      </div>
+
+      <!-- Grove Conditions -->
+      <div class="dash-card">
+        <div class="card-header"><h3>Current Conditions</h3><span class="badge live">Live</span></div>
+        <div class="conditions-grid">
+          <div class="cond-item"><span class="label">☀ Temperature</span><span class="val" id="cond-temp">—</span></div>
+          <div class="cond-item"><span class="label">💧 Humidity</span><span class="val" id="cond-humidity">—</span></div>
+          <div class="cond-item"><span class="label">🌬 Wind</span><span class="val" id="cond-wind">—</span></div>
+          <div class="cond-item"><span class="label">🐝 Pollination</span><span class="val" id="cond-pollination">—</span></div>
+          <div class="cond-item"><span class="label">🌱 Soil</span><span class="val" id="cond-soil">—</span></div>
+          <div class="cond-item"><span class="label">🫒 Harvest</span><span class="val" id="cond-harvest">—</span></div>
+        </div>
+      </div>
+
+      <!-- Harvest Progress -->
+      <div class="dash-card">
+        <div class="card-header"><h3>🫒 Harvest Progress</h3><span class="badge" id="harvest-badge">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);">
+          <span>Flowering</span>
+          <span id="harvest-label">—</span>
+        </div>
+        <div class="progress-track"><div class="fill" id="harvest-bar" style="width:0%;"></div></div>
+        <div class="progress-label">
+          <span>🌱 Bud</span>
+          <span>🌸 Flower</span>
+          <span>🫒 Fruit</span>
+          <span>🍂 Harvest</span>
+        </div>
+        <div style="margin-top:.3rem;font-size:.65rem;color:var(--muted-dim);" id="harvest-note">—</div>
+      </div>
+
+      <!-- Oil Allocation -->
+      <div class="dash-card">
+        <div class="card-header"><h3>Your Harvest 2026</h3><span class="badge" id="oil-badge">—</span></div>
+        <div class="oil-display">
+          <span class="num" id="oil-litres">—</span>
+          <span class="lbl">Litres</span>
+        </div>
+        <div class="oil-equivalent" id="oil-equivalent">—</div>
+        <button class="btn-dash block" id="btn-oil">View allocation →</button>
+      </div>
+
+      <!-- Steward Level -->
+      <div class="dash-card">
+        <div class="card-header"><h3>🏆 Steward</h3><span class="badge" id="steward-badge">—</span></div>
+        <div class="steward-row">
+          <span class="level" id="steward-level">—</span>
+          <div class="info">
+            <div class="name" id="steward-name">—</div>
+            <div class="next" id="steward-next">—</div>
+          </div>
+        </div>
+        <div class="progress-track" style="margin:.2rem 0 .3rem;"><div class="fill" id="steward-bar" style="width:0%;"></div></div>
+        <div class="achievements" id="achievements">
+          <span class="ach">🌿 First Harvest</span>
+          <span class="ach">🏡 First Villa Stay</span>
+          <span class="ach">🫒 100 Litres</span>
+          <span class="ach">🌍 Carbon Guardian</span>
+          <span class="ach">💎 Long-Term</span>
+        </div>
+      </div>
+
+      <!-- Villa -->
+      <div class="dash-card">
+        <div class="card-header"><h3>🏡 La Casetta</h3><span class="badge" id="villa-badge">—</span></div>
+        <div style="display:flex;gap:.8rem;font-size:.7rem;color:var(--muted);flex-wrap:wrap;">
+          <span>🌡 Tonight <span id="villa-temp">—</span></span>
+          <span>🌅 Sunset <span id="villa-sunset">—</span></span>
+          <span>🌊 Sea <span id="villa-sea">—</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted-dim);margin:.3rem 0 .1rem;">
+          <span>Estate Occupancy</span>
+          <span id="villa-occupancy">—</span>
+        </div>
+        <div class="progress-track"><div class="fill" id="villa-bar" style="width:0%;"></div></div>
+        <button class="btn-dash gold block" id="btn-villa">Book your stay →</button>
+      </div>
+
+      <!-- Estate Journal -->
+      <div class="dash-card full" id="journal">
+        <div class="card-header"><h3>📖 Estate Journal</h3><span class="badge live">Live</span></div>
+        <div id="journal-container">
+          <div class="journal-item"><span class="time">—</span><span class="event">Loading estate activity…</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
+</footer>
+
+<div id="toast-region" role="status" aria-live="polite"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "@solana/web3.js": "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.browser.esm.js"
+  }
+}
+</script>
+
+<script type="module">
+'use strict';
+
+// ============================================================
+// CONSOLE LOGGING — Full audit trail
+// ============================================================
+
+const LOG = {
+  prefix: '🌿 [OLIVIUM]',
+  info: (...args) => console.log(LOG.prefix, 'ℹ️', ...args),
+  success: (...args) => console.log(LOG.prefix, '✅', ...args),
+  warn: (...args) => console.warn(LOG.prefix, '⚠️', ...args),
+  error: (...args) => console.error(LOG.prefix, '❌', ...args),
+  data: (label, data) => console.log(LOG.prefix, `📊 ${label}:`, data),
+  step: (step, ...args) => console.log(LOG.prefix, `📍 [${step}]`, ...args),
+};
+
+LOG.info('===== OLIVIUM DASHBOARD INITIALIZING =====');
+LOG.info('Environment:', {
+  userAgent: navigator.userAgent,
+  viewport: `${window.innerWidth}x${window.innerHeight}`,
+  timestamp: new Date().toISOString(),
+});
+
+import { Connection, PublicKey } from '@solana/web3.js';
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+LOG.step('CONFIG', 'Loading configuration...');
+
+const CONFIG = {
+  PROGRAM_ID: new PublicKey('6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9'),
+  OLV_TOKEN_MINT: new PublicKey('6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9'),
+  RPC_ENDPOINT: 'https://api.devnet.solana.com',
+  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || 'https://your-project.supabase.co',
+  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || 'your-anon-key',
+};
+
+LOG.data('Configuration', {
+  programId: CONFIG.PROGRAM_ID.toBase58(),
+  rpcEndpoint: CONFIG.RPC_ENDPOINT,
+  supabaseUrl: CONFIG.SUPABASE_URL,
+});
+
+// ============================================================
+// STATE
+// ============================================================
+
+let state = {
+  identity: { type: 'guest', walletAddress: '' },
+  data: null,
+  isLoading: false,
+  error: null,
+  connection: null,
+  supabase: null,
+};
+
+LOG.step('STATE', 'Initial state:', { identity: state.identity });
+
+// ============================================================
+// DOM HELPERS
+// ============================================================
+
+const $ = (id) => document.getElementById(id);
+const setText = (id, t) => { const el = $(id); if (el) { el.textContent = t; return true; } return false; };
+const setHtml = (id, h) => { const el = $(id); if (el) { el.innerHTML = h; return true; } return false; };
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+// ============================================================
+// TOASTS
+// ============================================================
+
+function toast(msg, type = 'default') {
+  LOG.info('Toast:', msg, type);
+  const region = $('toast-region');
+  if (!region) { LOG.warn('Toast region not found'); return; }
+  const el = document.createElement('div');
+  el.className = 'toast' + (type !== 'default' ? ' ' + type : '');
+  el.textContent = msg;
+  region.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = '.3s';
+    setTimeout(() => el.remove(), 300);
+  }, 4200);
+}
+
+// ============================================================
+// AMBIENT PARTICLES
+// ============================================================
+
+function createAmbient() {
+  LOG.step('AMBIENT', 'Creating ambient particles...');
+  const container = $('ambient');
+  if (!container) { LOG.warn('Ambient container not found'); return; }
+  const leaves = ['🍃', '🍂', '🌿', '🫒'];
+  for (let i = 0; i < 12; i++) {
+    const el = document.createElement('div');
+    el.className = 'leaf';
+    el.textContent = leaves[i % leaves.length];
+    el.style.left = Math.random() * 100 + '%';
+    el.style.bottom = '-20px';
+    el.style.fontSize = (12 + Math.random() * 12) + 'px';
+    el.style.animationDuration = (25 + Math.random() * 40) + 's';
+    el.style.animationDelay = (Math.random() * 30) + 's';
+    el.style.opacity = 0.02 + Math.random() * 0.04;
+    container.appendChild(el);
+  }
+  LOG.success('Ambient particles created');
+}
+
+// ============================================================
+// SOLANA CONNECTION
+// ============================================================
+
+async function initSolana() {
+  LOG.step('SOLANA', 'Initializing Solana connection...');
+  try {
+    if (!state.connection) {
+      state.connection = new Connection(CONFIG.RPC_ENDPOINT, 'confirmed');
+      LOG.success('Solana connection established');
+    }
+    
+    // Test connection
+    const version = await state.connection.getVersion();
+    LOG.data('Solana version', version);
+    
+    // Check if program exists
+    const programInfo = await state.connection.getAccountInfo(CONFIG.PROGRAM_ID);
+    if (programInfo) {
+      LOG.success(`Program ${CONFIG.PROGRAM_ID.toBase58()} exists on chain`);
+      LOG.data('Program info', {
+        lamports: programInfo.lamports,
+        dataSize: programInfo.data?.length || 0,
+        executable: programInfo.executable,
+      });
+    } else {
+      LOG.warn(`Program ${CONFIG.PROGRAM_ID.toBase58()} not found on chain — using mock data`);
+    }
+    
+    return state.connection;
+  } catch (err) {
+    LOG.error('Solana initialization failed:', err.message);
+    toast('Failed to connect to Solana: ' + err.message, 'error');
+    throw err;
+  }
+}
+
+// ============================================================
+// SUPABASE
+// ============================================================
+
+async function initSupabase() {
+  LOG.step('SUPABASE', 'Initializing Supabase...');
+  try {
+    // Dynamic import for Supabase
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    state.supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    LOG.success('Supabase client initialized');
+    return state.supabase;
+  } catch (err) {
+    LOG.warn('Supabase initialization failed:', err.message);
+    toast('Supabase not available, using local data', 'default');
+    return null;
+  }
+}
+
+// ============================================================
+// DATA FETCHING — With full logging
+// ============================================================
+
+async function fetchWalletBalances(walletAddress) {
+  LOG.step('FETCH', `Fetching balances for ${walletAddress.slice(0, 8)}...`);
+  try {
+    if (!state.connection) await initSolana();
+    if (!state.connection) throw new Error('No connection');
+    
+    const pubkey = new PublicKey(walletAddress);
+    LOG.data('Wallet pubkey', pubkey.toBase58());
+    
+    const [solLamports, tokenAccounts] = await Promise.all([
+      state.connection.getBalance(pubkey),
+      state.connection.getParsedTokenAccountsByOwner(pubkey, { mint: CONFIG.OLV_TOKEN_MINT }),
+    ]);
+    
+    const sol = solLamports / 1e9;
+    const olv = tokenAccounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount ?? 0;
+    
+    LOG.data('Balances', { sol, olv, solLamports });
+    LOG.success(`Balances fetched: ${sol.toFixed(4)} SOL, ${olv.toFixed(2)} OLV`);
+    
+    return { sol, olv };
+  } catch (err) {
+    LOG.error('fetchWalletBalances failed:', err.message);
+    return { sol: 0, olv: 0 };
+  }
+}
+
+async function fetchMockPositions(walletAddress) {
+  LOG.step('FETCH', `Fetching mock positions for ${walletAddress.slice(0, 8)}...`);
+  // Generate deterministic mock data based on wallet address
+  const hash = walletAddress.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const count = 3 + (hash % 5);
+  const positions = [];
+  for (let i = 0; i < count; i++) {
+    positions.push({
+      account: {
+        treeId: i + 1,
+        sharesOwned: Math.floor(20 + Math.random() * 80),
+      }
+    });
+  }
+  LOG.data('Mock positions', positions);
+  return positions;
+}
+
+async function fetchMockTrees() {
+  LOG.step('FETCH', 'Fetching mock trees...');
+  const trees = [
+    { account: { treeId: 1, totalShares: 1000, lastHarvestYieldMl: 15000, totalCo2Kg: 120 } },
+    { account: { treeId: 2, totalShares: 1000, lastHarvestYieldMl: 12000, totalCo2Kg: 95 } },
+    { account: { treeId: 3, totalShares: 1000, lastHarvestYieldMl: 18000, totalCo2Kg: 140 } },
+    { account: { treeId: 4, totalShares: 1000, lastHarvestYieldMl: 20000, totalCo2Kg: 160 } },
+    { account: { treeId: 5, totalShares: 1000, lastHarvestYieldMl: 14000, totalCo2Kg: 110 } },
+  ];
+  LOG.data('Mock trees', trees.length);
+  return trees;
+}
+
+async function fetchPortfolio(walletAddress) {
+  LOG.step('PORTFOLIO', `Fetching portfolio for ${walletAddress.slice(0, 8)}...`);
+  if (!walletAddress) {
+    LOG.warn('No wallet address provided');
+    return { mignoleUnits: 0, olvTokens: 0, solBalance: 0, treeCount: 0 };
+  }
+
+  try {
+    const [balances, positions] = await Promise.all([
+      fetchWalletBalances(walletAddress),
+      fetchMockPositions(walletAddress),
+    ]);
+
+    const mignoleUnits = positions.reduce(
+      (sum, pos) => sum + Number(pos.account.sharesOwned || 0),
+      0
+    );
+
+    const result = {
+      mignoleUnits,
+      olvTokens: balances.olv,
+      solBalance: balances.sol,
+      treeCount: positions.length,
+    };
+    
+    LOG.data('Portfolio result', result);
+    LOG.success(`Portfolio: ${mignoleUnits} mignole units, ${balances.olv.toFixed(2)} OLV`);
+    return result;
+  } catch (err) {
+    LOG.error('fetchPortfolio failed:', err.message);
+    return { mignoleUnits: 0, olvTokens: 0, solBalance: 0, treeCount: 0 };
+  }
+}
+
+async function fetchEntitlement(walletAddress) {
+  LOG.step('ENTITLEMENT', `Fetching entitlement for ${walletAddress.slice(0, 8)}...`);
+  if (!walletAddress) return { oilLitresEntitled: 0, carbonTonnes: 0 };
+
+  try {
+    const [positions, trees] = await Promise.all([
+      fetchMockPositions(walletAddress),
+      fetchMockTrees(),
+    ]);
+
+    const treeById = new Map(trees.map(t => [t.account.treeId, t.account]));
+
+    let oilMl = 0;
+    let co2Kg = 0;
+
+    for (const pos of positions) {
+      const tree = treeById.get(pos.account.treeId);
+      if (!tree || Number(tree.totalShares) === 0) continue;
+      const shareFraction = Number(pos.account.sharesOwned) / Number(tree.totalShares);
+      oilMl += shareFraction * Number(tree.lastHarvestYieldMl || 0);
+      co2Kg += shareFraction * Number(tree.totalCo2Kg || 0);
+    }
+
+    const result = {
+      oilLitresEntitled: oilMl / 1000,
+      carbonTonnes: co2Kg / 1000,
+    };
+    
+    LOG.data('Entitlement', result);
+    LOG.success(`Entitled: ${result.oilLitresEntitled.toFixed(2)} L oil, ${result.carbonTonnes.toFixed(3)} t CO2`);
+    return result;
+  } catch (err) {
+    LOG.error('fetchEntitlement failed:', err.message);
+    return { oilLitresEntitled: 0, carbonTonnes: 0 };
+  }
+}
+
+async function fetchOilAllocation(walletAddress) {
+  LOG.step('OIL', `Fetching oil allocation for ${walletAddress.slice(0, 8)}...`);
+  if (!walletAddress) return { available: 0, entitled: 0, pending: 0 };
+
+  try {
+    const { oilLitresEntitled } = await fetchEntitlement(walletAddress);
+    
+    let completed = 0;
+    let pending = 0;
+    
+    // Try Supabase if available
+    if (state.supabase) {
+      LOG.info('Querying Supabase for oil transactions...');
+      try {
+        const { data, error } = await state.supabase
+          .from('oil_transactions')
+          .select('litres, status')
+          .eq('wallet', walletAddress);
+
+        if (!error && data) {
+          completed = data
+            .filter(t => t.status === 'completed')
+            .reduce((sum, t) => sum + Number(t.litres), 0);
+          pending = data
+            .filter(t => t.status === 'pending' || t.status === 'processing')
+            .reduce((sum, t) => sum + Number(t.litres), 0);
+          LOG.data('Supabase oil transactions', { completed, pending, total: data.length });
+        } else if (error) {
+          LOG.warn('Supabase query error:', error.message);
         }
+      } catch (err) {
+        LOG.warn('Supabase query failed:', err.message);
+      }
+    } else {
+      LOG.info('Supabase not available, using mock oil data');
+      // Mock data for demo
+      completed = oilLitresEntitled * 0.3;
+      pending = oilLitresEntitled * 0.1;
+    }
 
-        // ===== TOGGLE VIEW (simulated) =====
-        let isConnected = false;
+    const result = {
+      available: Math.max(0, oilLitresEntitled - completed - pending),
+      entitled: oilLitresEntitled,
+      pending,
+    };
+    
+    LOG.data('Oil allocation', result);
+    LOG.success(`Oil: ${result.available.toFixed(2)} L available of ${result.entitled.toFixed(2)} L entitled`);
+    return result;
+  } catch (err) {
+    LOG.error('fetchOilAllocation failed:', err.message);
+    return { available: 0, entitled: 0, pending: 0 };
+  }
+}
 
-        const publicView = document.getElementById('publicView');
-        const memberView = document.getElementById('memberView');
-        const connectBtn = document.getElementById('connectBtn');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const walletDisplay = document.getElementById('walletDisplay');
+async function fetchVillaAvailability(walletAddress) {
+  LOG.step('VILLA', `Fetching villa availability for ${walletAddress ? walletAddress.slice(0, 8) : 'guest'}...`);
+  try {
+    let availableNights = 12;
+    let occupancy = 72;
+    
+    // Try Supabase if available
+    if (state.supabase) {
+      try {
+        const { data, error } = await state.supabase
+          .from('villa_nights')
+          .select('night_date, status')
+          .gte('night_date', new Date().toISOString().slice(0, 10))
+          .lte('night_date', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10));
 
-        // Simulated member data
-        const memberData = {
-            wallet: '8x72...92KD',
-            tier: 'Tree Keeper',
-            treeCount: 1,
-            treeName: 'Tree #124 · Named Olive',
-            credits: '7 / 7',
-            oilAllocation: '5L · Pending Harvest',
-            benefits: {
-                oil: '5L EVOO',
-                nights: '7 Nights',
-                harvest: 'Invited',
-                concierge: 'Available'
-            }
-        };
-
-        function toggleView(connected) {
-            isConnected = connected;
-            if (connected) {
-                publicView.classList.add('hidden');
-                memberView.classList.add('active');
-                statusDot.className = 'dot';
-                statusText.textContent = 'Member Connected';
-                walletDisplay.textContent = memberData.wallet;
-                connectBtn.textContent = 'Disconnect';
-                connectBtn.className = 'btn-connect outline';
-
-                // Update member data
-                document.getElementById('memberWalletDisplay').textContent = memberData.wallet;
-                document.getElementById('memberTierDisplay').textContent = memberData.tier;
-                document.getElementById('memberTreeCount').textContent = memberData.treeCount;
-                document.getElementById('memberTreeName').textContent = memberData.treeName;
-                document.getElementById('memberCredits').textContent = memberData.credits;
-                document.getElementById('memberOilAllocation').textContent = memberData.oilAllocation;
-                document.getElementById('benefitOil').textContent = memberData.benefits.oil;
-                document.getElementById('benefitNights').textContent = memberData.benefits.nights;
-                document.getElementById('benefitHarvest').textContent = memberData.benefits.harvest;
-                document.getElementById('benefitConcierge').textContent = memberData.benefits.concierge;
-
-            } else {
-                publicView.classList.remove('hidden');
-                memberView.classList.remove('active');
-                statusDot.className = 'dot inactive';
-                statusText.textContent = 'Public Ecosystem View';
-                walletDisplay.textContent = 'Not Connected';
-                connectBtn.textContent = 'Connect Wallet';
-                connectBtn.className = 'btn-connect';
-            }
+        if (!error && data) {
+          const available = data.filter(n => n.status === 'available');
+          availableNights = available.length;
+          occupancy = Math.round(100 - (availableNights / data.length) * 100);
+          LOG.data('Villa nights from Supabase', { total: data.length, available: availableNights, occupancy });
         }
+      } catch (err) {
+        LOG.warn('Supabase villa query failed:', err.message);
+      }
+    }
 
-        connectBtn.addEventListener('click', function() {
-            toggleView(!isConnected);
-        });
+    const result = {
+      availableNights,
+      occupancy,
+      nextAvailable: new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10),
+    };
+    
+    LOG.data('Villa availability', result);
+    return result;
+  } catch (err) {
+    LOG.error('fetchVillaAvailability failed:', err.message);
+    return { availableNights: 0, occupancy: 0, nextAvailable: null };
+  }
+}
 
-        // ===== SMOOTH SCROLL =====
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    e.preventDefault();
-                    const target = document.querySelector(href);
-                    if (target) {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }
-            });
-        });
+// ============================================================
+// LOAD DASHBOARD DATA
+// ============================================================
 
-        console.log('🌿 Olivium Ecosystem Dashboard');
-        console.log('📊 Public view: Grove monitoring, harvest status, villa experiences');
-        console.log('🔐 Connect wallet to see your membership dashboard');
-    </script>
+async function loadDashboardData() {
+  LOG.step('LOAD', 'Loading full dashboard data...');
+  const wallet = getActiveWallet();
+  
+  if (!wallet) {
+    LOG.info('No active wallet — returning public data');
+    return {
+      portfolio: { mignoleUnits: 0, olvTokens: 0, solBalance: 0, treeCount: 0 },
+      oil: { available: 0, entitled: 0, pending: 0 },
+      villa: { availableNights: 0, occupancy: 0, nextAvailable: null },
+      weather: { temperature: 29, humidity: 42, windSpeed: 8, rainProb: 10, cloudCover: 30 },
+      forecast: [],
+      trees: [],
+      recentActivity: [],
+    };
+  }
+
+  try {
+    LOG.info(`Loading data for wallet ${wallet.slice(0, 8)}...`);
+    
+    const [portfolio, oil, villa] = await Promise.all([
+      fetchPortfolio(wallet),
+      fetchOilAllocation(wallet),
+      fetchVillaAvailability(wallet),
+    ]);
+
+    // Weather data — could be from API
+    const weather = {
+      temperature: 28 + Math.random() * 4,
+      humidity: 35 + Math.random() * 20,
+      windSpeed: 5 + Math.random() * 6,
+      rainProb: Math.random() * 20,
+      cloudCover: 20 + Math.random() * 40,
+    };
+    
+    const forecast = Array.from({ length: 5 }, (_, i) => ({
+      date: new Date(Date.now() + i * 86400000),
+      tempMax: 26 + Math.random() * 8,
+      tempMin: 16 + Math.random() * 4,
+      condition: ['Clear', 'Partly Cloudy', 'Sunny', 'Foggy', 'Rainy'][i % 5],
+      rainProb: Math.random() * 30,
+    }));
+
+    const trees = await fetchMockTrees();
+    
+    const recentActivity = [
+      { id: 1, action: 'villa_booked', timestamp: new Date(Date.now() - 3600000) },
+      { id: 2, action: 'oil_claimed', timestamp: new Date(Date.now() - 7200000) },
+    ];
+
+    const result = { portfolio, oil, villa, weather, forecast, trees, recentActivity };
+    LOG.success('Dashboard data loaded successfully');
+    LOG.data('Dashboard summary', {
+      mignoleUnits: portfolio.mignoleUnits,
+      oilAvailable: oil.available.toFixed(2),
+      villaNights: villa.availableNights,
+      treeCount: portfolio.treeCount,
+    });
+    return result;
+  } catch (err) {
+    LOG.error('loadDashboardData failed:', err.message, err.stack);
+    throw err;
+  }
+}
+
+// ============================================================
+// WALLET MANAGEMENT
+// ============================================================
+
+function getActiveWallet() {
+  return state.identity.type !== 'guest' ? state.identity.walletAddress : null;
+}
+
+window.connectWallet = async function() {
+  LOG.step('WALLET', 'Connect wallet requested');
+  try {
+    // Check for Phantom
+    const provider = window.solana || window.phantom?.solana;
+    if (!provider) {
+      LOG.warn('No Solana wallet detected');
+      toast('Please install Phantom wallet', 'error');
+      return;
+    }
+    
+    LOG.info('Wallet provider found, requesting connection...');
+    const response = await provider.connect();
+    const pubkey = response.publicKey?.toBase58?.() || provider.publicKey?.toBase58?.();
+    
+    if (!pubkey) throw new Error('No public key returned');
+    
+    LOG.success(`Wallet connected: ${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`);
+    
+    state.identity = { type: 'wallet', walletAddress: pubkey };
+    localStorage.setItem('olivium_identity', JSON.stringify(state.identity));
+    
+    await initSolana();
+    await refreshData();
+    
+    window.dispatchEvent(new CustomEvent('olivium:connected'));
+    toast('Wallet connected successfully!', 'success');
+  } catch (err) {
+    LOG.error('connectWallet failed:', err.message);
+    toast('Failed to connect wallet: ' + err.message, 'error');
+  }
+};
+
+window.disconnectWallet = async function() {
+  LOG.step('WALLET', 'Disconnect requested');
+  state.identity = { type: 'guest', walletAddress: '' };
+  localStorage.removeItem('olivium_identity');
+  state.data = null;
+  renderAll();
+  window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+  toast('Disconnected', 'default');
+  LOG.info('Wallet disconnected');
+};
+
+function getStoredIdentity() {
+  try {
+    const stored = localStorage.getItem('olivium_identity');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.type && parsed.walletAddress) {
+        LOG.info(`Restored identity: ${parsed.type} ${parsed.walletAddress.slice(0, 8)}...`);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    LOG.warn('Failed to restore identity:', err.message);
+  }
+  return { type: 'guest', walletAddress: '' };
+}
+
+// ============================================================
+// RENDER FUNCTIONS — With logging
+// ============================================================
+
+function renderWallet() {
+  LOG.step('RENDER', 'Rendering wallet state...');
+  const connected = state.identity.type !== 'guest' && state.identity.walletAddress !== '';
+  
+  const dot = $('statusDot');
+  if (dot) dot.className = 'dot' + (connected ? '' : ' inactive');
+  
+  setText('statusText', connected ? 'Member Connected' : 'Public Grove View');
+  setText('walletDisplay', connected ? `${state.identity.walletAddress.slice(0, 4)}…${state.identity.walletAddress.slice(-4)}` : 'Not connected');
+  
+  const btn = $('connectBtn');
+  if (btn) {
+    btn.textContent = connected ? 'Disconnect' : 'Connect Wallet';
+    btn.className = 'btn-connect' + (connected ? ' outline' : '');
+  }
+  
+  $('publicView')?.classList.toggle('hidden', connected);
+  $('memberView')?.classList.toggle('hidden', !connected);
+  
+  LOG.info(`Wallet render: ${connected ? 'connected' : 'disconnected'}`);
+}
+
+function renderPublic(data) {
+  LOG.step('RENDER', 'Rendering public view...');
+  if (!data) {
+    LOG.warn('No data for public render');
+    return;
+  }
+  setText('pub-trees', data.portfolio?.treeCount || 240);
+  setText('pub-harvest', (data.oil?.entitled || 412).toFixed(1) + ' L');
+  setText('pub-villa', data.villa?.availableNights || 12);
+  setText('pub-temp', Math.round(data.weather?.temperature || 29) + '°C');
+  setText('pub-temp-large', Math.round(data.weather?.temperature || 29) + '°C');
+}
+
+function renderPulse(data) {
+  if (!data) return;
+  const health = data.portfolio?.treeCount > 0 ? 96 : 0;
+  setText('pulse-health', health + '%');
+  setText('pulse-trees', data.portfolio?.treeCount || 0);
+  setText('pulse-moisture', '61%');
+  setText('pulse-fly', 'LOW');
+  setText('pulse-rain', '18 hrs');
+  setText('pulse-confidence', '96%');
+  setText('pulse-card-health', health + '%');
+  setText('pulse-card-trees', data.portfolio?.treeCount || 0);
+  setText('pulse-card-moisture', '61%');
+  setText('pulse-card-fly', 'LOW');
+  setText('pulse-card-rain', '18 hrs');
+  setText('pulse-card-confidence', '96%');
+}
+
+function renderEstate(data) {
+  if (!data) return;
+  const wallet = getActiveWallet();
+  const name = wallet ? 'Ricky' : '';
+  setText('estate-greeting', 'Welcome ' + name + '.');
+  setText('oracle-greeting', 'Good morning ' + name + '.');
+  setText('oracle-status-line', wallet ? 'Sunrise inspection complete.' : 'Connect wallet to activate the Oracle.');
+  setText('estate-trees', data.portfolio?.treeCount || 0);
+  setText('estate-equivalent', (data.portfolio?.mignoleUnits / 24 || 0).toFixed(1));
+  setText('estate-harvest', (data.oil?.entitled || 0).toFixed(1) + ' L');
+  setText('estate-nights', data.villa?.availableNights || 0);
+  setText('estate-temp', Math.round(data.weather?.temperature || 29) + '°C');
+}
+
+function renderOracle(data) {
+  if (!data) return;
+  const analysisItems = [
+    { label: '✓ Weather', value: 'Analysed' },
+    { label: '✓ ' + (data.portfolio?.treeCount || 0) + ' Trees', value: 'Inspected' },
+    { label: '✓ Soil Sensors', value: 'Reading' },
+    { label: '✓ Carbon Markets', value: 'Updated' },
+    { label: '✓ Villa Demand', value: 'Tracking' },
+    { label: '✓ Treasury', value: 'Healthy' },
+  ];
+  const analysisEl = $('oracle-analysis');
+  if (analysisEl) {
+    analysisEl.innerHTML = analysisItems.map(item =>
+      `<div class="row"><span class="label">${item.label}</span><span class="value gold">${item.value}</span></div>`
+    ).join('');
+  }
+  const conf = 92 + Math.floor(Math.random() * 7);
+  setText('oracle-confidence-label', conf + '%');
+  const bar = $('oracle-confidence-bar');
+  if (bar) bar.style.width = conf + '%';
+  
+  const insights = [
+    { text: 'Delay irrigation 18 hours.', reason: 'Cooler temperatures arrive tonight.', water: '620 L', yield: '2.1%' },
+    { text: 'Spray Kaolin tomorrow morning.', reason: 'Fly pressure expected to rise.', water: '0 L', yield: '4.7%' },
+    { text: 'Move 12% oil to DAO.', reason: 'Market conditions favour selling.', water: '0 L', yield: '+18% gain' },
+  ];
+  const insight = insights[Math.floor(Math.random() * insights.length)];
+  setText('oracle-insight-text', insight.text);
+  setText('oracle-insight-reason', insight.reason);
+  setText('oracle-water', insight.water);
+  setText('oracle-yield', insight.yield);
+  
+  const thoughts = ['🐝 Pollination looks excellent.', '🪰 Fly pressure remains low.', '📈 Carbon prices rising.', '🏡 September villa demand increasing.', '◎ Keep staking rewards unchanged.'];
+  const items = $('oracle-think-items');
+  if (items) items.innerHTML = thoughts.map(t => `<span class="think-item">${t}</span>`).join('');
+  
+  const tasks = ['Forecasting September harvest quality...', 'Analysing fly population trends...', 'Evaluating carbon credit timing...'];
+  setText('oracle-working-task', tasks[Math.floor(Math.random() * tasks.length)]);
+  const prog = $('oracle-working-progress');
+  if (prog) prog.style.width = (40 + Math.random() * 50) + '%';
+}
+
+function renderValues(data) {
+  if (!data) return;
+  const oilValue = (data.oil?.entitled || 0) * 18.60;
+  const carbonValue = (data.oil?.entitled || 0) * 0.82;
+  const villaValue = (data.villa?.availableNights || 0) * 75;
+  const olvmValue = (data.portfolio?.olvTokens || 0) * 0.412;
+  const total = oilValue + carbonValue + villaValue + olvmValue;
+  setText('val-oil', '€' + oilValue.toFixed(0).toLocaleString());
+  setText('val-carbon', '€' + carbonValue.toFixed(0).toLocaleString());
+  setText('val-villa', '€' + villaValue.toFixed(0).toLocaleString());
+  setText('val-olvm', '€' + olvmValue.toFixed(0).toLocaleString());
+  setText('val-total', '€' + total.toFixed(0).toLocaleString());
+}
+
+function renderConditions(data) {
+  if (!data) return;
+  setText('cond-temp', Math.round(data.weather?.temperature || 29) + '°C');
+  setText('cond-humidity', Math.round(data.weather?.humidity || 42) + '%');
+  setText('cond-wind', Math.round(data.weather?.windSpeed || 8) + ' km/h');
+  setText('cond-pollination', 'Excellent');
+  setText('cond-soil', 'Moist');
+  setText('cond-harvest', 'Growing');
+}
+
+function renderHarvest(data) {
+  const bar = $('harvest-bar');
+  if (bar) bar.style.width = '100%';
+  setText('harvest-label', 'Peak');
+  setText('harvest-note', 'Peak flowering — trees are thriving.');
+  const badge = $('harvest-badge');
+  if (badge) { badge.textContent = 'Flowering'; badge.className = 'badge live'; }
+}
+
+function renderOil(data) {
+  if (!data) return;
+  setText('oil-litres', (data.oil?.entitled || 0).toFixed(1));
+  setText('oil-equivalent', Math.round((data.oil?.entitled || 0) * 2) + ' bottles · €' + Math.round((data.oil?.entitled || 0) * 19.2).toLocaleString() + ' retail');
+}
+
+function renderSteward(data) {
+  if (!data) return;
+  const shares = data.portfolio?.mignoleUnits || 0;
+  let level, name, next, progress;
+  if (shares >= 1000) { level = 'V'; name = 'Grove Patron'; next = 'Max Level'; progress = 100; }
+  else if (shares >= 500) { level = 'IV'; name = 'Guardian'; next = 'Elder'; progress = 42; }
+  else if (shares >= 100) { level = 'III'; name = 'Steward'; next = 'Guardian'; progress = 18; }
+  else { level = 'II'; name = 'Member'; next = 'Steward'; progress = 5; }
+  setText('steward-badge', level);
+  setText('steward-level', level);
+  setText('steward-name', name);
+  setText('steward-next', progress + '% until ' + next);
+  const bar = $('steward-bar');
+  if (bar) bar.style.width = progress + '%';
+}
+
+function renderVilla(data) {
+  if (!data) return;
+  setText('villa-badge', (data.villa?.availableNights || 0) + ' nights');
+  setText('villa-occupancy', (data.villa?.occupancy || 72) + '%');
+  setText('villa-temp', '17°C');
+  setText('villa-sunset', '20:42');
+  setText('villa-sea', '4.1 km');
+  const bar = $('villa-bar');
+  if (bar) bar.style.width = (data.villa?.occupancy || 72) + '%';
+}
+
+function renderJournal(data) {
+  const container = $('journal-container');
+  if (!container) return;
+  const now = new Date();
+  const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const entries = [
+    { time: '08:02', event: 'Oracle completed inspection.', done: true },
+    { time: '08:16', event: 'Soil moisture updated.', done: true },
+    { time: '08:28', event: 'Weather model refreshed.', done: true },
+    { time: '09:03', event: 'Tree #84 entered flowering.', done: true },
+    { time: '09:08', event: 'Carbon valuation updated.', done: true },
+    { time: time, event: 'Estate monitoring active', done: false },
+  ];
+  container.innerHTML = entries.map(e =>
+    `<div class="journal-item"><span class="time">${e.time}</span><span class="event">${e.done ? '<span class="done">✓</span>' : '<span class="running">⋯</span>'} ${e.event}</span></div>`
+  ).join('');
+}
+
+function renderAll() {
+  LOG.step('RENDER', 'Rendering all UI components...');
+  const data = state.data;
+  const connected = state.identity.type !== 'guest' && state.identity.walletAddress !== '';
+  renderWallet();
+  if (!connected) {
+    renderPublic(data);
+    LOG.info('Public view rendered');
+    return;
+  }
+  renderPublic(data);
+  renderPulse(data);
+  renderEstate(data);
+  renderOracle(data);
+  renderValues(data);
+  renderConditions(data);
+  renderHarvest(data);
+  renderOil(data);
+  renderSteward(data);
+  renderVilla(data);
+  renderJournal(data);
+  LOG.success('Full dashboard rendered');
+}
+
+// ============================================================
+// REFRESH DATA — With race condition guard
+// ============================================================
+
+let refreshInProgress = false;
+
+async function refreshData() {
+  LOG.step('REFRESH', 'Refresh requested');
+  if (refreshInProgress) {
+    LOG.warn('Refresh already in progress, skipping');
+    return;
+  }
+  refreshInProgress = true;
+  LOG.info('Starting data refresh...');
+  
+  try {
+    state.isLoading = true;
+    state.data = await loadDashboardData();
+    renderAll();
+    LOG.success('Data refresh complete');
+  } catch (err) {
+    LOG.error('refreshData failed:', err.message, err.stack);
+    toast('Failed to load estate data: ' + err.message, 'error');
+    state.error = err.message;
+  } finally {
+    state.isLoading = false;
+    refreshInProgress = false;
+  }
+}
+
+// ============================================================
+// BIND ACTIONS
+// ============================================================
+
+function bindActions() {
+  LOG.step('BIND', 'Binding UI actions...');
+  
+  $('connectBtn')?.addEventListener('click', async () => {
+    LOG.info('Connect button clicked');
+    try {
+      if (state.identity.type !== 'guest' && state.identity.walletAddress) {
+        await window.disconnectWallet();
+      } else {
+        await window.connectWallet();
+      }
+    } catch (err) {
+      LOG.error('Connect action failed:', err.message);
+      toast(err.message || 'Connection failed', 'error');
+    }
+  });
+
+  $('btn-enter-estate')?.addEventListener('click', async () => {
+    LOG.info('Enter estate button clicked');
+    if (state.identity.type === 'guest' || !state.identity.walletAddress) {
+      await window.connectWallet();
+    }
+    if (state.identity.type !== 'guest' && state.identity.walletAddress) {
+      document.getElementById('oracle')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  $('btn-oil')?.addEventListener('click', () => {
+    LOG.info('Oil button clicked');
+    if (!state.data) return;
+    const oil = state.data.oil?.entitled || 0;
+    toast(`Your harvest: ${oil.toFixed(1)} L · ${Math.round(oil * 2)} bottles · €${Math.round(oil * 19.2).toLocaleString()} retail value`, 'success');
+  });
+
+  $('btn-villa')?.addEventListener('click', () => {
+    LOG.info('Villa button clicked');
+    const nights = state.data?.villa?.availableNights || 0;
+    toast(`La Casetta: ${nights} nights available. Book your stay.`, 'default');
+  });
+
+  const ham = $('navHam'), links = $('navLinks');
+  ham?.addEventListener('click', () => {
+    const open = ham.classList.toggle('open');
+    links?.classList.toggle('open');
+    ham.setAttribute('aria-expanded', String(open));
+  });
+  links?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    ham?.classList.remove('open');
+    links.classList.remove('open');
+    ham?.setAttribute('aria-expanded', 'false');
+  }));
+  
+  LOG.success('Actions bound');
+}
+
+// ============================================================
+// INIT — With full audit log
+// ============================================================
+
+async function init() {
+  LOG.info('========================================');
+  LOG.info('🌿 OLIVIUM ESTATE DASHBOARD v1.0');
+  LOG.info('========================================');
+  LOG.info('Starting initialization...');
+  
+  // Create ambient particles
+  createAmbient();
+  
+  // Bind actions
+  bindActions();
+  
+  // Restore identity
+  const stored = getStoredIdentity();
+  if (stored.type !== 'guest' && stored.walletAddress) {
+    state.identity = stored;
+    LOG.info(`Restored identity: ${stored.type} ${stored.walletAddress.slice(0, 8)}...`);
+  }
+  
+  // Initialize connections
+  try {
+    await initSolana();
+    await initSupabase();
+  } catch (err) {
+    LOG.warn('Connection initialization had issues:', err.message);
+  }
+  
+  // Initial render
+  renderAll();
+  
+  // Auto-connect if stored identity exists
+  if (state.identity.type !== 'guest' && state.identity.walletAddress) {
+    LOG.info('Auto-connecting with stored identity...');
+    await refreshData();
+  } else {
+    LOG.info('No stored identity, showing public view');
+    // Load public data
+    state.data = await loadDashboardData();
+    renderAll();
+  }
+  
+  // Listen for events
+  window.addEventListener('olivium:connected', () => {
+    LOG.info('Event: olivium:connected');
+    refreshData();
+  });
+  window.addEventListener('olivium:disconnected', () => {
+    LOG.info('Event: olivium:disconnected');
+    state.data = null;
+    renderAll();
+  });
+  
+  // Cross-tab sync
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'olivium_identity') {
+      LOG.info('Storage event: identity changed in another tab');
+      const newIdentity = getStoredIdentity();
+      if (newIdentity.walletAddress !== state.identity.walletAddress) {
+        state.identity = newIdentity;
+        refreshData();
+      }
+    }
+  });
+  
+  // Log final state
+  LOG.success('========================================');
+  LOG.success('🌿 OLIVIUM DASHBOARD READY');
+  LOG.success('========================================');
+  LOG.data('Final state', {
+    identity: state.identity,
+    hasData: !!state.data,
+    isLoading: state.isLoading,
+    connection: !!state.connection,
+    supabase: !!state.supabase,
+  });
+  
+  // Expose for debugging
+  window.__olivium = {
+    state,
+    CONFIG,
+    refreshData,
+    LOG,
+    $,
+    setText,
+  };
+  
+  LOG.info('Debug: window.__olivium available for inspection');
+}
+
+// Run
+LOG.info('DOM ready, executing init...');
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+
 </body>
 </html>
