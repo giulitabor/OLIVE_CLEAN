@@ -320,6 +320,25 @@
             margin-top: 0.5rem;
         }
 
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+        }
+        .loading-spinner .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--gold);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         footer {
             text-align: center;
             padding: 2rem;
@@ -398,7 +417,7 @@
                 </div>
 
                 <div class="form-card">
-                    <form id="waitlistFormElement" onsubmit="submitWaitlist(event)">
+                    <form id="waitlistFormElement">
                         <div class="form-group">
                             <label>Full Name</label>
                             <input type="text" id="fullName" placeholder="e.g., Alessandro Rossi" required>
@@ -439,8 +458,13 @@
                             <textarea id="notes" placeholder="Tell us about yourself, why you're interested in Olivium..."></textarea>
                         </div>
 
-                        <button type="submit" class="btn-primary">Join the Waitlist →</button>
+                        <button type="submit" class="btn-primary" id="submitBtn">Join the Waitlist →</button>
                     </form>
+
+                    <div id="loadingSpinner" class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p style="color: var(--muted); margin-top: 0.5rem;">Submitting your application...</p>
+                    </div>
 
                     <div style="margin-top:1rem; text-align:center;">
                         <p style="font-size:0.75rem; color:var(--muted-dim);">
@@ -471,184 +495,196 @@
     <footer>
         <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
     </footer>
-/
-<script>
-    // ===============================
-    // Supabase Configuration
-    // ===============================
 
-// src/lib/supabase.js
-import { createClient } from '@supabase/supabase-js';
+    <!-- 
+        IMPORTANT: This script uses Vite's import system
+        The file must be treated as a module by Vite
+    -->
+    <script type="module">
+        // ===============================
+        // Import Supabase using Vite
+        // ===============================
+        import { createClient } from '@supabase/supabase-js';
 
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
-    // ===============================
-    // Mobile Navigation
-    // ===============================
+        // Get credentials from Vite's environment variables
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    const ham = document.getElementById('navHam');
-    const links = document.getElementById('navLinks');
+        // Validate that credentials exist
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            console.error('❌ Missing Supabase credentials! Check your .env file.');
+            console.error('Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+            
+            // Show error in UI
+            document.querySelector('.form-card').innerHTML = `
+                <div style="text-align:center; padding:2rem; color: #ff6b6b;">
+                    <h3>⚠️ Configuration Error</h3>
+                    <p style="color: var(--muted);">Missing Supabase credentials. Please check your environment variables.</p>
+                    <p style="color: var(--muted-dim); font-size: 0.8rem; margin-top: 1rem;">
+                        Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file
+                    </p>
+                </div>
+            `;
+        }
 
-    if (ham && links) {
+        // Initialize Supabase
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('🌿 Supabase initialized successfully');
 
-        ham.addEventListener('click', () => {
-            ham.classList.toggle('open');
-            links.classList.toggle('open');
-        });
+        // ===============================
+        // Mobile Navigation
+        // ===============================
 
-        document.querySelectorAll('#navLinks a').forEach(link => {
+        const ham = document.getElementById('navHam');
+        const links = document.getElementById('navLinks');
 
-            link.addEventListener('click', () => {
-
-                ham.classList.remove('open');
-                links.classList.remove('open');
-
+        if (ham && links) {
+            ham.addEventListener('click', () => {
+                ham.classList.toggle('open');
+                links.classList.toggle('open');
             });
 
-        });
+            document.querySelectorAll('#navLinks a').forEach(link => {
+                link.addEventListener('click', () => {
+                    ham.classList.remove('open');
+                    links.classList.remove('open');
+                });
+            });
+        }
 
-    }
+        // ===============================
+        // Email sending function (using mailto)
+        // ===============================
 
-    // ===============================
-    // Waitlist Submission
-    // ===============================
+        function sendEmailNotification(formData) {
+            const subject = encodeURIComponent('New Waitlist Registration - Olivium');
+            
+            const body = encodeURIComponent(`
+        New Olivium Waitlist Registration
+        ────────────────────────────────
+        
+        Name:        ${formData.full_name}
+        Email:       ${formData.email}
+        Country:     ${formData.country || 'Not provided'}
+        Interests:   ${(formData.interests || []).join(', ') || 'Not specified'}
+        Owns OLVM:   ${formData.owns_olvm || 'Not specified'}
+        
+        Notes:
+        ${formData.notes || 'None provided'}
+        
+        ────────────────────────────────
+        Registration Date: ${new Date().toLocaleString()}
+        `);
+            
+            const mailtoLink = `mailto:olivium@tutamail.com?subject=${subject}&body=${body}`;
+            
+            // Open in new tab/window
+            window.open(mailtoLink, '_blank');
+            console.log('📧 Email notification sent to olivium@tutamail.com');
+        }
 
-    async function submitWaitlist(event) {
-
-        event.preventDefault();
+        // ===============================
+        // Waitlist Submission
+        // ===============================
 
         const form = document.getElementById("waitlistFormElement");
-        const submitBtn = form.querySelector("button[type='submit']");
+        const submitBtn = document.getElementById("submitBtn");
+        const loadingSpinner = document.getElementById("loadingSpinner");
 
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = "Joining...";
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-        const full_name = document.getElementById("fullName").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const country = document.getElementById("country").value.trim();
+            // Get form values
+            const full_name = document.getElementById("fullName").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const country = document.getElementById("country").value.trim();
 
-        const interests = Array.from(
-            document.querySelectorAll(
-                "#waitlistFormElement input[type='checkbox']:checked"
-            )
-        ).map(cb => cb.value);
+            const interests = Array.from(
+                document.querySelectorAll("#waitlistFormElement input[type='checkbox']:checked")
+            ).map(cb => cb.value);
 
-        const owns_olvm = document.getElementById("ownsOlvm").value;
+            const owns_olvm = document.getElementById("ownsOlvm").value;
+            const notes = document.getElementById("notes").value.trim().substring(0, 1000);
 
-        const notes = document
-            .getElementById("notes")
-            .value
-            .trim()
-            .substring(0,1000);
-
-        if (!full_name || !email) {
-
-            alert("Please enter your name and email.");
-
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = "Join the Waitlist →";
-
-            return;
-
-        }
-
-        const emailRegex =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailRegex.test(email)) {
-
-            alert("Please enter a valid email address.");
-
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = "Join the Waitlist →";
-
-            return;
-
-        }
-
-        try {
-
-            const { error } = await supabase
-
-                .from("waitlist")
-
-                .insert([{
-
-                    full_name,
-
-                    email,
-
-                    country,
-
-                    interests,
-
-                    owns_olvm,
-
-                    notes
-
-                }]);
-
-            if (error) {
-
-                if (error.code === "23505") {
-
-                    alert(
-                        "This email is already registered on the waitlist."
-                    );
-
-                } else {
-
-                    console.error(error);
-
-                    alert(
-                        "Unable to join the waitlist.\n\n" +
-                        error.message
-                    );
-
-                }
-
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = "Join the Waitlist →";
-
+            // Validation
+            if (!full_name || !email) {
+                alert("Please enter your name and email.");
                 return;
-
             }
 
-            form.reset();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                return;
+            }
 
-            document.getElementById("waitlistForm").style.display = "none";
+            // Prepare data
+            const formData = {
+                full_name,
+                email,
+                country: country || null,
+                interests: interests.length > 0 ? interests : null,
+                owns_olvm: owns_olvm || null,
+                notes: notes || null,
+                created_at: new Date().toISOString()
+            };
 
-            document.getElementById("successMessage").style.display = "block";
+            // Show loading state
+            submitBtn.style.display = 'none';
+            loadingSpinner.style.display = 'block';
 
-            window.scrollTo({
+            try {
+                // 1. Submit to Supabase
+                const { data, error } = await supabase
+                    .from("waitlist")
+                    .insert([formData])
+                    .select();
 
-                top: 0,
+                if (error) {
+                    console.error('Supabase error:', error);
+                    
+                    if (error.code === "23505") {
+                        alert("This email is already registered on the waitlist.");
+                    } else if (error.code === "42P01") {
+                        alert("Database table 'waitlist' not found. Please create the table in Supabase.");
+                        console.error('Table "waitlist" does not exist. Create it in your Supabase dashboard.');
+                    } else {
+                        alert(`Unable to join the waitlist: ${error.message}`);
+                    }
+                    
+                    // Reset UI
+                    submitBtn.style.display = 'block';
+                    loadingSpinner.style.display = 'none';
+                    return;
+                }
+                
+                console.log('✅ Supabase entry created:', data);
 
-                behavior: "smooth"
+                // 2. Send email notification using mailto
+                sendEmailNotification(formData);
 
-            });
+                // 3. Show success
+                form.reset();
+                document.getElementById("waitlistForm").style.display = "none";
+                document.getElementById("successMessage").style.display = "block";
 
-        }
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
 
-        catch(err) {
+            } catch (err) {
+                console.error('Error:', err);
+                alert("Unexpected error. Please try again later.");
+                
+                // Reset UI
+                submitBtn.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+            }
+        });
 
-            console.error(err);
-
-            alert(
-                "Unexpected error.\nPlease try again later."
-            );
-
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = "Join the Waitlist →";
-
-        }
-
-    }
-
-    console.log("🌿 Olivium Waitlist Ready");
-
-</script>
+        console.log("🌿 Olivium Waitlist Ready");
+        console.log(`🔗 Connected to Supabase: ${SUPABASE_URL}`);
+    </script>
 </body>
 </html>
