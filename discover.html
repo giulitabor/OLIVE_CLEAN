@@ -211,6 +211,10 @@
     .tier-feats{ list-style:none; margin-bottom:1.5rem; }
     .tier-feats li{ padding:.3rem 0; font-size:.8rem; color:#ccc; border-bottom:1px solid rgba(255,255,255,.03); }
     .tier-badge{ background:var(--gold); color:#0a0f08; padding:.2rem .8rem; border-radius:20px; font-size:.6rem; font-weight:600; letter-spacing:1px; display:inline-block; margin-bottom:1rem; border:1px solid var(--gold); }
+    .tier-btn{ background:transparent; border:1px solid rgba(197,160,89,0.3); color:#fff; padding:.6rem 1.5rem; border-radius:30px; text-decoration:none; font-size:.85rem; text-align:center; transition:.3s; margin-top:auto; }
+    .tier-btn:hover{ background:rgba(197,160,89,.1); border-color:var(--gold); }
+    .tier-btn.primary{ background:var(--gold); color:#0a0f08; border-color:var(--gold); }
+    .tier-btn.primary:hover{ background:#d4b36a; }
     .principle-card{ transition:all .4s ease; }
     .principle-card:hover{ border-color:rgba(197,160,89,.3); background:rgba(255,255,255,.06); }
     /* harvest */
@@ -314,7 +318,22 @@
 <!-- LIGHTBOX -->
 <div id="lightbox"><button id="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightbox-img" src="" alt=""/></div>
 
-
+<!-- MOBILE OVERLAY -->
+<div id="mob-overlay">
+  <a href="home.html" onclick="closeMob()">Home</a>
+  <a href="discover.html" onclick="closeMob()">Discover</a>
+  <a href="membership.html" onclick="closeMob()">Membership</a>
+  <a href="token.html" onclick="closeMob()">OLVM</a>
+  <a href="userDash.html" onclick="closeMob()">Dashboard</a>
+  <a href="join.html" class="nav-cta" onclick="closeMob()">Join</a>
+  <a href="Brochure.html" download onclick="closeMob()">Brochure</a>
+  <div class="mobile-lang-wrap">
+    <button class="mob-lang-btn active" id="mob-lang-en" onclick="setLanguage('en'); closeMob();">EN</button>
+    <button class="mob-lang-btn" id="mob-lang-it" onclick="setLanguage('it'); closeMob();">IT</button>
+    <button class="mob-lang-btn" id="mob-lang-de" onclick="setLanguage('de'); closeMob();">DE</button>
+    <button class="mob-lang-btn" id="mob-lang-fr" onclick="setLanguage('fr'); closeMob();">FR</button>
+  </div>
+</div>
 
 <!-- NAVIGATION -->
 <nav id="nav">
@@ -440,7 +459,8 @@
     </div>
   </div>
 </section>
-  <!-- COST COMPARISON -->
+
+<!-- COST COMPARISON -->
 <div class="comparison-wrap glass reveal" style="padding:1.5rem;">
    <section class="section-sm" style="background:linear-gradient(180deg,var(--dark) 0%,#0a0f08 100%);">
   <div class="wrap">
@@ -891,6 +911,29 @@
 <!-- FOOTER -->
 <footer><div class="footer-inner"><div class="footer-logo">OLIVIUM <span style="font-style:italic;font-weight:300;font-size:.9rem;color:rgba(255,255,255,.3);margin-left:4px;" data-en="Private Estate" data-it="Tenuta Privata" data-de="Privates Olivenanwesen" data-fr="Domaine Privé">Private Estate</span></div><div class="footer-links"><a href="#experience" data-en="Estate" data-it="Tenuta" data-de="Anwesen" data-fr="Domaine">Estate</a><a href="#tiers" data-en="Membership" data-it="Abbonamento" data-de="Mitgliedschaften" data-fr="Adhésion">Membership</a><a href="#harvest" data-en="Harvest" data-it="Raccolto" data-de="Olivenernte" data-fr="Récolte">Harvest</a><a href="#faq" data-en="FAQ" data-it="Domande Frequenti" data-de="Häufige Fragen" data-fr="FAQ">FAQ</a><a href="/privacy.html" data-en="Privacy" data-it="Privacy" data-de="Datenschutz" data-fr="Confidentialité">Privacy</a><a href="mailto:olivium@tutamail.com" data-en="Contact" data-it="Contatto" data-de="Kontakt" data-fr="Contact">Contact</a></div><div class="footer-copy" data-en="© 2026 Olivium · San Vincenzo, Tuscany" data-it="© 2026 Olivium · San Vincenzo, Toscana" data-de="© 2026 Olivium · San Vincenzo, Toskana" data-fr="© 2026 Olivium · San Vincenzo, Toscane">© 2026 Olivium · San Vincenzo, Tuscany</div></div></footer>
 
+<!-- Visit Request Modal -->
+<div id="visitModal" class="visit-modal">
+    <div class="visit-modal-content">
+        <button class="visit-close" onclick="closeVisitModal()">×</button>
+        <h2 data-en="Request Your Olivium Visit" data-it="Richiedi la Tua Visita Olivium" data-de="Aufenthalt anfragen" data-fr="Demandez Votre Visite Olivium">Request Your Olivium Visit</h2>
+        <p data-en="Tell us how we can welcome you to the estate." data-it="Dicci come possiamo accoglierti nella tenuta." data-de="Teilen Sie uns mit, wie wir Sie auf dem Anwesen willkommen heißen können." data-fr="Dites-nous comment nous pouvons vous accueillir dans le domaine.">Tell us how we can welcome you to the estate.</p>
+        <form id="visitForm" onsubmit="submitVisitRequest(event)">
+            <input type="hidden" name="_subject" value="New Olivium Visit Request">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="text" name="first_name" placeholder="First Name" required>
+            <input type="text" name="last_name" placeholder="Last Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="tel" name="phone" placeholder="Phone Number" required>
+            <textarea name="request" placeholder="Your request, preferred dates, number of guests..." rows="4" required></textarea>
+            <div class="visit-buttons">
+                <button type="button" class="cancel-btn" onclick="closeVisitModal()">Cancel</button>
+                <button type="submit" class="request-btn">Request Visit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- All JavaScript in one place -->
 <script>
 // --- LANGUAGE TOGGLE ---
 function toggleLangDropdown() {
@@ -934,42 +977,80 @@ document.addEventListener('DOMContentLoaded', () => {
   setLanguage(savedLang);
 });
 
-// --- ALL OTHER ORIGINAL JAVASCRIPT ---
+// --- MOBILE NAV - FIXED ---
+const ham = document.getElementById('nav-ham');
+const overlay = document.getElementById('mob-overlay');
+
+function closeMob() {
+  overlay.classList.remove('open');
+  ham.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openMob() {
+  overlay.classList.add('open');
+  ham.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function toggleMob() {
+  if (overlay.classList.contains('open')) {
+    closeMob();
+  } else {
+    openMob();
+  }
+}
+
+// Attach click event to hamburger button
+if (ham) {
+  ham.addEventListener('click', toggleMob);
+}
+
+// Close mobile menu when clicking a link in the overlay
+document.querySelectorAll('#mob-overlay a').forEach(link => {
+  link.addEventListener('click', closeMob);
+});
+
+// Close mobile menu on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && overlay.classList.contains('open')) {
+    closeMob();
+  }
+});
+
+// --- NAV SCROLL ---
 var nav = document.getElementById('nav');
 window.addEventListener('scroll', function(){ nav.classList.toggle('scrolled', window.scrollY > 60); });
 
+// --- REVEAL ANIMATIONS ---
 var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, {threshold:0.07});
 document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(function(el){ io.observe(el); });
 
+// --- COUNTER ANIMATION ---
 function animateCounter(el, target, prefix){ var start = 0, dur = 1800, step = 16; var timer = setInterval(function(){ start += Math.ceil(target / (dur/step)); if(start >= target){ start = target; clearInterval(timer); } el.textContent = (prefix||'') + start.toLocaleString(); }, step); }
 var statIo = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(!e.isIntersecting) return; var el = e.target; var t = parseInt(el.getAttribute('data-target')); var p = el.getAttribute('data-prefix')||''; if(t) animateCounter(el, t, p); statIo.unobserve(el); }); }, {threshold:.5});
 document.querySelectorAll('[data-target]').forEach(function(el){ statIo.observe(el); });
 
+// --- COUNTDOWN ---
 function updateCountdown(){ var target = new Date('2026-10-18T08:00:00'); var now = new Date(); var diff = target - now; if(diff < 0) diff = 0; document.getElementById('cd-d').textContent = Math.floor(diff/86400000); document.getElementById('cd-h').textContent = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0'); document.getElementById('cd-m').textContent = String(Math.floor((diff%3600000)/60000)).padStart(2,'0'); document.getElementById('cd-s').textContent = String(Math.floor((diff%60000)/1000)).padStart(2,'0'); }
 updateCountdown(); setInterval(updateCountdown, 1000);
 
+// --- FAQ TOGGLE ---
 function toggleFaq(el){ var item = el.parentElement; var wasOpen = item.classList.contains('open'); document.querySelectorAll('.faq-item.open').forEach(function(i){ i.classList.remove('open'); }); if(!wasOpen) item.classList.add('open'); }
 
+// --- VIRTUAL TOUR ---
 function tourRoom(btn, url){ document.querySelectorAll('.tour-btn').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); var pano = document.getElementById('tour-pano'); pano.style.backgroundImage = "url('"+url+"')"; }
 document.getElementById('tour-play-btn').addEventListener('click', function(){ var pano = document.getElementById('tour-pano'); pano.classList.toggle('pan'); this.textContent = pano.classList.contains('pan') ? '⏸' : '▶'; });
 
-function closeMob() { document.getElementById('mob-overlay').classList.remove('open'); if(document.getElementById('nav-ham')) document.getElementById('nav-ham').classList.remove('open'); document.body.style.overflow = ''; }
-function openMob() { document.getElementById('mob-overlay').classList.add('open'); if(document.getElementById('nav-ham')) document.getElementById('nav-ham').classList.add('open'); document.body.style.overflow = 'hidden'; }
-function toggleMob() { if(document.getElementById('mob-overlay').classList.contains('open')) closeMob(); else openMob(); }
-if(document.getElementById('nav-ham')) document.getElementById('nav-ham').addEventListener('click', toggleMob);
-document.addEventListener('keydown', function(e){ if(e.key==='Escape' && document.getElementById('mob-overlay').classList.contains('open')) closeMob(); });
-
+// --- LIGHTBOX ---
 function openLightbox(img){ document.getElementById('lightbox-img').src = img.src; document.getElementById('lightbox').classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow = ''; }
 document.getElementById('lightbox').addEventListener('click', function(e){ if(e.target===this) closeLightbox(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeLightbox(); });
-function openVisitModal(){
-    document.getElementById("visitModal").style.display="flex";
-}
 
-function closeVisitModal(){
-    document.getElementById("visitModal").style.display="none";
-}
+// --- VISIT MODAL ---
+function openVisitModal(){ document.getElementById("visitModal").style.display="flex"; }
+function closeVisitModal(){ document.getElementById("visitModal").style.display="none"; }
 
 async function submitVisitRequest(event){
     event.preventDefault();
@@ -1000,28 +1081,11 @@ async function submitVisitRequest(event){
         alert("Unable to send request. Please try again.");
     }
 }
-</script>
 
-<!-- Visit Request Modal -->
-<div id="visitModal" class="visit-modal">
-    <div class="visit-modal-content">
-        <button class="visit-close" onclick="closeVisitModal()">×</button>
-        <h2 data-en="Request Your Olivium Visit" data-it="Richiedi la Tua Visita Olivium" data-de="Aufenthalt anfragen" data-fr="Demandez Votre Visite Olivium">Request Your Olivium Visit</h2>
-        <p data-en="Tell us how we can welcome you to the estate." data-it="Dicci come possiamo accoglierti nella tenuta." data-de="Teilen Sie uns mit, wie wir Sie auf dem Anwesen willkommen heißen können." data-fr="Dites-nous comment nous pouvons vous accueillir dans le domaine.">Tell us how we can welcome you to the estate.</p>
-        <form id="visitForm" onsubmit="submitVisitRequest(event)">
-            <input type="hidden" name="_subject" value="New Olivium Visit Request">
-            <input type="hidden" name="_captcha" value="false">
-            <input type="text" name="first_name" placeholder="First Name" required>
-            <input type="text" name="last_name" placeholder="Last Name" required>
-            <input type="email" name="email" placeholder="Email Address" required>
-            <input type="tel" name="phone" placeholder="Phone Number" required>
-            <textarea name="request" placeholder="Your request, preferred dates, number of guests..." rows="4" required></textarea>
-            <div class="visit-buttons">
-                <button type="button" class="cancel-btn" onclick="closeVisitModal()">Cancel</button>
-                <button type="submit" class="request-btn">Request Visit</button>
-            </div>
-        </form>
-    </div>
-</div>
+// Close modal when clicking outside
+document.getElementById('visitModal').addEventListener('click', function(e) {
+  if (e.target === this) closeVisitModal();
+});
+</script>
 </body>
 </html>
