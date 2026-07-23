@@ -1,957 +1,886 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Olivium Ecosystem Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="OLIVIUM — a living Tuscan olive grove on-chain. Manage tree positions, OLV membership, oil allocation and villa stays." />
+<title>OLIVIUM · Grove Dashboard</title>
 
-    <style>
-        :root {
-            --gold: #C5A059;
-            --gold-light: #D4AF37;
-            --olive: #4a6b1e;
-            --olive-light: #6a9a2e;
-            --charcoal: #080b07;
-            --card-bg: rgba(255,255,255,0.03);
-            --border-gold: rgba(197,160,89,0.15);
-            --muted: rgba(255,255,255,0.5);
-            --muted-dim: rgba(255,255,255,0.25);
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<style>
+/* =========================================================================
+   TOKEN SYSTEM
+   Palette: charcoal ground, aged-gold accent, deep olive secondary.
+   Display: Playfair Display (editorial, estate-brochure feel)
+   Body: Inter · Data/mono: JetBrains Mono
+   Signature element: the "Grove Ring" — a radial map of the member's own
+   tree positions, colour-coded by health, standing in for a generic stat
+   block.
+   ========================================================================= */
+:root{
+  --charcoal:#070905;
+  --charcoal-2:#0d1109;
+  --panel:rgba(255,255,255,.035);
+  --panel-hover:rgba(255,255,255,.06);
+  --card-border:rgba(197,160,89,.14);
+  --card-border-hover:rgba(197,160,89,.34);
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--charcoal);
-            color: #fff;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-        }
+  --gold:#c5a059;
+  --gold-light:#ddbd7c;
+  --olive-deep:#233416;
+  --olive:#4a6b1e;
+  --olive-light:#8ec24a;
 
-        /* ===== VIDEO BACKGROUND ===== */
-        .video-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-            z-index: 0;
-        }
-        .video-bg video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(0.55) contrast(1.05) saturate(1.1);
-        }
-        .video-bg .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
-            pointer-events: none;
-        }
+  --cream:#f3efe6;
+  --muted:rgba(243,239,230,.56);
+  --muted-dim:rgba(243,239,230,.30);
 
-        /* ===== LOADING ===== */
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: rgba(8,11,7,0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            transition: opacity 0.6s ease;
-        }
-        .loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(197,160,89,0.1);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text {
-            color: var(--muted);
-            font-size: 0.9rem;
-            letter-spacing: 0.08em;
-        }
+  --good:#8ec24a;
+  --amber:#e0a83e;
+  --danger:#e2574c;
 
-        /* ===== NAVIGATION ===== */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 0 2rem;
-            height: 72px;
-            display: flex;
-            align-items: center;
-            background: rgba(8,11,7,0.6);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .nav-inner {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .nav-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 0.06em;
-        }
-        .nav-logo em {
-            font-style: italic;
-            font-weight: 400;
-            font-size: 0.8rem;
-            color: var(--gold);
-            margin-left: 4px;
-        }
+  --r-lg:22px;
+  --r-md:16px;
+  --r-sm:10px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
 
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            color: rgba(255,255,255,0.5);
-            text-decoration: none;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            transition: color 0.3s ease;
-        }
-        .nav-links a:hover { color: #fff; }
-        .nav-cta {
-            background: var(--gold);
-            color: #0a0f08 !important;
-            padding: 0.4rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600 !important;
-        }
-        .nav-cta:hover { background: #d4b06a !important; }
+*{margin:0;padding:0;box-sizing:border-box;}
 
-        .nav-ham {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-        .nav-ham span {
-            display: block;
-            width: 26px;
-            height: 2px;
-            background: #fff;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
-        .nav-ham.open span:nth-child(2) { opacity: 0; }
-        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+html{scroll-behavior:smooth;}
 
-        /* ===== MAIN WRAP ===== */
-        .main-wrap {
-            position: relative;
-            z-index: 10;
-            padding-top: 72px;
-            min-height: 100vh;
-        }
+body{
+  font-family:'Inter',sans-serif;
+  background:
+    radial-gradient(ellipse 100% 60% at 15% -10%, rgba(74,107,30,.18), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(197,160,89,.08), transparent 55%),
+    var(--charcoal);
+  color:var(--cream);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+}
+/* material grain — keeps the dark panels from reading as flat digital glass */
+body::before{
+  content:'';
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  opacity:.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+nav, .ticker, .main-wrap, footer{position:relative; z-index:2;}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 2rem 4rem;
-        }
+a{color:inherit;}
+button{font-family:inherit;}
 
-        /* ===== CONNECT BAR ===== */
-        .connect-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            padding: 0.8rem 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .connect-bar .status {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-        }
-        .connect-bar .status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--olive-light);
-        }
-        .connect-bar .status .dot.inactive {
-            background: #555;
-        }
-        .connect-bar .status span {
-            font-size: 0.8rem;
-            color: var(--muted);
-        }
-        .connect-bar .status .wallet {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--gold);
-            font-size: 0.75rem;
-            background: rgba(197,160,89,0.1);
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-        }
-        .btn-connect {
-            background: var(--gold);
-            color: #0a0f08;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .btn-connect:hover { background: var(--gold-light); transform: translateY(-2px); }
-        .btn-connect.outline {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.12);
-            color: #fff;
-        }
-        .btn-connect.outline:hover { background: rgba(255,255,255,0.05); border-color: var(--gold); }
+:focus-visible{outline:2px solid var(--gold); outline-offset:3px; border-radius:4px;}
 
-        /* ===== DASHBOARD GRID ===== */
-        .dash-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
+.serif{font-family:'Playfair Display',serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
 
-        .dash-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 1.8rem;
-            transition: all 0.4s ease;
-        }
-        .dash-card:hover {
-            border-color: var(--border-gold);
-        }
-        .dash-card.full {
-            grid-column: 1 / -1;
-        }
+/* ===== NAV ===== */
+nav{
+  position:sticky; top:0; z-index:100;
+  padding:0 clamp(16px,4vw,2rem);
+  height:72px;
+  display:flex; align-items:center;
+  background:rgba(7,9,5,.72);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.nav-inner{max-width:1280px; width:100%; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+.nav-logo{font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; letter-spacing:.02em;}
+.nav-logo em{font-style:italic; font-weight:400; font-size:.78rem; color:var(--gold); margin-left:6px;}
+.nav-links{display:flex; list-style:none; gap:1.6rem; align-items:center;}
+.nav-links a{text-decoration:none; color:var(--muted); font-size:.7rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; transition:color .2s var(--ease);}
+.nav-links a:hover{color:var(--cream);}
+.nav-ham{display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:8px;}
+.nav-ham span{display:block; width:24px; height:2px; background:var(--cream); border-radius:2px; transition:.25s var(--ease);}
+.nav-ham.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+.nav-ham.open span:nth-child(2){opacity:0;}
+.nav-ham.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
 
-        .dash-card .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .dash-card .card-header h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            color: #fff;
-            font-weight: 600;
-        }
-        .dash-card .card-header .icon {
-            font-size: 1.8rem;
-        }
-        .dash-card .card-header .badge {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--gold);
-            background: rgba(197,160,89,0.1);
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-        }
+/* ===== TICKER ===== */
+.ticker{height:38px; overflow:hidden; background:var(--charcoal-2); border-bottom:1px solid rgba(197,160,89,.14); display:flex; align-items:center;}
+.track{white-space:nowrap; display:inline-flex; animation:scroll 32s linear infinite; font-size:.72rem; font-weight:600; letter-spacing:.02em; color:var(--gold-light);}
+.track span{margin-right:56px; opacity:.85;}
+@keyframes scroll{0%{transform:translateX(0)} 100%{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.track{animation:none;} .dash-card, .btn-dash, button{transition:none !important;}}
 
-        .dash-stat {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 0.3rem;
-        }
-        .dash-stat .num {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.4rem;
-            font-weight: 600;
-            color: #fff;
-        }
-        .dash-stat .num.gold { color: var(--gold); }
-        .dash-stat .num.loading { color: var(--muted-dim); font-size: 1.5rem; }
-        .dash-stat .lbl {
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-        .dash-desc {
-            font-size: 0.85rem;
-            color: var(--muted);
-            line-height: 1.7;
-        }
+/* ===== LAYOUT ===== */
+.main-wrap{max-width:1280px; margin:0 auto; padding:1.6rem clamp(16px,4vw,2rem) 4rem;}
 
-        .dash-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .dash-list li {
-            padding: 0.6rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-        .dash-list li:last-child { border-bottom: none; }
-        .dash-list li .label { color: #fff; }
-        .dash-list li .value { color: var(--gold); font-weight: 500; }
-        .dash-list li .value.loading { color: var(--muted-dim); }
+.connect-bar{
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
+  background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:16px;
+  padding:.85rem 1.4rem; margin:1.4rem 0 2rem;
+}
+.connect-bar .status{display:flex; align-items:center; gap:.7rem; flex-wrap:wrap;}
+.status .dot{width:8px; height:8px; border-radius:50%; background:var(--olive-light); box-shadow:0 0 8px var(--olive-light);}
+.status .dot.inactive{background:#555; box-shadow:none;}
+.status span.label{font-size:.8rem; color:var(--muted);}
+.status .wallet{font-family:'JetBrains Mono',monospace; color:var(--gold); font-size:.78rem; background:rgba(197,160,89,.1); padding:.2rem .8rem; border-radius:50px;}
 
-        .dash-tag {
-            display: inline-block;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.05);
-            color: var(--muted);
-        }
-        .dash-tag.active {
-            background: rgba(76,175,80,0.15);
-            color: #4caf50;
-        }
-        .dash-tag.pending {
-            background: rgba(255,193,7,0.15);
-            color: #ffc107;
-        }
-        .dash-tag.gold {
-            background: rgba(197,160,89,0.15);
-            color: var(--gold);
-        }
+.btn-connect{background:var(--gold); color:#0a0f08; border:none; padding:.55rem 1.5rem; border-radius:50px; font-weight:700; font-size:.8rem; cursor:pointer; transition:.2s var(--ease);}
+.btn-connect:hover{background:var(--gold-light); transform:translateY(-2px);}
+.btn-connect.outline{background:transparent; border:1px solid rgba(255,255,255,.14); color:var(--cream);}
+.btn-connect.outline:hover{background:rgba(255,255,255,.06); border-color:var(--gold);}
+.btn-connect:disabled{opacity:.6; cursor:wait; transform:none;}
 
-        .btn-dash {
-            display: inline-block;
-            padding: 0.6rem 1.5rem;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: #fff;
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .btn-dash:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--gold);
-        }
-        .btn-dash.gold {
-            background: var(--gold);
-            color: #0a0f08;
-            border-color: var(--gold);
-        }
-        .btn-dash.gold:hover {
-            background: var(--gold-light);
-        }
+h1.page-title{font-family:'Playfair Display',serif; font-size:clamp(1.7rem,3.4vw,2.3rem); font-weight:400; margin-bottom:.3rem;}
+p.page-sub{color:var(--muted); font-size:.95rem; margin-bottom:1.6rem; max-width:62ch;}
 
-        /* ===== UPDATES ===== */
-        .update-item {
-            display: flex;
-            gap: 1rem;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .update-item:last-child { border-bottom: none; }
-        .update-item .date {
-            font-size: 0.7rem;
-            color: var(--muted-dim);
-            min-width: 80px;
-            font-weight: 500;
-            letter-spacing: 0.04em;
-        }
-        .update-item .content {
-            color: var(--muted);
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-        .update-item .content strong { color: #fff; font-weight: 500; }
+.hidden{display:none !important;}
 
-        /* ===== VIEWS ===== */
-        #memberView {
-            display: none;
-        }
-        #memberView.active {
-            display: block;
-        }
-        #publicView {
-            display: block;
-        }
-        #publicView.hidden {
-            display: none;
-        }
+/* ===== HERO — PUBLIC ===== */
+.hero-public{position:relative; padding:3.2rem 0 2.6rem; overflow:hidden;}
+.canopy-field{position:absolute; top:-70px; right:-90px; width:600px; height:520px; z-index:0; pointer-events:none;
+  -webkit-mask-image:radial-gradient(ellipse 60% 60% at 60% 40%, #000 0%, transparent 72%);
+  mask-image:radial-gradient(ellipse 60% 60% at 60% 40%, #000 0%, transparent 72%);
+}
+.canopy-field circle{animation:leaf-in .9s var(--ease) backwards;}
+.hero-copy{position:relative; z-index:1; max-width:640px;}
+.eyebrow{display:inline-block; font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--gold); margin-bottom:1.1rem; font-weight:700;}
+.hero-title{font-family:'Playfair Display',serif; font-weight:500; font-size:clamp(2.3rem,5.4vw,3.8rem); line-height:1.06; margin-bottom:1.15rem; animation:rise-in .7s var(--ease) backwards; animation-delay:.05s;}
+.hero-title em{font-style:italic; color:var(--gold); font-weight:400;}
+.hero-sub{font-size:1rem; color:var(--muted); max-width:50ch; margin-bottom:1.7rem; line-height:1.65; animation:rise-in .7s var(--ease) backwards; animation-delay:.15s;}
+.hero-cta-row{display:flex; gap:1.3rem; align-items:center; flex-wrap:wrap; animation:rise-in .7s var(--ease) backwards; animation-delay:.25s;}
+.hero-link{font-size:.8rem; color:var(--muted); text-decoration:none; border-bottom:1px solid rgba(255,255,255,.16); padding-bottom:2px; transition:.2s var(--ease);}
+.hero-link:hover{color:var(--gold); border-color:var(--gold);}
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            .dash-grid { grid-template-columns: 1fr 1fr; }
-        }
+@keyframes rise-in{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+@keyframes leaf-in{from{opacity:0; transform:scale(.4);} to{opacity:1; transform:scale(1);}}
 
-        @media (max-width: 768px) {
-            .container { padding: 1.5rem 1.25rem; }
-            .dash-grid { grid-template-columns: 1fr; }
-            .dash-card.full { grid-column: 1; }
-            .connect-bar { flex-direction: column; align-items: stretch; text-align: center; }
-            .connect-bar .status { justify-content: center; flex-wrap: wrap; }
+/* ===== HERO — MEMBER (Grove Ring centerpiece) ===== */
+.hero-member{display:grid; grid-template-columns:400px 1fr; gap:2.6rem; align-items:center; padding:2.4rem 0 2.8rem;}
+.ring-stage{position:relative; width:400px; height:400px; flex:0 0 auto; justify-self:center;}
+.ring-stage svg{position:absolute; top:50%; left:50%; width:230px; height:230px; transform:translate(-50%,-50%);}
+.ring-stage .ring-pulse{animation:pulse-ring 2.8s ease-in-out infinite; transform-box:fill-box; transform-origin:center;}
+.ring-stage .tree-dot{transform-box:fill-box; transform-origin:center; animation:dot-in .5s var(--ease) backwards;}
+@keyframes pulse-ring{0%,100%{opacity:.35; transform:scale(1);} 50%{opacity:.7; transform:scale(1.05);}}
 
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 72px;
-                left: 0;
-                right: 0;
-                background: rgba(8,11,7,0.98);
-                padding: 2rem;
-                gap: 1.5rem;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .nav-links.open { display: flex; }
-            .nav-ham { display: flex; }
+.orbit-chip{position:absolute; background:rgba(7,9,5,.86); border:1px solid var(--card-border-hover); border-radius:13px;
+  padding:.55rem .85rem; font-size:.66rem; color:var(--muted); backdrop-filter:blur(8px); white-space:nowrap;
+  opacity:0; animation:chip-in .6s var(--ease) forwards; box-shadow:0 10px 26px rgba(0,0,0,.35);}
+.orbit-chip strong{display:block; color:var(--cream); font-family:'JetBrains Mono',monospace; font-size:.94rem; font-weight:600; margin-top:1px;}
+.orbit-chip.c1{top:-6px; left:50%; transform:translateX(-50%); animation-delay:.2s;}
+.orbit-chip.c2{top:50%; right:-64px; transform:translateY(-50%); animation-delay:.36s;}
+.orbit-chip.c3{bottom:-6px; right:6px; animation-delay:.52s;}
+.orbit-chip.c4{bottom:-6px; left:6px; animation-delay:.68s;}
+@keyframes chip-in{from{opacity:0;} to{opacity:1;}}
+@keyframes dot-in{from{opacity:0; transform:scale(.35);} to{opacity:1; transform:scale(1);}}
 
-            .dash-stat .num { font-size: 2rem; }
-        }
+@media (max-width:900px){
+  .hero-member{grid-template-columns:1fr; justify-items:center; text-align:center; gap:1rem;}
+  .hero-member .hero-copy{max-width:44ch;}
+  .canopy-field{width:340px; height:280px; top:-40px; right:-60px; opacity:.7;}
+}
+@media (max-width:420px){
+  .ring-stage{transform:scale(.8); margin:-40px 0;}
+  .orbit-chip{font-size:.6rem; padding:.45rem .65rem;}
+  .orbit-chip strong{font-size:.82rem;}
+}
 
-        @media (max-width: 480px) {
-            .container { padding: 1rem 1rem 2rem; }
-            .dash-card { padding: 1.2rem; }
-            .update-item { flex-direction: column; gap: 0.3rem; }
-            .update-item .date { min-width: auto; }
-        }
-    </style>
+/* ===== GRID / CARDS ===== */
+.dash-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1.3rem; margin-top:1.3rem;}
+.dash-grid.two{grid-template-columns:1fr 1fr;}
+
+/* Asymmetric bento — deliberate hierarchy instead of a uniform card wall */
+.bento{display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:minmax(128px,auto); gap:1.1rem;}
+.bento-public{grid-template-areas:
+    "grove grove harvest token"
+    "grove grove villa villa"
+    "gov games villa villa"
+    "updates updates updates updates";}
+.bento-member{grid-template-areas:
+    "tier tier oil value"
+    "villa villa villa gov"
+    "villa villa villa games"
+    "updates updates updates updates";}
+.area-grove{grid-area:grove;} .area-harvest{grid-area:harvest;} .area-token{grid-area:token;}
+.area-villa{grid-area:villa;} .area-gov{grid-area:gov;} .area-games{grid-area:games;}
+.area-updates{grid-area:updates;} .area-tier{grid-area:tier;} .area-oil{grid-area:oil;}
+.area-value{grid-area:value;}
+
+/* compact cards shouldn't stretch to fill a tall row and leave dead space inside them */
+.area-gov, .area-games{align-self:start;}
+
+.feature-num{font-family:'Playfair Display',serif; font-size:clamp(3.2rem,7vw,4.6rem); font-weight:600; color:var(--gold); line-height:1;}
+
+/* ===== ESTATE VALUE ===== */
+.value-list{display:flex; flex-direction:column; gap:.4rem; margin-top:.2rem;}
+.value-row{display:flex; justify-content:space-between; font-size:.76rem; color:var(--muted);}
+.value-row .v{color:var(--cream); font-weight:500;}
+.value-total-row{display:flex; justify-content:space-between; margin-top:.5rem; padding-top:.5rem; border-top:1px solid rgba(255,255,255,.07); font-family:'Playfair Display',serif; font-size:1.15rem;}
+.value-total-row .v{color:var(--gold);}
+
+/* ===== WEATHER CHIP ===== */
+.weather-chip{display:inline-flex; align-items:center; gap:.5rem; font-size:.78rem; color:var(--muted); margin-top:.8rem;}
+.weather-chip .temp{font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--cream); font-weight:600;}
+.weather-chip .src{font-size:.6rem; color:var(--muted-dim); text-transform:uppercase; letter-spacing:.06em; border:1px solid rgba(255,255,255,.1); border-radius:50px; padding:.1rem .5rem;}
+
+@media (max-width:980px){
+  .bento{grid-template-areas:none !important; grid-template-columns:1fr;}
+  .bento > *{grid-column:auto !important; grid-row:auto !important; align-self:auto !important;}
+}
+.dash-card{
+  background:var(--panel); border:1px solid var(--card-border); border-radius:var(--r-lg);
+  padding:1.6rem; transition:border-color .3s var(--ease), transform .3s var(--ease);
+  display:flex; flex-direction:column;
+}
+.dash-card:hover{border-color:var(--card-border-hover);}
+.dash-card.full{grid-column:1/-1;}
+.dash-card.span2{grid-column:span 2;}
+
+.card-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:.6rem;}
+.card-header h3{font-family:'Playfair Display',serif; font-size:1.12rem; font-weight:600;}
+.badge{font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); background:rgba(197,160,89,.1); padding:.22rem .8rem; border-radius:50px; white-space:nowrap;}
+.badge.live{color:var(--good); background:rgba(142,194,74,.12);}
+.badge.pending{color:var(--amber); background:rgba(224,168,62,.12);}
+
+.dash-stat{display:flex; align-items:baseline; gap:.5rem; margin-bottom:.3rem;}
+.dash-stat .num{font-family:'Playfair Display',serif; font-size:2.3rem; font-weight:600;}
+.dash-stat .num.gold{color:var(--gold);}
+.dash-stat .lbl{font-size:.82rem; color:var(--muted);}
+.dash-desc{font-size:.84rem; color:var(--muted); line-height:1.65;}
+
+.dash-list{list-style:none;}
+.dash-list li{padding:.55rem 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; justify-content:space-between; align-items:center; font-size:.84rem; color:var(--muted);}
+.dash-list li:last-child{border-bottom:none;}
+.dash-list li .label{color:var(--cream);}
+.dash-list li .value{color:var(--gold); font-weight:500;}
+
+.dash-tag{display:inline-block; font-size:.68rem; padding:.2rem .75rem; border-radius:50px; background:rgba(255,255,255,.05); color:var(--muted);}
+.dash-tag.active{background:rgba(142,194,74,.14); color:var(--good);}
+.dash-tag.pending{background:rgba(224,168,62,.14); color:var(--amber);}
+
+.btn-dash{display:inline-block; padding:.6rem 1.4rem; border-radius:50px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); color:var(--cream); text-decoration:none; font-size:.78rem; font-weight:600; text-align:center; transition:.2s var(--ease); cursor:pointer;}
+.btn-dash:hover{background:rgba(255,255,255,.1); border-color:var(--gold);}
+.btn-dash.gold{background:var(--gold); color:#0a0f08; border-color:var(--gold);}
+.btn-dash.gold:hover{background:var(--gold-light);}
+.btn-dash.block{width:100%; margin-top:.9rem;}
+.btn-dash:disabled{opacity:.5; cursor:not-allowed;}
+
+.field{
+  width:100%; padding:.65rem .85rem; border-radius:var(--r-sm); border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.03); color:var(--cream); font-size:.82rem; font-family:inherit; margin-top:.55rem;
+}
+.field:focus{border-color:var(--gold);}
+textarea.field{resize:vertical; min-height:56px;}
+select.field{background:#101409;}
+
+/* ===== VILLA CALENDAR ===== */
+.cal-dow-row{display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem; margin-top:1rem; margin-bottom:.4rem;}
+.cal-dow-row span{text-align:center; font-size:.62rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted-dim);}
+.day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem;}
+.day{
+  aspect-ratio:1; display:flex; justify-content:center; align-items:center;
+  background:rgba(255,255,255,.04); border-radius:10px; font-size:.78rem; cursor:pointer;
+  border:1px solid transparent; transition:.15s var(--ease); color:var(--muted);
+}
+.day.empty{background:none; cursor:default;}
+.day:not(.empty):hover{background:rgba(255,255,255,.09); color:var(--cream);}
+.day.selected{background:var(--gold); color:#0a0f08; font-weight:700; border-color:var(--gold);}
+.day.unavailable{opacity:.25; cursor:not-allowed; text-decoration:line-through;}
+.day.today{border-color:var(--card-border-hover);}
+
+/* ===== UPDATES ===== */
+.update-item{display:flex; gap:1rem; padding:.75rem 0; border-bottom:1px solid rgba(255,255,255,.04);}
+.update-item:last-child{border-bottom:none;}
+.update-item .date{font-size:.68rem; color:var(--muted-dim); min-width:78px; font-weight:600; letter-spacing:.04em; padding-top:.1rem;}
+.update-item .content{color:var(--muted); font-size:.84rem; line-height:1.6;}
+.update-item .content strong{color:var(--cream); font-weight:600;}
+
+/* ===== GAMES ===== */
+.games-grid{display:grid; grid-template-columns:1fr 1fr; gap:.9rem; margin-top:.4rem;}
+.game-tile{background:rgba(255,255,255,.04); padding:1rem; border-radius:var(--r-md); text-align:center; text-decoration:none; border:1px solid rgba(255,255,255,.05); transition:.2s var(--ease);}
+.game-tile:hover{border-color:var(--gold); transform:translateY(-3px);}
+.game-tile .icon{font-size:1.7rem; display:block; margin-bottom:.3rem;}
+.game-tile .name{display:block; color:var(--cream); font-weight:600; font-size:.85rem;}
+.game-tile .sub{font-size:.68rem; color:var(--muted);}
+
+/* ===== TOKEN SNAPSHOT ===== */
+.token-row{display:flex; justify-content:space-between; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.8rem;}
+.token-row:last-child{border-bottom:none;}
+.token-row .k{color:var(--muted);}
+.token-row .v{color:var(--cream); font-family:'JetBrains Mono',monospace; font-size:.76rem;}
+.copy-btn{background:none; border:1px solid rgba(255,255,255,.1); color:var(--muted); border-radius:6px; font-size:.62rem; padding:.15rem .5rem; cursor:pointer; margin-left:.5rem;}
+.copy-btn:hover{border-color:var(--gold); color:var(--gold);}
+
+/* ===== FORMS TOGGLE ===== */
+.action-form{margin-top:1rem; display:flex; flex-direction:column; gap:0; border-top:1px solid rgba(255,255,255,.05); padding-top:1rem;}
+.action-form small.hint{color:var(--muted-dim); font-size:.68rem; margin-top:.4rem;}
+.split-btns{display:flex; gap:.6rem; margin-top:.9rem;}
+.split-btns .btn-dash{flex:1;}
+
+/* ===== TOAST ===== */
+#toast-region{position:fixed; bottom:20px; right:20px; z-index:1000; display:flex; flex-direction:column; gap:10px; max-width:320px;}
+.toast{background:#12160d; border:1px solid var(--card-border-hover); border-left:3px solid var(--gold); border-radius:12px; padding:.85rem 1rem; font-size:.8rem; color:var(--cream); box-shadow:0 12px 30px rgba(0,0,0,.4); animation:toast-in .25s var(--ease);}
+.toast.error{border-left-color:var(--danger);}
+.toast.success{border-left-color:var(--good);}
+@keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+/* ===== FOOTER ===== */
+footer{text-align:center; padding:2.2rem; border-top:1px solid rgba(255,255,255,.04);}
+footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:980px){
+  .nav-links{position:fixed; top:72px; left:0; right:0; flex-direction:column; background:rgba(7,9,5,.97); padding:1.2rem 0; gap:0; transform:translateY(-8px); opacity:0; pointer-events:none; transition:.25s var(--ease);}
+  .nav-links.open{transform:translateY(0); opacity:1; pointer-events:auto;}
+  .nav-links a{padding:.8rem 1.4rem; width:100%; display:block;}
+  .nav-ham{display:flex;}
+  .dash-grid, .dash-grid.two{grid-template-columns:1fr;}
+  .dash-card.span2{grid-column:auto;}
+}
+@media (max-width:560px){
+  .games-grid{grid-template-columns:1fr;}
+  .connect-bar{flex-direction:column; align-items:flex-start;}
+}
+</style>
 </head>
 <body>
 
-    <!-- ===== LOADING OVERLAY ===== -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading Olivium Ecosystem Data...</div>
-    </div>
+<!-- ===== AMBIENT PARTICLES ===== -->
+<div id="ambient" aria-hidden="true"></div>
 
-    <!-- ===== VIDEO BACKGROUND ===== -->
-    <div class="video-bg">
-        <video autoplay loop muted playsinline aria-hidden="true"
-               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
-            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
-        </video>
-        <div class="overlay"></div>
-    </div>
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">OLIVIUM<em>· grove</em></div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#public">Grove</a></li>
+      <li><a href="#member">Dashboard</a></li>
+      <li><a href="#trees">Trees</a></li>
+      <li><a href="#villa">Villa</a></li>
+      <li><a href="#token">OLVM</a></li>
+    </ul>
+    <button class="nav-ham" id="navHam" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
 
-    <!-- ===== NAVIGATION ===== -->
-    <nav>
-        <div class="nav-inner">
-            <div class="nav-logo">OLIVIUM <em>Dashboard</em></div>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="#publicView">Home</a></li>
-                <li><a href="#memberView" id="navMemberLink" style="display:none;">My Dashboard</a></li>
-                <li><a href="membership.html">Membership</a></li>
-                <li><a href="userDash.html" class="nav-cta">Dashboard</a></li>
-            </ul>
-            <button class="nav-ham" id="navHam" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+<div class="ticker" aria-label="Live grove &amp; market ticker">
+  <div class="track" id="ticker-track">
+    <span>🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
+    <span>◎ OLVM $0.412 ▲3.2%</span>
+    <span>🌿 CARBON €81.12/t ▲0.6%</span>
+    <span>🌳 240 Trees · Growing Phase</span>
+    <span>🏡 Villa: 12 Nights Open</span>
+    <span>💎 DAO Treasury Healthy</span>
+    <span aria-hidden="true">🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
+    <span aria-hidden="true">◎ OLVM $0.412 ▲3.2%</span>
+    <span aria-hidden="true">🌿 CARBON €81.12/t ▲0.6%</span>
+    <span aria-hidden="true">🌳 240 Trees · Growing Phase</span>
+    <span aria-hidden="true">🏡 Villa: 12 Nights Open</span>
+    <span aria-hidden="true">💎 DAO Treasury Healthy</span>
+  </div>
+</div>
+
+<div class="main-wrap">
+
+  <div class="connect-bar">
+    <div class="status">
+      <span class="dot inactive" id="statusDot"></span>
+      <span class="label" id="statusText">Public Grove View</span>
+      <span class="wallet" id="walletDisplay">Not connected</span>
+    </div>
+    <button class="btn-connect" id="connectBtn" type="button">Connect Wallet</button>
+  </div>
+
+  <!-- ===================== PUBLIC VIEW ===================== -->
+  <div id="publicView">
+
+    <section class="hero-public" id="public">
+      <svg class="canopy-field" id="canopyField" viewBox="0 0 600 520" aria-hidden="true"></svg>
+      <div class="hero-copy">
+        <span class="eyebrow">San Vincenzo, Tuscany · Est. 2026</span>
+        <h1 class="hero-title">A living grove,<br><em>owned on-chain.</em></h1>
+        <p class="hero-sub">240 olive trees, monitored and stewarded in real time. Every position ties to real oil, real carbon capture and a real Tuscan villa — connect a wallet to see your own.</p>
+        <div class="hero-cta-row">
+          <button class="btn-connect" id="heroConnectBtn" type="button">Connect Wallet</button>
+          <a href="#public-grid" class="hero-link">See the grove ↓</a>
         </div>
-    </nav>
-
-    <!-- ===== MAIN ===== -->
-    <div class="main-wrap">
-        <div class="container">
-
-            <!-- ===== CONNECT BAR ===== -->
-            <div class="connect-bar">
-                <div class="status">
-                    <span class="dot inactive" id="statusDot"></span>
-                    <span id="statusText">Public Ecosystem View</span>
-                    <span class="wallet" id="walletDisplay">Not Connected</span>
-                </div>
-                <div>
-                    <button class="btn-connect" id="connectBtn">Connect Wallet</button>
-                </div>
-            </div>
-
-            <!-- ===== PUBLIC VIEW ===== -->
-            <div id="publicView">
-                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
-                    🌿 Olivium <span style="color:var(--gold);">Ecosystem</span>
-                </h1>
-                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:1.5rem;">
-                    A living Tuscan olive grove — monitored, stewarded, and growing.
-                </p>
-
-                <div class="dash-grid">
-
-                    <!-- Grove Status -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🌳 Grove Status</h3>
-                            <span class="badge">Live</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num gold" id="publicTreeCount">240</span>
-                            <span class="lbl">Olive Trees</span>
-                        </div>
-                        <p class="dash-desc">San Vincenzo, Tuscany · Historic Estate</p>
-                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <span class="dash-tag active">● Growing Phase</span>
-                            <span class="dash-tag">🌿 2026 Season</span>
-                        </div>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Next Event</span>
-                                <span style="color:#fff;">Harvest · October 2026</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Harvest -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🫒 Harvest</h3>
-                            <span class="badge" id="publicHarvestBadge">Preparing</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num" id="publicHarvestYield">—</span>
-                            <span class="lbl" id="publicHarvestLabel">Season Not Started</span>
-                        </div>
-                        <p class="dash-desc">Expected Yield: TBD · Cold-pressed within 24 hours</p>
-                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <span class="dash-tag pending" id="publicHarvestStatus">● Preparing</span>
-                            <span class="dash-tag">📅 October - December</span>
-                        </div>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Status</span>
-                                <span style="color:#ffc107;" id="publicHarvestStatusText">Waiting for Autumn</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Villa Experiences -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🏡 Villa Experience</h3>
-                            <span class="badge">Available</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">Villa Stay</span> <span class="value">Book Now</span></li>
-                            <li><span class="label">Pool Access</span> <span class="value">Seasonal</span></li>
-                            <li><span class="label">Grove Visits</span> <span class="value">By Request</span></li>
-                        </ul>
-                        <div style="margin-top:1rem;">
-                            <button class="btn-dash gold" id="publicBookBtn">Book Experience →</button>
-                        </div>
-                    </div>
-
-                    <!-- Governance -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🗳 Governance</h3>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <p class="dash-desc">Community decisions about the estate's future — harvesting, improvements, and member experiences.</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Status</span>
-                                <span style="color:var(--muted-dim);">Launching Q4 2026</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Latest Updates - Full Width -->
-                    <div class="dash-card full">
-                        <div class="card-header">
-                            <h3>📢 Latest Olivium Updates</h3>
-                            <span class="badge">Live</span>
-                        </div>
-                        <div id="publicUpdates">
-                            <div class="update-item">
-                                <span class="date">July 2026</span>
-                                <span class="content"><strong>Summer grove monitoring</strong> — All 240 trees inspected. Healthy growth observed.</span>
-                            </div>
-                            <div class="update-item">
-                                <span class="date">June 2026</span>
-                                <span class="content"><strong>Villa availability updated</strong> — New dates released for Autumn stays.</span>
-                            </div>
-                            <div class="update-item">
-                                <span class="date">May 2026</span>
-                                <span class="content"><strong>New member experiences added</strong> — Private harvest dinners and olive oil tastings.</span>
-                            </div>
-                            <div class="update-item">
-                                <span class="date">April 2026</span>
-                                <span class="content"><strong>Spring blossom</strong> — The mignole are blooming across the grove.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- ===== MEMBER VIEW ===== -->
-            <div id="memberView">
-                <h1 style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:400; margin-bottom:0.3rem;">
-                    👋 Welcome Back
-                </h1>
-                <p style="color:var(--muted); font-size:0.95rem; margin-bottom:0.2rem;">
-                    Wallet: <span style="font-family:'JetBrains Mono',monospace; color:var(--gold);" id="memberWalletDisplay">—</span>
-                </p>
-                <p style="color:var(--muted-dim); font-size:0.8rem; margin-bottom:1.5rem;">
-                    <span id="memberTierDisplay">—</span> · Member since 2026
-                </p>
-
-                <div class="dash-grid">
-
-                    <!-- Your Membership -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🌿 Your Membership</h3>
-                            <span class="badge" id="memberBadge">Active</span>
-                        </div>
-                        <div class="dash-stat">
-                            <span class="num gold" id="memberTreeCount">—</span>
-                            <span class="lbl">Tree Connection</span>
-                        </div>
-                        <p class="dash-desc" id="memberTreeName">—</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted);">
-                                <span>Experience Credits</span>
-                                <span style="color:#fff;" id="memberCredits">—</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); margin-top:0.3rem;">
-                                <span>Olive Oil Allocation</span>
-                                <span style="color:#ffc107;" id="memberOilAllocation">—</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); margin-top:0.3rem;">
-                                <span>OLVM Tokens</span>
-                                <span style="color:var(--gold);" id="memberOlvmTokens">—</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); margin-top:0.3rem;">
-                                <span>Mignole Positions</span>
-                                <span style="color:var(--gold);" id="memberMignolePositions">—</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Your Benefits -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🎯 Your Benefits</h3>
-                            <span class="badge">2026</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">Olive Oil</span> <span class="value" id="benefitOil">—</span></li>
-                            <li><span class="label">Residency Nights</span> <span class="value" id="benefitNights">—</span></li>
-                            <li><span class="label">Harvest Access</span> <span class="value" id="benefitHarvest">—</span></li>
-                            <li><span class="label">Concierge</span> <span class="value" id="benefitConcierge">—</span></li>
-                            <li><span class="label">Carbon Credits</span> <span class="value" id="benefitCarbon">—</span></li>
-                        </ul>
-                        <div style="margin-top:1rem;">
-                            <button class="btn-dash gold" id="memberClaimOil">Claim Oil Allocation</button>
-                        </div>
-                    </div>
-
-                    <!-- Governance -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>🗳 Governance</h3>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <p class="dash-desc">No active votes at this time. Check back when community proposals are live.</p>
-                        <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--muted);">
-                                <span>Your Voting Power</span>
-                                <span style="color:var(--muted-dim);" id="memberVotingPower">—</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Next Steps -->
-                    <div class="dash-card">
-                        <div class="card-header">
-                            <h3>📋 Next Steps</h3>
-                            <span class="badge">Action</span>
-                        </div>
-                        <ul class="dash-list">
-                            <li><span class="label">📅 Plan Your Stay</span> <button class="btn-dash" style="padding:0.2rem 0.8rem; font-size:0.7rem;" id="memberBookVilla">Book Villa →</button></li>
-                            <li><span class="label">🫒 Harvest Season</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">October 2026</span></li>
-                            <li><span class="label">🌳 Visit Your Tree</span> <span class="value" style="font-size:0.75rem; color:var(--muted-dim);">Plan a visit</span></li>
-                            <li><span class="label">💎 Stake OLVM</span> <button class="btn-dash" style="padding:0.2rem 0.8rem; font-size:0.7rem;" id="memberStakeBtn">Stake →</button></li>
-                        </ul>
-                    </div>
-
-                    <!-- Latest Updates - Full Width -->
-                    <div class="dash-card full">
-                        <div class="card-header">
-                            <h3>📢 Member Updates</h3>
-                            <span class="badge">Personal</span>
-                        </div>
-                        <div id="memberUpdates">
-                            <div class="update-item">
-                                <span class="date">July 2026</span>
-                                <span class="content"><strong>Your tree #124</strong> — Summer growth monitored. Healthy and thriving.</span>
-                            </div>
-                            <div class="update-item">
-                                <span class="date">June 2026</span>
-                                <span class="content"><strong>Harvest preparation</strong> — You are invited to the October harvest. Save the date.</span>
-                            </div>
-                            <div class="update-item">
-                                <span class="date">May 2026</span>
-                                <span class="content"><strong>Welcome to Olivium</strong> — Your membership is active. Explore your benefits.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
+        <div class="weather-chip hidden" id="weatherChip">
+          <span id="weather-emoji">⛅</span>
+          <span class="temp" id="weather-temp">—</span>
+          <span id="weather-desc">—</span>
+          <span class="src">Live · San Vincenzo</span>
         </div>
+      </div>
+    </section>
+
+    <div class="dash-grid bento bento-public" id="public-grid">
+      <div class="dash-card area-grove">
+        <div class="card-header"><h3>🌳 Grove Status</h3><span class="badge live">Live</span></div>
+        <div class="feature-num">240</div>
+        <p class="dash-desc" style="margin-top:.3rem;">Olive Trees · San Vincenzo, Tuscany — Historic Estate</p>
+        <div style="margin-top:1.1rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+          <span class="dash-tag active">● Growing Phase</span>
+          <span class="dash-tag">2026 Season</span>
+        </div>
+      </div>
+
+      <div class="dash-card area-harvest">
+        <div class="card-header"><h3>🫒 Harvest</h3><span class="badge pending">Preparing</span></div>
+        <div class="dash-stat"><span class="num">—</span><span class="lbl">Season not started</span></div>
+        <p class="dash-desc">Expected yield: TBD · Cold-pressed within 24 hours.</p>
+        <span class="dash-tag pending" style="margin-top:.8rem; align-self:flex-start;">Oct – Dec</span>
+      </div>
+
+      <div class="dash-card area-token">
+        <div class="card-header"><h3>◎ OLVM</h3><span class="badge">Utility</span></div>
+        <div class="token-row"><span class="k">Price</span><span class="v">$0.412</span></div>
+        <div class="token-row"><span class="k">Contract</span><span class="v">8xQ2…f91K <button class="copy-btn" id="copyContract" type="button">Copy</button></span></div>
+      </div>
+
+      <div class="dash-card area-villa" style="justify-content:center;">
+        <div class="card-header"><h3>🏡 Villa Experience</h3><span class="badge live">Available</span></div>
+        <ul class="dash-list">
+          <li><span class="label">Villa stay</span><span class="value">Book now</span></li>
+          <li><span class="label">Pool access</span><span class="value">Seasonal</span></li>
+          <li><span class="label">Grove visits</span><span class="value">By request</span></li>
+        </ul>
+        <button class="btn-dash gold block" id="btn-book-public" type="button">Connect to book →</button>
+      </div>
+
+      <div class="dash-card area-gov">
+        <div class="card-header"><h3>🗳 Governance</h3><span class="badge">Soon</span></div>
+        <p class="dash-desc">Community votes on harvest, improvements and experiences.</p>
+        <span class="dash-tag" style="margin-top:.8rem; align-self:flex-start;">Q4 2026</span>
+      </div>
+
+      <div class="dash-card area-games">
+        <div class="card-header"><h3>🎮 Games</h3><span class="badge">Free</span></div>
+        <p class="dash-desc">Seasonal harvest games — earn bonus OLVM.</p>
+        <button class="btn-dash block" id="btn-arcade-public" type="button">Enter arcade</button>
+      </div>
+
+      <div class="dash-card area-updates">
+        <div class="card-header"><h3>📢 Latest Olivium Updates</h3><span class="badge live">Live</span></div>
+        <div class="update-item"><span class="date">Jul 2026</span><span class="content"><strong>Summer grove monitoring</strong> — all 240 trees inspected. Healthy growth observed.</span></div>
+        <div class="update-item"><span class="date">Jun 2026</span><span class="content"><strong>Villa availability updated</strong> — new dates released for autumn stays.</span></div>
+        <div class="update-item"><span class="date">May 2026</span><span class="content"><strong>New member experiences</strong> — private harvest dinners and olive oil tastings.</span></div>
+        <div class="update-item"><span class="date">Apr 2026</span><span class="content"><strong>Spring blossom</strong> — the mignole are blooming across the grove.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MEMBER VIEW ===================== -->
+  <div id="memberView" class="hidden">
+
+    <section class="hero-member" id="member">
+      <div class="ring-stage">
+        <svg id="groveRing" viewBox="0 0 150 150" role="img" aria-label="Ring diagram of your tree positions, colour-coded by health"></svg>
+        <div class="orbit-chip c1">Mignole<strong id="metric-mignole">—</strong></div>
+        <div class="orbit-chip c2">OLVM<strong id="metric-olvm">—</strong></div>
+        <div class="orbit-chip c3">Solana<strong id="metric-sol">—</strong></div>
+        <div class="orbit-chip c4">Tier<strong id="metric-tier-name-chip">—</strong></div>
+      </div>
+      <div class="hero-copy">
+        <span class="eyebrow">Welcome back, <span id="memberWalletLine">—</span></span>
+        <h1 class="hero-title">Your grove is <em id="grove-health-word">thriving</em>.</h1>
+        <p class="hero-sub" id="grove-health-line">Loading grove health…</p>
+        <div class="weather-chip hidden" id="weatherChipMember">
+          <span id="weather-emoji-m">⛅</span>
+          <span class="temp" id="weather-temp-m">—</span>
+          <span id="weather-desc-m">—</span>
+          <span class="src">Live · San Vincenzo</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="dash-grid bento bento-member">
+
+      <!-- OLV Tier -->
+      <div class="dash-card area-tier">
+        <div class="card-header"><h3>🌿 Membership</h3><span class="badge" id="memberBadge">Active</span></div>
+        <div class="dash-stat"><span class="num gold" id="metric-tier-olv">—</span><span class="lbl" id="memberTierLine">—</span></div>
+        <div style="margin-top:.8rem; height:6px; border-radius:4px; background:rgba(255,255,255,.06); overflow:hidden;">
+          <div id="tier-progress" style="height:100%; width:0%; background:linear-gradient(90deg,var(--olive-light),var(--gold)); transition:width .4s var(--ease);"></div>
+        </div>
+        <small class="hint" id="tier-progress-label" style="margin-top:.5rem;display:block;">—</small>
+      </div>
+
+      <!-- Estate Value (computed, not decorative) -->
+      <div class="dash-card area-value">
+        <div class="card-header"><h3>Estate Value</h3><span class="badge">Est.</span></div>
+        <div class="value-list">
+          <div class="value-row"><span>🫒 Oil</span><span class="v" id="val-oil">—</span></div>
+          <div class="value-row"><span>🌿 Carbon</span><span class="v" id="val-carbon">—</span></div>
+          <div class="value-row"><span>◎ OLVM</span><span class="v" id="val-olvm">—</span></div>
+        </div>
+        <div class="value-total-row"><span>Total</span><span class="v" id="val-total">—</span></div>
+        <small class="hint" style="margin-top:.5rem;display:block;">At today's reference prices — not a guaranteed payout.</small>
+      </div>
+
+      <!-- Oil Allocation -->
+      <div class="dash-card area-oil">
+        <div class="card-header"><h3>🫒 Oil Allocation</h3><span class="badge pending" id="oilBadge">Pending</span></div>
+        <div class="dash-stat"><span class="num gold" id="oil-claim">—</span><span class="lbl">available</span></div>
+        <small class="hint" id="oil-entitled-note">—</small>
+
+        <div class="split-btns">
+          <button class="btn-dash" id="btn-claim" type="button">Claim delivery</button>
+          <button class="btn-dash" id="btn-sell" type="button">Sell to DAO</button>
+        </div>
+
+        <div id="claim-form" class="action-form hidden">
+          <input type="number" id="claim-litres" class="field" placeholder="Litres to claim" min="0" step="0.1">
+          <input type="text" id="claim-name" class="field" placeholder="Recipient name">
+          <textarea id="claim-address" class="field" placeholder="Shipping address" rows="2"></textarea>
+          <button class="btn-dash gold block" id="btn-claim-submit" type="button">Confirm claim</button>
+        </div>
+
+        <div id="sell-form" class="action-form hidden">
+          <input type="number" id="sell-litres" class="field" placeholder="Litres to sell" min="0" step="0.1">
+          <select id="sell-currency" class="field">
+            <option value="OLVM">Receive OLVM</option>
+            <option value="SOL">Receive SOL</option>
+          </select>
+          <button class="btn-dash gold block" id="btn-sell-submit" type="button">Confirm sell to DAO</button>
+        </div>
+      </div>
+
+      <!-- Villa Booking (dominant secondary feature) -->
+      <div class="dash-card area-villa" id="villa">
+        <div class="card-header"><h3>🏡 Villa Stay</h3><span class="badge" id="villa-nights">— nights</span></div>
+        <p class="dash-desc">Tap open nights to build your stay, then confirm with your details.</p>
+        <div class="cal-dow-row"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+        <div class="day-grid" id="villa-days"></div>
+        <div class="action-form" style="border-top:none; padding-top:1rem;">
+          <input type="text" id="villa-name" class="field" placeholder="Full name">
+          <input type="email" id="villa-email" class="field" placeholder="Email for booking confirmation">
+          <textarea id="villa-notes" class="field" placeholder="Requests (optional)" rows="2"></textarea>
+          <button class="btn-dash gold block" id="btn-book" type="button">Submit residency request</button>
+        </div>
+      </div>
+
+      <!-- Governance -->
+      <div class="dash-card area-gov">
+        <div class="card-header"><h3>🗳 Governance</h3><span class="badge">Soon</span></div>
+        <p class="dash-desc">No active votes right now.</p>
+        <div class="dash-list" style="margin-top:.6rem;">
+          <li style="display:flex;justify-content:space-between;"><span>Voting power</span><span class="value" id="voting-power">—</span></li>
+        </div>
+      </div>
+
+      <!-- Web Games -->
+      <div class="dash-card area-games">
+        <div class="card-header"><h3>🎮 Games</h3><span class="badge">Free</span></div>
+        <div class="games-grid">
+          <a class="game-tile" href="https://puzzle-deploy.vercel.app" target="_blank" rel="noopener noreferrer">
+            <span class="icon">🧩</span><span class="name">Puzzle</span>
+          </a>
+          <a class="game-tile" href="https://olive-clean.vercel.app/webgame3.html" target="_blank" rel="noopener noreferrer">
+            <span class="icon">🌳</span><span class="name">Estate</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Member updates -->
+      <div class="dash-card area-updates">
+        <div class="card-header"><h3>📢 Member Updates</h3><span class="badge">Personal</span></div>
+        <div id="member-updates"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== TREES (full estate, always visible) ===================== -->
+  <section class="trees-section" id="trees">
+    <div class="trees-head">
+      <h1 class="page-title" style="margin-bottom:0;">🌳 The Estate Grove</h1>
+      <div class="trees-view-toggle">
+        <button class="active" id="tree-view-map" type="button">🗺️ Map</button>
+        <button id="tree-view-list" type="button">📋 List</button>
+      </div>
+    </div>
+    <p class="page-sub">All 16 trees across San Vincenzo. Your own positions are marked — tap any tree for its live detail.</p>
+
+    <div id="tree-map-view">
+      <div class="tree-map-container">
+        <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Map of the estate's olive trees, colour-coded by health">
+          <rect width="800" height="340" fill="rgba(35,52,22,.18)" rx="12"/>
+          <line x1="40" y1="115" x2="760" y2="115" stroke="rgba(255,255,255,.04)"/>
+          <line x1="40" y1="225" x2="760" y2="225" stroke="rgba(255,255,255,.04)"/>
+          <text x="400" y="34" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.16)" font-weight="600" letter-spacing="4">NORTH TERRACE</text>
+          <text x="400" y="326" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.16)" font-weight="600" letter-spacing="4">SOUTH SLOPE</text>
+          <g id="tree-map-dots"></g>
+        </svg>
+      </div>
+      <p class="map-hint">🟢 Healthy (85%+) · 🟡 Moderate (60–84%) · 🔴 Needs attention (&lt;60%) · ✦ Your positions</p>
     </div>
 
-    <!-- ===== FOOTER ===== -->
-    <footer style="position:relative; z-index:10; text-align:center; padding:2rem; border-top:1px solid rgba(255,255,255,0.04);">
-        <p style="color:var(--muted-dim); font-size:0.7rem; letter-spacing:0.06em;">
-            © 2026 Olivium · San Vincenzo, Tuscany
-        </p>
-    </footer>
+    <div id="tree-list-view" class="hidden">
+      <div class="tree-list" id="tree-list-container"></div>
+    </div>
+  </section>
 
-    <!-- ===== JAVASCRIPT ===== -->
-    <script>
-        // ============================================================
-        // 1. DATA LOADING — Simulated real data from the first dashboard
-        // ============================================================
+</div>
 
-        // Mock data that would come from blockchain/API
-        const ecosystemData = {
-            // Grove data
-            treeCount: 240,
-            harvestSeason: 'Preparing',
-            harvestYield: '—',
-            harvestStatus: 'Waiting for Autumn',
+<footer>
+  <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
+</footer>
 
-            // Wallet data (simulated)
-            wallet: {
-                address: '8x72...92KD',
-                olvmBalance: 1247.5,
-                solBalance: 3.42,
-                mignolePositions: 3,
-                olvBalance: 2500,
-                tier: 'Gold Member',
-                treeId: 124,
-                treeName: 'Tree #124 · Named Olive',
-                credits: '7 / 7',
-                oilAllocation: '5L · Pending Harvest',
-                benefits: {
-                    oil: '5L EVOO',
-                    nights: '7 Nights',
-                    harvest: 'Invited',
-                    concierge: 'Available',
-                    carbon: '0.8 t'
-                },
-                votingPower: '250 OLV'
-            }
-        };
+<div id="toast-region" role="status" aria-live="polite"></div>
 
-        // ============================================================
-        // 2. UI UPDATE FUNCTIONS
-        // ============================================================
+<div id="tree-detail-modal" class="tree-modal-overlay hidden">
+  <div class="tree-modal">
+    <button class="tree-modal-close" id="tree-modal-close-btn" type="button" aria-label="Close">✕</button>
+    <h2 id="tree-modal-name">—</h2>
+    <p class="sub" id="tree-modal-sub">—</p>
 
-        function updatePublicView(data) {
-            // Tree count
-            document.getElementById('publicTreeCount').textContent = data.treeCount;
+    <div class="tree-modal-tabs">
+      <button class="active" data-tab="overview" type="button">Overview</button>
+      <button data-tab="environment" type="button">🌡️ Environment</button>
+      <button data-tab="metadata" type="button">Metadata</button>
+    </div>
 
-            // Harvest
-            document.getElementById('publicHarvestYield').textContent = data.harvestYield;
-            document.getElementById('publicHarvestLabel').textContent = `Season ${data.harvestSeason}`;
-            document.getElementById('publicHarvestStatusText').textContent = data.harvestStatus;
+    <div class="tree-modal-tab active" id="tree-tab-overview">
+      <div class="tree-modal-stats">
+        <div class="tree-modal-stat"><span class="num" id="modal-age">—</span><span class="lbl">Age (yrs)</span></div>
+        <div class="tree-modal-stat"><span class="num" id="modal-height">—</span><span class="lbl">Height (m)</span></div>
+        <div class="tree-modal-stat"><span class="num" id="modal-yield">—</span><span class="lbl">Yield (L/yr)</span></div>
+      </div>
+      <div class="tree-modal-sensor-grid">
+        <div class="tree-modal-sensor"><span class="slbl">🌿 Variety</span><span class="sval" id="modal-variety">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">📍 Zone</span><span class="sval" id="modal-zone">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">💚 Health</span><span class="sval" id="modal-health">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">🌍 Carbon/yr</span><span class="sval" id="modal-carbon">—</span></div>
+      </div>
+    </div>
 
-            // Badge
-            const badge = document.getElementById('publicHarvestBadge');
-            if (data.harvestSeason === 'Preparing') {
-                badge.textContent = 'Preparing';
-                badge.className = 'badge pending';
-            } else {
-                badge.textContent = data.harvestSeason;
-                badge.className = 'badge';
-            }
+    <div class="tree-modal-tab" id="tree-tab-environment">
+      <div class="tree-modal-sensor-grid">
+        <div class="tree-modal-sensor"><span class="slbl">💧 Soil moisture</span><span class="sval" id="modal-soil">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">🌡️ Soil temp</span><span class="sval" id="modal-soiltemp">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">☀️ Light</span><span class="sval" id="modal-light">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">🌬️ CO₂</span><span class="sval" id="modal-co2">—</span></div>
+      </div>
+      <small class="hint" style="display:block;margin-top:.7rem;">Illustrative sensor readings — not yet wired to live field hardware.</small>
+    </div>
+
+    <div class="tree-modal-tab" id="tree-tab-metadata">
+      <div class="tree-modal-sensor-grid">
+        <div class="tree-modal-sensor"><span class="slbl">Tree ID</span><span class="sval mono" id="modal-id">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">Registered</span><span class="sval" id="modal-date">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">Total shares</span><span class="sval" id="modal-shares">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">GPS</span><span class="sval mono" id="modal-gps">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<!-- 
+    ===== THIS LOADS THE REAL DATA FROM YOUR TYPESCRIPT FILES =====
+    The dashboard.ts file imports:
+    - connection.ts (Solana wallet connection)
+    - dashboard-data.ts (real blockchain data fetching)
+    
+    This will fetch real on-chain data when run through Vite with:
+    - @solana/web3.js installed
+    - Proper environment variables (.env file)
+    - RPC endpoints configured
+-->
+<script type="module" src="./dashboard.ts"></script>
+
+<!-- 
+    ===== UI HELPER SCRIPTS =====
+    These handle UI interactions (nav toggles, tree maps, etc.) that are
+    independent of the data loading. The dashboard.ts will update the
+    data elements.
+-->
+<script>
+'use strict';
+
+// ===== Mobile nav toggle =====
+const ham = document.getElementById('navHam');
+const links = document.getElementById('navLinks');
+if (ham && links) {
+    ham.addEventListener('click', function() {
+        const open = this.classList.toggle('open');
+        links.classList.toggle('open');
+        this.setAttribute('aria-expanded', String(open));
+    });
+    links.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', function() {
+            ham.classList.remove('open');
+            links.classList.remove('open');
+            ham.setAttribute('aria-expanded', 'false');
+        });
+    });
+}
+
+// ===== Copy contract address =====
+document.getElementById('copyContract')?.addEventListener('click', async function() {
+    try {
+        await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K');
+        showToast('Contract address copied.', 'success');
+    } catch {
+        showToast('Copy failed — select and copy manually.', 'error');
+    }
+});
+
+// ===== Toast system =====
+function showToast(message, type = 'default') {
+    const region = document.getElementById('toast-region');
+    if (!region) return;
+    const el = document.createElement('div');
+    el.className = 'toast' + (type !== 'default' ? ' ' + type : '');
+    el.textContent = message;
+    region.appendChild(el);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = '.3s';
+        setTimeout(() => el.remove(), 300);
+    }, 4200);
+}
+
+// ===== Tree map view toggle =====
+document.getElementById('tree-view-map')?.addEventListener('click', function(e) {
+    this.classList.add('active');
+    document.getElementById('tree-view-list')?.classList.remove('active');
+    document.getElementById('tree-map-view')?.classList.remove('hidden');
+    document.getElementById('tree-list-view')?.classList.add('hidden');
+});
+
+document.getElementById('tree-view-list')?.addEventListener('click', function(e) {
+    this.classList.add('active');
+    document.getElementById('tree-view-map')?.classList.remove('active');
+    document.getElementById('tree-list-view')?.classList.remove('hidden');
+    document.getElementById('tree-map-view')?.classList.add('hidden');
+});
+
+// ===== Tree detail modal =====
+function closeTreeDetail() {
+    document.getElementById('tree-detail-modal')?.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+document.getElementById('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
+document.getElementById('tree-detail-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeTreeDetail();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeTreeDetail();
+});
+
+// ===== Tree modal tabs =====
+document.querySelectorAll('.tree-modal-tabs button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tree-modal-tabs button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.tree-modal-tab').forEach(c => c.classList.remove('active'));
+        document.getElementById('tree-tab-' + this.dataset.tab)?.classList.add('active');
+    });
+});
+
+// ===== Ambient leaves =====
+(function renderAmbient() {
+    const container = document.getElementById('ambient');
+    if (!container) return;
+    const glyphs = ['🍃', '🍂', '🌿'];
+    for (let i = 0; i < 10; i++) {
+        const el = document.createElement('div');
+        el.className = 'leaf';
+        el.textContent = glyphs[i % glyphs.length];
+        el.style.cssText = `
+            position: absolute;
+            left: ${Math.random() * 100}%;
+            bottom: -24px;
+            font-size: ${13 + Math.random() * 11}px;
+            opacity: 0;
+            animation: float-leaf ${26 + Math.random() * 34}s linear infinite;
+            animation-delay: ${Math.random() * 30}s;
+            pointer-events: none;
+        `;
+        container.appendChild(el);
+    }
+})();
+
+// ===== Add leaf animation to styles (if not already present) =====
+(function injectLeafKeyframes() {
+    if (document.getElementById('leaf-keyframes')) return;
+    const style = document.createElement('style');
+    style.id = 'leaf-keyframes';
+    style.textContent = `
+        @keyframes float-leaf {
+            0%{transform:translateY(0) rotate(0deg); opacity:0;}
+            8%{opacity:.05;}
+            92%{opacity:.05;}
+            100%{transform:translateY(-110vh) rotate(320deg); opacity:0;}
         }
+        @media (prefers-reduced-motion:reduce){.leaf{animation:none; display:none;}}
+    `;
+    document.head.appendChild(style);
+})();
 
-        function updateMemberView(data) {
-            const w = data.wallet;
-
-            // Wallet display
-            document.getElementById('memberWalletDisplay').textContent = w.address;
-
-            // Tier
-            document.getElementById('memberTierDisplay').textContent = w.tier;
-
-            // Membership
-            document.getElementById('memberTreeCount').textContent = w.treeId || '—';
-            document.getElementById('memberTreeName').textContent = w.treeName || '—';
-            document.getElementById('memberCredits').textContent = w.credits || '—';
-            document.getElementById('memberOilAllocation').textContent = w.oilAllocation || '—';
-            document.getElementById('memberOlvmTokens').textContent = w.olvmBalance ? `${w.olvmBalance} OLVM` : '—';
-            document.getElementById('memberMignolePositions').textContent = w.mignolePositions || '—';
-
-            // Benefits
-            document.getElementById('benefitOil').textContent = w.benefits.oil || '—';
-            document.getElementById('benefitNights').textContent = w.benefits.nights || '—';
-            document.getElementById('benefitHarvest').textContent = w.benefits.harvest || '—';
-            document.getElementById('benefitConcierge').textContent = w.benefits.concierge || '—';
-            document.getElementById('benefitCarbon').textContent = w.benefits.carbon || '—';
-
-            // Voting power
-            document.getElementById('memberVotingPower').textContent = w.votingPower || '—';
+// ===== Canopy field decoration =====
+(function renderCanopyField() {
+    const svg = document.getElementById('canopyField');
+    if (!svg) return;
+    const parts = [];
+    const cols = 12, rows = 10;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const seed = row * 31 + col * 17;
+            const jitterX = (seed % 13) - 6;
+            const jitterY = ((seed * 7) % 11) - 5;
+            const x = 40 + col * 46 + jitterX;
+            const y = 20 + row * 46 + jitterY;
+            const rad = 3 + (seed % 5);
+            const isGold = seed % 9 === 0;
+            const delay = ((row + col) * 0.03).toFixed(2);
+            parts.push(`<circle cx="${x}" cy="${y}" r="${rad}" fill="${isGold ? 'var(--gold)' : 'var(--olive-light)'}" opacity="${isGold ? .55 : .3}" style="animation-delay:${delay}s"/>`);
         }
+    }
+    svg.innerHTML = parts.join('');
+})();
 
-        // ============================================================
-        // 3. CONNECT / DISCONNECT LOGIC
-        // ============================================================
+// ===== Connect button handler (will be overridden by dashboard.ts) =====
+// This ensures the connect button works with the dashboard.ts wallet logic
+document.getElementById('connectBtn')?.addEventListener('click', function() {
+    // The dashboard.ts will handle the actual connection via its own event listeners
+    // We just trigger the click on the btn-wallet element that dashboard.ts uses
+    const walletBtn = document.getElementById('btn-wallet');
+    if (walletBtn) {
+        walletBtn.click();
+    } else {
+        // Fallback: dispatch a custom event that dashboard.ts might be listening for
+        window.dispatchEvent(new CustomEvent('olivium:connect-requested'));
+    }
+});
 
-        let isConnected = false;
+document.getElementById('heroConnectBtn')?.addEventListener('click', function() {
+    const walletBtn = document.getElementById('btn-wallet');
+    if (walletBtn) {
+        walletBtn.click();
+    } else {
+        window.dispatchEvent(new CustomEvent('olivium:connect-requested'));
+    }
+});
 
-        const publicView = document.getElementById('publicView');
-        const memberView = document.getElementById('memberView');
-        const connectBtn = document.getElementById('connectBtn');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const walletDisplay = document.getElementById('walletDisplay');
-        const navMemberLink = document.getElementById('navMemberLink');
-        const loadingOverlay = document.getElementById('loadingOverlay');
+// ===== Public book button =====
+document.getElementById('btn-book-public')?.addEventListener('click', function() {
+    const walletBtn = document.getElementById('btn-wallet');
+    if (walletBtn) {
+        walletBtn.click();
+    } else {
+        window.dispatchEvent(new CustomEvent('olivium:connect-requested'));
+    }
+});
 
-        function toggleView(connected) {
-            isConnected = connected;
-            if (connected) {
-                publicView.classList.add('hidden');
-                memberView.classList.add('active');
-                statusDot.className = 'dot';
-                statusText.textContent = 'Member Connected';
-                walletDisplay.textContent = ecosystemData.wallet.address;
-                connectBtn.textContent = 'Disconnect';
-                connectBtn.className = 'btn-connect outline';
-                navMemberLink.style.display = 'block';
+console.log('🌿 OLIVIUM Grove Dashboard loaded');
+console.log('📊 Data will be loaded from dashboard.ts');
+console.log('🔗 Make sure you have Vite running with all dependencies');
+</script>
 
-                // Update member data with the ecosystem data
-                updateMemberView(ecosystemData);
-
-            } else {
-                publicView.classList.remove('hidden');
-                memberView.classList.remove('active');
-                statusDot.className = 'dot inactive';
-                statusText.textContent = 'Public Ecosystem View';
-                walletDisplay.textContent = 'Not Connected';
-                connectBtn.textContent = 'Connect Wallet';
-                connectBtn.className = 'btn-connect';
-                navMemberLink.style.display = 'none';
-            }
-        }
-
-        // ============================================================
-        // 4. EVENT LISTENERS
-        // ============================================================
-
-        // Connect button
-        connectBtn.addEventListener('click', function() {
-            toggleView(!isConnected);
-        });
-
-        // Mobile nav
-        const ham = document.getElementById('navHam');
-        const links = document.getElementById('navLinks');
-        if (ham && links) {
-            ham.addEventListener('click', function() {
-                this.classList.toggle('open');
-                links.classList.toggle('open');
-            });
-            document.querySelectorAll('#navLinks a').forEach(link => {
-                link.addEventListener('click', function() {
-                    ham.classList.remove('open');
-                    links.classList.remove('open');
-                });
-            });
-        }
-
-        // Member nav link - scroll to member view
-        document.getElementById('navMemberLink').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('memberView').scrollIntoView({ behavior: 'smooth' });
-        });
-
-        // Public book button
-        document.getElementById('publicBookBtn').addEventListener('click', function() {
-            alert('🏡 Villa booking would open here. Connect your wallet to see personalized availability.');
-        });
-
-        // Member book villa
-        document.getElementById('memberBookVilla').addEventListener('click', function() {
-            alert('🏡 Opening villa booking for your membership...');
-        });
-
-        // Member claim oil
-        document.getElementById('memberClaimOil').addEventListener('click', function() {
-            alert('🫒 Claiming your olive oil allocation. This would trigger a transaction on-chain.');
-        });
-
-        // Member stake
-        document.getElementById('memberStakeBtn').addEventListener('click', function() {
-            alert('💎 Staking OLVM tokens. This would open the staking interface.');
-        });
-
-        // ============================================================
-        // 5. INITIALIZATION
-        // ============================================================
-
-        // Update public view with data
-        updatePublicView(ecosystemData);
-
-        // Hide loading after 1.5s
-        setTimeout(() => {
-            loadingOverlay.classList.add('hidden');
-        }, 1500);
-
-        // If wallet was previously connected (simulated)
-        // For demo, we start disconnected
-        // toggleView(false); // already default
-
-        console.log('🌿 Olivium Ecosystem Dashboard');
-        console.log('📊 Data loaded:', ecosystemData);
-        console.log('🔐 Click "Connect Wallet" to see member view');
-    </script>
 </body>
 </html>
