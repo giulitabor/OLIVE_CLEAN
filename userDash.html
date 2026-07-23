@@ -742,19 +742,47 @@ function showError(message) { showToast(message, 'error'); }
 function showSuccess(message) { showToast(message, 'success'); }
 
 // ============================================================
-// SOLANA CONNECTION
+// SOLANA CONNECTION — FIXED: Wait for Solana Web3 to load
 // ============================================================
 
+function waitForSolanaWeb3() {
+  return new Promise((resolve) => {
+    if (window.solanaWeb3) {
+      resolve();
+      return;
+    }
+    // Check every 100ms for up to 5 seconds
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (window.solanaWeb3) {
+        clearInterval(interval);
+        resolve();
+      } else if (attempts > 50) {
+        clearInterval(interval);
+        console.warn('Solana Web3 not loaded after 5 seconds');
+        resolve();
+      }
+    }, 100);
+  });
+}
+
 async function initSolanaConnection() {
+  // Wait for Solana Web3 to be available
+  await waitForSolanaWeb3();
+
   if (!window.solanaWeb3) {
-    console.error('Solana Web3 not loaded');
+    console.warn('Solana Web3 not available — using demo mode only');
     return null;
   }
+
   solanaConnection = new solanaWeb3.Connection(CONFIG.solanaRpc, 'confirmed');
+  console.log('✅ Solana connection initialized');
   return solanaConnection;
 }
 
 async function fetchSolBalance(pubkey) {
+  if (!solanaConnection) return 0;
   try {
     const balance = await solanaConnection.getBalance(pubkey);
     return balance / 1e9;
@@ -762,6 +790,7 @@ async function fetchSolBalance(pubkey) {
 }
 
 async function fetchOlvmBalance(pubkey) {
+  if (!solanaConnection) return 0;
   try {
     const mint = new solanaWeb3.PublicKey(CONFIG.olvmMint);
     const tokenAccounts = await solanaConnection.getParsedTokenAccountsByOwner(pubkey, { mint });
@@ -868,6 +897,9 @@ window.connectWallet = async function connectWallet() {
   btns.forEach((b) => { if (b) { b.disabled = true; b.textContent = 'Connecting…'; } });
 
   try {
+    // Wait for Solana Web3 to be available
+    await waitForSolanaWeb3();
+
     if (window.solana && window.solana.isPhantom) {
       const resp = await window.solana.connect();
       solanaWallet = window.solana;
@@ -976,6 +1008,9 @@ window.connectDemo = async function connectDemo() {
 
 async function restoreSession() {
   console.log('🔄 Checking for saved session...');
+
+  // Wait for Solana Web3 to be available
+  await waitForSolanaWeb3();
 
   if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
     try {
@@ -1385,7 +1420,6 @@ function bindActions() {
 // ============================================================
 
 function openTreeDetail(treeId) {
-  // This is a placeholder — real tree data would come from the program
   setText('tree-modal-name', `Tree #${treeId} — Frantoio`);
   setText('tree-modal-sub', 'North Terrace · San Vincenzo, Tuscany');
   $('tree-detail-modal')?.classList.remove('hidden');
@@ -1440,7 +1474,6 @@ function renderCanopyField() {
 // ============================================================
 
 function renderTreeMap() {
-  // Demo trees for the map
   const demoMapTrees = [
     { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, x: 90, y: 65, owned: false },
     { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, x: 160, y: 80, owned: true },
@@ -1482,6 +1515,8 @@ async function init() {
   renderCanopyField();
   renderTreeMap();
 
+  // Wait for Solana Web3 before initializing connection
+  await waitForSolanaWeb3();
   await initSolanaConnection();
 
   const restored = await restoreSession();
