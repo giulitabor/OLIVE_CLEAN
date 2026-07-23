@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
 
 <style>
-/* ===== All styles from prodashboad.html go here ===== */
-:root{
+/* ===== All styles ===== */
+:root {
   --charcoal:#070905;
   --charcoal-2:#0d1109;
   --panel:rgba(255,255,255,.035);
@@ -41,8 +41,7 @@
 html{scroll-behavior:smooth;}
 body{
   font-family:'Inter',sans-serif;
-  background:
-    radial-gradient(ellipse 100% 60% at 15% -10%, rgba(74,107,30,.18), transparent 60%),
+  background:radial-gradient(ellipse 100% 60% at 15% -10%, rgba(74,107,30,.18), transparent 60%),
     radial-gradient(ellipse 80% 50% at 100% 0%, rgba(197,160,89,.08), transparent 55%),
     var(--charcoal);
   color:var(--cream);
@@ -52,8 +51,12 @@ body{
 }
 body::before{
   content:'';
-  position:fixed; inset:0; z-index:1; pointer-events:none;
-  opacity:.05; mix-blend-mode:overlay;
+  position:fixed;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  opacity:.05;
+  mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 nav, .ticker, .main-wrap, footer{position:relative; z-index:2;}
@@ -64,10 +67,13 @@ button{font-family:inherit;}
 .mono{font-family:'JetBrains Mono',monospace;}
 
 nav{
-  position:sticky; top:0; z-index:100;
+  position:sticky;
+  top:0;
+  z-index:100;
   padding:0 clamp(16px,4vw,2rem);
   height:72px;
-  display:flex; align-items:center;
+  display:flex;
+  align-items:center;
   background:rgba(7,9,5,.72);
   backdrop-filter:blur(14px);
   border-bottom:1px solid rgba(255,255,255,.05);
@@ -93,9 +99,16 @@ nav{
 .main-wrap{max-width:1280px; margin:0 auto; padding:1.6rem clamp(16px,4vw,2rem) 4rem;}
 
 .connect-bar{
-  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
-  background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:16px;
-  padding:.85rem 1.4rem; margin:1.4rem 0 2rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:1rem;
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:16px;
+  padding:.85rem 1.4rem;
+  margin:1.4rem 0 2rem;
 }
 .connect-bar .status{display:flex; align-items:center; gap:.7rem; flex-wrap:wrap;}
 .status .dot{width:8px; height:8px; border-radius:50%; background:var(--olive-light); box-shadow:0 0 8px var(--olive-light);}
@@ -157,16 +170,8 @@ nav{
 
 .dash-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1.3rem; margin-top:1.3rem;}
 .bento{display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:minmax(128px,auto); gap:1.1rem;}
-.bento-public{grid-template-areas:
-    "grove grove harvest token"
-    "grove grove villa villa"
-    "gov games villa villa"
-    "updates updates updates updates";}
-.bento-member{grid-template-areas:
-    "tier tier oil value"
-    "villa villa villa gov"
-    "villa villa villa games"
-    "updates updates updates updates";}
+.bento-public{grid-template-areas:"grove grove harvest token" "grove grove villa villa" "gov games villa villa" "updates updates updates updates";}
+.bento-member{grid-template-areas:"tier tier oil value" "villa villa villa gov" "villa villa villa games" "updates updates updates updates";}
 .area-grove{grid-area:grove;} .area-harvest{grid-area:harvest;} .area-token{grid-area:token;}
 .area-villa{grid-area:villa;} .area-gov{grid-area:gov;} .area-games{grid-area:games;}
 .area-updates{grid-area:updates;} .area-tier{grid-area:tier;} .area-oil{grid-area:oil;}
@@ -179,9 +184,13 @@ nav{
 }
 
 .dash-card{
-  background:var(--panel); border:1px solid var(--card-border); border-radius:var(--r-lg);
-  padding:1.6rem; transition:border-color .3s var(--ease), transform .3s var(--ease);
-  display:flex; flex-direction:column;
+  background:var(--panel);
+  border:1px solid var(--card-border);
+  border-radius:var(--r-lg);
+  padding:1.6rem;
+  transition:border-color .3s var(--ease), transform .3s var(--ease);
+  display:flex;
+  flex-direction:column;
 }
 .dash-card:hover{border-color:var(--card-border-hover);}
 .card-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:.6rem;}
@@ -211,8 +220,15 @@ nav{
 .btn-dash:disabled{opacity:.5; cursor:not-allowed;}
 
 .field{
-  width:100%; padding:.65rem .85rem; border-radius:var(--r-sm); border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.03); color:var(--cream); font-size:.82rem; font-family:inherit; margin-top:.55rem;
+  width:100%;
+  padding:.65rem .85rem;
+  border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.03);
+  color:var(--cream);
+  font-size:.82rem;
+  font-family:inherit;
+  margin-top:.55rem;
 }
 .field:focus{border-color:var(--gold);}
 textarea.field{resize:vertical; min-height:56px;}
@@ -228,9 +244,17 @@ select.field{background:#101409;}
 .cal-dow-row span{text-align:center; font-size:.62rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted-dim);}
 .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem;}
 .day{
-  aspect-ratio:1; display:flex; justify-content:center; align-items:center;
-  background:rgba(255,255,255,.04); border-radius:10px; font-size:.78rem; cursor:pointer;
-  border:1px solid transparent; transition:.15s var(--ease); color:var(--muted);
+  aspect-ratio:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(255,255,255,.04);
+  border-radius:10px;
+  font-size:.78rem;
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:.15s var(--ease);
+  color:var(--muted);
 }
 .day.empty{background:none; cursor:default;}
 .day:not(.empty):hover{background:rgba(255,255,255,.09); color:var(--cream);}
@@ -332,9 +356,7 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 </head>
 <body>
 
-<!-- ===== AMBIENT PARTICLES ===== -->
-<div id="ambient" aria-hidden="true"></div>
-
+<!-- ===== NAVIGATION ===== -->
 <nav>
   <div class="nav-inner">
     <div class="nav-logo">OLIVIUM<em>· grove</em></div>
@@ -351,6 +373,7 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
   </div>
 </nav>
 
+<!-- ===== TICKER ===== -->
 <div class="ticker" aria-label="Live grove &amp; market ticker">
   <div class="track" id="ticker-track">
     <span>🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
@@ -368,18 +391,17 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
   </div>
 </div>
 
+<!-- ===== MAIN CONTENT ===== -->
 <div class="main-wrap">
 
+  <!-- ===== CONNECT BAR ===== -->
   <div class="connect-bar">
     <div class="status">
       <span class="dot inactive" id="statusDot"></span>
       <span class="label" id="statusText">Public Grove View</span>
       <span class="wallet" id="walletDisplay">Not connected</span>
     </div>
-    <!-- 
-      IMPORTANT: These hidden elements are for dashboard.ts to update
-      The wallet-status and wallet-address elements are used by dashboard.ts
-    -->
+    <!-- Hidden elements for dashboard.ts -->
     <div style="display:none;">
       <span id="wallet-status">Not connected</span>
       <span id="wallet-address">—</span>
@@ -387,9 +409,8 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
     <button class="btn-connect" id="btn-wallet" type="button">Connect Wallet</button>
   </div>
 
-  <!-- ===================== PUBLIC VIEW ===================== -->
+  <!-- ===== PUBLIC VIEW ===== -->
   <div id="publicView">
-
     <section class="hero-public" id="public">
       <svg class="canopy-field" id="canopyField" viewBox="0 0 600 520" aria-hidden="true"></svg>
       <div class="hero-copy">
@@ -399,12 +420,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         <div class="hero-cta-row">
           <button class="btn-connect" id="heroConnectBtn" type="button">Connect Wallet</button>
           <a href="#public-grid" class="hero-link">See the grove ↓</a>
-        </div>
-        <div class="weather-chip hidden" id="weatherChip">
-          <span id="weather-emoji">⛅</span>
-          <span class="temp" id="weather-temp">—</span>
-          <span id="weather-desc">—</span>
-          <span class="src">Live · San Vincenzo</span>
         </div>
       </div>
     </section>
@@ -464,7 +479,7 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
       </div>
     </div>
     
-    <!-- HIDDEN: These are for dashboard.ts to update asset values -->
+    <!-- Hidden elements for dashboard.ts asset values -->
     <div style="display:none;">
       <div id="asset-mignole">—</div>
       <div id="asset-oil">—</div>
@@ -472,12 +487,11 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
     </div>
   </div>
 
-  <!-- ===================== MEMBER VIEW ===================== -->
+  <!-- ===== MEMBER VIEW ===== -->
   <div id="memberView" class="hidden">
-
     <section class="hero-member" id="member">
       <div class="ring-stage">
-        <svg id="groveRing" viewBox="0 0 150 150" role="img" aria-label="Ring diagram of your tree positions, colour-coded by health"></svg>
+        <svg id="groveRing" viewBox="0 0 150 150" role="img"></svg>
         <div class="orbit-chip c1">Mignole<strong id="metric-mignole">—</strong></div>
         <div class="orbit-chip c2">OLVM<strong id="metric-olvm">—</strong></div>
         <div class="orbit-chip c3">Solana<strong id="metric-sol">—</strong></div>
@@ -487,18 +501,10 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         <span class="eyebrow">Welcome back, <span id="memberWalletLine">—</span></span>
         <h1 class="hero-title">Your grove is <em id="grove-health-word">thriving</em>.</h1>
         <p class="hero-sub" id="grove-health-line">Loading grove health…</p>
-        <div class="weather-chip hidden" id="weatherChipMember">
-          <span id="weather-emoji-m">⛅</span>
-          <span class="temp" id="weather-temp-m">—</span>
-          <span id="weather-desc-m">—</span>
-          <span class="src">Live · San Vincenzo</span>
-        </div>
       </div>
     </section>
 
     <div class="dash-grid bento bento-member">
-
-      <!-- OLV Tier -->
       <div class="dash-card area-tier">
         <div class="card-header"><h3>🌿 Membership</h3><span class="badge" id="memberBadge">Active</span></div>
         <div class="dash-stat"><span class="num gold" id="metric-olv-tier">—</span><span class="lbl" id="memberTierLine">—</span></div>
@@ -511,7 +517,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         </div>
       </div>
 
-      <!-- Estate Value -->
       <div class="dash-card area-value">
         <div class="card-header"><h3>Estate Value</h3><span class="badge">Est.</span></div>
         <div class="value-list">
@@ -523,24 +528,20 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         <small class="hint" style="margin-top:.5rem;display:block;">At today's reference prices — not a guaranteed payout.</small>
       </div>
 
-      <!-- Oil Allocation -->
       <div class="dash-card area-oil">
         <div class="card-header"><h3>🫒 Oil Allocation</h3><span class="badge pending" id="oilBadge">Pending</span></div>
         <div class="dash-stat"><span class="num gold" id="oil-claim">—</span><span class="lbl">available</span></div>
         <small class="hint" id="oil-entitled-note">—</small>
-
         <div class="split-btns">
           <button class="btn-dash" id="btn-claim" type="button">Claim delivery</button>
           <button class="btn-dash" id="btn-sell" type="button">Sell to DAO</button>
         </div>
-
         <div id="claim-form" class="action-form hidden">
           <input type="number" id="claim-litres" class="field" placeholder="Litres to claim" min="0" step="0.1">
           <input type="text" id="claim-name" class="field" placeholder="Recipient name">
           <textarea id="claim-address" class="field" placeholder="Shipping address" rows="2"></textarea>
           <button class="btn-dash gold block" id="btn-claim-submit" type="button">Confirm claim</button>
         </div>
-
         <div id="sell-form" class="action-form hidden">
           <input type="number" id="sell-litres" class="field" placeholder="Litres to sell" min="0" step="0.1">
           <select id="sell-currency" class="field">
@@ -551,7 +552,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         </div>
       </div>
 
-      <!-- Villa Booking -->
       <div class="dash-card area-villa" id="villa">
         <div class="card-header"><h3>🏡 Villa Stay</h3><span class="badge" id="villa-nights">— nights</span></div>
         <p class="dash-desc">Tap open nights to build your stay, then confirm with your details.</p>
@@ -565,7 +565,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         </div>
       </div>
 
-      <!-- Governance -->
       <div class="dash-card area-gov">
         <div class="card-header"><h3>🗳 Governance</h3><span class="badge">Soon</span></div>
         <p class="dash-desc">No active votes right now.</p>
@@ -574,7 +573,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         </div>
       </div>
 
-      <!-- Web Games -->
       <div class="dash-card area-games">
         <div class="card-header"><h3>🎮 Games</h3><span class="badge">Free</span></div>
         <div class="games-grid">
@@ -587,16 +585,14 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         </div>
       </div>
 
-      <!-- Member updates -->
       <div class="dash-card area-updates">
         <div class="card-header"><h3>📢 Member Updates</h3><span class="badge">Personal</span></div>
         <div id="member-updates"></div>
       </div>
-
     </div>
   </div>
 
-  <!-- ===================== TREES ===================== -->
+  <!-- ===== TREES ===== -->
   <section class="trees-section" id="trees">
     <div class="trees-head">
       <h1 class="page-title" style="margin-bottom:0;">🌳 The Estate Grove</h1>
@@ -606,10 +602,9 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
       </div>
     </div>
     <p class="page-sub">All trees across San Vincenzo. Your own positions are marked — tap any tree for its live detail.</p>
-
     <div id="tree-map-view">
       <div class="tree-map-container">
-        <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" role="img">
+        <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg">
           <rect width="800" height="340" fill="rgba(35,52,22,.18)" rx="12"/>
           <line x1="40" y1="115" x2="760" y2="115" stroke="rgba(255,255,255,.04)"/>
           <line x1="40" y1="225" x2="760" y2="225" stroke="rgba(255,255,255,.04)"/>
@@ -618,9 +613,7 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
           <g id="tree-map-dots"></g>
         </svg>
       </div>
-      <p class="map-hint">🟢 Healthy (85%+) · 🟡 Moderate (60–84%) · 🔴 Needs attention (&lt;60%) · ✦ Your positions</p>
     </div>
-
     <div id="tree-list-view" class="hidden">
       <div class="tree-list" id="tree-list-container"></div>
     </div>
@@ -634,72 +627,14 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 
 <div id="toast-region" role="status" aria-live="polite"></div>
 
-<div id="tree-detail-modal" class="tree-modal-overlay hidden">
-  <div class="tree-modal">
-    <button class="tree-modal-close" id="tree-modal-close-btn" type="button" aria-label="Close">✕</button>
-    <h2 id="tree-modal-name">—</h2>
-    <p class="sub" id="tree-modal-sub">—</p>
-
-    <div class="tree-modal-tabs">
-      <button class="active" data-tab="overview" type="button">Overview</button>
-      <button data-tab="environment" type="button">🌡️ Environment</button>
-      <button data-tab="metadata" type="button">Metadata</button>
-    </div>
-
-    <div class="tree-modal-tab active" id="tree-tab-overview">
-      <div class="tree-modal-stats">
-        <div class="tree-modal-stat"><span class="num" id="modal-age">—</span><span class="lbl">Age (yrs)</span></div>
-        <div class="tree-modal-stat"><span class="num" id="modal-height">—</span><span class="lbl">Height (m)</span></div>
-        <div class="tree-modal-stat"><span class="num" id="modal-yield">—</span><span class="lbl">Yield (L/yr)</span></div>
-      </div>
-      <div class="tree-modal-sensor-grid">
-        <div class="tree-modal-sensor"><span class="slbl">🌿 Variety</span><span class="sval" id="modal-variety">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">📍 Zone</span><span class="sval" id="modal-zone">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">💚 Health</span><span class="sval" id="modal-health">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">🌍 Carbon/yr</span><span class="sval" id="modal-carbon">—</span></div>
-      </div>
-    </div>
-
-    <div class="tree-modal-tab" id="tree-tab-environment">
-      <div class="tree-modal-sensor-grid">
-        <div class="tree-modal-sensor"><span class="slbl">💧 Soil moisture</span><span class="sval" id="modal-soil">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">🌡️ Soil temp</span><span class="sval" id="modal-soiltemp">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">☀️ Light</span><span class="sval" id="modal-light">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">🌬️ CO₂</span><span class="sval" id="modal-co2">—</span></div>
-      </div>
-      <small class="hint" style="display:block;margin-top:.7rem;">Illustrative sensor readings — not yet wired to live field hardware.</small>
-    </div>
-
-    <div class="tree-modal-tab" id="tree-tab-metadata">
-      <div class="tree-modal-sensor-grid">
-        <div class="tree-modal-sensor"><span class="slbl">Tree ID</span><span class="sval mono" id="modal-id">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">Registered</span><span class="sval" id="modal-date">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">Total shares</span><span class="sval" id="modal-shares">—</span></div>
-        <div class="tree-modal-sensor"><span class="slbl">GPS</span><span class="sval mono" id="modal-gps">—</span></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ===== SCRIPTS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-<!-- 
-    ===== THIS LOADS THE REAL DATA FROM YOUR TYPESCRIPT FILES =====
-    The dashboard.ts file imports connection.ts and dashboard-data.ts
-    which fetch real on-chain data from Solana.
--->
 <script type="module" src="./dashboard.ts"></script>
 
-<!-- 
-    ===== UI HELPER SCRIPTS =====
-    These handle UI interactions that are independent of data loading.
-    dashboard.ts will update the data elements.
--->
 <script>
 'use strict';
 
-// ===== Mobile nav toggle =====
+// Mobile nav
 const ham = document.getElementById('navHam');
 const links = document.getElementById('navLinks');
 if (ham && links) {
@@ -717,19 +652,17 @@ if (ham && links) {
     });
 }
 
-// ===== Hero Connect Button - triggers the main wallet button =====
+// Hero connect button
 document.getElementById('heroConnectBtn')?.addEventListener('click', function() {
-    const walletBtn = document.getElementById('btn-wallet');
-    if (walletBtn) walletBtn.click();
+    document.getElementById('btn-wallet')?.click();
 });
 
-// ===== Public book button =====
+// Public book button
 document.getElementById('btn-book-public')?.addEventListener('click', function() {
-    const walletBtn = document.getElementById('btn-wallet');
-    if (walletBtn) walletBtn.click();
+    document.getElementById('btn-wallet')?.click();
 });
 
-// ===== Copy contract address =====
+// Copy contract
 document.getElementById('copyContract')?.addEventListener('click', async function() {
     try {
         await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K');
@@ -739,7 +672,6 @@ document.getElementById('copyContract')?.addEventListener('click', async functio
     }
 });
 
-// ===== Toast system =====
 function showToast(message, type = 'default') {
     const region = document.getElementById('toast-region');
     if (!region) return;
@@ -754,110 +686,22 @@ function showToast(message, type = 'default') {
     }, 4200);
 }
 
-// ===== Tree map view toggle =====
-document.getElementById('tree-view-map')?.addEventListener('click', function(e) {
+// Tree view toggle
+document.getElementById('tree-view-map')?.addEventListener('click', function() {
     this.classList.add('active');
     document.getElementById('tree-view-list')?.classList.remove('active');
     document.getElementById('tree-map-view')?.classList.remove('hidden');
     document.getElementById('tree-list-view')?.classList.add('hidden');
 });
-
-document.getElementById('tree-view-list')?.addEventListener('click', function(e) {
+document.getElementById('tree-view-list')?.addEventListener('click', function() {
     this.classList.add('active');
     document.getElementById('tree-view-map')?.classList.remove('active');
     document.getElementById('tree-list-view')?.classList.remove('hidden');
     document.getElementById('tree-map-view')?.classList.add('hidden');
 });
 
-// ===== Tree detail modal =====
-function closeTreeDetail() {
-    document.getElementById('tree-detail-modal')?.classList.add('hidden');
-    document.body.style.overflow = '';
-}
-
-document.getElementById('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
-document.getElementById('tree-detail-modal')?.addEventListener('click', function(e) {
-    if (e.target === this) closeTreeDetail();
-});
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeTreeDetail();
-});
-
-// ===== Tree modal tabs =====
-document.querySelectorAll('.tree-modal-tabs button').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.tree-modal-tabs button').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        document.querySelectorAll('.tree-modal-tab').forEach(c => c.classList.remove('active'));
-        document.getElementById('tree-tab-' + this.dataset.tab)?.classList.add('active');
-    });
-});
-
-// ===== Ambient leaves =====
-(function renderAmbient() {
-    const container = document.getElementById('ambient');
-    if (!container) return;
-    const glyphs = ['🍃', '🍂', '🌿'];
-    for (let i = 0; i < 10; i++) {
-        const el = document.createElement('div');
-        el.className = 'leaf';
-        el.textContent = glyphs[i % glyphs.length];
-        el.style.cssText = `
-            position: absolute;
-            left: ${Math.random() * 100}%;
-            bottom: -24px;
-            font-size: ${13 + Math.random() * 11}px;
-            opacity: 0;
-            animation: float-leaf ${26 + Math.random() * 34}s linear infinite;
-            animation-delay: ${Math.random() * 30}s;
-            pointer-events: none;
-        `;
-        container.appendChild(el);
-    }
-})();
-
-// ===== Add leaf animation to styles =====
-(function injectLeafKeyframes() {
-    if (document.getElementById('leaf-keyframes')) return;
-    const style = document.createElement('style');
-    style.id = 'leaf-keyframes';
-    style.textContent = `
-        @keyframes float-leaf {
-            0%{transform:translateY(0) rotate(0deg); opacity:0;}
-            8%{opacity:.05;}
-            92%{opacity:.05;}
-            100%{transform:translateY(-110vh) rotate(320deg); opacity:0;}
-        }
-        @media (prefers-reduced-motion:reduce){.leaf{animation:none; display:none;}}
-    `;
-    document.head.appendChild(style);
-})();
-
-// ===== Canopy field decoration =====
-(function renderCanopyField() {
-    const svg = document.getElementById('canopyField');
-    if (!svg) return;
-    const parts = [];
-    const cols = 12, rows = 10;
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-            const seed = row * 31 + col * 17;
-            const jitterX = (seed % 13) - 6;
-            const jitterY = ((seed * 7) % 11) - 5;
-            const x = 40 + col * 46 + jitterX;
-            const y = 20 + row * 46 + jitterY;
-            const rad = 3 + (seed % 5);
-            const isGold = seed % 9 === 0;
-            const delay = ((row + col) * 0.03).toFixed(2);
-            parts.push(`<circle cx="${x}" cy="${y}" r="${rad}" fill="${isGold ? 'var(--gold)' : 'var(--olive-light)'}" opacity="${isGold ? .55 : .3}" style="animation-delay:${delay}s"/>`);
-        }
-    }
-    svg.innerHTML = parts.join('');
-})();
-
 console.log('🌿 OLIVIUM Grove Dashboard loaded');
 console.log('📊 Waiting for dashboard.ts to load data...');
-console.log('🔗 Wallet connected? Check the console above.');
 </script>
 
 </body>
