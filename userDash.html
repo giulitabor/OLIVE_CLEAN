@@ -864,6 +864,15 @@ window.disconnectWallet = async function disconnectWallet() {
   window.dispatchEvent(new CustomEvent('olivium:disconnected'));
 };
 
+   const CONFIG = {
+  solanaRpc: 'https://api.devnet.solana.com',
+  olvmMint: '6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9',
+  supabaseUrl: 'https://kqfqryeptkbvlkekocpx.supabase.co',
+  supabaseAnonKey: 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-',
+  weatherLat: 43.0833,
+  weatherLon: 10.5333,
+  mode: 'live', // Set to 'live' when ready
+};
 /* ===== tier config ===== */
 const TIERS = [
   { name: 'Seedling', minOlv: 0 },
