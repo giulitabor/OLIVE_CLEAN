@@ -653,10 +653,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 <script>
 'use strict';
 
-/* =========================================================================
-   OLIVIUM — Complete Working Dashboard
-   ========================================================================= */
-
 // ===== CONFIGURATION =====
 const CONFIG = {
   solanaRpc: 'https://api.devnet.solana.com',
@@ -689,10 +685,7 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 // ===== TOAST =====
 function toast(message, type = 'default') {
   const region = $('toast-region');
-  if (!region) {
-    console.log('🔔', message);
-    return;
-  }
+  if (!region) { console.log('🔔', message); return; }
   const el = document.createElement('div');
   el.className = 'toast' + (type !== 'default' ? ' ' + type : '');
   el.textContent = message;
@@ -708,10 +701,7 @@ const fmtDecimal = (n, p = 2) => n ? n.toFixed(p) : '—';
 const fmtSol = (n) => n !== null ? `${n.toFixed(2)} SOL` : '—';
 const fmtOlv = (n) => n !== null ? `${fmtInt(n)} OLV` : '—';
 
-// ============================================================
-// TIER SYSTEM
-// ============================================================
-
+// ===== TIER SYSTEM =====
 const TIERS = [
   { name: 'Guest', minOlvm: 0, mignole: 0, nights: 0, icon: '🔒' },
   { name: 'Guardian', minOlvm: 50000, mignole: 50, nights: 7, icon: '🌱' },
@@ -735,10 +725,7 @@ function getNextTier(olvm) {
   return null;
 }
 
-// ============================================================
-// DEMO DATA
-// ============================================================
-
+// ===== DEMO DATA =====
 const DEMO_TREES = [
   { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, age: 12, heightM: 4.2, yieldL: 24.8, x: 90, y: 65, owned: false },
   { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, age: 10, heightM: 3.8, yieldL: 22.1, x: 160, y: 80, owned: true },
@@ -765,23 +752,17 @@ const DEMO_TREES = [
 function loadSolanaLibs() {
   return new Promise((resolve) => {
     if (window.solanaWeb3 && window.anchor) { resolve(); return; }
-
     let loaded = 0;
     const total = 2;
-
     function checkLoaded() { loaded++; if (loaded === total) resolve(); }
-
     const script1 = document.createElement('script');
     script1.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/index.min.js';
     script1.onload = checkLoaded;
     document.head.appendChild(script1);
-
     const script2 = document.createElement('script');
     script2.src = 'https://cdn.jsdelivr.net/npm/@project-serum/anchor@0.29.0/dist/index.min.js';
     script2.onload = checkLoaded;
     document.head.appendChild(script2);
-
-    // Safety timeout
     setTimeout(resolve, 5000);
   });
 }
@@ -789,32 +770,19 @@ function loadSolanaLibs() {
 async function initProgram() {
   try {
     await loadSolanaLibs();
-
-    if (!window.solanaWeb3 || !window.anchor) {
-      console.warn('Solana libs not loaded');
-      return null;
-    }
-
+    if (!window.solanaWeb3 || !window.anchor) { console.warn('Solana libs not loaded'); return null; }
     const { Connection, PublicKey } = window.solanaWeb3;
     const { AnchorProvider, Program } = window.anchor;
-
     connection = new Connection(CONFIG.solanaRpc, 'confirmed');
-
     const dummyWallet = {
       publicKey: new PublicKey('11111111111111111111111111111111'),
       signTransaction: () => { throw new Error('Not implemented'); },
       signAllTransactions: () => { throw new Error('Not implemented'); },
     };
-
     const provider = new AnchorProvider(connection, dummyWallet, {});
     const programId = new PublicKey(CONFIG.programId);
-
     const idl = await Program.fetchIdl(programId, provider);
-    if (!idl) {
-      console.warn('Could not fetch IDL');
-      return null;
-    }
-
+    if (!idl) { console.warn('Could not fetch IDL'); return null; }
     program = new Program(idl, programId, provider);
     console.log('✅ Solana program connected:', CONFIG.programId);
     return program;
@@ -825,57 +793,97 @@ async function initProgram() {
 }
 
 // ============================================================
-// DATA API
+// DATA API — FIXED: Trees now check ownership via positions
 // ============================================================
 
 const DataAPI = {
   async fetchTrees() {
-    if (!isDemoMode && program) {
-      try {
-        const trees = await program.account.tree.all();
-        if (trees && trees.length > 0) {
-          return trees.map(t => ({
-            id: parseInt(t.account.tree_id) || Math.floor(Math.random() * 1000),
-            name: t.account.name || `Tree #${t.account.tree_id}`,
-            zone: t.account.location || 'Grove',
-            variety: t.account.variety || 'Frantoio',
-            health: t.account.health_status || 80 + Math.floor(Math.random() * 15),
-            age: t.account.age || 5 + Math.floor(Math.random() * 15),
-            heightM: 3 + Math.random() * 2,
-            yieldL: (t.account.last_harvest_yield_ml || 15000) / 1000,
-            carbon: t.account.total_co2_kg || 30 + Math.floor(Math.random() * 30),
-            x: 80 + Math.random() * 640,
-            y: 50 + Math.random() * 230,
-            owned: false,
-          }));
-        }
-      } catch (err) { /* fall through */ }
+    // If in demo mode OR program not available, return demo trees
+    if (isDemoMode || !program) {
+      return DEMO_TREES;
     }
-    return DEMO_TREES;
+
+    try {
+      // Fetch all trees from program
+      const trees = await program.account.tree.all();
+      if (!trees || trees.length === 0) {
+        return DEMO_TREES;
+      }
+
+      // Get user's wallet address
+      const wallet = getIdentity()?.wallet;
+      let ownedTreeIds = [];
+
+      // If we have a real wallet (not demo), fetch positions
+      if (wallet && wallet !== 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K') {
+        try {
+          const { PublicKey } = window.solanaWeb3;
+          const walletPubkey = new PublicKey(wallet);
+          const positions = await program.account.sharePosition.all([
+            { memcmp: { offset: 8, bytes: walletPubkey.toBase58() } }
+          ]);
+          ownedTreeIds = positions.map(p => p.account.tree_id);
+        } catch (err) {
+          console.warn('Could not fetch positions:', err);
+        }
+      }
+
+      // Map program trees to our format with proper ownership
+      return trees.map((t, index) => {
+        const treeId = t.account.tree_id || String(index + 1);
+        return {
+          id: parseInt(treeId) || 100 + index,
+          name: t.account.name || `Tree #${treeId}`,
+          zone: t.account.location || 'Grove',
+          variety: t.account.variety || 'Frantoio',
+          health: t.account.health_status || 80 + Math.floor(Math.random() * 15),
+          age: t.account.age || 5 + Math.floor(Math.random() * 15),
+          heightM: 3 + Math.random() * 2,
+          yieldL: (t.account.last_harvest_yield_ml || 15000) / 1000,
+          carbon: t.account.total_co2_kg || 30 + Math.floor(Math.random() * 30),
+          x: 80 + Math.random() * 640,
+          y: 50 + Math.random() * 230,
+          owned: ownedTreeIds.includes(treeId),
+        };
+      });
+    } catch (err) {
+      console.warn('Error fetching trees from program:', err);
+      return DEMO_TREES;
+    }
   },
 
   async fetchPortfolio(walletAddress) {
-    if (!isDemoMode && program && walletAddress && walletAddress !== 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K') {
-      try {
-        const { PublicKey } = window.solanaWeb3;
-        const wallet = new PublicKey(walletAddress);
-        const positions = await program.account.sharePosition.all([
-          { memcmp: { offset: 8, bytes: wallet.toBase58() } }
-        ]);
-        const totalShares = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
-        return {
-          mignoleUnits: totalShares,
-          olvTokens: totalShares * 10 || 1450,
-          solBalance: 4.281 + Math.random() * 2,
-        };
-      } catch (err) { /* fall through */ }
+    // If in demo mode OR no wallet, return demo portfolio
+    if (isDemoMode || !program || !walletAddress || walletAddress === 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K') {
+      const owned = DEMO_TREES.filter(t => t.owned);
+      return {
+        mignoleUnits: owned.length || 3,
+        olvTokens: 1450,
+        solBalance: 4.281,
+      };
     }
-    const owned = DEMO_TREES.filter(t => t.owned);
-    return {
-      mignoleUnits: owned.length || 3,
-      olvTokens: 1450,
-      solBalance: 4.281,
-    };
+
+    try {
+      const { PublicKey } = window.solanaWeb3;
+      const wallet = new PublicKey(walletAddress);
+      const positions = await program.account.sharePosition.all([
+        { memcmp: { offset: 8, bytes: wallet.toBase58() } }
+      ]);
+      const totalShares = positions.reduce((sum, p) => sum + Number(p.account.shares_owned), 0);
+      return {
+        mignoleUnits: totalShares,
+        olvTokens: totalShares * 10 || 1450,
+        solBalance: 4.281 + Math.random() * 2,
+      };
+    } catch (err) {
+      console.warn('Error fetching portfolio:', err);
+      const owned = DEMO_TREES.filter(t => t.owned);
+      return {
+        mignoleUnits: owned.length || 3,
+        olvTokens: 1450,
+        solBalance: 4.281,
+      };
+    }
   },
 
   async fetchOilAllocation(olvmBalance) {
@@ -1050,7 +1058,7 @@ function getIdentity() { return identity; }
 function getActiveWallet() { return identity.type !== 'guest' ? identity : null; }
 
 // ============================================================
-// RENDER FUNCTIONS
+// RENDER FUNCTIONS (same as before — kept for brevity)
 // ============================================================
 
 function renderWallet() {
@@ -1080,7 +1088,6 @@ function renderWallet() {
   if (memberView) memberView.classList.toggle('hidden', !connected);
   if (connected) setText('memberWalletLine', identity.label);
 
-  // Demo badge
   const badge = $('modeBadge');
   if (badge) {
     if (isDemoMode) {
@@ -1433,13 +1440,12 @@ function renderCanopyField() {
 }
 
 // ============================================================
-// BIND ACTIONS — THIS IS WHAT MAKES BUTTONS WORK
+// BIND ACTIONS
 // ============================================================
 
 function bindActions() {
   console.log('🔗 Binding actions...');
 
-  // === CONNECT BUTTONS ===
   const connectBtn = $('connectBtn');
   const heroBtn = $('heroConnectBtn');
 
@@ -1454,8 +1460,6 @@ function bindActions() {
       }
     });
     console.log('✅ Connect button bound');
-  } else {
-    console.warn('⚠️ connectBtn not found');
   }
 
   if (heroBtn) {
@@ -1469,11 +1473,9 @@ function bindActions() {
       }
     });
     console.log('✅ Hero connect button bound');
-  } else {
-    console.warn('⚠️ heroConnectBtn not found');
   }
 
-  // === DEMO BUTTON (create if missing) ===
+  // Demo button
   let demoBtn = $('demoConnectBtn');
   if (!demoBtn) {
     demoBtn = document.createElement('button');
@@ -1495,7 +1497,7 @@ function bindActions() {
     console.log('✅ Demo button bound');
   }
 
-  // === OTHER BUTTONS ===
+  // Other buttons
   const bookPublic = $('btn-book-public');
   if (bookPublic) {
     bookPublic.addEventListener('click', async function() {
@@ -1510,7 +1512,7 @@ function bindActions() {
     arcadeBtn.addEventListener('click', () => toast('Arcade coming soon', 'default'));
   }
 
-  // === CLAIM/SELL FORMS ===
+  // Claim/Sell forms
   const claimBtn = $('btn-claim');
   const sellBtn = $('btn-sell');
   if (claimBtn) {
@@ -1530,7 +1532,7 @@ function bindActions() {
     });
   }
 
-  // === CLAIM SUBMIT ===
+  // Claim submit
   const claimSubmit = $('btn-claim-submit');
   if (claimSubmit) {
     claimSubmit.addEventListener('click', async function() {
@@ -1551,7 +1553,7 @@ function bindActions() {
     });
   }
 
-  // === SELL SUBMIT ===
+  // Sell submit
   const sellSubmit = $('btn-sell-submit');
   if (sellSubmit) {
     sellSubmit.addEventListener('click', async function() {
@@ -1569,7 +1571,7 @@ function bindActions() {
     });
   }
 
-  // === BOOK VILLA ===
+  // Book villa
   const bookBtn = $('btn-book');
   if (bookBtn) {
     bookBtn.addEventListener('click', async function() {
@@ -1588,7 +1590,7 @@ function bindActions() {
     });
   }
 
-  // === COPY CONTRACT ===
+  // Copy contract
   const copyBtn = $('copyContract');
   if (copyBtn) {
     copyBtn.addEventListener('click', async () => {
@@ -1597,7 +1599,7 @@ function bindActions() {
     });
   }
 
-  // === MOBILE NAV ===
+  // Mobile nav
   const ham = $('navHam');
   const links = $('navLinks');
   if (ham && links) {
@@ -1613,7 +1615,7 @@ function bindActions() {
     }));
   }
 
-  // === TREES VIEW TOGGLE ===
+  // Trees view toggle
   const mapBtn = $('tree-view-map');
   const listBtn = $('tree-view-list');
   if (mapBtn && listBtn) {
@@ -1635,7 +1637,7 @@ function bindActions() {
     });
   }
 
-  // === TREE MODAL ===
+  // Tree modal
   const closeModalBtn = $('tree-modal-close-btn');
   if (closeModalBtn) closeModalBtn.addEventListener('click', closeTreeDetail);
 
@@ -1674,13 +1676,10 @@ async function init() {
 
   await initProgram();
 
-  // Initial render with demo data
   await refreshAllData();
 
-  // Bind actions AFTER elements exist
   bindActions();
 
-  // Auto-demo after a moment
   setTimeout(async () => {
     if (identity.type === 'guest') {
       await window.connectDemo();
@@ -1694,14 +1693,12 @@ async function init() {
   console.log('🔗 Program ID:', CONFIG.programId);
 }
 
-// Start when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
 
-// Expose for debugging
 window.olivium = { identity, isDemoMode, currentTrees, currentPortfolio, refreshAllData, renderAll };
 </script>
 </body>
