@@ -654,7 +654,7 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 'use strict';
 
 /* =========================================================================
-   REAL DATA LAYER — CONFIG + Solana Devnet + Supabase
+   OLIVIUM — Complete Working Dashboard
    ========================================================================= */
 
 // ===== CONFIGURATION =====
@@ -679,6 +679,7 @@ let currentPrices = { oil: 18.60, carbon: 81.12, olvm: 0.412 };
 let program = null;
 let connection = null;
 let solanaWallet = null;
+let selectedNights = new Set();
 
 // ===== DOM HELPERS =====
 const $ = (id) => document.getElementById(id);
@@ -688,7 +689,10 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 // ===== TOAST =====
 function toast(message, type = 'default') {
   const region = $('toast-region');
-  if (!region) return;
+  if (!region) {
+    console.log('🔔', message);
+    return;
+  }
   const el = document.createElement('div');
   el.className = 'toast' + (type !== 'default' ? ' ' + type : '');
   el.textContent = message;
@@ -754,12 +758,6 @@ const DEMO_TREES = [
   { id: 279, name: 'Tree #279', zone: 'South Slope', variety: 'Frantoio', health: 84, age: 12, heightM: 4.3, yieldL: 25.2, x: 600, y: 255, owned: false },
 ];
 
-const DEMO_UPDATES = [
-  { date: 'Jul 2026', html: '<strong>Your tree #124</strong> — summer growth monitored. Healthy and thriving.' },
-  { date: 'Jun 2026', html: '<strong>Harvest preparation</strong> — you are invited to the October harvest. Save the date.' },
-  { date: 'May 2026', html: '<strong>Welcome to Olivium</strong> — your membership is active. Explore your benefits.' },
-];
-
 // ============================================================
 // SOLANA PROGRAM INTEGRATION
 // ============================================================
@@ -782,12 +780,20 @@ function loadSolanaLibs() {
     script2.src = 'https://cdn.jsdelivr.net/npm/@project-serum/anchor@0.29.0/dist/index.min.js';
     script2.onload = checkLoaded;
     document.head.appendChild(script2);
+
+    // Safety timeout
+    setTimeout(resolve, 5000);
   });
 }
 
 async function initProgram() {
   try {
     await loadSolanaLibs();
+
+    if (!window.solanaWeb3 || !window.anchor) {
+      console.warn('Solana libs not loaded');
+      return null;
+    }
 
     const { Connection, PublicKey } = window.solanaWeb3;
     const { AnchorProvider, Program } = window.anchor;
@@ -805,7 +811,7 @@ async function initProgram() {
 
     const idl = await Program.fetchIdl(programId, provider);
     if (!idl) {
-      console.warn('Could not fetch IDL, using mock data');
+      console.warn('Could not fetch IDL');
       return null;
     }
 
@@ -818,78 +824,49 @@ async function initProgram() {
   }
 }
 
-async function fetchTreesFromProgram() {
-  if (!program) return null;
-  try {
-    const trees = await program.account.tree.all();
-    return trees.map(t => ({
-      id: parseInt(t.account.tree_id) || Math.floor(Math.random() * 1000),
-      name: t.account.name || `Tree #${t.account.tree_id}`,
-      zone: t.account.location || 'Grove',
-      variety: t.account.variety || 'Frantoio',
-      health: t.account.health_status || 80 + Math.floor(Math.random() * 15),
-      age: t.account.age || 5 + Math.floor(Math.random() * 15),
-      heightM: 3 + Math.random() * 2,
-      yieldL: (t.account.last_harvest_yield_ml || 15000) / 1000,
-      carbon: t.account.total_co2_kg || 30 + Math.floor(Math.random() * 30),
-      totalShares: t.account.total_shares || 1000,
-      sharesSold: t.account.shares_sold || 0,
-      hasGuardian: t.account.has_guardian || false,
-      guardianCount: t.account.guardian_count || 0,
-      x: 80 + Math.random() * 640,
-      y: 50 + Math.random() * 230,
-      owned: false,
-    }));
-  } catch (err) {
-    console.warn('Error fetching trees:', err);
-    return null;
-  }
-}
-
-async function fetchUserPositions(walletAddress) {
-  if (!program || !walletAddress) return [];
-  try {
-    const { PublicKey } = window.solanaWeb3;
-    const wallet = new PublicKey(walletAddress);
-    const positions = await program.account.sharePosition.all([
-      { memcmp: { offset: 8, bytes: wallet.toBase58() } }
-    ]);
-    return positions.map(p => ({
-      treeId: p.account.tree_id,
-      sharesOwned: p.account.shares_owned,
-      isGuardian: p.account.is_guardian,
-      pubkey: p.publicKey,
-    }));
-  } catch (err) {
-    console.warn('Error fetching positions:', err);
-    return [];
-  }
-}
-
 // ============================================================
-// UNIFIED DATA API
+// DATA API
 // ============================================================
 
 const DataAPI = {
   async fetchTrees() {
     if (!isDemoMode && program) {
-      const trees = await fetchTreesFromProgram();
-      if (trees && trees.length > 0) return trees;
+      try {
+        const trees = await program.account.tree.all();
+        if (trees && trees.length > 0) {
+          return trees.map(t => ({
+            id: parseInt(t.account.tree_id) || Math.floor(Math.random() * 1000),
+            name: t.account.name || `Tree #${t.account.tree_id}`,
+            zone: t.account.location || 'Grove',
+            variety: t.account.variety || 'Frantoio',
+            health: t.account.health_status || 80 + Math.floor(Math.random() * 15),
+            age: t.account.age || 5 + Math.floor(Math.random() * 15),
+            heightM: 3 + Math.random() * 2,
+            yieldL: (t.account.last_harvest_yield_ml || 15000) / 1000,
+            carbon: t.account.total_co2_kg || 30 + Math.floor(Math.random() * 30),
+            x: 80 + Math.random() * 640,
+            y: 50 + Math.random() * 230,
+            owned: false,
+          }));
+        }
+      } catch (err) { /* fall through */ }
     }
     return DEMO_TREES;
   },
 
   async fetchPortfolio(walletAddress) {
-    if (!isDemoMode && program && walletAddress) {
+    if (!isDemoMode && program && walletAddress && walletAddress !== 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K') {
       try {
-        const positions = await fetchUserPositions(walletAddress);
+        const { PublicKey } = window.solanaWeb3;
+        const wallet = new PublicKey(walletAddress);
+        const positions = await program.account.sharePosition.all([
+          { memcmp: { offset: 8, bytes: wallet.toBase58() } }
+        ]);
         const totalShares = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
-        const olvTokens = totalShares * 10;
         return {
           mignoleUnits: totalShares,
-          olvTokens: olvTokens || 1450,
+          olvTokens: totalShares * 10 || 1450,
           solBalance: 4.281 + Math.random() * 2,
-          positions: positions,
         };
       } catch (err) { /* fall through */ }
     }
@@ -923,14 +900,12 @@ const DataAPI = {
         wind: data.current_weather.windspeed,
       };
     } catch (err) {
-      console.warn('Weather fetch failed:', err);
       return null;
     }
   },
 
   async fetchPrices() {
     try {
-      // OLVM price from Jupiter (uses price.jup.ag - allowed in CSP)
       let olvm = 0.412;
       try {
         const res = await fetch(`https://price.jup.ag/v6/price?ids=${CONFIG.olvmMint}`);
@@ -941,8 +916,6 @@ const DataAPI = {
           }
         }
       } catch (e) { /* ignore */ }
-
-      // Oil and carbon prices are blocked by CSP, use reasonable defaults
       return { oil: 18.60, carbon: 81.12, olvm: olvm };
     } catch (err) {
       return { oil: 18.60, carbon: 81.12, olvm: 0.412 };
@@ -956,8 +929,7 @@ const DataAPI = {
     const end = new Date(endISO);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const iso = d.toISOString().slice(0, 10);
-      const unavailable = (d.getDate() % 7 === 0);
-      days.push({ iso, available: !unavailable });
+      days.push({ iso, available: (d.getDate() % 7 !== 0) });
     }
     return {
       availableNights: days.filter((d) => d.available).length,
@@ -988,25 +960,15 @@ const DataAPI = {
 // ============================================================
 
 window.connectWallet = async function connectWallet() {
+  console.log('🔗 Connect Wallet clicked');
   const btns = [$('connectBtn'), $('heroConnectBtn')];
   btns.forEach((b) => { if (b) { b.disabled = true; b.textContent = 'Connecting…'; } });
 
   try {
-    // Check for Phantom
     if (window.phantom?.solana) {
       const provider = window.phantom.solana;
       const response = await provider.connect();
       solanaWallet = response.publicKey.toString();
-
-      // Get balance safely
-      let balance = 0;
-      try {
-        if (provider.connection) {
-          balance = await provider.connection.getBalance(response.publicKey);
-        }
-      } catch (e) {
-        console.warn('Could not get balance:', e);
-      }
 
       await initProgram();
 
@@ -1020,21 +982,22 @@ window.connectWallet = async function connectWallet() {
       await refreshAllData();
       window.dispatchEvent(new CustomEvent('olivium:connected'));
       toast('🌿 Wallet connected — welcome to your estate', 'success');
+      console.log('✅ Connected:', solanaWallet);
     } else {
-      toast('Phantom wallet not detected. Starting in Demo mode.', 'default');
+      toast('Phantom wallet not detected. Starting Demo mode.', 'default');
       await window.connectDemo();
     }
   } catch (err) {
-    console.error('Wallet connection error:', err);
+    console.error('Wallet error:', err);
     showError(err.message || 'Wallet connection failed');
-    // Fall back to demo
     await window.connectDemo();
   } finally {
-    btns.forEach((b) => { if (b) { b.disabled = false; } });
+    btns.forEach((b) => { if (b) { b.disabled = false; b.textContent = 'Connect Wallet'; } });
   }
 };
 
 window.disconnectWallet = async function disconnectWallet() {
+  console.log('🔌 Disconnect clicked');
   try {
     if (window.phantom?.solana?.isConnected) {
       await window.phantom.solana.disconnect();
@@ -1046,9 +1009,11 @@ window.disconnectWallet = async function disconnectWallet() {
   isDemoMode = true;
   window.dispatchEvent(new CustomEvent('olivium:disconnected'));
   toast('Disconnected', 'default');
+  renderAll();
 };
 
 window.connectDemo = async function connectDemo() {
+  console.log('🎭 Demo mode clicked');
   await initProgram();
   identity = {
     type: 'wallet',
@@ -1059,13 +1024,15 @@ window.connectDemo = async function connectDemo() {
   await refreshAllData();
   window.dispatchEvent(new CustomEvent('olivium:connected'));
   toast('🎭 Demo mode active — exploring the estate', 'default');
+  console.log('✅ Demo mode active');
 };
 
 // ============================================================
-// REFRESH ALL DATA
+// REFRESH & RENDER
 // ============================================================
 
 async function refreshAllData() {
+  console.log('🔄 Refreshing data...');
   const wallet = getIdentity()?.wallet || null;
 
   currentTrees = await DataAPI.fetchTrees();
@@ -1076,11 +1043,8 @@ async function refreshAllData() {
   currentPrices = await DataAPI.fetchPrices();
 
   renderAll();
+  console.log('✅ Data refreshed');
 }
-
-// ============================================================
-// GETTERS
-// ============================================================
 
 function getIdentity() { return identity; }
 function getActiveWallet() { return identity.type !== 'guest' ? identity : null; }
@@ -1088,18 +1052,6 @@ function getActiveWallet() { return identity.type !== 'guest' ? identity : null;
 // ============================================================
 // RENDER FUNCTIONS
 // ============================================================
-
-function renderModeBadge() {
-  const badge = $('modeBadge');
-  if (!badge) return;
-  if (isDemoMode) {
-    badge.textContent = 'DEMO';
-    badge.className = 'mode-badge demo';
-  } else {
-    badge.textContent = '';
-    badge.className = 'mode-badge';
-  }
-}
 
 function renderWallet() {
   const connected = identity.type !== 'guest';
@@ -1111,17 +1063,34 @@ function renderWallet() {
   if (textEl) textEl.textContent = connected ? 'Member Connected' : 'Public Grove View';
   if (addrEl) addrEl.textContent = connected ? identity.label : 'Not connected';
 
-  [$('connectBtn'), $('heroConnectBtn')].forEach((btnEl) => {
-    if (!btnEl) return;
-    btnEl.textContent = connected ? 'Disconnect' : 'Connect Wallet';
-    btnEl.className = 'btn-connect' + (connected ? ' outline' : '');
-  });
+  const connectBtn = $('connectBtn');
+  const heroBtn = $('heroConnectBtn');
+  if (connectBtn) {
+    connectBtn.textContent = connected ? 'Disconnect' : 'Connect Wallet';
+    connectBtn.className = 'btn-connect' + (connected ? ' outline' : '');
+  }
+  if (heroBtn) {
+    heroBtn.textContent = connected ? 'Disconnect' : 'Connect Wallet';
+    heroBtn.className = 'btn-connect' + (connected ? ' outline' : '');
+  }
 
-  $('publicView')?.classList.toggle('hidden', connected);
-  $('memberView')?.classList.toggle('hidden', !connected);
+  const publicView = $('publicView');
+  const memberView = $('memberView');
+  if (publicView) publicView.classList.toggle('hidden', connected);
+  if (memberView) memberView.classList.toggle('hidden', !connected);
   if (connected) setText('memberWalletLine', identity.label);
 
-  renderModeBadge();
+  // Demo badge
+  const badge = $('modeBadge');
+  if (badge) {
+    if (isDemoMode) {
+      badge.textContent = 'DEMO';
+      badge.className = 'mode-badge demo';
+    } else {
+      badge.textContent = '';
+      badge.className = 'mode-badge';
+    }
+  }
 }
 
 function renderPortfolio() {
@@ -1203,9 +1172,9 @@ function renderOilAllocation() {
 
 function renderGroveRing() {
   const svg = $('groveRing');
-  if (!svg || !getActiveWallet()) return;
+  if (!svg) return;
 
-  const trees = currentTrees.filter(t => t.owned);
+  const trees = getActiveWallet() ? currentTrees.filter(t => t.owned) : [];
   const cx = 75, cy = 75, r = 56;
 
   if (!trees || trees.length === 0) {
@@ -1252,6 +1221,8 @@ function renderWeather() {
     setText('weather-temp', temp + '°C');
     setText('weather-emoji-m', emoji);
     setText('weather-temp-m', temp + '°C');
+    setText('weather-desc', 'San Vincenzo');
+    setText('weather-desc-m', 'San Vincenzo');
   } else {
     [$('weatherChip'), $('weatherChipMember')].forEach(c => c?.classList.add('hidden'));
   }
@@ -1261,7 +1232,8 @@ function renderTrees() {
   const trees = currentTrees.length ? currentTrees : DEMO_TREES;
 
   const owned = trees.filter(t => t.owned).length;
-  setText('tree-subtitle', `${trees.length} trees · ${owned} yours · ${new Set(trees.map(t => t.variety)).size} varieties`);
+  const subtitle = $('tree-subtitle');
+  if (subtitle) subtitle.textContent = `${trees.length} trees · ${owned} yours · ${new Set(trees.map(t => t.variety)).size} varieties`;
 
   const g = $('tree-map-dots');
   if (g) {
@@ -1323,16 +1295,17 @@ function openTreeDetail(treeId) {
   document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
   $('tree-tab-overview')?.classList.add('active');
 
-  $('tree-detail-modal')?.classList.remove('hidden');
+  const modal = $('tree-detail-modal');
+  if (modal) modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
 
 function closeTreeDetail() {
-  $('tree-detail-modal')?.classList.add('hidden');
+  const modal = $('tree-detail-modal');
+  if (modal) modal.classList.add('hidden');
   document.body.style.overflow = '';
 }
 
-let selectedNights = new Set();
 const todayISO = () => new Date().toISOString().slice(0, 10);
 function daysFromNowISO(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -1394,6 +1367,7 @@ function renderUpdates() {
 
 function renderAll() {
   renderWallet();
+
   if (getActiveWallet()) {
     renderPortfolio();
     renderEstateValue();
@@ -1415,6 +1389,8 @@ function renderAll() {
     if (bar) bar.style.width = '0%';
     setText('tier-progress-label', 'Connect wallet to see your tier');
     renderTrees();
+    renderGroveRing();
+    renderWeather();
   }
 }
 
@@ -1457,146 +1433,230 @@ function renderCanopyField() {
 }
 
 // ============================================================
-// BIND ACTIONS
+// BIND ACTIONS — THIS IS WHAT MAKES BUTTONS WORK
 // ============================================================
 
 function bindActions() {
-  const toggleWallet = async () => {
-    try {
-      getActiveWallet() ? await window.disconnectWallet() : await window.connectWallet();
-    } catch (err) { showError(err.message || 'Wallet connection failed'); }
-  };
+  console.log('🔗 Binding actions...');
 
-  $('connectBtn')?.addEventListener('click', toggleWallet);
-  $('heroConnectBtn')?.addEventListener('click', toggleWallet);
+  // === CONNECT BUTTONS ===
+  const connectBtn = $('connectBtn');
+  const heroBtn = $('heroConnectBtn');
 
-  // Create demo button if it doesn't exist
-  if (!$('demoConnectBtn')) {
-    const demoBtn = document.createElement('button');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      console.log('🔗 Connect button clicked');
+      if (getActiveWallet()) {
+        await window.disconnectWallet();
+      } else {
+        await window.connectWallet();
+      }
+    });
+    console.log('✅ Connect button bound');
+  } else {
+    console.warn('⚠️ connectBtn not found');
+  }
+
+  if (heroBtn) {
+    heroBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      console.log('🔗 Hero connect button clicked');
+      if (getActiveWallet()) {
+        await window.disconnectWallet();
+      } else {
+        await window.connectWallet();
+      }
+    });
+    console.log('✅ Hero connect button bound');
+  } else {
+    console.warn('⚠️ heroConnectBtn not found');
+  }
+
+  // === DEMO BUTTON (create if missing) ===
+  let demoBtn = $('demoConnectBtn');
+  if (!demoBtn) {
+    demoBtn = document.createElement('button');
     demoBtn.id = 'demoConnectBtn';
     demoBtn.className = 'btn-connect demo-btn';
     demoBtn.textContent = '🎭 Demo';
-    demoBtn.addEventListener('click', window.connectDemo);
-    const actionsDiv = document.querySelector('.connect-actions') || document.querySelector('.connect-bar');
-    if (actionsDiv) {
-      const btnContainer = document.createElement('div');
-      btnContainer.className = 'connect-actions';
-      btnContainer.style.display = 'flex';
-      btnContainer.style.gap = '0.5rem';
-      // Move existing buttons into container
-      const existingBtns = actionsDiv.querySelectorAll('.btn-connect');
-      existingBtns.forEach(b => btnContainer.appendChild(b.cloneNode(true)));
-      // Remove old buttons
-      existingBtns.forEach(b => b.remove());
-      btnContainer.appendChild(demoBtn);
-      actionsDiv.appendChild(btnContainer);
+    const connectBar = document.querySelector('.connect-bar');
+    if (connectBar) {
+      const actionsDiv = connectBar.querySelector('.connect-actions') || connectBar;
+      actionsDiv.appendChild(demoBtn);
     }
   }
+  if (demoBtn) {
+    demoBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      console.log('🎭 Demo button clicked');
+      await window.connectDemo();
+    });
+    console.log('✅ Demo button bound');
+  }
 
-  $('btn-arcade-public')?.addEventListener('click', () => toast('Arcade coming soon', 'default'));
+  // === OTHER BUTTONS ===
+  const bookPublic = $('btn-book-public');
+  if (bookPublic) {
+    bookPublic.addEventListener('click', async function() {
+      if (!getActiveWallet()) { await window.connectWallet(); }
+      const villa = $('villa');
+      if (villa) villa.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
 
-  $('btn-book-public')?.addEventListener('click', async () => {
-    if (!getActiveWallet()) { await window.connectWallet(); }
-    document.getElementById('villa')?.scrollIntoView({ behavior: 'smooth' });
-  });
+  const arcadeBtn = $('btn-arcade-public');
+  if (arcadeBtn) {
+    arcadeBtn.addEventListener('click', () => toast('Arcade coming soon', 'default'));
+  }
 
-  $('btn-claim')?.addEventListener('click', () => {
-    $('sell-form')?.classList.add('hidden');
-    $('claim-form')?.classList.toggle('hidden');
-  });
-  $('btn-sell')?.addEventListener('click', () => {
-    $('claim-form')?.classList.add('hidden');
-    $('sell-form')?.classList.toggle('hidden');
-  });
+  // === CLAIM/SELL FORMS ===
+  const claimBtn = $('btn-claim');
+  const sellBtn = $('btn-sell');
+  if (claimBtn) {
+    claimBtn.addEventListener('click', () => {
+      const sellForm = $('sell-form');
+      const claimForm = $('claim-form');
+      if (sellForm) sellForm.classList.add('hidden');
+      if (claimForm) claimForm.classList.toggle('hidden');
+    });
+  }
+  if (sellBtn) {
+    sellBtn.addEventListener('click', () => {
+      const claimForm = $('claim-form');
+      const sellForm = $('sell-form');
+      if (claimForm) claimForm.classList.add('hidden');
+      if (sellForm) sellForm.classList.toggle('hidden');
+    });
+  }
 
-  $('btn-claim-submit')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const litres = Number($('claim-litres')?.value || 0);
-    const name = ($('claim-name')?.value || '').trim();
-    const address = ($('claim-address')?.value || '').trim();
-    if (!litres || litres <= 0) return showError('Enter a litres amount.');
-    if (!name || !address) return showError('Shipping name and address are required.');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-    try {
-      await DataAPI.requestOilClaim(litres, name, { raw: address });
-      $('claim-form')?.classList.add('hidden');
-      await refreshAllData();
-      showSuccess('Claim submitted — you\'ll be notified once it ships.');
-    } catch (err) { showError(err.message || 'Claim failed'); }
-    finally { btn.disabled = false; btn.textContent = 'Confirm claim'; }
-  });
+  // === CLAIM SUBMIT ===
+  const claimSubmit = $('btn-claim-submit');
+  if (claimSubmit) {
+    claimSubmit.addEventListener('click', async function() {
+      const litres = Number($('claim-litres')?.value || 0);
+      const name = ($('claim-name')?.value || '').trim();
+      const address = ($('claim-address')?.value || '').trim();
+      if (!litres || litres <= 0) return showError('Enter a litres amount.');
+      if (!name || !address) return showError('Shipping name and address are required.');
+      this.disabled = true; this.textContent = 'Submitting…';
+      try {
+        await DataAPI.requestOilClaim(litres, name, { raw: address });
+        const claimForm = $('claim-form');
+        if (claimForm) claimForm.classList.add('hidden');
+        await refreshAllData();
+        showSuccess('Claim submitted — you\'ll be notified once it ships.');
+      } catch (err) { showError(err.message || 'Claim failed'); }
+      finally { this.disabled = false; this.textContent = 'Confirm claim'; }
+    });
+  }
 
-  $('btn-sell-submit')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const litres = Number($('sell-litres')?.value || 0);
-    if (!litres || litres <= 0) return showError('Enter a litres amount.');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-    try {
-      await DataAPI.requestSellToDao(litres, 'OLVM');
-      $('sell-form')?.classList.add('hidden');
-      await refreshAllData();
-      showSuccess('Sell request submitted — payout is pending a rate quote.');
-    } catch (err) { showError(err.message || 'Sell request failed'); }
-    finally { btn.disabled = false; btn.textContent = 'Confirm sell to DAO'; }
-  });
+  // === SELL SUBMIT ===
+  const sellSubmit = $('btn-sell-submit');
+  if (sellSubmit) {
+    sellSubmit.addEventListener('click', async function() {
+      const litres = Number($('sell-litres')?.value || 0);
+      if (!litres || litres <= 0) return showError('Enter a litres amount.');
+      this.disabled = true; this.textContent = 'Submitting…';
+      try {
+        await DataAPI.requestSellToDao(litres, 'OLVM');
+        const sellForm = $('sell-form');
+        if (sellForm) sellForm.classList.add('hidden');
+        await refreshAllData();
+        showSuccess('Sell request submitted — payout is pending a rate quote.');
+      } catch (err) { showError(err.message || 'Sell request failed'); }
+      finally { this.disabled = false; this.textContent = 'Confirm sell to DAO'; }
+    });
+  }
 
-  $('btn-book')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const email = ($('villa-email')?.value || '').trim();
-    const name = ($('villa-name')?.value || '').trim();
-    if (selectedNights.size === 0) return showError('Select at least one night.');
-    if (!email) return showError('Enter an email for the booking confirmation.');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-    try {
-      await DataAPI.requestVillaBooking(Array.from(selectedNights), email, name, '');
-      selectedNights = new Set();
-      await renderVilla();
-      showSuccess('Booking confirmed — check your email.');
-    } catch (err) { showError(err.message || 'Booking failed'); }
-    finally { btn.disabled = false; btn.textContent = 'Submit residency request'; }
-  });
+  // === BOOK VILLA ===
+  const bookBtn = $('btn-book');
+  if (bookBtn) {
+    bookBtn.addEventListener('click', async function() {
+      const email = ($('villa-email')?.value || '').trim();
+      const name = ($('villa-name')?.value || '').trim();
+      if (selectedNights.size === 0) return showError('Select at least one night.');
+      if (!email) return showError('Enter an email for the booking confirmation.');
+      this.disabled = true; this.textContent = 'Submitting…';
+      try {
+        await DataAPI.requestVillaBooking(Array.from(selectedNights), email, name, '');
+        selectedNights = new Set();
+        await renderVilla();
+        showSuccess('Booking confirmed — check your email.');
+      } catch (err) { showError(err.message || 'Booking failed'); }
+      finally { this.disabled = false; this.textContent = 'Submit residency request'; }
+    });
+  }
 
-  $('copyContract')?.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K'); showSuccess('Contract address copied.'); }
-    catch { showError('Copy failed — select and copy manually.'); }
-  });
+  // === COPY CONTRACT ===
+  const copyBtn = $('copyContract');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K'); showSuccess('Contract address copied.'); }
+      catch { showError('Copy failed — select and copy manually.'); }
+    });
+  }
 
-  const ham = $('navHam'), links = $('navLinks');
-  ham?.addEventListener('click', () => {
-    ham.classList.toggle('open');
-    links?.classList.toggle('open');
-    ham.setAttribute('aria-expanded', String(ham.classList.contains('open')));
-  });
-  links?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
-    ham?.classList.remove('open');
-    links?.classList.remove('open');
-    ham?.setAttribute('aria-expanded', 'false');
-  }));
+  // === MOBILE NAV ===
+  const ham = $('navHam');
+  const links = $('navLinks');
+  if (ham && links) {
+    ham.addEventListener('click', () => {
+      ham.classList.toggle('open');
+      links.classList.toggle('open');
+      ham.setAttribute('aria-expanded', String(ham.classList.contains('open')));
+    });
+    links.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
+      ham.classList.remove('open');
+      links.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    }));
+  }
 
-  $('tree-view-map')?.addEventListener('click', (e) => {
-    e.currentTarget.classList.add('active');
-    $('tree-view-list')?.classList.remove('active');
-    $('tree-map-view')?.classList.remove('hidden');
-    $('tree-list-view')?.classList.add('hidden');
-  });
-  $('tree-view-list')?.addEventListener('click', (e) => {
-    e.currentTarget.classList.add('active');
-    $('tree-view-map')?.classList.remove('active');
-    $('tree-list-view')?.classList.remove('hidden');
-    $('tree-map-view')?.classList.add('hidden');
-  });
+  // === TREES VIEW TOGGLE ===
+  const mapBtn = $('tree-view-map');
+  const listBtn = $('tree-view-list');
+  if (mapBtn && listBtn) {
+    mapBtn.addEventListener('click', () => {
+      mapBtn.classList.add('active');
+      listBtn.classList.remove('active');
+      const mapView = $('tree-map-view');
+      const listView = $('tree-list-view');
+      if (mapView) mapView.classList.remove('hidden');
+      if (listView) listView.classList.add('hidden');
+    });
+    listBtn.addEventListener('click', () => {
+      listBtn.classList.add('active');
+      mapBtn.classList.remove('active');
+      const mapView = $('tree-map-view');
+      const listView = $('tree-list-view');
+      if (listView) listView.classList.remove('hidden');
+      if (mapView) mapView.classList.add('hidden');
+    });
+  }
 
-  $('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
-  $('tree-detail-modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
+  // === TREE MODAL ===
+  const closeModalBtn = $('tree-modal-close-btn');
+  if (closeModalBtn) closeModalBtn.addEventListener('click', closeTreeDetail);
+
+  const modal = $('tree-detail-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
+  }
+
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTreeDetail(); });
+
   document.querySelectorAll('.tree-modal-tabs button').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
-      $('tree-tab-' + btn.dataset.tab)?.classList.add('active');
+      const tab = $('tree-tab-' + btn.dataset.tab);
+      if (tab) tab.classList.add('active');
     });
   });
+
+  console.log('✅ All actions bound');
 }
 
 // ============================================================
@@ -1607,13 +1667,17 @@ window.addEventListener('olivium:connected', () => { renderAll(); });
 window.addEventListener('olivium:disconnected', () => { renderAll(); });
 
 async function init() {
+  console.log('🌿 OLIVIUM Initializing...');
+
   renderAmbient();
   renderCanopyField();
 
   await initProgram();
 
-  // Initial render
+  // Initial render with demo data
   await refreshAllData();
+
+  // Bind actions AFTER elements exist
   bindActions();
 
   // Auto-demo after a moment
@@ -1622,17 +1686,23 @@ async function init() {
       await window.connectDemo();
       console.log('🎭 OLIVIUM running in Demo Mode');
       console.log('🔗 Click "Connect Wallet" for real Solana devnet connection');
-      console.log('📊 Data sources: Open-Meteo, Solana devnet, Supabase (if configured)');
     }
-  }, 600);
+  }, 500);
 
-  console.log('🌿 OLIVIUM — Real Data Layer Active');
+  console.log('🌿 OLIVIUM Ready');
   console.log('📡 Mode:', isDemoMode ? 'DEMO' : 'LIVE');
   console.log('🔗 Program ID:', CONFIG.programId);
-  console.log('🗄️ Supabase:', CONFIG.supabaseUrl !== 'https://kqfqryeptkbvlkekocpx.supabase.co' ? 'CONFIGURED' : 'Not configured');
 }
 
-init();
+// Start when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+// Expose for debugging
+window.olivium = { identity, isDemoMode, currentTrees, currentPortfolio, refreshAllData, renderAll };
 </script>
 </body>
 </html>
