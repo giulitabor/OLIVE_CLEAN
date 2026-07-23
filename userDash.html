@@ -659,24 +659,13 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 
 // ===== CONFIGURATION =====
 const CONFIG = {
-  // Solana Devnet
   solanaRpc: 'https://api.devnet.solana.com',
-  olvmMint: 'YOUR_OLVM_TOKEN_MINT_ADDRESS', // Replace with actual devnet mint
-
-  // Supabase
-  supabaseUrl: 'YOUR_SUPABASE_URL',
-  supabaseAnonKey: 'YOUR_SUPABASE_ANON_KEY',
-
-  // Weather (Open-Meteo, free, no API key)
+  programId: '9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV',
+  olvmMint: '6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9',
+  supabaseUrl: 'https://kqfqryeptkbvlkekocpx.supabase.co',
+  supabaseAnonKey: 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-',
   weatherLat: 43.0833,
   weatherLon: 10.5333,
-
-  // Price APIs (free tier)
-  oilApiUrl: 'https://api.commodities.ninja/v1/olive-oil',
-  carbonApiUrl: 'https://api.carbonmarket.com/v1/prices',
-
-  // Mode: 'demo' | 'live'
-  mode: 'demo',
 };
 
 // ===== STATE =====
@@ -687,11 +676,13 @@ let currentPortfolio = { mignoleUnits: 0, olvTokens: 0, solBalance: 0 };
 let currentAllocation = { available: 0, entitled: 0, pending: 0 };
 let currentWeather = null;
 let currentPrices = { oil: 18.60, carbon: 81.12, olvm: 0.412 };
+let program = null;
+let connection = null;
+let solanaWallet = null;
 
 // ===== DOM HELPERS =====
 const $ = (id) => document.getElementById(id);
 const setText = (id, t) => { const el = $(id); if (el) el.textContent = t; };
-const setHtml = (id, h) => { const el = $(id); if (el) el.innerHTML = h; };
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ===== TOAST =====
@@ -714,253 +705,7 @@ const fmtSol = (n) => n !== null ? `${n.toFixed(2)} SOL` : '—';
 const fmtOlv = (n) => n !== null ? `${fmtInt(n)} OLV` : '—';
 
 // ============================================================
-// LAYER 1: REALAPI — Supabase + Solana + Price Feeds
-// ============================================================
-
-const RealAPI = {
-  // ---- Supabase ----
-  async fetchTrees() {
-    try {
-      // If Supabase is configured, fetch real trees
-      if (CONFIG.supabaseUrl && CONFIG.supabaseUrl !== 'YOUR_SUPABASE_URL') {
-        // Dynamic import for Supabase
-        const supabase = window.supabase?.createClient
-          ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey)
-          : await this._initSupabase();
-
-        const { data, error } = await supabase
-          .from('trees')
-          .select('*')
-          .order('tree_id');
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          return data.map((t, i) => ({
-            id: t.tree_id || `T-${String(i+1).padStart(3,'0')}`,
-            name: t.name || `Tree #${i+1}`,
-            zone: t.zone || 'Grove',
-            variety: t.variety || 'Frantoio',
-            health: t.health || 80 + Math.floor(Math.random() * 15),
-            age: t.age || 5 + Math.floor(Math.random() * 15),
-            heightM: t.height || 3 + Math.random() * 2,
-            yieldL: t.yield_annual || 15 + Math.random() * 15,
-            x: 80 + Math.random() * 640,
-            y: 50 + Math.random() * 230,
-            owned: t.owner_wallet === getIdentity()?.wallet || false,
-            nft_mint: t.nft_mint || null,
-            total_shares: t.total_shares || 1000,
-            shares_sold: t.shares_sold || 0,
-            created_at: t.created_at || new Date().toISOString(),
-          }));
-        }
-      }
-      // Fallback to demo trees
-      return this._demoTrees();
-    } catch (err) {
-      console.warn('Supabase fetch failed:', err);
-      return this._demoTrees();
-    }
-  },
-
-  _demoTrees() {
-    return [
-      { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, age: 12, heightM: 4.2, yieldL: 24.8, x: 90, y: 65, owned: false },
-      { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, age: 10, heightM: 3.8, yieldL: 22.1, x: 160, y: 80, owned: true },
-      { id: 132, name: 'Tree #132', zone: 'North Terrace', variety: 'Frantoio', health: 92, age: 15, heightM: 4.5, yieldL: 26.3, x: 235, y: 60, owned: false },
-      { id: 145, name: 'Tree #145', zone: 'North Terrace', variety: 'Leccino', health: 88, age: 8, heightM: 3.5, yieldL: 18.7, x: 310, y: 85, owned: false },
-      { id: 158, name: 'Tree #158', zone: 'North Terrace', variety: 'Leccino', health: 85, age: 11, heightM: 4.0, yieldL: 20.5, x: 385, y: 62, owned: false },
-      { id: 170, name: 'Tree #170', zone: 'North Terrace', variety: 'Frantoio', health: 90, age: 9, heightM: 3.6, yieldL: 19.2, x: 460, y: 82, owned: false },
-      { id: 187, name: 'Tree #187', zone: 'North Terrace', variety: 'Moraiolo', health: 88, age: 14, heightM: 4.8, yieldL: 28.1, x: 535, y: 60, owned: true },
-      { id: 196, name: 'Tree #196', zone: 'North Terrace', variety: 'Frantoio', health: 82, age: 6, heightM: 3.2, yieldL: 15.4, x: 610, y: 84, owned: false },
-      { id: 203, name: 'Tree #203', zone: 'South Slope', variety: 'Leccino', health: 71, age: 7, heightM: 3.4, yieldL: 16.8, x: 685, y: 68, owned: true },
-      { id: 211, name: 'Tree #211', zone: 'South Slope', variety: 'Frantoio', health: 80, age: 13, heightM: 4.1, yieldL: 23.4, x: 120, y: 255, owned: false },
-      { id: 224, name: 'Tree #224', zone: 'South Slope', variety: 'Moraiolo', health: 72, age: 5, heightM: 3.0, yieldL: 14.2, x: 200, y: 275, owned: false },
-      { id: 239, name: 'Tree #239', zone: 'South Slope', variety: 'Frantoio', health: 88, age: 16, heightM: 4.6, yieldL: 27.6, x: 280, y: 250, owned: false },
-      { id: 247, name: 'Tree #247', zone: 'South Slope', variety: 'Leccino', health: 65, age: 4, heightM: 2.8, yieldL: 12.3, x: 360, y: 280, owned: false },
-      { id: 258, name: 'Tree #258', zone: 'South Slope', variety: 'Frantoio', health: 78, age: 10, heightM: 3.9, yieldL: 21.0, x: 440, y: 258, owned: false },
-      { id: 266, name: 'Tree #266', zone: 'South Slope', variety: 'Moraiolo', health: 70, age: 6, heightM: 3.3, yieldL: 16.1, x: 520, y: 278, owned: false },
-      { id: 279, name: 'Tree #279', zone: 'South Slope', variety: 'Frantoio', health: 84, age: 12, heightM: 4.3, yieldL: 25.2, x: 600, y: 255, owned: false },
-    ];
-  },
-
-  async _initSupabase() {
-    // Load Supabase from CDN if not available
-    if (typeof window.supabase === 'undefined') {
-      await new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-        script.onload = resolve;
-        document.head.appendChild(script);
-      });
-    }
-    return window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
-  },
-
-  // ---- Solana Wallet ----
-  async connectWallet() {
-    try {
-      // Check for Phantom
-      if (window.phantom?.solana) {
-        const provider = window.phantom.solana;
-        const response = await provider.connect();
-        const wallet = response.publicKey.toString();
-        const balance = await provider.connection.getBalance(response.publicKey);
-        return {
-          wallet: wallet,
-          solBalance: balance / 1e9,
-          provider: provider,
-        };
-      }
-      // Fallback: simulate connection
-      console.warn('Phantom not detected, using demo mode');
-      return {
-        wallet: '8x72…92KD',
-        solBalance: 4.281,
-        provider: null,
-      };
-    } catch (err) {
-      console.error('Wallet connection error:', err);
-      throw err;
-    }
-  },
-
-  async disconnectWallet() {
-    try {
-      if (window.phantom?.solana?.isConnected) {
-        await window.phantom.solana.disconnect();
-      }
-    } catch (err) {
-      console.warn('Disconnect error:', err);
-    }
-  },
-
-  // ---- Fetch Portfolio (OLVM balance from Solana) ----
-  async fetchPortfolio(walletAddress) {
-    try {
-      // If we have a real wallet and Solana connection
-      if (walletAddress && window.phantom?.solana) {
-        // In a real implementation, you'd fetch token accounts here
-        // For devnet, we simulate with a realistic balance
-        const olvmBalance = 1450 + Math.floor(Math.random() * 1000);
-        return {
-          mignoleUnits: Math.floor(olvmBalance / 100) + 3,
-          olvTokens: olvmBalance,
-          solBalance: 4.281 + Math.random() * 2,
-        };
-      }
-      // Demo fallback
-      return {
-        mignoleUnits: 3,
-        olvTokens: 1450,
-        solBalance: 4.281,
-      };
-    } catch (err) {
-      console.warn('Portfolio fetch failed:', err);
-      return {
-        mignoleUnits: 0,
-        olvTokens: 0,
-        solBalance: 0,
-      };
-    }
-  },
-
-  // ---- Fetch Oil Allocation ----
-  async fetchOilAllocation(olvmBalance) {
-    try {
-      // For now, simulate based on balance
-      const entitled = olvmBalance ? Math.min(15.5, olvmBalance / 50000) : 0;
-      return {
-        available: entitled * 0.6,
-        entitled: entitled,
-        pending: entitled * 0.4,
-      };
-    } catch (err) {
-      console.warn('Oil allocation fetch failed:', err);
-      return { available: 0, entitled: 0, pending: 0 };
-    }
-  },
-
-  // ---- Fetch Villa Availability ----
-  async fetchVillaAvailability(startISO, endISO) {
-    await wait(200);
-    const days = [];
-    const start = new Date(startISO);
-    const end = new Date(endISO);
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const iso = d.toISOString().slice(0, 10);
-      const unavailable = (d.getDate() % 7 === 0);
-      days.push({ iso, available: !unavailable });
-    }
-    return {
-      availableNights: days.filter((d) => d.available).length,
-      days,
-    };
-  },
-
-  // ---- Fetch Weather (Open-Meteo) ----
-  async fetchWeather() {
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.weatherLat}&longitude=${CONFIG.weatherLon}&current_weather=true`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Weather API error');
-      const data = await res.json();
-      return {
-        temp: data.current_weather.temperature,
-        code: data.current_weather.weathercode,
-        wind: data.current_weather.windspeed,
-      };
-    } catch (err) {
-      console.warn('Weather fetch failed:', err);
-      return null;
-    }
-  },
-
-  // ---- Fetch Prices ----
-  async fetchPrices() {
-    try {
-      // Try to fetch oil price
-      let oil = 18.60;
-      try {
-        const res = await fetch(CONFIG.oilApiUrl + '?format=json');
-        if (res.ok) {
-          const data = await res.json();
-          oil = data.price || 18.60;
-        }
-      } catch (e) { /* ignore */ }
-
-      // Try to fetch carbon price
-      let carbon = 81.12;
-      try {
-        const res = await fetch(CONFIG.carbonApiUrl);
-        if (res.ok) {
-          const data = await res.json();
-          carbon = data.price || 81.12;
-        }
-      } catch (e) { /* ignore */ }
-
-      // OLVM price from Jupiter
-      let olvm = 0.412;
-      try {
-        const res = await fetch(`https://quote-api.jup.ag/v6/price?ids=${CONFIG.olvmMint}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data && data.data[CONFIG.olvmMint]) {
-            olvm = parseFloat(data.data[CONFIG.olvmMint].price);
-          }
-        }
-      } catch (e) { /* ignore */ }
-
-      return { oil, carbon, olvm };
-    } catch (err) {
-      console.warn('Price fetch failed:', err);
-      return { oil: 18.60, carbon: 81.12, olvm: 0.412 };
-    }
-  },
-};
-
-// ============================================================
-// TIER SYSTEM (Fixed allocation per tier)
+// TIER SYSTEM
 // ============================================================
 
 const TIERS = [
@@ -987,48 +732,324 @@ function getNextTier(olvm) {
 }
 
 // ============================================================
+// DEMO DATA
+// ============================================================
+
+const DEMO_TREES = [
+  { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, age: 12, heightM: 4.2, yieldL: 24.8, x: 90, y: 65, owned: false },
+  { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, age: 10, heightM: 3.8, yieldL: 22.1, x: 160, y: 80, owned: true },
+  { id: 132, name: 'Tree #132', zone: 'North Terrace', variety: 'Frantoio', health: 92, age: 15, heightM: 4.5, yieldL: 26.3, x: 235, y: 60, owned: false },
+  { id: 145, name: 'Tree #145', zone: 'North Terrace', variety: 'Leccino', health: 88, age: 8, heightM: 3.5, yieldL: 18.7, x: 310, y: 85, owned: false },
+  { id: 158, name: 'Tree #158', zone: 'North Terrace', variety: 'Leccino', health: 85, age: 11, heightM: 4.0, yieldL: 20.5, x: 385, y: 62, owned: false },
+  { id: 170, name: 'Tree #170', zone: 'North Terrace', variety: 'Frantoio', health: 90, age: 9, heightM: 3.6, yieldL: 19.2, x: 460, y: 82, owned: false },
+  { id: 187, name: 'Tree #187', zone: 'North Terrace', variety: 'Moraiolo', health: 88, age: 14, heightM: 4.8, yieldL: 28.1, x: 535, y: 60, owned: true },
+  { id: 196, name: 'Tree #196', zone: 'North Terrace', variety: 'Frantoio', health: 82, age: 6, heightM: 3.2, yieldL: 15.4, x: 610, y: 84, owned: false },
+  { id: 203, name: 'Tree #203', zone: 'South Slope', variety: 'Leccino', health: 71, age: 7, heightM: 3.4, yieldL: 16.8, x: 685, y: 68, owned: true },
+  { id: 211, name: 'Tree #211', zone: 'South Slope', variety: 'Frantoio', health: 80, age: 13, heightM: 4.1, yieldL: 23.4, x: 120, y: 255, owned: false },
+  { id: 224, name: 'Tree #224', zone: 'South Slope', variety: 'Moraiolo', health: 72, age: 5, heightM: 3.0, yieldL: 14.2, x: 200, y: 275, owned: false },
+  { id: 239, name: 'Tree #239', zone: 'South Slope', variety: 'Frantoio', health: 88, age: 16, heightM: 4.6, yieldL: 27.6, x: 280, y: 250, owned: false },
+  { id: 247, name: 'Tree #247', zone: 'South Slope', variety: 'Leccino', health: 65, age: 4, heightM: 2.8, yieldL: 12.3, x: 360, y: 280, owned: false },
+  { id: 258, name: 'Tree #258', zone: 'South Slope', variety: 'Frantoio', health: 78, age: 10, heightM: 3.9, yieldL: 21.0, x: 440, y: 258, owned: false },
+  { id: 266, name: 'Tree #266', zone: 'South Slope', variety: 'Moraiolo', health: 70, age: 6, heightM: 3.3, yieldL: 16.1, x: 520, y: 278, owned: false },
+  { id: 279, name: 'Tree #279', zone: 'South Slope', variety: 'Frantoio', health: 84, age: 12, heightM: 4.3, yieldL: 25.2, x: 600, y: 255, owned: false },
+];
+
+const DEMO_UPDATES = [
+  { date: 'Jul 2026', html: '<strong>Your tree #124</strong> — summer growth monitored. Healthy and thriving.' },
+  { date: 'Jun 2026', html: '<strong>Harvest preparation</strong> — you are invited to the October harvest. Save the date.' },
+  { date: 'May 2026', html: '<strong>Welcome to Olivium</strong> — your membership is active. Explore your benefits.' },
+];
+
+// ============================================================
+// SOLANA PROGRAM INTEGRATION
+// ============================================================
+
+function loadSolanaLibs() {
+  return new Promise((resolve) => {
+    if (window.solanaWeb3 && window.anchor) { resolve(); return; }
+
+    let loaded = 0;
+    const total = 2;
+
+    function checkLoaded() { loaded++; if (loaded === total) resolve(); }
+
+    const script1 = document.createElement('script');
+    script1.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/index.min.js';
+    script1.onload = checkLoaded;
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.src = 'https://cdn.jsdelivr.net/npm/@project-serum/anchor@0.29.0/dist/index.min.js';
+    script2.onload = checkLoaded;
+    document.head.appendChild(script2);
+  });
+}
+
+async function initProgram() {
+  try {
+    await loadSolanaLibs();
+
+    const { Connection, PublicKey } = window.solanaWeb3;
+    const { AnchorProvider, Program } = window.anchor;
+
+    connection = new Connection(CONFIG.solanaRpc, 'confirmed');
+
+    const dummyWallet = {
+      publicKey: new PublicKey('11111111111111111111111111111111'),
+      signTransaction: () => { throw new Error('Not implemented'); },
+      signAllTransactions: () => { throw new Error('Not implemented'); },
+    };
+
+    const provider = new AnchorProvider(connection, dummyWallet, {});
+    const programId = new PublicKey(CONFIG.programId);
+
+    const idl = await Program.fetchIdl(programId, provider);
+    if (!idl) {
+      console.warn('Could not fetch IDL, using mock data');
+      return null;
+    }
+
+    program = new Program(idl, programId, provider);
+    console.log('✅ Solana program connected:', CONFIG.programId);
+    return program;
+  } catch (err) {
+    console.warn('Program init failed:', err);
+    return null;
+  }
+}
+
+async function fetchTreesFromProgram() {
+  if (!program) return null;
+  try {
+    const trees = await program.account.tree.all();
+    return trees.map(t => ({
+      id: parseInt(t.account.tree_id) || Math.floor(Math.random() * 1000),
+      name: t.account.name || `Tree #${t.account.tree_id}`,
+      zone: t.account.location || 'Grove',
+      variety: t.account.variety || 'Frantoio',
+      health: t.account.health_status || 80 + Math.floor(Math.random() * 15),
+      age: t.account.age || 5 + Math.floor(Math.random() * 15),
+      heightM: 3 + Math.random() * 2,
+      yieldL: (t.account.last_harvest_yield_ml || 15000) / 1000,
+      carbon: t.account.total_co2_kg || 30 + Math.floor(Math.random() * 30),
+      totalShares: t.account.total_shares || 1000,
+      sharesSold: t.account.shares_sold || 0,
+      hasGuardian: t.account.has_guardian || false,
+      guardianCount: t.account.guardian_count || 0,
+      x: 80 + Math.random() * 640,
+      y: 50 + Math.random() * 230,
+      owned: false,
+    }));
+  } catch (err) {
+    console.warn('Error fetching trees:', err);
+    return null;
+  }
+}
+
+async function fetchUserPositions(walletAddress) {
+  if (!program || !walletAddress) return [];
+  try {
+    const { PublicKey } = window.solanaWeb3;
+    const wallet = new PublicKey(walletAddress);
+    const positions = await program.account.sharePosition.all([
+      { memcmp: { offset: 8, bytes: wallet.toBase58() } }
+    ]);
+    return positions.map(p => ({
+      treeId: p.account.tree_id,
+      sharesOwned: p.account.shares_owned,
+      isGuardian: p.account.is_guardian,
+      pubkey: p.publicKey,
+    }));
+  } catch (err) {
+    console.warn('Error fetching positions:', err);
+    return [];
+  }
+}
+
+// ============================================================
+// UNIFIED DATA API
+// ============================================================
+
+const DataAPI = {
+  async fetchTrees() {
+    if (!isDemoMode && program) {
+      const trees = await fetchTreesFromProgram();
+      if (trees && trees.length > 0) return trees;
+    }
+    return DEMO_TREES;
+  },
+
+  async fetchPortfolio(walletAddress) {
+    if (!isDemoMode && program && walletAddress) {
+      try {
+        const positions = await fetchUserPositions(walletAddress);
+        const totalShares = positions.reduce((sum, p) => sum + p.sharesOwned, 0);
+        const olvTokens = totalShares * 10;
+        return {
+          mignoleUnits: totalShares,
+          olvTokens: olvTokens || 1450,
+          solBalance: 4.281 + Math.random() * 2,
+          positions: positions,
+        };
+      } catch (err) { /* fall through */ }
+    }
+    const owned = DEMO_TREES.filter(t => t.owned);
+    return {
+      mignoleUnits: owned.length || 3,
+      olvTokens: 1450,
+      solBalance: 4.281,
+    };
+  },
+
+  async fetchOilAllocation(olvmBalance) {
+    const tier = getTier(olvmBalance || 0);
+    const base = tier.minOlvm > 0 ? Math.min(15.5, (olvmBalance / 50000) * 5) : 0;
+    return {
+      available: base * 0.6,
+      entitled: base,
+      pending: base * 0.4,
+    };
+  },
+
+  async fetchWeather() {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.weatherLat}&longitude=${CONFIG.weatherLon}&current_weather=true`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Weather API error');
+      const data = await res.json();
+      return {
+        temp: data.current_weather.temperature,
+        code: data.current_weather.weathercode,
+        wind: data.current_weather.windspeed,
+      };
+    } catch (err) {
+      console.warn('Weather fetch failed:', err);
+      return null;
+    }
+  },
+
+  async fetchPrices() {
+    try {
+      // OLVM price from Jupiter (uses price.jup.ag - allowed in CSP)
+      let olvm = 0.412;
+      try {
+        const res = await fetch(`https://price.jup.ag/v6/price?ids=${CONFIG.olvmMint}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && data.data[CONFIG.olvmMint]) {
+            olvm = parseFloat(data.data[CONFIG.olvmMint].price);
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Oil and carbon prices are blocked by CSP, use reasonable defaults
+      return { oil: 18.60, carbon: 81.12, olvm: olvm };
+    } catch (err) {
+      return { oil: 18.60, carbon: 81.12, olvm: 0.412 };
+    }
+  },
+
+  async fetchVillaAvailability(startISO, endISO) {
+    await wait(200);
+    const days = [];
+    const start = new Date(startISO);
+    const end = new Date(endISO);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = d.toISOString().slice(0, 10);
+      const unavailable = (d.getDate() % 7 === 0);
+      days.push({ iso, available: !unavailable });
+    }
+    return {
+      availableNights: days.filter((d) => d.available).length,
+      days,
+    };
+  },
+
+  async requestOilClaim(litres, name, address) {
+    await wait(400);
+    if (litres > 9.5) throw new Error('That exceeds your available litres.');
+    return { ok: true };
+  },
+
+  async requestSellToDao(litres, currency) {
+    await wait(400);
+    if (litres > 9.5) throw new Error('That exceeds your available litres.');
+    return { ok: true, currency };
+  },
+
+  async requestVillaBooking(nights, email, name, notes) {
+    await wait(450);
+    return { ok: true, confirmationId: 'OLV-' + Math.random().toString(36).slice(2, 8).toUpperCase() };
+  },
+};
+
+// ============================================================
 // WALLET CONNECTION
 // ============================================================
 
 window.connectWallet = async function connectWallet() {
-  const btn = $('connectBtn');
-  const heroBtn = $('heroConnectBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
-  if (heroBtn) { heroBtn.disabled = true; heroBtn.textContent = 'Connecting…'; }
+  const btns = [$('connectBtn'), $('heroConnectBtn')];
+  btns.forEach((b) => { if (b) { b.disabled = true; b.textContent = 'Connecting…'; } });
 
   try {
-    const result = await RealAPI.connectWallet();
-    identity = {
-      type: 'wallet',
-      label: result.wallet.slice(0, 6) + '…' + result.wallet.slice(-4),
-      wallet: result.wallet,
-    };
-    isDemoMode = false;
+    // Check for Phantom
+    if (window.phantom?.solana) {
+      const provider = window.phantom.solana;
+      const response = await provider.connect();
+      solanaWallet = response.publicKey.toString();
 
-    // Fetch real data
-    await refreshAllData();
+      // Get balance safely
+      let balance = 0;
+      try {
+        if (provider.connection) {
+          balance = await provider.connection.getBalance(response.publicKey);
+        }
+      } catch (e) {
+        console.warn('Could not get balance:', e);
+      }
 
-    if (btn) btn.disabled = false;
-    if (heroBtn) heroBtn.disabled = false;
-    window.dispatchEvent(new CustomEvent('olivium:connected'));
-    toast('🌿 Wallet connected — welcome to your estate', 'success');
+      await initProgram();
+
+      identity = {
+        type: 'wallet',
+        label: solanaWallet.slice(0, 6) + '…' + solanaWallet.slice(-4),
+        wallet: solanaWallet,
+      };
+      isDemoMode = false;
+
+      await refreshAllData();
+      window.dispatchEvent(new CustomEvent('olivium:connected'));
+      toast('🌿 Wallet connected — welcome to your estate', 'success');
+    } else {
+      toast('Phantom wallet not detected. Starting in Demo mode.', 'default');
+      await window.connectDemo();
+    }
   } catch (err) {
+    console.error('Wallet connection error:', err);
     showError(err.message || 'Wallet connection failed');
-    if (btn) btn.disabled = false;
-    if (heroBtn) heroBtn.disabled = false;
+    // Fall back to demo
+    await window.connectDemo();
+  } finally {
+    btns.forEach((b) => { if (b) { b.disabled = false; } });
   }
 };
 
 window.disconnectWallet = async function disconnectWallet() {
-  await RealAPI.disconnectWallet();
+  try {
+    if (window.phantom?.solana?.isConnected) {
+      await window.phantom.solana.disconnect();
+    }
+  } catch (err) { /* ignore */ }
+
   identity = { type: 'guest' };
+  solanaWallet = null;
   isDemoMode = true;
   window.dispatchEvent(new CustomEvent('olivium:disconnected'));
   toast('Disconnected', 'default');
 };
 
-// ===== DEMO MODE =====
 window.connectDemo = async function connectDemo() {
+  await initProgram();
   identity = {
     type: 'wallet',
     label: 'DEMO·8x72',
@@ -1045,32 +1066,28 @@ window.connectDemo = async function connectDemo() {
 // ============================================================
 
 async function refreshAllData() {
-  // Fetch trees
-  currentTrees = await RealAPI.fetchTrees();
+  const wallet = getIdentity()?.wallet || null;
 
-  // Fetch portfolio
-  const wallet = getIdentity()?.wallet || 'demo';
-  currentPortfolio = await RealAPI.fetchPortfolio(wallet);
+  currentTrees = await DataAPI.fetchTrees();
+  const portfolio = await DataAPI.fetchPortfolio(wallet);
+  currentPortfolio = portfolio;
+  currentAllocation = await DataAPI.fetchOilAllocation(portfolio.olvTokens);
+  currentWeather = await DataAPI.fetchWeather();
+  currentPrices = await DataAPI.fetchPrices();
 
-  // Fetch oil allocation
-  currentAllocation = await RealAPI.fetchOilAllocation(currentPortfolio.olvTokens);
-
-  // Fetch weather
-  currentWeather = await RealAPI.fetchWeather();
-
-  // Fetch prices
-  currentPrices = await RealAPI.fetchPrices();
-
-  // Render everything
   renderAll();
 }
 
 // ============================================================
-// RENDER FUNCTIONS
+// GETTERS
 // ============================================================
 
 function getIdentity() { return identity; }
 function getActiveWallet() { return identity.type !== 'guest' ? identity : null; }
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
 
 function renderModeBadge() {
   const badge = $('modeBadge');
@@ -1098,19 +1115,6 @@ function renderWallet() {
     if (!btnEl) return;
     btnEl.textContent = connected ? 'Disconnect' : 'Connect Wallet';
     btnEl.className = 'btn-connect' + (connected ? ' outline' : '');
-  });
-
-  // Demo button state
-  const demoBtns = [$('demoConnectBtn'), $('heroDemoBtn')];
-  demoBtns.forEach((btn) => {
-    if (!btn) return;
-    if (connected && isDemoMode) {
-      btn.textContent = '🎭 Demo Active';
-      btn.className = 'btn-connect demo-btn active';
-    } else {
-      btn.textContent = '🎭 Demo';
-      btn.className = 'btn-connect demo-btn';
-    }
   });
 
   $('publicView')?.classList.toggle('hidden', connected);
@@ -1145,7 +1149,6 @@ function renderPortfolio() {
   setText('memberTierLine', tier.name + ' tier');
   setText('metric-tier-name-chip', tier.name);
 
-  // Progress to next tier
   if (nextTier) {
     const percent = Math.min(100, (olvm / nextTier.minOlvm) * 100);
     const bar = $('tier-progress');
@@ -1154,7 +1157,7 @@ function renderPortfolio() {
   } else {
     const bar = $('tier-progress');
     if (bar) bar.style.width = '100%';
-    setText('tier-progress-label', 'Maximum tier reached — Elder Grove');
+    setText('tier-progress-label', 'Maximum tier reached — Founder');
   }
 }
 
@@ -1244,10 +1247,6 @@ function renderWeather() {
     chips.forEach((c) => {
       if (!c) return;
       c.classList.remove('hidden');
-      const emojiEl = c.querySelector('.temp') ? c.querySelector('.temp').previousElementSibling : null;
-      if (emojiEl) emojiEl.textContent = emoji;
-      const tempEl = c.querySelector('.temp');
-      if (tempEl) tempEl.textContent = temp + '°C';
     });
     setText('weather-emoji', emoji);
     setText('weather-temp', temp + '°C');
@@ -1259,13 +1258,11 @@ function renderWeather() {
 }
 
 function renderTrees() {
-  const trees = currentTrees.length ? currentTrees : RealAPI._demoTrees();
+  const trees = currentTrees.length ? currentTrees : DEMO_TREES;
 
-  // Update subtitle
   const owned = trees.filter(t => t.owned).length;
   setText('tree-subtitle', `${trees.length} trees · ${owned} yours · ${new Set(trees.map(t => t.variety)).size} varieties`);
 
-  // Map
   const g = $('tree-map-dots');
   if (g) {
     g.innerHTML = trees.map((t) => {
@@ -1280,7 +1277,6 @@ function renderTrees() {
     });
   }
 
-  // List
   const container = $('tree-list-container');
   if (container) {
     container.innerHTML = trees.map((t) => {
@@ -1301,7 +1297,7 @@ function renderTrees() {
 }
 
 function openTreeDetail(treeId) {
-  const t = currentTrees.find(x => x.id === treeId) || RealAPI._demoTrees().find(x => x.id === treeId);
+  const t = currentTrees.find(x => x.id === treeId) || DEMO_TREES.find(x => x.id === treeId);
   if (!t) return;
 
   setText('tree-modal-name', `${t.name} — ${t.variety}${t.owned ? ' · Yours' : ''}`);
@@ -1336,15 +1332,17 @@ function closeTreeDetail() {
   document.body.style.overflow = '';
 }
 
+let selectedNights = new Set();
+const todayISO = () => new Date().toISOString().slice(0, 10);
+function daysFromNowISO(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+
 function renderVilla() {
-  // Use real API
-  RealAPI.fetchVillaAvailability(todayISO(), daysFromNowISO(29)).then(villa => {
+  DataAPI.fetchVillaAvailability(todayISO(), daysFromNowISO(29)).then(villa => {
     setText('villa-nights', `${villa.availableNights} nights open`);
     const container = $('villa-days');
     if (!container) return;
     container.innerHTML = '';
 
-    // leading blanks
     if (villa.days && villa.days.length > 0) {
       const leadIn = new Date(villa.days[0].iso).getDay();
       for (let i = 0; i < leadIn; i++) {
@@ -1379,7 +1377,7 @@ function renderUpdates() {
   const el = $('member-updates');
   if (!el) return;
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const treeCount = currentTrees.filter(t => t.owned).length;
+  const treeCount = currentTrees.filter(t => t.owned).length || 3;
   const entries = [
     { date: today, html: `<strong>Grove check-in</strong> — ${treeCount} tree${treeCount === 1 ? '' : 's'} under your stewardship today.` },
     { date: 'Jul 2026', html: '<strong>Summer grove monitoring</strong> — all trees inspected. Healthy growth observed.' },
@@ -1389,11 +1387,6 @@ function renderUpdates() {
     `<div class="update-item"><span class="date">${u.date}</span><span class="content">${u.html}</span></div>`
   ).join('');
 }
-
-// Villa helpers
-let selectedNights = new Set();
-const todayISO = () => new Date().toISOString().slice(0, 10);
-function daysFromNowISO(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
 // ============================================================
 // RENDER ALL
@@ -1412,7 +1405,6 @@ function renderAll() {
     renderUpdates();
     setText('voting-power', currentPortfolio.olvTokens ? fmtInt(currentPortfolio.olvTokens) : '—');
   } else {
-    // Reset member view to empty state
     ['metric-mignole', 'metric-olvm', 'metric-sol', 'metric-tier-olvm', 'val-oil', 'val-carbon', 'val-olvm', 'val-total', 'oil-claim', 'voting-power'].forEach(id => setText(id, '—'));
     setText('memberTierLine', 'Guest');
     setText('metric-tier-name-chip', 'Guest');
@@ -1422,156 +1414,12 @@ function renderAll() {
     const bar = $('tier-progress');
     if (bar) bar.style.width = '0%';
     setText('tier-progress-label', 'Connect wallet to see your tier');
-    // Reset trees to show all
     renderTrees();
   }
 }
 
 // ============================================================
-// BIND ACTIONS
-// ============================================================
-
-function bindActions() {
-  // Connect buttons
-  const toggleWallet = async () => {
-    try {
-      getActiveWallet() ? await window.disconnectWallet() : await window.connectWallet();
-    } catch (err) { showError(err.message || 'Wallet connection failed'); }
-  };
-
-  $('connectBtn')?.addEventListener('click', toggleWallet);
-  $('heroConnectBtn')?.addEventListener('click', toggleWallet);
-
-  // Demo buttons
-  const toggleDemo = async () => {
-    if (getActiveWallet() && !isDemoMode) {
-      await window.disconnectWallet();
-      await wait(200);
-    }
-    await window.connectDemo();
-  };
-
-  $('demoConnectBtn')?.addEventListener('click', toggleDemo);
-  $('heroDemoBtn')?.addEventListener('click', toggleDemo);
-
-  // Arcade
-  $('btn-arcade-public')?.addEventListener('click', () => toast('Arcade coming soon', 'default'));
-
-  // Book public
-  $('btn-book-public')?.addEventListener('click', async () => {
-    if (!getActiveWallet()) { await window.connectWallet(); }
-    document.getElementById('villa')?.scrollIntoView({ behavior: 'smooth' });
-  });
-
-  // Oil claim/sell
-  $('btn-claim')?.addEventListener('click', () => {
-    $('sell-form')?.classList.add('hidden');
-    $('claim-form')?.classList.toggle('hidden');
-  });
-  $('btn-sell')?.addEventListener('click', () => {
-    $('claim-form')?.classList.add('hidden');
-    $('sell-form')?.classList.toggle('hidden');
-  });
-
-  // Claim submit
-  $('btn-claim-submit')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const litres = Number($('claim-litres')?.value || 0);
-    const name = ($('claim-name')?.value || '').trim();
-    const address = ($('claim-address')?.value || '').trim();
-    if (!litres || litres <= 0) return showError('Enter a litres amount.');
-    if (!name || !address) return showError('Shipping name and address are required.');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-    try {
-      await wait(800);
-      $('claim-form')?.classList.add('hidden');
-      await refreshAllData();
-      showSuccess('Claim submitted — you\'ll be notified once it ships.');
-    } catch (err) { showError(err.message || 'Claim failed'); }
-    finally { btn.disabled = false; btn.textContent = 'Confirm claim'; }
-  });
-
-  // Sell submit
-  $('btn-sell-submit')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const litres = Number($('sell-litres')?.value || 0);
-    if (!litres || litres <= 0) return showError('Enter a litres amount.');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-    try {
-      await wait(800);
-      $('sell-form')?.classList.add('hidden');
-      await refreshAllData();
-      showSuccess('Sell request submitted — payout is pending a rate quote.');
-    } catch (err) { showError(err.message || 'Sell request failed'); }
-    finally { btn.disabled = false; btn.textContent = 'Confirm sell to DAO'; }
-  });
-
-  // Book villa
-  $('btn-book')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const email = ($('villa-email')?.value || '').trim();
-    const name = ($('villa-name')?.value || '').trim();
-    if (selectedNights.size === 0) return showError('Select at least one night.');
-    if (!email) return showError('Enter an email for the booking confirmation.');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-    try {
-      await wait(800);
-      selectedNights = new Set();
-      await renderVilla();
-      showSuccess('Booking confirmed — check your email.');
-    } catch (err) { showError(err.message || 'Booking failed'); }
-    finally { btn.disabled = false; btn.textContent = 'Submit residency request'; }
-  });
-
-  // Copy contract
-  $('copyContract')?.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K'); showSuccess('Contract address copied.'); }
-    catch { showError('Copy failed — select and copy manually.'); }
-  });
-
-  // Mobile nav
-  const ham = $('navHam'), links = $('navLinks');
-  ham?.addEventListener('click', () => {
-    ham.classList.toggle('open');
-    links?.classList.toggle('open');
-    ham.setAttribute('aria-expanded', String(ham.classList.contains('open')));
-  });
-  links?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
-    ham?.classList.remove('open');
-    links?.classList.remove('open');
-    ham?.setAttribute('aria-expanded', 'false');
-  }));
-
-  // Trees view toggle
-  $('tree-view-map')?.addEventListener('click', (e) => {
-    e.currentTarget.classList.add('active');
-    $('tree-view-list')?.classList.remove('active');
-    $('tree-map-view')?.classList.remove('hidden');
-    $('tree-list-view')?.classList.add('hidden');
-  });
-  $('tree-view-list')?.addEventListener('click', (e) => {
-    e.currentTarget.classList.add('active');
-    $('tree-view-map')?.classList.remove('active');
-    $('tree-list-view')?.classList.remove('hidden');
-    $('tree-map-view')?.classList.add('hidden');
-  });
-
-  // Tree modal
-  $('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
-  $('tree-detail-modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTreeDetail(); });
-  document.querySelectorAll('.tree-modal-tabs button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
-      $('tree-tab-' + btn.dataset.tab)?.classList.add('active');
-    });
-  });
-}
-
-// ============================================================
-// AMBIENT & CANOPY
+// AMBIENT
 // ============================================================
 
 function renderAmbient() {
@@ -1609,38 +1457,182 @@ function renderCanopyField() {
 }
 
 // ============================================================
+// BIND ACTIONS
+// ============================================================
+
+function bindActions() {
+  const toggleWallet = async () => {
+    try {
+      getActiveWallet() ? await window.disconnectWallet() : await window.connectWallet();
+    } catch (err) { showError(err.message || 'Wallet connection failed'); }
+  };
+
+  $('connectBtn')?.addEventListener('click', toggleWallet);
+  $('heroConnectBtn')?.addEventListener('click', toggleWallet);
+
+  // Create demo button if it doesn't exist
+  if (!$('demoConnectBtn')) {
+    const demoBtn = document.createElement('button');
+    demoBtn.id = 'demoConnectBtn';
+    demoBtn.className = 'btn-connect demo-btn';
+    demoBtn.textContent = '🎭 Demo';
+    demoBtn.addEventListener('click', window.connectDemo);
+    const actionsDiv = document.querySelector('.connect-actions') || document.querySelector('.connect-bar');
+    if (actionsDiv) {
+      const btnContainer = document.createElement('div');
+      btnContainer.className = 'connect-actions';
+      btnContainer.style.display = 'flex';
+      btnContainer.style.gap = '0.5rem';
+      // Move existing buttons into container
+      const existingBtns = actionsDiv.querySelectorAll('.btn-connect');
+      existingBtns.forEach(b => btnContainer.appendChild(b.cloneNode(true)));
+      // Remove old buttons
+      existingBtns.forEach(b => b.remove());
+      btnContainer.appendChild(demoBtn);
+      actionsDiv.appendChild(btnContainer);
+    }
+  }
+
+  $('btn-arcade-public')?.addEventListener('click', () => toast('Arcade coming soon', 'default'));
+
+  $('btn-book-public')?.addEventListener('click', async () => {
+    if (!getActiveWallet()) { await window.connectWallet(); }
+    document.getElementById('villa')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  $('btn-claim')?.addEventListener('click', () => {
+    $('sell-form')?.classList.add('hidden');
+    $('claim-form')?.classList.toggle('hidden');
+  });
+  $('btn-sell')?.addEventListener('click', () => {
+    $('claim-form')?.classList.add('hidden');
+    $('sell-form')?.classList.toggle('hidden');
+  });
+
+  $('btn-claim-submit')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const litres = Number($('claim-litres')?.value || 0);
+    const name = ($('claim-name')?.value || '').trim();
+    const address = ($('claim-address')?.value || '').trim();
+    if (!litres || litres <= 0) return showError('Enter a litres amount.');
+    if (!name || !address) return showError('Shipping name and address are required.');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    try {
+      await DataAPI.requestOilClaim(litres, name, { raw: address });
+      $('claim-form')?.classList.add('hidden');
+      await refreshAllData();
+      showSuccess('Claim submitted — you\'ll be notified once it ships.');
+    } catch (err) { showError(err.message || 'Claim failed'); }
+    finally { btn.disabled = false; btn.textContent = 'Confirm claim'; }
+  });
+
+  $('btn-sell-submit')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const litres = Number($('sell-litres')?.value || 0);
+    if (!litres || litres <= 0) return showError('Enter a litres amount.');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    try {
+      await DataAPI.requestSellToDao(litres, 'OLVM');
+      $('sell-form')?.classList.add('hidden');
+      await refreshAllData();
+      showSuccess('Sell request submitted — payout is pending a rate quote.');
+    } catch (err) { showError(err.message || 'Sell request failed'); }
+    finally { btn.disabled = false; btn.textContent = 'Confirm sell to DAO'; }
+  });
+
+  $('btn-book')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const email = ($('villa-email')?.value || '').trim();
+    const name = ($('villa-name')?.value || '').trim();
+    if (selectedNights.size === 0) return showError('Select at least one night.');
+    if (!email) return showError('Enter an email for the booking confirmation.');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    try {
+      await DataAPI.requestVillaBooking(Array.from(selectedNights), email, name, '');
+      selectedNights = new Set();
+      await renderVilla();
+      showSuccess('Booking confirmed — check your email.');
+    } catch (err) { showError(err.message || 'Booking failed'); }
+    finally { btn.disabled = false; btn.textContent = 'Submit residency request'; }
+  });
+
+  $('copyContract')?.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K'); showSuccess('Contract address copied.'); }
+    catch { showError('Copy failed — select and copy manually.'); }
+  });
+
+  const ham = $('navHam'), links = $('navLinks');
+  ham?.addEventListener('click', () => {
+    ham.classList.toggle('open');
+    links?.classList.toggle('open');
+    ham.setAttribute('aria-expanded', String(ham.classList.contains('open')));
+  });
+  links?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
+    ham?.classList.remove('open');
+    links?.classList.remove('open');
+    ham?.setAttribute('aria-expanded', 'false');
+  }));
+
+  $('tree-view-map')?.addEventListener('click', (e) => {
+    e.currentTarget.classList.add('active');
+    $('tree-view-list')?.classList.remove('active');
+    $('tree-map-view')?.classList.remove('hidden');
+    $('tree-list-view')?.classList.add('hidden');
+  });
+  $('tree-view-list')?.addEventListener('click', (e) => {
+    e.currentTarget.classList.add('active');
+    $('tree-view-map')?.classList.remove('active');
+    $('tree-list-view')?.classList.remove('hidden');
+    $('tree-map-view')?.classList.add('hidden');
+  });
+
+  $('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
+  $('tree-detail-modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTreeDetail(); });
+  document.querySelectorAll('.tree-modal-tabs button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
+      $('tree-tab-' + btn.dataset.tab)?.classList.add('active');
+    });
+  });
+}
+
+// ============================================================
 // INIT
 // ============================================================
 
-window.addEventListener('olivium:connected', () => {
-  renderAll();
-});
+window.addEventListener('olivium:connected', () => { renderAll(); });
+window.addEventListener('olivium:disconnected', () => { renderAll(); });
 
-window.addEventListener('olivium:disconnected', () => {
-  renderAll();
-});
+async function init() {
+  renderAmbient();
+  renderCanopyField();
 
-// Boot
-renderAmbient();
-renderCanopyField();
-renderAll();
-bindActions();
+  await initProgram();
 
-// Auto-demo after a moment
-setTimeout(() => {
-  if (identity.type === 'guest') {
-    window.connectDemo().then(() => {
+  // Initial render
+  await refreshAllData();
+  bindActions();
+
+  // Auto-demo after a moment
+  setTimeout(async () => {
+    if (identity.type === 'guest') {
+      await window.connectDemo();
       console.log('🎭 OLIVIUM running in Demo Mode');
       console.log('🔗 Click "Connect Wallet" for real Solana devnet connection');
-      console.log('📊 Data sources: Open-Meteo, Supabase (if configured), Solana devnet');
-    });
-  }
-}, 600);
+      console.log('📊 Data sources: Open-Meteo, Solana devnet, Supabase (if configured)');
+    }
+  }, 600);
 
-console.log('🌿 OLIVIUM — Real Data Layer Active');
-console.log('📡 Mode:', CONFIG.mode === 'live' ? 'LIVE (Real Data)' : 'DEMO (Mock Data)');
-console.log('🔗 Wallet: Phantom (devnet)');
-console.log('🗄️ Supabase:', CONFIG.supabaseUrl !== 'YOUR_SUPABASE_URL' ? 'CONFIGURED' : 'Not configured');
+  console.log('🌿 OLIVIUM — Real Data Layer Active');
+  console.log('📡 Mode:', isDemoMode ? 'DEMO' : 'LIVE');
+  console.log('🔗 Program ID:', CONFIG.programId);
+  console.log('🗄️ Supabase:', CONFIG.supabaseUrl !== 'https://kqfqryeptkbvlkekocpx.supabase.co' ? 'CONFIGURED' : 'Not configured');
+}
+
+init();
 </script>
 </body>
 </html>
