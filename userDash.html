@@ -153,8 +153,8 @@ p.page-sub{color:var(--muted); font-size:.95rem; margin-bottom:1.6rem; max-width
 @keyframes leaf-in{from{opacity:0; transform:scale(.4);} to{opacity:1; transform:scale(1);}}
 
 /* ===== HERO — MEMBER (Grove Ring centerpiece) ===== */
-.hero-member{display:grid; grid-template-columns:360px 1fr; gap:2.6rem; align-items:center; padding:2.4rem 0 2.8rem;}
-.ring-stage{position:relative; width:360px; height:360px; flex:0 0 auto; justify-self:center;}
+.hero-member{display:grid; grid-template-columns:400px 1fr; gap:2.6rem; align-items:center; padding:2.4rem 0 2.8rem;}
+.ring-stage{position:relative; width:400px; height:400px; flex:0 0 auto; justify-self:center;}
 .ring-stage svg{position:absolute; top:50%; left:50%; width:230px; height:230px; transform:translate(-50%,-50%);}
 .ring-stage .ring-pulse{animation:pulse-ring 2.8s ease-in-out infinite; transform-box:fill-box; transform-origin:center;}
 .ring-stage .tree-dot{transform-box:fill-box; transform-origin:center; animation:dot-in .5s var(--ease) backwards;}
@@ -164,10 +164,10 @@ p.page-sub{color:var(--muted); font-size:.95rem; margin-bottom:1.6rem; max-width
   padding:.55rem .85rem; font-size:.66rem; color:var(--muted); backdrop-filter:blur(8px); white-space:nowrap;
   opacity:0; animation:chip-in .6s var(--ease) forwards; box-shadow:0 10px 26px rgba(0,0,0,.35);}
 .orbit-chip strong{display:block; color:var(--cream); font-family:'JetBrains Mono',monospace; font-size:.94rem; font-weight:600; margin-top:1px;}
-.orbit-chip.c1{top:6px; left:50%; transform:translateX(-50%); animation-delay:.2s;}
-.orbit-chip.c2{top:44%; right:-4px; transform:translateY(-50%); animation-delay:.36s;}
-.orbit-chip.c3{bottom:34px; right:22px; animation-delay:.52s;}
-.orbit-chip.c4{bottom:34px; left:22px; animation-delay:.68s;}
+.orbit-chip.c1{top:-6px; left:50%; transform:translateX(-50%); animation-delay:.2s;}
+.orbit-chip.c2{top:50%; right:-64px; transform:translateY(-50%); animation-delay:.36s;}
+.orbit-chip.c3{bottom:-6px; right:6px; animation-delay:.52s;}
+.orbit-chip.c4{bottom:-6px; left:6px; animation-delay:.68s;}
 @keyframes chip-in{from{opacity:0;} to{opacity:1;}}
 @keyframes dot-in{from{opacity:0; transform:scale(.35);} to{opacity:1; transform:scale(1);}}
 
@@ -177,7 +177,7 @@ p.page-sub{color:var(--muted); font-size:.95rem; margin-bottom:1.6rem; max-width
   .canopy-field{width:340px; height:280px; top:-40px; right:-60px; opacity:.7;}
 }
 @media (max-width:420px){
-  .ring-stage{width:300px; height:300px; transform:scale(.92);}
+  .ring-stage{transform:scale(.8); margin:-40px 0;}
   .orbit-chip{font-size:.6rem; padding:.45rem .65rem;}
   .orbit-chip strong{font-size:.82rem;}
 }
@@ -194,19 +194,35 @@ p.page-sub{color:var(--muted); font-size:.95rem; margin-bottom:1.6rem; max-width
     "gov games villa villa"
     "updates updates updates updates";}
 .bento-member{grid-template-areas:
-    "tier tier oil oil"
+    "tier tier oil value"
     "villa villa villa gov"
     "villa villa villa games"
     "updates updates updates updates";}
 .area-grove{grid-area:grove;} .area-harvest{grid-area:harvest;} .area-token{grid-area:token;}
 .area-villa{grid-area:villa;} .area-gov{grid-area:gov;} .area-games{grid-area:games;}
 .area-updates{grid-area:updates;} .area-tier{grid-area:tier;} .area-oil{grid-area:oil;}
+.area-value{grid-area:value;}
+
+/* compact cards shouldn't stretch to fill a tall row and leave dead space inside them */
+.area-gov, .area-games{align-self:start;}
 
 .feature-num{font-family:'Playfair Display',serif; font-size:clamp(3.2rem,7vw,4.6rem); font-weight:600; color:var(--gold); line-height:1;}
 
+/* ===== ESTATE VALUE ===== */
+.value-list{display:flex; flex-direction:column; gap:.4rem; margin-top:.2rem;}
+.value-row{display:flex; justify-content:space-between; font-size:.76rem; color:var(--muted);}
+.value-row .v{color:var(--cream); font-weight:500;}
+.value-total-row{display:flex; justify-content:space-between; margin-top:.5rem; padding-top:.5rem; border-top:1px solid rgba(255,255,255,.07); font-family:'Playfair Display',serif; font-size:1.15rem;}
+.value-total-row .v{color:var(--gold);}
+
+/* ===== WEATHER CHIP ===== */
+.weather-chip{display:inline-flex; align-items:center; gap:.5rem; font-size:.78rem; color:var(--muted); margin-top:.8rem;}
+.weather-chip .temp{font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--cream); font-weight:600;}
+.weather-chip .src{font-size:.6rem; color:var(--muted-dim); text-transform:uppercase; letter-spacing:.06em; border:1px solid rgba(255,255,255,.1); border-radius:50px; padding:.1rem .5rem;}
+
 @media (max-width:980px){
   .bento{grid-template-areas:none !important; grid-template-columns:1fr;}
-  .bento > *{grid-column:auto !important; grid-row:auto !important;}
+  .bento > *{grid-column:auto !important; grid-row:auto !important; align-self:auto !important;}
 }
 .dash-card{
   background:var(--panel); border:1px solid var(--card-border); border-radius:var(--r-lg);
@@ -317,6 +333,64 @@ select.field{background:#101409;}
 @keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
 
 /* ===== FOOTER ===== */
+/* ===== AMBIENT PARTICLES ===== */
+#ambient{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;}
+.leaf{position:absolute; font-size:15px; opacity:0; animation:float-leaf linear infinite; pointer-events:none;}
+@keyframes float-leaf{
+  0%{transform:translateY(0) rotate(0deg); opacity:0;}
+  8%{opacity:.05;}
+  92%{opacity:.05;}
+  100%{transform:translateY(-110vh) rotate(320deg); opacity:0;}
+}
+@media (prefers-reduced-motion:reduce){.leaf{animation:none; display:none;}}
+
+/* ===== TREES ESTATE SECTION ===== */
+.trees-section{margin-top:2.4rem;}
+.trees-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.8rem; margin-bottom:1rem;}
+.trees-view-toggle{display:flex; gap:.4rem;}
+.trees-view-toggle button{padding:.4rem 1rem; border-radius:20px; border:1px solid rgba(255,255,255,.1); background:transparent; color:var(--muted); font-size:.7rem; font-weight:600; cursor:pointer; transition:.2s var(--ease);}
+.trees-view-toggle button.active{background:var(--gold); color:#0a0f08; border-color:var(--gold);}
+.trees-view-toggle button:hover:not(.active){border-color:var(--gold); color:var(--cream);}
+
+.tree-map-container{background:var(--panel); border:1px solid var(--card-border); border-radius:var(--r-lg); padding:1.2rem;}
+.tree-map-container svg{width:100%; height:auto; border-radius:10px;}
+.tree-map-dot{cursor:pointer; transition:r .15s var(--ease);}
+.tree-map-dot:hover{r:11;}
+.map-hint{font-size:.68rem; color:var(--muted-dim); text-align:center; margin-top:.6rem;}
+
+.tree-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:.9rem;}
+.tree-card{background:var(--panel); border:1px solid var(--card-border); border-radius:var(--r-md); padding:1rem; cursor:pointer; transition:.2s var(--ease);}
+.tree-card:hover{border-color:var(--gold); transform:translateY(-3px);}
+.tree-card .tree-name{font-size:.85rem; font-weight:600; color:var(--cream);}
+.tree-card .tree-zone{font-size:.68rem; color:var(--muted-dim); margin-top:1px;}
+.tree-card .tree-health-row{display:flex; align-items:center; gap:.4rem; margin-top:.55rem;}
+.tree-card .tree-health-row .dot{width:8px; height:8px; border-radius:50%;}
+.tree-card .tree-health-row .pct{font-size:.72rem; color:var(--muted);}
+.tree-card .tree-meta{font-size:.65rem; color:var(--muted-dim); margin-top:.3rem;}
+.tree-card .tree-owned{display:inline-block; margin-top:.5rem; font-size:.6rem; color:var(--gold); background:rgba(197,160,89,.1); padding:.15rem .55rem; border-radius:50px;}
+
+/* ===== TREE DETAIL MODAL ===== */
+.tree-modal-overlay{position:fixed; inset:0; z-index:200; background:rgba(5,6,4,.86); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:1rem; overflow-y:auto;}
+.tree-modal{background:#12160d; border:1px solid var(--card-border-hover); border-radius:var(--r-lg); width:100%; max-width:640px; max-height:88vh; overflow-y:auto; position:relative; padding:1.4rem 1.5rem 1.6rem;}
+.tree-modal-close{position:absolute; top:.9rem; right:.9rem; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--cream); cursor:pointer; font-size:1rem; transition:.2s var(--ease);}
+.tree-modal-close:hover{background:rgba(255,255,255,.12);}
+.tree-modal h2{font-family:'Playfair Display',serif; font-size:1.35rem; font-weight:500; margin-bottom:.2rem; padding-right:2rem;}
+.tree-modal .sub{font-size:.78rem; color:var(--muted); margin-bottom:1.1rem;}
+.tree-modal-tabs{display:flex; gap:.3rem; border-bottom:1px solid rgba(255,255,255,.07); margin-bottom:1rem; overflow-x:auto;}
+.tree-modal-tabs button{padding:.4rem .8rem; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--muted); font-size:.72rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:.2s var(--ease);}
+.tree-modal-tabs button.active{color:var(--gold); border-bottom-color:var(--gold);}
+.tree-modal-tabs button:hover{color:var(--cream);}
+.tree-modal-tab{display:none;}
+.tree-modal-tab.active{display:block;}
+.tree-modal-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin-bottom:1rem;}
+.tree-modal-stat{background:rgba(255,255,255,.03); border-radius:var(--r-sm); padding:.6rem; text-align:center;}
+.tree-modal-stat .num{font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:600; color:var(--gold);}
+.tree-modal-stat .lbl{font-size:.6rem; color:var(--muted-dim); display:block; margin-top:2px;}
+.tree-modal-sensor-grid{display:grid; grid-template-columns:1fr 1fr; gap:.4rem;}
+.tree-modal-sensor{display:flex; justify-content:space-between; padding:.3rem .55rem; background:rgba(255,255,255,.03); border-radius:6px; font-size:.72rem;}
+.tree-modal-sensor .slbl{color:var(--muted);}
+.tree-modal-sensor .sval{color:var(--cream); font-weight:500;}
+
 footer{text-align:center; padding:2.2rem; border-top:1px solid rgba(255,255,255,.04);}
 footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 
@@ -397,6 +471,12 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
           <button class="btn-connect" id="heroConnectBtn" type="button">Connect Wallet</button>
           <a href="#public-grid" class="hero-link">See the grove ↓</a>
         </div>
+        <div class="weather-chip hidden" id="weatherChip">
+          <span id="weather-emoji">⛅</span>
+          <span class="temp" id="weather-temp">—</span>
+          <span id="weather-desc">—</span>
+          <span class="src">Live · San Vincenzo</span>
+        </div>
       </div>
     </section>
 
@@ -471,6 +551,12 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
         <span class="eyebrow">Welcome back, <span id="memberWalletLine">—</span></span>
         <h1 class="hero-title">Your grove is <em id="grove-health-word">thriving</em>.</h1>
         <p class="hero-sub" id="grove-health-line">Loading grove health…</p>
+        <div class="weather-chip hidden" id="weatherChipMember">
+          <span id="weather-emoji-m">⛅</span>
+          <span class="temp" id="weather-temp-m">—</span>
+          <span id="weather-desc-m">—</span>
+          <span class="src">Live · San Vincenzo</span>
+        </div>
       </div>
     </section>
 
@@ -484,6 +570,18 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
           <div id="tier-progress" style="height:100%; width:0%; background:linear-gradient(90deg,var(--olive-light),var(--gold)); transition:width .4s var(--ease);"></div>
         </div>
         <small class="hint" id="tier-progress-label" style="margin-top:.5rem;display:block;">—</small>
+      </div>
+
+      <!-- Estate Value (computed, not decorative) -->
+      <div class="dash-card area-value">
+        <div class="card-header"><h3>Estate Value</h3><span class="badge">Est.</span></div>
+        <div class="value-list">
+          <div class="value-row"><span>🫒 Oil</span><span class="v" id="val-oil">—</span></div>
+          <div class="value-row"><span>🌿 Carbon</span><span class="v" id="val-carbon">—</span></div>
+          <div class="value-row"><span>◎ OLVM</span><span class="v" id="val-olvm">—</span></div>
+        </div>
+        <div class="value-total-row"><span>Total</span><span class="v" id="val-total">—</span></div>
+        <small class="hint" style="margin-top:.5rem;display:block;">At today's reference prices — not a guaranteed payout.</small>
       </div>
 
       <!-- Oil Allocation -->
@@ -559,6 +657,36 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
     </div>
   </div>
 
+  <!-- ===================== TREES (full estate, always visible) ===================== -->
+  <section class="trees-section" id="trees">
+    <div class="trees-head">
+      <h1 class="page-title" style="margin-bottom:0;">🌳 The Estate Grove</h1>
+      <div class="trees-view-toggle">
+        <button class="active" id="tree-view-map" type="button">🗺️ Map</button>
+        <button id="tree-view-list" type="button">📋 List</button>
+      </div>
+    </div>
+    <p class="page-sub">All 16 trees across San Vincenzo. Your own positions are marked — tap any tree for its live detail.</p>
+
+    <div id="tree-map-view">
+      <div class="tree-map-container">
+        <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Map of the estate's olive trees, colour-coded by health">
+          <rect width="800" height="340" fill="rgba(35,52,22,.18)" rx="12"/>
+          <line x1="40" y1="115" x2="760" y2="115" stroke="rgba(255,255,255,.04)"/>
+          <line x1="40" y1="225" x2="760" y2="225" stroke="rgba(255,255,255,.04)"/>
+          <text x="400" y="34" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.16)" font-weight="600" letter-spacing="4">NORTH TERRACE</text>
+          <text x="400" y="326" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.16)" font-weight="600" letter-spacing="4">SOUTH SLOPE</text>
+          <g id="tree-map-dots"></g>
+        </svg>
+      </div>
+      <p class="map-hint">🟢 Healthy (85%+) · 🟡 Moderate (60–84%) · 🔴 Needs attention (&lt;60%) · ✦ Your positions</p>
+    </div>
+
+    <div id="tree-list-view" class="hidden">
+      <div class="tree-list" id="tree-list-container"></div>
+    </div>
+  </section>
+
 </div>
 
 <footer>
@@ -566,6 +694,53 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 </footer>
 
 <div id="toast-region" role="status" aria-live="polite"></div>
+
+<div id="tree-detail-modal" class="tree-modal-overlay hidden">
+  <div class="tree-modal">
+    <button class="tree-modal-close" id="tree-modal-close-btn" type="button" aria-label="Close">✕</button>
+    <h2 id="tree-modal-name">—</h2>
+    <p class="sub" id="tree-modal-sub">—</p>
+
+    <div class="tree-modal-tabs">
+      <button class="active" data-tab="overview" type="button">Overview</button>
+      <button data-tab="environment" type="button">🌡️ Environment</button>
+      <button data-tab="metadata" type="button">Metadata</button>
+    </div>
+
+    <div class="tree-modal-tab active" id="tree-tab-overview">
+      <div class="tree-modal-stats">
+        <div class="tree-modal-stat"><span class="num" id="modal-age">—</span><span class="lbl">Age (yrs)</span></div>
+        <div class="tree-modal-stat"><span class="num" id="modal-height">—</span><span class="lbl">Height (m)</span></div>
+        <div class="tree-modal-stat"><span class="num" id="modal-yield">—</span><span class="lbl">Yield (L/yr)</span></div>
+      </div>
+      <div class="tree-modal-sensor-grid">
+        <div class="tree-modal-sensor"><span class="slbl">🌿 Variety</span><span class="sval" id="modal-variety">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">📍 Zone</span><span class="sval" id="modal-zone">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">💚 Health</span><span class="sval" id="modal-health">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">🌍 Carbon/yr</span><span class="sval" id="modal-carbon">—</span></div>
+      </div>
+    </div>
+
+    <div class="tree-modal-tab" id="tree-tab-environment">
+      <div class="tree-modal-sensor-grid">
+        <div class="tree-modal-sensor"><span class="slbl">💧 Soil moisture</span><span class="sval" id="modal-soil">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">🌡️ Soil temp</span><span class="sval" id="modal-soiltemp">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">☀️ Light</span><span class="sval" id="modal-light">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">🌬️ CO₂</span><span class="sval" id="modal-co2">—</span></div>
+      </div>
+      <small class="hint" style="display:block;margin-top:.7rem;">Illustrative sensor readings — not yet wired to live field hardware.</small>
+    </div>
+
+    <div class="tree-modal-tab" id="tree-tab-metadata">
+      <div class="tree-modal-sensor-grid">
+        <div class="tree-modal-sensor"><span class="slbl">Tree ID</span><span class="sval mono" id="modal-id">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">Registered</span><span class="sval" id="modal-date">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">Total shares</span><span class="sval" id="modal-shares">—</span></div>
+        <div class="tree-modal-sensor"><span class="slbl">GPS</span><span class="sval mono" id="modal-gps">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -590,17 +765,37 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
 
 const wait = (ms) => new Promise((res) => setTimeout(res, ms));
 
-const MOCK_TREES = [
-  { id: 124, name: 'Tree #124', zone: 'North Terrace', health: 96 },
-  { id: 187, name: 'Tree #187', zone: 'North Terrace', health: 88 },
-  { id: 203, name: 'Tree #203', zone: 'South Slope',   health: 71 },
+// Full estate — 16 trees. Three are the connected member's own positions (owned:true),
+// matching the ids surfaced in the Grove Ring / portfolio elsewhere on the page.
+const ESTATE_TREES = [
+  { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, age: 12, heightM: 4.2, yieldL: 24.8, x: 90,  y: 65,  owned: false },
+  { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, age: 10, heightM: 3.8, yieldL: 22.1, x: 160, y: 80,  owned: true  },
+  { id: 132, name: 'Tree #132', zone: 'North Terrace', variety: 'Frantoio', health: 92, age: 15, heightM: 4.5, yieldL: 26.3, x: 235, y: 60,  owned: false },
+  { id: 145, name: 'Tree #145', zone: 'North Terrace', variety: 'Leccino',  health: 88, age: 8,  heightM: 3.5, yieldL: 18.7, x: 310, y: 85,  owned: false },
+  { id: 158, name: 'Tree #158', zone: 'North Terrace', variety: 'Leccino',  health: 85, age: 11, heightM: 4.0, yieldL: 20.5, x: 385, y: 62,  owned: false },
+  { id: 170, name: 'Tree #170', zone: 'North Terrace', variety: 'Frantoio', health: 90, age: 9,  heightM: 3.6, yieldL: 19.2, x: 460, y: 82,  owned: false },
+  { id: 187, name: 'Tree #187', zone: 'North Terrace', variety: 'Moraiolo', health: 88, age: 14, heightM: 4.8, yieldL: 28.1, x: 535, y: 60,  owned: true  },
+  { id: 196, name: 'Tree #196', zone: 'North Terrace', variety: 'Frantoio', health: 82, age: 6,  heightM: 3.2, yieldL: 15.4, x: 610, y: 84,  owned: false },
+  { id: 203, name: 'Tree #203', zone: 'South Slope',   variety: 'Leccino',  health: 71, age: 7,  heightM: 3.4, yieldL: 16.8, x: 685, y: 68,  owned: true  },
+  { id: 211, name: 'Tree #211', zone: 'South Slope',   variety: 'Frantoio', health: 80, age: 13, heightM: 4.1, yieldL: 23.4, x: 120, y: 255, owned: false },
+  { id: 224, name: 'Tree #224', zone: 'South Slope',   variety: 'Moraiolo', health: 72, age: 5,  heightM: 3.0, yieldL: 14.2, x: 200, y: 275, owned: false },
+  { id: 239, name: 'Tree #239', zone: 'South Slope',   variety: 'Frantoio', health: 88, age: 16, heightM: 4.6, yieldL: 27.6, x: 280, y: 250, owned: false },
+  { id: 247, name: 'Tree #247', zone: 'South Slope',   variety: 'Leccino',  health: 65, age: 4,  heightM: 2.8, yieldL: 12.3, x: 360, y: 280, owned: false },
+  { id: 258, name: 'Tree #258', zone: 'South Slope',   variety: 'Frantoio', health: 78, age: 10, heightM: 3.9, yieldL: 21.0, x: 440, y: 258, owned: false },
+  { id: 266, name: 'Tree #266', zone: 'South Slope',   variety: 'Moraiolo', health: 70, age: 6,  heightM: 3.3, yieldL: 16.1, x: 520, y: 278, owned: false },
+  { id: 279, name: 'Tree #279', zone: 'South Slope',   variety: 'Frantoio', health: 84, age: 12, heightM: 4.3, yieldL: 25.2, x: 600, y: 255, owned: false },
 ];
+const MOCK_TREES = ESTATE_TREES.filter((t) => t.owned);
 
 const MOCK_UPDATES = [
   { date: 'Jul 2026', html: '<strong>Your tree #124</strong> — summer growth monitored. Healthy and thriving.' },
   { date: 'Jun 2026', html: '<strong>Harvest preparation</strong> — you are invited to the October harvest. Save the date.' },
   { date: 'May 2026', html: '<strong>Welcome to Olivium</strong> — your membership is active. Explore your benefits.' },
 ];
+
+// Reference prices used only for the Estate Value estimate — not a live feed.
+const PRICES = { oilPerLitreEUR: 18.60, carbonPerTonneEUR: 81.12, olvmUSD: 0.412 };
+let lastAvgHealth = null; // set by renderGroveRing, reused by the journal so copy stays honest
 
 const OliviumAPI = {
   async fetchPortfolio() {
@@ -754,6 +949,52 @@ function renderCanopyField() {
   svg.innerHTML = parts.join('');
 }
 
+/* ===== weather: real fetch, no fabricated fallback numbers ===== */
+function weatherEmoji(code) {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '⛅';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '❄️';
+  return '⛈️';
+}
+async function renderWeather() {
+  const chips = [$('weatherChip'), $('weatherChipMember')];
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=43.0833&longitude=10.5333&current_weather=true';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('weather http ' + res.status);
+    const data = await res.json();
+    const temp = Math.round(data.current_weather.temperature);
+    const code = data.current_weather.weathercode;
+    setText('weather-temp', temp + '°C');
+    setText('weather-desc', 'in San Vincenzo today');
+    setText('weather-emoji', weatherEmoji(code));
+    setText('weather-temp-m', temp + '°C');
+    setText('weather-desc-m', 'in San Vincenzo today');
+    setText('weather-emoji-m', weatherEmoji(code));
+    chips.forEach((c) => c?.classList.remove('hidden'));
+  } catch (err) {
+    // No network in this context, or the API is unreachable — say nothing rather than show a guessed temperature.
+    chips.forEach((c) => c?.classList.add('hidden'));
+  }
+}
+
+/* ===== estate value: deterministic math from portfolio + reference prices, not decoration ===== */
+async function renderEstateValue() {
+  if (!getActiveWallet()) return;
+  const [portfolio, entitlement] = await Promise.all([OliviumAPI.fetchPortfolio(), OliviumAPI.fetchEntitlement()]);
+  const oilValue = entitlement.oilLitresEntitled * PRICES.oilPerLitreEUR;
+  const carbonValue = entitlement.carbonTonnes * PRICES.carbonPerTonneEUR;
+  const olvmValueEUR = portfolio.olvTokens * PRICES.olvmUSD * 0.92; // rough USD→EUR for a single blended total
+  const total = oilValue + carbonValue + olvmValueEUR;
+
+  setText('val-oil', '€' + oilValue.toFixed(0));
+  setText('val-carbon', '€' + carbonValue.toFixed(0));
+  setText('val-olvm', '€' + olvmValueEUR.toFixed(0));
+  setText('val-total', '€' + total.toFixed(0));
+}
+
 /* ===== render: portfolio + tier ===== */
 async function renderPortfolio() {
   if (!getActiveWallet()) return;
@@ -779,6 +1020,91 @@ function healthColor(h) {
   if (h >= 60) return 'var(--amber)';
   return 'var(--danger)';
 }
+
+/* ===== ambient floating leaves ===== */
+function renderAmbient() {
+  const container = $('ambient');
+  if (!container) return;
+  const glyphs = ['🍃', '🍂', '🌿'];
+  for (let i = 0; i < 10; i++) {
+    const el = document.createElement('div');
+    el.className = 'leaf';
+    el.textContent = glyphs[i % glyphs.length];
+    el.style.left = Math.random() * 100 + '%';
+    el.style.bottom = '-24px';
+    el.style.fontSize = (13 + Math.random() * 11) + 'px';
+    el.style.animationDuration = (26 + Math.random() * 34) + 's';
+    el.style.animationDelay = (Math.random() * 30) + 's';
+    container.appendChild(el);
+  }
+}
+
+/* ===== Trees estate section: map + list + detail modal ===== */
+function renderTreeMap() {
+  const g = $('tree-map-dots');
+  if (!g) return;
+  g.innerHTML = ESTATE_TREES.map((t) => {
+    const r = t.owned ? 9 : 7;
+    const ring = t.owned ? `<circle cx="${t.x}" cy="${t.y}" r="${r + 4}" fill="none" stroke="var(--gold)" stroke-width="1.4" opacity=".8"/>` : '';
+    return `${ring}<circle class="tree-map-dot" cx="${t.x}" cy="${t.y}" r="${r}" fill="${healthColor(t.health)}" stroke="rgba(255,255,255,.12)" stroke-width="1" data-tree="${t.id}"><title>${t.name} · ${t.variety} · ${t.health}% health${t.owned ? ' · Yours' : ''}</title></circle>`;
+  }).join('');
+  g.querySelectorAll('.tree-map-dot').forEach((dot) => {
+    dot.addEventListener('click', () => openTreeDetail(Number(dot.dataset.tree)));
+  });
+}
+
+function renderTreeList() {
+  const container = $('tree-list-container');
+  if (!container) return;
+  container.innerHTML = ESTATE_TREES.map((t) => `
+    <div class="tree-card" data-tree="${t.id}">
+      <div class="tree-name">${t.name}</div>
+      <div class="tree-zone">${t.zone} · ${t.variety}</div>
+      <div class="tree-health-row"><span class="dot" style="background:${healthColor(t.health)};"></span><span class="pct">${t.health}% healthy</span></div>
+      <div class="tree-meta">${t.age} yrs · ${t.heightM}m · ${t.yieldL.toFixed(1)} L/yr</div>
+      ${t.owned ? '<span class="tree-owned">✦ Yours</span>' : ''}
+    </div>
+  `).join('');
+  container.querySelectorAll('.tree-card').forEach((card) => {
+    card.addEventListener('click', () => openTreeDetail(Number(card.dataset.tree)));
+  });
+}
+
+function openTreeDetail(treeId) {
+  const t = ESTATE_TREES.find((x) => x.id === treeId);
+  if (!t) return;
+  setText('tree-modal-name', `${t.name} — ${t.variety}${t.owned ? ' · Yours' : ''}`);
+  setText('tree-modal-sub', `${t.zone} · San Vincenzo, Tuscany`);
+  setText('modal-age', String(t.age));
+  setText('modal-height', t.heightM.toFixed(1));
+  setText('modal-yield', t.yieldL.toFixed(1));
+  setText('modal-variety', t.variety);
+  setText('modal-zone', t.zone);
+  setText('modal-health', `${t.health}%`);
+  setText('modal-carbon', `${(30 + (t.id % 30)).toFixed(0)} kg`);
+  setText('modal-soil', `${(50 + (t.id % 30))}%`);
+  setText('modal-soiltemp', `${(18 + (t.id % 8))}°C`);
+  setText('modal-light', `${(30000 + (t.id % 20) * 1000).toLocaleString()} lux`);
+  setText('modal-co2', `${(390 + (t.id % 40))} ppm`);
+  setText('modal-id', `OLV-T-${t.id}`);
+  setText('modal-date', '2024-03-15');
+  setText('modal-shares', '1,000');
+  setText('modal-gps', '43.0833°N, 10.5333°E');
+
+  document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
+  document.querySelector('.tree-modal-tabs button[data-tab="overview"]')?.classList.add('active');
+  document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
+  $('tree-tab-overview')?.classList.add('active');
+
+  $('tree-detail-modal')?.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTreeDetail() {
+  $('tree-detail-modal')?.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
 async function renderGroveRing() {
   const svg = $('groveRing');
   if (!svg || !getActiveWallet()) return;
@@ -786,6 +1112,7 @@ async function renderGroveRing() {
   const trees = await OliviumAPI.fetchTrees();
   const cx = 75, cy = 75, r = 56;
   const avgHealth = Math.round(trees.reduce((a, t) => a + t.health, 0) / trees.length);
+  lastAvgHealth = avgHealth;
 
   const parts = [`<circle cx="${cx}" cy="${cy}" r="32" fill="rgba(197,160,89,.09)" stroke="var(--card-border-hover)" stroke-width="1"/>`];
   parts.push(`<text x="${cx}" y="${cy - 2}" text-anchor="middle" class="hub-num" font-size="19">${trees.length}</text>`);
@@ -857,7 +1184,12 @@ async function renderVilla() {
 function renderMemberUpdates() {
   const el = $('member-updates');
   if (!el) return;
-  el.innerHTML = MOCK_UPDATES.map((u) =>
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const todayEntry = lastAvgHealth != null
+    ? { date: today, html: `<strong>Grove check-in</strong> — ${lastAvgHealth}% average canopy health across your positions today.` }
+    : null;
+  const entries = todayEntry ? [todayEntry, ...MOCK_UPDATES] : MOCK_UPDATES;
+  el.innerHTML = entries.map((u) =>
     `<div class="update-item"><span class="date">${u.date}</span><span class="content">${u.html}</span></div>`
   ).join('');
 }
@@ -866,7 +1198,7 @@ function renderMemberUpdates() {
 async function renderDashboard() {
   renderWallet();
   if (!getActiveWallet()) return;
-  await Promise.all([renderPortfolio(), renderGroveRing(), renderOilAllocation(), renderVilla()]);
+  await Promise.all([renderPortfolio(), renderGroveRing(), renderOilAllocation(), renderVilla(), renderEstateValue()]);
   renderMemberUpdates();
   setText('voting-power', '—');
 }
@@ -962,6 +1294,33 @@ function bindActions() {
   links?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
     ham?.classList.remove('open'); links.classList.remove('open'); ham?.setAttribute('aria-expanded', 'false');
   }));
+
+  // trees: map/list toggle
+  $('tree-view-map')?.addEventListener('click', (e) => {
+    e.currentTarget.classList.add('active');
+    $('tree-view-list')?.classList.remove('active');
+    $('tree-map-view')?.classList.remove('hidden');
+    $('tree-list-view')?.classList.add('hidden');
+  });
+  $('tree-view-list')?.addEventListener('click', (e) => {
+    e.currentTarget.classList.add('active');
+    $('tree-view-map')?.classList.remove('active');
+    $('tree-list-view')?.classList.remove('hidden');
+    $('tree-map-view')?.classList.add('hidden');
+  });
+
+  // tree modal
+  $('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
+  $('tree-detail-modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTreeDetail(); });
+  document.querySelectorAll('.tree-modal-tabs button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
+      $('tree-tab-' + btn.dataset.tab)?.classList.add('active');
+    });
+  });
 }
 
 window.addEventListener('olivium:connected', renderDashboard);
@@ -969,6 +1328,10 @@ window.addEventListener('olivium:disconnected', renderDashboard);
 
 bindActions();
 renderCanopyField();
+renderAmbient();
+renderTreeMap();
+renderTreeList();
+renderWeather();
 renderDashboard();
 </script>
 
