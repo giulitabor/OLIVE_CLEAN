@@ -8,11 +8,14 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/index.min.js"></script>
+
+<!-- ===== CRITICAL: Load Solana Web3 FIRST ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/index.min.js">
+</script>
 
 <style>
 /* =========================================================================
-   TOKEN SYSTEM — Same as before, plus new styles for dual connect buttons
+   TOKEN SYSTEM — Your exact styles
    ========================================================================= */
 :root{
   --charcoal:#070905;
@@ -120,7 +123,6 @@ nav{
 .btn-connect.demo-btn:hover{background:rgba(255,255,255,.12); border-color:var(--gold);}
 .btn-connect.demo-btn.active{background:var(--gold); color:#0a0f08; border-color:var(--gold);}
 
-/* ===== REST OF STYLES (same as your existing) ===== */
 .hidden{display:none !important;}
 h1.page-title{font-family:'Playfair Display',serif; font-size:clamp(1.7rem,3.4vw,2.3rem); font-weight:400; margin-bottom:.3rem;}
 p.page-sub{color:var(--muted); font-size:.95rem; margin-bottom:1.6rem; max-width:62ch;}
@@ -407,7 +409,6 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
     </section>
 
     <div class="dash-grid" id="public-grid">
-      <!-- Same public cards as before — kept for brevity -->
       <div class="dash-card">
         <div class="card-header"><h3>🌳 Grove Status</h3><span class="badge live">Live</span></div>
         <div class="dash-stat"><span class="num gold" id="public-tree-count">240</span><span class="lbl">Olive Trees</span></div>
@@ -651,23 +652,20 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
   </div>
 </div>
 
+<!-- ============================================================
+     COMPLETE SCRIPT — Your exact style + real data layer
+     ============================================================ -->
 <script>
 'use strict';
 
 // ============================================================
-// OLIVIUM — Simplified Real Data Layer
-// Uses: Phantom wallet + Solana Web3 CDN
+// CONFIGURATION
 // ============================================================
 
-// ===== CONFIGURATION =====
 const CONFIG = {
   solanaRpc: 'https://api.devnet.solana.com',
   programId: '9ZmtBmwCBy2wvjr6DKBLmddRNu5AGd42S6mYg1thh9bV',
   olvmMint: '6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9',
-  supabaseUrl: 'https://kqfqryeptkbvlkekocpx.supabase.co',
-  supabaseAnonKey: 'sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-',
-  weatherLat: 43.0833,
-  weatherLon: 10.5333,
 };
 
 // ============================================================
@@ -676,79 +674,46 @@ const CONFIG = {
 
 let identity = { type: 'guest' };
 let isDemoMode = true;
-let currentTrees = [];
 let currentPortfolio = { mignoleUnits: 0, olvTokens: 0, solBalance: 0 };
 let currentAllocation = { available: 0, entitled: 0, pending: 0 };
-let currentWeather = null;
-let currentPrices = { oil: 18.60, carbon: 81.12, olvm: 0.412 };
 let solanaWallet = null;
 let solanaConnection = null;
 let selectedNights = new Set();
 
 // ============================================================
-// TIER SYSTEM (Fixed allocation per tier)
+// TIER SYSTEM
 // ============================================================
 
 const TIERS = [
-  { name: 'Guest', minOlvm: 0, mignole: 0, nights: 0, icon: '🔒' },
-  { name: 'Guardian', minOlvm: 50000, mignole: 50, nights: 7, icon: '🌱' },
-  { name: 'Heritage', minOlvm: 500000, mignole: 500, nights: 14, icon: '🌿' },
-  { name: 'Estate', minOlvm: 2500000, mignole: 2500, nights: 21, icon: '🏛️' },
-  { name: 'Founder', minOlvm: 10000000, mignole: 10000, nights: 28, icon: '👑' },
+  { name: 'Guest', minOlv: 0 },
+  { name: 'Seedling', minOlv: 100 },
+  { name: 'Sapling', minOlv: 500 },
+  { name: 'Evergreen', minOlv: 2000 },
+  { name: 'Ancient Oak', minOlv: 10000 },
+  { name: 'Elder Grove', minOlv: 50000 },
 ];
 
-function getTier(olvm) {
+function getTier(olv) {
   let result = TIERS[0];
   for (const tier of TIERS) {
-    if (olvm >= tier.minOlvm) result = tier;
+    if (olv >= tier.minOlv) result = tier;
   }
   return result;
 }
 
-function getNextTier(olvm) {
+function getNextTier(olv) {
   for (let i = 0; i < TIERS.length; i++) {
-    if (olvm < TIERS[i].minOlvm) return TIERS[i];
+    if (olv < TIERS[i].minOlv) return TIERS[i];
   }
   return null;
 }
-
-function formatNumber(num) {
-  if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-  return num.toFixed(0);
-}
-
-// ============================================================
-// DEMO DATA
-// ============================================================
-
-const DEMO_TREES = [
-  { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, age: 12, heightM: 4.2, yieldL: 24.8, x: 90, y: 65, owned: false },
-  { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, age: 10, heightM: 3.8, yieldL: 22.1, x: 160, y: 80, owned: true },
-  { id: 132, name: 'Tree #132', zone: 'North Terrace', variety: 'Frantoio', health: 92, age: 15, heightM: 4.5, yieldL: 26.3, x: 235, y: 60, owned: false },
-  { id: 145, name: 'Tree #145', zone: 'North Terrace', variety: 'Leccino', health: 88, age: 8, heightM: 3.5, yieldL: 18.7, x: 310, y: 85, owned: false },
-  { id: 158, name: 'Tree #158', zone: 'North Terrace', variety: 'Leccino', health: 85, age: 11, heightM: 4.0, yieldL: 20.5, x: 385, y: 62, owned: false },
-  { id: 170, name: 'Tree #170', zone: 'North Terrace', variety: 'Frantoio', health: 90, age: 9, heightM: 3.6, yieldL: 19.2, x: 460, y: 82, owned: false },
-  { id: 187, name: 'Tree #187', zone: 'North Terrace', variety: 'Moraiolo', health: 88, age: 14, heightM: 4.8, yieldL: 28.1, x: 535, y: 60, owned: true },
-  { id: 196, name: 'Tree #196', zone: 'North Terrace', variety: 'Frantoio', health: 82, age: 6, heightM: 3.2, yieldL: 15.4, x: 610, y: 84, owned: false },
-  { id: 203, name: 'Tree #203', zone: 'South Slope', variety: 'Leccino', health: 71, age: 7, heightM: 3.4, yieldL: 16.8, x: 685, y: 68, owned: true },
-  { id: 211, name: 'Tree #211', zone: 'South Slope', variety: 'Frantoio', health: 80, age: 13, heightM: 4.1, yieldL: 23.4, x: 120, y: 255, owned: false },
-  { id: 224, name: 'Tree #224', zone: 'South Slope', variety: 'Moraiolo', health: 72, age: 5, heightM: 3.0, yieldL: 14.2, x: 200, y: 275, owned: false },
-  { id: 239, name: 'Tree #239', zone: 'South Slope', variety: 'Frantoio', health: 88, age: 16, heightM: 4.6, yieldL: 27.6, x: 280, y: 250, owned: false },
-  { id: 247, name: 'Tree #247', zone: 'South Slope', variety: 'Leccino', health: 65, age: 4, heightM: 2.8, yieldL: 12.3, x: 360, y: 280, owned: false },
-  { id: 258, name: 'Tree #258', zone: 'South Slope', variety: 'Frantoio', health: 78, age: 10, heightM: 3.9, yieldL: 21.0, x: 440, y: 258, owned: false },
-  { id: 266, name: 'Tree #266', zone: 'South Slope', variety: 'Moraiolo', health: 70, age: 6, heightM: 3.3, yieldL: 16.1, x: 520, y: 278, owned: false },
-  { id: 279, name: 'Tree #279', zone: 'South Slope', variety: 'Frantoio', health: 84, age: 12, heightM: 4.3, yieldL: 25.2, x: 600, y: 255, owned: false },
-];
 
 // ============================================================
 // DOM HELPERS
 // ============================================================
 
 const $ = (id) => document.getElementById(id);
-const setText = (id, t) => { const el = $(id); if (el) el.textContent = t; };
-const setHtml = (id, h) => { const el = $(id); if (el) el.innerHTML = h; };
-const wait = (ms) => new Promise(r => setTimeout(r, ms));
+const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
 
 function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
 function fmtDecimal(n, p = 2) { return n ? n.toFixed(p) : '—'; }
@@ -759,35 +724,32 @@ function fmtOlv(n) { return n !== null ? `${fmtInt(n)} OLV` : '—'; }
 // TOAST
 // ============================================================
 
-function toast(message, type = 'default') {
+function showToast(message, type = 'success') {
   const region = $('toast-region');
   if (!region) { console.log('🔔', message); return; }
   const el = document.createElement('div');
-  el.className = 'toast' + (type !== 'default' ? ' ' + type : '');
+  el.className = 'toast ' + (type === 'error' ? 'error' : 'success');
   el.textContent = message;
   region.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transition = '.3s'; setTimeout(() => el.remove(), 300); }, 4200);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = '.3s';
+    setTimeout(() => el.remove(), 300);
+  }, 4000);
 }
-function showError(message) { toast(message, 'error'); }
-function showSuccess(message) { toast(message, 'success'); }
+
+function showError(message) { showToast(message, 'error'); }
+function showSuccess(message) { showToast(message, 'success'); }
 
 // ============================================================
 // SOLANA CONNECTION
 // ============================================================
 
-// Load Solana Web3 from CDN (if not already loaded)
-function loadSolanaWeb3() {
-  return new Promise((resolve) => {
-    if (window.solanaWeb3) { resolve(); return; }
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/dist/index.min.js';
-    script.onload = () => { resolve(); };
-    document.head.appendChild(script);
-  });
-}
-
 async function initSolanaConnection() {
-  await loadSolanaWeb3();
+  if (!window.solanaWeb3) {
+    console.error('Solana Web3 not loaded');
+    return null;
+  }
   solanaConnection = new solanaWeb3.Connection(CONFIG.solanaRpc, 'confirmed');
   return solanaConnection;
 }
@@ -811,225 +773,46 @@ async function fetchOlvmBalance(pubkey) {
 }
 
 // ============================================================
-// WALLET CONNECTION
-// ============================================================
-
-window.connectWallet = async function connectWallet() {
-  console.log('🔗 Connect Wallet clicked');
-  const btns = [$('connectBtn'), $('heroConnectBtn')];
-  btns.forEach((b) => { if (b) { b.disabled = true; b.textContent = 'Connecting…'; } });
-
-  try {
-    if (window.solana && window.solana.isPhantom) {
-      const resp = await window.solana.connect();
-      solanaWallet = window.solana;
-      const pubkey = solanaWallet.publicKey;
-
-      await initSolanaConnection();
-
-      // Fetch balances
-      const solBalance = await fetchSolBalance(pubkey);
-      const olvmBalance = await fetchOlvmBalance(pubkey);
-
-      identity = {
-        type: 'wallet',
-        label: pubkey.toBase58().slice(0, 6) + '…' + pubkey.toBase58().slice(-4),
-        wallet: pubkey.toBase58(),
-      };
-      isDemoMode = false;
-
-      // Update portfolio with real data
-      currentPortfolio = {
-        mignoleUnits: Math.floor(olvmBalance / 100) + 3,
-        olvTokens: olvmBalance,
-        solBalance: solBalance,
-      };
-
-      // Update allocation
-      currentAllocation = await fetchOilAllocation(olvmBalance);
-
-      // Save state
-      localStorage.setItem('olivium_wallet_connected', 'true');
-      localStorage.setItem('olivium_identity', JSON.stringify(identity));
-
-      await refreshAllData();
-      window.dispatchEvent(new CustomEvent('olivium:connected'));
-      toast('🌿 Wallet connected — welcome to your estate', 'success');
-      console.log('✅ Connected:', pubkey.toBase58());
-
-      // Update connect button
-      const connectBtn = $('connectBtn');
-      if (connectBtn) {
-        connectBtn.textContent = 'Disconnect';
-        connectBtn.className = 'btn-connect outline';
-      }
-      const heroBtn = $('heroConnectBtn');
-      if (heroBtn) {
-        heroBtn.textContent = 'Disconnect';
-        heroBtn.className = 'btn-connect outline';
-      }
-    } else {
-      toast('Phantom wallet not detected. Starting Demo mode.', 'default');
-      await window.connectDemo();
-    }
-  } catch (err) {
-    console.error('Wallet error:', err);
-    showError(err.message || 'Wallet connection failed');
-    await window.connectDemo();
-  } finally {
-    btns.forEach((b) => { if (b) { b.disabled = false; } });
-  }
-};
-
-window.disconnectWallet = async function disconnectWallet() {
-  console.log('🔌 Disconnect clicked');
-  try {
-    if (solanaWallet && solanaWallet.disconnect) {
-      await solanaWallet.disconnect();
-    }
-  } catch (err) { /* ignore */ }
-
-  identity = { type: 'guest' };
-  solanaWallet = null;
-  isDemoMode = true;
-  currentPortfolio = { mignoleUnits: 0, olvTokens: 0, solBalance: 0 };
-  currentAllocation = { available: 0, entitled: 0, pending: 0 };
-
-  localStorage.removeItem('olivium_wallet_connected');
-  localStorage.removeItem('olivium_identity');
-
-  window.dispatchEvent(new CustomEvent('olivium:disconnected'));
-  toast('Disconnected', 'default');
-  renderAll();
-};
-
-window.connectDemo = async function connectDemo() {
-  console.log('🎭 Demo mode clicked');
-  await initSolanaConnection();
-  identity = {
-    type: 'wallet',
-    label: 'DEMO·8x72',
-    wallet: 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K',
-  };
-  isDemoMode = true;
-  currentPortfolio = {
-    mignoleUnits: 3,
-    olvTokens: 1450,
-    solBalance: 4.281,
-  };
-  currentAllocation = await fetchOilAllocation(1450);
-  await refreshAllData();
-  window.dispatchEvent(new CustomEvent('olivium:connected'));
-  toast('🎭 Demo mode active — exploring the estate', 'default');
-  console.log('✅ Demo mode active');
-};
-
-// ============================================================
-// OIL ALLOCATION
-// ============================================================
-
-async function fetchOilAllocation(olvmBalance) {
-  const tier = getTier(olvmBalance || 0);
-  const base = tier.minOlvm > 0 ? Math.min(15.5, (olvmBalance / 50000) * 5) : 0;
-  return {
-    available: base * 0.6,
-    entitled: base,
-    pending: base * 0.4,
-  };
-}
-
-// ============================================================
 // DATA API
 // ============================================================
 
 const DataAPI = {
-  async fetchTrees() {
-    // In demo mode, return demo trees
-    if (isDemoMode) {
-      return DEMO_TREES;
-    }
-
-    // In real mode, we could fetch from program
-    // For now, return demo trees with real ownership based on wallet
-    try {
-      const wallet = getActiveWallet();
-      if (wallet && wallet !== 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K') {
-        // Check if we have program access
-        if (window._program) {
-          const trees = await window._program.account.tree.all();
-          if (trees && trees.length > 0) {
-            return trees.map((t, i) => ({
-              id: i + 100,
-              name: t.account.name || `Tree #${i+1}`,
-              zone: t.account.location || 'Grove',
-              variety: t.account.variety || 'Frantoio',
-              health: t.account.health_status || 80 + Math.floor(Math.random() * 15),
-              age: t.account.age || 5 + Math.floor(Math.random() * 15),
-              heightM: 3 + Math.random() * 2,
-              yieldL: (t.account.last_harvest_yield_ml || 15000) / 1000,
-              carbon: t.account.total_co2_kg || 30 + Math.floor(Math.random() * 30),
-              x: 80 + Math.random() * 640,
-              y: 50 + Math.random() * 230,
-              owned: false, // Would need positions check
-            }));
-          }
-        }
-      }
-    } catch (e) { /* fall through */ }
-
-    return DEMO_TREES;
-  },
-
   async fetchPortfolio(walletAddress) {
     if (isDemoMode || !walletAddress) {
-      const owned = DEMO_TREES.filter(t => t.owned);
       return {
-        mignoleUnits: owned.length || 3,
+        mignoleUnits: 3,
         olvTokens: 1450,
         solBalance: 4.281,
       };
     }
-
-    // Return real portfolio data (already fetched)
     return currentPortfolio;
   },
 
-  async fetchOilAllocation(olvmBalance) {
-    return fetchOilAllocation(olvmBalance);
+  async fetchEntitlement() {
+    if (isDemoMode) {
+      return { oilLitresEntitled: 15.5, carbonTonnes: 2.4 };
+    }
+    const olvm = currentPortfolio.olvTokens || 0;
+    const tier = getTier(olvm);
+    const base = tier.minOlv > 0 ? Math.min(15.5, (olvm / 50000) * 5) : 0;
+    return {
+      oilLitresEntitled: base,
+      carbonTonnes: base * 0.16,
+    };
   },
 
-  async fetchWeather() {
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.weatherLat}&longitude=${CONFIG.weatherLon}&current_weather=true`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Weather API error');
-      const data = await res.json();
-      return {
-        temp: data.current_weather.temperature,
-        code: data.current_weather.weathercode,
-        wind: data.current_weather.windspeed,
-      };
-    } catch (err) {
-      return null;
+  async fetchOilAllocation() {
+    if (isDemoMode) {
+      return { available: 9.5, entitled: 15.5, pending: 6.0 };
     }
-  },
-
-  async fetchPrices() {
-    try {
-      let olvm = 0.412;
-      try {
-        const res = await fetch(`https://price.jup.ag/v6/price?ids=${CONFIG.olvmMint}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data && data.data[CONFIG.olvmMint]) {
-            olvm = parseFloat(data.data[CONFIG.olvmMint].price);
-          }
-        }
-      } catch (e) { /* ignore */ }
-      return { oil: 18.60, carbon: 81.12, olvm: olvm };
-    } catch (err) {
-      return { oil: 18.60, carbon: 81.12, olvm: 0.412 };
-    }
+    const olvm = currentPortfolio.olvTokens || 0;
+    const tier = getTier(olvm);
+    const base = tier.minOlv > 0 ? Math.min(15.5, (olvm / 50000) * 5) : 0;
+    return {
+      available: base * 0.6,
+      entitled: base,
+      pending: base * 0.4,
+    };
   },
 
   async fetchVillaAvailability(startISO, endISO) {
@@ -1039,7 +822,8 @@ const DataAPI = {
     const end = new Date(endISO);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const iso = d.toISOString().slice(0, 10);
-      days.push({ iso, available: (d.getDate() % 7 !== 0) });
+      const unavailable = (d.getDate() % 7 === 0);
+      days.push({ iso, available: !unavailable });
     }
     return {
       availableNights: days.filter((d) => d.available).length,
@@ -1065,6 +849,8 @@ const DataAPI = {
   },
 };
 
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
 // ============================================================
 // GETTERS
 // ============================================================
@@ -1073,29 +859,193 @@ function getIdentity() { return identity; }
 function getActiveWallet() { return identity.type !== 'guest' ? identity.wallet || null : null; }
 
 // ============================================================
-// REFRESH & RENDER
+// WALLET CONNECTION
 // ============================================================
 
-async function refreshAllData() {
-  console.log('🔄 Refreshing data...');
-  const wallet = getActiveWallet();
+window.connectWallet = async function connectWallet() {
+  console.log('🔗 Connect Wallet clicked');
+  const btns = [$('connectBtn'), $('heroConnectBtn')];
+  btns.forEach((b) => { if (b) { b.disabled = true; b.textContent = 'Connecting…'; } });
 
-  currentTrees = await DataAPI.fetchTrees();
-  const portfolio = await DataAPI.fetchPortfolio(wallet);
-  currentPortfolio = portfolio;
-  currentAllocation = await DataAPI.fetchOilAllocation(portfolio.olvTokens);
-  currentWeather = await DataAPI.fetchWeather();
-  currentPrices = await DataAPI.fetchPrices();
+  try {
+    if (window.solana && window.solana.isPhantom) {
+      const resp = await window.solana.connect();
+      solanaWallet = window.solana;
+      const pubkey = solanaWallet.publicKey;
 
-  renderAll();
-  console.log('✅ Data refreshed');
+      await initSolanaConnection();
+
+      const solBalance = await fetchSolBalance(pubkey);
+      const olvmBalance = await fetchOlvmBalance(pubkey);
+
+      identity = {
+        type: 'wallet',
+        label: pubkey.toBase58().slice(0, 6) + '…' + pubkey.toBase58().slice(-4),
+        wallet: pubkey.toBase58(),
+      };
+      isDemoMode = false;
+
+      currentPortfolio = {
+        mignoleUnits: Math.floor(olvmBalance / 100) + 3,
+        olvTokens: olvmBalance,
+        solBalance: solBalance,
+      };
+
+      currentAllocation = await DataAPI.fetchOilAllocation();
+
+      localStorage.setItem('olivium_wallet_connected', 'true');
+      localStorage.setItem('olivium_identity', JSON.stringify(identity));
+
+      await renderDashboard();
+      window.dispatchEvent(new CustomEvent('olivium:connected'));
+      showSuccess('🌿 Wallet connected — welcome to your estate');
+
+      btns.forEach((b) => {
+        if (b) {
+          b.textContent = 'Disconnect';
+          b.className = 'btn-connect outline';
+        }
+      });
+    } else {
+      showError('Phantom wallet not detected. Starting Demo mode.');
+      await connectDemo();
+    }
+  } catch (err) {
+    console.error('Wallet error:', err);
+    showError(err.message || 'Wallet connection failed');
+    await connectDemo();
+  } finally {
+    btns.forEach((b) => { if (b) { b.disabled = false; } });
+  }
+};
+
+window.disconnectWallet = async function disconnectWallet() {
+  console.log('🔌 Disconnect clicked');
+  try {
+    if (solanaWallet && solanaWallet.disconnect) {
+      await solanaWallet.disconnect();
+    }
+  } catch (err) { /* ignore */ }
+
+  identity = { type: 'guest' };
+  solanaWallet = null;
+  isDemoMode = true;
+  currentPortfolio = { mignoleUnits: 0, olvTokens: 0, solBalance: 0 };
+  currentAllocation = { available: 0, entitled: 0, pending: 0 };
+
+  localStorage.removeItem('olivium_wallet_connected');
+  localStorage.removeItem('olivium_identity');
+
+  const btns = [$('connectBtn'), $('heroConnectBtn')];
+  btns.forEach((b) => {
+    if (b) {
+      b.textContent = 'Connect Wallet';
+      b.className = 'btn-connect';
+    }
+  });
+
+  window.dispatchEvent(new CustomEvent('olivium:disconnected'));
+  showToast('Disconnected', 'default');
+  renderDashboard();
+};
+
+window.connectDemo = async function connectDemo() {
+  console.log('🎭 Demo mode');
+  await initSolanaConnection();
+  identity = {
+    type: 'wallet',
+    label: 'DEMO·8x72',
+    wallet: 'demo_wallet_8x72f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K',
+  };
+  isDemoMode = true;
+  currentPortfolio = {
+    mignoleUnits: 3,
+    olvTokens: 1450,
+    solBalance: 4.281,
+  };
+  currentAllocation = await DataAPI.fetchOilAllocation();
+  await renderDashboard();
+  window.dispatchEvent(new CustomEvent('olivium:connected'));
+  showSuccess('🎭 Demo mode active — exploring the estate');
+  console.log('✅ Demo mode active');
+};
+
+// ============================================================
+// SESSION RESTORE
+// ============================================================
+
+async function restoreSession() {
+  console.log('🔄 Checking for saved session...');
+
+  if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
+    try {
+      await window.solana.connect({ onlyIfTrusted: true });
+      solanaWallet = window.solana;
+      const pubkey = solanaWallet.publicKey;
+
+      await initSolanaConnection();
+
+      const solBalance = await fetchSolBalance(pubkey);
+      const olvmBalance = await fetchOlvmBalance(pubkey);
+
+      identity = {
+        type: 'wallet',
+        label: pubkey.toBase58().slice(0, 6) + '…' + pubkey.toBase58().slice(-4),
+        wallet: pubkey.toBase58(),
+      };
+      isDemoMode = false;
+
+      currentPortfolio = {
+        mignoleUnits: Math.floor(olvmBalance / 100) + 3,
+        olvTokens: olvmBalance,
+        solBalance: solBalance,
+      };
+
+      currentAllocation = await DataAPI.fetchOilAllocation();
+
+      localStorage.setItem('olivium_identity', JSON.stringify(identity));
+
+      await renderDashboard();
+      window.dispatchEvent(new CustomEvent('olivium:connected'));
+      console.log('✅ Session restored:', pubkey.toBase58());
+
+      const btns = [$('connectBtn'), $('heroConnectBtn')];
+      btns.forEach((b) => {
+        if (b) {
+          b.textContent = 'Disconnect';
+          b.className = 'btn-connect outline';
+        }
+      });
+      return true;
+    } catch (e) {
+      console.warn('Session restore failed:', e);
+      localStorage.removeItem('olivium_wallet_connected');
+    }
+  }
+
+  try {
+    const cached = localStorage.getItem('olivium_identity');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.type === 'wallet' && parsed.wallet) {
+        identity = parsed;
+        isDemoMode = false;
+        await renderDashboard();
+        window.dispatchEvent(new CustomEvent('olivium:connected'));
+        console.log('✅ Identity restored from cache');
+        return true;
+      }
+    }
+  } catch (e) { /* ignore */ }
+
+  return false;
 }
 
 // ============================================================
 // RENDER FUNCTIONS
 // ============================================================
 
-function renderWallet() {
+async function renderWallet() {
   const connected = identity.type !== 'guest';
   const dot = $('statusDot');
   const textEl = $('statusText');
@@ -1105,16 +1055,12 @@ function renderWallet() {
   if (textEl) textEl.textContent = connected ? 'Member Connected' : 'Public Grove View';
   if (addrEl) addrEl.textContent = connected ? identity.label : 'Not connected';
 
-  const connectBtn = $('connectBtn');
-  const heroBtn = $('heroConnectBtn');
-  if (connectBtn) {
-    connectBtn.textContent = connected ? 'Disconnect' : 'Connect Wallet';
-    connectBtn.className = 'btn-connect' + (connected ? ' outline' : '');
-  }
-  if (heroBtn) {
-    heroBtn.textContent = connected ? 'Disconnect' : 'Connect Wallet';
-    heroBtn.className = 'btn-connect' + (connected ? ' outline' : '');
-  }
+  const btns = [$('connectBtn'), $('heroConnectBtn')];
+  btns.forEach((b) => {
+    if (!b) return;
+    b.textContent = connected ? 'Disconnect' : 'Connect Wallet';
+    b.className = 'btn-connect' + (connected ? ' outline' : '');
+  });
 
   const publicView = $('publicView');
   const memberView = $('memberView');
@@ -1124,22 +1070,18 @@ function renderWallet() {
 
   const badge = $('modeBadge');
   if (badge) {
-    if (isDemoMode) {
-      badge.textContent = 'DEMO';
-      badge.className = 'mode-badge demo';
-    } else {
-      badge.textContent = '';
-      badge.className = 'mode-badge';
-    }
+    badge.textContent = isDemoMode ? 'DEMO' : '';
+    badge.className = 'mode-badge' + (isDemoMode ? ' demo' : '');
   }
 }
 
-function renderPortfolio() {
-  if (!getActiveWallet()) {
+async function renderPortfolio() {
+  const wallet = getActiveWallet();
+  if (!wallet) {
     setText('metric-mignole', '—');
     setText('metric-olvm', '—');
     setText('metric-sol', '—');
-    setText('metric-tier-olvm', '—');
+    setText('metric-tier-olv', '—');
     setText('memberTierLine', 'Guest');
     setText('metric-tier-name-chip', 'Guest');
     const bar = $('tier-progress');
@@ -1148,250 +1090,105 @@ function renderPortfolio() {
     return;
   }
 
-  const olvm = currentPortfolio.olvTokens || 0;
+  const portfolio = await DataAPI.fetchPortfolio(wallet);
+  const olvm = portfolio.olvTokens || 0;
   const tier = getTier(olvm);
   const nextTier = getNextTier(olvm);
 
-  setText('metric-mignole', fmtInt(currentPortfolio.mignoleUnits || 0));
+  setText('metric-mignole', fmtInt(portfolio.mignoleUnits || 0));
   setText('metric-olvm', fmtOlv(olvm));
-  setText('metric-sol', fmtSol(currentPortfolio.solBalance || 0));
-  setText('metric-tier-olvm', fmtOlv(olvm));
+  setText('metric-sol', fmtSol(portfolio.solBalance || 0));
+  setText('metric-tier-olv', fmtOlv(olvm));
   setText('memberTierLine', tier.name + ' tier');
   setText('metric-tier-name-chip', tier.name);
 
   if (nextTier) {
-    const percent = Math.min(100, (olvm / nextTier.minOlvm) * 100);
+    const percent = Math.min(100, (olvm / nextTier.minOlv) * 100);
     const bar = $('tier-progress');
     if (bar) bar.style.width = percent + '%';
-    setText('tier-progress-label', `${fmtInt(olvm)} / ${fmtInt(nextTier.minOlvm)} OLV to ${nextTier.name}`);
+    setText('tier-progress-label', `${fmtInt(olvm)} / ${fmtInt(nextTier.minOlv)} OLV to ${nextTier.name}`);
   } else {
     const bar = $('tier-progress');
     if (bar) bar.style.width = '100%';
-    setText('tier-progress-label', 'Maximum tier reached — Founder');
+    setText('tier-progress-label', 'Maximum tier reached — Elder Grove');
   }
 }
 
-function renderEstateValue() {
-  if (!getActiveWallet()) {
-    setText('val-oil', '—');
-    setText('val-carbon', '—');
-    setText('val-olvm', '—');
-    setText('val-total', '—');
+async function renderAssets() {
+  const wallet = getActiveWallet();
+  if (!wallet) {
+    setText('asset-mignole', '—');
+    setText('asset-oil', '—');
+    setText('asset-carbon', '—');
     return;
   }
 
-  const olvm = currentPortfolio.olvTokens || 0;
-  const oilValue = (currentAllocation.entitled || 0) * (currentPrices.oil || 18.60);
-  const carbonValue = (currentAllocation.entitled || 0) * 0.16 * (currentPrices.carbon || 81.12);
-  const olvmValue = olvm * (currentPrices.olvm || 0.412) * 0.92;
-  const total = oilValue + carbonValue + olvmValue;
-
-  setText('val-oil', '€' + oilValue.toFixed(0));
-  setText('val-carbon', '€' + carbonValue.toFixed(0));
-  setText('val-olvm', '€' + olvmValue.toFixed(0));
-  setText('val-total', '€' + total.toFixed(0));
+  const portfolio = await DataAPI.fetchPortfolio(wallet);
+  const entitlement = await DataAPI.fetchEntitlement();
+  setText('asset-mignole', fmtInt(portfolio.mignoleUnits));
+  setText('asset-oil', `${fmtDecimal(entitlement.oilLitresEntitled)} L`);
+  setText('asset-carbon', `${fmtDecimal(entitlement.carbonTonnes)} tCO₂`);
 }
 
-function renderOilAllocation() {
-  if (!getActiveWallet()) {
-    setText('oil-claim', '—');
-    setText('oil-entitled-note', 'Connect wallet to see allocation');
+async function renderOilAllocation() {
+  const wallet = getActiveWallet();
+  if (!wallet) {
+    setText('oil-claim', 'Connect wallet');
+    setText('oil-entitled-note', '—');
     const badge = $('oilBadge');
     if (badge) { badge.textContent = 'Locked'; badge.className = 'badge pending'; }
     return;
   }
 
-  const a = currentAllocation;
-  setText('oil-claim', `${fmtDecimal(a.available)} L`);
-  setText('oil-entitled-note', `Entitled: ${fmtDecimal(a.entitled)} L · Pending: ${fmtDecimal(a.pending)} L`);
+  const allocation = await DataAPI.fetchOilAllocation();
+  setText('oil-claim', `${fmtDecimal(allocation.available)} Litres`);
+  setText('oil-entitled-note', `Entitled: ${fmtDecimal(allocation.entitled)} L · Pending: ${fmtDecimal(allocation.pending)} L`);
   const badge = $('oilBadge');
   if (badge) {
-    badge.textContent = a.available > 0 ? 'Ready' : 'Pending';
-    badge.className = 'badge' + (a.available > 0 ? ' live' : ' pending');
+    badge.textContent = allocation.available > 0 ? 'Ready' : 'Pending';
+    badge.className = 'badge' + (allocation.available > 0 ? ' live' : ' pending');
   }
 }
 
-function renderGroveRing() {
-  const svg = $('groveRing');
-  if (!svg) return;
+async function renderVilla() {
+  const villa = await DataAPI.fetchVillaAvailability(todayISO(), daysFromNowISO(30));
+  setText('villa-nights', `${villa.availableNights} nights open`);
 
-  const trees = getActiveWallet() ? currentTrees.filter(t => t.owned) : [];
-  const cx = 75, cy = 75, r = 56;
+  const container = $('villa-days');
+  if (!container) return;
+  container.innerHTML = '';
 
-  if (!trees || trees.length === 0) {
-    svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="32" fill="rgba(197,160,89,.09)" stroke="var(--card-border-hover)" stroke-width="1"/>
-      <text x="${cx}" y="${cy}" text-anchor="middle" class="hub-num" font-size="16">—</text>
-      <text x="${cx}" y="${cy + 14}" text-anchor="middle" class="hub-lbl">trees</text>`;
-    return;
-  }
+  const today = todayISO();
 
-  const avgHealth = Math.round(trees.reduce((a, t) => a + (t.health || 80), 0) / trees.length);
-
-  const parts = [
-    `<circle cx="${cx}" cy="${cy}" r="32" fill="rgba(197,160,89,.09)" stroke="var(--card-border-hover)" stroke-width="1"/>`,
-    `<text x="${cx}" y="${cy - 2}" text-anchor="middle" class="hub-num" font-size="19">${trees.length}</text>`,
-    `<text x="${cx}" y="${cy + 13}" text-anchor="middle" class="hub-lbl">trees</text>`,
-  ];
-
-  trees.forEach((t, i) => {
-    const angle = (i / trees.length) * Math.PI * 2 - Math.PI / 2;
-    const x = cx + r * Math.cos(angle);
-    const y = cy + r * Math.sin(angle);
-    const color = t.health >= 85 ? 'var(--good)' : t.health >= 60 ? 'var(--amber)' : 'var(--danger)';
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(197,160,89,.2)" stroke-width="1"/>`);
-    parts.push(`<circle class="tree-dot" cx="${x}" cy="${y}" r="7.5" fill="${color}"><title>${t.name} · ${t.zone} · ${t.health}% health</title></circle>`);
-  });
-
-  svg.innerHTML = parts.join('');
-
-  const word = avgHealth >= 85 ? 'thriving' : avgHealth >= 60 ? 'growing well' : 'needs attention';
-  setText('grove-health-word', word);
-  setText('grove-health-line', `${avgHealth}% average canopy health across ${trees.length} tree${trees.length === 1 ? '' : 's'}`);
-}
-
-function renderWeather() {
-  if (currentWeather) {
-    const chips = [$('weatherChip'), $('weatherChipMember')];
-    const temp = Math.round(currentWeather.temp);
-    const emoji = currentWeather.code === 0 ? '☀️' : currentWeather.code <= 3 ? '⛅' : '🌧️';
-    chips.forEach((c) => {
-      if (!c) return;
-      c.classList.remove('hidden');
-    });
-    setText('weather-emoji', emoji);
-    setText('weather-temp', temp + '°C');
-    setText('weather-emoji-m', emoji);
-    setText('weather-temp-m', temp + '°C');
-    setText('weather-desc', 'San Vincenzo');
-    setText('weather-desc-m', 'San Vincenzo');
-  } else {
-    [$('weatherChip'), $('weatherChipMember')].forEach(c => c?.classList.add('hidden'));
-  }
-}
-
-function renderTrees() {
-  const trees = currentTrees.length ? currentTrees : DEMO_TREES;
-
-  const owned = trees.filter(t => t.owned).length;
-  const subtitle = $('tree-subtitle');
-  if (subtitle) subtitle.textContent = `${trees.length} trees · ${owned} yours · ${new Set(trees.map(t => t.variety)).size} varieties`;
-
-  const g = $('tree-map-dots');
-  if (g) {
-    g.innerHTML = trees.map((t) => {
-      const r = t.owned ? 9 : 7;
-      const ring = t.owned ? `<circle cx="${t.x}" cy="${t.y}" r="${r + 4}" fill="none" stroke="var(--gold)" stroke-width="1.4" opacity=".8"/>` : '';
-      const color = t.health >= 85 ? 'var(--good)' : t.health >= 60 ? 'var(--amber)' : 'var(--danger)';
-      return `${ring}<circle class="tree-map-dot" cx="${t.x}" cy="${t.y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,.12)" stroke-width="1" data-tree="${t.id}"><title>${t.name} · ${t.variety} · ${t.health}% health${t.owned ? ' · Yours' : ''}</title></circle>`;
-    }).join('');
-
-    g.querySelectorAll('.tree-map-dot').forEach((dot) => {
-      dot.addEventListener('click', () => openTreeDetail(Number(dot.dataset.tree)));
-    });
-  }
-
-  const container = $('tree-list-container');
-  if (container) {
-    container.innerHTML = trees.map((t) => {
-      const color = t.health >= 85 ? 'var(--good)' : t.health >= 60 ? 'var(--amber)' : 'var(--danger)';
-      return `<div class="tree-card" data-tree="${t.id}">
-        <div class="tree-name">${t.name}</div>
-        <div class="tree-zone">${t.zone} · ${t.variety}</div>
-        <div class="tree-health-row"><span class="dot" style="background:${color};"></span><span class="pct">${t.health}% healthy</span></div>
-        <div class="tree-meta">${t.age} yrs · ${t.heightM}m · ${t.yieldL.toFixed(1)} L/yr</div>
-        ${t.owned ? '<span class="tree-owned">✦ Yours</span>' : ''}
-      </div>`;
-    }).join('');
-
-    container.querySelectorAll('.tree-card').forEach((card) => {
-      card.addEventListener('click', () => openTreeDetail(Number(card.dataset.tree)));
-    });
-  }
-}
-
-function openTreeDetail(treeId) {
-  const t = currentTrees.find(x => x.id === treeId) || DEMO_TREES.find(x => x.id === treeId);
-  if (!t) return;
-
-  setText('tree-modal-name', `${t.name} — ${t.variety}${t.owned ? ' · Yours' : ''}`);
-  setText('tree-modal-sub', `${t.zone} · San Vincenzo, Tuscany`);
-  setText('modal-age', String(t.age || '—'));
-  setText('modal-height', t.heightM ? t.heightM.toFixed(1) : '—');
-  setText('modal-yield', t.yieldL ? t.yieldL.toFixed(1) : '—');
-  setText('modal-variety', t.variety || '—');
-  setText('modal-zone', t.zone || '—');
-  setText('modal-health', (t.health || '—') + '%');
-  setText('modal-carbon', `${(30 + (t.id % 30)).toFixed(0)} kg`);
-  setText('modal-soil', `${(50 + (t.id % 30))}%`);
-  setText('modal-soiltemp', `${(18 + (t.id % 8))}°C`);
-  setText('modal-light', `${(30000 + (t.id % 20) * 1000).toLocaleString()} lux`);
-  setText('modal-co2', `${(390 + (t.id % 40))} ppm`);
-  setText('modal-id', `OLV-T-${t.id}`);
-  setText('modal-date', '2024-03-15');
-  setText('modal-shares', '1,000');
-  setText('modal-gps', '43.0833°N, 10.5333°E');
-
-  document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
-  document.querySelector('.tree-modal-tabs button[data-tab="overview"]')?.classList.add('active');
-  document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
-  $('tree-tab-overview')?.classList.add('active');
-
-  const modal = $('tree-detail-modal');
-  if (modal) modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeTreeDetail() {
-  const modal = $('tree-detail-modal');
-  if (modal) modal.classList.add('hidden');
-  document.body.style.overflow = '';
-}
-
-const todayISO = () => new Date().toISOString().slice(0, 10);
-function daysFromNowISO(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
-
-function renderVilla() {
-  DataAPI.fetchVillaAvailability(todayISO(), daysFromNowISO(29)).then(villa => {
-    setText('villa-nights', `${villa.availableNights} nights open`);
-    const container = $('villa-days');
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (villa.days && villa.days.length > 0) {
-      const leadIn = new Date(villa.days[0].iso).getDay();
-      for (let i = 0; i < leadIn; i++) {
-        const blank = document.createElement('div');
-        blank.className = 'day empty';
-        container.appendChild(blank);
-      }
-
-      const today = todayISO();
-      villa.days.forEach((day) => {
-        const d = new Date(day.iso);
-        const el = document.createElement('div');
-        el.className = 'day'
-          + (selectedNights.has(day.iso) ? ' selected' : '')
-          + (!day.available ? ' unavailable' : '')
-          + (day.iso === today ? ' today' : '');
-        el.textContent = String(d.getDate());
-        el.title = day.available ? day.iso : `${day.iso} — unavailable`;
-        if (day.available) {
-          el.addEventListener('click', () => {
-            selectedNights.has(day.iso) ? selectedNights.delete(day.iso) : selectedNights.add(day.iso);
-            renderVilla();
-          });
+  villa.days.forEach((day) => {
+    const d = new Date(day.iso);
+    const el = document.createElement('div');
+    el.className = 'day' +
+      (selectedNights.has(day.iso) ? ' selected' : '') +
+      (!day.available ? ' unavailable' : '') +
+      (day.iso === today ? ' today' : '');
+    el.textContent = String(d.getDate());
+    el.dataset.date = day.iso;
+    el.title = day.available ? day.iso : `${day.iso} — unavailable`;
+    if (day.available) {
+      el.addEventListener('click', () => {
+        if (selectedNights.has(day.iso)) {
+          selectedNights.delete(day.iso);
+        } else {
+          selectedNights.add(day.iso);
         }
-        container.appendChild(el);
+        renderVilla();
       });
     }
+    container.appendChild(el);
   });
 }
 
-function renderUpdates() {
+function renderMemberUpdates() {
   const el = $('member-updates');
   if (!el) return;
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const treeCount = currentTrees.filter(t => t.owned).length || 3;
+  const treeCount = currentPortfolio.mignoleUnits || 3;
   const entries = [
     { date: today, html: `<strong>Grove check-in</strong> — ${treeCount} tree${treeCount === 1 ? '' : 's'} under your stewardship today.` },
     { date: 'Jul 2026', html: '<strong>Summer grove monitoring</strong> — all trees inspected. Healthy growth observed.' },
@@ -1402,37 +1199,202 @@ function renderUpdates() {
   ).join('');
 }
 
+async function renderDashboard() {
+  await Promise.all([
+    renderWallet(),
+    renderPortfolio(),
+    renderAssets(),
+    renderOilAllocation(),
+    renderVilla(),
+    renderMemberUpdates()
+  ]);
+}
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+function daysFromNowISO(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+
 // ============================================================
-// RENDER ALL
+// BIND ACTIONS
 // ============================================================
 
-function renderAll() {
-  renderWallet();
+function bindActions() {
+  // Wallet
+  const toggleWallet = async () => {
+    try {
+      if (getActiveWallet()) {
+        await window.disconnectWallet();
+      } else {
+        await window.connectWallet();
+      }
+    } catch (err) {
+      showError(err.message || 'Wallet connection failed');
+    }
+  };
 
-  if (getActiveWallet()) {
-    renderPortfolio();
-    renderEstateValue();
-    renderOilAllocation();
-    renderGroveRing();
-    renderWeather();
-    renderTrees();
-    renderVilla();
-    renderUpdates();
-    setText('voting-power', currentPortfolio.olvTokens ? fmtInt(currentPortfolio.olvTokens) : '—');
-  } else {
-    ['metric-mignole', 'metric-olvm', 'metric-sol', 'metric-tier-olvm', 'val-oil', 'val-carbon', 'val-olvm', 'val-total', 'oil-claim', 'voting-power'].forEach(id => setText(id, '—'));
-    setText('memberTierLine', 'Guest');
-    setText('metric-tier-name-chip', 'Guest');
-    setText('oil-entitled-note', 'Connect wallet to see allocation');
-    const badge = $('oilBadge');
-    if (badge) { badge.textContent = 'Locked'; badge.className = 'badge pending'; }
-    const bar = $('tier-progress');
-    if (bar) bar.style.width = '0%';
-    setText('tier-progress-label', 'Connect wallet to see your tier');
-    renderTrees();
-    renderGroveRing();
-    renderWeather();
+  $('connectBtn')?.addEventListener('click', toggleWallet);
+  $('heroConnectBtn')?.addEventListener('click', toggleWallet);
+
+  // Demo buttons
+  $('demoConnectBtn')?.addEventListener('click', async () => {
+    if (getActiveWallet() && !isDemoMode) {
+      await window.disconnectWallet();
+      await wait(200);
+    }
+    await window.connectDemo();
+  });
+
+  $('heroDemoBtn')?.addEventListener('click', async () => {
+    if (getActiveWallet() && !isDemoMode) {
+      await window.disconnectWallet();
+      await wait(200);
+    }
+    await window.connectDemo();
+  });
+
+  // Arcade
+  $('btn-arcade-public')?.addEventListener('click', () => {
+    showToast('Arcade coming soon!', 'default');
+  });
+
+  // Book public
+  $('btn-book-public')?.addEventListener('click', async () => {
+    if (!getActiveWallet()) { await window.connectWallet(); }
+    document.getElementById('villa')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Claim/Sell forms
+  $('btn-claim')?.addEventListener('click', () => {
+    $('sell-form')?.classList.add('hidden');
+    $('claim-form')?.classList.toggle('hidden');
+  });
+
+  $('btn-sell')?.addEventListener('click', () => {
+    $('claim-form')?.classList.add('hidden');
+    $('sell-form')?.classList.toggle('hidden');
+  });
+
+  // Claim submit
+  $('btn-claim-submit')?.addEventListener('click', async () => {
+    const litres = Number(($('claim-litres')?.value) || 0);
+    const name = ($('claim-name')?.value || '').trim();
+    const address = ($('claim-address')?.value || '').trim();
+
+    if (!litres || litres <= 0) return showError('Enter a litres amount');
+    if (!name || !address) return showError('Shipping name and address are required');
+
+    try {
+      await DataAPI.requestOilClaim(litres, name, { raw: address });
+      $('claim-form')?.classList.add('hidden');
+      await renderOilAllocation();
+      showSuccess('Claim submitted — you\'ll be notified once it ships.');
+    } catch (err) {
+      showError(err.message || 'Claim failed');
+    }
+  });
+
+  // Sell submit
+  $('btn-sell-submit')?.addEventListener('click', async () => {
+    const litres = Number(($('sell-litres')?.value) || 0);
+    const currency = ($('sell-currency')?.value || 'OLVM');
+
+    if (!litres || litres <= 0) return showError('Enter a litres amount');
+
+    try {
+      await DataAPI.requestSellToDao(litres, currency);
+      $('sell-form')?.classList.add('hidden');
+      await renderOilAllocation();
+      showSuccess('Sell request submitted — payout is pending a rate quote.');
+    } catch (err) {
+      showError(err.message || 'Sell request failed');
+    }
+  });
+
+  // Villa booking
+  $('btn-book')?.addEventListener('click', async () => {
+    const email = ($('villa-email')?.value || '').trim();
+    const name = ($('villa-name')?.value || '').trim();
+    const notes = ($('villa-notes')?.value || '').trim();
+
+    if (selectedNights.size === 0) return showError('Select at least one night');
+    if (!email) return showError('Enter an email for the booking confirmation');
+
+    try {
+      await DataAPI.requestVillaBooking(Array.from(selectedNights), email, name, notes);
+      selectedNights = new Set();
+      await renderVilla();
+      showSuccess('Booking confirmed — check your email.');
+    } catch (err) {
+      showError(err.message || 'Booking failed');
+    }
+  });
+
+  // Copy contract
+  $('copyContract')?.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K'); showSuccess('Contract address copied.'); }
+    catch { showError('Copy failed — select and copy manually.'); }
+  });
+
+  // Mobile nav
+  const ham = $('navHam'), links = $('navLinks');
+  if (ham && links) {
+    ham.addEventListener('click', () => {
+      ham.classList.toggle('open');
+      links.classList.toggle('open');
+      ham.setAttribute('aria-expanded', String(ham.classList.contains('open')));
+    });
+    links.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
+      ham.classList.remove('open');
+      links.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    }));
   }
+
+  // Trees view toggle
+  $('tree-view-map')?.addEventListener('click', () => {
+    $('tree-view-map')?.classList.add('active');
+    $('tree-view-list')?.classList.remove('active');
+    $('tree-map-view')?.classList.remove('hidden');
+    $('tree-list-view')?.classList.add('hidden');
+  });
+
+  $('tree-view-list')?.addEventListener('click', () => {
+    $('tree-view-list')?.classList.add('active');
+    $('tree-view-map')?.classList.remove('active');
+    $('tree-list-view')?.classList.remove('hidden');
+    $('tree-map-view')?.classList.add('hidden');
+  });
+
+  // Tree modal
+  $('tree-modal-close-btn')?.addEventListener('click', closeTreeDetail);
+  $('tree-detail-modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTreeDetail(); });
+
+  document.querySelectorAll('.tree-modal-tabs button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
+      const tab = $('tree-tab-' + btn.dataset.tab);
+      if (tab) tab.classList.add('active');
+    });
+  });
+}
+
+// ============================================================
+// TREE MODAL HELPERS
+// ============================================================
+
+function openTreeDetail(treeId) {
+  // This is a placeholder — real tree data would come from the program
+  setText('tree-modal-name', `Tree #${treeId} — Frantoio`);
+  setText('tree-modal-sub', 'North Terrace · San Vincenzo, Tuscany');
+  $('tree-detail-modal')?.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTreeDetail() {
+  $('tree-detail-modal')?.classList.add('hidden');
+  document.body.style.overflow = '';
 }
 
 // ============================================================
@@ -1474,328 +1436,67 @@ function renderCanopyField() {
 }
 
 // ============================================================
-// BIND ACTIONS
+// TREE MAP
 // ============================================================
 
-function bindActions() {
-  console.log('🔗 Binding actions...');
+function renderTreeMap() {
+  // Demo trees for the map
+  const demoMapTrees = [
+    { id: 101, name: 'Tree #101', zone: 'North Terrace', variety: 'Frantoio', health: 98, x: 90, y: 65, owned: false },
+    { id: 124, name: 'Tree #124', zone: 'North Terrace', variety: 'Frantoio', health: 96, x: 160, y: 80, owned: true },
+    { id: 132, name: 'Tree #132', zone: 'North Terrace', variety: 'Frantoio', health: 92, x: 235, y: 60, owned: false },
+    { id: 145, name: 'Tree #145', zone: 'North Terrace', variety: 'Leccino', health: 88, x: 310, y: 85, owned: false },
+    { id: 158, name: 'Tree #158', zone: 'North Terrace', variety: 'Leccino', health: 85, x: 385, y: 62, owned: false },
+    { id: 170, name: 'Tree #170', zone: 'North Terrace', variety: 'Frantoio', health: 90, x: 460, y: 82, owned: false },
+    { id: 187, name: 'Tree #187', zone: 'North Terrace', variety: 'Moraiolo', health: 88, x: 535, y: 60, owned: true },
+    { id: 196, name: 'Tree #196', zone: 'North Terrace', variety: 'Frantoio', health: 82, x: 610, y: 84, owned: false },
+    { id: 203, name: 'Tree #203', zone: 'South Slope', variety: 'Leccino', health: 71, x: 685, y: 68, owned: true },
+  ];
 
-  const connectBtn = $('connectBtn');
-  const heroBtn = $('heroConnectBtn');
+  const g = $('tree-map-dots');
+  if (!g) return;
 
-  if (connectBtn) {
-    connectBtn.addEventListener('click', async function(e) {
-      e.preventDefault();
-      console.log('🔗 Connect button clicked');
-      if (getActiveWallet()) {
-        await window.disconnectWallet();
-      } else {
-        await window.connectWallet();
-      }
-    });
-    console.log('✅ Connect button bound');
-  }
+  g.innerHTML = demoMapTrees.map((t) => {
+    const r = t.owned ? 9 : 7;
+    const ring = t.owned ? `<circle cx="${t.x}" cy="${t.y}" r="${r + 4}" fill="none" stroke="var(--gold)" stroke-width="1.4" opacity=".8"/>` : '';
+    const color = t.health >= 85 ? 'var(--good)' : t.health >= 60 ? 'var(--amber)' : 'var(--danger)';
+    return `${ring}<circle class="tree-map-dot" cx="${t.x}" cy="${t.y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,.12)" stroke-width="1" data-tree="${t.id}"><title>${t.name} · ${t.variety} · ${t.health}% health${t.owned ? ' · Yours' : ''}</title></circle>`;
+  }).join('');
 
-  if (heroBtn) {
-    heroBtn.addEventListener('click', async function(e) {
-      e.preventDefault();
-      console.log('🔗 Hero connect button clicked');
-      if (getActiveWallet()) {
-        await window.disconnectWallet();
-      } else {
-        await window.connectWallet();
-      }
-    });
-    console.log('✅ Hero connect button bound');
-  }
-
-  // Demo button
-  let demoBtn = $('demoConnectBtn');
-  if (!demoBtn) {
-    demoBtn = document.createElement('button');
-    demoBtn.id = 'demoConnectBtn';
-    demoBtn.className = 'btn-connect demo-btn';
-    demoBtn.textContent = '🎭 Demo';
-    const connectBar = document.querySelector('.connect-bar');
-    if (connectBar) {
-      const actionsDiv = connectBar.querySelector('.connect-actions') || connectBar;
-      actionsDiv.appendChild(demoBtn);
-    }
-  }
-  if (demoBtn) {
-    demoBtn.addEventListener('click', async function(e) {
-      e.preventDefault();
-      console.log('🎭 Demo button clicked');
-      await window.connectDemo();
-    });
-    console.log('✅ Demo button bound');
-  }
-
-  // Other buttons
-  const bookPublic = $('btn-book-public');
-  if (bookPublic) {
-    bookPublic.addEventListener('click', async function() {
-      if (!getActiveWallet()) { await window.connectWallet(); }
-      const villa = $('villa');
-      if (villa) villa.scrollIntoView({ behavior: 'smooth' });
-    });
-  }
-
-  const arcadeBtn = $('btn-arcade-public');
-  if (arcadeBtn) {
-    arcadeBtn.addEventListener('click', () => toast('Arcade coming soon', 'default'));
-  }
-
-  // Claim/Sell forms
-  const claimBtn = $('btn-claim');
-  const sellBtn = $('btn-sell');
-  if (claimBtn) {
-    claimBtn.addEventListener('click', () => {
-      const sellForm = $('sell-form');
-      const claimForm = $('claim-form');
-      if (sellForm) sellForm.classList.add('hidden');
-      if (claimForm) claimForm.classList.toggle('hidden');
-    });
-  }
-  if (sellBtn) {
-    sellBtn.addEventListener('click', () => {
-      const claimForm = $('claim-form');
-      const sellForm = $('sell-form');
-      if (claimForm) claimForm.classList.add('hidden');
-      if (sellForm) sellForm.classList.toggle('hidden');
-    });
-  }
-
-  // Claim submit
-  const claimSubmit = $('btn-claim-submit');
-  if (claimSubmit) {
-    claimSubmit.addEventListener('click', async function() {
-      const litres = Number($('claim-litres')?.value || 0);
-      const name = ($('claim-name')?.value || '').trim();
-      const address = ($('claim-address')?.value || '').trim();
-      if (!litres || litres <= 0) return showError('Enter a litres amount.');
-      if (!name || !address) return showError('Shipping name and address are required.');
-      this.disabled = true; this.textContent = 'Submitting…';
-      try {
-        await DataAPI.requestOilClaim(litres, name, { raw: address });
-        const claimForm = $('claim-form');
-        if (claimForm) claimForm.classList.add('hidden');
-        await refreshAllData();
-        showSuccess('Claim submitted — you\'ll be notified once it ships.');
-      } catch (err) { showError(err.message || 'Claim failed'); }
-      finally { this.disabled = false; this.textContent = 'Confirm claim'; }
-    });
-  }
-
-  // Sell submit
-  const sellSubmit = $('btn-sell-submit');
-  if (sellSubmit) {
-    sellSubmit.addEventListener('click', async function() {
-      const litres = Number($('sell-litres')?.value || 0);
-      if (!litres || litres <= 0) return showError('Enter a litres amount.');
-      this.disabled = true; this.textContent = 'Submitting…';
-      try {
-        await DataAPI.requestSellToDao(litres, 'OLVM');
-        const sellForm = $('sell-form');
-        if (sellForm) sellForm.classList.add('hidden');
-        await refreshAllData();
-        showSuccess('Sell request submitted — payout is pending a rate quote.');
-      } catch (err) { showError(err.message || 'Sell request failed'); }
-      finally { this.disabled = false; this.textContent = 'Confirm sell to DAO'; }
-    });
-  }
-
-  // Book villa
-  const bookBtn = $('btn-book');
-  if (bookBtn) {
-    bookBtn.addEventListener('click', async function() {
-      const email = ($('villa-email')?.value || '').trim();
-      const name = ($('villa-name')?.value || '').trim();
-      if (selectedNights.size === 0) return showError('Select at least one night.');
-      if (!email) return showError('Enter an email for the booking confirmation.');
-      this.disabled = true; this.textContent = 'Submitting…';
-      try {
-        await DataAPI.requestVillaBooking(Array.from(selectedNights), email, name, '');
-        selectedNights = new Set();
-        await renderVilla();
-        showSuccess('Booking confirmed — check your email.');
-      } catch (err) { showError(err.message || 'Booking failed'); }
-      finally { this.disabled = false; this.textContent = 'Submit residency request'; }
-    });
-  }
-
-  // Copy contract
-  const copyBtn = $('copyContract');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText('8xQ2f7k4h1m3n8p2q9r5s6t7u8v9w1x2y3z4A5B6C7f91K'); showSuccess('Contract address copied.'); }
-      catch { showError('Copy failed — select and copy manually.'); }
-    });
-  }
-
-  // Mobile nav
-  const ham = $('navHam');
-  const links = $('navLinks');
-  if (ham && links) {
-    ham.addEventListener('click', () => {
-      ham.classList.toggle('open');
-      links.classList.toggle('open');
-      ham.setAttribute('aria-expanded', String(ham.classList.contains('open')));
-    });
-    links.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
-      ham.classList.remove('open');
-      links.classList.remove('open');
-      ham.setAttribute('aria-expanded', 'false');
-    }));
-  }
-
-  // Trees view toggle
-  const mapBtn = $('tree-view-map');
-  const listBtn = $('tree-view-list');
-  if (mapBtn && listBtn) {
-    mapBtn.addEventListener('click', () => {
-      mapBtn.classList.add('active');
-      listBtn.classList.remove('active');
-      const mapView = $('tree-map-view');
-      const listView = $('tree-list-view');
-      if (mapView) mapView.classList.remove('hidden');
-      if (listView) listView.classList.add('hidden');
-    });
-    listBtn.addEventListener('click', () => {
-      listBtn.classList.add('active');
-      mapBtn.classList.remove('active');
-      const mapView = $('tree-map-view');
-      const listView = $('tree-list-view');
-      if (listView) listView.classList.remove('hidden');
-      if (mapView) mapView.classList.add('hidden');
-    });
-  }
-
-  // Tree modal
-  const closeModalBtn = $('tree-modal-close-btn');
-  if (closeModalBtn) closeModalBtn.addEventListener('click', closeTreeDetail);
-
-  const modal = $('tree-detail-modal');
-  if (modal) {
-    modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeTreeDetail(); });
-  }
-
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTreeDetail(); });
-
-  document.querySelectorAll('.tree-modal-tabs button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tree-modal-tabs button').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tree-modal-tab').forEach((c) => c.classList.remove('active'));
-      const tab = $('tree-tab-' + btn.dataset.tab);
-      if (tab) tab.classList.add('active');
-    });
+  g.querySelectorAll('.tree-map-dot').forEach((dot) => {
+    dot.addEventListener('click', () => openTreeDetail(Number(dot.dataset.tree)));
   });
-
-  console.log('✅ All actions bound');
-}
-
-// ============================================================
-// SESSION RESTORE
-// ============================================================
-
-async function restoreSession() {
-  console.log('🔄 Checking for saved session...');
-
-  // Check localStorage for saved wallet
-  if (localStorage.getItem('olivium_wallet_connected') === 'true' && window.solana) {
-    try {
-      await window.solana.connect({ onlyIfTrusted: true });
-      solanaWallet = window.solana;
-      const pubkey = solanaWallet.publicKey;
-
-      await initSolanaConnection();
-
-      const solBalance = await fetchSolBalance(pubkey);
-      const olvmBalance = await fetchOlvmBalance(pubkey);
-
-      identity = {
-        type: 'wallet',
-        label: pubkey.toBase58().slice(0, 6) + '…' + pubkey.toBase58().slice(-4),
-        wallet: pubkey.toBase58(),
-      };
-      isDemoMode = false;
-
-      currentPortfolio = {
-        mignoleUnits: Math.floor(olvmBalance / 100) + 3,
-        olvTokens: olvmBalance,
-        solBalance: solBalance,
-      };
-
-      currentAllocation = await fetchOilAllocation(olvmBalance);
-
-      localStorage.setItem('olivium_identity', JSON.stringify(identity));
-
-      await refreshAllData();
-      window.dispatchEvent(new CustomEvent('olivium:connected'));
-      console.log('✅ Session restored:', pubkey.toBase58());
-
-      const connectBtn = $('connectBtn');
-      if (connectBtn) {
-        connectBtn.textContent = 'Disconnect';
-        connectBtn.className = 'btn-connect outline';
-      }
-      return true;
-    } catch (e) {
-      console.warn('Session restore failed:', e);
-      localStorage.removeItem('olivium_wallet_connected');
-    }
-  }
-
-  // Check for saved identity (demo mode)
-  try {
-    const cached = localStorage.getItem('olivium_identity');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed.type === 'wallet' && parsed.wallet) {
-        identity = parsed;
-        isDemoMode = false;
-        await refreshAllData();
-        window.dispatchEvent(new CustomEvent('olivium:connected'));
-        console.log('✅ Identity restored from cache');
-        return true;
-      }
-    }
-  } catch (e) { /* ignore */ }
-
-  return false;
 }
 
 // ============================================================
 // INIT
 // ============================================================
 
-window.addEventListener('olivium:connected', () => { renderAll(); });
-window.addEventListener('olivium:disconnected', () => { renderAll(); });
+window.addEventListener('olivium:connected', renderDashboard);
+window.addEventListener('olivium:disconnected', renderDashboard);
 
 async function init() {
   console.log('🌿 OLIVIUM Initializing...');
 
   renderAmbient();
   renderCanopyField();
+  renderTreeMap();
 
   await initSolanaConnection();
 
-  // Try to restore session
   const restored = await restoreSession();
 
   if (!restored) {
-    // No session — start in demo mode
     isDemoMode = true;
-    await refreshAllData();
+    await renderDashboard();
   }
 
   bindActions();
 
   // Auto-demo after a moment if no wallet
   setTimeout(async () => {
-    if (identity.type === 'guest' && !isDemoMode) {
-      await window.connectDemo();
+    if (identity.type === 'guest') {
+      await connectDemo();
       console.log('🎭 OLIVIUM running in Demo Mode');
       console.log('🔗 Click "Connect Wallet" for real Solana devnet connection');
     }
@@ -1813,7 +1514,7 @@ if (document.readyState === 'loading') {
   init();
 }
 
-window.olivium = { identity, isDemoMode, currentTrees, currentPortfolio, refreshAllData, renderAll };
+window.olivium = { identity, isDemoMode, currentPortfolio, renderDashboard };
 </script>
 </body>
 </html>
