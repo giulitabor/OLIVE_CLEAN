@@ -15,6 +15,7 @@
 /* ===== COMBINED STYLES ===== */
 
 :root {
+    /* From first dashboard */
     --bg-deep: #050606;
     --bg-mid: #101512;
     --accent: #b8ff72;
@@ -69,6 +70,38 @@
     height: 100%;
     background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
     pointer-events: none;
+}
+
+/* ===== LOADING OVERLAY ===== */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(8,11,7,0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    transition: opacity 0.8s ease;
+}
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(197,160,89,0.1);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+    color: var(--muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
 }
 
 /* ===== MAIN LAYOUT ===== */
@@ -170,7 +203,7 @@ nav {
 .nav-ham.open span:nth-child(2) { opacity: 0; }
 .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
 
-/* ===== CONNECT BAR FROM SECOND DASHBOARD ===== */
+/* ===== CONNECT BAR ===== */
 .connect-bar {
     display: flex;
     justify-content: space-between;
@@ -486,6 +519,12 @@ button:hover, .btn:hover {
 </head>
 <body>
 
+<!-- ===== LOADING OVERLAY ===== -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading Olivium Ecosystem Data...</div>
+</div>
+
 <!-- ===== VIDEO BACKGROUND ===== -->
 <div class="video-bg">
     <video autoplay loop muted playsinline aria-hidden="true"
@@ -536,7 +575,7 @@ button:hover, .btn:hover {
         <!-- ===== CONNECT BAR ===== -->
         <div class="connect-bar">
             <div class="status">
-                <span class="dot" id="statusDot"></span>
+                <span class="dot inactive" id="statusDot"></span>
                 <span id="statusText">Not connected</span>
                 <span class="wallet" id="walletDisplay">—</span>
             </div>
@@ -653,23 +692,31 @@ button:hover, .btn:hover {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <!-- 
-    ===== THIS LOADS THE REAL DATA =====
-    The dashboard.ts file imports connection.ts and dashboard-data.ts
-    which fetch real on-chain data from Solana.
+    ===== THIS LOADS THE REAL DATA FROM YOUR TYPESCRIPT FILES =====
+    The dashboard.ts file imports:
+    - connection.ts (Solana wallet connection)
+    - dashboard-data.ts (real blockchain data fetching)
     
-    To make this work, you need:
-    1. A Vite or similar bundler setup
-    2. The actual TypeScript files (dashboard.ts, connection.ts, dashboard-data.ts)
-    3. Environment variables for Solana RPC endpoints
-    4. @solana/web3.js and other dependencies installed
+    This will fetch real on-chain data when run through Vite with:
+    - @solana/web3.js installed
+    - Proper environment variables (.env file)
+    - RPC endpoints configured
 -->
 <script type="module" src="./dashboard.ts"></script>
 
 <!-- 
     ===== FALLBACK JAVASCRIPT FOR UI INTERACTIONS =====
-    This handles the UI elements that don't depend on blockchain data
+    This handles UI elements that don't depend on blockchain data
+    and will work alongside the TypeScript module
 -->
 <script>
+    // Hide loading overlay after 2 seconds (or when dashboard.ts loads)
+    // dashboard.ts will also hide this when data is ready
+    setTimeout(() => {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.classList.add('hidden');
+    }, 2000);
+
     // Mobile nav toggle
     const ham = document.getElementById('navHam');
     const links = document.getElementById('navLinks');
@@ -718,9 +765,28 @@ button:hover, .btn:hover {
         form.classList.toggle('hidden');
     });
 
+    // Arcade button
+    document.getElementById('btn-arcade')?.addEventListener('click', function() {
+        alert('🎮 Arcade coming soon! Play harvest games and earn OLVM.');
+    });
+
+    // Book villa
+    document.getElementById('btn-book')?.addEventListener('click', function() {
+        const name = document.getElementById('villa-name')?.value;
+        const email = document.getElementById('villa-email')?.value;
+        const dates = document.getElementById('villa-date-range')?.value;
+        
+        if (!name || !email || !dates) {
+            alert('Please fill in your name, email, and select dates.');
+            return;
+        }
+        
+        alert(`🏡 Residency request submitted for ${name} on ${dates}. You will receive a confirmation email at ${email}.`);
+    });
+
     console.log('🌿 OLIVIUM Dashboard loaded');
-    console.log('📊 Data will be loaded from dashboard.ts when available');
-    console.log('🔗 Make sure you have the TypeScript files and bundler setup');
+    console.log('📊 Real data will be loaded from dashboard.ts');
+    console.log('🔗 Make sure you have Vite running with all dependencies');
 </script>
 
 </body>
