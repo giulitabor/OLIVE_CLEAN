@@ -5,6 +5,9 @@ import { connection } from "./connection.js";
 
 // Token mint address for OLV (replace with actual OLV token address)
 const OLV_TOKEN_MINT  = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
+export const OLV_TOKEN_MINT = new PublicKey(
+    "3LeuF1Gs5pajvELtQ1neqU4PDU62UWcxsjxQE1araho2"
+);
 
 // Solana Devnet Configuration
 let wallet = null;
@@ -104,7 +107,7 @@ function showToast(msg, isError = false) {
     setTimeout(() => { toast.style.opacity = '0'; }, 3000);
 }
 
-async function fetchSolBalance(pubkey) {
+export async function fetchSolBalance(pubkey) {
     try {
         const balance = await connection.getBalance(pubkey);
         return balance / 1e9;
@@ -114,7 +117,7 @@ async function fetchSolBalance(pubkey) {
     }
 }
 
-async function fetchOlvBalance(pubkey) {
+export async function fetchOlvBalance(pubkey) {
     try {
         // Get all token accounts for the wallet
         const tokenAccounts = await connection.getParsedTokenAccountsByOwner(pubkey, {
@@ -133,7 +136,7 @@ async function fetchOlvBalance(pubkey) {
     }
 }
 
-function getCurrentTier(olvBalance) {
+export function getCurrentTier(olvBalance) {
     for (let i = TIERS.length - 1; i >= 0; i--) {
         if (olvBalance >= TIERS[i].minOlv) {
             return TIERS[i];
@@ -186,7 +189,7 @@ function loadTiers(currentOlvBalance = 0) {
 }
 
 // Update the balance display in your updateWalletUI function
-async function updateWalletUI() {
+export async function updateWalletUI() {
     if (walletPubKey) {
         const short = walletPubKey.toBase58().slice(0,4) + "..." + walletPubKey.toBase58().slice(-4);
         if (walletShortEl) walletShortEl.innerText = short;
