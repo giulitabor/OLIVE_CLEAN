@@ -4,7 +4,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { connection } from "./connection.js";
 
 // Token mint address for OLV (replace with actual OLV token address)
-const OLV_TOKEN_MINT  = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
+//const OLV_TOKEN_MINT  = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 export const OLV_TOKEN_MINT = new PublicKey(
     "3LeuF1Gs5pajvELtQ1neqU4PDU62UWcxsjxQE1araho2"
 );
