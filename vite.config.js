@@ -38,6 +38,8 @@ export default defineConfig({
         join: resolve(__dirname, "join.html"),
         membeship: resolve(__dirname, "membership.html"),
 
+        live_field: resolve(__dirname, "olivium-live.html"),
+        upload: resolve(__dirname, "field-upload.html"),
 
 
 
