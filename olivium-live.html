@@ -69,9 +69,9 @@ a{text-decoration:none;color:inherit}
   display:flex;
   align-items:center;
   overflow:hidden;
-  background:
-    linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%),
-    url("https://images.unsplash.com/photo-1553452118-621e1f860f43?auto=format&fit=crop&w=2200&q=88") center/cover;
+  background-size:cover;
+  background-position:center;
+  transition:background-image .6s ease;
 }
 .hero-inner{width:92%;max-width:1400px;margin:auto;display:grid;grid-template-columns:1fr 330px;gap:42px;align-items:center}
 .eyebrow{letter-spacing:3px;font-size:14px;font-weight:800;color:#e1d87d;margin-bottom:12px}
@@ -220,6 +220,7 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
   .footer{flex-direction:column;gap:12px;text-align:center}
 }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
@@ -241,7 +242,7 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
   <button class="menu" onclick="toggleMenu()">☰</button>
 </header>
 
-<section class="hero" id="home">
+<section class="hero" id="home" style="background-image:linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%),url('https://images.unsplash.com/photo-1553452118-621e1f860f43?auto=format&fit=crop&w=2200&q=88')">
   <div class="hero-inner">
     <div id="today">
       <div class="eyebrow">TODAY AT OLIVIUM</div>
@@ -293,41 +294,49 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
       <div class="overlay-box"><strong>240</strong><span>Olive Trees</span><span>Tuscany, Italy</span><span>Frantoio · Moraiolo</span></div>
     </article>
 
-    <article class="card image-card">
-      <div class="image map-image"></div>
-      <div class="card-label">🗺 Grove Map</div>
-      <a class="card-link" href="#grove">View Details →</a>
-      <div class="overlay-box"><strong>240</strong><span>Mapped trees</span><span>West-facing slope</span></div>
+    <article class="card image-card" style="min-height:275px">
+      <div id="grove-map" style="position:absolute;inset:0;background:#dcd8c4"></div>
+      <div class="card-label" style="z-index:2">🗺 Grove Map</div>
+      <a class="card-link" href="#grove" style="z-index:2">View Details →</a>
+      <div class="overlay-box" style="z-index:2"><strong id="map-pin-count">0</strong><span>Mapped entries</span><span>West-facing slope</span></div>
     </article>
 
     <aside id="season" class="season">
       <h3>Season 2026</h3>
+      <div id="season-stage-line" style="margin:-8px 0 16px;font-size:13px;color:#cbd3c3;line-height:1.5">
+        <span id="season-stage-name">—</span><br>
+        <span id="season-harvest-countdown" style="color:#e2d66d;font-weight:700"></span>
+      </div>
       <div class="season-grid">
-        <div class="season-stat"><strong>184</strong><span>Days Observed</span></div>
-        <div class="season-stat"><strong>97</strong><span>Field Updates</span></div>
-        <div class="season-stat"><strong>1,284</strong><span>Photographs</span></div>
-        <div class="season-stat"><strong>436 mm</strong><span>Rainfall</span></div>
+        <div class="season-stat"><strong id="stat-days-observed">—</strong><span>Days Observed</span></div>
+        <div class="season-stat"><strong id="stat-field-updates">—</strong><span>Field Updates</span></div>
+        <div class="season-stat"><strong id="stat-photographs">—</strong><span>Photographs</span></div>
+        <div class="season-stat"><strong id="stat-rainfall">—</strong><span>Rainfall</span></div>
       </div>
     </aside>
+  </section>
+
+  <section class="section" id="the-season" style="padding:0 4% 10px">
+    <div class="section-head"><h2 class="section-title"><span>📈</span> The Season</h2></div>
+    <div id="season-timeline" style="display:flex;overflow-x:auto;gap:8px;padding-bottom:6px"></div>
   </section>
 
   <section class="section grid-main">
     <article class="card updates">
       <div class="section-head"><h2 class="section-title"><span>❧</span> Recent Updates</h2><a class="view-all" href="#journal">View All →</a></div>
-      <div class="update"><div class="thumb u1"></div><div><strong>21 Aug · 08:42</strong><p>Morning inspection — western slope<br>7 photographs</p></div></div>
-      <div class="update"><div class="thumb u2"></div><div><strong>20 Aug · 09:15</strong><p>Hot and dry conditions<br>12 photographs</p></div></div>
-      <div class="update"><div class="thumb u3"></div><div><strong>18 Aug · 14:20</strong><p>Rain event · 7.2 mm rainfall<br>8 photographs</p></div></div>
-      <div class="update"><div class="thumb u1"></div><div><strong>17 Aug · 08:30</strong><p>Tree health check — eastern area<br>10 photographs</p></div></div>
+      <div id="recent-updates-list">
+        <div style="padding:8px 0;color:#6d7469;font-size:13px">Loading…</div>
+      </div>
     </article>
 
     <article class="card updates">
       <div class="section-head"><h2 class="section-title"><span>◌</span> Conditions</h2></div>
-      <div style="padding:8px 0 14px;color:#6d7469;font-size:13px;line-height:1.6">
+      <div style="padding:8px 0 14px;color:#6d7469;font-size:13px;line-height:1.6" id="conditions-caption">
         Live station data will appear here automatically once connected.
       </div>
-      <div class="update"><div style="font-size:25px">☀</div><div><strong>Solar Radiation</strong><p>624 W/m² · strong sunlight</p></div></div>
-      <div class="update"><div style="font-size:25px">💨</div><div><strong>Wind Gust</strong><p>18 km/h · NW</p></div></div>
-      <div class="update"><div style="font-size:25px">💧</div><div><strong>Rainfall</strong><p>0.0 mm today</p></div></div>
+      <div class="update"><div style="font-size:25px">☀</div><div><strong>Solar Radiation</strong><p id="cond-solar">— W/m²</p></div></div>
+      <div class="update"><div style="font-size:25px">💨</div><div><strong>Wind Gust</strong><p id="cond-wind-gust">—</p></div></div>
+      <div class="update"><div style="font-size:25px">💧</div><div><strong>Rainfall</strong><p id="cond-rainfall">— today</p></div></div>
     </article>
 
     <aside id="member" class="member">
@@ -383,6 +392,7 @@ function toggleMenu(){
 </script>
 
 <!-- === Live weather data (Supabase) === -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
@@ -461,6 +471,27 @@ function toggleMenu(){
     if (row.received_at){
       document.getElementById('wx-updated').textContent = timeAgo(row.received_at);
     }
+
+    // Conditions panel (reuses the same latest reading)
+    var solarEl = document.getElementById('cond-solar');
+    if (solarEl){
+      var solarDesc = row.solar_radiation === null || row.solar_radiation === undefined ? "" :
+        (row.solar_radiation >= 500 ? " · strong sunlight" : row.solar_radiation >= 150 ? " · partly sunny" : " · low light");
+      solarEl.textContent = fmt(row.solar_radiation, 0, " W/m²") + solarDesc;
+    }
+    var gustEl = document.getElementById('cond-wind-gust');
+    if (gustEl){
+      var gustVal = (row.wind_gust !== null && row.wind_gust !== undefined) ? row.wind_gust : row.wind_speed;
+      gustEl.textContent = fmt(gustVal, 0, " km/h") + (toCompass(row.wind_direction) ? " · " + toCompass(row.wind_direction) : "");
+    }
+    var rainCondEl = document.getElementById('cond-rainfall');
+    if (rainCondEl){
+      rainCondEl.textContent = fmt(row.rainfall, 1, " mm") + " today";
+    }
+    var captionEl = document.getElementById('conditions-caption');
+    if (captionEl && row.received_at){
+      captionEl.textContent = "Live reading from the station, " + timeAgo(row.received_at).toLowerCase() + ".";
+    }
   }
 
   async function loadLatestWeather(){
@@ -488,6 +519,50 @@ function toggleMenu(){
   setInterval(loadLatestWeather, 60000); // refresh every 60s
 
   // ---------------------------------------------------------
+  // Random hero image from github.com/kyngrick/olivium_photos
+  // ---------------------------------------------------------
+  var PHOTOS_REPO = "kyngrick/olivium_photos";
+  var IMAGE_EXT = /\.(jpe?g|png|webp|gif)$/i;
+
+  async function loadRandomHeroImage(){
+    try {
+      // Find the default branch first (works whether it's main/master/etc.)
+      var repoRes = await fetch("https://api.github.com/repos/" + PHOTOS_REPO);
+      if (!repoRes.ok) throw new Error("Repo lookup failed: " + repoRes.status);
+      var repoInfo = await repoRes.json();
+      var branch = repoInfo.default_branch || "main";
+
+      var treeRes = await fetch(
+        "https://api.github.com/repos/" + PHOTOS_REPO + "/git/trees/" + branch + "?recursive=1"
+      );
+      if (!treeRes.ok) throw new Error("Tree lookup failed: " + treeRes.status);
+      var treeData = await treeRes.json();
+
+      var images = (treeData.tree || [])
+        .filter(function(item){ return item.type === "blob" && IMAGE_EXT.test(item.path); })
+        .map(function(item){ return item.path; });
+
+      if (images.length === 0){
+        console.warn("No images found in " + PHOTOS_REPO + " — keeping default hero image.");
+        return;
+      }
+
+      var pick = images[Math.floor(Math.random() * images.length)];
+      var rawUrl = "https://raw.githubusercontent.com/" + PHOTOS_REPO + "/" + branch + "/" + pick;
+
+      var hero = document.getElementById('home');
+      if (hero){
+        hero.style.backgroundImage =
+          "linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%), url('" + rawUrl + "')";
+      }
+    } catch (err){
+      console.warn("Random hero image failed, keeping default:", err);
+    }
+  }
+
+  loadRandomHeroImage();
+
+  // ---------------------------------------------------------
   // Field entries: Latest from the Grove + Grove Journal
   // ---------------------------------------------------------
   var BUCKET = "photos_olivium";
@@ -513,7 +588,44 @@ function toggleMenu(){
       if (firstSentence.length > 0 && firstSentence.length <= 60) return firstSentence;
       if (firstSentence.length > 60) return firstSentence.slice(0, 57) + "…";
     }
-    return "Field update";
+    return autoTitle(entry);
+  }
+
+  // ---------------------------------------------------------
+  // Automatic daily summaries — when a field entry has no note
+  // (or as a fallback), generate a plain-language line from
+  // whatever we do have: weather snapshot + photo count.
+  // ---------------------------------------------------------
+  function autoTitle(entry){
+    var t = entry.temperature_snapshot;
+    if (t !== null && t !== undefined){
+      if (t >= 30) return "A hot day in the grove";
+      if (t >= 24) return "A warm inspection";
+      if (t <= 12) return "A cool day in the grove";
+    }
+    var photoCount = (entry.photo_paths || []).length;
+    return photoCount > 0 ? "Field inspection" : "Grove update";
+  }
+
+  function autoSummary(entry){
+    var bits = [];
+    var t = entry.temperature_snapshot, h = entry.humidity_snapshot, r = entry.rainfall_snapshot;
+    var photoCount = (entry.photo_paths || []).length;
+
+    if (t !== null && t !== undefined){
+      bits.push((t >= 28 ? "A hot" : t <= 14 ? "A cool" : "A mild") + ", " +
+        ((r !== null && r > 0) ? "wet" : "dry") + " day in the grove (" + Number(t).toFixed(1) + "°C" +
+        (h !== null && h !== undefined ? ", " + Number(h).toFixed(0) + "% humidity" : "") + ").");
+    }
+    if (photoCount > 0){
+      bits.push(photoCount + " photograph" + (photoCount === 1 ? "" : "s") + " recorded during today's inspection.");
+    }
+    if (bits.length === 0) return "Field update from the grove.";
+    return bits.join(" ");
+  }
+
+  function entryNote(entry){
+    return entry.note && entry.note.trim().length > 0 ? entry.note : autoSummary(entry);
   }
 
   function renderLatestEntry(entry){
@@ -530,8 +642,7 @@ function toggleMenu(){
     document.getElementById('latest-meta').textContent =
       "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
     document.getElementById('latest-title').textContent = entryTitle(entry);
-    document.getElementById('latest-note').textContent =
-      entry.note || (photoCount + " photo" + (photoCount === 1 ? "" : "s") + " from the grove.");
+    document.getElementById('latest-note').textContent = entryNote(entry);
 
     if (photoCount > 0){
       var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
@@ -571,7 +682,7 @@ function toggleMenu(){
       }
       metrics.push('▧ ' + photoCount + ' photo' + (photoCount === 1 ? '' : 's'));
 
-      var noteText = entry.note || 'Field update from the grove.';
+      var noteText = entryNote(entry);
       var dateHtml = parts.isToday ? 'TODAY<br>' + parts.day + ' ' + parts.month : parts.day + ' ' + parts.month;
 
       return '<div class="journal-item">' +
@@ -581,6 +692,202 @@ function toggleMenu(){
         '<div class="journal-metrics">' + metrics.join(' · ') + '</div>' +
       '</div>';
     }).join('');
+  }
+
+  function renderRecentUpdates(entries){
+    var container = document.getElementById('recent-updates-list');
+    if (!container) return;
+    if (!entries || entries.length === 0){
+      container.innerHTML = '<div style="padding:8px 0;color:#6d7469;font-size:13px">No updates yet.</div>';
+      return;
+    }
+    container.innerHTML = entries.slice(0, 4).map(function(entry){
+      var parts = formatDateParts(entry.created_at);
+      var photoCount = (entry.photo_paths || []).length;
+      var thumbUrl = photoCount > 0 ? publicPhotoUrl(entry.photo_paths[0]) : "";
+      var thumbStyle = thumbUrl
+        ? 'background-image:url(\'' + thumbUrl + '\');background-size:cover;background-position:center'
+        : 'background:#e2dfd3';
+      return '<div class="update">' +
+        '<div class="thumb" style="' + thumbStyle + '"></div>' +
+        '<div><strong>' + parts.badge + ' · ' + parts.time + '</strong>' +
+        '<p>' + entryTitle(entry) + '<br>' + photoCount + ' photograph' + (photoCount === 1 ? '' : 's') + '</p></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------
+  // Season stage + harvest countdown (pure date logic, no DB)
+  // ---------------------------------------------------------
+  var SEASON_STAGES = [
+    { month: 0,  name: "Pruning",               icon: "✂️" },
+    { month: 1,  name: "Flowering preparation",  icon: "🌱" },
+    { month: 2,  name: "Spring growth",          icon: "🌿" },
+    { month: 3,  name: "Flowering",              icon: "🌼" },
+    { month: 4,  name: "Fruit development",      icon: "🫒" },
+    { month: 5,  name: "Summer heat",            icon: "☀️" },
+    { month: 6,  name: "Ripening begins",        icon: "🌡️" },
+    { month: 7,  name: "Ripening",               icon: "🌡️" },
+    { month: 8,  name: "Harvest preparation",    icon: "🧺" },
+    { month: 9,  name: "Harvest",                icon: "🌾" },
+    { month: 10, name: "Harvest & milling",      icon: "🫒" },
+    { month: 11, name: "Dormancy & rest",        icon: "❄️" }
+  ];
+  var HARVEST_START_MONTH = 9; // October (0-indexed)
+  var HARVEST_START_DAY = 1;
+  var HARVEST_END_MONTH = 10;  // harvest window runs through November
+
+  function renderSeasonStage(){
+    var today = new Date();
+    var stage = SEASON_STAGES[today.getMonth()];
+    var nameEl = document.getElementById('season-stage-name');
+    var countdownEl = document.getElementById('season-harvest-countdown');
+    if (nameEl) nameEl.textContent = stage.icon + " " + stage.name.toUpperCase();
+    if (!countdownEl) return;
+
+    var inHarvest = today.getMonth() === HARVEST_START_MONTH || today.getMonth() === HARVEST_END_MONTH;
+    if (inHarvest){
+      countdownEl.textContent = "🌾 Harvest is underway";
+      return;
+    }
+
+    var year = today.getFullYear();
+    var harvestDate = new Date(year, HARVEST_START_MONTH, HARVEST_START_DAY);
+    if (today > harvestDate){
+      harvestDate = new Date(year + 1, HARVEST_START_MONTH, HARVEST_START_DAY);
+    }
+    var daysLeft = Math.ceil((harvestDate - today) / 86400000);
+    countdownEl.textContent = "Harvest in " + daysLeft + " day" + (daysLeft === 1 ? "" : "s");
+  }
+
+  function renderSeasonTimeline(){
+    var container = document.getElementById('season-timeline');
+    if (!container) return;
+    var currentMonth = new Date().getMonth();
+    container.innerHTML = SEASON_STAGES.map(function(stage, idx){
+      var isCurrent = idx === currentMonth;
+      var monthLabel = new Date(2026, idx, 1).toLocaleString('en-US', { month: 'short' }).toUpperCase();
+      return '<div style="flex:0 0 auto;min-width:88px;text-align:center;padding:12px 8px;border-radius:10px;' +
+        (isCurrent ? 'background:#17301c;color:#fff' : 'background:#f4f2e6;color:#5f665d') + '">' +
+        '<div style="font-size:20px">' + stage.icon + '</div>' +
+        '<div style="font-size:11px;font-weight:800;letter-spacing:.4px;margin-top:6px">' + monthLabel + '</div>' +
+        '<div style="font-size:10px;margin-top:3px;opacity:.85">' + stage.name + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------
+  // Season stats: Days Observed, Field Updates, Photographs, Rainfall
+  // ---------------------------------------------------------
+  async function loadSeasonStats(){
+    try {
+      var weatherAgg = await client
+        .from('weather_data')
+        .select('received_at.min(), rainfall.sum()')
+        .single();
+
+      var updatesCount = await client
+        .from('field_entries')
+        .select('*', { count: 'exact', head: true });
+
+      var photoRows = await client
+        .from('field_entries')
+        .select('photo_paths');
+
+      if (!weatherAgg.error && weatherAgg.data){
+        var earliest = weatherAgg.data.min;
+        if (earliest){
+          var days = Math.floor((Date.now() - new Date(earliest).getTime()) / 86400000) + 1;
+          document.getElementById('stat-days-observed').textContent = days;
+        }
+        var totalRain = weatherAgg.data.sum;
+        if (totalRain !== null && totalRain !== undefined){
+          document.getElementById('stat-rainfall').textContent = Number(totalRain).toFixed(0) + ' mm';
+        }
+      }
+
+      if (!updatesCount.error && updatesCount.count !== null){
+        document.getElementById('stat-field-updates').textContent = updatesCount.count;
+      }
+
+      if (!photoRows.error && photoRows.data){
+        var totalPhotos = photoRows.data.reduce(function(sum, r){
+          return sum + ((r.photo_paths || []).length);
+        }, 0);
+        document.getElementById('stat-photographs').textContent = totalPhotos.toLocaleString();
+      }
+    } catch (err){
+      console.error('Season stats failed:', err);
+    }
+  }
+
+  renderSeasonStage();
+  renderSeasonTimeline();
+  loadSeasonStats();
+
+
+  var groveMap = null;
+  var groveMapMarkers = [];
+
+  function ensureGroveMap(){
+    if (groveMap) return groveMap;
+    var el = document.getElementById('grove-map');
+    if (!el || typeof L === 'undefined') return null;
+
+    groveMap = L.map(el, {
+      zoomControl: false,
+      attributionControl: false,
+      scrollWheelZoom: false
+    }).setView([43.7, 11.2], 15); // Tuscany-ish default; recentres once pins load
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(groveMap);
+
+    return groveMap;
+  }
+
+  function renderGroveMap(entries){
+    var map = ensureGroveMap();
+    if (!map) return;
+
+    groveMapMarkers.forEach(function(m){ map.removeLayer(m); });
+    groveMapMarkers = [];
+
+    var pinned = entries.filter(function(e){
+      return e.gps_lat !== null && e.gps_lat !== undefined &&
+             e.gps_lng !== null && e.gps_lng !== undefined;
+    });
+
+    document.getElementById('map-pin-count').textContent = pinned.length;
+
+    if (pinned.length === 0) return;
+
+    var bounds = [];
+    pinned.forEach(function(entry){
+      var latlng = [entry.gps_lat, entry.gps_lng];
+      bounds.push(latlng);
+      var marker = L.circleMarker(latlng, {
+        radius: 7,
+        color: '#5b6e28',
+        weight: 2,
+        fillColor: '#e1d66f',
+        fillOpacity: 0.9
+      }).addTo(map);
+
+      var parts = formatDateParts(entry.created_at);
+      var popupHtml = '<strong>' + entryTitle(entry) + '</strong><br>' +
+        parts.badge + ' · ' + parts.time +
+        (entry.tree_id ? '<br>Tree ' + entry.tree_id : '');
+      marker.bindPopup(popupHtml);
+      groveMapMarkers.push(marker);
+    });
+
+    if (bounds.length === 1){
+      map.setView(bounds[0], 16);
+    } else {
+      map.fitBounds(bounds, { padding: [24, 24] });
+    }
   }
 
   async function loadFieldEntries(){
@@ -599,6 +906,8 @@ function toggleMenu(){
       var entries = res.data || [];
       renderLatestEntry(entries[0]);
       renderJournal(entries);
+      renderGroveMap(entries);
+      renderRecentUpdates(entries);
     } catch (err){
       console.error('Field entries fetch failed:', err);
     }
