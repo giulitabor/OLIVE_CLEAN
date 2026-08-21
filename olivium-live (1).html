@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olivium — The Living Story of a Tuscan Olive Grove</title>
+<meta name="description" content="Olivium — a living digital window into a Tuscan olive grove.">
+<style>
+:root{
+  --forest:#102515;
+  --forest-2:#18351f;
+  --olive:#61752d;
+  --olive-dark:#43521f;
+  --gold:#c8b65b;
+  --cream:#f7f4e9;
+  --paper:#fffdf6;
+  --line:#ddd9c9;
+  --text:#263127;
+  --muted:#70766b;
+  --good:#82c341;
+  --warn:#e6ad27;
+  --danger:#d94a3d;
+  --shadow:0 14px 40px rgba(22,35,23,.10);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:var(--cream);
+}
+h1,h2,h3,h4{font-family:Georgia,"Times New Roman",serif;margin:0;color:var(--forest)}
+button,a{font:inherit}
+a{text-decoration:none;color:inherit}
+
+.topbar{
+  height:72px;
+  background:rgba(12,29,17,.98);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:30px;
+  padding:0 4vw;
+  position:sticky;
+  top:0;
+  z-index:50;
+  box-shadow:0 4px 18px rgba(0,0,0,.12);
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:310px}
+.brand-mark{font-size:28px;color:#d2c766;transform:rotate(-20deg)}
+.brand-name{font-family:Georgia,serif;font-size:26px;letter-spacing:3px}
+.brand-tag{font-family:Georgia,serif;font-style:italic;color:#c9cfbf;font-size:13px;margin-left:5px}
+.nav{display:flex;gap:28px;align-items:center;margin-left:auto}
+.nav a{font-size:14px;color:#e7eadf;opacity:.88;padding:25px 0;border-bottom:2px solid transparent}
+.nav a:hover,.nav a.active{opacity:1;border-color:var(--gold)}
+.member-btn{
+  background:linear-gradient(135deg,#d1c46b,#a79a43);
+  color:#192016;border:0;border-radius:9px;padding:11px 18px;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.18)
+}
+.menu{display:none;background:none;border:0;color:#fff;font-size:24px}
+
+.hero{
+  min-height:470px;
+  position:relative;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  background:
+    linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%),
+    url("https://images.unsplash.com/photo-1553452118-621e1f860f43?auto=format&fit=crop&w=2200&q=88") center/cover;
+}
+.hero-inner{width:92%;max-width:1400px;margin:auto;display:grid;grid-template-columns:1fr 330px;gap:42px;align-items:center}
+.eyebrow{letter-spacing:3px;font-size:14px;font-weight:800;color:#e1d87d;margin-bottom:12px}
+.hero h1{font-size:54px;line-height:1.02;color:#fff;max-width:750px}
+.hero-copy{font-family:Georgia,serif;font-size:20px;line-height:1.5;max-width:720px;color:#f1f0e7;margin:18px 0 28px}
+.weather-grid{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:12px;max-width:760px}
+.weather-card{
+  background:rgba(21,35,19,.72);backdrop-filter:blur(10px);
+  border:1px solid rgba(220,215,131,.38);border-radius:14px;padding:17px;
+}
+.weather-icon{font-size:21px;color:#e0d46b}
+.weather-label{font-size:12px;color:#d3d7ca;margin-top:8px}
+.weather-value{font-family:Georgia,serif;font-size:24px;margin-top:4px}
+.weather-sub{font-size:11px;color:#c5cabb}
+
+.pulse{
+  background:rgba(15,31,18,.88);backdrop-filter:blur(12px);
+  border:1px solid rgba(224,216,130,.32);border-radius:18px;padding:23px;
+  box-shadow:0 18px 45px rgba(0,0,0,.22)
+}
+.pulse h2{color:#fff;font-size:24px;margin-bottom:18px}
+.pulse-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.13);font-size:13px}
+.pulse-row:last-of-type{border:0}
+.status{display:flex;align-items:center;gap:8px;font-weight:700}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.green{background:var(--good)}.yellow{background:var(--warn)}.red{background:var(--danger)}
+.pulse-note{font-family:Georgia,serif;font-style:italic;color:#d9d9c9;font-size:13px;line-height:1.45;margin-top:16px}
+
+main{width:92%;max-width:1400px;margin:30px auto 60px}
+.section{margin-bottom:26px}
+.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:15px}
+.section-title{font-size:26px;display:flex;gap:10px;align-items:center}
+.section-title span{color:var(--olive)}
+.view-all{font-size:13px;font-weight:800;color:var(--olive-dark)}
+.card{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden
+}
+
+.latest{
+  display:grid;grid-template-columns:1.3fr .9fr;min-height:300px
+}
+.latest-photo{
+  min-height:300px;
+  background:url("https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=88") center/cover;
+  position:relative
+}
+.photo-badge{position:absolute;left:15px;bottom:15px;background:rgba(11,24,13,.86);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px}
+.latest-copy{padding:32px}
+.latest-copy h3{font-size:29px;line-height:1.1;margin:12px 0}
+.latest-copy p{font-size:15px;color:#5f665d;line-height:1.65}
+.meta{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.4px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;border:1px solid #cfc9a2;
+  background:#faf6d9;color:#3e4d20;border-radius:10px;padding:10px 15px;font-weight:800;
+  cursor:pointer;margin-top:10px
+}
+
+.grid-main{display:grid;grid-template-columns:1fr 1fr 320px;gap:20px}
+.image-card{min-height:275px;position:relative;padding:0;overflow:hidden}
+.image-card .image{
+  height:275px;background-position:center;background-size:cover
+}
+.grove-image{background-image:url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1300&q=88")}
+.map-image{
+  background-image:url("https://images.unsplash.com/photo-1524666041070-9e7b1c0e0c1c?auto=format&fit=crop&w=1300&q=88");
+  filter:saturate(.85)
+}
+.overlay-box{
+  position:absolute;right:14px;bottom:14px;background:rgba(20,35,19,.9);
+  color:#fff;border-radius:12px;padding:14px 17px;min-width:150px
+}
+.overlay-box strong{display:block;color:#e1d66f;font-family:Georgia,serif;font-size:25px}
+.overlay-box span{display:block;font-size:11px;color:#d4d9cd;margin-top:3px}
+.card-label{position:absolute;left:18px;top:16px;background:rgba(255,253,246,.93);padding:8px 11px;border-radius:8px;font-weight:800;color:var(--forest);font-family:Georgia,serif}
+.card-link{position:absolute;right:18px;top:18px;color:#e1d66f;font-size:12px;font-weight:800}
+
+.season{
+  background:linear-gradient(145deg,#142b18,#213d20);
+  color:#fff;padding:22px;border-radius:var(--radius);height:100%;
+}
+.season h3{color:#fff;font-size:25px}
+.season-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.season-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px}
+.season-stat strong{font-family:Georgia,serif;color:#e2d66d;font-size:25px;display:block}
+.season-stat span{font-size:11px;color:#cbd3c3}
+
+.updates{padding:20px}
+.update{display:grid;grid-template-columns:58px 1fr;gap:11px;padding:13px 0;border-bottom:1px solid #e2dfd3}
+.update:last-child{border:0}
+.thumb{width:58px;height:58px;border-radius:10px;background-size:cover;background-position:center}
+.u1{background-image:url("https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=200&q=80")}
+.u2{background-image:url("https://images.unsplash.com/photo-1497250681960-ef046c08a56e?auto=format&fit=crop&w=200&q=80")}
+.u3{background-image:url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=200&q=80")}
+.update strong{font-size:12px;display:block;color:var(--forest)}
+.update p{font-size:11px;line-height:1.35;color:#6c7269;margin:3px 0}
+
+.journal{padding:10px 20px 18px}
+.journal-item{display:grid;grid-template-columns:70px 90px 1fr 220px;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid #e2dfd3}
+.journal-item:last-child{border:0}
+.date{font-size:12px;font-weight:800;color:#697060}
+.journal-thumb{height:62px;border-radius:9px;background-size:cover;background-position:center}
+.journal-text strong{font-family:Georgia,serif;font-size:17px;color:var(--forest)}
+.journal-text p{font-size:12px;color:#73796e;margin:4px 0;line-height:1.4}
+.journal-metrics{display:flex;justify-content:flex-end;gap:12px;font-size:11px;color:#74796f}
+
+.member{
+  margin-top:20px;padding:20px;background:#e8ead7;border:1px solid #d4d8bb;border-radius:var(--radius)
+}
+.member h3{font-size:23px}
+.member p{font-family:Georgia,serif;color:#69705f;font-size:13px;line-height:1.45}
+.member-btn-wide{width:100%;background:#5b6e28;color:#fff;border:0;border-radius:9px;padding:11px;font-weight:800;cursor:pointer}
+.member-perks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.perk{text-align:center;font-size:10px;color:#69705f}
+.perk b{display:block;font-size:17px;margin-bottom:4px;color:#4d5e23}
+
+.footer{background:#102315;color:#bfc6b7;padding:20px 4vw;display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.footer-brand{color:#e2d66d;font-family:Georgia,serif;letter-spacing:2px;font-size:16px}
+.footer-links{display:flex;gap:18px}
+
+.toast{
+  position:fixed;right:20px;bottom:20px;background:#17301c;color:#fff;padding:14px 18px;
+  border-radius:12px;box-shadow:0 15px 35px rgba(0,0,0,.25);transform:translateY(120px);
+  transition:.35s;z-index:100;font-size:13px
+}
+.toast.show{transform:translateY(0)}
+
+@media(max-width:1050px){
+  .brand{min-width:auto}.brand-tag{display:none}.nav{gap:14px}
+  .grid-main{grid-template-columns:1fr 1fr}
+  .season{grid-column:span 2}
+  .hero-inner{grid-template-columns:1fr}
+  .pulse{max-width:420px}
+}
+@media(max-width:760px){
+  .topbar{height:62px;padding:0 5%;gap:12px}.brand-name{font-size:21px}
+  .nav{display:none}.menu{display:block;margin-left:auto}
+  .hero{min-height:650px}.hero-inner{width:90%;padding:45px 0}
+  .hero h1{font-size:39px}.hero-copy{font-size:17px}
+  .weather-grid{grid-template-columns:1fr 1fr}
+  main{width:90%}
+  .latest,.grid-main{grid-template-columns:1fr}
+  .season{grid-column:auto}
+  .journal-item{grid-template-columns:55px 70px 1fr}
+  .journal-metrics{grid-column:3;justify-content:flex-start}
+  .footer{flex-direction:column;gap:12px;text-align:center}
+}
+</style>
+</head>
+
+<body>
+<header class="topbar">
+  <a class="brand" href="#home">
+    <span class="brand-mark">◢</span>
+    <span class="brand-name">OLIVIUM</span>
+    <span class="brand-tag">The living story of a Tuscan olive grove</span>
+  </a>
+  <nav class="nav">
+    <a class="active" href="#home">Home</a>
+    <a href="#today">Today</a>
+    <a href="#grove">The Grove</a>
+    <a href="#journal">Journal</a>
+    <a href="#season">Season</a>
+    <a href="#member">Your Olivium</a>
+    <button class="member-btn" onclick="showToast('Member login will connect to your Olivium account.')">♙ Member Login</button>
+  </nav>
+  <button class="menu" onclick="toggleMenu()">☰</button>
+</header>
+
+<section class="hero" id="home">
+  <div class="hero-inner">
+    <div id="today">
+      <div class="eyebrow">TODAY AT OLIVIUM</div>
+      <h1 id="wx-date">Friday · 21 August 2026</h1>
+      <p class="hero-copy" id="wx-summary">A warm and sunny day in the grove. Conditions are stable and the trees look healthy after the recent heat.</p>
+
+      <div class="weather-grid">
+        <div class="weather-card"><div class="weather-icon">♨</div><div class="weather-label">Temperature</div><div class="weather-value" id="wx-temp">—</div><div class="weather-sub">Now</div></div>
+        <div class="weather-card"><div class="weather-icon">◯</div><div class="weather-label">Humidity</div><div class="weather-value" id="wx-humidity">—</div><div class="weather-sub">Relative</div></div>
+        <div class="weather-card"><div class="weather-icon">≋</div><div class="weather-label">Wind</div><div class="weather-value" id="wx-wind">—</div><div class="weather-sub" id="wx-wind-dir">—</div></div>
+        <div class="weather-card"><div class="weather-icon">☁</div><div class="weather-label">Rain</div><div class="weather-value" id="wx-rain">—</div><div class="weather-sub">Today</div></div>
+      </div>
+      <div id="wx-updated" style="font-size:11px;color:#c5cabb;margin-top:10px;letter-spacing:.3px"></div>
+    </div>
+
+    <aside class="pulse">
+      <h2>🌿 Grove Pulse</h2>
+      <div class="pulse-row"><span>Tree Condition</span><span class="status"><i class="dot green"></i> Excellent</span></div>
+      <div class="pulse-row"><span>Soil Moisture</span><span class="status" id="wx-soil"><i class="dot yellow"></i> Dry</span></div>
+      <div class="pulse-row"><span>Weather</span><span class="status" id="wx-weather-status"><i class="dot yellow"></i> Hot &amp; Stable</span></div>
+      <div class="pulse-row"><span>Field Activity</span><span class="status"><i class="dot green"></i> Complete</span></div>
+      <div class="pulse-note" id="wx-note">“The grove is in good condition. Continue monitoring for water stress.”</div>
+    </aside>
+  </div>
+</section>
+
+<main>
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title"><span>❧</span> Latest from the Grove</h2>
+      <a class="view-all" href="#journal">View All →</a>
+    </div>
+    <article class="card latest" id="latest-entry">
+      <div class="latest-photo" id="latest-photo"><div class="photo-badge" id="latest-badge">—</div></div>
+      <div class="latest-copy">
+        <div class="meta" id="latest-meta">FIELD UPDATE</div>
+        <h3 id="latest-title">Waiting for the first field update…</h3>
+        <p id="latest-note">Once a field entry is uploaded from the grove, it will appear here automatically.</p>
+        <button class="btn" id="latest-view-btn">◉ View Photos</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="section grid-main" id="grove">
+    <article class="card image-card">
+      <div class="image grove-image"></div>
+      <div class="card-label">🌿 The Grove</div>
+      <a class="card-link" href="#grove">Explore Our 240 Olive Trees →</a>
+      <div class="overlay-box"><strong>240</strong><span>Olive Trees</span><span>Tuscany, Italy</span><span>Frantoio · Moraiolo</span></div>
+    </article>
+
+    <article class="card image-card">
+      <div class="image map-image"></div>
+      <div class="card-label">🗺 Grove Map</div>
+      <a class="card-link" href="#grove">View Details →</a>
+      <div class="overlay-box"><strong>240</strong><span>Mapped trees</span><span>West-facing slope</span></div>
+    </article>
+
+    <aside id="season" class="season">
+      <h3>Season 2026</h3>
+      <div class="season-grid">
+        <div class="season-stat"><strong>184</strong><span>Days Observed</span></div>
+        <div class="season-stat"><strong>97</strong><span>Field Updates</span></div>
+        <div class="season-stat"><strong>1,284</strong><span>Photographs</span></div>
+        <div class="season-stat"><strong>436 mm</strong><span>Rainfall</span></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="section grid-main">
+    <article class="card updates">
+      <div class="section-head"><h2 class="section-title"><span>❧</span> Recent Updates</h2><a class="view-all" href="#journal">View All →</a></div>
+      <div class="update"><div class="thumb u1"></div><div><strong>21 Aug · 08:42</strong><p>Morning inspection — western slope<br>7 photographs</p></div></div>
+      <div class="update"><div class="thumb u2"></div><div><strong>20 Aug · 09:15</strong><p>Hot and dry conditions<br>12 photographs</p></div></div>
+      <div class="update"><div class="thumb u3"></div><div><strong>18 Aug · 14:20</strong><p>Rain event · 7.2 mm rainfall<br>8 photographs</p></div></div>
+      <div class="update"><div class="thumb u1"></div><div><strong>17 Aug · 08:30</strong><p>Tree health check — eastern area<br>10 photographs</p></div></div>
+    </article>
+
+    <article class="card updates">
+      <div class="section-head"><h2 class="section-title"><span>◌</span> Conditions</h2></div>
+      <div style="padding:8px 0 14px;color:#6d7469;font-size:13px;line-height:1.6">
+        Live station data will appear here automatically once connected.
+      </div>
+      <div class="update"><div style="font-size:25px">☀</div><div><strong>Solar Radiation</strong><p>624 W/m² · strong sunlight</p></div></div>
+      <div class="update"><div style="font-size:25px">💨</div><div><strong>Wind Gust</strong><p>18 km/h · NW</p></div></div>
+      <div class="update"><div style="font-size:25px">💧</div><div><strong>Rainfall</strong><p>0.0 mm today</p></div></div>
+    </article>
+
+    <aside id="member" class="member">
+      <h3>Your Olivium</h3>
+      <p>Be part of the journey. Follow the grove, see its progress and share in its future.</p>
+      <button class="member-btn-wide" onclick="showToast('Membership area placeholder — ready for your authentication system.')">Become a Member →</button>
+      <div class="member-perks">
+        <div class="perk"><b>◌</b>Oil Shipments</div>
+        <div class="perk"><b>◈</b>Olive Credits</div>
+        <div class="perk"><b>⌂</b>Villa Stays</div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="section" id="journal">
+    <div class="section-head">
+      <h2 class="section-title"><span>❧</span> The Grove Journal</h2>
+      <a class="view-all" href="#journal">View All →</a>
+    </div>
+    <article class="card journal" id="journal-list">
+      <div style="padding:14px 0;color:#6d7469;font-size:13px">Loading journal…</div>
+    </article>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-brand">OLIVIUM</div>
+  <div>Tradition · Innovation · Sustainable Future</div>
+  <div class="footer-links"><span>Instagram</span><span>Privacy</span><span>Terms</span><span>Contact</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(message){
+  const t=document.getElementById('toast');
+  t.textContent=message;
+  t.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function toggleMenu(){
+  const nav=document.querySelector('.nav');
+  nav.style.display=nav.style.display==='flex'?'none':'flex';
+  nav.style.position='absolute';
+  nav.style.top='62px';
+  nav.style.right='4%';
+  nav.style.background='#102515';
+  nav.style.padding='15px 20px';
+  nav.style.flexDirection='column';
+  nav.style.borderRadius='12px';
+}
+</script>
+
+<!-- === Live weather data (Supabase) === -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+  var SUPABASE_URL = "https://kqfqryeptkbvlkekocpx.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-";
+  var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  var COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  function toCompass(deg){
+    if (deg === null || deg === undefined || isNaN(deg)) return "";
+    var idx = Math.round(deg / 22.5) % 16;
+    return COMPASS[idx];
+  }
+
+  function fmt(value, decimals, unit){
+    if (value === null || value === undefined || isNaN(value)) return "—";
+    return Number(value).toFixed(decimals) + (unit || "");
+  }
+
+  function timeAgo(iso){
+    var diffMs = Date.now() - new Date(iso).getTime();
+    var mins = Math.round(diffMs / 60000);
+    if (mins < 1) return "Updated just now";
+    if (mins === 1) return "Updated 1 minute ago";
+    if (mins < 60) return "Updated " + mins + " minutes ago";
+    var hrs = Math.round(mins / 60);
+    if (hrs === 1) return "Updated 1 hour ago";
+    return "Updated " + hrs + " hours ago";
+  }
+
+  function deriveConditions(row){
+    var hot = row.temperature !== null && row.temperature >= 28;
+    var dry = row.rainfall !== null && row.rainfall <= 0;
+    var sunny = row.solar_radiation !== null && row.solar_radiation >= 300;
+    var labels = [];
+    labels.push(hot ? "HOT" : "MILD");
+    labels.push(dry ? "DRY" : "WET");
+    if (row.solar_radiation !== null) labels.push(sunny ? "SUNNY" : "OVERCAST");
+    labels.push((row.rainfall !== null && row.rainfall > 0) ? (row.rainfall + "mm RAIN") : "NO RAIN");
+    return { hot: hot, dry: dry, labels: labels };
+  }
+
+  function render(row){
+    if (!row){
+      document.getElementById('wx-summary').textContent =
+        "No live weather data yet — waiting on the first reading from the station.";
+      return;
+    }
+
+    document.getElementById('wx-temp').textContent = fmt(row.temperature, 1, "°C");
+    document.getElementById('wx-humidity').textContent = fmt(row.humidity, 0, "%");
+    document.getElementById('wx-wind').textContent = fmt(row.wind_speed, 0, " km/h");
+    document.getElementById('wx-wind-dir').textContent = toCompass(row.wind_direction) || "—";
+    document.getElementById('wx-rain').textContent = fmt(row.rainfall, 1, " mm");
+
+    var cond = deriveConditions(row);
+    var summary = (cond.hot ? "A hot" : "A mild") + ", " + (cond.dry ? "dry" : "wet") +
+      " day in the grove so far. " +
+      (cond.dry && cond.hot ? "Worth keeping an eye on soil moisture." : "Conditions look comfortable for the trees.");
+    document.getElementById('wx-summary').textContent = summary;
+
+    var soilEl = document.getElementById('wx-soil');
+    if (cond.dry){
+      soilEl.innerHTML = '<i class="dot yellow"></i> Dry';
+    } else {
+      soilEl.innerHTML = '<i class="dot green"></i> Moist';
+    }
+
+    var weatherEl = document.getElementById('wx-weather-status');
+    weatherEl.innerHTML = '<i class="dot ' + (cond.hot ? 'yellow' : 'green') + '"></i> ' + cond.labels.join(' · ');
+
+    document.getElementById('wx-note').textContent =
+      '"The grove is currently ' + cond.labels.join(', ').toLowerCase() + '. ' +
+      (cond.dry ? 'Continue monitoring for water stress.' : 'Soil conditions look healthy.') + '"';
+
+    if (row.received_at){
+      document.getElementById('wx-updated').textContent = timeAgo(row.received_at);
+    }
+  }
+
+  async function loadLatestWeather(){
+    try {
+      var res = await client
+        .from('weather_data')
+        .select('*')
+        .order('received_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (res.error){
+        console.error('Supabase read error:', res.error);
+        document.getElementById('wx-summary').textContent =
+          "Couldn't load live weather data right now.";
+        return;
+      }
+      render(res.data);
+    } catch (err){
+      console.error('Weather fetch failed:', err);
+    }
+  }
+
+  loadLatestWeather();
+  setInterval(loadLatestWeather, 60000); // refresh every 60s
+
+  // ---------------------------------------------------------
+  // Field entries: Latest from the Grove + Grove Journal
+  // ---------------------------------------------------------
+  var BUCKET = "photos_olivium";
+
+  function publicPhotoUrl(path){
+    var { data } = client.storage.from(BUCKET).getPublicUrl(path);
+    return data ? data.publicUrl : "";
+  }
+
+  function formatDateParts(iso){
+    var d = new Date(iso);
+    var today = new Date();
+    var isToday = d.toDateString() === today.toDateString();
+    var day = d.getDate();
+    var month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+    var time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return { isToday: isToday, day: day, month: month, time: time, badge: (isToday ? "TODAY" : day + " " + month) };
+  }
+
+  function entryTitle(entry){
+    if (entry.note){
+      var firstSentence = entry.note.split(/[.!\n]/)[0].trim();
+      if (firstSentence.length > 0 && firstSentence.length <= 60) return firstSentence;
+      if (firstSentence.length > 60) return firstSentence.slice(0, 57) + "…";
+    }
+    return "Field update";
+  }
+
+  function renderLatestEntry(entry){
+    if (!entry){
+      document.getElementById('latest-title').textContent = "No field updates yet";
+      document.getElementById('latest-note').textContent = "Once a field entry is uploaded from the grove, it will appear here automatically.";
+      document.getElementById('latest-view-btn').style.display = 'none';
+      return;
+    }
+    var parts = formatDateParts(entry.created_at);
+    var photoCount = (entry.photo_paths || []).length;
+
+    document.getElementById('latest-badge').textContent = parts.badge + " · " + parts.time;
+    document.getElementById('latest-meta').textContent =
+      "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
+    document.getElementById('latest-title').textContent = entryTitle(entry);
+    document.getElementById('latest-note').textContent =
+      entry.note || (photoCount + " photo" + (photoCount === 1 ? "" : "s") + " from the grove.");
+
+    if (photoCount > 0){
+      var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
+      var photoEl = document.getElementById('latest-photo');
+      photoEl.style.backgroundImage = "url('" + firstUrl + "')";
+      photoEl.style.backgroundSize = "cover";
+      photoEl.style.backgroundPosition = "center";
+      var btn = document.getElementById('latest-view-btn');
+      btn.style.display = '';
+      btn.onclick = function(){ window.open(firstUrl, '_blank'); };
+    } else {
+      document.getElementById('latest-view-btn').style.display = 'none';
+    }
+  }
+
+  function renderJournal(entries){
+    var container = document.getElementById('journal-list');
+    if (!entries || entries.length === 0){
+      container.innerHTML = '<div style="padding:14px 0;color:#6d7469;font-size:13px">No journal entries yet — upload a field update to get started.</div>';
+      return;
+    }
+
+    container.innerHTML = entries.map(function(entry){
+      var parts = formatDateParts(entry.created_at);
+      var photoCount = (entry.photo_paths || []).length;
+      var thumbUrl = photoCount > 0 ? publicPhotoUrl(entry.photo_paths[0]) : "";
+      var thumbStyle = thumbUrl
+        ? 'background-image:url(\'' + thumbUrl + '\');background-size:cover;background-position:center'
+        : 'background:#e2dfd3';
+
+      var metrics = [];
+      if (entry.temperature_snapshot !== null && entry.temperature_snapshot !== undefined){
+        metrics.push('♨ ' + Number(entry.temperature_snapshot).toFixed(1) + '°C');
+      }
+      if (entry.humidity_snapshot !== null && entry.humidity_snapshot !== undefined){
+        metrics.push('◯ ' + Number(entry.humidity_snapshot).toFixed(0) + '%');
+      }
+      metrics.push('▧ ' + photoCount + ' photo' + (photoCount === 1 ? '' : 's'));
+
+      var noteText = entry.note || 'Field update from the grove.';
+      var dateHtml = parts.isToday ? 'TODAY<br>' + parts.day + ' ' + parts.month : parts.day + ' ' + parts.month;
+
+      return '<div class="journal-item">' +
+        '<div class="date">' + dateHtml + '</div>' +
+        '<div class="journal-thumb" style="' + thumbStyle + '"></div>' +
+        '<div class="journal-text"><strong>' + entryTitle(entry) + '</strong><p>' + noteText + '</p></div>' +
+        '<div class="journal-metrics">' + metrics.join(' · ') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function loadFieldEntries(){
+    try {
+      var res = await client
+        .from('field_entries')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (res.error){
+        console.error('Supabase field_entries read error:', res.error);
+        return;
+      }
+
+      var entries = res.data || [];
+      renderLatestEntry(entries[0]);
+      renderJournal(entries);
+    } catch (err){
+      console.error('Field entries fetch failed:', err);
+    }
+  }
+
+  loadFieldEntries();
+  setInterval(loadFieldEntries, 60000); // refresh every 60s
+})();
+</script>
+</body>
+</html>
