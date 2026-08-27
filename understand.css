@@ -1176,7 +1176,7 @@ body::after{
   background:linear-gradient(160deg,rgba(197,160,89,.1),rgba(15,20,15,.9));
 }
 .tier-card.featured::after{
-  content:'MOST POPULAR';
+  content:'EXPERIENCE';
   position:absolute;top:14px;right:-28px;
   background:var(--gold);color:#000;
   font-size:.55rem;font-weight:700;letter-spacing:2px;
