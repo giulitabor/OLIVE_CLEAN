@@ -363,20 +363,84 @@ footer p{color:var(--muted-dim); font-size:.7rem; letter-spacing:.06em;}
   </div>
 </nav>
 
-<div class="ticker" aria-label="Live grove &amp; market ticker">
+<div class="ticker" aria-label="Live OLIVIUM market and grove data">
   <div class="track" id="ticker-track">
-    <span>🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
-    <span>◎ OLVM $0.412 ▲3.2%</span>
-    <span>🌿 CARBON €81.12/t ▲0.6%</span>
-    <span>🌳 240 Trees · Growing Phase</span>
-    <span>🏡 Villa: 12 Nights Open</span>
-    <span>💎 DAO Treasury Healthy</span>
-    <span aria-hidden="true">🫒 EXTRA VIRGIN OIL €18.60/L ▲1.8%</span>
-    <span aria-hidden="true">◎ OLVM $0.412 ▲3.2%</span>
-    <span aria-hidden="true">🌿 CARBON €81.12/t ▲0.6%</span>
-    <span aria-hidden="true">🌳 240 Trees · Growing Phase</span>
-    <span aria-hidden="true">🏡 Villa: 12 Nights Open</span>
-    <span aria-hidden="true">💎 DAO Treasury Healthy</span>
+
+    <span>
+      🫒 EXTRA VIRGIN OIL
+      <strong id="ticker-oil-price">—</strong>
+      <small id="ticker-oil-change"></small>
+    </span>
+
+    <span>
+      ◎ OLVM
+      <strong id="ticker-olvm-price">—</strong>
+      <small id="ticker-olvm-change"></small>
+    </span>
+
+    <span>
+      ☀ SOL
+      <strong id="ticker-sol-price">—</strong>
+      <small id="ticker-sol-change"></small>
+    </span>
+
+    <span>
+      🌿 CARBON
+      <strong id="ticker-carbon-price">—</strong>
+      <small id="ticker-carbon-change"></small>
+    </span>
+
+    <span>
+      🌳
+      <strong id="ticker-tree-count">—</strong>
+      Trees
+      ·
+      <strong id="ticker-plant-phase">—</strong>
+    </span>
+
+    <span>
+      🌦
+      <strong id="ticker-weather">—</strong>
+    </span>
+
+    <!-- second copy for seamless animation -->
+    <span aria-hidden="true">
+      🫒 EXTRA VIRGIN OIL
+      <strong id="ticker-oil-price-2">—</strong>
+      <small id="ticker-oil-change-2"></small>
+    </span>
+
+    <span aria-hidden="true">
+      ◎ OLVM
+      <strong id="ticker-olvm-price-2">—</strong>
+      <small id="ticker-olvm-change-2"></small>
+    </span>
+
+    <span aria-hidden="true">
+      ☀ SOL
+      <strong id="ticker-sol-price-2">—</strong>
+      <small id="ticker-sol-change-2"></small>
+    </span>
+
+    <span aria-hidden="true">
+      🌿 CARBON
+      <strong id="ticker-carbon-price-2">—</strong>
+      <small id="ticker-carbon-change-2"></small>
+    </span>
+
+    <span aria-hidden="true">
+      🌳
+      <strong id="ticker-tree-count-2">—</strong>
+      Trees
+      ·
+      <strong id="ticker-plant-phase-2">—</strong>
+    </span>
+
+    <span aria-hidden="true">
+      🌦
+      <strong id="ticker-weather-2">—</strong>
+    </span>
+
   </div>
 </div>
 
