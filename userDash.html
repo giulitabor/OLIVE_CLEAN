@@ -107,6 +107,33 @@ nav{
 .ticker{height:38px; overflow:hidden; background:var(--charcoal-2); border-bottom:1px solid rgba(197,160,89,.14); display:flex; align-items:center;}
 .track{white-space:nowrap; display:inline-flex; animation:scroll 32s linear infinite; font-size:.72rem; font-weight:600; letter-spacing:.02em; color:var(--gold-light);}
 .track span{margin-right:56px; opacity:.85;}
+   .track span{
+  display:inline-flex;
+  align-items:center;
+  gap:.35rem;
+  margin-right:56px;
+  opacity:.9;
+}
+
+.track strong{
+  color:var(--cream);
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;
+}
+
+.track small{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.62rem;
+  color:var(--good);
+}
+
+.track small.down{
+  color:var(--danger);
+}
+
+.track .stale{
+  color:var(--amber);
+}
 @keyframes scroll{0%{transform:translateX(0)} 100%{transform:translateX(-50%)}}
 @media (prefers-reduced-motion:reduce){.track{animation:none;} .dash-card, .btn-dash, button{transition:none !important;}}
 
