@@ -1,15 +1,26 @@
 /**
- * livedash.ts — Olivium DAO Live Dashboard
+ * livedash.ts — OLIVIUM DAO LIVE DASHBOARD
  * ─────────────────────────────────────────────────────────────────────────────
- * Integrates connection.ts, reserve_board.ts, and reserveb.ts to create
- * a fully functional live dashboard with:
- *   • Supabase Realtime subscriptions for sensor and tree data
- *   • Phantom wallet connection (and email MFA fallback)
- *   • On-chain program interaction (OLV balances, tree positions)
- *   • Live sensor data display (ESP32 → Supabase)
- *   • Real-time chart updates
- *   • Tree adoption modal flow
- *   • Villa stay / loyalty tier UI
+ *
+ * Responsibilities:
+ *   • Wallet / email connection UI
+ *   • On-chain tree loading
+ *   • On-chain OLVM balance
+ *   • Supabase Realtime sensor updates
+ *   • Supabase Realtime tree updates
+ *   • Live Grove ticker
+ *   • Live field sensor ticker
+ *   • Dashboard refresh
+ *   • Villa / Guardian UI bridge
+ *   • Compatibility with existing inline HTML handlers
+ *
+ * IMPORTANT:
+ *   - No fake OLVM market price is displayed.
+ *   - OLVM price remains PRE-LAUNCH until a real market exists.
+ *   - Tree count comes from the Anchor program.
+ *   - Field sensor data comes from Supabase.
+ *   - VITE_OLVM_MINT must contain the REAL OLVM mint address.
+ *
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -53,462 +64,147 @@ import {
   closeSuccess,
 } from "./src/reserveb";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. EXPOSE ALL FUNCTIONS TO WINDOW (for inline HTML event handlers)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Connection
-(window as any).connectWallet = connectWallet;
-(window as any).disconnectWallet = disconnectWallet;
-(window as any).connectEmail = connectEmail;
-(window as any).isConnected = isConnected;
-(window as any).getIdentity = getIdentity;
-(window as any).getProgram = getProgram;
-(window as any).getProvider = getProvider;
-(window as any).handleDisconnectWorkflow = handleDisconnectWorkflow;
-
-// Reserve Board
-(window as any).getTrees = getTrees;
-(window as any).getAllPositions = getAllPositions;
-(window as any).loadTrees = loadTrees;
-(window as any).renderMyTreesFromPositions = renderMyTreesFromPositions;
-(window as any).openTreeDetailModal = openTreeDetailModal;
-(window as any).closeTreeDetailModal = closeTreeDetailModal;
-(window as any).switchTreeDetailTab = switchTreeDetailTab;
-(window as any).updateVillaStayUI = updateVillaStayUI;
-(window as any).updateStatsUI = updateStatsUI;
-(window as any).updateWalletUI = updateWalletUI;
-(window as any).openSellModal = openSellModal;
-(window as any).closeSellModal = closeSellModal;
-(window as any).confirmSellAction = confirmSellAction;
-(window as any).setSellMax = setSellMax;
-
-// Reserve B
-(window as any).updateIdentityBalanceUI = updateIdentityBalanceUI;
-(window as any).waitForProgram = waitForProgram;
-(window as any).closeModal = closeModal;
-(window as any).closeAgreement = closeAgreement;
-(window as any).closeConnectModal = closeConnectModal;
-(window as any).closeSuccess = closeSuccess;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. DOM REFS
-// ─────────────────────────────────────────────────────────────────────────────
-
-const $ = (id: string) => document.getElementById(id);
-const connectBtn = $("connectBtn") as HTMLButtonElement | null;
-const connStatus = $("connStatus");
-const connStatusText = $("conn-status-text");
-const walletType = $("wallet-type");
-const olvBalance = $("wallet-olv-balance");
-const walletBadge = $("wallet-badge");
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. SUPABASE REALTIME SUBSCRIPTIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-let sensorChannel: any = null;
-let treeChannel: any = null;
-
-/**
- * Subscribe to real-time sensor data from Supabase.
- * Updates the UI whenever a new sensor reading is inserted or updated.
- */
-export function subscribeToSensorData() {
-  if (sensorChannel) {
-    sensorChannel.unsubscribe();
-  }
-
-  sensorChannel = sb
-    .channel("sensor-updates")
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "sensor_readings" },
-      (payload) => {
-        console.log("[SENSOR] INSERT:", payload.new);
-        updateSensorUI(payload.new);
-      }
-    )
-    .on(
-      "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "sensor_readings" },
-      (payload) => {
-        console.log("[SENSOR] UPDATE:", payload.new);
-        updateSensorUI(payload.new);
-      }
-    )
-    .subscribe((status) => {
-      console.log("[SENSOR] Subscription status:", status);
-    });
-
-  return sensorChannel;
-}
-
-/**
- * Subscribe to real-time tree metadata changes.
- * Refreshes the tree grid when trees are added, updated, or deleted.
- */
-export function subscribeToTreeUpdates() {
-  if (treeChannel) {
-    treeChannel.unsubscribe();
-  }
-
-  treeChannel = sb
-    .channel("tree-updates")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "tree_metadata" },
-      () => {
-        console.log("[TREE] Change detected, reloading...");
-        loadTrees("all");
-      }
-    )
-    .subscribe((status) => {
-      console.log("[TREE] Subscription status:", status);
-    });
-
-  return treeChannel;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. UI UPDATERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Update the sensor UI with fresh data from Supabase.
- */
-function updateSensorUI(data: any) {
-  if (!data) return;
-
-  // Soil moisture
-  const moistureEl = $("sensor-moisture");
-  const moistureBar = $("sensor-moisture-bar");
-  if (moistureEl && data.moisture !== undefined) {
-    moistureEl.textContent = data.moisture + "%";
-    if (moistureBar) {
-      (moistureBar as HTMLElement).style.width = data.moisture + "%";
-    }
-  }
-
-  // Temperature
-  const tempEl = $("sensor-temp");
-  if (tempEl && data.temperature !== undefined) {
-    tempEl.textContent = data.temperature;
-  }
-
-  // Humidity
-  const humidityEl = $("sensor-humidity");
-  if (humidityEl && data.humidity !== undefined) {
-    humidityEl.textContent = data.humidity;
-  }
-
-  // Wind
-  const windEl = $("live-wind");
-  if (windEl && data.wind_speed !== undefined) {
-    windEl.textContent = data.wind_speed;
-  }
-
-  // Altitude
-  const altEl = $("live-alt");
-  if (altEl && data.altitude !== undefined) {
-    altEl.textContent = data.altitude;
-  }
-
-  // GPS
-  const gpsEl = $("live-gps");
-  if (gpsEl && data.gps) {
-    gpsEl.textContent = data.gps;
-  }
-
-  // Sensor count
-  const sensorCountEl = $("live-sensor-count");
-  if (sensorCountEl && data.sensor_count !== undefined) {
-    sensorCountEl.textContent = data.sensor_count;
-  }
-
-  // Update weather display
-  updateWeatherUI(data);
-}
-
-/**
- * Update weather display from sensor data.
- */
-function updateWeatherUI(data: any) {
-  const tempEl = $("weather-temp");
-  if (tempEl && data.temperature !== undefined) {
-    tempEl.textContent = data.temperature;
-  }
-
-  const humidityEl = $("weather-humidity");
-  if (humidityEl && data.humidity !== undefined) {
-    humidityEl.textContent = data.humidity;
-  }
-
-  const windEl = $("weather-wind");
-  if (windEl && data.wind_speed !== undefined) {
-    windEl.textContent = data.wind_speed;
-  }
-
-  // UV index
-  const uvEl = $("weather-uv");
-  if (uvEl && data.uv_index !== undefined) {
-    uvEl.textContent = data.uv_index;
-  }
-}
-
-/**
- * Update wallet connection status in the UI.
- */
-export function updateWalletConnectionUI() {
-  const identity = getIdentity();
-
-  if (identity.type === "guest") {
-    if (connStatusText) connStatusText.textContent = "disconnected";
-    if (walletType) walletType.textContent = "Guest";
-    if (olvBalance) olvBalance.textContent = "0";
-    if (connectBtn) {
-      connectBtn.textContent = "Connect Phantom";
-      connectBtn.style.background = "#2b7a3e";
-    }
-    if (connStatus) {
-      const dot = connStatus.querySelector("i");
-      if (dot) dot.style.color = "#ffaa33";
-    }
-    return;
-  }
-
-  if (identity.type === "wallet" && identity.wallet) {
-    const short = identity.label || identity.wallet.slice(0, 4) + "…" + identity.wallet.slice(-4);
-    if (connStatusText) connStatusText.textContent = "connected";
-    if (walletType) walletType.textContent = "Phantom";
-    if (connectBtn) {
-      connectBtn.textContent = `🔑 ${short}`;
-      connectBtn.style.background = "#4a6741";
-    }
-    if (connStatus) {
-      const dot = connStatus.querySelector("i");
-      if (dot) dot.style.color = "#3dcc6a";
-    }
-    return;
-  }
-
-  if (identity.type === "email") {
-    if (connStatusText) connStatusText.textContent = "email secured";
-    if (walletType) walletType.textContent = "Email";
-    if (connectBtn) {
-      connectBtn.textContent = `✉️ ${identity.label}`;
-      connectBtn.style.background = "#4a6741";
-    }
-    if (connStatus) {
-      const dot = connStatus.querySelector("i");
-      if (dot) dot.style.color = "#3dcc6a";
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. WALLET CONNECT HANDLER (with UI feedback)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function handleConnectClick() {
-  if (isConnected()) {
-    // Disconnect
-    await handleDisconnectWorkflow();
-    updateWalletConnectionUI();
-    updateIdentityBalanceUI();
-    return;
-  }
-
-  // Show connect modal
-  const modal = $("connectModal");
-  if (modal) {
-    modal.style.display = "flex";
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 6. OLV BALANCE FETCHER
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { PublicKey } from "@solana/web3.js";
 
-const OLV_MINT = new PublicKey("6C3xwo24Tvkw6fxSK1PNLCcQsWJt7Y9seH95xMtTP8V9");
 
-export async function fetchOLVBalance(walletAddress: string): Promise<number> {
-  try {
-    const pubkey = new PublicKey(walletAddress);
-    const ata = await PublicKey.findProgramAddress(
-      [
-        pubkey.toBuffer(),
-        new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA").toBuffer(),
-        OLV_MINT.toBuffer(),
-      ],
-      new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
-    );
-    const tokenAccount = await connection.getTokenAccountBalance(ata[0]);
-    return tokenAccount.value.uiAmount || 0;
-  } catch (err) {
-    console.warn("[OLV] Balance fetch failed:", err);
-    return 0;
-  }
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// 1. GLOBAL WINDOW BRIDGE
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. DASHBOARD REFRESH
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function refreshDashboard() {
-  console.log("[DASH] Refreshing dashboard...");
-
-  // Update identity UI
-  updateIdentityBalanceUI();
-  updateWalletConnectionUI();
-
-  // Refresh tree data
-  await loadTrees("all");
-
-  // Update stats
-  await updateStatsUI();
-
-  // Update villa stay UI
-  await updateVillaStayUI();
-
-  // If connected, fetch OLV balance
-  const identity = getIdentity();
-  if (identity.wallet) {
-    const balance = await fetchOLVBalance(identity.wallet);
-    if (olvBalance) {
-      olvBalance.textContent = balance.toFixed(2);
-    }
-  }
-
-  console.log("[DASH] Refresh complete");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. INIT
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function initLiveDash() {
-  console.log("[LIVEDASH] export async function initLiveDash() {
-  console.log("[LIVEDASH] Initializing...");
-
-  await waitForProgram();
-
-  await loadTrees("all");
-
-  await updateIdentityBalanceUI();
-  updateWalletConnectionUI();
-  await updateStatsUI();
-  await updateVillaStayUI();
-
-  // ─────────────────────────────────────────────
-  // INITIAL LIVE TICKER
-  // ─────────────────────────────────────────────
-
-  await updateLiveTicker();
-
-  // Real-time subscriptions
-  subscribeToSensorData();
-  subscribeToTreeUpdates();
-
-  if (connectBtn) {
-    connectBtn.addEventListener("click", handleConnectClick);
-  }
-
-  window.addEventListener("olivium:connected", async () => {
-    console.log("[LIVEDASH] Connected event received");
-    updateWalletConnectionUI();
-    await refreshDashboard();
-    await updateLiveTicker();
-  });
-
-  window.addEventListener("olivium:disconnected", async () => {
-    console.log("[LIVEDASH] Disconnected event received");
-    updateWalletConnectionUI();
-    await refreshDashboard();
-    await updateLiveTicker();
-  });
-
-  window.addEventListener("solana:connection-complete", async () => {
-    console.log("[LIVEDASH] Solana connection complete");
-    updateWalletConnectionUI();
-    await refreshDashboard();
-    await updateLiveTicker();
-  });
-
-  // Existing 30-second refresh
-  setInterval(async () => {
-    await updateStatsUI();
-    await updateVillaStayUI();
-
-    // Refresh ticker data too
-    await updateLiveTicker();
-
-  }, 30000);
-
-  console.log("[LIVEDASH] Initialized successfully");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 9. DOM READY
-// ─────────────────────────────────────────────────────────────────────────────
-
-document.addEventListener("DOMContentLoaded", () => {
-  initLiveDash();
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 10. EXPOSE
-// ─────────────────────────────────────────────────────────────────────────────
+const win = window as any;
 
 
+// Connection
+win.connectWallet = connectWallet;
+win.disconnectWallet = disconnectWallet;
+win.connectEmail = connectEmail;
+win.isConnected = isConnected;
+win.getIdentity = getIdentity;
+win.getProgram = getProgram;
+win.getProvider = getProvider;
+win.handleDisconnectWorkflow = handleDisconnectWorkflow;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LIVE TICKER
-// ─────────────────────────────────────────────────────────────────────────────
 
-type TickerItem = {
+// Reserve Board
+win.getTrees = getTrees;
+win.getAllPositions = getAllPositions;
+win.loadTrees = loadTrees;
+win.renderMyTreesFromPositions = renderMyTreesFromPositions;
+win.openTreeDetailModal = openTreeDetailModal;
+win.closeTreeDetailModal = closeTreeDetailModal;
+win.switchTreeDetailTab = switchTreeDetailTab;
+win.updateVillaStayUI = updateVillaStayUI;
+win.updateStatsUI = updateStatsUI;
+win.updateWalletUI = updateWalletUI;
+win.openSellModal = openSellModal;
+win.closeSellModal = closeSellModal;
+win.confirmSellAction = confirmSellAction;
+win.setSellMax = setSellMax;
+
+
+// Reserve B
+win.updateIdentityBalanceUI = updateIdentityBalanceUI;
+win.waitForProgram = waitForProgram;
+win.closeModal = closeModal;
+win.closeAgreement = closeAgreement;
+win.closeConnectModal = closeConnectModal;
+win.closeSuccess = closeSuccess;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 2. DOM HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const $ = (id: string): HTMLElement | null =>
+  document.getElementById(id);
+
+const connectBtn =
+  $("connectBtn") as HTMLButtonElement | null;
+
+const connStatus =
+  $("connStatus");
+
+const connStatusText =
+  $("conn-status-text");
+
+const walletType =
+  $("wallet-type");
+
+const olvBalance =
+  $("wallet-olv-balance");
+
+const walletBadge =
+  $("wallet-badge");
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 3. LIVE SENSOR STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let latestSensorData: any | null = null;
+
+let sensorChannel: any = null;
+let fieldSensorChannel: any = null;
+let treeChannel: any = null;
+
+let tickerUpdateInProgress = false;
+
+let initialized = false;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 4. LIVE TICKER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface TickerItem {
   icon: string;
   text: string;
   tone?: "up" | "down" | "neutral";
-};
+}
 
-let tickerRefreshTimer: number | null = null;
 
 /**
- * Render the live ticker.
- *
- * IMPORTANT:
- * The ticker is populated only from verified live data.
- * We never use placeholder market prices.
+ * Render ticker items twice so the CSS marquee can loop continuously.
  */
 function renderLiveTicker(items: TickerItem[]) {
-  const track = $("ticker-track");
+
+  const track =
+    document.getElementById("ticker-track");
 
   if (!track) {
-    console.warn("[TICKER] #ticker-track not found");
+    console.warn(
+      "[TICKER] #ticker-track not found."
+    );
     return;
   }
 
   track.innerHTML = "";
 
-  const fragment = document.createDocumentFragment();
+  const fragment =
+    document.createDocumentFragment();
 
-  // Duplicate the sequence for seamless CSS scrolling.
   for (let copy = 0; copy < 2; copy++) {
+
     for (const item of items) {
-      const span = document.createElement("span");
+
+      const span =
+        document.createElement("span");
 
       if (copy === 1) {
-        span.setAttribute("aria-hidden", "true");
+        span.setAttribute(
+          "aria-hidden",
+          "true"
+        );
       }
 
-      span.textContent = `${item.icon} ${item.text}`;
+      span.textContent =
+        `${item.icon} ${item.text}`;
 
       if (item.tone === "up") {
         span.classList.add("ticker-up");
-      } else if (item.tone === "down") {
+      }
+
+      if (item.tone === "down") {
         span.classList.add("ticker-down");
       }
 
@@ -521,106 +217,1537 @@ function renderLiveTicker(items: TickerItem[]) {
 
 
 /**
- * Build the ticker from the actual dashboard state.
+ * Get the current tree count directly from the Anchor program.
  *
- * No fabricated price, yield, treasury status or availability.
+ * This is NOT a hardcoded 240.
+ * If the on-chain program reports another number, the ticker changes.
  */
-async function updateLiveTicker() {
-  const items: TickerItem[] = [];
-
-  // ─────────────────────────────────────────────
-  // GROVE
-  // ─────────────────────────────────────────────
-
-  // This is REAL and can remain active.
-  items.push({
-    icon: "🌳",
-    text: "240 Trees · Growing Phase",
-    tone: "neutral",
-  });
-
-
-  // ─────────────────────────────────────────────
-  // SENSOR DATA
-  // ─────────────────────────────────────────────
+async function getLiveTreeCount(): Promise<number | null> {
 
   try {
+
+    const trees =
+      await getTrees();
+
+    if (!Array.isArray(trees)) {
+      return null;
+    }
+
+    return trees.length;
+
+  } catch (err) {
+
+    console.warn(
+      "[TICKER] Unable to read on-chain tree count:",
+      err
+    );
+
+    return null;
+  }
+}
+
+
+/**
+ * Get the newest field sensor record.
+ *
+ * reserve_board.ts uses node_sensors for field sensor data,
+ * so the ticker reads that same source.
+ */
+async function getLatestFieldSensor(): Promise<any | null> {
+
+  try {
+
     const { data, error } = await sb
-      .from("sensor_readings")
+      .from("node_sensors")
       .select("*")
-      .order("created_at", { ascending: false })
+      .order("created_at", {
+        ascending: false,
+      })
       .limit(1)
       .maybeSingle();
 
-    if (!error && data) {
+    if (error) {
 
-      if (data.temperature !== undefined && data.temperature !== null) {
+      console.warn(
+        "[TICKER] node_sensors query failed:",
+        error.message
+      );
+
+      return null;
+    }
+
+    return data ?? null;
+
+  } catch (err) {
+
+    console.warn(
+      "[TICKER] node_sensors exception:",
+      err
+    );
+
+    return null;
+  }
+}
+
+
+/**
+ * Convert the latest sensor reading into ticker items.
+ */
+function addSensorTickerItems(
+  items: TickerItem[],
+  sensor: any | null
+) {
+
+  if (!sensor) {
+    return;
+  }
+
+
+  // Temperature
+  if (
+    sensor.temperature !== undefined &&
+    sensor.temperature !== null
+  ) {
+
+    const value =
+      Number(sensor.temperature);
+
+    if (Number.isFinite(value)) {
+
+      items.push({
+        icon: "🌡",
+        text:
+          `Field ${value.toFixed(1)}°C`,
+        tone: "neutral",
+      });
+    }
+  }
+
+
+  // Soil moisture
+  const soilValue =
+    sensor.soil_moisture ??
+    sensor.moisture;
+
+  if (
+    soilValue !== undefined &&
+    soilValue !== null
+  ) {
+
+    const value =
+      Number(soilValue);
+
+    if (Number.isFinite(value)) {
+
+      items.push({
+        icon: "💧",
+        text:
+          `Soil ${value.toFixed(1)}%`,
+        tone: "neutral",
+      });
+    }
+  }
+
+
+  // Humidity
+  if (
+    sensor.humidity !== undefined &&
+    sensor.humidity !== null
+  ) {
+
+    const value =
+      Number(sensor.humidity);
+
+    if (Number.isFinite(value)) {
+
+      items.push({
+        icon: "💨",
+        text:
+          `Humidity ${value.toFixed(0)}%`,
+        tone: "neutral",
+      });
+    }
+  }
+
+
+  // Wind
+  if (
+    sensor.wind_speed !== undefined &&
+    sensor.wind_speed !== null
+  ) {
+
+    const value =
+      Number(sensor.wind_speed);
+
+    if (Number.isFinite(value)) {
+
+      items.push({
+        icon: "🌬",
+        text:
+          `Wind ${value.toFixed(1)} m/s`,
+        tone: "neutral",
+      });
+    }
+  }
+
+
+  // Sensor timestamp
+  if (sensor.created_at) {
+
+    const timestamp =
+      new Date(sensor.created_at)
+        .getTime();
+
+    if (Number.isFinite(timestamp)) {
+
+      const ageMs =
+        Math.max(
+          0,
+          Date.now() - timestamp
+        );
+
+      const ageMinutes =
+        Math.round(
+          ageMs / 60000
+        );
+
+      if (ageMinutes < 2) {
+
         items.push({
-          icon: "🌡",
-          text: `Field ${Number(data.temperature).toFixed(1)}°C`,
-          tone: "neutral",
+          icon: "●",
+          text: "Field sensors · Live",
+          tone: "up",
         });
-      }
 
-      if (data.moisture !== undefined && data.moisture !== null) {
-        items.push({
-          icon: "💧",
-          text: `Soil ${Number(data.moisture).toFixed(0)}%`,
-          tone: "neutral",
-        });
-      }
+      } else {
 
-      if (data.wind_speed !== undefined && data.wind_speed !== null) {
         items.push({
-          icon: "🌬",
-          text: `Wind ${Number(data.wind_speed).toFixed(1)} m/s`,
+          icon: "●",
+          text:
+            `Field sensors · ${ageMinutes} min ago`,
           tone: "neutral",
         });
       }
     }
+  }
+}
+
+
+/**
+ * Update the live dashboard ticker.
+ *
+ * Deliberately does NOT invent:
+ *   - OLVM price
+ *   - oil market price
+ *   - carbon price
+ *   - treasury health
+ *   - villa availability
+ *
+ * Those should only be displayed once connected to genuine data sources.
+ */
+export async function updateLiveTicker() {
+
+  if (tickerUpdateInProgress) {
+    return;
+  }
+
+  tickerUpdateInProgress = true;
+
+  try {
+
+    const items: TickerItem[] = [];
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GROVE
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const treeCount =
+      await getLiveTreeCount();
+
+    if (treeCount !== null) {
+
+      items.push({
+        icon: "🌳",
+        text:
+          `${treeCount} Trees · Growing Phase`,
+        tone: "neutral",
+      });
+
+    } else {
+
+      items.push({
+        icon: "🌳",
+        text:
+          "Grove · Growing Phase",
+        tone: "neutral",
+      });
+    }
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // FIELD SENSOR
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const sensor =
+      await getLatestFieldSensor();
+
+    if (sensor) {
+
+      latestSensorData =
+        sensor;
+
+      addSensorTickerItems(
+        items,
+        sensor
+      );
+    }
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TOKEN
+    // ─────────────────────────────────────────────────────────────────────────
+
+    items.push({
+      icon: "◎",
+      text: "OLVM · PRE-LAUNCH",
+      tone: "neutral",
+    });
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // REAL GROVE PHASE
+    // ─────────────────────────────────────────────────────────────────────────
+
+    items.push({
+      icon: "🫒",
+      text: "2026 Season · Growing Phase",
+      tone: "neutral",
+    });
+
+
+    renderLiveTicker(items);
+
   } catch (err) {
-    console.warn("[TICKER] Sensor query failed:", err);
+
+    console.error(
+      "[TICKER] Update failed:",
+      err
+    );
+
+    renderLiveTicker([
+      {
+        icon: "🌳",
+        text: "Grove · Growing Phase",
+        tone: "neutral",
+      },
+      {
+        icon: "◎",
+        text: "OLVM · PRE-LAUNCH",
+        tone: "neutral",
+      },
+    ]);
+
+  } finally {
+
+    tickerUpdateInProgress =
+      false;
+  }
+}
+
+
+win.updateLiveTicker =
+  updateLiveTicker;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 5. SUPABASE SENSOR REALTIME
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Update dashboard sensor fields.
+ *
+ * Supports both:
+ *   sensor_readings.moisture
+ *   node_sensors.soil_moisture
+ */
+function updateSensorUI(data: any) {
+
+  if (!data) {
+    return;
   }
 
 
-  // ─────────────────────────────────────────────
-  // OLVM MARKET
-  // ─────────────────────────────────────────────
-
-  /*
-   * DO NOT display a fake OLVM price.
-   *
-   * Until the real OLVM mint has a live trading pair,
-   * the ticker simply says PRE-LAUNCH.
-   */
-
-  items.push({
-    icon: "◎",
-    text: "OLVM · PRE-LAUNCH",
-    tone: "neutral",
-  });
+  latestSensorData =
+    data;
 
 
-  // ─────────────────────────────────────────────
-  // HARVEST
-  // ─────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // SOIL MOISTURE
+  // ───────────────────────────────────────────────────────────────────────────
 
-  items.push({
-    icon: "🫒",
-    text: "2026 Harvest · Preparing",
-    tone: "neutral",
-  });
+  const moisture =
+    data.soil_moisture ??
+    data.moisture;
+
+  const moistureEl =
+    $("sensor-moisture");
+
+  const moistureBar =
+    $("sensor-moisture-bar");
 
 
-  renderLiveTicker(items);
+  if (
+    moistureEl &&
+    moisture !== undefined &&
+    moisture !== null
+  ) {
+
+    const value =
+      Number(moisture);
+
+    moistureEl.textContent =
+      `${value}%`;
+
+    if (
+      moistureBar &&
+      Number.isFinite(value)
+    ) {
+
+      (
+        moistureBar as HTMLElement
+      ).style.width =
+        `${Math.max(
+          0,
+          Math.min(100, value)
+        )}%`;
+    }
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TEMPERATURE
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const tempEl =
+    $("sensor-temp");
+
+  if (
+    tempEl &&
+    data.temperature !== undefined
+  ) {
+
+    tempEl.textContent =
+      String(data.temperature);
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // HUMIDITY
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const humidityEl =
+    $("sensor-humidity");
+
+  if (
+    humidityEl &&
+    data.humidity !== undefined
+  ) {
+
+    humidityEl.textContent =
+      String(data.humidity);
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // WIND
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const windEl =
+    $("live-wind");
+
+  if (
+    windEl &&
+    data.wind_speed !== undefined
+  ) {
+
+    windEl.textContent =
+      String(data.wind_speed);
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // ALTITUDE
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const altEl =
+    $("live-alt");
+
+  if (
+    altEl &&
+    data.altitude !== undefined
+  ) {
+
+    altEl.textContent =
+      String(data.altitude);
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // GPS
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const gpsEl =
+    $("live-gps");
+
+  if (
+    gpsEl &&
+    data.gps !== undefined
+  ) {
+
+    gpsEl.textContent =
+      String(data.gps);
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // SENSOR COUNT
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const sensorCountEl =
+    $("live-sensor-count");
+
+  if (
+    sensorCountEl &&
+    data.sensor_count !== undefined
+  ) {
+
+    sensorCountEl.textContent =
+      String(data.sensor_count);
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // WEATHER
+  // ───────────────────────────────────────────────────────────────────────────
+
+  updateWeatherUI(data);
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TICKER
+  // ───────────────────────────────────────────────────────────────────────────
+
+  updateLiveTicker();
 }
 
-(window as any).initLiveDash = initLiveDash;
-(window as any).refreshDashboard = refreshDashboard;
-(window as any).fetchOLVBalance = fetchOLVBalance;
-(window as any).updateWalletConnectionUI = updateWalletConnectionUI;
-(window as any).subscribeToSensorData = subscribeToSensorData;
-(window as any).subscribeToTreeUpdates = subscribeToTreeUpdates;
-(window as any).updateLiveTicker = updateLiveTicker;
 
-console.log("[livedash.ts] ✅ Module loaded");
+/**
+ * Update weather widgets using incoming sensor data.
+ */
+function updateWeatherUI(data: any) {
+
+  if (!data) {
+    return;
+  }
+
+
+  const tempEl =
+    $("weather-temp");
+
+  if (
+    tempEl &&
+    data.temperature !== undefined
+  ) {
+
+    tempEl.textContent =
+      String(data.temperature);
+  }
+
+
+  const humidityEl =
+    $("weather-humidity");
+
+  if (
+    humidityEl &&
+    data.humidity !== undefined
+  ) {
+
+    humidityEl.textContent =
+      String(data.humidity);
+  }
+
+
+  const windEl =
+    $("weather-wind");
+
+  if (
+    windEl &&
+    data.wind_speed !== undefined
+  ) {
+
+    windEl.textContent =
+      String(data.wind_speed);
+  }
+
+
+  const uvEl =
+    $("weather-uv");
+
+  if (
+    uvEl &&
+    data.uv_index !== undefined
+  ) {
+
+    uvEl.textContent =
+      String(data.uv_index);
+  }
+
+
+  // Member hero weather
+  const memberTemp =
+    $("weather-temp-m");
+
+  if (
+    memberTemp &&
+    data.temperature !== undefined
+  ) {
+
+    memberTemp.textContent =
+      String(data.temperature);
+  }
+
+
+  const memberDesc =
+    $("weather-desc-m");
+
+  if (
+    memberDesc &&
+    data.weather_description !== undefined
+  ) {
+
+    memberDesc.textContent =
+      String(data.weather_description);
+  }
+}
+
+
+/**
+ * Subscribe to the legacy sensor_readings table.
+ *
+ * Kept because other parts of the dashboard may already use it.
+ */
+export function subscribeToSensorData() {
+
+  if (sensorChannel) {
+
+    try {
+      sensorChannel.unsubscribe();
+    } catch (_) {
+      // Ignore unsubscribe errors.
+    }
+
+    sensorChannel =
+      null;
+  }
+
+
+  sensorChannel =
+    sb
+      .channel("sensor-updates")
+
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "sensor_readings",
+        },
+        (payload) => {
+
+          console.log(
+            "[SENSOR] INSERT:",
+            payload.new
+          );
+
+          updateSensorUI(
+            payload.new
+          );
+        }
+      )
+
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "sensor_readings",
+        },
+        (payload) => {
+
+          console.log(
+            "[SENSOR] UPDATE:",
+            payload.new
+          );
+
+          updateSensorUI(
+            payload.new
+          );
+        }
+      )
+
+      .subscribe((status) => {
+
+        console.log(
+          "[SENSOR] sensor_readings:",
+          status
+        );
+      });
+
+
+  return sensorChannel;
+}
+
+
+/**
+ * Subscribe to node_sensors.
+ *
+ * This is the field sensor source used by reserve_board.ts.
+ */
+export function subscribeToFieldSensorData() {
+
+  if (fieldSensorChannel) {
+
+    try {
+      fieldSensorChannel.unsubscribe();
+    } catch (_) {
+      // Ignore unsubscribe errors.
+    }
+
+    fieldSensorChannel =
+      null;
+  }
+
+
+  fieldSensorChannel =
+    sb
+      .channel("node-sensor-updates")
+
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "node_sensors",
+        },
+        (payload) => {
+
+          console.log(
+            "[NODE_SENSOR] INSERT:",
+            payload.new
+          );
+
+          updateSensorUI(
+            payload.new
+          );
+        }
+      )
+
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "node_sensors",
+        },
+        (payload) => {
+
+          console.log(
+            "[NODE_SENSOR] UPDATE:",
+            payload.new
+          );
+
+          updateSensorUI(
+            payload.new
+          );
+        }
+      )
+
+      .subscribe((status) => {
+
+        console.log(
+          "[NODE_SENSOR] Subscription:",
+          status
+        );
+      });
+
+
+  return fieldSensorChannel;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 6. TREE REALTIME
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function subscribeToTreeUpdates() {
+
+  if (treeChannel) {
+
+    try {
+      treeChannel.unsubscribe();
+    } catch (_) {
+      // Ignore unsubscribe errors.
+    }
+
+    treeChannel =
+      null;
+  }
+
+
+  treeChannel =
+    sb
+      .channel("tree-updates")
+
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tree_metadata",
+        },
+        async () => {
+
+          console.log(
+            "[TREE] Change detected."
+          );
+
+          try {
+
+            await loadTrees("all");
+
+            await updateStatsUI();
+
+            await updateLiveTicker();
+
+          } catch (err) {
+
+            console.error(
+              "[TREE] Reload failed:",
+              err
+            );
+          }
+        }
+      )
+
+      .subscribe((status) => {
+
+        console.log(
+          "[TREE] Subscription:",
+          status
+        );
+      });
+
+
+  return treeChannel;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 7. WALLET UI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function updateWalletConnectionUI() {
+
+  const identity =
+    getIdentity();
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // GUEST
+  // ───────────────────────────────────────────────────────────────────────────
+
+  if (
+    !identity ||
+    identity.type === "guest"
+  ) {
+
+    if (connStatusText) {
+      connStatusText.textContent =
+        "disconnected";
+    }
+
+    if (walletType) {
+      walletType.textContent =
+        "Guest";
+    }
+
+    if (olvBalance) {
+      olvBalance.textContent =
+        "0";
+    }
+
+    if (connectBtn) {
+
+      connectBtn.textContent =
+        "Connect Phantom";
+
+      connectBtn.style.background =
+        "#2b7a3e";
+    }
+
+    if (connStatus) {
+
+      const dot =
+        connStatus.querySelector("i");
+
+      if (dot) {
+        (dot as HTMLElement).style.color =
+          "#ffaa33";
+      }
+    }
+
+    if (walletBadge) {
+      walletBadge.textContent =
+        "Guest";
+    }
+
+    return;
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // PHANTOM
+  // ───────────────────────────────────────────────────────────────────────────
+
+  if (
+    identity.type === "wallet" &&
+    identity.wallet
+  ) {
+
+    const short =
+      identity.label ||
+      (
+        identity.wallet.slice(0, 4) +
+        "…" +
+        identity.wallet.slice(-4)
+      );
+
+
+    if (connStatusText) {
+      connStatusText.textContent =
+        "connected";
+    }
+
+    if (walletType) {
+      walletType.textContent =
+        "Phantom";
+    }
+
+    if (connectBtn) {
+
+      connectBtn.textContent =
+        `🔑 ${short}`;
+
+      connectBtn.style.background =
+        "#4a6741";
+    }
+
+    if (connStatus) {
+
+      const dot =
+        connStatus.querySelector("i");
+
+      if (dot) {
+        (dot as HTMLElement).style.color =
+          "#3dcc6a";
+      }
+    }
+
+    if (walletBadge) {
+      walletBadge.textContent =
+        "Connected";
+    }
+
+    return;
+  }
+
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // EMAIL
+  // ───────────────────────────────────────────────────────────────────────────
+
+  if (
+    identity.type === "email"
+  ) {
+
+    if (connStatusText) {
+      connStatusText.textContent =
+        "email secured";
+    }
+
+    if (walletType) {
+      walletType.textContent =
+        "Email";
+    }
+
+    if (connectBtn) {
+
+      connectBtn.textContent =
+        `✉️ ${identity.label || "Account"}`;
+
+      connectBtn.style.background =
+        "#4a6741";
+    }
+
+    if (connStatus) {
+
+      const dot =
+        connStatus.querySelector("i");
+
+      if (dot) {
+        (dot as HTMLElement).style.color =
+          "#3dcc6a";
+      }
+    }
+
+    if (walletBadge) {
+      walletBadge.textContent =
+        "Email";
+    }
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 8. CONNECT BUTTON
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function handleConnectClick() {
+
+  try {
+
+    if (isConnected()) {
+
+      console.log(
+        "[WALLET] Disconnect requested."
+      );
+
+      await handleDisconnectWorkflow();
+
+      updateWalletConnectionUI();
+
+      await updateIdentityBalanceUI();
+
+      await updateLiveTicker();
+
+      return;
+    }
+
+
+    const modal =
+      $("connectModal");
+
+    if (modal) {
+
+      modal.style.display =
+        "flex";
+    }
+
+  } catch (err) {
+
+    console.error(
+      "[WALLET] Connect/disconnect error:",
+      err
+    );
+  }
+}
+
+
+win.handleConnectClick =
+  handleConnectClick;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 9. REAL OLVM BALANCE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * REAL OLVM mint.
+ *
+ * Set in Vite:
+ *
+ * VITE_OLVM_MINT=YOUR_REAL_SOLANA_MINT_ADDRESS
+ *
+ * Do NOT put a fake / placeholder mint here.
+ */
+const OLVM_MINT_ADDRESS =
+  import.meta.env.VITE_OLVM_MINT || "";
+
+
+/**
+ * Fetch the actual OLVM token balance for a wallet.
+ *
+ * Uses Solana's parsed token accounts rather than manually deriving
+ * an ATA, making this simpler and more robust.
+ */
+export async function fetchOLVMBalance(
+  walletAddress: string
+): Promise<number> {
+
+  if (!OLVM_MINT_ADDRESS) {
+
+    console.warn(
+      "[OLVM] VITE_OLVM_MINT is not configured."
+    );
+
+    return 0;
+  }
+
+
+  try {
+
+    const owner =
+      new PublicKey(walletAddress);
+
+    const mint =
+      new PublicKey(
+        OLVM_MINT_ADDRESS
+      );
+
+
+    const result =
+      await connection.getParsedTokenAccountsByOwner(
+        owner,
+        {
+          mint,
+        }
+      );
+
+
+    let total =
+      0;
+
+
+    for (
+      const account of result.value
+    ) {
+
+      const parsed =
+        account.account.data.parsed;
+
+      const tokenAmount =
+        parsed?.info?.tokenAmount;
+
+      if (
+        tokenAmount &&
+        tokenAmount.uiAmount !== null &&
+        tokenAmount.uiAmount !== undefined
+      ) {
+
+        total +=
+          Number(tokenAmount.uiAmount);
+      }
+    }
+
+
+    return total;
+
+  } catch (err) {
+
+    console.warn(
+      "[OLVM] Balance fetch failed:",
+      err
+    );
+
+    return 0;
+  }
+}
+
+
+/**
+ * Compatibility alias.
+ *
+ * Existing HTML / code may still call fetchOLVBalance().
+ */
+export async function fetchOLVBalance(
+  walletAddress: string
+): Promise<number> {
+
+  return fetchOLVMBalance(
+    walletAddress
+  );
+}
+
+
+win.fetchOLVMBalance =
+  fetchOLVMBalance;
+
+win.fetchOLVBalance =
+  fetchOLVBalance;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 10. DASHBOARD REFRESH
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function refreshDashboard() {
+
+  console.log(
+    "[DASH] Refreshing dashboard..."
+  );
+
+
+  try {
+
+    // Wallet UI
+    updateWalletConnectionUI();
+
+
+    // Identity / token UI
+    await updateIdentityBalanceUI();
+
+
+    // Trees
+    await loadTrees("all");
+
+
+    // Stats
+    await updateStatsUI();
+
+
+    // Villa / Guardian
+    await updateVillaStayUI();
+
+
+    // Direct OLVM balance
+    const identity =
+      getIdentity();
+
+
+    if (
+      identity &&
+      identity.wallet
+    ) {
+
+      const balance =
+        await fetchOLVMBalance(
+          identity.wallet
+        );
+
+
+      if (olvBalance) {
+
+        olvBalance.textContent =
+          balance.toLocaleString(
+            undefined,
+            {
+              maximumFractionDigits: 2,
+            }
+          );
+      }
+    }
+
+
+    // Live ticker
+    await updateLiveTicker();
+
+
+    console.log(
+      "[DASH] Refresh complete."
+    );
+
+  } catch (err) {
+
+    console.error(
+      "[DASH] Refresh failed:",
+      err
+    );
+  }
+}
+
+
+win.refreshDashboard =
+  refreshDashboard;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 11. INITIALIZATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function initLiveDash() {
+
+  if (initialized) {
+
+    console.log(
+      "[LIVEDASH] Already initialized."
+    );
+
+    return;
+  }
+
+
+  initialized =
+    true;
+
+
+  console.log(
+    "[LIVEDASH] Initializing..."
+  );
+
+
+  try {
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // WAIT FOR ANCHOR PROGRAM
+    // ─────────────────────────────────────────────────────────────────────────
+
+    await waitForProgram();
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // INITIAL TREE DATA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    await loadTrees("all");
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // INITIAL UI
+    // ─────────────────────────────────────────────────────────────────────────
+
+    await updateIdentityBalanceUI();
+
+    updateWalletConnectionUI();
+
+    await updateStatsUI();
+
+    await updateVillaStayUI();
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LIVE TICKER
+    // ─────────────────────────────────────────────────────────────────────────
+
+    await updateLiveTicker();
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUPABASE REALTIME
+    // ─────────────────────────────────────────────────────────────────────────
+
+    subscribeToSensorData();
+
+    subscribeToFieldSensorData();
+
+    subscribeToTreeUpdates();
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONNECT BUTTON
+    // ─────────────────────────────────────────────────────────────────────────
+
+    if (connectBtn) {
+
+      connectBtn.addEventListener(
+        "click",
+        handleConnectClick
+      );
+    }
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // WALLET CONNECTED
+    // ─────────────────────────────────────────────────────────────────────────
+
+    window.addEventListener(
+      "olivium:connected",
+      async () => {
+
+        console.log(
+          "[LIVEDASH] Connected event received."
+        );
+
+        updateWalletConnectionUI();
+
+        await refreshDashboard();
+      }
+    );
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // WALLET DISCONNECTED
+    // ─────────────────────────────────────────────────────────────────────────
+
+    window.addEventListener(
+      "olivium:disconnected",
+      async () => {
+
+        console.log(
+          "[LIVEDASH] Disconnected event received."
+        );
+
+        updateWalletConnectionUI();
+
+        await refreshDashboard();
+      }
+    );
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LEGACY SOLANA BRIDGE
+    // ─────────────────────────────────────────────────────────────────────────
+
+    window.addEventListener(
+      "solana:connection-complete",
+      async () => {
+
+        console.log(
+          "[LIVEDASH] Solana connection complete."
+        );
+
+        updateWalletConnectionUI();
+
+        await refreshDashboard();
+      }
+    );
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PERIODIC REFRESH
+    // ─────────────────────────────────────────────────────────────────────────
+
+    setInterval(
+      async () => {
+
+        try {
+
+          // Stats
+          await updateStatsUI();
+
+
+          // Guardian / villa
+          await updateVillaStayUI();
+
+
+          // Live ticker
+          await updateLiveTicker();
+
+        } catch (err) {
+
+          console.warn(
+            "[LIVEDASH] Periodic refresh failed:",
+            err
+          );
+        }
+
+      },
+      30_000
+    );
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TICKER REFRESH
+    // ─────────────────────────────────────────────────────────────────────────
+
+    setInterval(
+      async () => {
+
+        try {
+
+          await updateLiveTicker();
+
+        } catch (err) {
+
+          console.warn(
+            "[TICKER] Periodic update failed:",
+            err
+          );
+        }
+
+      },
+      60_000
+    );
+
+
+    console.log(
+      "[LIVEDASH] Initialized successfully."
+    );
+
+  } catch (err) {
+
+    console.error(
+      "[LIVEDASH] Initialization failed:",
+      err
+    );
+
+    initialized =
+      false;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 12. DOM READY
+// ═══════════════════════════════════════════════════════════════════════════════
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      initLiveDash();
+    },
+    {
+      once: true,
+    }
+  );
+
+} else {
+
+  // Module was loaded after DOMContentLoaded.
+  initLiveDash();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 13. FINAL WINDOW EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+win.initLiveDash =
+  initLiveDash;
+
+win.refreshDashboard =
+  refreshDashboard;
+
+win.fetchOLVMBalance =
+  fetchOLVMBalance;
+
+win.fetchOLVBalance =
+  fetchOLVBalance;
+
+win.updateWalletConnectionUI =
+  updateWalletConnectionUI;
+
+win.subscribeToSensorData =
+  subscribeToSensorData;
+
+win.subscribeToFieldSensorData =
+  subscribeToFieldSensorData;
+
+win.subscribeToTreeUpdates =
+  subscribeToTreeUpdates;
+
+win.updateLiveTicker =
+  updateLiveTicker;
+
+win.latestSensorData =
+  latestSensorData;
+
+
+console.log(
+  "[livedash.ts] ✅ Live dashboard module loaded."
+);
