@@ -40,26 +40,15 @@ import {
 import {
   getTrees,
   getAllPositions,
-  openTreeDetailModal,
-  closeTreeDetailModal,
-  switchTreeDetailTab,
   updateVillaStayUI,
   updateStatsUI,
   updateWalletUI,
-  openSellModal,
-  closeSellModal,
-  confirmSellAction,
-  setSellMax,
 } from "./src/reserve_board";
 
 import {
   updateIdentityBalanceUI,
   waitForProgram,
   handleDisconnectWorkflow,
-  closeModal,
-  closeAgreement,
-  closeConnectModal,
-  closeSuccess,
 } from "./src/reserveb";
 
 import { PublicKey } from "@solana/web3.js";
