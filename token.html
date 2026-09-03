@@ -8,7 +8,7 @@
 
   <meta
     name="description"
-    content="OLVM is the digital layer connecting the OLIVIUM olive estate in Tuscany with its global community of Guardians."
+    content="OLVM is the digital layer connecting OLIVIUM, a living olive estate in Tuscany, with a global community of Guardians."
   >
 
   <meta name="theme-color" content="#19382d">
@@ -128,7 +128,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 27px;
+      gap: 25px;
       font-size: 13px;
       letter-spacing: 0.05em;
     }
@@ -179,9 +179,9 @@
       background-image:
         linear-gradient(
           90deg,
-          rgba(10,30,23,0.90) 0%,
-          rgba(10,30,23,0.68) 40%,
-          rgba(10,30,23,0.24) 75%,
+          rgba(10,30,23,0.91) 0%,
+          rgba(10,30,23,0.70) 40%,
+          rgba(10,30,23,0.35) 72%,
           rgba(10,30,23,0.25) 100%
         ),
         url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/walkN.png");
@@ -315,11 +315,9 @@
 
       padding: 34px;
 
-      border:
-        1px solid rgba(255,255,255,0.20);
+      border: 1px solid rgba(255,255,255,0.20);
 
-      background:
-        rgba(12,35,27,0.62);
+      background: rgba(12,35,27,0.62);
 
       backdrop-filter: blur(16px);
 
@@ -364,7 +362,7 @@
     }
 
     /* =========================================================
-       INTRO
+       STORY
     ========================================================= */
 
     .intro {
@@ -426,7 +424,7 @@
     }
 
     .snapshot-heading {
-      max-width: 700px;
+      max-width: 760px;
       margin-bottom: 50px;
     }
 
@@ -463,7 +461,7 @@
     }
 
     /* =========================================================
-       REAL PLACE
+       THE ESTATE
     ========================================================= */
 
     .place {
@@ -529,12 +527,182 @@
     }
 
     /* =========================================================
+       GUARDIAN TIERS
+    ========================================================= */
+
+    .guardians {
+      padding: 120px 0;
+      background: var(--paper);
+    }
+
+    .guardians-heading {
+      max-width: 800px;
+      margin-bottom: 55px;
+    }
+
+    .guardians-sub {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      max-width: 760px;
+    }
+
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .tier {
+      position: relative;
+
+      background: white;
+
+      border: 1px solid var(--line);
+
+      border-radius: var(--radius);
+
+      padding: 32px 28px 30px;
+
+      min-height: 480px;
+
+      display: flex;
+      flex-direction: column;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .tier:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow);
+    }
+
+    .tier.featured {
+      border: 2px solid var(--gold);
+      box-shadow: var(--shadow);
+    }
+
+    .tier-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+
+      padding: 6px 10px;
+
+      border-radius: 999px;
+
+      background: var(--gold);
+      color: white;
+
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+
+    .tier-icon {
+      font-size: 30px;
+      margin-bottom: 20px;
+    }
+
+    .tier-name {
+      font-family: Georgia, serif;
+      font-size: 29px;
+      line-height: 1.1;
+
+      color: var(--olive);
+
+      margin-bottom: 12px;
+    }
+
+    .tier-holding {
+      font-family: Georgia, serif;
+
+      font-size: 25px;
+
+      color: var(--gold);
+
+      margin-bottom: 17px;
+    }
+
+    .tier-description {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+
+      min-height: 72px;
+
+      margin-bottom: 20px;
+    }
+
+    .tier-list {
+      list-style: none;
+
+      display: grid;
+      gap: 11px;
+
+      padding-top: 20px;
+
+      border-top: 1px solid var(--line);
+    }
+
+    .tier-list li {
+      position: relative;
+
+      padding-left: 21px;
+
+      color: var(--text);
+
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tier-list li::before {
+      content: "✓";
+
+      position: absolute;
+      left: 0;
+
+      color: var(--gold);
+
+      font-weight: 800;
+    }
+
+    .tier-footer {
+      margin-top: auto;
+
+      padding-top: 22px;
+
+      color: var(--muted);
+
+      font-size: 10px;
+
+      letter-spacing: 0.08em;
+
+      text-transform: uppercase;
+    }
+
+    .tier-note {
+      margin-top: 30px;
+
+      max-width: 900px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+
+      line-height: 1.8;
+    }
+
+    /* =========================================================
        240 TREES
     ========================================================= */
 
     .trees {
       padding: 120px 0;
-      background: var(--paper);
+      background: var(--cream);
     }
 
     .trees-header {
@@ -562,10 +730,10 @@
       background-image:
         linear-gradient(
           180deg,
-          rgba(10,30,23,0.10),
-          rgba(10,30,23,0.55)
+          rgba(10,30,23,0.05),
+          rgba(10,30,23,0.48)
         ),
-        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg");
+        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grovedrone1.png");
 
       background-size: cover;
       background-position: center;
@@ -573,6 +741,7 @@
 
     .tree-content {
       padding: 70px;
+
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -580,7 +749,9 @@
 
     .tree-number {
       font-family: Georgia, serif;
+
       font-size: clamp(90px, 12vw, 160px);
+
       line-height: 0.8;
 
       color: var(--gold-light);
@@ -590,8 +761,11 @@
 
     .tree-content h3 {
       font-family: Georgia, serif;
+
       font-size: 42px;
+
       line-height: 1.05;
+
       font-weight: 400;
 
       margin-bottom: 20px;
@@ -599,8 +773,11 @@
 
     .tree-content p {
       color: rgba(255,255,255,0.72);
+
       font-size: 16px;
+
       line-height: 1.8;
+
       max-width: 520px;
     }
 
@@ -609,11 +786,15 @@
 
       display: flex;
       flex-wrap: wrap;
+
       align-items: center;
+
       gap: 9px;
 
       font-size: 10px;
+
       letter-spacing: 0.10em;
+
       text-transform: uppercase;
 
       color: var(--gold-light);
@@ -621,7 +802,9 @@
 
     .tree-flow span:not(:last-child)::after {
       content: "→";
+
       margin-left: 9px;
+
       color: rgba(255,255,255,0.35);
     }
 
@@ -631,7 +814,7 @@
 
     .mignole {
       padding: 120px 0;
-      background: var(--cream);
+      background: var(--paper);
     }
 
     .mignole-grid {
@@ -643,15 +826,21 @@
 
     .mignole-image {
       height: 620px;
+
       object-fit: cover;
+
       object-position: center;
+
       border-radius: var(--radius);
+
       box-shadow: var(--shadow);
     }
 
     .mignole-copy {
       font-family: Georgia, serif;
+
       font-size: 30px;
+
       line-height: 1.35;
 
       color: var(--olive);
@@ -661,12 +850,14 @@
 
     .mignole-small {
       color: var(--muted);
+
       font-size: 16px;
+
       line-height: 1.8;
     }
 
     /* =========================================================
-       HOW IT WORKS
+       HOW OLVM WORKS
     ========================================================= */
 
     .how {
@@ -676,13 +867,17 @@
 
     .how-heading {
       text-align: center;
+
       max-width: 760px;
+
       margin: 0 auto 65px;
     }
 
     .steps {
       display: grid;
+
       grid-template-columns: repeat(3, 1fr);
+
       gap: 20px;
     }
 
@@ -690,6 +885,7 @@
       padding: 38px;
 
       border: 1px solid var(--line);
+
       border-radius: var(--radius-small);
 
       background: white;
@@ -697,14 +893,19 @@
 
     .step-number {
       color: var(--gold);
+
       font-family: Georgia, serif;
+
       font-size: 44px;
+
       margin-bottom: 25px;
     }
 
     .step h3 {
       font-family: Georgia, serif;
+
       font-size: 27px;
+
       font-weight: 400;
 
       color: var(--olive);
@@ -714,7 +915,9 @@
 
     .step p {
       color: var(--muted);
+
       font-size: 15px;
+
       line-height: 1.75;
     }
 
@@ -724,9 +927,11 @@
 
     .harvest {
       position: relative;
+
       min-height: 700px;
 
       display: flex;
+
       align-items: center;
 
       background:
@@ -739,6 +944,7 @@
         url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/my_harvest1.jpeg");
 
       background-size: cover;
+
       background-position: center 35%;
 
       color: white;
@@ -746,12 +952,15 @@
 
     .harvest-content {
       width: min(calc(100% - 40px), var(--max));
+
       margin: 0 auto;
+
       padding: 100px 0;
     }
 
     .harvest-content .section-title {
       color: white;
+
       max-width: 700px;
     }
 
@@ -761,6 +970,7 @@
       color: rgba(255,255,255,0.78);
 
       font-size: 18px;
+
       line-height: 1.8;
 
       margin-bottom: 30px;
@@ -774,6 +984,7 @@
       padding-left: 18px;
 
       color: rgba(255,255,255,0.65);
+
       font-size: 13px;
     }
 
@@ -783,17 +994,21 @@
 
     .experience {
       padding: 120px 0;
+
       background: var(--paper);
     }
 
     .experience-heading {
       max-width: 720px;
+
       margin-bottom: 50px;
     }
 
     .experience-grid {
       display: grid;
+
       grid-template-columns: 1.25fr 0.75fr;
+
       gap: 20px;
     }
 
@@ -801,6 +1016,7 @@
       height: 600px;
 
       position: relative;
+
       overflow: hidden;
 
       border-radius: var(--radius);
@@ -808,12 +1024,15 @@
 
     .experience-main img {
       height: 100%;
+
       object-fit: cover;
     }
 
     .experience-main::after {
       content: "";
+
       position: absolute;
+
       inset: 0;
 
       background:
@@ -825,9 +1044,13 @@
 
     .experience-label {
       position: absolute;
+
       z-index: 2;
+
       left: 35px;
+
       right: 35px;
+
       bottom: 30px;
 
       color: white;
@@ -835,18 +1058,23 @@
 
     .experience-label h3 {
       font-family: Georgia, serif;
+
       font-size: 34px;
+
       font-weight: 400;
     }
 
     .experience-side {
       display: grid;
+
       grid-template-rows: 1fr 1fr;
+
       gap: 20px;
     }
 
     .experience-card {
       position: relative;
+
       overflow: hidden;
 
       border-radius: var(--radius);
@@ -854,12 +1082,15 @@
 
     .experience-card img {
       height: 100%;
+
       object-fit: cover;
     }
 
     .experience-card::after {
       content: "";
+
       position: absolute;
+
       inset: 0;
 
       background:
@@ -871,55 +1102,67 @@
 
     .experience-card span {
       position: absolute;
+
       z-index: 2;
 
       left: 25px;
+
       bottom: 22px;
 
       color: white;
 
       font-family: Georgia, serif;
+
       font-size: 25px;
     }
 
     /* =========================================================
-       IS / ISN'T
+       WHAT OLVM IS / ISN'T
     ========================================================= */
 
     .clarity {
       padding: 110px 0;
+
       background: var(--cream);
     }
 
     .clarity-heading {
       max-width: 720px;
+
       margin-bottom: 50px;
     }
 
     .clarity-grid {
       display: grid;
+
       grid-template-columns: 1fr 1fr;
+
       gap: 20px;
     }
 
     .clarity-card {
       border-radius: var(--radius);
+
       padding: 45px;
     }
 
     .clarity-card.is {
       background: var(--olive);
+
       color: white;
     }
 
     .clarity-card.isnt {
       background: white;
+
       border: 1px solid var(--line);
     }
 
     .clarity-card h3 {
       font-family: Georgia, serif;
+
       font-size: 35px;
+
       font-weight: 400;
 
       margin-bottom: 25px;
@@ -927,23 +1170,31 @@
 
     .clarity-card ul {
       list-style: none;
+
       display: grid;
+
       gap: 15px;
     }
 
     .clarity-card li {
       padding-left: 25px;
+
       position: relative;
 
       font-size: 15px;
+
       line-height: 1.6;
     }
 
     .clarity-card li::before {
       content: "•";
+
       position: absolute;
+
       left: 0;
+
       color: var(--gold);
+
       font-size: 20px;
     }
 
@@ -961,12 +1212,15 @@
 
     .tokenomics {
       padding: 120px 0;
+
       background: var(--olive-deep);
+
       color: white;
     }
 
     .tokenomics-heading {
       max-width: 760px;
+
       margin-bottom: 55px;
     }
 
@@ -976,21 +1230,29 @@
 
     .tokenomics-copy {
       color: rgba(255,255,255,0.70);
+
       font-size: 17px;
+
       line-height: 1.8;
     }
 
     .allocation {
       display: grid;
+
       grid-template-columns: repeat(4, 1fr);
+
       gap: 14px;
+
       margin-top: 45px;
     }
 
     .allocation-box {
       border: 1px solid rgba(255,255,255,0.13);
+
       background: rgba(255,255,255,0.04);
+
       border-radius: var(--radius-small);
+
       padding: 28px;
     }
 
@@ -998,7 +1260,9 @@
       display: block;
 
       font-family: Georgia, serif;
+
       font-size: 26px;
+
       font-weight: 400;
 
       color: var(--gold-light);
@@ -1008,6 +1272,7 @@
 
     .allocation-box span {
       color: rgba(255,255,255,0.62);
+
       font-size: 13px;
     }
 
@@ -1015,9 +1280,86 @@
       margin-top: 25px;
 
       font-size: 12px;
+
       line-height: 1.7;
 
       color: rgba(255,255,255,0.50);
+    }
+
+    /* =========================================================
+       OFFICIAL TOKEN
+    ========================================================= */
+
+    .official {
+      padding: 100px 0;
+
+      background: var(--cream);
+    }
+
+    .official-box {
+      background: var(--paper);
+
+      border: 1px solid var(--line);
+
+      border-radius: var(--radius);
+
+      padding: 45px;
+    }
+
+    .official-grid {
+      display: grid;
+
+      grid-template-columns: repeat(4, 1fr);
+
+      gap: 20px;
+    }
+
+    .official-item {
+      padding-right: 20px;
+
+      border-right: 1px solid var(--line);
+    }
+
+    .official-item:last-child {
+      border-right: none;
+    }
+
+    .official-label {
+      color: var(--muted);
+
+      font-size: 10px;
+
+      letter-spacing: 0.14em;
+
+      text-transform: uppercase;
+
+      margin-bottom: 10px;
+    }
+
+    .official-value {
+      color: var(--olive);
+
+      font-family: Georgia, serif;
+
+      font-size: 23px;
+
+      line-height: 1.2;
+    }
+
+    .address {
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+
+      font-size: 12px;
+
+      word-break: break-all;
+
+      color: var(--muted);
     }
 
     /* =========================================================
@@ -1026,18 +1368,23 @@
 
     .roadmap {
       padding: 120px 0;
+
       background: var(--paper);
     }
 
     .roadmap-list {
       margin-top: 55px;
+
       border-top: 1px solid var(--line);
     }
 
     .roadmap-item {
       display: grid;
+
       grid-template-columns: 90px 220px 1fr;
+
       gap: 25px;
+
       align-items: center;
 
       padding: 28px 0;
@@ -1047,18 +1394,23 @@
 
     .roadmap-number {
       color: var(--gold);
+
       font-family: Georgia, serif;
+
       font-size: 28px;
     }
 
     .roadmap-name {
       font-family: Georgia, serif;
+
       font-size: 25px;
+
       color: var(--olive);
     }
 
     .roadmap-description {
       color: var(--muted);
+
       font-size: 14px;
     }
 
@@ -1068,16 +1420,19 @@
 
     .faq {
       padding: 110px 0;
+
       background: var(--cream);
     }
 
     .faq-list {
       margin-top: 45px;
+
       border-top: 1px solid var(--line);
     }
 
     details {
       border-bottom: 1px solid var(--line);
+
       padding: 22px 0;
     }
 
@@ -1087,11 +1442,15 @@
       list-style: none;
 
       display: flex;
+
       justify-content: space-between;
+
       gap: 20px;
 
       font-family: Georgia, serif;
+
       font-size: 22px;
+
       color: var(--olive);
     }
 
@@ -1101,8 +1460,11 @@
 
     summary::after {
       content: "+";
+
       font-family: sans-serif;
+
       color: var(--gold);
+
       font-size: 22px;
     }
 
@@ -1114,7 +1476,9 @@
       max-width: 850px;
 
       color: var(--muted);
+
       font-size: 15px;
+
       line-height: 1.8;
 
       padding: 18px 0 5px;
@@ -1128,6 +1492,7 @@
       min-height: 700px;
 
       display: flex;
+
       align-items: center;
 
       background:
@@ -1138,29 +1503,35 @@
         url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png");
 
       background-size: cover;
+
       background-position: center;
 
       color: white;
+
       text-align: center;
     }
 
     .final-content {
       width: min(calc(100% - 40px), 850px);
+
       margin: auto;
     }
 
     .final .section-title {
       color: white;
+
       font-size: clamp(48px, 7vw, 90px);
     }
 
     .final p {
       max-width: 680px;
+
       margin: 0 auto 35px;
 
       color: rgba(255,255,255,0.78);
 
       font-size: 18px;
+
       line-height: 1.8;
     }
 
@@ -1170,14 +1541,17 @@
 
     .transparency {
       padding: 80px 0;
+
       background: #eef1eb;
     }
 
     .transparency-box {
       max-width: 900px;
+
       margin: 0 auto;
 
       font-size: 12px;
+
       line-height: 1.8;
 
       color: #68756e;
@@ -1193,37 +1567,51 @@
 
     footer {
       background: #0d2119;
+
       color: white;
+
       padding: 55px 0;
     }
 
     .footer-inner {
       width: min(calc(100% - 40px), var(--max));
+
       margin: 0 auto;
 
       display: flex;
+
       align-items: center;
+
       justify-content: space-between;
+
       gap: 30px;
     }
 
     .footer-brand {
       font-family: Georgia, serif;
+
       font-size: 23px;
+
       letter-spacing: 0.12em;
     }
 
     .footer-sub {
       color: rgba(255,255,255,0.50);
+
       font-size: 12px;
+
       margin-top: 6px;
     }
 
     .footer-links {
       display: flex;
+
       gap: 22px;
+
       flex-wrap: wrap;
+
       font-size: 12px;
+
       color: rgba(255,255,255,0.70);
     }
 
@@ -1234,6 +1622,22 @@
     /* =========================================================
        RESPONSIVE
     ========================================================= */
+
+    @media (max-width: 1050px) {
+
+      .tier-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .official-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 25px;
+      }
+
+      .official-item:nth-child(2) {
+        border-right: none;
+      }
+    }
 
     @media (max-width: 950px) {
 
@@ -1247,7 +1651,9 @@
 
       .hero-content {
         grid-template-columns: 1fr;
+
         gap: 55px;
+
         padding: 90px 0;
       }
 
@@ -1259,6 +1665,7 @@
       .place-grid,
       .mignole-grid {
         grid-template-columns: 1fr;
+
         gap: 45px;
       }
 
@@ -1297,6 +1704,7 @@
 
       .experience-side {
         grid-template-columns: 1fr 1fr;
+
         grid-template-rows: 300px;
       }
 
@@ -1310,6 +1718,7 @@
 
       .footer-inner {
         flex-direction: column;
+
         align-items: flex-start;
       }
     }
@@ -1359,12 +1768,14 @@
       .intro,
       .snapshot,
       .place,
+      .guardians,
       .trees,
       .mignole,
       .how,
       .experience,
       .clarity,
       .tokenomics,
+      .official,
       .roadmap,
       .faq {
         padding: 80px 0;
@@ -1382,16 +1793,26 @@
 
       .token-grid {
         grid-template-columns: 1fr 1fr;
+
         gap: 10px;
       }
 
       .token-box {
         padding: 20px;
+
         min-height: 125px;
       }
 
       .token-box-value {
         font-size: 21px;
+      }
+
+      .tier-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tier {
+        min-height: auto;
       }
 
       .tree-image {
@@ -1422,6 +1843,7 @@
 
       .experience-side {
         grid-template-columns: 1fr;
+
         grid-template-rows: 250px 250px;
       }
 
@@ -1437,8 +1859,26 @@
         font-size: 21px;
       }
 
+      .official-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .official-item {
+        border-right: none;
+
+        border-bottom: 1px solid var(--line);
+
+        padding: 0 0 20px;
+      }
+
+      .official-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
       .roadmap-item {
         grid-template-columns: 45px 1fr;
+
         gap: 8px 15px;
       }
 
@@ -1468,10 +1908,11 @@
 <body>
 
   <!-- ========================================================
-       NAV
+       NAVIGATION
   ========================================================= -->
 
   <nav class="nav">
+
     <div class="nav-inner">
 
       <a class="brand" href="index.html">
@@ -1479,18 +1920,35 @@
       </a>
 
       <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="discover.html">Discover</a>
-        <a href="membership.html">Membership</a>
-        <a href="token.html">OLVM</a>
-        <a href="dashboard.html">Dashboard</a>
+
+        <a href="index.html">
+          Home
+        </a>
+
+        <a href="discover.html">
+          Discover
+        </a>
+
+        <a href="membership.html">
+          Membership
+        </a>
+
+        <a href="token.html">
+          OLVM
+        </a>
+
+        <a href="dashboard.html">
+          Dashboard
+        </a>
 
         <a class="nav-cta" href="membership.html">
           Become a Guardian
         </a>
+
       </div>
 
     </div>
+
   </nav>
 
 
@@ -1510,26 +1968,27 @@
           SOLANA · OLVM · OLIVIUM
         </div>
 
-        <h1>OLVM</h1>
+        <h1>
+          OLVM
+        </h1>
 
         <h2>
           The digital layer of a real olive estate in Tuscany.
         </h2>
 
         <p class="hero-copy">
-          OLVM connects the digital community with OLIVIUM —
+          OLVM connects a global digital community with OLIVIUM —
           a living estate built around olive trees, harvest,
           stewardship and the experience of returning to Tuscany.
         </p>
 
         <div class="hero-buttons">
 
-          <!-- Replace with direct Pump.fun launch URL when live -->
           <a
             class="btn btn-gold"
-            href="#launch"
+            href="#guardians"
           >
-            OLVM Launch
+            Explore Guardian Tiers
           </a>
 
           <a
@@ -1584,7 +2043,7 @@
 
 
   <!-- ========================================================
-       INTRO
+       STORY
   ========================================================= -->
 
   <section class="intro">
@@ -1602,34 +2061,38 @@
         </h2>
 
         <p class="intro-text">
-          OLIVIUM is not built around an abstract digital world.
-          Its starting point is physical: a Tuscan estate,
-          an olive grove, the seasons, the harvest and the
-          people who choose to become part of its story.
+          OLIVIUM begins with something physical: a Tuscan estate,
+          an olive grove, the seasons, the harvest and the people
+          who choose to become part of its story.
         </p>
 
         <br>
 
         <p class="intro-text">
-          OLVM is the digital gateway connecting that physical
-          world with a global community.
+          OLVM is the digital layer connecting that physical world
+          with a global community of Guardians.
         </p>
 
         <br>
 
-        <a class="btn btn-gold" href="discover.html">
+        <a
+          class="btn btn-gold"
+          href="discover.html"
+        >
           Read the deeper story →
         </a>
 
       </div>
 
       <div>
+
         <img
           class="intro-image"
           src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png"
           alt="Aerial view of the OLIVIUM estate in Tuscany"
           loading="lazy"
         >
+
       </div>
 
     </div>
@@ -1638,7 +2101,7 @@
 
 
   <!-- ========================================================
-       TOKEN SNAPSHOT
+       OLVM AT A GLANCE
   ========================================================= -->
 
   <section class="snapshot">
@@ -1652,8 +2115,8 @@
         </div>
 
         <h2 class="section-title">
-          Simple at the surface.
-          Deep underneath.
+          A digital token connected
+          to a physical place.
         </h2>
 
       </div>
@@ -1661,6 +2124,7 @@
       <div class="token-grid">
 
         <div class="token-box">
+
           <div class="token-box-label">
             Token
           </div>
@@ -1668,9 +2132,11 @@
           <div class="token-box-value">
             OLVM
           </div>
+
         </div>
 
         <div class="token-box">
+
           <div class="token-box-label">
             Network
           </div>
@@ -1678,26 +2144,31 @@
           <div class="token-box-value">
             Solana
           </div>
+
         </div>
 
         <div class="token-box">
+
           <div class="token-box-label">
-            Launch
+            Estate
           </div>
 
           <div class="token-box-value">
-            Pump.fun
+            Tuscany
           </div>
+
         </div>
 
         <div class="token-box">
+
           <div class="token-box-label">
-            Launch timing
+            Grove
           </div>
 
           <div class="token-box-value">
-            Q4 2026
+            240 Trees
           </div>
+
         </div>
 
       </div>
@@ -1708,7 +2179,7 @@
 
 
   <!-- ========================================================
-       REAL PLACE
+       THE ESTATE
   ========================================================= -->
 
   <section class="place">
@@ -1720,7 +2191,7 @@
         <img
           class="place-image"
           src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png"
-          alt="OLIVIUM villa at sunset"
+          alt="OLIVIUM estate villa in Tuscany"
           loading="lazy"
         >
 
@@ -1737,61 +2208,370 @@
         </h2>
 
         <p class="place-copy">
-          The digital layer makes sense because there is a
-          physical place underneath it.
+          The digital layer matters because there is a real place
+          underneath it.
         </p>
 
         <p class="place-copy">
-          OLIVIUM brings together an olive grove, a Tuscan
-          residence, harvest traditions and estate experiences
-          into one connected ecosystem.
+          OLIVIUM brings together an olive grove, a Tuscan residence,
+          harvest traditions and estate experiences into one connected
+          ecosystem.
         </p>
 
         <div class="place-points">
 
           <div class="place-point">
-            <div class="place-number">01</div>
+
+            <div class="place-number">
+              01
+            </div>
+
             <div>
-              <strong>San Vincenzo, Tuscany</strong>
+
+              <strong>
+                San Vincenzo, Tuscany
+              </strong>
+
               <span>
                 A real estate environment on the Tuscan coast.
               </span>
+
             </div>
+
           </div>
 
+
           <div class="place-point">
-            <div class="place-number">02</div>
+
+            <div class="place-number">
+              02
+            </div>
+
             <div>
-              <strong>240 olive trees</strong>
+
+              <strong>
+                240 olive trees
+              </strong>
+
               <span>
-                The physical grove at the heart of the concept.
+                The physical grove at the heart of OLIVIUM.
               </span>
+
             </div>
+
           </div>
 
+
           <div class="place-point">
-            <div class="place-number">03</div>
+
+            <div class="place-number">
+              03
+            </div>
+
             <div>
-              <strong>Harvest & stewardship</strong>
+
+              <strong>
+                Harvest & stewardship
+              </strong>
+
               <span>
                 A living agricultural cycle rather than a static asset.
               </span>
+
             </div>
+
           </div>
 
+
           <div class="place-point">
-            <div class="place-number">04</div>
+
+            <div class="place-number">
+              04
+            </div>
+
             <div>
-              <strong>Estate experiences</strong>
+
+              <strong>
+                Estate experiences
+              </strong>
+
               <span>
                 The digital world ultimately leads back to the estate.
               </span>
+
             </div>
+
           </div>
 
         </div>
 
       </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       GUARDIAN TIERS
+  ========================================================= -->
+
+  <section
+    class="guardians"
+    id="guardians"
+  >
+
+    <div class="container">
+
+      <div class="guardians-heading">
+
+        <div class="section-kicker">
+          The Guardian system
+        </div>
+
+        <h2 class="section-title">
+          Your place in OLIVIUM
+          is defined in OLVM.
+        </h2>
+
+        <p class="guardians-sub">
+          Guardian tiers are based on the amount of OLVM held in
+          the qualifying wallet. The tiers describe participation
+          within the OLIVIUM ecosystem and access to the corresponding
+          Guardian experience.
+        </p>
+
+      </div>
+
+
+      <div class="tier-grid">
+
+        <!-- GUARDIAN -->
+
+        <article class="tier">
+
+          <div class="tier-icon">
+            🌱
+          </div>
+
+          <h3 class="tier-name">
+            Guardian
+          </h3>
+
+          <div class="tier-holding">
+            50,000 OLVM
+          </div>
+
+          <p class="tier-description">
+            The entry point into the OLIVIUM Guardian community.
+            A first connection with the grove and the estate.
+          </p>
+
+          <ul class="tier-list">
+
+            <li>
+              Guardian community access
+            </li>
+
+            <li>
+              OLIVIUM ecosystem recognition
+            </li>
+
+            <li>
+              Seasonal grove and harvest updates
+            </li>
+
+            <li>
+              Eligibility for published Guardian experiences
+            </li>
+
+            <li>
+              Digital Guardian identity
+            </li>
+
+          </ul>
+
+          <div class="tier-footer">
+            Qualifying holding · 50K OLVM
+          </div>
+
+        </article>
+
+
+        <!-- HERITAGE -->
+
+        <article class="tier featured">
+
+          <div class="tier-badge">
+            Most connected
+          </div>
+
+          <div class="tier-icon">
+            🌿
+          </div>
+
+          <h3 class="tier-name">
+            Heritage Guardian
+          </h3>
+
+          <div class="tier-holding">
+            500,000 OLVM
+          </div>
+
+          <p class="tier-description">
+            A deeper relationship with the grove, including a
+            specific Guardian Tree and enhanced estate participation.
+          </p>
+
+          <ul class="tier-list">
+
+            <li>
+              Specific Guardian Tree
+            </li>
+
+            <li>
+              Digital tree identity and profile
+            </li>
+
+            <li>
+              Annual olive oil benefit, subject to harvest and final terms
+            </li>
+
+            <li>
+              Three estate nights per year
+            </li>
+
+            <li>
+              One guest may accompany the Guardian
+            </li>
+
+            <li>
+              Harvest and seasonal participation opportunities
+            </li>
+
+          </ul>
+
+          <div class="tier-footer">
+            Qualifying holding · 500K OLVM
+          </div>
+
+        </article>
+
+
+        <!-- ESTATE -->
+
+        <article class="tier">
+
+          <div class="tier-icon">
+            🏡
+          </div>
+
+          <h3 class="tier-name">
+            Estate Guardian
+          </h3>
+
+          <div class="tier-holding">
+            2,500,000 OLVM
+          </div>
+
+          <p class="tier-description">
+            A deeper estate relationship for Guardians seeking
+            greater participation in the life of OLIVIUM.
+          </p>
+
+          <ul class="tier-list">
+
+            <li>
+              Enhanced Guardian recognition
+            </li>
+
+            <li>
+              Expanded estate experience eligibility
+            </li>
+
+            <li>
+              Deeper connection to the grove and harvest
+            </li>
+
+            <li>
+              Priority access to eligible estate experiences
+            </li>
+
+            <li>
+              Enhanced digital tree ecosystem access
+            </li>
+
+          </ul>
+
+          <div class="tier-footer">
+            Qualifying holding · 2.5M OLVM
+          </div>
+
+        </article>
+
+
+        <!-- FOUNDER -->
+
+        <article class="tier">
+
+          <div class="tier-icon">
+            👑
+          </div>
+
+          <h3 class="tier-name">
+            Founder
+          </h3>
+
+          <div class="tier-holding">
+            10,000,000 OLVM
+          </div>
+
+          <p class="tier-description">
+            The highest Guardian tier and deepest expression of
+            participation in the OLIVIUM ecosystem.
+          </p>
+
+          <ul class="tier-list">
+
+            <li>
+              Founder recognition
+            </li>
+
+            <li>
+              Highest level of Guardian participation
+            </li>
+
+            <li>
+              Enhanced estate experience eligibility
+            </li>
+
+            <li>
+              Founder community access
+            </li>
+
+            <li>
+              Eligibility for future Founder opportunities
+            </li>
+
+          </ul>
+
+          <div class="tier-footer">
+            Qualifying holding · 10M OLVM
+          </div>
+
+        </article>
+
+      </div>
+
+
+      <p class="tier-note">
+        Guardian tiers are determined by qualifying OLVM holdings
+        according to the published OLIVIUM program rules. Holding
+        OLVM does not constitute legal ownership of the estate,
+        land or individual olive trees. Guardian benefits remain
+        subject to final terms, availability, agricultural conditions,
+        booking rules and applicable law.
+      </p>
 
     </div>
 
@@ -1818,8 +2598,8 @@
         </h2>
 
         <p class="intro-text">
-          OLIVIUM's strongest connection between the physical
-          and digital worlds is the grove itself.
+          The strongest connection between the physical and digital
+          worlds of OLIVIUM is the grove itself.
         </p>
 
       </div>
@@ -1840,19 +2620,33 @@
           </h3>
 
           <p>
-            Each tree can become part of the digital identity
-            layer of OLIVIUM — linking its physical place in
-            the grove with a future tree profile, history,
-            imagery and Guardian relationship.
+            Each tree can become part of the digital identity layer
+            of OLIVIUM — connecting its physical place in the grove
+            with a future tree profile, imagery, history and Guardian
+            relationship.
           </p>
 
           <div class="tree-flow">
 
-            <span>Physical tree</span>
-            <span>Tree identity</span>
-            <span>Guardian</span>
-            <span>OLVM</span>
-            <span>Estate experience</span>
+            <span>
+              Physical tree
+            </span>
+
+            <span>
+              Tree identity
+            </span>
+
+            <span>
+              Guardian
+            </span>
+
+            <span>
+              OLVM
+            </span>
+
+            <span>
+              Estate experience
+            </span>
 
           </div>
 
@@ -1891,13 +2685,14 @@
         </p>
 
         <p class="mignole-small">
-          The mignole is the tiny olive blossom that appears
-          in spring. It represents potential, patience and
-          renewal — the natural cycle behind everything
-          OLIVIUM is trying to preserve and connect.
+          The mignole is the tiny olive blossom that appears in
+          spring. It represents potential, patience and renewal —
+          the natural cycle behind everything OLIVIUM is trying
+          to preserve and connect.
         </p>
 
       </div>
+
 
       <div>
 
@@ -1919,7 +2714,7 @@
        HOW IT WORKS
   ========================================================= -->
 
-  <section class="how" id="launch">
+  <section class="how">
 
     <div class="container">
 
@@ -1930,7 +2725,8 @@
         </div>
 
         <h2 class="section-title">
-          From digital token to estate experience.
+          From holding OLVM
+          to experiencing OLIVIUM.
         </h2>
 
       </div>
@@ -1945,14 +2741,13 @@
           </div>
 
           <h3>
-            Acquire OLVM
+            Hold OLVM
           </h3>
 
           <p>
-            OLVM is planned to launch on Solana through
-            Pump.fun. Once launched, the official token
-            address and verified launch link will be published
-            here.
+            Acquire and hold OLVM in a qualifying wallet. Guardian
+            eligibility is determined by the published OLVM holding
+            thresholds.
           </p>
 
         </div>
@@ -1969,9 +2764,8 @@
           </h3>
 
           <p>
-            Qualifying OLVM holdings may provide eligibility
-            for published Guardian and ecosystem opportunities,
-            subject to the final program terms.
+            Connect the qualifying wallet and establish your Guardian
+            status under the applicable OLIVIUM program terms.
           </p>
 
         </div>
@@ -1988,9 +2782,9 @@
           </h3>
 
           <p>
-            The digital layer ultimately leads back to the
-            grove — the trees, harvest, olive oil and the
-            experience of spending time at the estate.
+            Your digital connection leads back to the real grove —
+            the trees, harvest, olive oil and the experience of
+            spending time at the estate.
           </p>
 
         </div>
@@ -2059,8 +2853,8 @@
 
         <p class="intro-text">
           The reason OLIVIUM exists is not simply to create
-          another digital asset. It is to build a bridge
-          between a physical estate and a worldwide community.
+          another digital asset. It is to build a bridge between
+          a physical estate and a worldwide community.
         </p>
 
       </div>
@@ -2077,9 +2871,11 @@
           >
 
           <div class="experience-label">
+
             <h3>
               Come to the estate.
             </h3>
+
           </div>
 
         </div>
@@ -2126,7 +2922,7 @@
 
 
   <!-- ========================================================
-       IS / ISN'T
+       CLARITY
   ========================================================= -->
 
   <section class="clarity">
@@ -2156,28 +2952,31 @@
           </h3>
 
           <ul>
+
             <li>
               A Solana-based ecosystem token.
             </li>
 
             <li>
-              A digital gateway into the developing OLIVIUM ecosystem.
+              A digital layer connecting the OLIVIUM community.
             </li>
 
             <li>
-              A potential mechanism for Guardian eligibility
-              under published terms.
+              A mechanism for Guardian eligibility under published terms.
             </li>
 
             <li>
-              Part of the future digital identity layer of
-              the OLIVIUM grove.
+              Part of the future digital identity layer of the grove.
             </li>
 
             <li>
-              A connection between a physical estate and a
-              global digital community.
+              A connection between a physical estate and a global community.
             </li>
+
+            <li>
+              A way to participate in the developing OLIVIUM ecosystem.
+            </li>
+
           </ul>
 
         </div>
@@ -2200,7 +2999,7 @@
             </li>
 
             <li>
-              A promise of dividends, profits or yield.
+              A promise of dividends, profits or guaranteed yield.
             </li>
 
             <li>
@@ -2208,8 +3007,11 @@
             </li>
 
             <li>
-              A substitute for independent legal, tax or
-              financial advice.
+              A transfer of ownership of the estate or business.
+            </li>
+
+            <li>
+              A substitute for independent legal, tax or financial advice.
             </li>
 
           </ul>
@@ -2242,10 +3044,9 @@
         </h2>
 
         <p class="tokenomics-copy">
-          The final OLVM allocation will be published before
-          launch together with the official token address,
-          treasury/development wallets and verified launch
-          information.
+          The approved OLVM token allocation will be published
+          together with the official token address, treasury and
+          development wallets and verified launch information.
         </p>
 
       </div>
@@ -2254,33 +3055,63 @@
       <div class="allocation">
 
         <div class="allocation-box">
-          <strong>TBA</strong>
-          <span>Total / launch supply</span>
+
+          <strong>
+            TBA
+          </strong>
+
+          <span>
+            Total / launch supply
+          </span>
+
         </div>
 
-        <div class="allocation-box">
-          <strong>TBA</strong>
-          <span>Liquidity / launch allocation</span>
-        </div>
 
         <div class="allocation-box">
-          <strong>TBA</strong>
-          <span>Treasury / ecosystem</span>
+
+          <strong>
+            TBA
+          </strong>
+
+          <span>
+            Liquidity / launch allocation
+          </span>
+
         </div>
 
+
         <div class="allocation-box">
-          <strong>TBA</strong>
-          <span>Team / development / other</span>
+
+          <strong>
+            TBA
+          </strong>
+
+          <span>
+            Treasury / ecosystem
+          </span>
+
+        </div>
+
+
+        <div class="allocation-box">
+
+          <strong>
+            TBA
+          </strong>
+
+          <span>
+            Development / other
+          </span>
+
         </div>
 
       </div>
 
 
       <p class="allocation-note">
-        Final percentages and wallet allocations will be
-        replaced with the approved OLVM tokenomics before
-        public launch. No allocation should be interpreted
-        until the official figures are published.
+        Final percentages and wallet allocations should only be
+        replaced with the approved OLVM tokenomics. No allocation
+        should be interpreted until the official figures are published.
       </p>
 
     </div>
@@ -2292,11 +3123,11 @@
        OFFICIAL TOKEN INFORMATION
   ========================================================= -->
 
-  <section class="snapshot">
+  <section class="official">
 
     <div class="container">
 
-      <div class="snapshot-heading">
+      <div class="official-box">
 
         <div class="section-kicker">
           Official information
@@ -2306,58 +3137,58 @@
           Verify before you interact.
         </h2>
 
-      </div>
 
+        <div class="official-grid">
 
-      <div class="token-grid">
+          <div class="official-item">
 
-        <div class="token-box">
+            <div class="official-label">
+              Token
+            </div>
 
-          <div class="token-box-label">
-            Token
+            <div class="official-value">
+              OLVM
+            </div>
+
           </div>
 
-          <div class="token-box-value">
-            OLVM
+
+          <div class="official-item">
+
+            <div class="official-label">
+              Blockchain
+            </div>
+
+            <div class="official-value">
+              Solana
+            </div>
+
           </div>
 
-        </div>
 
+          <div class="official-item">
 
-        <div class="token-box">
+            <div class="official-label">
+              Contract / Mint
+            </div>
 
-          <div class="token-box-label">
-            Blockchain
+            <div class="official-value address">
+              Coming Soon
+            </div>
+
           </div>
 
-          <div class="token-box-value">
-            Solana
-          </div>
 
-        </div>
+          <div class="official-item">
 
+            <div class="official-label">
+              Official launch
+            </div>
 
-        <div class="token-box">
+            <div class="official-value">
+              Q4 2026
+            </div>
 
-          <div class="token-box-label">
-            Contract / Mint
-          </div>
-
-          <div class="token-box-value">
-            Coming Soon
-          </div>
-
-        </div>
-
-
-        <div class="token-box">
-
-          <div class="token-box-label">
-            Official launch
-          </div>
-
-          <div class="token-box-value">
-            Q4 2026
           </div>
 
         </div>
@@ -2400,8 +3231,8 @@
           </div>
 
           <div class="roadmap-description">
-            Establish the physical estate, grove and
-            foundational OLIVIUM experience.
+            Establish the physical estate, grove and foundational
+            OLIVIUM experience.
           </div>
 
         </div>
@@ -2418,8 +3249,7 @@
           </div>
 
           <div class="roadmap-description">
-            Launch the OLVM digital layer and onboard
-            the wider community.
+            Launch the OLVM digital layer and onboard the wider community.
           </div>
 
         </div>
@@ -2436,8 +3266,8 @@
           </div>
 
           <div class="roadmap-description">
-            Develop Guardian identities, eligibility
-            systems and published membership pathways.
+            Develop Guardian identities, eligibility systems and
+            published membership pathways.
           </div>
 
         </div>
@@ -2454,8 +3284,8 @@
           </div>
 
           <div class="roadmap-description">
-            Build individual digital tree identities and
-            connect physical grove data to the ecosystem.
+            Build individual digital tree identities and connect
+            physical grove data to the ecosystem.
           </div>
 
         </div>
@@ -2468,12 +3298,12 @@
           </div>
 
           <div class="roadmap-name">
-            Estate
+            Estate Experience
           </div>
 
           <div class="roadmap-description">
-            Expand the connection between OLVM,
-            harvest, residency and estate experiences.
+            Expand the connection between OLVM, harvest,
+            residency and estate experiences.
           </div>
 
         </div>
@@ -2523,90 +3353,126 @@
       <div class="faq-list">
 
         <details>
+
           <summary>
             What is OLVM?
           </summary>
 
           <p>
-            OLVM is the Solana-based ecosystem token of
-            OLIVIUM. It is intended to connect the digital
-            community with the developing OLIVIUM ecosystem,
-            including Guardian opportunities and future
-            estate experiences under published terms.
+            OLVM is the Solana-based ecosystem token of OLIVIUM.
+            It is designed to connect the digital community with
+            the developing OLIVIUM ecosystem, including Guardian
+            opportunities and estate experiences under published terms.
           </p>
 
         </details>
 
 
         <details>
+
           <summary>
-            Where is OLVM launching?
+            How are Guardian tiers determined?
           </summary>
 
           <p>
-            OLVM is planned for launch on Pump.fun in Q4 2026.
-            The direct official launch link will be published
-            once the token is live.
+            Guardian tiers are determined by qualifying OLVM holdings.
+            The current published thresholds are 50,000 OLVM for
+            Guardian, 500,000 OLVM for Heritage Guardian,
+            2,500,000 OLVM for Estate Guardian and 10,000,000 OLVM
+            for Founder.
           </p>
 
         </details>
 
 
         <details>
+
+          <summary>
+            Do I need to spend a certain amount of money to become a Guardian?
+          </summary>
+
+          <p>
+            Guardian eligibility is defined by OLVM holdings, not by
+            a euro or dollar purchase amount. The relevant requirement
+            is the qualifying OLVM balance in the applicable wallet,
+            according to the published program rules.
+          </p>
+
+        </details>
+
+
+        <details>
+
           <summary>
             Does OLVM mean I own part of the estate?
           </summary>
 
           <p>
-            No. Holding OLVM does not transfer ownership of
-            the land, villa, company, olive trees or business.
-            Guardian participation and estate benefits are
-            separate from legal ownership.
+            No. Holding OLVM does not transfer ownership of the land,
+            villa, company, olive trees or business. Guardian
+            participation and estate benefits are separate from
+            legal ownership.
           </p>
 
         </details>
 
 
         <details>
+
           <summary>
-            Will OLVM pay dividends or guaranteed returns?
+            Does OLVM guarantee profits or returns?
           </summary>
 
           <p>
-            No. OLVM should not be represented as providing
-            guaranteed profits, dividends, yield or price
-            appreciation.
+            No. OLVM should not be represented as providing guaranteed
+            profits, dividends, yield or price appreciation.
           </p>
 
         </details>
 
 
         <details>
+
           <summary>
-            What are Guardians?
+            What is a Heritage Guardian?
           </summary>
 
           <p>
-            Guardians are participants in the OLIVIUM ecosystem.
-            Specific Guardian tiers, eligibility requirements
-            and benefits will be published as the program is
-            finalized.
+            Heritage Guardian is the 500,000 OLVM tier. Subject to
+            the published Guardian terms, this tier is intended to
+            provide a deeper relationship with the grove, including
+            a specific Guardian Tree and defined estate experiences.
           </p>
 
         </details>
 
 
         <details>
+
           <summary>
-            Will every tree have a digital identity?
+            Will the trees have digital identities?
           </summary>
 
           <p>
             The planned OLIVIUM tree layer is designed to give
             individual trees digital identities connected to
-            physical grove information. The final implementation,
-            metadata and any NFT functionality will be published
-            separately.
+            physical grove information, imagery and seasonal history.
+            Final implementation details will be published separately.
+          </p>
+
+        </details>
+
+
+        <details>
+
+          <summary>
+            Where is OLVM launching?
+          </summary>
+
+          <p>
+            OLVM is planned for launch on Solana through Pump.fun.
+            The direct official launch link and verified token address
+            will be published once the token is live.
           </p>
 
         </details>
@@ -2636,11 +3502,15 @@
       </h2>
 
       <p>
-        OLVM starts online.
-        OLIVIUM brings the story back to the land.
+        Hold OLVM.
+        Become part of the Guardian community.
+        Then come back to the place behind it all.
       </p>
 
-      <div class="hero-buttons" style="justify-content:center;">
+      <div
+        class="hero-buttons"
+        style="justify-content:center;"
+      >
 
         <a
           class="btn btn-gold"
@@ -2673,23 +3543,32 @@
 
       <div class="transparency-box">
 
-        <strong>Important information:</strong>
+        <strong>
+          Important information:
+        </strong>
 
-        OLVM is a crypto-asset and may lose value. Nothing
-        on this page constitutes a promise of profit, yield,
-        dividends, revenue sharing or future price appreciation.
+        <br><br>
+
+        OLVM is a crypto-asset and may lose value. Nothing on this
+        page constitutes a promise of profit, yield, dividends,
+        revenue sharing or future price appreciation.
+
+        <br><br>
+
+        Guardian tiers are based on qualifying OLVM holdings.
+        They are not denominated by a monetary purchase amount.
 
         <br><br>
 
         Guardian and membership benefits are subject to final
-        program terms, availability, harvest conditions,
-        booking rules and applicable law.
+        program terms, availability, harvest conditions, booking
+        rules and applicable law.
 
         <br><br>
 
         Holding OLVM does not transfer ownership of the OLIVIUM
-        estate, land, villa, company, individual olive trees
-        or business profits.
+        estate, land, villa, company, individual olive trees or
+        business profits.
 
         <br><br>
 
@@ -2707,10 +3586,10 @@
         <br><br>
 
         Information on this website is provided for general
-        informational purposes and is not legal, tax or
-        financial advice. Applicable Italian and EU requirements
-        should be reviewed before formal public distribution
-        or marketing of the token.
+        informational purposes and is not legal, tax or financial
+        advice. Applicable Italian and EU requirements should be
+        reviewed before formal public distribution or marketing
+        of the token.
 
       </div>
 
