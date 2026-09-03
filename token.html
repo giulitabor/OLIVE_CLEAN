@@ -1,608 +1,2773 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OLVM Token | Olivium Ecosystem</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        :root {
-            --gold: #C5A059;
-            --gold-light: #D4AF37;
-            --charcoal: #080b07;
-            --muted: rgba(255,255,255,0.5);
-            --muted-dim: rgba(255,255,255,0.25);
-        }
+  <title>OLVM — The Digital Layer of OLIVIUM</title>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta
+    name="description"
+    content="OLVM is the digital layer connecting the OLIVIUM olive estate in Tuscany with its global community of Guardians."
+  >
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--charcoal);
-            color: #fff;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-        }
+  <meta name="theme-color" content="#19382d">
 
-        .video-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-            z-index: 0;
-        }
-        .video-bg video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(0.55) contrast(1.05) saturate(1.1);
-        }
-        .video-bg .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(8,11,7,0.75) 0%, rgba(8,11,7,0.4) 50%, rgba(8,11,7,0.85) 100%);
-            pointer-events: none;
-        }
+  <style>
+    :root {
+      --olive: #19382d;
+      --olive-deep: #10271f;
+      --olive-2: #285342;
+      --olive-soft: #e9efe8;
 
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 0 2rem;
-            height: 72px;
-            display: flex;
-            align-items: center;
-            background: rgba(8,11,7,0.6);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .nav-inner {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .nav-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 0.06em;
-        }
-        .nav-logo em {
-            font-style: italic;
-            font-weight: 400;
-            font-size: 0.8rem;
-            color: var(--gold);
-            margin-left: 4px;
-        }
+      --cream: #f5f1e6;
+      --paper: #fffdf8;
+      --white: #ffffff;
 
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            color: rgba(255,255,255,0.5);
-            text-decoration: none;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            transition: color 0.3s ease;
-        }
-        .nav-links a:hover { color: #fff; }
-        .nav-cta {
-            background: var(--gold);
-            color: #0a0f08 !important;
-            padding: 0.4rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600 !important;
-        }
-        .nav-cta:hover { background: #d4b06a !important; }
+      --gold: #b58b42;
+      --gold-light: #d8bc7b;
 
-        .nav-ham {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-        .nav-ham span {
-            display: block;
-            width: 26px;
-            height: 2px;
-            background: #fff;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-        .nav-ham.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
-        .nav-ham.open span:nth-child(2) { opacity: 0; }
-        .nav-ham.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+      --text: #20372e;
+      --muted: #68756e;
 
-        .main-wrap {
-            position: relative;
-            z-index: 10;
-            padding-top: 72px;
-            min-height: 100vh;
-        }
+      --line: #dfe4db;
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 3rem 2rem 4rem;
-        }
+      --shadow:
+        0 20px 60px rgba(25, 56, 45, 0.10);
 
-        .hero-section {
-            text-align: center;
-            padding: 2rem 0 3rem;
-        }
-        .hero-section .eyebrow {
-            font-size: 0.65rem;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--gold);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .hero-section h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 4rem;
-            font-weight: 400;
-            color: #fff;
-            letter-spacing: -0.02em;
-        }
-        .hero-section h1 .gold { color: var(--gold); font-style: italic; }
-        .hero-section p {
-            color: var(--muted);
-            max-width: 600px;
-            margin: 1rem auto 0;
-            font-size: 1.1rem;
-            line-height: 1.8;
-        }
-        .hero-section .rule {
-            width: 50px;
-            height: 2px;
-            background: var(--gold);
-            margin: 1.2rem auto;
-        }
+      --radius: 22px;
+      --radius-small: 14px;
 
-        .token-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 600px;
-            margin: 0 auto 2.5rem;
-            text-align: center;
-        }
-        .token-box .label {
-            font-size: 0.7rem;
-            color: var(--muted-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-        .token-box .address {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.2rem;
-            color: var(--gold);
-            padding: 0.5rem 0;
-            word-break: break-all;
-        }
-        .token-box .network {
-            font-size: 0.8rem;
-            color: var(--muted);
-            background: rgba(255,255,255,0.05);
-            padding: 0.2rem 0.8rem;
-            border-radius: 50px;
-            display: inline-block;
-            margin-top: 0.3rem;
-        }
+      --max: 1180px;
+    }
 
-        .btn-buy {
-            display: inline-block;
-            padding: 1rem 3rem;
-            border-radius: 50px;
-            background: var(--gold);
-            color: #0a0f08;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            margin-top: 0.5rem;
-        }
-        .btn-buy:hover {
-            background: var(--gold-light);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(197,160,89,0.3);
-        }
-        .btn-buy.disabled {
-            opacity: 0.4;
-            pointer-events: none;
-            cursor: not-allowed;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 2.5rem;
-        }
-        .info-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 2rem;
-        }
-        .info-card h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.3rem;
-            color: #fff;
-            margin-bottom: 0.8rem;
-        }
-        .info-card ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .info-card ul li {
-            color: var(--muted);
-            font-size: 0.85rem;
-            padding: 0.4rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .info-card ul li:last-child { border-bottom: none; }
-        .info-card ul li::before {
-            content: "✦";
-            color: var(--gold);
-            font-size: 0.6rem;
-        }
+    html {
+      scroll-behavior: smooth;
+    }
 
-        .why-olvm {
-            background: rgba(197,160,89,0.04);
-            border: 1px solid rgba(197,160,89,0.1);
-            border-radius: 16px;
-            padding: 1.5rem 2rem;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-        .why-olvm h4 {
-            font-family: 'Playfair Display', serif;
-            color: #fff;
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-        .why-olvm p {
-            color: var(--muted);
-            font-size: 0.9rem;
-            line-height: 1.7;
-            max-width: 500px;
-            margin: 0 auto;
-        }
+    body {
+      font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-        .roadmap {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-        .roadmap-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-        .roadmap-item .phase {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--gold);
-            font-weight: 600;
-        }
-        .roadmap-item .title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.1rem;
-            color: #fff;
-            margin: 0.3rem 0;
-        }
-        .roadmap-item .desc {
-            color: var(--muted);
-            font-size: 0.8rem;
-            line-height: 1.6;
-        }
-        .roadmap-item .status {
-            display: inline-block;
-            font-size: 0.6rem;
-            padding: 0.15rem 0.8rem;
-            border-radius: 50px;
-            background: rgba(255,193,7,0.15);
-            color: #ffc107;
-            margin-top: 0.5rem;
-        }
-        .roadmap-item .status.done {
-            background: rgba(76,175,80,0.15);
-            color: #4caf50;
-        }
-        .roadmap-item .status.live {
-            background: rgba(197,160,89,0.15);
-            color: var(--gold);
-        }
+      background: var(--paper);
+      color: var(--text);
+      line-height: 1.6;
+    }
 
-        .faq-item {
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding: 1rem 0;
-        }
-        .faq-item:last-child { border-bottom: none; }
-        .faq-item .q {
-            font-weight: 600;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .faq-item .q .arrow {
-            transition: transform 0.3s ease;
-            color: var(--muted-dim);
-        }
-        .faq-item .q.open .arrow { transform: rotate(180deg); }
-        .faq-item .a {
-            color: var(--muted);
-            font-size: 0.9rem;
-            line-height: 1.7;
-            padding-top: 0.5rem;
-            display: none;
-        }
-        .faq-item .a.open { display: block; }
+    img {
+      display: block;
+      width: 100%;
+    }
 
-        footer {
-            text-align: center;
-            padding: 2rem;
-            border-top: 1px solid rgba(255,255,255,0.04);
-        }
-        footer p {
-            color: var(--muted-dim);
-            font-size: 0.7rem;
-            letter-spacing: 0.06em;
-        }
-        footer .footer-links {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 1.5rem 2.5rem;
-            margin: 1rem 0;
-        }
-        footer .footer-links a {
-            color: var(--muted-dim);
-            text-decoration: none;
-            font-size: 0.7rem;
-            letter-spacing: 0.04em;
-            transition: color 0.3s ease;
-        }
-        footer .footer-links a:hover { color: #fff; }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-        @media (max-width: 1024px) {
-            .info-grid { grid-template-columns: 1fr 1fr; }
-            .roadmap { grid-template-columns: repeat(3, 1fr); }
-        }
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        @media (max-width: 768px) {
-            .container { padding: 2rem 1.25rem; }
-            .hero-section h1 { font-size: 2.8rem; }
-            .info-grid { grid-template-columns: 1fr; }
-            .roadmap { grid-template-columns: 1fr; max-width: 400px; margin: 1.5rem auto 0; }
+    .container {
+      width: min(calc(100% - 40px), var(--max));
+      margin: 0 auto;
+    }
 
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 72px;
-                left: 0;
-                right: 0;
-                background: rgba(8,11,7,0.98);
-                padding: 2rem;
-                gap: 1.5rem;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .nav-links.open { display: flex; }
-            .nav-ham { display: flex; }
-        }
+    /* =========================================================
+       NAVIGATION
+    ========================================================= */
 
-        @media (max-width: 480px) {
-            .hero-section h1 { font-size: 2.2rem; }
-            .token-box .address { font-size: 0.9rem; }
-            .btn-buy { width: 100%; text-align: center; }
-        }
-    </style>
+    .nav {
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      right: 0;
+
+      height: 78px;
+
+      display: flex;
+      align-items: center;
+
+      background: rgba(255,253,248,0.92);
+      backdrop-filter: blur(18px);
+
+      border-bottom: 1px solid rgba(223,228,219,0.8);
+    }
+
+    .nav-inner {
+      width: min(calc(100% - 40px), var(--max));
+      margin: 0 auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+    }
+
+    .brand {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 23px;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: var(--olive);
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 27px;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      transition: 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--gold);
+    }
+
+    .nav-cta {
+      background: var(--olive);
+      color: white !important;
+      padding: 11px 18px;
+      border-radius: 999px;
+    }
+
+    .nav-cta:hover {
+      background: var(--olive-2);
+    }
+
+    /* =========================================================
+       HERO
+    ========================================================= */
+
+    .hero {
+      min-height: 850px;
+      padding-top: 78px;
+
+      position: relative;
+
+      display: flex;
+      align-items: stretch;
+
+      overflow: hidden;
+
+      background: var(--olive-deep);
+      color: white;
+    }
+
+    .hero-image {
+      position: absolute;
+      inset: 0;
+
+      background-image:
+        linear-gradient(
+          90deg,
+          rgba(10,30,23,0.90) 0%,
+          rgba(10,30,23,0.68) 40%,
+          rgba(10,30,23,0.24) 75%,
+          rgba(10,30,23,0.25) 100%
+        ),
+        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/walkN.png");
+
+      background-size: cover;
+      background-position: center;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+
+      width: min(calc(100% - 40px), var(--max));
+      margin: auto;
+
+      padding: 100px 0 110px;
+
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      align-items: center;
+      gap: 80px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+
+      color: var(--gold-light);
+
+      margin-bottom: 25px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 32px;
+      height: 1px;
+      background: var(--gold-light);
+    }
+
+    .hero h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(72px, 12vw, 150px);
+      line-height: 0.82;
+      letter-spacing: -0.055em;
+
+      margin-bottom: 32px;
+    }
+
+    .hero h2 {
+      max-width: 650px;
+
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+
+      font-size: clamp(29px, 4vw, 52px);
+      line-height: 1.08;
+
+      margin-bottom: 25px;
+    }
+
+    .hero-copy {
+      max-width: 610px;
+
+      font-size: 18px;
+      line-height: 1.75;
+
+      color: rgba(255,255,255,0.82);
+
+      margin-bottom: 35px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      min-height: 50px;
+      padding: 0 22px;
+
+      border-radius: 999px;
+
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+
+      transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: white;
+    }
+
+    .btn-gold:hover {
+      background: #9e7735;
+    }
+
+    .btn-outline {
+      border: 1px solid rgba(255,255,255,0.45);
+      color: white;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.13);
+    }
+
+    .hero-card {
+      justify-self: end;
+
+      width: min(100%, 440px);
+
+      padding: 34px;
+
+      border:
+        1px solid rgba(255,255,255,0.20);
+
+      background:
+        rgba(12,35,27,0.62);
+
+      backdrop-filter: blur(16px);
+
+      border-radius: var(--radius);
+
+      box-shadow:
+        0 30px 80px rgba(0,0,0,0.22);
+    }
+
+    .hero-card-label {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      margin-bottom: 20px;
+    }
+
+    .hero-card h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 32px;
+      line-height: 1.15;
+      font-weight: 400;
+      margin-bottom: 28px;
+    }
+
+    .hero-card-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+
+      padding: 16px 0;
+
+      border-top: 1px solid rgba(255,255,255,0.13);
+
+      font-size: 13px;
+    }
+
+    .hero-card-line span:last-child {
+      color: var(--gold-light);
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* =========================================================
+       INTRO
+    ========================================================= */
+
+    .intro {
+      padding: 115px 0;
+      background: var(--paper);
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 90px;
+      align-items: center;
+    }
+
+    .section-kicker {
+      color: var(--gold);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 800;
+
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+
+      font-size: clamp(40px, 5vw, 68px);
+      line-height: 1.03;
+
+      color: var(--olive);
+
+      margin-bottom: 25px;
+    }
+
+    .intro-text {
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .intro-image {
+      height: 570px;
+      object-fit: cover;
+
+      border-radius: var(--radius);
+
+      box-shadow: var(--shadow);
+    }
+
+    /* =========================================================
+       TOKEN SNAPSHOT
+    ========================================================= */
+
+    .snapshot {
+      background: var(--cream);
+      padding: 100px 0;
+    }
+
+    .snapshot-heading {
+      max-width: 700px;
+      margin-bottom: 50px;
+    }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .token-box {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-small);
+
+      padding: 30px;
+      min-height: 150px;
+    }
+
+    .token-box-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+
+      margin-bottom: 14px;
+    }
+
+    .token-box-value {
+      color: var(--olive);
+
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 26px;
+      line-height: 1.15;
+    }
+
+    /* =========================================================
+       REAL PLACE
+    ========================================================= */
+
+    .place {
+      padding: 120px 0;
+      background: var(--olive);
+      color: white;
+    }
+
+    .place-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 70px;
+      align-items: center;
+    }
+
+    .place-image {
+      height: 600px;
+      object-fit: cover;
+      border-radius: var(--radius);
+    }
+
+    .place .section-title {
+      color: white;
+    }
+
+    .place-copy {
+      color: rgba(255,255,255,0.76);
+      font-size: 17px;
+      line-height: 1.8;
+      margin-bottom: 30px;
+    }
+
+    .place-points {
+      display: grid;
+      gap: 0;
+      margin-top: 35px;
+    }
+
+    .place-point {
+      padding: 20px 0;
+      border-top: 1px solid rgba(255,255,255,0.14);
+
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      gap: 15px;
+    }
+
+    .place-number {
+      font-family: Georgia, serif;
+      color: var(--gold-light);
+      font-size: 22px;
+    }
+
+    .place-point strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .place-point span {
+      color: rgba(255,255,255,0.65);
+      font-size: 14px;
+    }
+
+    /* =========================================================
+       240 TREES
+    ========================================================= */
+
+    .trees {
+      padding: 120px 0;
+      background: var(--paper);
+    }
+
+    .trees-header {
+      max-width: 720px;
+      margin-bottom: 55px;
+    }
+
+    .tree-feature {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 590px;
+
+      border-radius: var(--radius);
+      overflow: hidden;
+
+      background: var(--olive-deep);
+      color: white;
+
+      box-shadow: var(--shadow);
+    }
+
+    .tree-image {
+      min-height: 590px;
+
+      background-image:
+        linear-gradient(
+          180deg,
+          rgba(10,30,23,0.10),
+          rgba(10,30,23,0.55)
+        ),
+        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg");
+
+      background-size: cover;
+      background-position: center;
+    }
+
+    .tree-content {
+      padding: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .tree-number {
+      font-family: Georgia, serif;
+      font-size: clamp(90px, 12vw, 160px);
+      line-height: 0.8;
+
+      color: var(--gold-light);
+
+      margin-bottom: 25px;
+    }
+
+    .tree-content h3 {
+      font-family: Georgia, serif;
+      font-size: 42px;
+      line-height: 1.05;
+      font-weight: 400;
+
+      margin-bottom: 20px;
+    }
+
+    .tree-content p {
+      color: rgba(255,255,255,0.72);
+      font-size: 16px;
+      line-height: 1.8;
+      max-width: 520px;
+    }
+
+    .tree-flow {
+      margin-top: 35px;
+
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+
+      font-size: 10px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+
+      color: var(--gold-light);
+    }
+
+    .tree-flow span:not(:last-child)::after {
+      content: "→";
+      margin-left: 9px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* =========================================================
+       MIGNOLE
+    ========================================================= */
+
+    .mignole {
+      padding: 120px 0;
+      background: var(--cream);
+    }
+
+    .mignole-grid {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .mignole-image {
+      height: 620px;
+      object-fit: cover;
+      object-position: center;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .mignole-copy {
+      font-family: Georgia, serif;
+      font-size: 30px;
+      line-height: 1.35;
+
+      color: var(--olive);
+
+      margin-bottom: 25px;
+    }
+
+    .mignole-small {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    /* =========================================================
+       HOW IT WORKS
+    ========================================================= */
+
+    .how {
+      padding: 120px 0;
+      background: var(--paper);
+    }
+
+    .how-heading {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto 65px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .step {
+      padding: 38px;
+
+      border: 1px solid var(--line);
+      border-radius: var(--radius-small);
+
+      background: white;
+    }
+
+    .step-number {
+      color: var(--gold);
+      font-family: Georgia, serif;
+      font-size: 44px;
+      margin-bottom: 25px;
+    }
+
+    .step h3 {
+      font-family: Georgia, serif;
+      font-size: 27px;
+      font-weight: 400;
+
+      color: var(--olive);
+
+      margin-bottom: 13px;
+    }
+
+    .step p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    /* =========================================================
+       HARVEST
+    ========================================================= */
+
+    .harvest {
+      position: relative;
+      min-height: 700px;
+
+      display: flex;
+      align-items: center;
+
+      background:
+        linear-gradient(
+          90deg,
+          rgba(12,34,26,0.91),
+          rgba(12,34,26,0.58),
+          rgba(12,34,26,0.30)
+        ),
+        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/my_harvest1.jpeg");
+
+      background-size: cover;
+      background-position: center 35%;
+
+      color: white;
+    }
+
+    .harvest-content {
+      width: min(calc(100% - 40px), var(--max));
+      margin: 0 auto;
+      padding: 100px 0;
+    }
+
+    .harvest-content .section-title {
+      color: white;
+      max-width: 700px;
+    }
+
+    .harvest-copy {
+      max-width: 650px;
+
+      color: rgba(255,255,255,0.78);
+
+      font-size: 18px;
+      line-height: 1.8;
+
+      margin-bottom: 30px;
+    }
+
+    .harvest-note {
+      display: inline-block;
+
+      border-left: 2px solid var(--gold-light);
+
+      padding-left: 18px;
+
+      color: rgba(255,255,255,0.65);
+      font-size: 13px;
+    }
+
+    /* =========================================================
+       ESTATE EXPERIENCE
+    ========================================================= */
+
+    .experience {
+      padding: 120px 0;
+      background: var(--paper);
+    }
+
+    .experience-heading {
+      max-width: 720px;
+      margin-bottom: 50px;
+    }
+
+    .experience-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 20px;
+    }
+
+    .experience-main {
+      height: 600px;
+
+      position: relative;
+      overflow: hidden;
+
+      border-radius: var(--radius);
+    }
+
+    .experience-main img {
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .experience-main::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+
+      background:
+        linear-gradient(
+          transparent 45%,
+          rgba(10,30,23,0.75)
+        );
+    }
+
+    .experience-label {
+      position: absolute;
+      z-index: 2;
+      left: 35px;
+      right: 35px;
+      bottom: 30px;
+
+      color: white;
+    }
+
+    .experience-label h3 {
+      font-family: Georgia, serif;
+      font-size: 34px;
+      font-weight: 400;
+    }
+
+    .experience-side {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .experience-card {
+      position: relative;
+      overflow: hidden;
+
+      border-radius: var(--radius);
+    }
+
+    .experience-card img {
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .experience-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+
+      background:
+        linear-gradient(
+          transparent 35%,
+          rgba(10,30,23,0.68)
+        );
+    }
+
+    .experience-card span {
+      position: absolute;
+      z-index: 2;
+
+      left: 25px;
+      bottom: 22px;
+
+      color: white;
+
+      font-family: Georgia, serif;
+      font-size: 25px;
+    }
+
+    /* =========================================================
+       IS / ISN'T
+    ========================================================= */
+
+    .clarity {
+      padding: 110px 0;
+      background: var(--cream);
+    }
+
+    .clarity-heading {
+      max-width: 720px;
+      margin-bottom: 50px;
+    }
+
+    .clarity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .clarity-card {
+      border-radius: var(--radius);
+      padding: 45px;
+    }
+
+    .clarity-card.is {
+      background: var(--olive);
+      color: white;
+    }
+
+    .clarity-card.isnt {
+      background: white;
+      border: 1px solid var(--line);
+    }
+
+    .clarity-card h3 {
+      font-family: Georgia, serif;
+      font-size: 35px;
+      font-weight: 400;
+
+      margin-bottom: 25px;
+    }
+
+    .clarity-card ul {
+      list-style: none;
+      display: grid;
+      gap: 15px;
+    }
+
+    .clarity-card li {
+      padding-left: 25px;
+      position: relative;
+
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .clarity-card li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-size: 20px;
+    }
+
+    .is li {
+      color: rgba(255,255,255,0.80);
+    }
+
+    .isnt li {
+      color: var(--muted);
+    }
+
+    /* =========================================================
+       TOKENOMICS
+    ========================================================= */
+
+    .tokenomics {
+      padding: 120px 0;
+      background: var(--olive-deep);
+      color: white;
+    }
+
+    .tokenomics-heading {
+      max-width: 760px;
+      margin-bottom: 55px;
+    }
+
+    .tokenomics .section-title {
+      color: white;
+    }
+
+    .tokenomics-copy {
+      color: rgba(255,255,255,0.70);
+      font-size: 17px;
+      line-height: 1.8;
+    }
+
+    .allocation {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 45px;
+    }
+
+    .allocation-box {
+      border: 1px solid rgba(255,255,255,0.13);
+      background: rgba(255,255,255,0.04);
+      border-radius: var(--radius-small);
+      padding: 28px;
+    }
+
+    .allocation-box strong {
+      display: block;
+
+      font-family: Georgia, serif;
+      font-size: 26px;
+      font-weight: 400;
+
+      color: var(--gold-light);
+
+      margin-bottom: 7px;
+    }
+
+    .allocation-box span {
+      color: rgba(255,255,255,0.62);
+      font-size: 13px;
+    }
+
+    .allocation-note {
+      margin-top: 25px;
+
+      font-size: 12px;
+      line-height: 1.7;
+
+      color: rgba(255,255,255,0.50);
+    }
+
+    /* =========================================================
+       ROADMAP
+    ========================================================= */
+
+    .roadmap {
+      padding: 120px 0;
+      background: var(--paper);
+    }
+
+    .roadmap-list {
+      margin-top: 55px;
+      border-top: 1px solid var(--line);
+    }
+
+    .roadmap-item {
+      display: grid;
+      grid-template-columns: 90px 220px 1fr;
+      gap: 25px;
+      align-items: center;
+
+      padding: 28px 0;
+
+      border-bottom: 1px solid var(--line);
+    }
+
+    .roadmap-number {
+      color: var(--gold);
+      font-family: Georgia, serif;
+      font-size: 28px;
+    }
+
+    .roadmap-name {
+      font-family: Georgia, serif;
+      font-size: 25px;
+      color: var(--olive);
+    }
+
+    .roadmap-description {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* =========================================================
+       FAQ
+    ========================================================= */
+
+    .faq {
+      padding: 110px 0;
+      background: var(--cream);
+    }
+
+    .faq-list {
+      margin-top: 45px;
+      border-top: 1px solid var(--line);
+    }
+
+    details {
+      border-bottom: 1px solid var(--line);
+      padding: 22px 0;
+    }
+
+    summary {
+      cursor: pointer;
+
+      list-style: none;
+
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+
+      font-family: Georgia, serif;
+      font-size: 22px;
+      color: var(--olive);
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "+";
+      font-family: sans-serif;
+      color: var(--gold);
+      font-size: 22px;
+    }
+
+    details[open] summary::after {
+      content: "−";
+    }
+
+    details p {
+      max-width: 850px;
+
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+
+      padding: 18px 0 5px;
+    }
+
+    /* =========================================================
+       FINAL CTA
+    ========================================================= */
+
+    .final {
+      min-height: 700px;
+
+      display: flex;
+      align-items: center;
+
+      background:
+        linear-gradient(
+          rgba(10,30,23,0.60),
+          rgba(10,30,23,0.78)
+        ),
+        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png");
+
+      background-size: cover;
+      background-position: center;
+
+      color: white;
+      text-align: center;
+    }
+
+    .final-content {
+      width: min(calc(100% - 40px), 850px);
+      margin: auto;
+    }
+
+    .final .section-title {
+      color: white;
+      font-size: clamp(48px, 7vw, 90px);
+    }
+
+    .final p {
+      max-width: 680px;
+      margin: 0 auto 35px;
+
+      color: rgba(255,255,255,0.78);
+
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    /* =========================================================
+       TRANSPARENCY
+    ========================================================= */
+
+    .transparency {
+      padding: 80px 0;
+      background: #eef1eb;
+    }
+
+    .transparency-box {
+      max-width: 900px;
+      margin: 0 auto;
+
+      font-size: 12px;
+      line-height: 1.8;
+
+      color: #68756e;
+    }
+
+    .transparency-box strong {
+      color: var(--olive);
+    }
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    footer {
+      background: #0d2119;
+      color: white;
+      padding: 55px 0;
+    }
+
+    .footer-inner {
+      width: min(calc(100% - 40px), var(--max));
+      margin: 0 auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+    }
+
+    .footer-brand {
+      font-family: Georgia, serif;
+      font-size: 23px;
+      letter-spacing: 0.12em;
+    }
+
+    .footer-sub {
+      color: rgba(255,255,255,0.50);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 22px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+    }
+
+    .footer-links a:hover {
+      color: var(--gold-light);
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 950px) {
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-content {
+        grid-template-columns: 1fr;
+        gap: 55px;
+        padding: 90px 0;
+      }
+
+      .hero-card {
+        justify-self: start;
+      }
+
+      .intro-grid,
+      .place-grid,
+      .mignole-grid {
+        grid-template-columns: 1fr;
+        gap: 45px;
+      }
+
+      .intro-image,
+      .mignole-image {
+        height: 500px;
+      }
+
+      .token-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .tree-feature {
+        grid-template-columns: 1fr;
+      }
+
+      .tree-image {
+        min-height: 450px;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .allocation {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .experience-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .experience-main {
+        height: 500px;
+      }
+
+      .experience-side {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 300px;
+      }
+
+      .clarity-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .roadmap-item {
+        grid-template-columns: 60px 170px 1fr;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 600px) {
+
+      .container,
+      .nav-inner,
+      .hero-content,
+      .harvest-content,
+      .footer-inner {
+        width: min(calc(100% - 28px), var(--max));
+      }
+
+      .nav {
+        height: 68px;
+      }
+
+      .hero {
+        padding-top: 68px;
+      }
+
+      .hero-image {
+        background-position: 58% center;
+      }
+
+      .hero-content {
+        padding: 80px 0 75px;
+      }
+
+      .hero h1 {
+        font-size: 78px;
+      }
+
+      .hero h2 {
+        font-size: 34px;
+      }
+
+      .hero-copy {
+        font-size: 16px;
+      }
+
+      .hero-card {
+        padding: 25px;
+      }
+
+      .intro,
+      .snapshot,
+      .place,
+      .trees,
+      .mignole,
+      .how,
+      .experience,
+      .clarity,
+      .tokenomics,
+      .roadmap,
+      .faq {
+        padding: 80px 0;
+      }
+
+      .section-title {
+        font-size: 43px;
+      }
+
+      .intro-image,
+      .mignole-image,
+      .place-image {
+        height: 390px;
+      }
+
+      .token-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .token-box {
+        padding: 20px;
+        min-height: 125px;
+      }
+
+      .token-box-value {
+        font-size: 21px;
+      }
+
+      .tree-image {
+        min-height: 350px;
+      }
+
+      .tree-content {
+        padding: 40px 28px;
+      }
+
+      .tree-number {
+        font-size: 100px;
+      }
+
+      .tree-content h3 {
+        font-size: 35px;
+      }
+
+      .harvest {
+        min-height: 620px;
+
+        background-position: 62% center;
+      }
+
+      .experience-main {
+        height: 390px;
+      }
+
+      .experience-side {
+        grid-template-columns: 1fr;
+        grid-template-rows: 250px 250px;
+      }
+
+      .allocation {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .allocation-box {
+        padding: 20px;
+      }
+
+      .allocation-box strong {
+        font-size: 21px;
+      }
+
+      .roadmap-item {
+        grid-template-columns: 45px 1fr;
+        gap: 8px 15px;
+      }
+
+      .roadmap-description {
+        grid-column: 2;
+      }
+
+      .clarity-card {
+        padding: 30px;
+      }
+
+      .final {
+        min-height: 620px;
+      }
+
+      .final p {
+        font-size: 16px;
+      }
+
+      .footer-links {
+        gap: 14px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-    <div class="video-bg">
-        <video autoplay loop muted playsinline aria-hidden="true"
-               poster="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olivium_logo2.png">
-            <source src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grove2.mp4" type="video/mp4">
-        </video>
-        <div class="overlay"></div>
+  <!-- ========================================================
+       NAV
+  ========================================================= -->
+
+  <nav class="nav">
+    <div class="nav-inner">
+
+      <a class="brand" href="index.html">
+        OLIVIUM
+      </a>
+
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="discover.html">Discover</a>
+        <a href="membership.html">Membership</a>
+        <a href="token.html">OLVM</a>
+        <a href="dashboard.html">Dashboard</a>
+
+        <a class="nav-cta" href="membership.html">
+          Become a Guardian
+        </a>
+      </div>
+
+    </div>
+  </nav>
+
+
+  <!-- ========================================================
+       HERO
+  ========================================================= -->
+
+  <header class="hero">
+
+    <div class="hero-image"></div>
+
+    <div class="hero-content">
+
+      <div>
+
+        <div class="eyebrow">
+          SOLANA · OLVM · OLIVIUM
+        </div>
+
+        <h1>OLVM</h1>
+
+        <h2>
+          The digital layer of a real olive estate in Tuscany.
+        </h2>
+
+        <p class="hero-copy">
+          OLVM connects the digital community with OLIVIUM —
+          a living estate built around olive trees, harvest,
+          stewardship and the experience of returning to Tuscany.
+        </p>
+
+        <div class="hero-buttons">
+
+          <!-- Replace with direct Pump.fun launch URL when live -->
+          <a
+            class="btn btn-gold"
+            href="#launch"
+          >
+            OLVM Launch
+          </a>
+
+          <a
+            class="btn btn-outline"
+            href="discover.html"
+          >
+            Discover OLIVIUM
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <div class="hero-card">
+
+        <div class="hero-card-label">
+          The idea
+        </div>
+
+        <h3>
+          Real land.<br>
+          Real trees.<br>
+          Digital community.
+        </h3>
+
+        <div class="hero-card-line">
+          <span>Estate</span>
+          <span>San Vincenzo, Tuscany</span>
+        </div>
+
+        <div class="hero-card-line">
+          <span>Grove</span>
+          <span>240 olive trees</span>
+        </div>
+
+        <div class="hero-card-line">
+          <span>Network</span>
+          <span>Solana</span>
+        </div>
+
+        <div class="hero-card-line">
+          <span>Token</span>
+          <span>OLVM</span>
+        </div>
+
+      </div>
+
     </div>
 
-    <nav>
-        <div class="nav-inner">
-            <div class="nav-logo">OLIVIUM <em>Token</em></div>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="home.html">Home</a></li>
-                <li><a href="discover.html">Discover</a></li>
-                <li><a href="membership.html">Membership</a></li>
-                <li><a href="userDash.html">Dashboard</a></li>
-                <li><a href="join.html">Join</a></li>
-            </ul>
-            <button class="nav-ham" id="navHam" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+  </header>
+
+
+  <!-- ========================================================
+       INTRO
+  ========================================================= -->
+
+  <section class="intro">
+
+    <div class="container intro-grid">
+
+      <div>
+
+        <div class="section-kicker">
+          The story
         </div>
-    </nav>
 
-    <div class="main-wrap">
-        <div class="container">
+        <h2 class="section-title">
+          A token with a place behind it.
+        </h2>
 
-            <section class="hero-section">
-                <p class="eyebrow">🫒 Ecosystem Token</p>
-                <h1>OLVM <span class="gold">Token</span></h1>
-                <div class="rule"></div>
-                <p>The O-Liv-In Token powers the Olivium ecosystem — connecting members, governance, and real-world experiences.</p>
-            </section>
+        <p class="intro-text">
+          OLIVIUM is not built around an abstract digital world.
+          Its starting point is physical: a Tuscan estate,
+          an olive grove, the seasons, the harvest and the
+          people who choose to become part of its story.
+        </p>
 
-            <div class="token-box">
-                <div class="label">Network</div>
-                <div class="network">Solana</div>
-                <div style="margin:1rem 0 0.5rem;">
-                    <div class="label">Contract Address</div>
-                    <div class="address" id="contractAddress">COMING SOON</div>
-                </div>
+        <br>
 
-                <a href="#" class="btn-buy disabled" id="buyBtn">
-                    BUY OLVM
-                    <span style="display:block; font-size:0.6rem; font-weight:400; opacity:0.6;">Coming Soon</span>
-                </a>
-                <p style="color:var(--muted-dim); font-size:0.7rem; margin-top:0.5rem;">Launching on Pump.fun · Q4 2026</p>
-            </div>
+        <p class="intro-text">
+          OLVM is the digital gateway connecting that physical
+          world with a global community.
+        </p>
 
-            <div class="why-olvm">
-                <h4>Why Hold OLVM?</h4>
-                <p>OLVM is the digital key to the Olivium ecosystem. Holding OLVM is expected to provide access to future membership opportunities and ecosystem benefits as the project develops.</p>
-            </div>
+        <br>
 
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>📋 Token Details</h3>
-                    <ul>
-                        <li>Name: O-Liv-In Token</li>
-                        <li>Symbol: OLVM</li>
-                        <li>Network: Solana</li>
-                        <li>Type: Utility Token</li>
-                        <li>Total Supply: TBA</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>⚡ Utility</h3>
-                    <ul>
-                        <li>Membership identity</li>
-                        <li>Community governance</li>
-                        <li>Ecosystem access</li>
-                        <li>Future experiences</li>
-                        <li>Staking &amp; rewards</li>
-                    </ul>
-                </div>
-            </div>
+        <a class="btn btn-gold" href="discover.html">
+          Read the deeper story →
+        </a>
 
-            <div style="margin-top:3rem;">
-                <h2 style="font-family:'Playfair Display',serif; font-size:2rem; color:#fff; text-align:center; font-weight:400;">Roadmap</h2>
-                <div class="rule" style="margin:1rem auto;"></div>
+      </div>
 
-                <div class="roadmap">
-                    <div class="roadmap-item">
-                        <div class="phase">Phase 1</div>
-                        <div class="title">Estate Foundation</div>
-                        <div class="desc">Grove established · Villa secured · Community building</div>
-                        <span class="status done">✓ Complete</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <div class="phase">Phase 2</div>
-                        <div class="title">Token Launch</div>
-                        <div class="desc">OLVM token deployment · Ecosystem dashboard · Member onboarding</div>
-                        <span class="status live">● In Progress</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <div class="phase">Phase 3</div>
-                        <div class="title">Full Ecosystem</div>
-                        <div class="desc">Governance live · Villa experiences · Harvest integration · DAO</div>
-                        <span class="status">Coming Soon</span>
-                    </div>
-                </div>
-            </div>
+      <div>
+        <img
+          class="intro-image"
+          src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png"
+          alt="Aerial view of the OLIVIUM estate in Tuscany"
+          loading="lazy"
+        >
+      </div>
 
-            <div style="margin-top:3rem;">
-                <h2 style="font-family:'Playfair Display',serif; font-size:2rem; color:#fff; text-align:center; font-weight:400;">Frequently Asked Questions</h2>
-                <div class="rule" style="margin:1rem auto;"></div>
-
-                <div style="max-width:750px; margin:0 auto;">
-                    <div class="faq-item">
-                        <div class="q" onclick="toggleFaq(this)">What is OLVM? <span class="arrow">▼</span></div>
-                        <div class="a">OLVM is the utility token for the Olivium ecosystem. It powers membership identity, community governance, and access to estate experiences.</div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="q" onclick="toggleFaq(this)">How do I buy OLVM? <span class="arrow">▼</span></div>
-                        <div class="a">OLVM will be available on Pump.fun when launched. Connect your Solana wallet and follow the purchase flow. Launch date: Q4 2026.</div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="q" onclick="toggleFaq(this)">What can I do with OLVM? <span class="arrow">▼</span></div>
-                        <div class="a">OLVM unlocks membership tiers, governance participation, villa stays, olive oil allocations, and future ecosystem experiences.</div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="q" onclick="toggleFaq(this)">Is OLVM an investment? <span class="arrow">▼</span></div>
-                        <div class="a">OLVM is a utility token designed for ecosystem participation. It is not a financial instrument. Always do your own research.</div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
     </div>
 
-    <footer>
-        <div class="footer-links">
-            <a href="index.html">Home</a>
-            <a href="discover.html">Discover</a>
-            <a href="membership.html">Membership</a>
-            <a href="token.html">OLVM</a>
-            <a href="userDash.html">Dashboard</a>
-            <a href="join.html">Join</a>
+  </section>
+
+
+  <!-- ========================================================
+       TOKEN SNAPSHOT
+  ========================================================= -->
+
+  <section class="snapshot">
+
+    <div class="container">
+
+      <div class="snapshot-heading">
+
+        <div class="section-kicker">
+          OLVM at a glance
         </div>
-        <p>© 2026 Olivium · San Vincenzo, Tuscany</p>
-    </footer>
 
-    <script>
-        const ham = document.getElementById('navHam');
-        const links = document.getElementById('navLinks');
-        if (ham && links) {
-            ham.addEventListener('click', function() {
-                this.classList.toggle('open');
-                links.classList.toggle('open');
-            });
-            document.querySelectorAll('#navLinks a').forEach(link => {
-                link.addEventListener('click', function() {
-                    ham.classList.remove('open');
-                    links.classList.remove('open');
-                });
-            });
-        }
+        <h2 class="section-title">
+          Simple at the surface.
+          Deep underneath.
+        </h2>
 
-        function toggleFaq(el) {
-            el.classList.toggle('open');
-            const answer = el.nextElementSibling;
-            answer.classList.toggle('open');
-        }
+      </div>
 
-        console.log('🫒 OLVM Token Page');
-        console.log('🚀 Launching Q4 2026');
-    </script>
+      <div class="token-grid">
+
+        <div class="token-box">
+          <div class="token-box-label">
+            Token
+          </div>
+
+          <div class="token-box-value">
+            OLVM
+          </div>
+        </div>
+
+        <div class="token-box">
+          <div class="token-box-label">
+            Network
+          </div>
+
+          <div class="token-box-value">
+            Solana
+          </div>
+        </div>
+
+        <div class="token-box">
+          <div class="token-box-label">
+            Launch
+          </div>
+
+          <div class="token-box-value">
+            Pump.fun
+          </div>
+        </div>
+
+        <div class="token-box">
+          <div class="token-box-label">
+            Launch timing
+          </div>
+
+          <div class="token-box-value">
+            Q4 2026
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       REAL PLACE
+  ========================================================= -->
+
+  <section class="place">
+
+    <div class="container place-grid">
+
+      <div>
+
+        <img
+          class="place-image"
+          src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png"
+          alt="OLIVIUM villa at sunset"
+          loading="lazy"
+        >
+
+      </div>
+
+      <div>
+
+        <div class="section-kicker">
+          The foundation
+        </div>
+
+        <h2 class="section-title">
+          Start with the estate.
+        </h2>
+
+        <p class="place-copy">
+          The digital layer makes sense because there is a
+          physical place underneath it.
+        </p>
+
+        <p class="place-copy">
+          OLIVIUM brings together an olive grove, a Tuscan
+          residence, harvest traditions and estate experiences
+          into one connected ecosystem.
+        </p>
+
+        <div class="place-points">
+
+          <div class="place-point">
+            <div class="place-number">01</div>
+            <div>
+              <strong>San Vincenzo, Tuscany</strong>
+              <span>
+                A real estate environment on the Tuscan coast.
+              </span>
+            </div>
+          </div>
+
+          <div class="place-point">
+            <div class="place-number">02</div>
+            <div>
+              <strong>240 olive trees</strong>
+              <span>
+                The physical grove at the heart of the concept.
+              </span>
+            </div>
+          </div>
+
+          <div class="place-point">
+            <div class="place-number">03</div>
+            <div>
+              <strong>Harvest & stewardship</strong>
+              <span>
+                A living agricultural cycle rather than a static asset.
+              </span>
+            </div>
+          </div>
+
+          <div class="place-point">
+            <div class="place-number">04</div>
+            <div>
+              <strong>Estate experiences</strong>
+              <span>
+                The digital world ultimately leads back to the estate.
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       240 TREES
+  ========================================================= -->
+
+  <section class="trees">
+
+    <div class="container">
+
+      <div class="trees-header">
+
+        <div class="section-kicker">
+          The grove
+        </div>
+
+        <h2 class="section-title">
+          240 trees.<br>
+          240 identities.
+        </h2>
+
+        <p class="intro-text">
+          OLIVIUM's strongest connection between the physical
+          and digital worlds is the grove itself.
+        </p>
+
+      </div>
+
+
+      <div class="tree-feature">
+
+        <div class="tree-image"></div>
+
+        <div class="tree-content">
+
+          <div class="tree-number">
+            240
+          </div>
+
+          <h3>
+            One living grove.
+          </h3>
+
+          <p>
+            Each tree can become part of the digital identity
+            layer of OLIVIUM — linking its physical place in
+            the grove with a future tree profile, history,
+            imagery and Guardian relationship.
+          </p>
+
+          <div class="tree-flow">
+
+            <span>Physical tree</span>
+            <span>Tree identity</span>
+            <span>Guardian</span>
+            <span>OLVM</span>
+            <span>Estate experience</span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       MIGNOLE
+  ========================================================= -->
+
+  <section class="mignole">
+
+    <div class="container mignole-grid">
+
+      <div>
+
+        <div class="section-kicker">
+          The beginning
+        </div>
+
+        <h2 class="section-title">
+          Every olive begins as a mignole.
+        </h2>
+
+        <p class="mignole-copy">
+          Before the bottle.
+          Before the harvest.
+          Before the experience.
+          There is a blossom.
+        </p>
+
+        <p class="mignole-small">
+          The mignole is the tiny olive blossom that appears
+          in spring. It represents potential, patience and
+          renewal — the natural cycle behind everything
+          OLIVIUM is trying to preserve and connect.
+        </p>
+
+      </div>
+
+      <div>
+
+        <img
+          class="mignole-image"
+          src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/mignole.jpeg"
+          alt="Olive blossoms on an OLIVIUM olive tree"
+          loading="lazy"
+        >
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       HOW IT WORKS
+  ========================================================= -->
+
+  <section class="how" id="launch">
+
+    <div class="container">
+
+      <div class="how-heading">
+
+        <div class="section-kicker">
+          How OLVM fits in
+        </div>
+
+        <h2 class="section-title">
+          From digital token to estate experience.
+        </h2>
+
+      </div>
+
+
+      <div class="steps">
+
+        <div class="step">
+
+          <div class="step-number">
+            01
+          </div>
+
+          <h3>
+            Acquire OLVM
+          </h3>
+
+          <p>
+            OLVM is planned to launch on Solana through
+            Pump.fun. Once launched, the official token
+            address and verified launch link will be published
+            here.
+          </p>
+
+        </div>
+
+
+        <div class="step">
+
+          <div class="step-number">
+            02
+          </div>
+
+          <h3>
+            Become a Guardian
+          </h3>
+
+          <p>
+            Qualifying OLVM holdings may provide eligibility
+            for published Guardian and ecosystem opportunities,
+            subject to the final program terms.
+          </p>
+
+        </div>
+
+
+        <div class="step">
+
+          <div class="step-number">
+            03
+          </div>
+
+          <h3>
+            Experience OLIVIUM
+          </h3>
+
+          <p>
+            The digital layer ultimately leads back to the
+            grove — the trees, harvest, olive oil and the
+            experience of spending time at the estate.
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       HARVEST
+  ========================================================= -->
+
+  <section class="harvest">
+
+    <div class="harvest-content">
+
+      <div class="section-kicker">
+        From grove to harvest
+      </div>
+
+      <h2 class="section-title">
+        The digital layer follows
+        a living cycle.
+      </h2>
+
+      <p class="harvest-copy">
+        OLIVIUM is ultimately about something physical:
+        trees growing, olives forming, people harvesting
+        and oil being produced.
+      </p>
+
+      <p class="harvest-copy">
+        OLVM is designed to connect the community to that
+        broader ecosystem as it develops.
+      </p>
+
+      <div class="harvest-note">
+        Harvest outcomes vary by season and agricultural conditions.
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       ESTATE EXPERIENCE
+  ========================================================= -->
+
+  <section class="experience">
+
+    <div class="container">
+
+      <div class="experience-heading">
+
+        <div class="section-kicker">
+          More than a token
+        </div>
+
+        <h2 class="section-title">
+          The destination is real.
+        </h2>
+
+        <p class="intro-text">
+          The reason OLIVIUM exists is not simply to create
+          another digital asset. It is to build a bridge
+          between a physical estate and a worldwide community.
+        </p>
+
+      </div>
+
+
+      <div class="experience-grid">
+
+        <div class="experience-main">
+
+          <img
+            src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/poolN.png"
+            alt="OLIVIUM estate pool overlooking Tuscany"
+            loading="lazy"
+          >
+
+          <div class="experience-label">
+            <h3>
+              Come to the estate.
+            </h3>
+          </div>
+
+        </div>
+
+
+        <div class="experience-side">
+
+          <div class="experience-card">
+
+            <img
+              src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png"
+              alt="Aerial view of the OLIVIUM villa"
+              loading="lazy"
+            >
+
+            <span>
+              A place to return to.
+            </span>
+
+          </div>
+
+
+          <div class="experience-card">
+
+            <img
+              src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg"
+              alt="Freshly harvested olives"
+              loading="lazy"
+            >
+
+            <span>
+              From grove to table.
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       IS / ISN'T
+  ========================================================= -->
+
+  <section class="clarity">
+
+    <div class="container">
+
+      <div class="clarity-heading">
+
+        <div class="section-kicker">
+          Transparency
+        </div>
+
+        <h2 class="section-title">
+          What OLVM is.
+          What it isn't.
+        </h2>
+
+      </div>
+
+
+      <div class="clarity-grid">
+
+        <div class="clarity-card is">
+
+          <h3>
+            OLVM is
+          </h3>
+
+          <ul>
+            <li>
+              A Solana-based ecosystem token.
+            </li>
+
+            <li>
+              A digital gateway into the developing OLIVIUM ecosystem.
+            </li>
+
+            <li>
+              A potential mechanism for Guardian eligibility
+              under published terms.
+            </li>
+
+            <li>
+              Part of the future digital identity layer of
+              the OLIVIUM grove.
+            </li>
+
+            <li>
+              A connection between a physical estate and a
+              global digital community.
+            </li>
+          </ul>
+
+        </div>
+
+
+        <div class="clarity-card isnt">
+
+          <h3>
+            OLVM isn't
+          </h3>
+
+          <ul>
+
+            <li>
+              Equity in OLIVIUM or another company.
+            </li>
+
+            <li>
+              Legal ownership of land or an olive tree.
+            </li>
+
+            <li>
+              A promise of dividends, profits or yield.
+            </li>
+
+            <li>
+              A guarantee that the token price will increase.
+            </li>
+
+            <li>
+              A substitute for independent legal, tax or
+              financial advice.
+            </li>
+
+          </ul>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       TOKENOMICS
+  ========================================================= -->
+
+  <section class="tokenomics">
+
+    <div class="container">
+
+      <div class="tokenomics-heading">
+
+        <div class="section-kicker">
+          Tokenomics
+        </div>
+
+        <h2 class="section-title">
+          Designed to be transparent.
+        </h2>
+
+        <p class="tokenomics-copy">
+          The final OLVM allocation will be published before
+          launch together with the official token address,
+          treasury/development wallets and verified launch
+          information.
+        </p>
+
+      </div>
+
+
+      <div class="allocation">
+
+        <div class="allocation-box">
+          <strong>TBA</strong>
+          <span>Total / launch supply</span>
+        </div>
+
+        <div class="allocation-box">
+          <strong>TBA</strong>
+          <span>Liquidity / launch allocation</span>
+        </div>
+
+        <div class="allocation-box">
+          <strong>TBA</strong>
+          <span>Treasury / ecosystem</span>
+        </div>
+
+        <div class="allocation-box">
+          <strong>TBA</strong>
+          <span>Team / development / other</span>
+        </div>
+
+      </div>
+
+
+      <p class="allocation-note">
+        Final percentages and wallet allocations will be
+        replaced with the approved OLVM tokenomics before
+        public launch. No allocation should be interpreted
+        until the official figures are published.
+      </p>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       OFFICIAL TOKEN INFORMATION
+  ========================================================= -->
+
+  <section class="snapshot">
+
+    <div class="container">
+
+      <div class="snapshot-heading">
+
+        <div class="section-kicker">
+          Official information
+        </div>
+
+        <h2 class="section-title">
+          Verify before you interact.
+        </h2>
+
+      </div>
+
+
+      <div class="token-grid">
+
+        <div class="token-box">
+
+          <div class="token-box-label">
+            Token
+          </div>
+
+          <div class="token-box-value">
+            OLVM
+          </div>
+
+        </div>
+
+
+        <div class="token-box">
+
+          <div class="token-box-label">
+            Blockchain
+          </div>
+
+          <div class="token-box-value">
+            Solana
+          </div>
+
+        </div>
+
+
+        <div class="token-box">
+
+          <div class="token-box-label">
+            Contract / Mint
+          </div>
+
+          <div class="token-box-value">
+            Coming Soon
+          </div>
+
+        </div>
+
+
+        <div class="token-box">
+
+          <div class="token-box-label">
+            Official launch
+          </div>
+
+          <div class="token-box-value">
+            Q4 2026
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       ROADMAP
+  ========================================================= -->
+
+  <section class="roadmap">
+
+    <div class="container">
+
+      <div class="section-kicker">
+        Roadmap
+      </div>
+
+      <h2 class="section-title">
+        From estate foundation
+        to digital ecosystem.
+      </h2>
+
+
+      <div class="roadmap-list">
+
+        <div class="roadmap-item">
+
+          <div class="roadmap-number">
+            01
+          </div>
+
+          <div class="roadmap-name">
+            Estate
+          </div>
+
+          <div class="roadmap-description">
+            Establish the physical estate, grove and
+            foundational OLIVIUM experience.
+          </div>
+
+        </div>
+
+
+        <div class="roadmap-item">
+
+          <div class="roadmap-number">
+            02
+          </div>
+
+          <div class="roadmap-name">
+            OLVM
+          </div>
+
+          <div class="roadmap-description">
+            Launch the OLVM digital layer and onboard
+            the wider community.
+          </div>
+
+        </div>
+
+
+        <div class="roadmap-item">
+
+          <div class="roadmap-number">
+            03
+          </div>
+
+          <div class="roadmap-name">
+            Guardians
+          </div>
+
+          <div class="roadmap-description">
+            Develop Guardian identities, eligibility
+            systems and published membership pathways.
+          </div>
+
+        </div>
+
+
+        <div class="roadmap-item">
+
+          <div class="roadmap-number">
+            04
+          </div>
+
+          <div class="roadmap-name">
+            Tree Layer
+          </div>
+
+          <div class="roadmap-description">
+            Build individual digital tree identities and
+            connect physical grove data to the ecosystem.
+          </div>
+
+        </div>
+
+
+        <div class="roadmap-item">
+
+          <div class="roadmap-number">
+            05
+          </div>
+
+          <div class="roadmap-name">
+            Estate
+          </div>
+
+          <div class="roadmap-description">
+            Expand the connection between OLVM,
+            harvest, residency and estate experiences.
+          </div>
+
+        </div>
+
+
+        <div class="roadmap-item">
+
+          <div class="roadmap-number">
+            06
+          </div>
+
+          <div class="roadmap-name">
+            Transparency
+          </div>
+
+          <div class="roadmap-description">
+            Publish verified contracts, wallet addresses,
+            tokenomics, documentation and ecosystem data.
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       FAQ
+  ========================================================= -->
+
+  <section class="faq">
+
+    <div class="container">
+
+      <div class="section-kicker">
+        Frequently asked
+      </div>
+
+      <h2 class="section-title">
+        Questions about OLVM.
+      </h2>
+
+
+      <div class="faq-list">
+
+        <details>
+          <summary>
+            What is OLVM?
+          </summary>
+
+          <p>
+            OLVM is the Solana-based ecosystem token of
+            OLIVIUM. It is intended to connect the digital
+            community with the developing OLIVIUM ecosystem,
+            including Guardian opportunities and future
+            estate experiences under published terms.
+          </p>
+
+        </details>
+
+
+        <details>
+          <summary>
+            Where is OLVM launching?
+          </summary>
+
+          <p>
+            OLVM is planned for launch on Pump.fun in Q4 2026.
+            The direct official launch link will be published
+            once the token is live.
+          </p>
+
+        </details>
+
+
+        <details>
+          <summary>
+            Does OLVM mean I own part of the estate?
+          </summary>
+
+          <p>
+            No. Holding OLVM does not transfer ownership of
+            the land, villa, company, olive trees or business.
+            Guardian participation and estate benefits are
+            separate from legal ownership.
+          </p>
+
+        </details>
+
+
+        <details>
+          <summary>
+            Will OLVM pay dividends or guaranteed returns?
+          </summary>
+
+          <p>
+            No. OLVM should not be represented as providing
+            guaranteed profits, dividends, yield or price
+            appreciation.
+          </p>
+
+        </details>
+
+
+        <details>
+          <summary>
+            What are Guardians?
+          </summary>
+
+          <p>
+            Guardians are participants in the OLIVIUM ecosystem.
+            Specific Guardian tiers, eligibility requirements
+            and benefits will be published as the program is
+            finalized.
+          </p>
+
+        </details>
+
+
+        <details>
+          <summary>
+            Will every tree have a digital identity?
+          </summary>
+
+          <p>
+            The planned OLIVIUM tree layer is designed to give
+            individual trees digital identities connected to
+            physical grove information. The final implementation,
+            metadata and any NFT functionality will be published
+            separately.
+          </p>
+
+        </details>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       FINAL CTA
+  ========================================================= -->
+
+  <section class="final">
+
+    <div class="final-content">
+
+      <div class="section-kicker">
+        Come to the grove
+      </div>
+
+      <h2 class="section-title">
+        The digital layer
+        is only the beginning.
+      </h2>
+
+      <p>
+        OLVM starts online.
+        OLIVIUM brings the story back to the land.
+      </p>
+
+      <div class="hero-buttons" style="justify-content:center;">
+
+        <a
+          class="btn btn-gold"
+          href="membership.html"
+        >
+          Become a Guardian
+        </a>
+
+        <a
+          class="btn btn-outline"
+          href="discover.html"
+        >
+          Explore the Estate
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       TRANSPARENCY
+  ========================================================= -->
+
+  <section class="transparency">
+
+    <div class="container">
+
+      <div class="transparency-box">
+
+        <strong>Important information:</strong>
+
+        OLVM is a crypto-asset and may lose value. Nothing
+        on this page constitutes a promise of profit, yield,
+        dividends, revenue sharing or future price appreciation.
+
+        <br><br>
+
+        Guardian and membership benefits are subject to final
+        program terms, availability, harvest conditions,
+        booking rules and applicable law.
+
+        <br><br>
+
+        Holding OLVM does not transfer ownership of the OLIVIUM
+        estate, land, villa, company, individual olive trees
+        or business profits.
+
+        <br><br>
+
+        The official OLVM contract/mint address, tokenomics,
+        treasury and development wallet addresses and official
+        launch links will be published only after they are
+        finalized and verified.
+
+        <br><br>
+
+        OLIVIUM does not endorse wash trading, fake engagement,
+        circular transactions, manufactured demand or misleading
+        representations of token volume, rankings or price.
+
+        <br><br>
+
+        Information on this website is provided for general
+        informational purposes and is not legal, tax or
+        financial advice. Applicable Italian and EU requirements
+        should be reviewed before formal public distribution
+        or marketing of the token.
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       FOOTER
+  ========================================================= -->
+
+  <footer>
+
+    <div class="footer-inner">
+
+      <div>
+
+        <div class="footer-brand">
+          OLIVIUM
+        </div>
+
+        <div class="footer-sub">
+          Private Estate · San Vincenzo, Tuscany · OLVM · Solana
+        </div>
+
+      </div>
+
+
+      <div class="footer-links">
+
+        <a href="index.html">
+          Home
+        </a>
+
+        <a href="discover.html">
+          Discover
+        </a>
+
+        <a href="membership.html">
+          Membership
+        </a>
+
+        <a href="token.html">
+          OLVM
+        </a>
+
+        <a href="dashboard.html">
+          Dashboard
+        </a>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+
 </body>
 </html>
