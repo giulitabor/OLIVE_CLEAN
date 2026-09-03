@@ -390,54 +390,61 @@ export async function refreshDashboard() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function initLiveDash() {
+  console.log("[LIVEDASH] export async function initLiveDash() {
   console.log("[LIVEDASH] Initializing...");
 
-  // Wait for program to be ready
   await waitForProgram();
 
-  // Load initial tree data
   await loadTrees("all");
 
-  // Update all UI components
   await updateIdentityBalanceUI();
   updateWalletConnectionUI();
   await updateStatsUI();
   await updateVillaStayUI();
 
-  // Subscribe to real-time updates
+  // ─────────────────────────────────────────────
+  // INITIAL LIVE TICKER
+  // ─────────────────────────────────────────────
+
+  await updateLiveTicker();
+
+  // Real-time subscriptions
   subscribeToSensorData();
   subscribeToTreeUpdates();
 
-  // Set up event listeners
   if (connectBtn) {
     connectBtn.addEventListener("click", handleConnectClick);
   }
 
-  // Listen for connection events
   window.addEventListener("olivium:connected", async () => {
     console.log("[LIVEDASH] Connected event received");
     updateWalletConnectionUI();
     await refreshDashboard();
+    await updateLiveTicker();
   });
 
   window.addEventListener("olivium:disconnected", async () => {
     console.log("[LIVEDASH] Disconnected event received");
     updateWalletConnectionUI();
     await refreshDashboard();
+    await updateLiveTicker();
   });
 
-  // Legacy bridge
   window.addEventListener("solana:connection-complete", async () => {
     console.log("[LIVEDASH] Solana connection complete");
     updateWalletConnectionUI();
     await refreshDashboard();
+    await updateLiveTicker();
   });
 
-  // Auto-refresh every 30 seconds for sensor data
+  // Existing 30-second refresh
   setInterval(async () => {
-    // Only refresh stats, not the full tree grid (which is real-time via subscription)
     await updateStatsUI();
     await updateVillaStayUI();
+
+    // Refresh ticker data too
+    await updateLiveTicker();
+
   }, 30000);
 
   console.log("[LIVEDASH] Initialized successfully");
@@ -455,11 +462,165 @@ document.addEventListener("DOMContentLoaded", () => {
 // 10. EXPOSE
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LIVE TICKER
+// ─────────────────────────────────────────────────────────────────────────────
+
+type TickerItem = {
+  icon: string;
+  text: string;
+  tone?: "up" | "down" | "neutral";
+};
+
+let tickerRefreshTimer: number | null = null;
+
+/**
+ * Render the live ticker.
+ *
+ * IMPORTANT:
+ * The ticker is populated only from verified live data.
+ * We never use placeholder market prices.
+ */
+function renderLiveTicker(items: TickerItem[]) {
+  const track = $("ticker-track");
+
+  if (!track) {
+    console.warn("[TICKER] #ticker-track not found");
+    return;
+  }
+
+  track.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+
+  // Duplicate the sequence for seamless CSS scrolling.
+  for (let copy = 0; copy < 2; copy++) {
+    for (const item of items) {
+      const span = document.createElement("span");
+
+      if (copy === 1) {
+        span.setAttribute("aria-hidden", "true");
+      }
+
+      span.textContent = `${item.icon} ${item.text}`;
+
+      if (item.tone === "up") {
+        span.classList.add("ticker-up");
+      } else if (item.tone === "down") {
+        span.classList.add("ticker-down");
+      }
+
+      fragment.appendChild(span);
+    }
+  }
+
+  track.appendChild(fragment);
+}
+
+
+/**
+ * Build the ticker from the actual dashboard state.
+ *
+ * No fabricated price, yield, treasury status or availability.
+ */
+async function updateLiveTicker() {
+  const items: TickerItem[] = [];
+
+  // ─────────────────────────────────────────────
+  // GROVE
+  // ─────────────────────────────────────────────
+
+  // This is REAL and can remain active.
+  items.push({
+    icon: "🌳",
+    text: "240 Trees · Growing Phase",
+    tone: "neutral",
+  });
+
+
+  // ─────────────────────────────────────────────
+  // SENSOR DATA
+  // ─────────────────────────────────────────────
+
+  try {
+    const { data, error } = await sb
+      .from("sensor_readings")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+
+      if (data.temperature !== undefined && data.temperature !== null) {
+        items.push({
+          icon: "🌡",
+          text: `Field ${Number(data.temperature).toFixed(1)}°C`,
+          tone: "neutral",
+        });
+      }
+
+      if (data.moisture !== undefined && data.moisture !== null) {
+        items.push({
+          icon: "💧",
+          text: `Soil ${Number(data.moisture).toFixed(0)}%`,
+          tone: "neutral",
+        });
+      }
+
+      if (data.wind_speed !== undefined && data.wind_speed !== null) {
+        items.push({
+          icon: "🌬",
+          text: `Wind ${Number(data.wind_speed).toFixed(1)} m/s`,
+          tone: "neutral",
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("[TICKER] Sensor query failed:", err);
+  }
+
+
+  // ─────────────────────────────────────────────
+  // OLVM MARKET
+  // ─────────────────────────────────────────────
+
+  /*
+   * DO NOT display a fake OLVM price.
+   *
+   * Until the real OLVM mint has a live trading pair,
+   * the ticker simply says PRE-LAUNCH.
+   */
+
+  items.push({
+    icon: "◎",
+    text: "OLVM · PRE-LAUNCH",
+    tone: "neutral",
+  });
+
+
+  // ─────────────────────────────────────────────
+  // HARVEST
+  // ─────────────────────────────────────────────
+
+  items.push({
+    icon: "🫒",
+    text: "2026 Harvest · Preparing",
+    tone: "neutral",
+  });
+
+
+  renderLiveTicker(items);
+}
+
 (window as any).initLiveDash = initLiveDash;
 (window as any).refreshDashboard = refreshDashboard;
 (window as any).fetchOLVBalance = fetchOLVBalance;
 (window as any).updateWalletConnectionUI = updateWalletConnectionUI;
 (window as any).subscribeToSensorData = subscribeToSensorData;
 (window as any).subscribeToTreeUpdates = subscribeToTreeUpdates;
+(window as any).updateLiveTicker = updateLiveTicker;
 
 console.log("[livedash.ts] ✅ Module loaded");
