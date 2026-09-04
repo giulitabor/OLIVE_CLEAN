@@ -85,21 +85,6 @@ win.handleDisconnectWorkflow = handleDisconnectWorkflow;
 // Only functions actually exported by reserve_board.ts are bridged here.
 // ═════════════════════════════════════════════════════════════════════════════
 
-win.getTrees = getTrees;
-win.getAllPositions = getAllPositions;
-
-win.openTreeDetailModal = openTreeDetailModal;
-win.closeTreeDetailModal = closeTreeDetailModal;
-win.switchTreeDetailTab = switchTreeDetailTab;
-
-win.updateVillaStayUI = updateVillaStayUI;
-win.updateStatsUI = updateStatsUI;
-win.updateWalletUI = updateWalletUI;
-
-win.openSellModal = openSellModal;
-win.closeSellModal = closeSellModal;
-win.confirmSellAction = confirmSellAction;
-win.setSellMax = setSellMax;
 
 
 // ═════════════════════════════════════════════════════════════════════════════
