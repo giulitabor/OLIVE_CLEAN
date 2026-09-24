@@ -7,414 +7,883 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --gold: #C5A059;
+      --gold-glow: rgba(197, 160, 89, 0.3);
       --dusk: #070705;
+      --dusk-card: rgba(18, 18, 14, 0.7);
       --green: #10b981;
       --danger: #ef4444;
+      --warning: #f59e0b;
     }
 
-    /* Construction Mode Visuals */
-    .constructor-active .tree {
-      border-style: dashed;
-      opacity: 0.8;
-    }
-
-    .constructor-active .tree:hover {
-      background: #ef4444 !important; /* Red for removal */
-      transform: scale(1.1);
-    }
-
-    .constructor-active .cell-empty {
-      opacity: 0.3 !important;
-      pointer-events: auto !important;
-      background: rgba(255,255,255,0.05);
-      border: 1px dashed rgba(197,160,89,0.2);
-      border-radius: 50%;
-    }
-
-    .constructor-active .cell-empty:hover {
-      background: var(--green) !important;
-      opacity: 1 !important;
-    }
-
-    #controls-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
     body {
       margin: 0;
       background: var(--dusk);
       color: #f5eed8;
       font-family: 'JetBrains Mono', monospace;
       overflow-x: hidden;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(197, 160, 89, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
     }
 
     .serif { font-family: 'Cormorant Garamond', serif; }
 
     .card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(10px);
-      padding: 16px;
-      border-radius: 10px;
+      background: var(--dusk-card);
+      border: 1px solid rgba(197, 160, 89, 0.15);
+      backdrop-filter: blur(12px);
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: border-color 0.3s ease;
     }
 
-    /* TOPOLOGICAL GRID */
+    .card:hover {
+      border-color: rgba(197, 160, 89, 0.3);
+    }
+
+    /* TOPOLOGICAL GRID - FIXED TO 21 COLUMNS FOR PERFECT ALIGNMENT */
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(15, 1fr); /* Rotated View */
-      gap: 4px;
-      padding: 10px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 8px;
+      grid-template-columns: repeat(21, 1fr);
+      gap: 5px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      user-select: none;
     }
 
     .tree {
       aspect-ratio: 1;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.4);
       border-radius: 50%;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0px; /* Hide text unless hover */
-      color: black;
+      font-size: 0px; 
+      color: #000;
       position: relative;
     }
 
     .tree:hover {
-      transform: scale(2.2);
+      transform: scale(2.1);
       background: var(--gold) !important;
-      font-size: 8px;
-      font-weight: bold;
+      font-size: 9px;
+      font-weight: 700;
       z-index: 50;
-      border-radius: 4px;
-      border-color: white;
+      border-radius: 6px;
+      border-color: #ffffff;
+      box-shadow: 0 0 15px rgba(197, 160, 89, 0.8);
     }
 
-    /* Tree States */
-    .tree.genesis { border: 2px solid var(--gold); box-shadow: 0 0 10px rgba(197, 160, 89, 0.4); }
-    .tree.risk-high { background: var(--danger); border-color: #ff0000; box-shadow: 0 0 8px var(--danger); }
-    .tree.risk-med { background: #f59e0b; border-color: #fbbf24; }
-    .tree.sprayed { border: 2px solid #3b82f6; }
+    /* Tree Status Visuals */
+    .tree.genesis { 
+      border: 2px solid var(--gold); 
+      box-shadow: 0 0 8px rgba(197, 160, 89, 0.5); 
+    }
+    
+    .tree.risk-high { 
+      background: rgba(239, 68, 68, 0.85) !important; 
+      border-color: #ff4444; 
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+      animation: pulseRisk 2s infinite ease-in-out;
+    }
+    
+    .tree.risk-med { 
+      background: rgba(245, 158, 11, 0.8) !important; 
+      border-color: #fbbf24; 
+    }
+
+    .tree.sprayed { 
+      outline: 2px solid #3b82f6;
+      outline-offset: 1px;
+    }
+
+    @keyframes pulseRisk {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+    }
+
+    /* Construction Mode Styles */
+    .constructor-active .tree {
+      border-style: dashed;
+      opacity: 0.85;
+    }
+
+    .constructor-active .tree:hover {
+      background: var(--danger) !important;
+      border-color: #ffffff;
+      transform: scale(1.2);
+    }
+
+    .constructor-active .cell-empty {
+      opacity: 0.4 !important;
+      pointer-events: auto !important;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(197, 160, 89, 0.25);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .constructor-active .cell-empty:hover {
+      background: var(--green) !important;
+      border-color: #ffffff;
+      opacity: 0.9 !important;
+      transform: scale(1.2);
+    }
 
     /* Modal Styles */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
-    .modal-overlay.active { display: flex; }
+
+    .modal-overlay.active { 
+      display: flex; 
+      opacity: 1;
+    }
+
     .modal-content {
-      background: #0c0c0a;
-      border: 2px solid var(--gold);
+      background: #0d0d0b;
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 30px rgba(197, 160, 89, 0.2);
       border-radius: 16px;
-      padding: 32px;
-      max-width: 450px;
-      width: 90%;
-      animation: modalSlide 0.3s ease-out;
+      padding: 28px;
+      max-width: 480px;
+      width: 92%;
+      transform: translateY(10px);
+      transition: transform 0.3s ease;
     }
-    @keyframes modalSlide { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-overlay.active .modal-content {
+      transform: translateY(0);
+    }
 
     .data-row {
       display: flex;
       justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .data-label { color: var(--gold); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+
+    .data-label { 
+      color: var(--gold); 
+      font-size: 11px; 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(197, 160, 89, 0.3);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(197, 160, 89, 0.6);
+    }
   </style>
 </head>
 
 <body>
 
-<div class="flex justify-between p-6 border-b border-white/10 items-center">
-  <div class="serif text-3xl text-gold italic">OLIVIUM OS</div>
-  <div class="flex gap-4 items-center">
-    <div class="text-right">
-      <div class="text-[10px] opacity-50 uppercase">Current Sector</div>
+<!-- HEADER BAR -->
+<header class="flex flex-wrap justify-between p-5 border-b border-white/10 items-center gap-4 bg-black/40 backdrop-blur-md sticky top-0 z-40">
+  <div class="flex items-center gap-3">
+    <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+    <div class="serif text-3xl text-[var(--gold)] italic tracking-wider font-semibold">OLIVIUM OS</div>
+    <span class="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/60">v3.4 PRO</span>
+  </div>
+
+  <div class="flex flex-wrap gap-3 items-center">
+    <div class="text-right pr-3 border-r border-white/10">
+      <div class="text-[9px] opacity-50 uppercase tracking-widest">Active Sector</div>
       <div class="text-xs font-bold text-emerald-400">VILLA TOSCAGIALLA</div>
     </div>
-    <div class="flex gap-4 items-center">
 
-    <div class="flex gap-4 items-center">
-      <button id="constructorBtn" onclick="toggleConstructor()" class="text-[10px] bg-gold/10 border border-gold/50 px-3 py-2 rounded hover:bg-gold hover:text-black transition uppercase font-bold">
-        🛠 Constructor Mode
-      </button>
-      <button onclick="exportLayout()" class="text-[10px] bg-emerald-600/20 border border-emerald-500/50 px-3 py-2 rounded hover:bg-emerald-500 hover:text-black transition uppercase font-bold">
-        💾 Download Layout
-      </button>
-      <button onclick="document.getElementById('layout-upload').click()" class="text-[10px] bg-blue-600/20 border border-blue-500/50 px-3 py-2 rounded hover:bg-blue-500 hover:text-black transition uppercase font-bold">
-        📂 Load Layout
-      </button>
-      <input type="file" id="layout-upload" class="hidden" accept=".json" onchange="importLayout(this)">
-  </div>
-</div>
-    <div class="h-8 w-[1px] bg-white/10"></div>
-    <button onclick="document.getElementById('dash-upload').click()" class="text-[10px] bg-gold/10 border border-gold/50 px-3 py-2 rounded hover:bg-gold hover:text-black transition uppercase font-bold">
-      Import Tree Data
+    <button id="constructorBtn" onclick="toggleConstructor()" class="text-[10px] bg-[var(--gold)]/10 border border-[var(--gold)]/50 text-[var(--gold)] px-3 py-2 rounded hover:bg-[var(--gold)] hover:text-black transition uppercase font-bold flex items-center gap-1.5">
+      <span>🛠</span> <span>Constructor Mode</span>
     </button>
+    
+    <button onclick="exportLayout()" class="text-[10px] bg-emerald-600/20 border border-emerald-500/50 text-emerald-300 px-3 py-2 rounded hover:bg-emerald-500 hover:text-black transition uppercase font-bold flex items-center gap-1.5">
+      <span>💾</span> <span>Save Layout</span>
+    </button>
+
+    <button onclick="document.getElementById('layout-upload').click()" class="text-[10px] bg-blue-600/20 border border-blue-500/50 text-blue-300 px-3 py-2 rounded hover:bg-blue-500 hover:text-black transition uppercase font-bold flex items-center gap-1.5">
+      <span>📂</span> <span>Load Layout</span>
+    </button>
+    <input type="file" id="layout-upload" class="hidden" accept=".json" onchange="importLayout(this)">
+
+    <button onclick="document.getElementById('dash-upload').click()" class="text-[10px] bg-purple-600/20 border border-purple-500/50 text-purple-300 px-3 py-2 rounded hover:bg-purple-500 hover:text-black transition uppercase font-bold flex items-center gap-1.5">
+      <span>📊</span> <span>Import Tree Data</span>
+    </button>
+    <input type="file" id="dash-upload" class="hidden" accept=".json" onchange="loadMetadata(this)">
   </div>
-  <input type="file" id="dash-upload" class="hidden" accept=".json" onchange="loadMetadata(this)">
-</div>
+</header>
 
-<div class="grid grid-cols-12 gap-6 p-6">
+<!-- MAIN CONTENT DASHBOARD -->
+<main class="grid grid-cols-12 gap-6 p-6 max-w-[1800px] mx-auto">
 
-  <div class="col-span-3 space-y-4">
+  <!-- LEFT PANEL: ENVIRONMENT & ORACLE INTELLIGENCE -->
+  <section class="col-span-12 lg:col-span-3 space-y-5">
+    <!-- Weather Card -->
     <div class="card">
-      <h3 class="text-xs text-gold uppercase mb-3">🌦 Local Environment</h3>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between"><span class="opacity-60">Temp</span><b>21°C</b></div>
-        <div class="flex justify-between"><span class="opacity-60">Humidity</span><b>63%</b></div>
-        <div class="flex justify-between"><span class="opacity-60">Fly Risk</span><b class="text-orange-400">MEDIUM</b></div>
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-xs text-[var(--gold)] uppercase font-bold tracking-wider">🌦 Local Microclimate</h3>
+        <span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">LIVE SENSOR</span>
       </div>
-    </div>
-
-    <div class="card">
-      <h3 class="text-xs text-gold uppercase mb-3">🧠 Oracle Intelligence</h3>
-      <div id="oracle-log" class="text-[11px] leading-relaxed opacity-70">
-        System ready. Load tree_metadata.json to begin spatial analysis.
-      </div>
-      <button onclick="runAnalysis()" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-black font-bold py-2 rounded text-xs transition">
-        RUN SPATIAL RISK MODEL
-      </button>
-    </div>
-  </div>
-
-  <div class="col-span-6 card">
-    <div class="flex justify-between items-start mb-6">
-      <div>
-        <h2 class="serif text-2xl italic text-gold">Alpha Grove</h2>
-        <p class="text-[10px] opacity-50">235 TREES • TOPOLOGICAL VIEW</p>
-      </div>
-      <div class="text-right">
-        <div class="text-[10px] opacity-60 uppercase">Field Average Risk</div>
-        <div id="avg-risk" class="text-3xl text-gold font-bold">--</div>
-      </div>
-    </div>
-
-    <div id="grid" class="grid-container">
-      </div>
-  </div>
-
-  <div class="col-span-3 space-y-4">
-    <div class="card">
-      <h3 class="text-xs text-gold uppercase mb-2">📡 Field Sensors</h3>
-      <canvas id="fieldChart" height="150"></canvas>
-    </div>
-
-    <div class="card">
-      <h3 class="text-xs text-gold uppercase mb-3">🧪 Treatment History</h3>
-      <div id="history-log" class="text-[10px] space-y-2 h-32 overflow-y-auto pr-2">
-        <div class="border-l-2 border-gold/30 pl-2">
-          <p class="opacity-40">2026-05-10</p>
-          <p>Copper Sulfate Application (All)</p>
+      <div class="space-y-2.5 text-xs">
+        <div class="flex justify-between items-center py-1 border-b border-white/5">
+          <span class="opacity-60">Canopy Temp</span>
+          <b id="env-temp" class="text-white font-mono text-sm">21.4°C</b>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-white/5">
+          <span class="opacity-60">Relative Humidity</span>
+          <b id="env-humidity" class="text-white font-mono text-sm">63%</b>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-white/5">
+          <span class="opacity-60">Soil Volumetric Moisture</span>
+          <b id="env-soil" class="text-emerald-400 font-mono text-sm">31.2%</b>
+        </div>
+        <div class="flex justify-between items-center py-1">
+          <span class="opacity-60">Bactrocera Oleae Risk</span>
+          <b id="env-risk-badge" class="text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-400/30">MEDIUM</b>
         </div>
       </div>
-      <input id="treat-input" placeholder="New Log Entry..." class="w-full mt-4 p-2 bg-black/40 text-[10px] border border-white/10 rounded">
     </div>
-  </div>
-</div>
 
+    <!-- Oracle Intelligence Engine -->
+    <div class="card">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-xs text-[var(--gold)] uppercase font-bold tracking-wider">🧠 Oracle Intelligence</h3>
+        <span class="text-[9px] text-white/40">AI MODEL v4</span>
+      </div>
+      <div id="oracle-log" class="text-[11px] leading-relaxed opacity-80 bg-black/40 p-3 rounded-lg border border-white/5 min-h-[110px] font-mono text-emerald-300/90">
+        > System initialized.<br>
+        > 235 Olive Digital Twins registered.<br>
+        > Click "RUN SPATIAL RISK MODEL" to simulate field infection dynamics.
+      </div>
+      <button onclick="runAnalysis()" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-black font-bold py-2.5 rounded-lg text-xs transition shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2">
+        <span>⚡</span> <span>RUN SPATIAL RISK MODEL</span>
+      </button>
+    </div>
+
+    <!-- Quick Stats Card -->
+    <div class="card">
+      <h3 class="text-xs text-[var(--gold)] uppercase font-bold tracking-wider mb-3">📌 Sector Status Summary</h3>
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div class="bg-black/30 p-2.5 rounded border border-white/5">
+          <div class="text-[10px] opacity-50 uppercase">Active Trees</div>
+          <div id="stat-total-trees" class="text-lg font-bold text-white mt-0.5">235</div>
+        </div>
+        <div class="bg-black/30 p-2.5 rounded border border-white/5">
+          <div class="text-[10px] opacity-50 uppercase">Sprayed Trees</div>
+          <div id="stat-sprayed" class="text-lg font-bold text-blue-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-black/30 p-2.5 rounded border border-white/5">
+          <div class="text-[10px] opacity-50 uppercase">High Risk</div>
+          <div id="stat-high-risk" class="text-lg font-bold text-red-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-black/30 p-2.5 rounded border border-white/5">
+          <div class="text-[10px] opacity-50 uppercase">Est. Total Harvest</div>
+          <div id="stat-total-yield" class="text-lg font-bold text-[var(--gold)] mt-0.5">-- kg</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MIDDLE PANEL: TOPOLOGICAL MAP GRID -->
+  <section class="col-span-12 lg:col-span-6 card flex flex-col justify-between">
+    <div>
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h2 class="serif text-3xl italic text-[var(--gold)] font-semibold">Alpha Grove</h2>
+          <p id="topological-subtitle" class="text-[10px] opacity-50 tracking-wider">235 TREES • TOPOLOGICAL VIEW (21x15 MATRIX)</p>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] opacity-60 uppercase tracking-widest">Field Average Risk</div>
+          <div id="avg-risk" class="text-3xl text-[var(--gold)] font-bold font-mono">0.00</div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Map Grid -->
+      <div id="grid" class="grid-container">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </div>
+
+    <!-- Map Legend -->
+    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] opacity-80">
+      <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500/40 border border-emerald-500 inline-block"></span> Normal</div>
+      <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[var(--gold)] border-2 border-[var(--gold)] inline-block"></span> Genesis Tree</div>
+      <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500 border border-amber-400 inline-block"></span> Med Risk</div>
+      <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 border border-red-400 inline-block"></span> High Risk</div>
+      <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500/20 border-2 border-blue-500 inline-block"></span> Sprayed</div>
+    </div>
+  </section>
+
+  <!-- RIGHT PANEL: SENSOR TELEMETRY CHART & TREATMENT LOG -->
+  <section class="col-span-12 lg:col-span-3 space-y-5">
+    <!-- Chart Telemetry -->
+    <div class="card">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xs text-[var(--gold)] uppercase font-bold tracking-wider">📡 Field Sensor Telemetry</h3>
+        <span class="text-[9px] text-white/40">24H TIMELINE</span>
+      </div>
+      <div class="relative w-full h-44">
+        <canvas id="fieldChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Treatment History -->
+    <div class="card">
+      <h3 class="text-xs text-[var(--gold)] uppercase font-bold tracking-wider mb-3">🧪 Treatment History</h3>
+      <div id="history-log" class="text-[10px] space-y-2.5 h-36 overflow-y-auto pr-1">
+        <div class="border-l-2 border-[var(--gold)]/50 pl-2 py-0.5">
+          <p class="opacity-40 text-[9px]">2026-05-10 08:30</p>
+          <p class="font-medium">Copper Sulfate Application (Full Sector)</p>
+        </div>
+        <div class="border-l-2 border-emerald-500/50 pl-2 py-0.5">
+          <p class="opacity-40 text-[9px]">2026-04-18 14:15</p>
+          <p class="font-medium">Organic Fly Trap Deployment</p>
+        </div>
+      </div>
+
+      <div class="mt-3 flex gap-2">
+        <input id="treat-input" placeholder="New Log Entry..." class="w-full p-2 bg-black/60 text-[11px] border border-white/10 rounded-lg text-white focus:outline-none focus:border-[var(--gold)] font-mono">
+        <button onclick="addTreatmentLog()" class="bg-[var(--gold)] hover:bg-yellow-500 text-black px-3 py-1.5 rounded-lg text-xs font-bold transition">Add</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- DIGITAL TWIN INSPECTION MODAL -->
 <div id="treeModal" class="modal-overlay" onclick="if(event.target===this) closeTreeModal()">
   <div class="modal-content">
-    <div class="flex justify-between items-start mb-6 border-b border-gold/20 pb-4">
+    <div class="flex justify-between items-start mb-5 border-b border-[var(--gold)]/30 pb-3">
       <div>
-        <h2 class="serif text-3xl text-gold italic" id="m-title">Tree #--</h2>
-        <p class="text-xs opacity-50 uppercase tracking-widest">Digital Twin Status</p>
+        <h2 class="serif text-3xl text-[var(--gold)] italic font-semibold" id="m-title">Tree #--</h2>
+        <p class="text-[10px] opacity-50 uppercase tracking-widest">Digital Twin Status & Telemetry</p>
       </div>
-      <button class="text-2xl text-gold hover:rotate-90 transition" onclick="closeTreeModal()">×</button>
+      <button class="text-2xl text-[var(--gold)] hover:text-white transition" onclick="closeTreeModal()">×</button>
     </div>
 
-    <div id="m-content">
-      <div class="data-row"><span class="data-label">Health Status</span><span id="m-status" class="font-bold">--</span></div>
-      <div class="data-row"><span class="data-label">Infestation Level</span><span id="m-fly">--</span></div>
-      <div class="data-row"><span class="data-label">Estimated Yield</span><span id="m-yield">--</span></div>
-      <div class="data-row"><span class="data-label">Last Treatment</span><span id="m-last">--</span></div>
+    <div id="m-content" class="space-y-1">
+      <div class="data-row"><span class="data-label">Coordinates</span><span id="m-coords" class="font-mono text-xs">--</span></div>
+      <div class="data-row"><span class="data-label">Health Status</span><span id="m-status" class="font-bold text-xs">--</span></div>
+      <div class="data-row"><span class="data-label">Infestation Level (Moth/Fly)</span><span id="m-fly" class="font-mono text-xs">--</span></div>
+      <div class="data-row"><span class="data-label">Estimated Yield</span><span id="m-yield" class="font-mono text-xs">--</span></div>
+      <div class="data-row"><span class="data-label">Treatment State</span><span id="m-last" class="font-mono text-xs">--</span></div>
     </div>
 
-    <button class="w-full mt-8 border border-gold text-gold py-3 hover:bg-gold hover:text-black transition font-bold text-xs">
-      GENERATE DETAILED REPORT
-    </button>
+    <div class="mt-6 flex gap-3">
+      <button id="m-spray-btn" onclick="toggleSprayCurrentTree()" class="w-1/2 border border-blue-500 text-blue-400 py-2.5 rounded-lg hover:bg-blue-600 hover:text-white transition font-bold text-xs flex items-center justify-center gap-1">
+        <span>🚿</span> <span id="m-spray-text">Toggle Spray</span>
+      </button>
+      <button onclick="generateReport()" class="w-1/2 border border-[var(--gold)] text-[var(--gold)] py-2.5 rounded-lg hover:bg-[var(--gold)] hover:text-black transition font-bold text-xs flex items-center justify-center gap-1">
+        <span>📄</span> <span>Download Report</span>
+      </button>
+    </div>
   </div>
 </div>
 
-<script>// UPDATED FIELD ARCHITECTURE
-  // The first 6 rows now start at x=// --- OLIVIUM OS: CORE ENGINE ---
+<script>
+// --- OLIVIUM OS: CORE ENGINE ---
 
 let isConstructorMode = false;
 let activeTreeMap = new Map();
-let treeMetadata = {}; // Data from today.json
+let treeMetadata = {}; // Data from imported json or spatial model
+let fieldTelemetryChart = null;
+let currentModalTreeId = null;
+
+// Initialize telemetry historical data
+const initialSensorData = {
+  labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+  temp: [14.2, 12.8, 16.5, 22.8, 24.1, 19.8, 16.2],
+  moisture: [35, 36, 34, 30, 28, 31, 33],
+  pestCount: [2, 1, 4, 12, 18, 9, 3]
+};
 
 /**
- * INITIALIZE: Priority 1: Browser Memory | Priority 2: Hardcoded Field Logic
+ * INITIALIZE: Priority 1: Browser Memory | Priority 2: Hardcoded Topological Field Logic
  */
 function initializeMap() {
-    const savedLayout = localStorage.getItem('olivium_field_map_v3');
+  const savedLayout = localStorage.getItem('olivium_field_map_v3');
 
-    if (savedLayout) {
-        activeTreeMap = new Map(JSON.parse(savedLayout));
-        console.log("Layout synchronized from Browser Memory.");
-    } else {
-        // Default topological layout
-        const FIELD_ROWS = [
-            { y:1, s:10, c:12 }, { y:2, s:10, c:12 }, { y:3, s:10, c:12 },
-            { y:4, s:10, c:12 }, { y:5, s:10, c:12 }, { y:6, s:10, c:12 },
-            { y:7, s:1,  c:21 }, { y:8, s:1,  c:21 }, { y:9, s:1,  c:21 },
-            { y:10, s:1, c:21 }, { y:11, s:1, c:21 }, { y:12, s:1, c:21 },
-            { y:13, s:4, c:17 }, { y:14, s:4, c:17 }, { y:15, s:4, c:9 }
-        ];
-        FIELD_ROWS.forEach(row => {
-            for(let i = 0; i < row.c; i++){
-                activeTreeMap.set(`${row.s + i},${row.y}`, true);
-            }
-        });
+  if (savedLayout) {
+    try {
+      activeTreeMap = new Map(JSON.parse(savedLayout));
+      console.log("Layout synchronized from Browser Memory.");
+    } catch(e) {
+      loadDefaultLayout();
     }
-    renderLiveGrid();
+  } else {
+    loadDefaultLayout();
+  }
+
+  initChart();
+  renderLiveGrid();
+  updateSectorSummary();
 }
 
 /**
- * CONSTRUCTOR: Toggle between data-view and layout-edit
+ * Load the default topological structure (235 trees across 21x15 grid)
+ */
+function loadDefaultLayout() {
+  activeTreeMap.clear();
+  const FIELD_ROWS = [
+    { y:1, s:10, c:12 }, { y:2, s:10, c:12 }, { y:3, s:10, c:12 },
+    { y:4, s:10, c:12 }, { y:5, s:10, c:12 }, { y:6, s:10, c:12 },
+    { y:7, s:1,  c:21 }, { y:8, s:1,  c:21 }, { y:9, s:1,  c:21 },
+    { y:10, s:1, c:21 }, { y:11, s:1, c:21 }, { y:12, s:1, c:21 },
+    { y:13, s:4, c:17 }, { y:14, s:4, c:17 }, { y:15, s:4, c:9 }
+  ];
+
+  FIELD_ROWS.forEach(row => {
+    for(let i = 0; i < row.c; i++){
+      activeTreeMap.set(`${row.s + i},${row.y}`, true);
+    }
+  });
+}
+
+/**
+ * CONSTRUCTOR: Toggle between data-view and layout-edit mode
  */
 window.toggleConstructor = () => {
-    isConstructorMode = !isConstructorMode;
-    const btn = document.getElementById("constructorBtn");
-    const grid = document.getElementById("grid");
+  isConstructorMode = !isConstructorMode;
+  const btn = document.getElementById("constructorBtn");
+  const grid = document.getElementById("grid");
 
-    if(isConstructorMode) {
-        btn.innerText = "💾 SAVE & LOCK LAYOUT";
-        btn.classList.replace("bg-gold/10", "bg-emerald-600");
-        btn.classList.add("text-black");
-        grid.classList.add("constructor-active");
-    } else {
-        // Commit to LocalStorage
-        const mapData = JSON.stringify(Array.from(activeTreeMap.entries()));
-        localStorage.setItem('olivium_field_map_v3', mapData);
+  if(isConstructorMode) {
+    btn.innerHTML = "<span>💾</span> <span>SAVE & LOCK LAYOUT</span>";
+    btn.classList.replace("bg-[var(--gold)]/10", "bg-emerald-600");
+    btn.classList.replace("text-[var(--gold)]", "text-black");
+    grid.classList.add("constructor-active");
+  } else {
+    // Commit to LocalStorage
+    const mapData = JSON.stringify(Array.from(activeTreeMap.entries()));
+    localStorage.setItem('olivium_field_map_v3', mapData);
 
-        btn.innerText = "🛠 CONSTRUCTOR MODE";
-        btn.classList.replace("bg-emerald-600", "bg-gold/10");
-        btn.classList.remove("text-black");
-        grid.classList.remove("constructor-active");
-        alert("Field layout locked and saved to browser.");
-    }
-    renderLiveGrid();
+    btn.innerHTML = "<span>🛠</span> <span>Constructor Mode</span>";
+    btn.classList.replace("bg-emerald-600", "bg-[var(--gold)]/10");
+    btn.classList.replace("text-black", "text-[var(--gold)]");
+    grid.classList.remove("constructor-active");
+  }
+  renderLiveGrid();
+  updateSectorSummary();
 };
 
 /**
- * RENDER: The visual engine. Recalculates IDs every frame for perfect sequencing.
+ * STREAMING_CHUNK:Rendering visual grid engine...
+ * RENDER: The visual grid engine. Recalculates IDs every frame for perfect sequencing.
  */
 window.renderLiveGrid = () => {
-    const grid = document.getElementById("grid");
-    if(!grid) return;
-    grid.innerHTML = '';
-    let treeIdCounter = 1;
+  const grid = document.getElementById("grid");
+  if(!grid) return;
+  grid.innerHTML = '';
+  let treeIdCounter = 1;
 
-    // Scan the 21x15 grid
-    for(let y = 1; y <= 15; y++) {
-        for(let x = 1; x <= 21; x++) {
-            const key = `${x},${y}`;
-            const cell = document.createElement("div");
+  // Scan the 21x15 matrix row by row
+  for(let y = 1; y <= 15; y++) {
+    for(let x = 1; x <= 21; x++) {
+      const key = `${x},${y}`;
+      const cell = document.createElement("div");
 
-            if(activeTreeMap.has(key)) {
-                const currentId = treeIdCounter++;
-                const data = treeMetadata[currentId.toString()];
+      if(activeTreeMap.has(key)) {
+        const currentId = treeIdCounter++;
+        const data = treeMetadata[currentId.toString()];
 
-                cell.className = "tree";
-                cell.id = `t-${currentId}`;
-                cell.innerText = currentId;
+        cell.className = "tree";
+        cell.id = `t-${currentId}`;
+        cell.innerText = currentId;
 
-                // Apply GENESIS style (First 3)
-                if(currentId <= 3) cell.classList.add('genesis');
+        // Apply GENESIS style (First 3 trees)
+        if(currentId <= 3) cell.classList.add('genesis');
 
-                // PAINTING: Apply styles from today.json
-                if(data) {
-                    if(data.m >= 3) cell.classList.add('risk-high');
-                    else if(data.m >= 2) cell.classList.add('risk-med');
-                    if(data.s === true) cell.classList.add('sprayed');
-                }
-
-                cell.onclick = () => {
-                    if(isConstructorMode) {
-                        activeTreeMap.delete(key); // Remove tree
-                        renderLiveGrid();
-                    } else {
-                        openTreeModal(currentId, data);
-                    }
-                };
-            } else {
-                // Empty space - only interactive in constructor mode
-                cell.className = "cell-empty opacity-0 pointer-events-none";
-                cell.onclick = () => {
-                    if(isConstructorMode) {
-                        activeTreeMap.set(key, true); // Add tree
-                        renderLiveGrid();
-                    }
-                };
-            }
-            grid.appendChild(cell);
+        // Apply metadata risk & treatment styles
+        if(data) {
+          if(data.m >= 3) cell.classList.add('risk-high');
+          else if(data.m >= 2) cell.classList.add('risk-med');
+          if(data.s === true) cell.classList.add('sprayed');
         }
+
+        cell.onclick = () => {
+          if(isConstructorMode) {
+            activeTreeMap.delete(key); // Remove tree from topology
+            renderLiveGrid();
+            updateSectorSummary();
+          } else {
+            openTreeModal(currentId, key, data);
+          }
+        };
+      } else {
+        // Empty grid cell space
+        cell.className = "cell-empty opacity-0 pointer-events-none";
+        cell.onclick = () => {
+          if(isConstructorMode) {
+            activeTreeMap.set(key, true); // Add tree to topology
+            renderLiveGrid();
+            updateSectorSummary();
+          }
+        };
+      }
+      grid.appendChild(cell);
     }
+  }
 };
 
 /**
- * DATA: Import/Export handlers for your Real Field Map
+ * STREAMING_CHUNK:Configuring Spatial Risk Model logic...
+ * SPATIAL RISK MODEL SIMULATION
+ */
+window.runAnalysis = () => {
+  const oracleLog = document.getElementById("oracle-log");
+  oracleLog.innerHTML = "> Executing Spatial Risk Vector Analysis...<br>";
+
+  let totalRisk = 0;
+  let highRiskCount = 0;
+  let sprayedCount = 0;
+  let totalYield = 0;
+
+  let totalTreeCount = activeTreeMap.size;
+  if(totalTreeCount === 0) {
+    oracleLog.innerHTML = "> Error: Grid is empty. Use Constructor Mode to add trees.";
+    return;
+  }
+
+  // Pick random hotspot origins for pest infection dynamics
+  const hotspot1 = Math.floor(Math.random() * totalTreeCount) + 1;
+  const hotspot2 = Math.floor(Math.random() * totalTreeCount) + 1;
+
+  for(let i = 1; i <= totalTreeCount; i++) {
+    // Distance calculation relative to hotspots
+    const dist1 = Math.abs(i - hotspot1);
+    const dist2 = Math.abs(i - hotspot2);
+    const minDist = Math.min(dist1, dist2);
+
+    let infestationLevel = 1; // Default low
+    if (minDist < 3) infestationLevel = 3; // High
+    else if (minDist < 7) infestationLevel = 2; // Medium
+
+    // Maintain existing spray state if present
+    const existingSpray = treeMetadata[i.toString()]?.s || false;
+    if(existingSpray) sprayedCount++;
+
+    const estYield = Math.floor(25 + Math.random() * 20); // 25-45 kg yield per tree
+    totalYield += estYield;
+
+    treeMetadata[i.toString()] = {
+      m: infestationLevel,
+      s: existingSpray,
+      p: `${estYield} kg`
+    };
+
+    totalRisk += infestationLevel;
+    if (infestationLevel >= 3) highRiskCount++;
+  }
+
+  const avgRisk = (totalRisk / totalTreeCount).toFixed(2);
+  document.getElementById("avg-risk").innerText = avgRisk;
+
+  // Log Insights to Oracle Log Card
+  oracleLog.innerHTML += `> Calculated ${totalTreeCount} Tree Nodes.<br>`;
+  oracleLog.innerHTML += `> Spatial Risk Avg: <b class="text-amber-300">${avgRisk}</b><br>`;
+  oracleLog.innerHTML += `> Infection Hotspots detected near Tree #${hotspot1} and Tree #${hotspot2}.<br>`;
+  oracleLog.innerHTML += `> <span class="text-red-400">High Risk Trees: ${highRiskCount}</span>. Targeted spraying recommended.`;
+
+  // Update Telemetry Chart dynamically
+  if (fieldTelemetryChart) {
+    fieldTelemetryChart.data.datasets[2].data = [2, 3, 8, 22, 35, 24, 15];
+    fieldTelemetryChart.update();
+  }
+
+  renderLiveGrid();
+  updateSectorSummary();
+};
+
+/**
+ * STREAMING_CHUNK:Setting up Chart.js sensor canvas...
+ * CHART.JS SENSOR TELEMETRY
+ */
+function initChart() {
+  const ctx = document.getElementById('fieldChart').getContext('2d');
+  
+  fieldTelemetryChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: initialSensorData.labels,
+      datasets: [
+        {
+          label: 'Canopy Temp (°C)',
+          data: initialSensorData.temp,
+          borderColor: '#C5A059',
+          borderWidth: 1.5,
+          tension: 0.4,
+          pointRadius: 2,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Soil Moisture (%)',
+          data: initialSensorData.moisture,
+          borderColor: '#10b981',
+          borderWidth: 1.5,
+          tension: 0.4,
+          pointRadius: 2,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Fly Trap Count',
+          data: initialSensorData.pestCount,
+          borderColor: '#ef4444',
+          borderWidth: 1.5,
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#888', font: { size: 9, family: 'JetBrains Mono' }, boxWidth: 8 }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#666', font: { size: 8 } },
+          grid: { color: 'rgba(255,255,255,0.03)' }
+        },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          ticks: { color: '#666', font: { size: 8 } },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          ticks: { color: '#ef4444', font: { size: 8 } },
+          grid: { drawOnChartArea: false }
+        }
+      }
+    }
+  });
+}
+
+/**
+ * STREAMING_CHUNK:Adding treatment log and modal events...
+ * TREATMENT LOG ENGINE
+ */
+window.addTreatmentLog = () => {
+  const input = document.getElementById("treat-input");
+  const val = input.value.trim();
+  if (!val) return;
+
+  const logContainer = document.getElementById("history-log");
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+  const entry = document.createElement("div");
+  entry.className = "border-l-2 border-[var(--gold)]/70 pl-2 py-0.5 animate-pulse";
+  entry.innerHTML = `
+    <p class="opacity-40 text-[9px]">${now}</p>
+    <p class="font-medium">${val}</p>
+  `;
+
+  logContainer.prepend(entry);
+  input.value = '';
+};
+
+/**
+ * DIGITAL TWIN MODAL LOGIC
+ */
+window.openTreeModal = (id, coords, data) => {
+  currentModalTreeId = id;
+  document.getElementById("m-title").innerText = `Tree #${id}`;
+  document.getElementById("m-coords").innerText = `Grid [${coords}]`;
+  
+  const statusEl = document.getElementById("m-status");
+  const flyEl = document.getElementById("m-fly");
+  const yieldEl = document.getElementById("m-yield");
+  const lastEl = document.getElementById("m-last");
+  const sprayText = document.getElementById("m-spray-text");
+
+  if(data) {
+    statusEl.innerText = data.m >= 3 ? "CRITICAL RISK" : (data.m >= 2 ? "WARNING" : "HEALTHY");
+    statusEl.className = `font-bold text-xs ${data.m >= 3 ? 'text-red-400' : (data.m >= 2 ? 'text-amber-400' : 'text-emerald-400')}`;
+    
+    flyEl.innerText = `${data.m} / 3 Severity Level`;
+    yieldEl.innerText = data.p || "--";
+    lastEl.innerText = data.s ? "Sprayed & Protected" : "Untreated";
+    sprayText.innerText = data.s ? "Mark Untreated" : "Apply Spray Treatment";
+  } else {
+    statusEl.innerText = "NO DATA LOADED";
+    statusEl.className = "font-bold text-xs text-white/50";
+    flyEl.innerText = "--";
+    yieldEl.innerText = "--";
+    lastEl.innerText = "Untreated";
+    sprayText.innerText = "Apply Spray Treatment";
+  }
+
+  document.getElementById("treeModal").classList.add("active");
+};
+
+window.closeTreeModal = () => {
+  document.getElementById("treeModal").classList.remove("active");
+  currentModalTreeId = null;
+};
+
+window.toggleSprayCurrentTree = () => {
+  if(!currentModalTreeId) return;
+  const idStr = currentModalTreeId.toString();
+
+  if(!treeMetadata[idStr]) {
+    treeMetadata[idStr] = { m: 1, s: true, p: "30 kg" };
+  } else {
+    treeMetadata[idStr].s = !treeMetadata[idStr].s;
+  }
+
+  renderLiveGrid();
+  updateSectorSummary();
+  
+  // Refresh modal views
+  const data = treeMetadata[idStr];
+  document.getElementById("m-last").innerText = data.s ? "Sprayed & Protected" : "Untreated";
+  document.getElementById("m-spray-text").innerText = data.s ? "Mark Untreated" : "Apply Spray Treatment";
+};
+
+window.generateReport = () => {
+  if(!currentModalTreeId) return;
+  const id = currentModalTreeId;
+  const data = treeMetadata[id.toString()] || { m: 1, s: false, p: 'Unknown' };
+
+  const reportText = `OLIVIUM OS — DIGITAL TWIN REPORT
+----------------------------------
+Tree ID: #${id}
+Sector: VILLA TOSCAGIALLA (Alpha Grove)
+Timestamp: ${new Date().toLocaleString()}
+Infestation Severity: ${data.m} / 3
+Treatment Status: ${data.s ? 'SPRAYED' : 'UNSPRAYED'}
+Estimated Yield: ${data.p || 'N/A'}
+Recommendation: ${data.m >= 3 ? 'Immediate Targeted Application Required' : 'Standard Routine Monitoring'}
+`;
+
+  const blob = new Blob([reportText], {type: "text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Tree_#${id}_Diagnostic_Report.txt`;
+  a.click();
+};
+
+/**
+ * SUMMARY STATISTICS CALCULATOR
+ */
+function updateSectorSummary() {
+  const total = activeTreeMap.size;
+  document.getElementById("stat-total-trees").innerText = total;
+  document.getElementById("topological-subtitle").innerText = `${total} TREES • TOPOLOGICAL VIEW (21x15 MATRIX)`;
+
+  let sprayed = 0;
+  let highRisk = 0;
+  let totalYield = 0;
+
+  Object.values(treeMetadata).forEach(item => {
+    if(item.s) sprayed++;
+    if(item.m >= 3) highRisk++;
+    if(item.p) totalYield += parseInt(item.p) || 0;
+  });
+
+  document.getElementById("stat-sprayed").innerText = sprayed;
+  document.getElementById("stat-high-risk").innerText = highRisk;
+  document.getElementById("stat-total-yield").innerText = totalYield > 0 ? `${totalYield} kg` : "--";
+}
+
+/**
+ * IMPORT & EXPORT LAYOUT JSON DATA
  */
 window.exportLayout = () => {
-    const mapArray = Array.from(activeTreeMap.entries());
-    const blob = new Blob([JSON.stringify(mapArray)], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "real_field_map_backup.json";
-    a.click();
+  const mapArray = Array.from(activeTreeMap.entries());
+  const blob = new Blob([JSON.stringify(mapArray, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "olivium_alpha_grove_layout.json";
+  a.click();
 };
 
 window.importLayout = (input) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const parsed = JSON.parse(e.target.result);
-        activeTreeMap = new Map(parsed);
-        localStorage.setItem('olivium_field_map_v3', JSON.stringify(parsed));
-        renderLiveGrid();
-        alert("Real Field Map Successfully Loaded.");
-    };
-    reader.readAsText(input.files[0]);
+  const file = input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      activeTreeMap = new Map(parsed);
+      localStorage.setItem('olivium_field_map_v3', JSON.stringify(parsed));
+      renderLiveGrid();
+      updateSectorSummary();
+      alert("Real Field Map Layout Successfully Loaded.");
+    } catch(err) {
+      alert("Invalid JSON format for Field Map Layout.");
+    }
+  };
+  reader.readAsText(file);
 };
 
 window.loadMetadata = (input) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        treeMetadata = JSON.parse(e.target.result);
-        renderLiveGrid();
-        document.getElementById("oracle-log").innerText = "today.json applied to map.";
-    };
-    reader.readAsText(input.files[0]);
+  const file = input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      treeMetadata = JSON.parse(e.target.result);
+      renderLiveGrid();
+      updateSectorSummary();
+      document.getElementById("oracle-log").innerText = "> Metadata file successfully applied to Alpha Grove map grid.";
+    } catch(err) {
+      alert("Invalid Tree Data Metadata JSON file.");
+    }
+  };
+  reader.readAsText(file);
 };
 
-window.openTreeModal = (id, data) => {
-    document.getElementById("m-title").innerText = `Tree #${id}`;
-    document.getElementById("m-status").innerText = data ? (data.s ? "Sprayed" : "Untreated") : "No Data";
-    document.getElementById("m-fly").innerText = data ? data.m : "--";
-    document.getElementById("m-yield").innerText = data ? (data.p || "--") : "--";
-    document.getElementById("treeModal").classList.add("active");
-};
-
-window.closeTreeModal = () => document.getElementById("treeModal").classList.remove("active");
-
-// Bootstrap
+// Bootstrap runtime initialization
 document.addEventListener("DOMContentLoaded", initializeMap);
 </script>
+
 </body>
 </html>
