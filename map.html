@@ -135,10 +135,10 @@
     }
     .btn-purple:hover { background: #a855f7; color: #fff; }
 
-    /* TOPOLOGICAL MAP GRID (21 COLUMNS) */
+    /* TOPOLOGICAL MAP GRID (24 COLUMNS) */
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(21, 1fr);
+      grid-template-columns: repeat(24, 1fr);
       gap: 5px;
       padding: 12px;
       background: rgba(0, 0, 0, 0.5);
@@ -339,7 +339,7 @@
       <div class="flex justify-between items-start" style="margin-bottom:16px;">
         <div>
           <h2 class="serif italic text-gold font-semibold" style="font-size:1.75rem; color:var(--gold);">Alpha Grove</h2>
-          <p id="topological-subtitle" style="font-size:10px; opacity:0.5;">235 TREES • TOPOLOGICAL MATRIX (21x15)</p>
+          <p id="topological-subtitle" style="font-size:10px; opacity:0.5;">235 TREES • TOPOLOGICAL MATRIX (24x18)</p>
         </div>
         <div style="text-align:right;">
           <div style="font-size:9px; opacity:0.6; text-transform:uppercase;">Field Avg Risk</div>
@@ -451,9 +451,10 @@ window.loadDefaultLayout = function() {
   const FIELD_ROWS = [
     { y:1, s:10, c:12 }, { y:2, s:10, c:12 }, { y:3, s:10, c:12 },
     { y:4, s:10, c:12 }, { y:5, s:10, c:12 }, { y:6, s:10, c:12 },
-    { y:7, s:1,  c:21 }, { y:8, s:1,  c:21 }, { y:9, s:1,  c:21 },
-    { y:10, s:1, c:21 }, { y:11, s:1, c:21 }, { y:12, s:1, c:21 },
-    { y:13, s:4, c:17 }, { y:14, s:4, c:17 }, { y:15, s:4, c:9 }
+    { y:7, s:1,  c:24 }, { y:8, s:1,  c:24 }, { y:9, s:1,  c:24 },
+    { y:10, s:1, c:24 }, { y:11, s:1, c:24 }, { y:12, s:1, c:24 },
+    { y:13, s:4, c:20 }, { y:14, s:4, c:20 }, { y:15, s:4, c:12 },
+    { y:16, s:4, c:12 }, { y:17, s:4, c:12 }, { y:18, s:4, c:12 }
   ];
 
   FIELD_ROWS.forEach(row => {
@@ -487,8 +488,8 @@ window.renderLiveGrid = function() {
   grid.innerHTML = '';
   let treeIdCounter = 1;
 
-  for(let y = 1; y <= 15; y++) {
-    for(let x = 1; x <= 21; x++) {
+  for(let y = 1; y <= 18; y++) {
+    for(let x = 1; x <= 24; x++) {
       const key = `${x},${y}`;
       const cell = document.createElement("div");
 
