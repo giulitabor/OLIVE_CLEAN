@@ -11,6 +11,7 @@
             --blue: #3b82f6;
             --olive: #5a7a2b;
             --brown: #8a6d3b;
+            --harvest: #a855f7;
         }
         * {
             box-sizing: border-box;
@@ -21,15 +22,15 @@
             color: #f5eed8;
             font-family: Arial, sans-serif;
             margin: 0;
-            padding-bottom: 180px;
+            padding-bottom: 200px;
         }
         header {
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(0,0,0,0.96);
+            background: rgba(0,0,0,0.97);
             border-bottom: 1px solid #222;
-            padding: 14px;
+            padding: 12px 14px;
         }
         .header-top, .header-bottom {
             display: flex;
@@ -63,43 +64,87 @@
             color: var(--blue);
         }
 
-        /* GPS ACCURACY SWITCH */
-        .switch {
+        /* ---- YOU-ARE-HERE BAR ---- */
+        .locate-bar {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background: #0b0b0b;
+            border-bottom: 1px solid #222;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .locate-row {
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .locate-row span {
+            color: var(--gold);
+        }
+        .locate-progress-track {
+            flex: 1;
+            height: 6px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .locate-progress-fill {
+            height: 100%;
+            background: var(--harvest);
+            width: 0%;
+            transition: width .25s;
+        }
+        .locate-pct {
+            font-size: 10px;
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+
+        /* ---- MINI FIELD MAP ---- */
+        .minimap-wrap {
+            position: sticky;
+            top: 41px;
+            z-index: 850;
+            background: #0b0b0b;
+            border-bottom: 1px solid #222;
+            padding: 8px 12px 10px;
+        }
+        .minimap-label {
+            font-size: 9px;
+            opacity: 0.5;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .minimap {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5px;
+            width: 100%;
+        }
+        .minimap-row {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 1.5px;
+            height: 7px;
+            border-radius: 2px;
             position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 20px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #333;
-            border-radius: 20px;
-            transition: .3s;
             cursor: pointer;
         }
-        .slider:before {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            left: 3px;
-            bottom: 3px;
-            background: #fff;
-            border-radius: 50%;
-            transition: .3s;
+        .minimap-row.current {
+            outline: 1.5px solid #fff;
+            outline-offset: 1px;
         }
-        input:checked + .slider {
-            background: var(--gold);
+        .minimap-cell {
+            border-radius: 1px;
+            background: transparent;
         }
-        input:checked + .slider:before {
-            transform: translateX(14px);
-        }
+        .minimap-cell.tree { background: #333; }
+        .minimap-cell.tree.harvested { background: var(--harvest); }
 
         /* CANVAS CONTAINER */
         .wrapper {
@@ -116,6 +161,14 @@
             padding: 10px;
             border-radius: 6px;
             border: 1px solid #111;
+            scroll-margin-top: 110px;
+        }
+        .row-container.flash {
+            animation: flashRow 1.4s ease;
+        }
+        @keyframes flashRow {
+            0%, 100% { border-color: #111; }
+            30% { border-color: var(--harvest); box-shadow: 0 0 16px rgba(168,85,247,0.5); }
         }
         .row-label {
             font-size: 11px;
@@ -125,6 +178,15 @@
             text-transform: uppercase;
             border-left: 3px solid var(--gold);
             padding-left: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .row-progress {
+            color: #888;
+            font-size: 9px;
+            font-weight: normal;
+            text-transform: none;
         }
 
         /* Strict 14-Column Layout Sourced directly from look2.html Matrix Dimensions */
@@ -153,6 +215,20 @@
             border-color: var(--blue);
             background: rgba(59, 130, 246, 0.08);
         }
+        .tree-card.harvested {
+            border-color: var(--harvest);
+            background: rgba(168, 85, 247, 0.12);
+        }
+        .tree-card.harvested.sprayed {
+            border-image: linear-gradient(135deg, var(--blue), var(--harvest)) 1;
+        }
+        .tree-card.target-flash {
+            animation: targetPulse 1.4s ease;
+        }
+        @keyframes targetPulse {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.12); box-shadow: 0 0 14px rgba(168,85,247,0.9); }
+        }
 
         /* Genesis Initial 3-Tree Variant Layouts */
         .tree-card.genesis {
@@ -169,12 +245,17 @@
             font-weight: bold;
             color: var(--gold);
         }
-        .spray-toggle {
+        .toggle-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+        .spray-toggle, .harvest-toggle {
             background: transparent;
             border: 1px solid #333;
             color: #777;
             font-size: 9px;
-            padding: 2px 4px;
+            padding: 4px 2px;
             border-radius: 3px;
             text-transform: uppercase;
             cursor: pointer;
@@ -183,6 +264,11 @@
         .sprayed .spray-toggle {
             background: var(--blue);
             border-color: var(--blue);
+            color: white;
+        }
+        .harvested .harvest-toggle {
+            background: var(--harvest);
+            border-color: var(--harvest);
             color: white;
         }
 
@@ -205,6 +291,40 @@
         .active-S { background: var(--brown) !important; color: white !important; }
         .active-M { background: var(--olive) !important; color: white !important; }
         .active-A { background: var(--gold) !important; color: black !important; font-weight: bold; }
+
+        /* FLOATING NAV */
+        .float-nav {
+            position: fixed;
+            right: 12px;
+            bottom: 210px;
+            z-index: 950;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .fab {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #151515;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+        }
+        .fab.next-target {
+            background: var(--harvest);
+            border-color: var(--harvest);
+            color: #fff;
+            font-size: 10px;
+            width: 56px;
+            height: 56px;
+        }
 
         /* FIXED SYSTEM FOOTER */
         footer {
@@ -246,7 +366,7 @@
     <div class="header-top">
         <div>
             <h1 class="title">Villa Toscagialla Matrix</h1>
-            <div id="counter" class="small">0 / 0 Sprayed</div>
+            <div id="counter" class="small">0 / 0 Sprayed · 0 / 0 Harvested</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
             <span>GPS</span>
@@ -268,24 +388,54 @@
     </div>
 </header>
 
+<!-- YOU ARE HERE -->
+<div class="locate-bar">
+    <div class="locate-row">ROW <span id="locate-row-num">1</span> / <span id="locate-row-total">21</span></div>
+    <div class="locate-progress-track"><div class="locate-progress-fill" id="locate-progress-fill"></div></div>
+    <div class="locate-pct" id="locate-pct">0%</div>
+</div>
+
+<!-- MINI FIELD MAP -->
+<div class="minimap-wrap">
+    <div class="minimap-label">Field overview — tap a row to jump</div>
+    <div class="minimap" id="minimap"></div>
+</div>
+
 <div class="wrapper">
     <div class="canvas" id="canvas"></div>
+</div>
+
+<div class="float-nav">
+    <div class="fab" id="prev-row-btn">▲</div>
+    <div class="fab" id="next-row-btn">▼</div>
+    <div class="fab next-target" id="next-target-btn">NEXT<br>TREE</div>
 </div>
 
 <footer>
     <div class="legend">
         <div class="legend-item"><div class="box" style="border: 1px solid var(--blue); background: rgba(59,130,246,0.2);"></div> Sprayed</div>
+        <div class="legend-item"><div class="box" style="border: 1px solid var(--harvest); background: rgba(168,85,247,0.25);"></div> Harvested</div>
         <div class="legend-item"><div class="box" style="background: var(--brown);"></div> S: Sparse</div>
         <div class="legend-item"><div class="box" style="background: var(--olive);"></div> M: Medium</div>
-        <div class="legend-item"><div class="box" style="background: var(--gold);"></div> A: Abundant</div>
     </div>
-    <div style="font-size: 9px; opacity: 0.4; text-align: center; margin-top: 4px;">M: Mignola | P: Preflower | O: Olives</div>
+    <div style="font-size: 9px; opacity: 0.4; text-align: center; margin-top: 4px;">M: Mignola | P: Preflower | O: Olives — tap "Next Tree" to jump to the next unharvested tree</div>
 </footer>
+
+<style>
+    /* GPS ACCURACY SWITCH (kept with original styling, placed after footer styles intentionally) */
+    .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #333; border-radius: 20px; transition: .3s; cursor: pointer; }
+    .slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+    input:checked + .slider { background: var(--gold); }
+    input:checked + .slider:before { transform: translateX(14px); }
+</style>
 
 <script>
     const G='g', Y='y', R='r', B='b', E='e';
     const levels = ["-", "S", "M", "A"];
     let gpsWatch = null;
+    let currentRowIndex = 0;
 
     // Direct structural layout matching look2.html with corrections included
     const grid = [
@@ -314,6 +464,23 @@
 
     let treeData = {};
     const canvas = document.getElementById('canvas');
+    const minimapEl = document.getElementById('minimap');
+    let rowObserver = null;
+
+    // Precompute which global tree ids fall in which row, for progress + navigation
+    function buildRowIndex() {
+        const rowIds = [];
+        let id = 1;
+        grid.forEach(rowData => {
+            const ids = [];
+            rowData.forEach(cell => {
+                if (cell !== E) { ids.push(id); id++; }
+            });
+            rowIds.push(ids);
+        });
+        return rowIds;
+    }
+    const rowIds = buildRowIndex();
 
     function render() {
         canvas.innerHTML = '';
@@ -322,7 +489,13 @@
         grid.forEach((rowData, rowIndex) => {
             const rowContainer = document.createElement('div');
             rowContainer.className = 'row-container';
-            rowContainer.innerHTML = `<div class="row-label">Row ${rowIndex + 1}</div>`;
+            rowContainer.dataset.rowIndex = rowIndex;
+            rowContainer.id = `row-${rowIndex}`;
+
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.innerHTML = `<span>Row ${rowIndex + 1}</span><span class="row-progress" id="rp-${rowIndex}"></span>`;
+            rowContainer.appendChild(label);
 
             const treeGrid = document.createElement('div');
             treeGrid.className = 'tree-grid';
@@ -336,19 +509,27 @@
                 } else {
                     const id = globalTreeId;
                     globalTreeId++;
+                    card.id = `tree-${id}`;
 
                     if (!treeData[id]) {
-                        treeData[id] = { sprayed: false, m: 0, p: 0, o: 0 };
+                        treeData[id] = { sprayed: false, harvested: false, m: 0, p: 0, o: 0 };
                     }
+                    if (treeData[id].harvested === undefined) treeData[id].harvested = false;
 
                     if (treeData[id].sprayed) card.classList.add('sprayed');
+                    if (treeData[id].harvested) card.classList.add('harvested');
                     if (id <= 3) card.classList.add('genesis');
 
                     card.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span class="card-id">#${id}</span>
+                        </div>
+                        <div class="toggle-row">
                             <button onclick="toggleSpray(event, ${id}, this)" class="spray-toggle">
-                                ${treeData[id].sprayed ? "Done" : "Spray"}
+                                ${treeData[id].sprayed ? "Sprayed" : "Spray"}
+                            </button>
+                            <button onclick="toggleHarvest(event, ${id}, this)" class="harvest-toggle">
+                                ${treeData[id].harvested ? "Picked" : "Harvest"}
                             </button>
                         </div>
                         <div class="cycle-box">
@@ -365,8 +546,113 @@
             canvas.appendChild(rowContainer);
         });
 
+        buildMinimap();
         updateCounter();
+        updateRowProgress();
+        setupRowObserver();
     }
+
+    function buildMinimap() {
+        minimapEl.innerHTML = '';
+        grid.forEach((rowData, rowIndex) => {
+            const mRow = document.createElement('div');
+            mRow.className = 'minimap-row';
+            mRow.dataset.rowIndex = rowIndex;
+            rowData.forEach((cell, colIndex) => {
+                const mCell = document.createElement('div');
+                if (cell === E) {
+                    mCell.className = 'minimap-cell';
+                } else {
+                    const id = rowIds[rowIndex][countTreesBefore(rowData, colIndex)];
+                    mCell.className = 'minimap-cell tree';
+                    mCell.dataset.treeId = id;
+                }
+                mRow.appendChild(mCell);
+            });
+            mRow.onclick = () => jumpToRow(rowIndex, true);
+            minimapEl.appendChild(mRow);
+        });
+    }
+
+    function countTreesBefore(rowData, colIndex) {
+        let c = 0;
+        for (let i = 0; i < colIndex; i++) if (rowData[i] !== E) c++;
+        return c;
+    }
+
+    function refreshMinimapHarvestColors() {
+        document.querySelectorAll('.minimap-cell.tree').forEach(el => {
+            const id = el.dataset.treeId;
+            if (treeData[id] && treeData[id].harvested) el.classList.add('harvested');
+            else el.classList.remove('harvested');
+        });
+    }
+
+    function setupRowObserver() {
+        if (rowObserver) rowObserver.disconnect();
+        rowObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    currentRowIndex = parseInt(entry.target.dataset.rowIndex);
+                    updateLocateBar();
+                }
+            });
+        }, { rootMargin: '-40% 0px -50% 0px', threshold: 0 });
+        document.querySelectorAll('.row-container').forEach(el => rowObserver.observe(el));
+    }
+
+    function updateLocateBar() {
+        document.getElementById('locate-row-num').innerText = currentRowIndex + 1;
+        document.getElementById('locate-row-total').innerText = grid.length;
+        document.querySelectorAll('.minimap-row').forEach(el => {
+            el.classList.toggle('current', parseInt(el.dataset.rowIndex) === currentRowIndex);
+        });
+        const ids = rowIds[currentRowIndex];
+        const done = ids.filter(id => treeData[id] && treeData[id].harvested).length;
+        const pct = ids.length ? Math.round((done / ids.length) * 100) : 0;
+        document.getElementById('locate-progress-fill').style.width = pct + '%';
+        document.getElementById('locate-pct').innerText = `${done}/${ids.length} picked`;
+    }
+
+    function updateRowProgress() {
+        grid.forEach((rowData, rowIndex) => {
+            const ids = rowIds[rowIndex];
+            const done = ids.filter(id => treeData[id] && treeData[id].harvested).length;
+            const el = document.getElementById(`rp-${rowIndex}`);
+            if (el) el.innerText = ids.length ? `${done}/${ids.length} picked` : '';
+        });
+        updateLocateBar();
+        refreshMinimapHarvestColors();
+    }
+
+    function jumpToRow(rowIndex, flash) {
+        const el = document.getElementById(`row-${rowIndex}`);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (flash) {
+            el.classList.add('flash');
+            setTimeout(() => el.classList.remove('flash'), 1400);
+        }
+    }
+
+    document.getElementById('prev-row-btn').onclick = () => jumpToRow(Math.max(0, currentRowIndex - 1));
+    document.getElementById('next-row-btn').onclick = () => jumpToRow(Math.min(grid.length - 1, currentRowIndex + 1));
+
+    document.getElementById('next-target-btn').onclick = () => {
+        let total = 0;
+        grid.forEach(r => r.forEach(c => { if (c !== E) total++; }));
+        let targetId = null;
+        for (let id = 1; id <= total; id++) {
+            if (!treeData[id] || !treeData[id].harvested) { targetId = id; break; }
+        }
+        if (!targetId) { alert('All trees harvested! 🎉'); return; }
+        const card = document.getElementById(`tree-${targetId}`);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('target-flash');
+            setTimeout(() => card.classList.remove('target-flash'), 1400);
+        }
+    };
 
     window.toggleSpray = (e, id, btn) => {
         e.stopPropagation();
@@ -376,7 +662,7 @@
         const card = btn.closest('.tree-card');
         if (isSprayed) {
             card.classList.add('sprayed');
-            btn.innerText = "Done";
+            btn.innerText = "Sprayed";
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
@@ -398,6 +684,27 @@
 
         save();
         updateCounter();
+    };
+
+    window.toggleHarvest = (e, id, btn) => {
+        e.stopPropagation();
+        const isHarvested = !treeData[id].harvested;
+        treeData[id].harvested = isHarvested;
+
+        const card = btn.closest('.tree-card');
+        if (isHarvested) {
+            card.classList.add('harvested');
+            btn.innerText = "Picked";
+            treeData[id].harvestedAt = new Date().toISOString();
+        } else {
+            card.classList.remove('harvested');
+            btn.innerText = "Harvest";
+            delete treeData[id].harvestedAt;
+        }
+
+        save();
+        updateCounter();
+        updateRowProgress();
     };
 
     window.cycleValue = (e, id, key, btn) => {
@@ -427,7 +734,8 @@
         let total = 0;
         grid.forEach(r => r.forEach(c => { if (c !== E) total++; }));
         const sprayed = Object.values(treeData).filter(t => t.sprayed).length;
-        document.getElementById('counter').innerText = `${sprayed} / ${total} Sprayed`;
+        const harvested = Object.values(treeData).filter(t => t.harvested).length;
+        document.getElementById('counter').innerText = `${sprayed} / ${total} Sprayed · ${harvested} / ${total} Harvested`;
     }
 
     document.getElementById('gps-toggle').addEventListener('change', (e) => {
