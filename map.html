@@ -339,7 +339,7 @@
       <div class="flex justify-between items-start" style="margin-bottom:16px;">
         <div>
           <h2 class="serif italic text-gold font-semibold" style="font-size:1.75rem; color:var(--gold);">Alpha Grove</h2>
-          <p id="topological-subtitle" style="font-size:10px; opacity:0.5;">235 TREES • TOPOLOGICAL MATRIX (24x18)</p>
+          <p id="topological-subtitle" style="font-size:10px; opacity:0.5;">235 TREES • TOPOLOGICAL MATRIX (24x22)</p>
         </div>
         <div style="text-align:right;">
           <div style="font-size:9px; opacity:0.6; text-transform:uppercase;">Field Avg Risk</div>
@@ -488,7 +488,7 @@ window.renderLiveGrid = function() {
   grid.innerHTML = '';
   let treeIdCounter = 1;
 
-  for(let y = 1; y <= 18; y++) {
+  for(let y = 1; y <= 22; y++) {
     for(let x = 1; x <= 24; x++) {
       const key = `${x},${y}`;
       const cell = document.createElement("div");
