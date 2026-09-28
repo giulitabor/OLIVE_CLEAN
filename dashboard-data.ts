@@ -234,3 +234,54 @@ export async function requestVillaBooking(nightDates: string[], guestEmail: stri
 
   if (error) throw error;
 }
+
+
+/* ── OLVM live market data ──────────────────────────────────────────── */
+
+const OLVM_MARKET_MINT =
+  "5AkvDeeV5CFaeUcLSxEcKTwBuNvWPkDe6YXhPwH9pump";
+
+export async function fetchOlvmMarketData() {
+  const url =
+    `https://api.dexscreener.com/token-pairs/v1/solana/${OLVM_MARKET_MINT}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`OLVM market data request failed: ${response.status}`);
+  }
+
+  const pairs = await response.json();
+
+  if (!Array.isArray(pairs) || pairs.length === 0) {
+    return null;
+  }
+
+  // Prefer the pool with the greatest reported USD liquidity.
+  const pair = pairs
+    .filter((p: any) =>
+      p.chainId === "solana" &&
+      p.baseToken?.address === OLVM_MARKET_MINT
+    )
+    .sort(
+      (a: any, b: any) =>
+        Number(b.liquidity?.usd ?? 0) -
+        Number(a.liquidity?.usd ?? 0)
+    )[0];
+
+  if (!pair) return null;
+
+  return {
+    mint: OLVM_MARKET_MINT,
+    symbol: pair.baseToken?.symbol ?? "OLVM",
+    name: pair.baseToken?.name ?? "Olivium",
+    priceUsd: Number(pair.priceUsd ?? 0),
+    change24h: Number(pair.priceChange?.h24 ?? 0),
+    volume24h: Number(pair.volume?.h24 ?? 0),
+    liquidityUsd: Number(pair.liquidity?.usd ?? 0),
+    marketCapUsd: Number(pair.marketCap ?? pair.fdv ?? 0),
+    pairUrl: pair.url ?? null,
+    pairAddress: pair.pairAddress ?? null,
+    updatedAt: new Date().toISOString(),
+  };
+}
