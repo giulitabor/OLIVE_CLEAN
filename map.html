@@ -90,7 +90,15 @@
       transition: border-color 0.3s ease;
     }
     .card:hover { border-color: rgba(197, 160, 89, 0.4); }
+.tree-estimated-kg {
+    font-size: 9px;
+    color: #aaa;
+    margin-top: -2px;
+}
 
+.tree-card:hover .tree-estimated-kg {
+    color: var(--gold);
+}
     /* Buttons */
     .btn {
       font-family: 'JetBrains Mono', monospace;
@@ -183,6 +191,29 @@
     }
     .tree.risk-med { background: rgba(245, 158, 11, 0.8) !important; border-color: #fbbf24; }
     .tree.sprayed { outline: 2px solid #3b82f6; outline-offset: 1px; }
+/* Harvest Heat Map */
+.tree.harvest-none {
+  background: rgba(100, 100, 100, 0.35) !important;
+  border-color: rgba(180, 180, 180, 0.25) !important;
+}
+
+.tree.harvest-1 {
+  background: rgba(16, 185, 129, 0.55) !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 7px rgba(16, 185, 129, 0.35);
+}
+
+.tree.harvest-2 {
+  background: rgba(245, 158, 11, 0.75) !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 9px rgba(245, 158, 11, 0.45);
+}
+
+.tree.harvest-3 {
+  background: rgba(239, 68, 68, 0.85) !important;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 11px rgba(239, 68, 68, 0.55);
+}
 
     @keyframes pulseRisk {
       0%, 100% { transform: scale(1); }
@@ -352,13 +383,39 @@
     </div>
 
     <!-- Legend -->
-    <div style="margin-top:16px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; font-size:10px; opacity:0.8;">
-      <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:rgba(16,185,129,0.5);"></span> Normal</div>
-      <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--gold);"></span> Genesis</div>
-      <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#f59e0b;"></span> Med Risk</div>
-      <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444;"></span> High Risk</div>
-      <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid #3b82f6;"></span> Sprayed</div>
-    </div>
+<!-- Harvest Heat Map Legend -->
+<div style="margin-top:16px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; font-size:10px; opacity:0.9;">
+
+  <div style="font-weight:700; color:var(--gold);">
+    HARVEST HEAT
+  </div>
+
+  <div>
+    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:rgba(100,100,100,0.5);"></span>
+    Not Harvested
+  </div>
+
+  <div>
+    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:rgba(16,185,129,0.7);"></span>
+    1
+  </div>
+
+  <div>
+    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:rgba(245,158,11,0.8);"></span>
+    2
+  </div>
+
+  <div>
+    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:rgba(239,68,68,0.9);"></span>
+    3
+  </div>
+
+  <div>
+    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid #3b82f6;"></span>
+    Sprayed
+  </div>
+
+</div>
   </section>
 
   <!-- RIGHT PANEL: TELEMETRY & LOGS -->
@@ -429,9 +486,56 @@ window.treeMetadata = {};
 window.fieldTelemetryChart = null;
 window.currentModalTreeId = null;
 
-// Initialize layout map
+
+// ============================================================
+// ESTIMATED KG
+// ============================================================
+
+window.getEstimatedKg = function(treeId) {
+  const id = Number(treeId);
+  const colour = window.treeColourMap?.[id];
+
+  // YELLOW: 8.0–12.0 kg, increments of 0.4
+  if (colour === 'yellow') {
+    const values = [
+      8.0, 8.4, 8.8, 9.2, 9.6,
+      10.0, 10.4, 10.8, 11.2, 11.6, 12.0
+    ];
+
+    return values[(id * 7) % values.length];
+  }
+
+  // GREEN: 6.0–8.0 kg, increments of 0.5
+  if (colour === 'green') {
+    const values = [
+      6.0, 6.5, 7.0, 7.5, 8.0
+    ];
+
+    return values[(id * 3) % values.length];
+  }
+
+  // RED: 4.0–6.0 kg, increments of 0.2
+  if (colour === 'red') {
+    const values = [
+      4.0, 4.2, 4.4, 4.6, 4.8,
+      5.0, 5.2, 5.4, 5.6, 5.8, 6.0
+    ];
+
+    return values[(id * 5) % values.length];
+  }
+
+  return null;
+};
+
+
+// ============================================================
+// INITIALIZE MAP
+// ============================================================
+
 window.initializeMap = function() {
+
   const savedLayout = localStorage.getItem('olivium_field_map_v3');
+
   if (savedLayout) {
     try {
       window.activeTreeMap = new Map(JSON.parse(savedLayout));
@@ -446,296 +550,1102 @@ window.initializeMap = function() {
   window.updateSectorSummary();
 };
 
+
+// ============================================================
+// DEFAULT FIELD LAYOUT
+// ============================================================
+
 window.loadDefaultLayout = function() {
+
   window.activeTreeMap.clear();
+
   const FIELD_ROWS = [
-    { y:1, s:10, c:12 }, { y:2, s:10, c:12 }, { y:3, s:10, c:12 },
-    { y:4, s:10, c:12 }, { y:5, s:10, c:12 }, { y:6, s:10, c:12 },
-    { y:7, s:1,  c:24 }, { y:8, s:1,  c:24 }, { y:9, s:1,  c:24 },
-    { y:10, s:1, c:24 }, { y:11, s:1, c:24 }, { y:12, s:1, c:24 },
-    { y:13, s:4, c:20 }, { y:14, s:4, c:20 }, { y:15, s:4, c:12 },
-    { y:16, s:4, c:12 }, { y:17, s:4, c:12 }, { y:18, s:4, c:12 }
+    { y:1,  s:10, c:12 },
+    { y:2,  s:10, c:12 },
+    { y:3,  s:10, c:12 },
+    { y:4,  s:10, c:12 },
+    { y:5,  s:10, c:12 },
+    { y:6,  s:10, c:12 },
+
+    { y:7,  s:1,  c:24 },
+    { y:8,  s:1,  c:24 },
+    { y:9,  s:1,  c:24 },
+    { y:10, s:1,  c:24 },
+    { y:11, s:1,  c:24 },
+    { y:12, s:1,  c:24 },
+
+    { y:13, s:4, c:20 },
+    { y:14, s:4, c:20 },
+    { y:15, s:4, c:12 },
+    { y:16, s:4, c:12 },
+    { y:17, s:4, c:12 },
+    { y:18, s:4, c:12 }
   ];
 
   FIELD_ROWS.forEach(row => {
-    for(let i = 0; i < row.c; i++){
-      window.activeTreeMap.set(`${row.s + i},${row.y}`, true);
+
+    for(let i = 0; i < row.c; i++) {
+
+      window.activeTreeMap.set(
+        `${row.s + i},${row.y}`,
+        true
+      );
+
     }
+
   });
 };
 
+
+// ============================================================
+// CONSTRUCTOR MODE
+// ============================================================
+
 window.toggleConstructor = function() {
-  window.isConstructorMode = !window.isConstructorMode;
-  const btn = document.getElementById("constructorBtn");
-  const grid = document.getElementById("grid");
+
+  window.isConstructorMode =
+    !window.isConstructorMode;
+
+  const btn =
+    document.getElementById("constructorBtn");
+
+  const grid =
+    document.getElementById("grid");
 
   if(window.isConstructorMode) {
-    btn.innerHTML = "<span>💾</span> <span>Save & Lock Layout</span>";
+
+    btn.innerHTML =
+      "<span>💾</span> <span>Save & Lock Layout</span>";
+
     grid.classList.add("constructor-active");
+
   } else {
-    const mapData = JSON.stringify(Array.from(window.activeTreeMap.entries()));
-    localStorage.setItem('olivium_field_map_v3', mapData);
-    btn.innerHTML = "<span>🛠</span> <span>Constructor Mode</span>";
-    grid.classList.remove("constructor-active");
+
+    const mapData =
+      JSON.stringify(
+        Array.from(window.activeTreeMap.entries())
+      );
+
+    localStorage.setItem(
+      'olivium_field_map_v3',
+      mapData
+    );
+
+    btn.innerHTML =
+      "<span>🛠</span> <span>Constructor Mode</span>";
+
+    grid.classList.remove(
+      "constructor-active"
+    );
   }
+
   window.renderLiveGrid();
   window.updateSectorSummary();
 };
+
+
+// ============================================================
+// RENDER LIVE GRID
+// ============================================================
 
 window.renderLiveGrid = function() {
-  const grid = document.getElementById("grid");
+
+  const grid =
+    document.getElementById("grid");
+
   if(!grid) return;
+
   grid.innerHTML = '';
+
   let treeIdCounter = 1;
 
+  // Reset colour map every render
+  window.treeColourMap = {};
+
+
   for(let y = 1; y <= 22; y++) {
+
     for(let x = 1; x <= 24; x++) {
+
       const key = `${x},${y}`;
-      const cell = document.createElement("div");
+
+      const cell =
+        document.createElement("div");
+
+
+      // ------------------------------------------------------
+      // TREE
+      // ------------------------------------------------------
 
       if(window.activeTreeMap.has(key)) {
-        const currentId = treeIdCounter++;
-        const data = window.treeMetadata[currentId.toString()];
 
-        cell.className = "tree";
-        cell.id = `t-${currentId}`;
-        cell.innerText = currentId;
+        const currentId =
+          treeIdCounter++;
 
-        if(currentId <= 3) cell.classList.add('genesis');
+        const idString =
+          currentId.toString();
 
-        if(data) {
-          if(data.m >= 3) cell.classList.add('risk-high');
-          else if(data.m >= 2) cell.classList.add('risk-med');
-          if(data.s === true) cell.classList.add('sprayed');
+        let data =
+          window.treeMetadata[idString];
+
+
+        // ----------------------------------------------------
+        // DETERMINE TREE COLOUR
+        // ----------------------------------------------------
+
+        let treeColour = 'green';
+
+        if(data && Number(data.harvestHeat) >= 3) {
+
+          treeColour = 'red';
+
+        } else if(data && Number(data.harvestHeat) === 2) {
+
+          treeColour = 'red';
+
+        } else if(data && Number(data.harvestHeat) === 1) {
+
+          treeColour = 'green';
+
+        } else {
+
+          treeColour = 'green';
+
         }
 
+
+        // Store colour
+        window.treeColourMap[currentId] =
+          treeColour;
+
+
+        // ----------------------------------------------------
+        // ESTIMATED KG
+        // ----------------------------------------------------
+
+        const estimatedKg =
+          window.getEstimatedKg(currentId);
+
+
+        // ----------------------------------------------------
+        // CREATE METADATA IF MISSING
+        // ----------------------------------------------------
+
+        if(!data) {
+
+          data = {
+            m: 0,
+            s: false,
+            p: "",
+            estimatedKg: estimatedKg
+          };
+
+          window.treeMetadata[idString] =
+            data;
+
+        } else {
+
+          // Always keep estimatedKg in metadata
+          data.estimatedKg =
+            estimatedKg;
+        }
+
+
+        // ----------------------------------------------------
+        // TREE CELL
+        // ----------------------------------------------------
+
+        cell.className = "tree";
+
+        cell.id =
+          `t-${currentId}`;
+
+        cell.innerText =
+          currentId;
+
+
+        // ----------------------------------------------------
+        // HOVER TOOLTIP
+        // ----------------------------------------------------
+
+        cell.title =
+          estimatedKg !== null
+            ? `Tree #${currentId} — Estimated yield: ${estimatedKg.toFixed(1)} kg`
+            : `Tree #${currentId}`;
+
+
+        // ----------------------------------------------------
+        // GENESIS TREES
+        // ----------------------------------------------------
+
+        if(currentId <= 3) {
+
+          cell.classList.add('genesis');
+
+        }
+
+
+        // ----------------------------------------------------
+        // EXISTING RISK / TREATMENT INDICATORS
+        // ----------------------------------------------------
+
+        if(data.m >= 3) {
+
+          cell.classList.add(
+            'risk-high'
+          );
+
+        } else if(data.m >= 2) {
+
+          cell.classList.add(
+            'risk-med'
+          );
+
+        }
+
+
+        if(data.s === true) {
+
+          cell.classList.add(
+            'sprayed'
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // HARVEST HEAT MAP
+        // ----------------------------------------------------
+
+        const harvestHeat =
+          Math.max(
+            0,
+            Math.min(
+              3,
+              Number(data.harvestHeat ?? 0)
+            )
+          );
+
+        cell.classList.add(
+          `harvest-${harvestHeat}`
+        );
+
+
+        // ----------------------------------------------------
+        // CLICK
+        // ----------------------------------------------------
+
         cell.onclick = () => {
+
           if(window.isConstructorMode) {
-            window.activeTreeMap.delete(key);
+
+            window.activeTreeMap.delete(
+              key
+            );
+
             window.renderLiveGrid();
+
             window.updateSectorSummary();
+
           } else {
-            window.openTreeModal(currentId, key, data);
+
+            window.openTreeModal(
+              currentId,
+              key,
+              data
+            );
+
           }
+
         };
+
+
+      // ------------------------------------------------------
+      // EMPTY CELL
+      // ------------------------------------------------------
+
       } else {
-        cell.className = "cell-empty opacity-0";
+
+        cell.className =
+          "cell-empty opacity-0";
+
         cell.onclick = () => {
+
           if(window.isConstructorMode) {
-            window.activeTreeMap.set(key, true);
+
+            window.activeTreeMap.set(
+              key,
+              true
+            );
+
             window.renderLiveGrid();
+
             window.updateSectorSummary();
+
           }
+
         };
+
       }
+
+
       grid.appendChild(cell);
+
     }
+
   }
 };
 
-window.runAnalysis = function() {
-  const oracleLog = document.getElementById("oracle-log");
-  oracleLog.innerHTML = "> Executing Spatial Risk Model...<br>";
 
-  let totalRisk = 0;
-  let highRiskCount = 0;
-  let totalTreeCount = window.activeTreeMap.size;
+// ============================================================
+// OPEN TREE MODAL
+// ============================================================
 
-  if(totalTreeCount === 0) {
-    oracleLog.innerHTML = "> Error: No active trees in sector.";
-    return;
-  }
+window.openTreeModal =
+function(id, coords, data) {
 
-  const hotspot1 = Math.floor(Math.random() * totalTreeCount) + 1;
-  const hotspot2 = Math.floor(Math.random() * totalTreeCount) + 1;
+  window.currentModalTreeId =
+    id;
 
-  for(let i = 1; i <= totalTreeCount; i++) {
-    const dist1 = Math.abs(i - hotspot1);
-    const dist2 = Math.abs(i - hotspot2);
-    const minDist = Math.min(dist1, dist2);
+  document.getElementById(
+    "m-title"
+  ).innerText =
+    `Tree #${id}`;
 
-    let infestationLevel = 1;
-    if (minDist < 3) infestationLevel = 3;
-    else if (minDist < 7) infestationLevel = 2;
+  document.getElementById(
+    "m-coords"
+  ).innerText =
+    `[${coords}]`;
 
-    const existingSpray = window.treeMetadata[i.toString()]?.s || false;
-    const estYield = Math.floor(25 + Math.random() * 20);
 
-    window.treeMetadata[i.toString()] = {
-      m: infestationLevel,
-      s: existingSpray,
-      p: `${estYield} kg`
-    };
+  const statusEl =
+    document.getElementById("m-status");
 
-    totalRisk += infestationLevel;
-    if (infestationLevel >= 3) highRiskCount++;
-  }
+  const flyEl =
+    document.getElementById("m-fly");
 
-  const avgRisk = (totalRisk / totalTreeCount).toFixed(2);
-  document.getElementById("avg-risk").innerText = avgRisk;
+  const yieldEl =
+    document.getElementById("m-yield");
 
-  oracleLog.innerHTML += `> Spatial Risk Avg: <b>${avgRisk}</b><br>`;
-  oracleLog.innerHTML += `> Hotspots near #${hotspot1} and #${hotspot2}.<br>`;
-  oracleLog.innerHTML += `> High Risk Trees: <span style="color:#f87171">${highRiskCount}</span>.`;
+  const lastEl =
+    document.getElementById("m-last");
 
-  window.renderLiveGrid();
-  window.updateSectorSummary();
-};
-
-window.openTreeModal = function(id, coords, data) {
-  window.currentModalTreeId = id;
-  document.getElementById("m-title").innerText = `Tree #${id}`;
-  document.getElementById("m-coords").innerText = `[${coords}]`;
-  
-  const statusEl = document.getElementById("m-status");
-  const flyEl = document.getElementById("m-fly");
-  const yieldEl = document.getElementById("m-yield");
-  const lastEl = document.getElementById("m-last");
 
   if(data) {
-    statusEl.innerText = data.m >= 3 ? "CRITICAL RISK" : (data.m >= 2 ? "WARNING" : "HEALTHY");
-    statusEl.style.color = data.m >= 3 ? '#f87171' : (data.m >= 2 ? '#fbbf24' : '#34d399');
-    flyEl.innerText = `${data.m} / 3 Severity`;
-    yieldEl.innerText = data.p || "--";
-    lastEl.innerText = data.s ? "Sprayed & Protected" : "Untreated";
+
+    statusEl.innerText =
+      data.m >= 3
+        ? "CRITICAL RISK"
+        : (
+            data.m >= 2
+              ? "WARNING"
+              : "HEALTHY"
+          );
+
+
+    statusEl.style.color =
+      data.m >= 3
+        ? '#f87171'
+        : (
+            data.m >= 2
+              ? '#fbbf24'
+              : '#34d399'
+          );
+
+
+    flyEl.innerText =
+      `${data.m || 0} / 3 Severity`;
+
+
+    // SHOW ESTIMATED KG
+    yieldEl.innerText =
+      data.estimatedKg !== null &&
+      data.estimatedKg !== undefined
+        ? `${Number(data.estimatedKg).toFixed(1)} kg`
+        : "--";
+
+
+    lastEl.innerText =
+      data.s
+        ? "Sprayed & Protected"
+        : "Untreated";
+
+
   } else {
-    statusEl.innerText = "NO DATA";
-    statusEl.style.color = "#888";
-    flyEl.innerText = "--";
-    yieldEl.innerText = "--";
-    lastEl.innerText = "Untreated";
+
+    statusEl.innerText =
+      "NO DATA";
+
+    statusEl.style.color =
+      "#888";
+
+    flyEl.innerText =
+      "--";
+
+    yieldEl.innerText =
+      "--";
+
+    lastEl.innerText =
+      "Untreated";
   }
 
-  document.getElementById("treeModal").classList.add("active");
+
+  document.getElementById(
+    "treeModal"
+  ).classList.add("active");
 };
+
+
+// ============================================================
+// CLOSE TREE MODAL
+// ============================================================
 
 window.closeTreeModal = function() {
-  document.getElementById("treeModal").classList.remove("active");
-  window.currentModalTreeId = null;
+
+  document.getElementById(
+    "treeModal"
+  ).classList.remove("active");
+
+  window.currentModalTreeId =
+    null;
 };
 
-window.toggleSprayCurrentTree = function() {
-  if(!window.currentModalTreeId) return;
-  const idStr = window.currentModalTreeId.toString();
+
+// ============================================================
+// TOGGLE SPRAY
+// ============================================================
+
+window.toggleSprayCurrentTree =
+function() {
+
+  if(!window.currentModalTreeId)
+    return;
+
+  const idStr =
+    window.currentModalTreeId.toString();
+
 
   if(!window.treeMetadata[idStr]) {
-    window.treeMetadata[idStr] = { m: 1, s: true, p: "30 kg" };
+
+    const estimatedKg =
+      window.getEstimatedKg(
+        window.currentModalTreeId
+      );
+
+    window.treeMetadata[idStr] = {
+
+      m: 1,
+      s: true,
+      p: "30 kg",
+      estimatedKg: estimatedKg
+
+    };
+
   } else {
-    window.treeMetadata[idStr].s = !window.treeMetadata[idStr].s;
+
+    window.treeMetadata[idStr].s =
+      !window.treeMetadata[idStr].s;
+
   }
 
+
   window.renderLiveGrid();
+
   window.updateSectorSummary();
+
   window.closeTreeModal();
 };
 
-window.generateReport = function() {
-  if(!window.currentModalTreeId) return;
-  const id = window.currentModalTreeId;
-  const data = window.treeMetadata[id.toString()] || { m: 1, s: false, p: 'N/A' };
 
-  const reportText = `OLIVIUM OS — DIAGNOSTIC REPORT\nTree ID: #${id}\nRisk: ${data.m}/3\nStatus: ${data.s ? 'SPRAYED' : 'UNSPRAYED'}`;
-  const blob = new Blob([reportText], {type: "text/plain"});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Tree_#${id}_Report.txt`;
+// ============================================================
+// RUN SPATIAL ANALYSIS
+// ============================================================
+
+window.runAnalysis =
+function() {
+
+  const oracleLog =
+    document.getElementById(
+      "oracle-log"
+    );
+
+  oracleLog.innerHTML =
+    "> Executing Spatial Risk Model...<br>";
+
+
+  let totalRisk = 0;
+
+  let highRiskCount = 0;
+
+  let totalTreeCount =
+    window.activeTreeMap.size;
+
+
+  if(totalTreeCount === 0) {
+
+    oracleLog.innerHTML =
+      "> Error: No active trees in sector.";
+
+    return;
+  }
+
+
+  const hotspot1 =
+    Math.floor(
+      Math.random() * totalTreeCount
+    ) + 1;
+
+
+  const hotspot2 =
+    Math.floor(
+      Math.random() * totalTreeCount
+    ) + 1;
+
+
+  for(
+    let i = 1;
+    i <= totalTreeCount;
+    i++
+  ) {
+
+    const dist1 =
+      Math.abs(i - hotspot1);
+
+    const dist2 =
+      Math.abs(i - hotspot2);
+
+    const minDist =
+      Math.min(
+        dist1,
+        dist2
+      );
+
+
+    let infestationLevel = 1;
+
+
+    if(minDist < 3)
+
+      infestationLevel = 3;
+
+    else if(minDist < 7)
+
+      infestationLevel = 2;
+
+
+    const existingSpray =
+      window.treeMetadata[
+        i.toString()
+      ]?.s || false;
+
+
+    const existingData =
+      window.treeMetadata[
+        i.toString()
+      ] || {};
+
+
+    const existingEstimatedKg =
+      existingData.estimatedKg ??
+      window.getEstimatedKg(i);
+
+
+    window.treeMetadata[
+      i.toString()
+    ] = {
+
+      ...existingData,
+
+      m: infestationLevel,
+
+      s: existingSpray,
+
+      p: existingData.p || "",
+
+      estimatedKg:
+        existingEstimatedKg
+
+    };
+
+
+    totalRisk +=
+      infestationLevel;
+
+
+    if(infestationLevel >= 3)
+
+      highRiskCount++;
+
+  }
+
+
+  const avgRisk =
+    (
+      totalRisk /
+      totalTreeCount
+    ).toFixed(2);
+
+
+  document.getElementById(
+    "avg-risk"
+  ).innerText =
+    avgRisk;
+
+
+  oracleLog.innerHTML +=
+    `> Spatial Risk Avg: <b>${avgRisk}</b><br>`;
+
+
+  oracleLog.innerHTML +=
+    `> Hotspots near #${hotspot1} and #${hotspot2}.<br>`;
+
+
+  oracleLog.innerHTML +=
+    `> High Risk Trees: <span style="color:#f87171">${highRiskCount}</span>.`;
+
+
+  window.renderLiveGrid();
+
+  window.updateSectorSummary();
+};
+
+
+// ============================================================
+// GENERATE REPORT
+// ============================================================
+
+window.generateReport =
+function() {
+
+  if(!window.currentModalTreeId)
+    return;
+
+
+  const id =
+    window.currentModalTreeId;
+
+
+  const data =
+    window.treeMetadata[
+      id.toString()
+    ] ||
+    {
+      m: 1,
+      s: false,
+      p: 'N/A'
+    };
+
+
+  const reportText =
+`OLIVIUM OS — DIAGNOSTIC REPORT
+Tree ID: #${id}
+Risk: ${data.m}/3
+Estimated Yield: ${
+  data.estimatedKg !== undefined
+    ? data.estimatedKg + ' kg'
+    : 'N/A'
+}
+Status: ${
+  data.s
+    ? 'SPRAYED'
+    : 'UNSPRAYED'
+}`;
+
+
+  const blob =
+    new Blob(
+      [reportText],
+      {
+        type: "text/plain"
+      }
+    );
+
+
+  const a =
+    document.createElement('a');
+
+  a.href =
+    URL.createObjectURL(blob);
+
+  a.download =
+    `Tree_#${id}_Report.txt`;
+
   a.click();
 };
 
-window.addTreatmentLog = function() {
-  const input = document.getElementById("treat-input");
-  const val = input.value.trim();
-  if (!val) return;
 
-  const logContainer = document.getElementById("history-log");
-  const entry = document.createElement("div");
-  entry.style.borderLeft = "2px solid var(--gold)";
-  entry.style.paddingLeft = "8px";
-  entry.innerHTML = `<p style="opacity:0.4; font-size:9px;">${new Date().toLocaleTimeString()}</p><p>${val}</p>`;
+// ============================================================
+// ADD TREATMENT LOG
+// ============================================================
+
+window.addTreatmentLog =
+function() {
+
+  const input =
+    document.getElementById(
+      "treat-input"
+    );
+
+  const val =
+    input.value.trim();
+
+
+  if(!val)
+    return;
+
+
+  const logContainer =
+    document.getElementById(
+      "history-log"
+    );
+
+
+  const entry =
+    document.createElement(
+      "div"
+    );
+
+
+  entry.style.borderLeft =
+    "2px solid var(--gold)";
+
+  entry.style.paddingLeft =
+    "8px";
+
+
+  entry.innerHTML =
+    `<p style="opacity:0.4; font-size:9px;">
+      ${new Date().toLocaleTimeString()}
+    </p>
+    <p>${val}</p>`;
+
 
   logContainer.prepend(entry);
+
   input.value = '';
 };
 
-window.updateSectorSummary = function() {
-  const total = window.activeTreeMap.size;
-  document.getElementById("stat-total-trees").innerText = total;
+
+// ============================================================
+// SECTOR SUMMARY
+// ============================================================
+
+window.updateSectorSummary =
+function() {
+
+  const total =
+    window.activeTreeMap.size;
+
+
+  document.getElementById(
+    "stat-total-trees"
+  ).innerText =
+    total;
+
 
   let sprayed = 0;
+
   let highRisk = 0;
+
   let totalYield = 0;
 
-  Object.values(window.treeMetadata).forEach(item => {
-    if(item.s) sprayed++;
-    if(item.m >= 3) highRisk++;
-    if(item.p) totalYield += parseInt(item.p) || 0;
+
+  Object.values(
+    window.treeMetadata
+  ).forEach(item => {
+
+    if(item.s)
+
+      sprayed++;
+
+
+    if(item.m >= 3)
+
+      highRisk++;
+
+
+    if(item.p)
+
+      totalYield +=
+        parseInt(item.p) || 0;
+
   });
 
-  document.getElementById("stat-sprayed").innerText = sprayed;
-  document.getElementById("stat-high-risk").innerText = highRisk;
-  document.getElementById("stat-total-yield").innerText = totalYield > 0 ? `${totalYield} kg` : "--";
+
+  document.getElementById(
+    "stat-sprayed"
+  ).innerText =
+    sprayed;
+
+
+  document.getElementById(
+    "stat-high-risk"
+  ).innerText =
+    highRisk;
+
+
+  document.getElementById(
+    "stat-total-yield"
+  ).innerText =
+    totalYield > 0
+      ? `${totalYield} kg`
+      : "--";
 };
 
-window.exportLayout = function() {
-  const mapArray = Array.from(window.activeTreeMap.entries());
-  const blob = new Blob([JSON.stringify(mapArray)], {type: "application/json"});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = "olivium_grove_layout.json";
+
+// ============================================================
+// EXPORT LAYOUT
+// ============================================================
+
+window.exportLayout =
+function() {
+
+  const mapArray =
+    Array.from(
+      window.activeTreeMap.entries()
+    );
+
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          mapArray
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+
+  const a =
+    document.createElement(
+      'a'
+    );
+
+
+  a.href =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  a.download =
+    "olivium_grove_layout.json";
+
+
   a.click();
 };
 
-window.importLayout = function(input) {
-  const file = input.files[0];
-  if(!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    window.activeTreeMap = new Map(JSON.parse(e.target.result));
-    localStorage.setItem('olivium_field_map_v3', JSON.stringify(Array.from(window.activeTreeMap.entries())));
+// ============================================================
+// IMPORT LAYOUT
+// ============================================================
+
+window.importLayout =
+function(input) {
+
+  const file =
+    input.files[0];
+
+  if(!file)
+    return;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+  (e) => {
+
+    window.activeTreeMap =
+      new Map(
+        JSON.parse(
+          e.target.result
+        )
+      );
+
+
+    localStorage.setItem(
+      'olivium_field_map_v3',
+      JSON.stringify(
+        Array.from(
+          window.activeTreeMap.entries()
+        )
+      )
+    );
+
+
     window.renderLiveGrid();
+
     window.updateSectorSummary();
+
   };
+
+
   reader.readAsText(file);
 };
 
-window.loadMetadata = function(input) {
-  const file = input.files[0];
-  if(!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    window.treeMetadata = JSON.parse(e.target.result);
+// ============================================================
+// LOAD METADATA
+// ============================================================
+
+window.loadMetadata =
+function(input) {
+
+  const file =
+    input.files[0];
+
+  if(!file)
+    return;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+  (e) => {
+
+    window.treeMetadata =
+      JSON.parse(
+        e.target.result
+      );
+
+
+    // Add estimatedKg to imported trees
+    Object.keys(
+      window.treeMetadata
+    ).forEach(id => {
+
+      if(
+        window.treeMetadata[id]
+          .estimatedKg === undefined
+      ) {
+
+        window.treeMetadata[id]
+          .estimatedKg =
+            window.getEstimatedKg(id);
+
+      }
+
+    });
+
+
     window.renderLiveGrid();
+
     window.updateSectorSummary();
+
   };
+
+
   reader.readAsText(file);
 };
 
-// Initialize Chart on Module Load
-document.addEventListener('ChartJSLoaded', () => {
-  const ctx = document.getElementById('fieldChart').getContext('2d');
-  window.fieldTelemetryChart = new window.Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-      datasets: [{
-        label: 'Temp (°C)',
-        data: [14, 13, 17, 23, 24, 19],
-        borderColor: '#C5A059',
-        borderWidth: 1.5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
-    }
-  });
-});
 
-document.addEventListener("DOMContentLoaded", window.initializeMap);
+// ============================================================
+// CHART
+// ============================================================
+
+document.addEventListener(
+  'ChartJSLoaded',
+  () => {
+
+    const ctx =
+      document
+        .getElementById(
+          'fieldChart'
+        )
+        .getContext('2d');
+
+
+    window.fieldTelemetryChart =
+      new window.Chart(
+        ctx,
+        {
+
+          type: 'line',
+
+          data: {
+
+            labels: [
+              '00:00',
+              '04:00',
+              '08:00',
+              '12:00',
+              '16:00',
+              '20:00'
+            ],
+
+            datasets: [
+
+              {
+
+                label:
+                  'Temp (°C)',
+
+                data: [
+                  14,
+                  13,
+                  17,
+                  23,
+                  24,
+                  19
+                ],
+
+                borderColor:
+                  '#C5A059',
+
+                borderWidth:
+                  1.5
+
+              }
+
+            ]
+
+          },
+
+          options: {
+
+            responsive:
+              true,
+
+            maintainAspectRatio:
+              false,
+
+            plugins: {
+
+              legend: {
+
+                display:
+                  false
+
+              }
+
+            }
+
+          }
+
+        }
+      );
+
+  }
+);
+
+
+// ============================================================
+// START
+// ============================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  window.initializeMap
+);
+
 </script>
-
 </body>
 </html>
