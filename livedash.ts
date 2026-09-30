@@ -863,7 +863,7 @@ function updateSensorUI(
 
 
   // Do not block the sensor realtime callback.
-  void updateLiveTicker();
+  //void updateLiveTicker();
 }
 
 
