@@ -1052,20 +1052,19 @@ export function subscribeToSensorData() {
         }
       )
 
-      .subscribe(
-        (
-          status
-        ) => {
+    .subscribe(
+  (
+    status,
+    err
+  ) => {
 
-          console.log(
-            "[SENSOR] sensor_readings:",
-            status
-          );
-        }
-      );
-
-
-  return sensorChannel;
+    console.log(
+      "[SENSOR] sensor_readings:",
+      status,
+      err || ""
+    );
+  }
+);
 }
 
 
@@ -1138,18 +1137,19 @@ export function subscribeToFieldSensorData() {
         }
       )
 
-      .subscribe(
-        (
-          status
-        ) => {
+.subscribe(
+  (
+    status,
+    err
+  ) => {
 
-          console.log(
-            "[NODE_SENSOR] Subscription:",
-            status
-          );
-        }
-      );
-
+    console.log(
+      "[NODE_SENSOR] Subscription:",
+      status,
+      err || ""
+    );
+  }
+);
 
   return fieldSensorChannel;
 }
@@ -1220,16 +1220,18 @@ export function subscribeToTreeUpdates() {
       )
 
       .subscribe(
-        (
-          status
-        ) => {
+  (
+    status,
+    err
+  ) => {
 
-          console.log(
-            "[TREE] Subscription:",
-            status
-          );
-        }
-      );
+    console.log(
+      "[TREE] Subscription:",
+      status,
+      err || ""
+    );
+  }
+);
 
 
   return treeChannel;
