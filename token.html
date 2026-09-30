@@ -641,6 +641,7 @@
       list-style: none;
 
       display: grid;
+
       gap: 11px;
 
       padding-top: 20px;
@@ -694,231 +695,6 @@
       font-size: 12px;
 
       line-height: 1.8;
-    }
-
-    /* =========================================================
-       240 TREES
-    ========================================================= */
-
-    .trees {
-      padding: 120px 0;
-      background: var(--cream);
-    }
-
-    .trees-header {
-      max-width: 720px;
-      margin-bottom: 55px;
-    }
-
-    .tree-feature {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      min-height: 590px;
-
-      border-radius: var(--radius);
-      overflow: hidden;
-
-      background: var(--olive-deep);
-      color: white;
-
-      box-shadow: var(--shadow);
-    }
-
-    .tree-image {
-      min-height: 590px;
-
-      background-image:
-        linear-gradient(
-          180deg,
-          rgba(10,30,23,0.05),
-          rgba(10,30,23,0.48)
-        ),
-        url("https://raw.githubusercontent.com/kyngrick/olivium_photos/main/grovedrone1.png");
-
-      background-size: cover;
-      background-position: center;
-    }
-
-    .tree-content {
-      padding: 70px;
-
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .tree-number {
-      font-family: Georgia, serif;
-
-      font-size: clamp(90px, 12vw, 160px);
-
-      line-height: 0.8;
-
-      color: var(--gold-light);
-
-      margin-bottom: 25px;
-    }
-
-    .tree-content h3 {
-      font-family: Georgia, serif;
-
-      font-size: 42px;
-
-      line-height: 1.05;
-
-      font-weight: 400;
-
-      margin-bottom: 20px;
-    }
-
-    .tree-content p {
-      color: rgba(255,255,255,0.72);
-
-      font-size: 16px;
-
-      line-height: 1.8;
-
-      max-width: 520px;
-    }
-
-    .tree-flow {
-      margin-top: 35px;
-
-      display: flex;
-      flex-wrap: wrap;
-
-      align-items: center;
-
-      gap: 9px;
-
-      font-size: 10px;
-
-      letter-spacing: 0.10em;
-
-      text-transform: uppercase;
-
-      color: var(--gold-light);
-    }
-
-    .tree-flow span:not(:last-child)::after {
-      content: "→";
-
-      margin-left: 9px;
-
-      color: rgba(255,255,255,0.35);
-    }
-
-    /* =========================================================
-       MIGNOLE
-    ========================================================= */
-
-    .mignole {
-      padding: 120px 0;
-      background: var(--paper);
-    }
-
-    .mignole-grid {
-      display: grid;
-      grid-template-columns: 0.85fr 1.15fr;
-      gap: 80px;
-      align-items: center;
-    }
-
-    .mignole-image {
-      height: 620px;
-
-      object-fit: cover;
-
-      object-position: center;
-
-      border-radius: var(--radius);
-
-      box-shadow: var(--shadow);
-    }
-
-    .mignole-copy {
-      font-family: Georgia, serif;
-
-      font-size: 30px;
-
-      line-height: 1.35;
-
-      color: var(--olive);
-
-      margin-bottom: 25px;
-    }
-
-    .mignole-small {
-      color: var(--muted);
-
-      font-size: 16px;
-
-      line-height: 1.8;
-    }
-
-    /* =========================================================
-       HOW OLVM WORKS
-    ========================================================= */
-
-    .how {
-      padding: 120px 0;
-      background: var(--paper);
-    }
-
-    .how-heading {
-      text-align: center;
-
-      max-width: 760px;
-
-      margin: 0 auto 65px;
-    }
-
-    .steps {
-      display: grid;
-
-      grid-template-columns: repeat(3, 1fr);
-
-      gap: 20px;
-    }
-
-    .step {
-      padding: 38px;
-
-      border: 1px solid var(--line);
-
-      border-radius: var(--radius-small);
-
-      background: white;
-    }
-
-    .step-number {
-      color: var(--gold);
-
-      font-family: Georgia, serif;
-
-      font-size: 44px;
-
-      margin-bottom: 25px;
-    }
-
-    .step h3 {
-      font-family: Georgia, serif;
-
-      font-size: 27px;
-
-      font-weight: 400;
-
-      color: var(--olive);
-
-      margin-bottom: 13px;
-    }
-
-    .step p {
-      color: var(--muted);
-
-      font-size: 15px;
-
-      line-height: 1.75;
     }
 
     /* =========================================================
@@ -1117,7 +893,7 @@
     }
 
     /* =========================================================
-       WHAT OLVM IS / ISN'T
+       CLARITY
     ========================================================= */
 
     .clarity {
@@ -1861,7 +1637,6 @@
 
       .official-grid {
         grid-template-columns: 1fr;
-      }
 
       .official-item {
         border-right: none;
@@ -1907,1659 +1682,209 @@
 
 <body>
 
-  <!-- ========================================================
-       NAVIGATION
-  ========================================================= -->
-
+  <!-- NAVIGATION -->
   <nav class="nav">
-
     <div class="nav-inner">
-
-      <a class="brand" href="index.html">
-        OLIVIUM
-      </a>
-
+      <a class="brand" href="index.html">OLIVIUM</a>
       <div class="nav-links">
-
-        <a href="index.html">
-          Home
-        </a>
-
-        <a href="discover.html">
-          Discover
-        </a>
-
-        <a href="#guardians">
-          Tiers
-        </a>
-
-        <a href="token.html">
-          OLVM
-        </a>
-
-        <a href="dashboard.html">
-          Dashboard
-        </a>
-
-        <a class="nav-cta" href="#buy_connect_check">
-          Become a Guardian
-        </a>
-
+        <a href="index.html">Home</a>
+        <a href="discover.html">Discover</a>
+        <a href="#guardians">Tiers</a>
+        <a href="token.html">OLVM</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a class="nav-cta" href="#buy_connect_check">Become a Guardian</a>
       </div>
-
     </div>
-
   </nav>
 
-
-  <!-- ========================================================
-       HERO
-  ========================================================= -->
-
+  <!-- HERO -->
   <header class="hero">
-
     <div class="hero-image"></div>
-
     <div class="hero-content">
-
       <div>
-
-        <div class="eyebrow">
-          SOLANA · OLVM · OLIVIUM
-        </div>
-
-        <h1>
-          OLVM
-        </h1>
-
-        <h2>
-          The digital layer of a real olive estate in Tuscany.
-        </h2>
-
+        <div class="eyebrow">SOLANA · OLVM · OLIVIUM</div>
+        <h1>OLVM</h1>
+        <h2>The digital layer of a real olive estate in Tuscany.</h2>
         <p class="hero-copy">
           OLVM connects a global digital community with OLIVIUM —
           a living estate built around olive trees, harvest,
           stewardship and the experience of returning to Tuscany.
         </p>
-
         <div class="hero-buttons">
-
-          <a
-            class="btn btn-gold"
-            href="#guardians"
-          >
-            Explore Guardian Tiers
-          </a>
-
-          <a
-            class="btn btn-outline"
-            href="discover.html"
-          >
-            Discover OLIVIUM
-          </a>
-
+          <a class="btn btn-gold" href="#guardians">Explore Guardian Tiers</a>
+          <a class="btn btn-outline" href="discover.html">Discover OLIVIUM</a>
         </div>
-
       </div>
 
-
       <div class="hero-card">
-
-        <div class="hero-card-label">
-          The idea
-        </div>
-
-        <h3>
-          Real land.<br>
-          Real trees.<br>
-          Digital community.
-        </h3>
-
+        <div class="hero-card-label">The idea</div>
+        <h3>Real land.<br>Real trees.<br>Digital community.</h3>
         <div class="hero-card-line">
           <span>Estate</span>
           <span>San Vincenzo, Tuscany</span>
         </div>
-
         <div class="hero-card-line">
           <span>Grove</span>
           <span>240 olive trees</span>
         </div>
-
         <div class="hero-card-line">
           <span>Network</span>
           <span>Solana</span>
         </div>
-
         <div class="hero-card-line">
           <span>Token</span>
           <span>OLVM</span>
         </div>
-
       </div>
-
     </div>
-
   </header>
 
-
-  <!-- ========================================================
-       STORY
-  ========================================================= -->
-
+  <!-- STORY -->
   <section class="intro">
-
     <div class="container intro-grid">
-
       <div>
-
-        <div class="section-kicker">
-          The story
-        </div>
-
-        <h2 class="section-title">
-          A token with a place behind it.
-        </h2>
-
+        <div class="section-kicker">The story</div>
+        <h2 class="section-title">A token with a place behind it.</h2>
         <p class="intro-text">
           OLIVIUM begins with something physical: a Tuscan estate,
           an olive grove, the seasons, the harvest and the people
           who choose to become part of its story.
         </p>
-
         <br>
-
         <p class="intro-text">
           OLVM is the digital layer connecting that physical world
           with a global community of Guardians.
         </p>
-
         <br>
-
-        <a
-          class="btn btn-gold"
-          href="discover.html"
-        >
-          Read the deeper story →
-        </a>
-
+        <a class="btn btn-gold" href="discover.html">Read the deeper story →</a>
       </div>
-
       <div>
-
-        <img
-          class="intro-image"
-          src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png"
-          alt="Aerial view of the OLIVIUM estate in Tuscany"
-          loading="lazy"
-        >
-
+        <img class="intro-image" src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png" alt="Aerial view of the OLIVIUM estate in Tuscany" loading="lazy">
       </div>
-
     </div>
-
   </section>
 
-
-  <!-- ========================================================
-       OLVM AT A GLANCE
-  ========================================================= -->
-
+  <!-- TOKEN SNAPSHOT -->
   <section class="snapshot">
-
     <div class="container">
-
       <div class="snapshot-heading">
-
-        <div class="section-kicker">
-          OLVM at a glance
-        </div>
-
-        <h2 class="section-title">
-          A digital token connected
-          to a physical place.
-        </h2>
-
+        <div class="section-kicker">OLVM Live Market Data</div>
+        <h2 class="section-title">A digital token connected to a physical place.</h2>
       </div>
 
       <div class="token-grid">
-
         <div class="token-box">
-
-          <div class="token-box-label">
-            Token
-          </div>
-
-          <div class="token-box-value">
-            OLVM
-          </div>
-
+          <div class="token-box-label">Price (USD)</div>
+          <div class="token-box-value" id="token-price">Loading...</div>
         </div>
 
         <div class="token-box">
-
-          <div class="token-box-label">
-            Network
-          </div>
-
-          <div class="token-box-value">
-            Solana
-          </div>
-
+          <div class="token-box-label">Market Cap</div>
+          <div class="token-box-value" id="token-marketcap">Loading...</div>
         </div>
 
         <div class="token-box">
-
-          <div class="token-box-label">
-            Estate
-          </div>
-
-          <div class="token-box-value">
-            Tuscany
-          </div>
-
+          <div class="token-box-label">24h Volume</div>
+          <div class="token-box-value" id="token-volume">Loading...</div>
         </div>
 
         <div class="token-box">
-
-          <div class="token-box-label">
-            Grove
-          </div>
-
-          <div class="token-box-value">
-            240 Trees
-          </div>
-
+          <div class="token-box-label">Liquidity</div>
+          <div class="token-box-value" id="token-liquidity">Loading...</div>
         </div>
-
       </div>
-
     </div>
-
   </section>
 
-
-  <!-- ========================================================
-       THE ESTATE
-  ========================================================= -->
-
-  <section class="place">
-
-    <div class="container place-grid">
-
-      <div>
-
-        <img
-          class="place-image"
-          src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/villa.png"
-          alt="OLIVIUM estate villa in Tuscany"
-          loading="lazy"
-        >
-
-      </div>
-
-      <div>
-
-        <div class="section-kicker">
-          The foundation
-        </div>
-
-        <h2 class="section-title">
-          Start with the estate.
-        </h2>
-
-        <p class="place-copy">
-          The digital layer matters because there is a real place
-          underneath it.
-        </p>
-
-        <p class="place-copy">
-          OLIVIUM brings together an olive grove, a Tuscan residence,
-          harvest traditions and estate experiences into one connected
-          ecosystem.
-        </p>
-
-        <div class="place-points">
-
-          <div class="place-point">
-
-            <div class="place-number">
-              01
-            </div>
-
-            <div>
-
-              <strong>
-                San Vincenzo, Tuscany
-              </strong>
-
-              <span>
-                A real estate environment on the Tuscan coast.
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <div class="place-point">
-
-            <div class="place-number">
-              02
-            </div>
-
-            <div>
-
-              <strong>
-                240 olive trees
-              </strong>
-
-              <span>
-                The physical grove at the heart of OLIVIUM.
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <div class="place-point">
-
-            <div class="place-number">
-              03
-            </div>
-
-            <div>
-
-              <strong>
-                Harvest & stewardship
-              </strong>
-
-              <span>
-                A living agricultural cycle rather than a static asset.
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <div class="place-point">
-
-            <div class="place-number">
-              04
-            </div>
-
-            <div>
-
-              <strong>
-                Estate experiences
-              </strong>
-
-              <span>
-                The digital world ultimately leads back to the estate.
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-<!-- ========================================================
-     GUARDIAN TIERS
-========================================================= -->
-
-<section
-  class="guardians"
-  id="guardians"
->
-
-  <div class="container">
-
-```
-<div class="guardians-heading">
-
-  <div class="section-kicker">
-    The Guardian system
-  </div>
-
-  <h2 class="section-title">
-    Hold OLVM.
-    <br>
-    Become part of OLIVIUM.
-  </h2>
-
-  <p class="guardians-sub">
-    OLIVIUM connects a digital token with a real Tuscan olive estate.
-    Guardian tiers are defined by qualifying OLVM holdings and are
-    designed to deepen your connection to the grove, the harvest,
-    the estate and the experiences built around it.
-  </p>
-
-</div>
-
-
-<div class="tier-grid">
-
-  <!-- GUARDIAN -->
-
-  <article class="tier">
-
-    <div class="tier-icon">
-      🌱
-    </div>
-
-    <h3 class="tier-name">
-      Guardian
-    </h3>
-
-    <div class="tier-holding">
-      50,000 OLVM
-    </div>
-
-    <p class="tier-description">
-      The entry point into the OLIVIUM Guardian community.
-      A first connection with the grove and the living ecosystem
-      behind OLVM.
-    </p>
-
-    <ul class="tier-list">
-
-      <li>
-        Guardian community access
-      </li>
-
-      <li>
-        OLIVIUM ecosystem recognition
-      </li>
-
-      <li>
-        Seasonal grove and harvest updates
-      </li>
-
-      <li>
-        Eligibility for published Guardian rewards and experiences
-      </li>
-
-      <li>
-        Digital Guardian identity
-      </li>
-
-    </ul>
-
-    <div class="tier-footer">
-      Qualifying holding · 50K OLVM
-    </div>
-
-  </article>
-
-
-  <!-- HERITAGE -->
-
-  <article class="tier featured">
-
-    <div class="tier-badge">
-      Most connected
-    </div>
-
-    <div class="tier-icon">
-      🌿
-    </div>
-
-    <h3 class="tier-name">
-      Heritage Guardian
-    </h3>
-
-    <div class="tier-holding">
-      500,000 OLVM
-    </div>
-
-    <p class="tier-description">
-      A deeper relationship with the grove, including a specific
-      Guardian Tree and enhanced participation in the OLIVIUM
-      estate ecosystem.
-    </p>
-
-    <ul class="tier-list">
-
-      <li>
-        Specific Guardian Tree
-      </li>
-
-      <li>
-        Digital tree identity and profile
-      </li>
-
-      <li>
-        Annual olive oil benefit, subject to harvest and final terms
-      </li>
-
-      <li>
-        Priority access to eligible estate experiences
-      </li>
-
-      <li>
-        Harvest and seasonal participation opportunities
-      </li>
-
-    </ul>
-
-    <div class="tier-footer">
-      Qualifying holding · 500K OLVM
-    </div>
-
-  </article>
-
-
-  <!-- VILLA GUARDIAN -->
-
-  <article class="tier">
-
-    <div class="tier-icon">
-      🏡
-    </div>
-
-    <h3 class="tier-name">
-      Villa Guardian
-    </h3>
-
-    <div class="tier-holding">
-      2,500,000 OLVM
-    </div>
-
-    <p class="tier-description">
-      A significant connection to the estate, unlocking access
-      to a real OLIVIUM villa experience in Tuscany.
-    </p>
-
-    <ul class="tier-list">
-
-      <li>
-        1 villa night per year
-      </li>
-
-      <li>
-        Priority access to eligible villa dates
-      </li>
-
-      <li>
-        Guardian estate experience
-      </li>
-
-      <li>
-        Seasonal grove and harvest participation
-      </li>
-
-      <li>
-        Enhanced Guardian recognition
-      </li>
-
-    </ul>
-
-    <div class="tier-footer">
-      Qualifying holding · 2.5M OLVM
-    </div>
-
-  </article>
-
-
-  <!-- ESTATE GUARDIAN -->
-
-  <article class="tier">
-
-    <div class="tier-icon">
-      🌿
-    </div>
-
-    <h3 class="tier-name">
-      Estate Guardian
-    </h3>
-
-    <div class="tier-holding">
-      5,000,000 OLVM
-    </div>
-
-    <p class="tier-description">
-      A deeper commitment to OLIVIUM, with expanded access to
-      the estate and more time to experience the property.
-    </p>
-
-    <ul class="tier-list">
-
-      <li>
-        2 villa nights per year
-      </li>
-
-      <li>
-        Priority estate booking
-      </li>
-
-      <li>
-        Enhanced olive oil benefit, subject to harvest and final terms
-      </li>
-
-      <li>
-        Harvest and seasonal participation opportunities
-      </li>
-
-      <li>
-        Enhanced digital tree ecosystem access
-      </li>
-
-    </ul>
-
-    <div class="tier-footer">
-      Qualifying holding · 5M OLVM
-    </div>
-
-  </article>
-
-
-  <!-- FOUNDING ESTATE GUARDIAN -->
-
-  <article class="tier">
-
-    <div class="tier-icon">
-      🏛️
-    </div>
-
-    <h3 class="tier-name">
-      Founding Estate Guardian
-    </h3>
-
-    <div class="tier-holding">
-      10,000,000 OLVM
-    </div>
-
-    <p class="tier-description">
-      One of the deepest expressions of participation in OLIVIUM,
-      connecting substantial OLVM commitment with extended access
-      to the estate.
-    </p>
-
-    <ul class="tier-list">
-
-      <li>
-        3 villa nights per year
-      </li>
-
-      <li>
-        Priority access to eligible villa dates
-      </li>
-
-      <li>
-        Enhanced estate experiences
-      </li>
-
-      <li>
-        Founder recognition
-      </li>
-
-      <li>
-        Eligibility for future Founder opportunities
-      </li>
-
-    </ul>
-
-    <div class="tier-footer">
-      Qualifying holding · 10M OLVM
-    </div>
-
-  </article>
-
-
-  <!-- ESTATE PATRON -->
-
-  <article class="tier">
-
-    <div class="tier-icon">
-      👑
-    </div>
-
-    <h3 class="tier-name">
-      Estate Patron
-    </h3>
-
-    <div class="tier-holding">
-      25,000,000 OLVM
-    </div>
-
-    <p class="tier-description">
-      The highest published Guardian level — created for those
-      who want the deepest connection with the OLIVIUM estate
-      and its long-term story.
-    </p>
-
-    <ul class="tier-list">
-
-      <li>
-        Up to 5 villa nights per year
-      </li>
-
-      <li>
-        Highest level of estate booking priority
-      </li>
-
-      <li>
-        Premium estate experiences
-      </li>
-
-      <li>
-        Highest Guardian recognition
-      </li>
-
-      <li>
-        Eligibility for future Patron opportunities
-      </li>
-
-    </ul>
-
-    <div class="tier-footer">
-      Qualifying holding · 25M OLVM
-    </div>
-
-  </article>
-
-</div>
-
-
-<div class="guardian-experience">
-
-  <div class="section-kicker">
-    The experience
-  </div>
-
-  <h3>
-    Hold OLVM.
-    <br>
-    Come to Tuscany.
-  </h3>
-
-  <p>
-    OLIVIUM is designed to connect digital participation with
-    something real: a living olive grove, its harvest, its oil
-    and the place itself. As Guardian status increases, so does
-    access to the experiences built around the estate.
-  </p>
-
-</div>
-
-
-<p class="tier-note">
-  Villa and estate benefits are program utilities and are not
-  representations of legal ownership of the estate, land, villa
-  or individual olive trees. Villa nights are subject to
-  availability, blackout periods, annual capacity limits,
-  booking rules, applicable terms and applicable law. Guardian
-  eligibility is based on qualifying OLVM holdings under the
-  published OLIVIUM program rules. Benefits may be modified,
-  suspended or replaced as the OLIVIUM program develops.
-</p>
-```
-
-  </div>
-
-</section>
-
-
-
-  <!-- ========================================================
-       HARVEST
-  ========================================================= -->
-
-  <section class="harvest">
-
-    <div class="harvest-content">
-
-      <div class="section-kicker">
-        From grove to harvest
-      </div>
-
-      <h2 class="section-title">
-        The digital layer follows
-        a living cycle.
-      </h2>
-
-      <p class="harvest-copy">
-        OLIVIUM is ultimately about something physical:
-        trees growing, olives forming, people harvesting
-        and oil being produced.
-      </p>
-
-      <p class="harvest-copy">
-        OLVM is designed to connect the community to that
-        broader ecosystem as it develops.
-      </p>
-
-      <div class="harvest-note">
-        Harvest outcomes vary by season and agricultural conditions.
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       ESTATE EXPERIENCE
-  ========================================================= -->
-
-  <section class="experience">
-
-    <div class="container">
-
-      <div class="experience-heading">
-
-        <div class="section-kicker">
-          More than a token
-        </div>
-
-        <h2 class="section-title">
-          The destination is real.
-        </h2>
-
-        <p class="intro-text">
-          The reason OLIVIUM exists is not simply to create
-          another digital asset. It is to build a bridge between
-          a physical estate and a worldwide community.
-        </p>
-
-      </div>
-
-
-      <div class="experience-grid">
-
-        <div class="experience-main">
-
-          <img
-            src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/poolN.png"
-            alt="OLIVIUM estate pool overlooking Tuscany"
-            loading="lazy"
-          >
-
-          <div class="experience-label">
-
-            <h3>
-              Come to the estate.
-            </h3>
-
-          </div>
-
-        </div>
-
-
-        <div class="experience-side">
-
-          <div class="experience-card">
-
-            <img
-              src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/dronevilla.png"
-              alt="Aerial view of the OLIVIUM villa"
-              loading="lazy"
-            >
-
-            <span>
-              A place to return to.
-            </span>
-
-          </div>
-
-
-          <div class="experience-card">
-
-            <img
-              src="https://raw.githubusercontent.com/kyngrick/olivium_photos/main/olives.jpeg"
-              alt="Freshly harvested olives"
-              loading="lazy"
-            >
-
-            <span>
-              From grove to table.
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       CLARITY
-  ========================================================= -->
-
-  <section class="clarity">
-
-    <div class="container">
-
-      <div class="clarity-heading">
-
-        <div class="section-kicker">
-          Transparency
-        </div>
-
-        <h2 class="section-title">
-          What OLVM is.
-          What it isn't.
-        </h2>
-
-      </div>
-
-
-      <div class="clarity-grid">
-
-        <div class="clarity-card is">
-
-          <h3>
-            OLVM is
-          </h3>
-
-          <ul>
-
-            <li>
-              A Solana-based ecosystem token.
-            </li>
-
-            <li>
-              A digital layer connecting the OLIVIUM community.
-            </li>
-
-            <li>
-              A mechanism for Guardian eligibility under published terms.
-            </li>
-
-            <li>
-              Part of the future digital identity layer of the grove.
-            </li>
-
-            <li>
-              A connection between a physical estate and a global community.
-            </li>
-
-            <li>
-              A way to participate in the developing OLIVIUM ecosystem.
-            </li>
-
-          </ul>
-
-        </div>
-
-
-        <div class="clarity-card isnt">
-
-          <h3>
-            OLVM isn't
-          </h3>
-
-          <ul>
-
-            <li>
-              Equity in OLIVIUM or another company.
-            </li>
-
-            <li>
-              Legal ownership of land or an olive tree.
-            </li>
-
-            <li>
-              A promise of dividends, profits or guaranteed yield.
-            </li>
-
-            <li>
-              A guarantee that the token price will increase.
-            </li>
-
-            <li>
-              A transfer of ownership of the estate or business.
-            </li>
-
-            <li>
-              A substitute for independent legal, tax or financial advice.
-            </li>
-
-          </ul>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       TOKENOMICS
-  ========================================================= -->
-
-  <section class="tokenomics">
-
-    <div class="container">
-
-      <div class="tokenomics-heading">
-
-        <div class="section-kicker">
-          Tokenomics
-        </div>
-
-        <h2 class="section-title">
-          Designed to be transparent.
-        </h2>
-
-        <p class="tokenomics-copy">
-          The approved OLVM token allocation will be published
-          together with the official token address, treasury and
-          development wallets and verified launch information.
-        </p>
-
-      </div>
-
-
-      <div class="allocation">
-
-        <div class="allocation-box">
-
-          <strong>
-            1,000,000,000
-          </strong>
-
-          <span>
-            Total / launch supply
-          </span>
-
-        </div>
-
-
-        <div class="allocation-box">
-
-          <strong>
-            1,000
-          </strong>
-
-          <span>
-            Liquidity / launch allocation
-          </span>
-
-        </div>
-
-
-        <div class="allocation-box">
-
-          <strong>
-            5 SOL
-          </strong>
-
-          <span>
-            Treasury / ecosystem
-          </span>
-
-        </div>
-
-
-        <div class="allocation-box">
-
-          <strong>
-            2 SOL
-          </strong>
-
-          <span>
-            Development / other
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <p class="allocation-note">
-        Final percentages and wallet allocations should only be
-        replaced with the approved OLVM tokenomics. No allocation
-        should be interpreted until the official figures are published.
-      </p>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       OFFICIAL TOKEN INFORMATION
-  ========================================================= -->
-
+  <!-- OFFICIAL TOKEN INFORMATION -->
   <section class="official">
-
     <div class="container">
-
       <div class="official-box">
-
-        <div class="section-kicker">
-          Official information
-        </div>
-
-        <h2 class="section-title">
-          Verify before you interact.
-        </h2>
-
-
+        <div class="section-kicker">Official information</div>
+        <h2 class="section-title">Verify before you interact.</h2>
         <div class="official-grid">
-
           <div class="official-item">
-
-            <div class="official-label">
-              Token
-            </div>
-
-            <div class="official-value">
-              OLVM
-            </div>
-
+            <div class="official-label">Token</div>
+            <div class="official-value">OLVM</div>
           </div>
-
-
           <div class="official-item">
-
-            <div class="official-label">
-              Blockchain
-            </div>
-
-            <div class="official-value">
-              Solana
-            </div>
-
+            <div class="official-label">Blockchain</div>
+            <div class="official-value">Solana</div>
           </div>
-
-
           <div class="official-item">
-
-            <div class="official-label">
-              Contract / Mint
-            </div>
-
-            <div class="official-value address">
-5AkvDeeV5CFaeUcLSxEcKTwBuNvWPkDe6YXhPwH9pump            </div>
-
+            <div class="official-label">Contract / Mint</div>
+            <div class="official-value address" id="mint-address">5AkvDeeV5CFaeUcLSxEcKTwBuNvWPkDe6YXhPwH9pump</div>
           </div>
-
-
           <div class="official-item">
-
-            <div class="official-label">
-              Official launch
-            </div>
-
-            <div class="official-value">
-              Q4 2026
-            </div>
-
+            <div class="official-label">Official launch</div>
+            <div class="official-value">Q4 2026</div>
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   </section>
-
-
-  <!-- ========================================================
-       ROADMAP
-  ========================================================= -->
-
-  <section class="roadmap">
-
-    <div class="container">
-
-      <div class="section-kicker">
-        Roadmap
-      </div>
-
-      <h2 class="section-title">
-        From estate foundation
-        to digital ecosystem.
-      </h2>
-
-
-      <div class="roadmap-list">
-
-        <div class="roadmap-item">
-
-          <div class="roadmap-number">
-            01
-          </div>
-
-          <div class="roadmap-name">
-            Estate
-          </div>
-
-          <div class="roadmap-description">
-            Establish the physical estate, grove and foundational
-            OLIVIUM experience.
-          </div>
-
-        </div>
-
-
-        <div class="roadmap-item">
-
-          <div class="roadmap-number">
-            02
-          </div>
-
-          <div class="roadmap-name">
-            OLVM
-          </div>
-
-          <div class="roadmap-description">
-            Launch the OLVM digital layer and onboard the wider community.
-          </div>
-
-        </div>
-
-
-        <div class="roadmap-item">
-
-          <div class="roadmap-number">
-            03
-          </div>
-
-          <div class="roadmap-name">
-            Guardians
-          </div>
-
-          <div class="roadmap-description">
-            Develop Guardian identities, eligibility systems and
-            published membership pathways.
-          </div>
-
-        </div>
-
-
-        <div class="roadmap-item">
-
-          <div class="roadmap-number">
-            04
-          </div>
-
-          <div class="roadmap-name">
-            Tree Layer
-          </div>
-
-          <div class="roadmap-description">
-            Build individual digital tree identities and connect
-            physical grove data to the ecosystem.
-          </div>
-
-        </div>
-
-
-        <div class="roadmap-item">
-
-          <div class="roadmap-number">
-            05
-          </div>
-
-          <div class="roadmap-name">
-            Estate Experience
-          </div>
-
-          <div class="roadmap-description">
-            Expand the connection between OLVM, harvest,
-            residency and estate experiences.
-          </div>
-
-        </div>
-
-
-        <div class="roadmap-item">
-
-          <div class="roadmap-number">
-            06
-          </div>
-
-          <div class="roadmap-name">
-            Transparency
-          </div>
-
-          <div class="roadmap-description">
-            Publish verified contracts, wallet addresses,
-            tokenomics, documentation and ecosystem data.
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       FAQ
-  ========================================================= -->
-
-  <section class="faq">
-
-    <div class="container">
-
-      <div class="section-kicker">
-        Frequently asked
-      </div>
-
-      <h2 class="section-title">
-        Questions about OLVM.
-      </h2>
-
-
-      <div class="faq-list">
-
-        <details>
-
-          <summary>
-            What is OLVM?
-          </summary>
-
-          <p>
-            OLVM is the Solana-based ecosystem token of OLIVIUM.
-            It is designed to connect the digital community with
-            the developing OLIVIUM ecosystem, including Guardian
-            opportunities and estate experiences under published terms.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            How are Guardian tiers determined?
-          </summary>
-
-          <p>
-            Guardian tiers are determined by qualifying OLVM holdings.
-            The current published thresholds are 50,000 OLVM for
-            Guardian, 500,000 OLVM for Heritage Guardian,
-            2,500,000 OLVM for Estate Guardian and 10,000,000 OLVM
-            for Founder.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            Do I need to spend a certain amount of money to become a Guardian?
-          </summary>
-
-          <p>
-            Guardian eligibility is defined by OLVM holdings, not by
-            a euro or dollar purchase amount. The relevant requirement
-            is the qualifying OLVM balance in the applicable wallet,
-            according to the published program rules.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            Does OLVM mean I own part of the estate?
-          </summary>
-
-          <p>
-            No. Holding OLVM does not transfer ownership of the land,
-            villa, company, olive trees or business. Guardian
-            participation and estate benefits are separate from
-            legal ownership.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            Does OLVM guarantee profits or returns?
-          </summary>
-
-          <p>
-            No. OLVM should not be represented as providing guaranteed
-            profits, dividends, yield or price appreciation.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            What is a Heritage Guardian?
-          </summary>
-
-          <p>
-            Heritage Guardian is the 500,000 OLVM tier. Subject to
-            the published Guardian terms, this tier is intended to
-            provide a deeper relationship with the grove, including
-            a specific Guardian Tree and defined estate experiences.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            Will the trees have digital identities?
-          </summary>
-
-          <p>
-            The planned OLIVIUM tree layer is designed to give
-            individual trees digital identities connected to
-            physical grove information, imagery and seasonal history.
-            Final implementation details will be published separately.
-          </p>
-
-        </details>
-
-
-        <details>
-
-          <summary>
-            Where is OLVM launching?
-          </summary>
-
-          <p>
-            OLVM is planned for launch on Solana through Pump.fun.
-            The direct official launch link and verified token address
-            will be published once the token is live.
-          </p>
-
-        </details>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       FINAL CTA
-  ========================================================= -->
-
-  <section class="final">
-
-    <div class="final-content">
-
-      <div class="section-kicker">
-        Come to the grove
-      </div>
-
-      <h2 class="section-title">
-        The digital layer
-        is only the beginning.
-      </h2>
-
-      <p>
-        Hold OLVM.
-        Become part of the Guardian community.
-        Then come back to the place behind it all.
-      </p>
-
-      <div
-        class="hero-buttons"
-        style="justify-content:center;"
-      >
-
-        <a
-          class="btn btn-gold"
-            href="#guardians"
-        >
-          Become a Guardian
-        </a>
-
-        <a
-          class="btn btn-outline"
-          href="discover.html"
-        >
-          Explore the Estate
-        </a>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       TRANSPARENCY
-  ========================================================= -->
-
-  <section class="transparency">
-
-    <div class="container">
-
-      <div class="transparency-box">
-
-        <strong>
-          Important information:
-        </strong>
-
-        <br><br>
-
-        OLVM is a crypto-asset and may lose value. Nothing on this
-        page constitutes a promise of profit, yield, dividends,
-        revenue sharing or future price appreciation.
-
-        <br><br>
-
-        Guardian tiers are based on qualifying OLVM holdings.
-        They are not denominated by a monetary purchase amount.
-
-        <br><br>
-
-        Guardian and membership benefits are subject to final
-        program terms, availability, harvest conditions, booking
-        rules and applicable law.
-
-        <br><br>
-
-        Holding OLVM does not transfer ownership of the OLIVIUM
-        estate, land, villa, company, individual olive trees or
-        business profits.
-
-        <br><br>
-
-        The official OLVM contract/mint address, tokenomics,
-        treasury and development wallet addresses and official
-        launch links will be published only after they are
-        finalized and verified.
-
-        <br><br>
-
-        OLIVIUM does not endorse wash trading, fake engagement,
-        circular transactions, manufactured demand or misleading
-        representations of token volume, rankings or price.
-
-        <br><br>
-
-        Information on this website is provided for general
-        informational purposes and is not legal, tax or financial
-        advice. Applicable Italian and EU requirements should be
-        reviewed before formal public distribution or marketing
-        of the token.
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================================
-       FOOTER
-  ========================================================= -->
 
   <footer>
-
     <div class="footer-inner">
-
       <div>
-
-        <div class="footer-brand">
-          OLIVIUM
-        </div>
-
-        <div class="footer-sub">
-          Private Estate · San Vincenzo, Tuscany · OLVM · Solana
-        </div>
-
+        <div class="footer-brand">OLIVIUM</div>
+        <div class="footer-sub">Private Estate · San Vincenzo, Tuscany · OLVM · Solana</div>
       </div>
-
-
       <div class="footer-links">
-
-        <a href="index.html">
-          Home
-        </a>
-
-        <a href="discover.html">
-          Discover
-        </a>
-
-        <a href="membership.html">
-          Membership
-        </a>
-
-        <a href="token.html">
-          OLVM
-        </a>
-
-        <a href="dashboard.html">
-          Dashboard
-        </a>
-
+        <a href="index.html">Home</a>
+        <a href="discover.html">Discover</a>
+        <a href="membership.html">Membership</a>
+        <a href="token.html">OLVM</a>
+        <a href="dashboard.html">Dashboard</a>
       </div>
-
     </div>
-
   </footer>
 
+  <!-- LIVE DATA FETCHING SCRIPT -->
+  <script>
+    async function fetchTokenData() {
+      const mintAddress = "5AkvDeeV5CFaeUcLSxEcKTwBuNvWPkDe6YXhPwH9pump";
+      const apiUrl = `https://api.dexscreener.com/latest/dex/tokens/${mintAddress}`;
 
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.pairs && data.pairs.length > 0) {
+          const pair = data.pairs[0];
+          
+          // Price formatting
+          const price = parseFloat(pair.priceUsd);
+          document.getElementById("token-price").innerText = price ? `$${price.toFixed(6)}` : "N/A";
+
+          // Market Cap formatting
+          const marketCap = pair.fdv || pair.marketCap;
+          document.getElementById("token-marketcap").innerText = marketCap ? `$${Number(marketCap).toLocaleString()}` : "N/A";
+
+          // 24h Volume formatting
+          const volume = pair.volume?.h24;
+          document.getElementById("token-volume").innerText = volume ? `$${Number(volume).toLocaleString()}` : "N/A";
+
+          // Liquidity formatting
+          const liquidity = pair.liquidity?.usd;
+          document.getElementById("token-liquidity").innerText = liquidity ? `$${Number(liquidity).toLocaleString()}` : "N/A";
+        } else {
+          document.getElementById("token-price").innerText = "Not Listed";
+          document.getElementById("token-marketcap").innerText = "Not Listed";
+          document.getElementById("token-volume").innerText = "Not Listed";
+          document.getElementById("token-liquidity").innerText = "Not Listed";
+        }
+      } catch (error) {
+        console.error("Error fetching token price data:", error);
+        document.getElementById("token-price").innerText = "Error";
+        document.getElementById("token-marketcap").innerText = "Error";
+        document.getElementById("token-volume").innerText = "Error";
+        document.getElementById("token-liquidity").innerText = "Error";
+      }
+    }
+
+    // Fetch on initial load
+    document.addEventListener("DOMContentLoaded", fetchTokenData);
+  </script>
 </body>
 </html>
