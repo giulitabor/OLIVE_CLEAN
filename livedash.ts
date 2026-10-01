@@ -251,6 +251,126 @@ function renderLiveTicker(
 }
 
 
+// ═════════════════════════════════════════════════════════════════════════════
+// SEASON / FIELD PHASE
+// Combined calendar + actual harvest data
+// ═════════════════════════════════════════════════════════════════════════════
+
+async function getCurrentSeasonPhase(): Promise<string> {
+
+  const year =
+    new Date().getFullYear();
+
+  const month =
+    new Date().getMonth() + 1;
+
+  // ---------------------------------------------------------------------------
+  // ACTUAL HARVEST DATA
+  // ---------------------------------------------------------------------------
+
+  try {
+
+    const response =
+      await fetch("/harvest.json", {
+        cache: "no-store",
+      });
+
+    if (response.ok) {
+
+      const harvestData =
+        await response.json();
+
+      const trees =
+        harvestData?.treeData ||
+        harvestData ||
+        {};
+
+      const harvestStarted =
+        Object.values(trees).some(
+          (tree: any) => {
+
+            if (!tree) {
+              return false;
+            }
+
+            if (
+              tree.harvested !== true ||
+              !tree.harvestedAt
+            ) {
+              return false;
+            }
+
+            const harvestedYear =
+              new Date(
+                tree.harvestedAt
+              ).getFullYear();
+
+            return harvestedYear === year;
+          }
+        );
+
+      if (harvestStarted) {
+
+        return "Harvest Phase";
+      }
+    }
+
+  } catch (err) {
+
+    console.warn(
+      "[SEASON] Unable to read harvest.json:",
+      err
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // CALENDAR FALLBACK
+  // ---------------------------------------------------------------------------
+
+  if (
+    month === 1 ||
+    month === 2 ||
+    month === 3
+  ) {
+
+    return "Dormant Phase";
+  }
+
+  if (
+    month === 4 ||
+    month === 5
+  ) {
+
+    return "Flowering Phase";
+  }
+
+  if (
+    month === 6 ||
+    month === 7
+  ) {
+
+    return "Fruit Development";
+  }
+
+  if (
+    month === 8 ||
+    month === 9
+  ) {
+
+    return "Ripening Phase";
+  }
+
+  if (
+    month === 10 ||
+    month === 11
+  ) {
+
+    return "Harvest Phase";
+  }
+
+  return "Post-Harvest Phase";
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Fallback ticker
 // ─────────────────────────────────────────────────────────────────────────────
@@ -258,12 +378,12 @@ function renderLiveTicker(
 function renderTickerFallback() {
 
   renderLiveTicker([
-    {
-      icon: "🌳",
-      text:
-        "Grove · Growing Phase",
-      tone: "neutral",
-    },
+   {
+  icon: "🫒",
+  text:
+    `${new Date().getFullYear()} Season · Growing Phase`,
+  tone: "neutral",
+},
 
     {
       icon: "◎",
@@ -592,12 +712,24 @@ export async function updateLiveTicker() {
       treeCount !== null
     ) {
 
-      items.push({
-        icon: "🌳",
-        text:
-          `${treeCount} Trees · Growing Phase`,
-        tone: "neutral",
-      });
+      // ─────────────────────────────────────────────────────────────────────────
+// SEASON
+// Combined calendar + actual harvest data
+// ─────────────────────────────────────────────────────────────────────────
+
+const seasonPhase =
+  await getCurrentSeasonPhase();
+
+items.push({
+  icon: "🫒",
+  text:
+    `${new Date().getFullYear()} Season · ${seasonPhase}`,
+  tone:
+    seasonPhase === "Harvest Phase"
+      ? "up"
+      : "neutral",
+});
+      
 
     } else {
 
