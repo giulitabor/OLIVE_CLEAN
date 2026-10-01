@@ -1335,7 +1335,7 @@ export function subscribeToTreeUpdates() {
 
           try {
 
-            await updateStatsUI();
+           // await updateStatsUI();
 
             await updateLiveTicker();
 
@@ -1844,7 +1844,7 @@ export async function refreshDashboard() {
     //
     // IMPORTANT:
     // No loadTrees() call.
-    await updateStatsUI();
+   // await updateStatsUI();
 
 
     // Villa / Guardian
@@ -1966,7 +1966,7 @@ export async function initLiveDash() {
     // TREE STATS
     // ─────────────────────────────────────────────────────────────────────────
 
-    await updateStatsUI();
+  //  await updateStatsUI();
 
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -2073,7 +2073,7 @@ export async function initLiveDash() {
 
         try {
 
-          await updateStatsUI();
+      //    await updateStatsUI();
 
           await updateVillaStayUI();
 
