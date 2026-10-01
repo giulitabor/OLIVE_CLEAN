@@ -131,127 +131,39 @@
 
   <script>
     // ------------- HARVEST DATA (rich sample logs: dates, kg olives, oil %, tree types, press time, frantoio location & name, download links) -------------
-    const harvestLogs = [
-      {
-        id: "HV-101",
-        date: "2024-10-15",
-        olivesKg: 1280,
-        oilPercent: 18.3,
-        oilLiters: 234.2,
-        treeTypes: "Moraiolo, Leccino, Frantoio",
-        pressTime: "09:30 AM - 12:15 PM",
-        frantoioName: "Frantoio del Casale",
-        frantoioLocation: "Tavarnelle Val di Pesa, Tuscany",
-        notes: "Early harvest, intense green fruitiness",
-        downloadPdfUrl: "#",     // demo download links
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-102",
-        date: "2024-10-22",
-        olivesKg: 2045,
-        oilPercent: 19.7,
-        oilLiters: 402.8,
-        treeTypes: "Pendolino, Moraiolo, Olivastra",
-        pressTime: "08:00 AM - 02:30 PM",
-        frantoioName: "Frantoio Laudemio",
-        frantoioLocation: "Greve in Chianti, Florence",
-        notes: "High polyphenols, robust spicy finish",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-103",
-        date: "2024-11-05",
-        olivesKg: 975,
-        oilPercent: 15.9,
-        oilLiters: 155.0,
-        treeTypes: "Canino, Frantoio, Leccino",
-        pressTime: "10:30 AM - 01:45 PM",
-        frantoioName: "Fattoria Montellori",
-        frantoioLocation: "San Miniato, Pisa",
-        notes: "Late harvest, sweet almond notes",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-104",
-        date: "2024-09-28",
-        olivesKg: 3120,
-        oilPercent: 21.2,
-        oilLiters: 661.4,
-        treeTypes: "Coratina, Frantoio, Moraiolo",
-        pressTime: "06:30 AM - 04:00 PM",
-        frantoioName: "Frantoio di Sant' Ilario",
-        frantoioLocation: "Impruneta, Florence",
-        notes: "Record oil yield, excellent quality",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-105",
-        date: "2024-10-30",
-        olivesKg: 850,
-        oilPercent: 17.2,
-        oilLiters: 146.2,
-        treeTypes: "Leccino, Frantoio, Ciliegiolo",
-        pressTime: "11:00 AM - 02:20 PM",
-        frantoioName: "Frantoio di Petroio",
-        frantoioLocation: "Castellina in Chianti, Siena",
-        notes: "Organic grove, delicate herbaceous",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-106",
-        date: "2023-10-18",
-        olivesKg: 1580,
-        oilPercent: 18.9,
-        oilLiters: 298.6,
-        treeTypes: "Moraiolo, Pendolino, Maurino",
-        pressTime: "08:45 AM - 01:30 PM",
-        frantoioName: "Frantoio La Torre",
-        frantoioLocation: "Montaione, Valdelsa",
-        notes: "Excellent balance, medium fruit",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-107",
-        date: "2023-11-12",
-        olivesKg: 2300,
-        oilPercent: 16.4,
-        oilLiters: 377.2,
-        treeTypes: "Frantoio, Leccino, Rosciola",
-        pressTime: "07:15 AM - 03:50 PM",
-        frantoioName: "Frantoio Il Palagio",
-        frantoioLocation: "Radda in Chianti, Siena",
-        notes: "Cold extraction method, fruity",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      },
-      {
-        id: "HV-108",
-        date: "2024-12-01",
-        olivesKg: 645,
-        oilPercent: 14.8,
-        oilLiters: 95.5,
-        treeTypes: "Olivastra Seggianese, Leccino",
-        pressTime: "09:00 AM - 11:40 AM",
-        frantoioName: "Frantoio Toscano",
-        frantoioLocation: "Seggiano, Grosseto",
-        notes: "Small late harvest batch",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
-      }
+const harvestLogs = [
+  {
+    id: "HV-2026-01",
+    date: "2026-10-01",
+    olivesKg: 1380,
+    oilPercent: null,
+    oilLiters: null,
+    status: "AT THE MILL · AWAITING PRESSING",
+    treeTypes: "Olivium Grove · First 2026 Harvest",
+    pressTime: "Awaiting pressing",
+    frantoioName: "Pressing pending",
+    frantoioLocation: "Tuscany",
+    notes: "First harvest of the 2026 season. 1,380 kg of olives have been harvested from the grove and delivered to the mill. Awaiting pressing and final oil yield.",
+    downloadPdfUrl: "#",
+    downloadCsvUrl: "#",
+    downloadReportUrl: "#"
+  },
+
+  {
+    id: "HV-101",
+    date: "2024-10-15",
+    olivesKg: 1280,
+    oilPercent: 18.3,
+    oilLiters: 234.2,
+    treeTypes: "Moraiolo, Leccino, Frantoio",
+    pressTime: "09:30 AM - 12:15 PM",
+    frantoioName: "Frantoio del Casale",
+    frantoioLocation: "Tavarnelle Val di Pesa, Tuscany",
+    notes: "Early harvest, intense green fruitiness",
+    downloadPdfUrl: "#",
+    downloadCsvUrl: "#",
+    downloadReportUrl: "#"
+  }
     ];
 
     // helper: format date YYYY-MM-DD to readable "Oct 15, 2024"
