@@ -94,7 +94,7 @@
     <!-- Header with filter & title -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-5">
       <div>
-        <h1 class="text-3xl font-serif font-bold tracking-tight">Harvest Archive <span class="text-[#C5A059]">· Crusca d'Oro</span></h1>
+        <h1 class="text-3xl font-serif font-bold tracking-tight">Harvest Archive <span class="text-[#C5A059]">· Olivium Toscagialla Estate </span></h1>
         <p class="text-stone-400 text-sm mt-1">Historical yields, oil percentages, frantoio details & downloadable records.</p>
       </div>
       <!-- Filter by date range quick -->
@@ -139,10 +139,10 @@ const harvestLogs = [
     oilPercent: null,
     oilLiters: null,
     status: "AT THE MILL · AWAITING PRESSING",
-    treeTypes: "Olivium Grove · First 2026 Harvest",
+    treeTypes: "Moraiolo, Leccino, Frantoio, Coritano",
     pressTime: "Awaiting pressing",
     frantoioName: "Pressing pending",
-    frantoioLocation: "Tuscany",
+    frantoioLocation: "https://maps.app.goo.gl/m4BNLCSKVn3kPpiX6",
     notes: "First harvest of the 2026 season. 1,380 kg of olives have been harvested from the grove and delivered to the mill. Awaiting pressing and final oil yield.",
     downloadPdfUrl: "#",
     downloadCsvUrl: "#",
@@ -155,10 +155,10 @@ const harvestLogs = [
     olivesKg: 1280,
     oilPercent: 18.3,
     oilLiters: 234.2,
-    treeTypes: "Moraiolo, Leccino, Frantoio",
+    treeTypes: "Moraiolo, Leccino, Frantoio, Coritano",
     pressTime: "09:30 AM - 12:15 PM",
     frantoioName: "Frantoio del Casale",
-    frantoioLocation: "Tavarnelle Val di Pesa, Tuscany",
+    frantoioLocation: "https://maps.app.goo.gl/m4BNLCSKVn3kPpiX6",
     notes: "Early harvest, intense green fruitiness",
     downloadPdfUrl: "#",
     downloadCsvUrl: "#",
@@ -221,13 +221,13 @@ const harvestLogs = [
                 <i class="fas fa-calendar-alt text-[#C5A059] text-sm"></i> ${formatDate(log.date)}
               </h3>
             </div>
-            <span class="badge-oil text-xs px-2 py-1 rounded-full font-bold">${log.oilPercent}% oil</span>
+            <span class="badge-oil text-xs px-2 py-1 rounded-full font-bold">${log.oilPercent !== null ? log.oilPercent + '% oil' : log.status}</span>
           </div>
 
           <!-- main metrics -->
           <div class="grid grid-cols-2 gap-3 text-sm border-b border-white/10 pb-3">
             <div><span class="text-stone-400 block text-[10px] uppercase">Olives (kg)</span><span class="font-semibold text-lg">${log.olivesKg.toLocaleString()} kg</span></div>
-            <div><span class="text-stone-400 block text-[10px] uppercase">Oil yield</span><span class="font-semibold text-lg">${log.oilLiters.toFixed(1)} L</span></div>
+            <div><span class="text-stone-400 block text-[10px] uppercase">Oil yield</span><span class="font-semibold text-lg">${log.oilLiters !== null ? log.oilLiters.toFixed(1) + ' L' : 'N/A'}</span></div>
           </div>
 
           <!-- tree types & press time -->
@@ -247,7 +247,7 @@ const harvestLogs = [
             <div class="flex items-center gap-2 mb-1"><i class="fas fa-oil-can text-[#C5A059]"></i><span class="font-bold uppercase text-[10px] tracking-wider">Frantoio</span></div>
             <div class="flex justify-between flex-wrap gap-y-1">
               <span><span class="text-stone-400">Name:</span> ${log.frantoioName}</span>
-              <span><span class="text-stone-400">📍 Location:</span> ${log.frantoioLocation}</span>
+              <span><span class="text-stone-400">📍 Location:</span> <a href="${log.frantoioLocation}" target="_blank" class="text-[#C5A059] underline hover:text-white">View Location Map</a></span>
             </div>
             ${log.notes ? `<div class="italic text-stone-400 text-[11px] mt-2 border-t border-white/5 pt-1">🍈 ${log.notes}</div>` : ''}
           </div>
@@ -371,20 +371,11 @@ const harvestLogs = [
         alert('Dashboard view (coming soon) – full analytics for harvest trends.');
       });
     }
-    // make sure that default "Harvest Log" is active already.
 
     // initial render
     filterAndRender();
 
-    // additional polish: automatically update when page loaded
-    window.addEventListener('load', () => {
-      // default nothing, but ensure that empty reset works
-    });
-
-    // download simulation: if any actual external download required we could inject but since spec asks for download links as well, we have three per card (PDF/CSV/Report)
-    // In real world you would replace # with signed URLs, but demo shows functional download requests alert to indicate feature.
-    // Also provide a global export? we can add a small "Export filtered data as CSV" but not mandatory, but enhance? but spec already covers each card downloads.
-    // Add bonus: optional hidden extra feature: export all logs to CSV from header? to be thorough but not require.
+    // extra export button feature
     const headerExtra = document.querySelector('.flex.flex-col.md\\:flex-row.justify-between');
     if(headerExtra && !document.getElementById('extraExportBtn')) {
       const exportBtn = document.createElement('button');
@@ -412,8 +403,6 @@ const harvestLogs = [
       const filterContainer = document.querySelector('.flex.flex-wrap.gap-3.items-center');
       if(filterContainer) filterContainer.appendChild(exportBtn);
     }
-
-    // optional: attach active style for mobile drawer connect behavior.
   </script>
 </body>
 </html>
