@@ -1843,49 +1843,32 @@
 
   <!-- LIVE DATA FETCHING SCRIPT -->
   <script>
-    async function fetchTokenData() {
-      const mintAddress = "5AkvDeeV5CFaeUcLSxEcKTwBuNvWPkDe6YXhPwH9pump";
-      const apiUrl = `https://api.dexscreener.com/latest/dex/tokens/${mintAddress}`;
+<script>
+  async function fetchTokenData() {
+    const mintAddress = "5AkvDeeV5CFaeUcLSxEcKTwBuNvWPkDe6YXhPwH9pump";
+    const apiUrl = `https://price.jup.ag/v6/price?ids=${mintAddress}`;
 
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
 
-        if (data.pairs && data.pairs.length > 0) {
-          const pair = data.pairs[0];
-          
-          // Price formatting
-          const price = parseFloat(pair.priceUsd);
-          document.getElementById("token-price").innerText = price ? `$${price.toFixed(6)}` : "N/A";
-
-          // Market Cap formatting
-          const marketCap = pair.fdv || pair.marketCap;
-          document.getElementById("token-marketcap").innerText = marketCap ? `$${Number(marketCap).toLocaleString()}` : "N/A";
-
-          // 24h Volume formatting
-          const volume = pair.volume?.h24;
-          document.getElementById("token-volume").innerText = volume ? `$${Number(volume).toLocaleString()}` : "N/A";
-
-          // Liquidity formatting
-          const liquidity = pair.liquidity?.usd;
-          document.getElementById("token-liquidity").innerText = liquidity ? `$${Number(liquidity).toLocaleString()}` : "N/A";
-        } else {
-          document.getElementById("token-price").innerText = "Not Listed";
-          document.getElementById("token-marketcap").innerText = "Not Listed";
-          document.getElementById("token-volume").innerText = "Not Listed";
-          document.getElementById("token-liquidity").innerText = "Not Listed";
-        }
-      } catch (error) {
-        console.error("Error fetching token price data:", error);
-        document.getElementById("token-price").innerText = "Error";
-        document.getElementById("token-marketcap").innerText = "Error";
-        document.getElementById("token-volume").innerText = "Error";
-        document.getElementById("token-liquidity").innerText = "Error";
+      if (data.data && data.data[mintAddress]) {
+        const tokenData = data.data[mintAddress];
+        const price = tokenData.price;
+        document.getElementById("token-price").innerText = price ? `$${price.toFixed(6)}` : "N/A";
+        document.getElementById("token-marketcap").innerText = "N/A";
+        document.getElementById("token-volume").innerText = "N/A";
+        document.getElementById("token-liquidity").innerText = "N/A";
+      } else {
+        document.getElementById("token-price").innerText = "Not Listed";
       }
+    } catch (error) {
+      console.error("Error fetching token price data:", error);
+      document.getElementById("token-price").innerText = "Error";
     }
+  }
 
-    // Fetch on initial load
-    document.addEventListener("DOMContentLoaded", fetchTokenData);
-  </script>
+  document.addEventListener("DOMContentLoaded", fetchTokenData);
+</script>
 </body>
 </html>
