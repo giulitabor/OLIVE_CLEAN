@@ -2015,25 +2015,17 @@ function toggleMenu(){
       'hidden';
   }
 
-  function closeJournalModal(){
+function closeJournalModal(){
+  var modal = document.getElementById('journal-modal');
+  if (!modal) return;
 
-    var modal =
-      document.getElementById(
-        'journal-modal'
-      );
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
 
-    if (!modal) return;
-
-    modal.classList.remove('open');
-
-    modal.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-
-    document.body.style.overflow =
-      '';
-  }
+// Make available to inline onclick handlers in the HTML
+window.closeJournalModal = closeJournalModal;
 
   document.addEventListener(
     'keydown',
