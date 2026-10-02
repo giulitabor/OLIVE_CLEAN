@@ -402,7 +402,7 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
     <aside class="pulse">
       <h2>🌿 Grove Pulse</h2>
       <div class="pulse-row"><span>Tree Condition</span><span class="status"><i class="dot green"></i> Excellent</span></div>
-      <div class="pulse-row"><span>Soil Moisture</span><span class="status" id="wx-soil"><i class="dot yellow"></i> Dry</span></div>
+      <div class="pulse-row"><span>Rain Status</span><span class="status" id="wx-soil"><i class="dot yellow"></i> Dry</span></div>
       <div class="pulse-row"><span>Weather</span><span class="status" id="wx-weather-status"><i class="dot yellow"></i> Hot &amp; Stable</span></div>
       <div class="pulse-row"><span>Field Activity</span><span class="status"><i class="dot green"></i> Complete</span></div>
       <div class="pulse-note" id="wx-note">“The grove is in good condition. Continue monitoring for water stress.”</div>
@@ -489,7 +489,7 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
     <aside id="member" class="member">
       <h3>Your Olivium</h3>
       <p>Be part of the journey. Follow the grove, see its progress and share in its future.</p>
-      <button class="member-btn-wide" onclick="showToast('Membership area placeholder — ready for your authentication system.')">Become a Member →</button>
+      <button class="member-btn-wide" onclick="showToast('Membership area placeholder — ready for your authentication system.')">Become a Guardian →</button>
       <div class="member-perks">
         <div class="perk"><b>◌</b>Oil Shipments</div>
         <div class="perk"><b>◈</b>Olive Credits</div>
@@ -566,6 +566,50 @@ function toggleMenu(){
   var SUPABASE_ANON_KEY = "sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-";
   var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // ---------- Rome timezone helpers ----------
+  var ROME_TZ = 'Europe/Rome';
+  function romeDateParts(date){
+    var d = date || new Date();
+    var fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: ROME_TZ,
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    var parts = fmt.formatToParts(d);
+    var out = {};
+    parts.forEach(function(p){ out[p.type] = p.value; });
+    return out;
+  }
+  function romeDateString(date){
+    var p = romeDateParts(date);
+    return p.weekday + ' · ' + p.day + ' ' + p.month + ' ' + p.year;
+  }
+  function romeNow(){
+    // Returns a Date object whose local getters reflect Rome time.
+    var now = new Date();
+    var romeStr = now.toLocaleString('en-US', { timeZone: ROME_TZ });
+    return new Date(romeStr);
+  }
+  function romeMonth(date){
+    var d = date || new Date();
+    var parts = new Intl.DateTimeFormat('en-GB', { timeZone: ROME_TZ, month: 'numeric' }).formatToParts(d);
+    var m = parts.find(function(p){ return p.type === 'month'; });
+    return m ? (parseInt(m.value, 10) - 1) : d.getMonth(); // 0-indexed
+  }
+  function romeYear(date){
+    var d = date || new Date();
+    var parts = new Intl.DateTimeFormat('en-GB', { timeZone: ROME_TZ, year: 'numeric' }).formatToParts(d);
+    var y = parts.find(function(p){ return p.type === 'year'; });
+    return y ? parseInt(y.value, 10) : d.getFullYear();
+  }
+  function romeDateOnly(date){
+    var d = date || new Date();
+    var s = d.toLocaleDateString('en-CA', { timeZone: ROME_TZ }); // YYYY-MM-DD
+    return new Date(s + 'T00:00:00');
+  }
+
   var COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
   function toCompass(deg){
     if (deg === null || deg === undefined || isNaN(deg)) return "";
@@ -605,6 +649,12 @@ function toggleMenu(){
     if (!row){
       document.getElementById('wx-summary').textContent =
         "No live weather data yet — waiting on the first reading from the station.";
+      document.getElementById('wx-temp').textContent = "—";
+      document.getElementById('wx-humidity').textContent = "—";
+      document.getElementById('wx-wind').textContent = "—";
+      document.getElementById('wx-wind-dir').textContent = "—";
+      document.getElementById('wx-rain').textContent = "—";
+      document.getElementById('wx-updated').textContent = "";
       return;
     }
 
@@ -659,28 +709,21 @@ function toggleMenu(){
       captionEl.textContent = "Live reading from the station, " + timeAgo(row.received_at).toLowerCase() + ".";
     }
   }
-function updateWxDate(){
-  var now = new Date();
-  var weekday = now.toLocaleDateString('en-GB', {weekday:'long'});
-  var day = now.getDate();
-  var month = now.toLocaleDateString('en-GB', {month:'long'});
-  var year = now.getFullYear();
 
-  document.getElementById('wx-date').textContent =
-    weekday + ' · ' + day + ' ' + month + ' ' + year;
-}
+  // ---------- Hero date (Rome timezone, no duplicates) ----------
+  function updateWxDate(){
+    document.getElementById('wx-date').textContent = romeDateString();
+  }
+  updateWxDate();
+  setInterval(updateWxDate, 60000);
 
-updateWxDate();
-
-updateWxDate();
   async function loadLatestWeather(){
     try {
       var res = await client
         .from('weather_data')
         .select('*')
         .order('received_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
       if (res.error){
         console.error('Supabase read error:', res.error);
@@ -688,14 +731,15 @@ updateWxDate();
           "Couldn't load live weather data right now.";
         return;
       }
-      render(res.data);
+      var row = (res.data && res.data.length) ? res.data[0] : null;
+      render(row);
     } catch (err){
       console.error('Weather fetch failed:', err);
     }
   }
 
   loadLatestWeather();
-  setInterval(loadLatestWeather, 60000); // refresh every 60s
+  setInterval(loadLatestWeather, 60000);
 
   // ---------------------------------------------------------
   // Random hero image from github.com/kyngrick/olivium_photos
@@ -705,7 +749,6 @@ updateWxDate();
 
   async function loadRandomHeroImage(){
     try {
-      // Find the default branch first (works whether it's main/master/etc.)
       var repoRes = await fetch("https://api.github.com/repos/" + PHOTOS_REPO);
       if (!repoRes.ok) throw new Error("Repo lookup failed: " + repoRes.status);
       var repoInfo = await repoRes.json();
@@ -734,7 +777,7 @@ updateWxDate();
         hero.style.backgroundImage =
           "linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%), url('" + rawUrl + "')";
       }
-    } catch (err){
+    } catch (err) {
       console.warn("Random hero image failed, keeping default:", err);
     }
   }
@@ -747,17 +790,33 @@ updateWxDate();
   var BUCKET = "photos_olivium";
 
   function publicPhotoUrl(path){
-    var { data } = client.storage.from(BUCKET).getPublicUrl(path);
-    return data ? data.publicUrl : "";
+    var res = client.storage.from(BUCKET).getPublicUrl(path);
+    return res && res.data ? res.data.publicUrl : "";
+  }
+
+  function escapeHtml(str){
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function formatDateParts(iso){
     var d = new Date(iso);
-    var today = new Date();
-    var isToday = d.toDateString() === today.toDateString();
-    var day = d.getDate();
-    var month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-    var time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    var todayRome = romeDateOnly(new Date());
+    var entryRome = romeDateOnly(d);
+    var isToday = entryRome.getTime() === todayRome.getTime();
+    var day = entryRome.getDate();
+    var month = entryRome.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+    var time = d.toLocaleTimeString('en-GB', {
+      timeZone: ROME_TZ,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
     return { isToday: isToday, day: day, month: month, time: time, badge: (isToday ? "TODAY" : day + " " + month) };
   }
 
@@ -770,11 +829,6 @@ updateWxDate();
     return autoTitle(entry);
   }
 
-  // ---------------------------------------------------------
-  // Automatic daily summaries — when a field entry has no note
-  // (or as a fallback), generate a plain-language line from
-  // whatever we do have: weather snapshot + photo count.
-  // ---------------------------------------------------------
   function autoTitle(entry){
     var t = entry.temperature_snapshot;
     if (t !== null && t !== undefined){
@@ -803,160 +857,161 @@ updateWxDate();
     return bits.join(" ");
   }
 
-  
   function entryNote(entry){
     return entry.note && entry.note.trim().length > 0 ? entry.note : autoSummary(entry);
   }
-function openJournalModal(entry){
-  var modal = document.getElementById('journal-modal');
-  if (!modal) return;
 
-  var parts = formatDateParts(entry.created_at);
-  var photoPaths = entry.photo_paths || [];
+  function openJournalModal(entry){
+    var modal = document.getElementById('journal-modal');
+    if (!modal) return;
 
-  document.getElementById('journal-modal-date').textContent =
-    parts.badge + " · " + parts.time +
-    (entry.tree_id ? " · TREE " + entry.tree_id : "");
+    var parts = formatDateParts(entry.created_at);
+    var photoPaths = entry.photo_paths || [];
 
-  document.getElementById('journal-modal-title').textContent =
-    entryTitle(entry);
+    document.getElementById('journal-modal-date').textContent =
+      parts.badge + " · " + parts.time +
+      (entry.tree_id ? " · TREE " + entry.tree_id : "");
 
-  document.getElementById('journal-modal-note').textContent =
-    entryNote(entry);
+    document.getElementById('journal-modal-title').textContent =
+      entryTitle(entry);
 
-  var gallery = document.getElementById('journal-modal-gallery');
-  var mainPhoto = document.getElementById('journal-modal-photo');
+    document.getElementById('journal-modal-note').textContent =
+      entryNote(entry);
 
-  gallery.innerHTML = "";
+    var gallery = document.getElementById('journal-modal-gallery');
+    var mainPhoto = document.getElementById('journal-modal-photo');
 
-  if (photoPaths.length > 0){
-    var firstUrl = publicPhotoUrl(photoPaths[0]);
-    mainPhoto.style.backgroundImage = "url('" + firstUrl + "')";
+    gallery.innerHTML = "";
 
-    photoPaths.forEach(function(path){
-      var url = publicPhotoUrl(path);
+    if (photoPaths.length > 0){
+      var firstUrl = publicPhotoUrl(photoPaths[0]);
+      mainPhoto.style.backgroundImage = "url('" + firstUrl + "')";
 
-      var thumb = document.createElement('div');
-      thumb.className = 'photo-thumb';
-      thumb.style.backgroundImage = "url('" + url + "')";
+      photoPaths.forEach(function(path){
+        var url = publicPhotoUrl(path);
 
-      thumb.onclick = function(){
-        mainPhoto.style.backgroundImage = "url('" + url + "')";
-      };
+        var thumb = document.createElement('div');
+        thumb.className = 'photo-thumb';
+        thumb.style.backgroundImage = "url('" + url + "')";
 
-      gallery.appendChild(thumb);
-    });
-  } else {
-    mainPhoto.style.backgroundImage = "none";
-    mainPhoto.style.backgroundColor = "#e2dfd3";
+        thumb.onclick = function(){
+          mainPhoto.style.backgroundImage = "url('" + url + "')";
+        };
+
+        gallery.appendChild(thumb);
+      });
+    } else {
+      mainPhoto.style.backgroundImage = "none";
+      mainPhoto.style.backgroundColor = "#e2dfd3";
+    }
+
+    var metrics = [];
+
+    if (entry.temperature_snapshot !== null &&
+        entry.temperature_snapshot !== undefined){
+      metrics.push("♨ " + Number(entry.temperature_snapshot).toFixed(1) + "°C");
+    }
+
+    if (entry.humidity_snapshot !== null &&
+        entry.humidity_snapshot !== undefined){
+      metrics.push("◯ " + Number(entry.humidity_snapshot).toFixed(0) + "%");
+    }
+
+    if (entry.rainfall_snapshot !== null &&
+        entry.rainfall_snapshot !== undefined){
+      metrics.push("💧 " + Number(entry.rainfall_snapshot).toFixed(1) + " mm rain");
+    }
+
+    metrics.push("▧ " + photoPaths.length +
+      " photograph" + (photoPaths.length === 1 ? "" : "s"));
+
+    document.getElementById('journal-modal-metrics').textContent =
+      metrics.join(" · ");
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
   }
 
-  var metrics = [];
+  function closeJournalModal(){
+    var modal = document.getElementById('journal-modal');
+    if (!modal) return;
 
-  if (entry.temperature_snapshot !== null &&
-      entry.temperature_snapshot !== undefined){
-    metrics.push("♨ " + Number(entry.temperature_snapshot).toFixed(1) + "°C");
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
   }
 
-  if (entry.humidity_snapshot !== null &&
-      entry.humidity_snapshot !== undefined){
-    metrics.push("◯ " + Number(entry.humidity_snapshot).toFixed(0) + "%");
-  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeJournalModal();
+  });
 
-  if (entry.rainfall_snapshot !== null &&
-      entry.rainfall_snapshot !== undefined){
-    metrics.push("💧 " + Number(entry.rainfall_snapshot).toFixed(1) + " mm rain");
-  }
+  function renderLatestEntry(entry){
+    if (!entry){
+      document.getElementById('latest-title').textContent = "No field updates yet";
+      document.getElementById('latest-note').textContent =
+        "Once a field entry is uploaded from the grove, it will appear here automatically.";
+      return;
+    }
 
-  metrics.push("▧ " + photoPaths.length +
-    " photograph" + (photoPaths.length === 1 ? "" : "s"));
+    var parts = formatDateParts(entry.created_at);
+    var photoCount = (entry.photo_paths || []).length;
 
-  document.getElementById('journal-modal-metrics').textContent =
-    metrics.join(" · ");
+    document.getElementById('latest-badge').textContent =
+      parts.badge + " · " + parts.time;
 
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
-}
+    document.getElementById('latest-meta').textContent =
+      "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
 
-function closeJournalModal(){
-  var modal = document.getElementById('journal-modal');
-  if (!modal) return;
+    document.getElementById('latest-title').textContent =
+      entryTitle(entry);
 
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden','true');
-  document.body.style.overflow='';
-}
-
-document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') closeJournalModal();
-});
-function renderLatestEntry(entry){
-  if (!entry){
-    document.getElementById('latest-title').textContent = "No field updates yet";
     document.getElementById('latest-note').textContent =
-      "Once a field entry is uploaded from the grove, it will appear here automatically.";
-    return;
-  }
+      entryNote(entry);
 
-  var parts = formatDateParts(entry.created_at);
-  var photoCount = (entry.photo_paths || []).length;
+    var photoEl = document.getElementById('latest-photo');
+    var strip = document.getElementById('latest-photo-strip');
+    var countEl = document.getElementById('latest-photo-count');
 
-  document.getElementById('latest-badge').textContent =
-    parts.badge + " · " + parts.time;
+    strip.innerHTML = "";
 
-  document.getElementById('latest-meta').textContent =
-    "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
+    if (photoCount > 0){
+      var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
 
-  document.getElementById('latest-title').textContent =
-    entryTitle(entry);
+      photoEl.style.backgroundImage = "url('" + firstUrl + "')";
+      photoEl.style.backgroundSize = "cover";
+      photoEl.style.backgroundPosition = "center";
 
-  document.getElementById('latest-note').textContent =
-    entryNote(entry);
+      entry.photo_paths.forEach(function(path){
+        var url = publicPhotoUrl(path);
 
-  var photoEl = document.getElementById('latest-photo');
-  var strip = document.getElementById('latest-photo-strip');
-  var countEl = document.getElementById('latest-photo-count');
+        var thumb = document.createElement('div');
+        thumb.className = 'photo-thumb';
+        thumb.style.backgroundImage = "url('" + url + "')";
 
-  strip.innerHTML = "";
+        thumb.onclick = function(){
+          openJournalModal(entry);
+        };
 
-  if (photoCount > 0){
-    var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
+        strip.appendChild(thumb);
+      });
 
-    photoEl.style.backgroundImage = "url('" + firstUrl + "')";
-    photoEl.style.backgroundSize = "cover";
-    photoEl.style.backgroundPosition = "center";
+      countEl.textContent =
+        photoCount + " photograph" + (photoCount === 1 ? "" : "s") +
+        " · scroll to explore";
 
-    entry.photo_paths.forEach(function(path){
-      var url = publicPhotoUrl(path);
-
-      var thumb = document.createElement('div');
-      thumb.className = 'photo-thumb';
-      thumb.style.backgroundImage = "url('" + url + "')";
-
-      thumb.onclick = function(){
+      photoEl.onclick = function(){
         openJournalModal(entry);
       };
 
-      strip.appendChild(thumb);
-    });
+      photoEl.style.cursor = "pointer";
 
-    countEl.textContent =
-      photoCount + " photograph" + (photoCount === 1 ? "" : "s") +
-      " · scroll to explore";
-
-    photoEl.onclick = function(){
-      openJournalModal(entry);
-    };
-
-    photoEl.style.cursor = "pointer";
-
-  } else {
-    photoEl.style.backgroundImage = "";
-    strip.innerHTML = "";
-    countEl.textContent = "No photographs recorded";
+    } else {
+      photoEl.style.backgroundImage = "";
+      strip.innerHTML = "";
+      countEl.textContent = "No photographs recorded";
+    }
   }
-}
 
   function renderJournal(entries){
     var container = document.getElementById('journal-list');
@@ -965,7 +1020,7 @@ function renderLatestEntry(entry){
       return;
     }
 
-    container.innerHTML = entries.map(function(entry){
+    container.innerHTML = entries.map(function(entry, idx){
       var parts = formatDateParts(entry.created_at);
       var photoCount = (entry.photo_paths || []).length;
       var thumbUrl = photoCount > 0 ? publicPhotoUrl(entry.photo_paths[0]) : "";
@@ -985,18 +1040,26 @@ function renderLatestEntry(entry){
       var noteText = entryNote(entry);
       var dateHtml = parts.isToday ? 'TODAY<br>' + parts.day + ' ' + parts.month : parts.day + ' ' + parts.month;
 
-return '<div class="journal-item" data-entry-index="' + entries.indexOf(entry) + '">' +
-  '<div class="date">' + dateHtml + '</div>' +
+      return '<div class="journal-item" role="button" tabindex="0" data-entry-index="' + idx + '" aria-label="Open journal entry: ' + escapeHtml(entryTitle(entry)) + '">' +
+        '<div class="date">' + dateHtml + '</div>' +
         '<div class="journal-thumb" style="' + thumbStyle + '"></div>' +
-        '<div class="journal-text"><strong>' + entryTitle(entry) + '</strong><p>' + noteText + '</p></div>' +
+        '<div class="journal-text"><strong>' + escapeHtml(entryTitle(entry)) + '</strong><p>' + escapeHtml(noteText) + '</p></div>' +
         '<div class="journal-metrics">' + metrics.join(' · ') + '</div>' +
       '</div>';
     }).join('');
-    Array.from(container.querySelectorAll('.journal-item')).forEach(function(item, index){
-  item.onclick = function(){
-    openJournalModal(entries[index]);
-  };
-});
+
+    Array.from(container.querySelectorAll('.journal-item')).forEach(function(item){
+      var idx = parseInt(item.getAttribute('data-entry-index'), 10);
+      item.onclick = function(){
+        openJournalModal(entries[idx]);
+      };
+      item.onkeydown = function(e){
+        if (e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          openJournalModal(entries[idx]);
+        }
+      };
+    });
   }
 
   function renderRecentUpdates(entries){
@@ -1015,14 +1078,14 @@ return '<div class="journal-item" data-entry-index="' + entries.indexOf(entry) +
         : 'background:#e2dfd3';
       return '<div class="update">' +
         '<div class="thumb" style="' + thumbStyle + '"></div>' +
-        '<div><strong>' + parts.badge + ' · ' + parts.time + '</strong>' +
-        '<p>' + entryTitle(entry) + '<br>' + photoCount + ' photograph' + (photoCount === 1 ? '' : 's') + '</p></div>' +
+        '<div><strong>' + escapeHtml(parts.badge) + ' · ' + escapeHtml(parts.time) + '</strong>' +
+        '<p>' + escapeHtml(entryTitle(entry)) + '<br>' + photoCount + ' photograph' + (photoCount === 1 ? '' : 's') + '</p></div>' +
       '</div>';
     }).join('');
   }
 
   // ---------------------------------------------------------
-  // Season stage + harvest countdown (pure date logic, no DB)
+  // Season stage + harvest countdown (Rome timezone)
   // ---------------------------------------------------------
   var SEASON_STAGES = [
     { month: 0,  name: "Pruning",               icon: "✂️" },
@@ -1040,54 +1103,48 @@ return '<div class="journal-item" data-entry-index="' + entries.indexOf(entry) +
   ];
   var HARVEST_START_MONTH = 9; // October (0-indexed)
   var HARVEST_START_DAY = 1;
-  var HARVEST_END_MONTH = 10;  // harvest window runs through November
 
-function renderSeasonStage(){
-  var today = new Date();
+  function renderSeasonStage(){
+    var now = new Date();
+    var month = romeMonth(now);
+    var year = romeYear(now);
 
-  var nameEl = document.getElementById('season-stage-name');
-  var countdownEl = document.getElementById('season-harvest-countdown');
+    var nameEl = document.getElementById('season-stage-name');
+    var countdownEl = document.getElementById('season-harvest-countdown');
 
-  if (!nameEl || !countdownEl) return;
+    if (!nameEl || !countdownEl) return;
 
-  // 2026 harvest has reached its end.
-  if (today.getFullYear() === 2026 && today.getMonth() === 9){
-    nameEl.textContent = "🧺 END OF HARVEST";
-    countdownEl.textContent = "🌾 Harvest complete · the grove is moving into milling";
-    return;
+    // October: harvest underway
+    if (month === 9){
+      nameEl.textContent = "🧺 HARVEST UNDERWAY";
+      countdownEl.textContent = "🌾 The grove is being harvested";
+      return;
+    }
+
+    // November: harvest & milling
+    if (month === 10){
+      nameEl.textContent = "🫒 HARVEST & MILLING";
+      countdownEl.textContent = "🌿 Oil production and settling";
+      return;
+    }
+
+    var stage = SEASON_STAGES[month];
+    nameEl.textContent = stage.icon + " " + stage.name.toUpperCase();
+
+    // Compute days until next October 1 (Rome date, ignoring time)
+    var todayRome = romeDateOnly(now);
+    var harvestDate = new Date(year, HARVEST_START_MONTH, HARVEST_START_DAY);
+    if (todayRome.getTime() >= harvestDate.getTime()){
+      harvestDate = new Date(year + 1, HARVEST_START_MONTH, HARVEST_START_DAY);
+    }
+    var daysLeft = Math.ceil((harvestDate - todayRome) / 86400000);
+    countdownEl.textContent = "Harvest in " + daysLeft + " day" + (daysLeft === 1 ? "" : "s");
   }
-
-  if (today.getFullYear() === 2026 && today.getMonth() === 10){
-    nameEl.textContent = "🫒 POST-HARVEST & MILLING";
-    countdownEl.textContent = "🌿 Harvest complete · oil production and settling";
-    return;
-  }
-
-  var stage = SEASON_STAGES[today.getMonth()];
-
-  nameEl.textContent =
-    stage.icon + " " + stage.name.toUpperCase();
-
-  var year = today.getFullYear();
-  var harvestDate = new Date(year, HARVEST_START_MONTH, HARVEST_START_DAY);
-
-  if (today > harvestDate){
-    harvestDate =
-      new Date(year + 1, HARVEST_START_MONTH, HARVEST_START_DAY);
-  }
-
-  var daysLeft =
-    Math.ceil((harvestDate - today) / 86400000);
-
-  countdownEl.textContent =
-    "Harvest in " + daysLeft +
-    " day" + (daysLeft === 1 ? "" : "s");
-}
 
   function renderSeasonTimeline(){
     var container = document.getElementById('season-timeline');
     if (!container) return;
-    var currentMonth = new Date().getMonth();
+    var currentMonth = romeMonth(new Date());
     container.innerHTML = SEASON_STAGES.map(function(stage, idx){
       var isCurrent = idx === currentMonth;
       var monthLabel = new Date(2026, idx, 1).toLocaleString('en-US', { month: 'short' }).toUpperCase();
@@ -1101,38 +1158,55 @@ function renderSeasonStage(){
   }
 
   // ---------------------------------------------------------
-  // Season stats: Days Observed, Field Updates, Photographs, Rainfall
+  // Season stats: Days Observed, Field Updates, Photographs,
+  // Rainfall — limited to 2026 season (Jan 1 – Dec 31, 2026)
   // ---------------------------------------------------------
   async function loadSeasonStats(){
     try {
+      var seasonStart = '2026-01-01T00:00:00+01:00';
+      var seasonEnd   = '2026-12-31T23:59:59+01:00';
+
+      // Weather: earliest 2026 reading + rainfall sum within 2026
       var weatherAgg = await client
         .from('weather_data')
-        .select('received_at.min(), rainfall.sum()')
-        .single();
-
-      var updatesCount = await client
-        .from('field_entries')
-        .select('*', { count: 'exact', head: true });
-
-      var photoRows = await client
-        .from('field_entries')
-        .select('photo_paths');
+        .select('received_at, rainfall')
+        .gte('received_at', seasonStart)
+        .lte('received_at', seasonEnd);
 
       if (!weatherAgg.error && weatherAgg.data){
-        var earliest = weatherAgg.data.min;
-        if (earliest){
-          var days = Math.floor((Date.now() - new Date(earliest).getTime()) / 86400000) + 1;
-          document.getElementById('stat-days-observed').textContent = days;
-        }
-        var totalRain = weatherAgg.data.sum;
-        if (totalRain !== null && totalRain !== undefined){
-          document.getElementById('stat-rainfall').textContent = Number(totalRain).toFixed(0) + ' mm';
+        var rows = weatherAgg.data;
+        if (rows.length > 0){
+          var earliest = rows.reduce(function(min, r){
+            return (!min || r.received_at < min) ? r.received_at : min;
+          }, null);
+          if (earliest){
+            var days = Math.floor((Date.now() - new Date(earliest).getTime()) / 86400000) + 1;
+            document.getElementById('stat-days-observed').textContent = days;
+          }
+          var totalRain = rows.reduce(function(sum, r){
+            return sum + (Number(r.rainfall) || 0);
+          }, 0);
+          document.getElementById('stat-rainfall').textContent = totalRain.toFixed(0) + ' mm';
         }
       }
+
+      // Field entries within 2026
+      var updatesCount = await client
+        .from('field_entries')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', seasonStart)
+        .lte('created_at', seasonEnd);
 
       if (!updatesCount.error && updatesCount.count !== null){
         document.getElementById('stat-field-updates').textContent = updatesCount.count;
       }
+
+      // Photos within 2026 field entries
+      var photoRows = await client
+        .from('field_entries')
+        .select('photo_paths')
+        .gte('created_at', seasonStart)
+        .lte('created_at', seasonEnd);
 
       if (!photoRows.error && photoRows.data){
         var totalPhotos = photoRows.data.reduce(function(sum, r){
@@ -1148,41 +1222,49 @@ function renderSeasonStage(){
   renderSeasonStage();
   renderSeasonTimeline();
   loadSeasonStats();
+  setInterval(function(){
+    renderSeasonStage();
+    renderSeasonTimeline();
+    loadSeasonStats();
+  }, 60000);
 
-
+  // ---------------------------------------------------------
+  // Grove map (up to 1000 GPS-validated entries)
+  // ---------------------------------------------------------
   var groveMap = null;
   var groveMapMarkers = [];
 
-function ensureGroveMap(){
-  if (groveMap) return groveMap;
+  function ensureGroveMap(){
+    if (groveMap) return groveMap;
 
-  var el = document.getElementById('grove-map');
-  if (!el || typeof L === 'undefined') return null;
+    var el = document.getElementById('grove-map');
+    if (!el || typeof L === 'undefined') return null;
 
-  // Olivium grove — correct San Vincenzo area
-  var GROVE_CENTER = [43.10052, 10.55912];
+    var GROVE_CENTER = [43.10052, 10.55912];
 
-  groveMap = L.map(el, {
-    zoomControl: false,
-    attributionControl: false,
-    scrollWheelZoom: false
-  }).setView(GROVE_CENTER, 17);
+    groveMap = L.map(el, {
+      zoomControl: false,
+      scrollWheelZoom: false
+    }).setView(GROVE_CENTER, 17);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 20
-  }).addTo(groveMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+    }).addTo(groveMap);
 
-  // Grove centre marker
-  L.marker(GROVE_CENTER)
-    .addTo(groveMap)
-    .bindPopup(
-      '<strong>OLIVIUM GROVE</strong><br>' +
-      'San Vincenzo, Tuscany<br>' +
-      '<span style="font-size:11px">Frantoio · Moraiolo · Coritano</span>'
-    );
+    L.marker(GROVE_CENTER)
+      .addTo(groveMap)
+      .bindPopup(
+        '<strong>OLIVIUM GROVE</strong><br>' +
+        'San Vincenzo, Tuscany<br>' +
+        '<span style="font-size:11px">Frantoio · Moraiolo · Coritano</span>'
+      );
 
-  return groveMap;
-}
+    return groveMap;
+  }
+
+  function isValidLat(v){ return typeof v === 'number' && !isNaN(v) && v >= -90 && v <= 90; }
+  function isValidLng(v){ return typeof v === 'number' && !isNaN(v) && v >= -180 && v <= 180; }
 
   function renderGroveMap(entries){
     var map = ensureGroveMap();
@@ -1192,8 +1274,7 @@ function ensureGroveMap(){
     groveMapMarkers = [];
 
     var pinned = entries.filter(function(e){
-      return e.gps_lat !== null && e.gps_lat !== undefined &&
-             e.gps_lng !== null && e.gps_lng !== undefined;
+      return isValidLat(e.gps_lat) && isValidLng(e.gps_lng);
     });
 
     document.getElementById('map-pin-count').textContent = pinned.length;
@@ -1213,9 +1294,9 @@ function ensureGroveMap(){
       }).addTo(map);
 
       var parts = formatDateParts(entry.created_at);
-      var popupHtml = '<strong>' + entryTitle(entry) + '</strong><br>' +
-        parts.badge + ' · ' + parts.time +
-        (entry.tree_id ? '<br>Tree ' + entry.tree_id : '');
+      var popupHtml = '<strong>' + escapeHtml(entryTitle(entry)) + '</strong><br>' +
+        escapeHtml(parts.badge) + ' · ' + escapeHtml(parts.time) +
+        (entry.tree_id ? '<br>Tree ' + escapeHtml(entry.tree_id) : '');
       marker.bindPopup(popupHtml);
       groveMapMarkers.push(marker);
     });
@@ -1233,7 +1314,7 @@ function ensureGroveMap(){
         .from('field_entries')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(1000);
 
       if (res.error){
         console.error('Supabase field_entries read error:', res.error);
@@ -1251,7 +1332,7 @@ function ensureGroveMap(){
   }
 
   loadFieldEntries();
-  setInterval(loadFieldEntries, 60000); // refresh every 60s
+  setInterval(loadFieldEntries, 60000);
 })();
 </script>
 </body>
