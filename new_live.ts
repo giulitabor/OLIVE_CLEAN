@@ -2449,8 +2449,67 @@ function bindWalletButton() {
     $("btn-wallet") as HTMLButtonElement | null;
 
   if (!button) {
+    console.warn("[OLIVIUM] #btn-wallet not found");
     return;
   }
+
+  /*
+   * IMPORTANT:
+   * This button is ALWAYS the Solana wallet button.
+   * It is NEVER changed into a login button.
+   */
+
+  button.textContent = "Connect Wallet";
+
+  /*
+   * Remove handlers previously attached by cloning the
+   * existing button, while preserving the original ID,
+   * classes and styling.
+   */
+
+  const replacement =
+    button.cloneNode(true) as HTMLButtonElement;
+
+  replacement.id = "btn-wallet";
+
+  button.parentNode?.replaceChild(
+    replacement,
+    button
+  );
+
+  replacement.addEventListener(
+    "click",
+    async () => {
+
+      const wallet =
+        getConnectedWallet();
+
+      if (wallet) {
+
+        /*
+         * Wallet disconnect ONLY.
+         *
+         * This does NOT log the member out of Supabase.
+         */
+
+        await disconnectOptionalWallet();
+
+      } else {
+
+        /*
+         * Wallet connection is independent of
+         * Supabase member authentication.
+         */
+
+        await connectOptionalWallet();
+
+      }
+
+    }
+  );
+
+  updateWalletButtonText(replacement);
+}
 
 
   /*
