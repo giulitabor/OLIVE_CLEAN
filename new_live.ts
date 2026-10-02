@@ -137,26 +137,26 @@ function markInitialised(): void {
    a single renderAll() invocation.
    ============================================================ */
 
+const RENDER_DEBOUNCE_MS = 50;
+
 let renderScheduled = false;
+let renderTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleRender(): void {
   if (renderScheduled) return;
   renderScheduled = true;
 
-  const run = () => {
+  if (renderTimer) clearTimeout(renderTimer);
+
+  renderTimer = setTimeout(() => {
+    renderTimer = null;
     renderScheduled = false;
     try {
       renderAll();
     } catch (error) {
       console.warn("[OLIVIUM RENDER]", error);
     }
-  };
-
-  if (typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(run);
-  } else {
-    setTimeout(run, 16);
-  }
+  }, RENDER_DEBOUNCE_MS);
 }
 
 /* ============================================================
