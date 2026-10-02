@@ -1042,28 +1042,47 @@ return '<div class="journal-item" data-entry-index="' + entries.indexOf(entry) +
   var HARVEST_START_DAY = 1;
   var HARVEST_END_MONTH = 10;  // harvest window runs through November
 
-  function renderSeasonStage(){
-    var today = new Date();
-    var stage = SEASON_STAGES[today.getMonth()];
-    var nameEl = document.getElementById('season-stage-name');
-    var countdownEl = document.getElementById('season-harvest-countdown');
-    if (nameEl) nameEl.textContent = stage.icon + " " + stage.name.toUpperCase();
-    if (!countdownEl) return;
+function renderSeasonStage(){
+  var today = new Date();
 
-    var inHarvest = today.getMonth() === HARVEST_START_MONTH || today.getMonth() === HARVEST_END_MONTH;
-    if (inHarvest){
-      countdownEl.textContent = "🌾 Harvest is underway";
-      return;
-    }
+  var nameEl = document.getElementById('season-stage-name');
+  var countdownEl = document.getElementById('season-harvest-countdown');
 
-    var year = today.getFullYear();
-    var harvestDate = new Date(year, HARVEST_START_MONTH, HARVEST_START_DAY);
-    if (today > harvestDate){
-      harvestDate = new Date(year + 1, HARVEST_START_MONTH, HARVEST_START_DAY);
-    }
-    var daysLeft = Math.ceil((harvestDate - today) / 86400000);
-    countdownEl.textContent = "Harvest in " + daysLeft + " day" + (daysLeft === 1 ? "" : "s");
+  if (!nameEl || !countdownEl) return;
+
+  // 2026 harvest has reached its end.
+  if (today.getFullYear() === 2026 && today.getMonth() === 9){
+    nameEl.textContent = "🧺 END OF HARVEST";
+    countdownEl.textContent = "🌾 Harvest complete · the grove is moving into milling";
+    return;
   }
+
+  if (today.getFullYear() === 2026 && today.getMonth() === 10){
+    nameEl.textContent = "🫒 POST-HARVEST & MILLING";
+    countdownEl.textContent = "🌿 Harvest complete · oil production and settling";
+    return;
+  }
+
+  var stage = SEASON_STAGES[today.getMonth()];
+
+  nameEl.textContent =
+    stage.icon + " " + stage.name.toUpperCase();
+
+  var year = today.getFullYear();
+  var harvestDate = new Date(year, HARVEST_START_MONTH, HARVEST_START_DAY);
+
+  if (today > harvestDate){
+    harvestDate =
+      new Date(year + 1, HARVEST_START_MONTH, HARVEST_START_DAY);
+  }
+
+  var daysLeft =
+    Math.ceil((harvestDate - today) / 86400000);
+
+  countdownEl.textContent =
+    "Harvest in " + daysLeft +
+    " day" + (daysLeft === 1 ? "" : "s");
+}
 
   function renderSeasonTimeline(){
     var container = document.getElementById('season-timeline');
