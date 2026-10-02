@@ -119,6 +119,46 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
   background:url("https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=88") center/cover;
   position:relative
 }
+  .photo-strip{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding:12px 0 4px;
+  scrollbar-width:thin;
+  scroll-snap-type:x mandatory;
+}
+
+.photo-strip::-webkit-scrollbar{
+  height:6px;
+}
+
+.photo-strip::-webkit-scrollbar-thumb{
+  background:#b7b79d;
+  border-radius:10px;
+}
+
+.photo-thumb{
+  flex:0 0 150px;
+  height:105px;
+  border-radius:10px;
+  background-size:cover;
+  background-position:center;
+  cursor:pointer;
+  scroll-snap-align:start;
+  border:2px solid transparent;
+  transition:.2s;
+}
+
+.photo-thumb:hover{
+  border-color:var(--gold);
+  transform:translateY(-2px);
+}
+
+.photo-count{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:7px;
+}
 .photo-badge{position:absolute;left:15px;bottom:15px;background:rgba(11,24,13,.86);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px}
 .latest-copy{padding:32px}
 .latest-copy h3{font-size:29px;line-height:1.1;margin:12px 0}
@@ -297,7 +337,11 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
     <article class="card image-card" style="min-height:275px">
       <div id="grove-map" style="position:absolute;inset:0;background:#dcd8c4"></div>
       <div class="card-label" style="z-index:2">🗺 Grove Map</div>
-      <a class="card-link" href="#grove" style="z-index:2">View Details →</a>
+<a class="card-link"
+   href="https://maps.app.goo.gl/m4BNLCSKVn3kPpiX6"
+   target="_blank"
+   rel="noopener"
+   style="z-index:2">Open Grove →</a>
       <div class="overlay-box" style="z-index:2"><strong id="map-pin-count">0</strong><span>Mapped entries</span><span>West-facing slope</span></div>
     </article>
 
@@ -842,23 +886,36 @@ updateWxDate();
   var groveMap = null;
   var groveMapMarkers = [];
 
-  function ensureGroveMap(){
-    if (groveMap) return groveMap;
-    var el = document.getElementById('grove-map');
-    if (!el || typeof L === 'undefined') return null;
+function ensureGroveMap(){
+  if (groveMap) return groveMap;
 
-    groveMap = L.map(el, {
-      zoomControl: false,
-      attributionControl: false,
-      scrollWheelZoom: false
-    }).setView([43.7, 11.2], 15); // Tuscany-ish default; recentres once pins load
+  var el = document.getElementById('grove-map');
+  if (!el || typeof L === 'undefined') return null;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(groveMap);
+  // Olivium grove — correct San Vincenzo area
+  var GROVE_CENTER = [43.10052, 10.55912];
 
-    return groveMap;
-  }
+  groveMap = L.map(el, {
+    zoomControl: false,
+    attributionControl: false,
+    scrollWheelZoom: false
+  }).setView(GROVE_CENTER, 17);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 20
+  }).addTo(groveMap);
+
+  // Grove centre marker
+  L.marker(GROVE_CENTER)
+    .addTo(groveMap)
+    .bindPopup(
+      '<strong>OLIVIUM GROVE</strong><br>' +
+      'San Vincenzo, Tuscany<br>' +
+      '<span style="font-size:11px">Frantoio · Moraiolo · Coritano</span>'
+    );
+
+  return groveMap;
+}
 
   function renderGroveMap(entries){
     var map = ensureGroveMap();
