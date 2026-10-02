@@ -259,6 +259,107 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
   .journal-metrics{grid-column:3;justify-content:flex-start}
   .footer{flex-direction:column;gap:12px;text-align:center}
 }
+  .journal-item{
+  cursor:pointer;
+  transition:background .2s ease;
+  border-radius:10px;
+  padding-left:8px;
+  padding-right:8px;
+}
+
+.journal-item:hover{
+  background:#f4f2e6;
+}
+
+.journal-modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  z-index:200;
+}
+
+.journal-modal.open{
+  display:block;
+}
+
+.journal-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(8,18,10,.72);
+  backdrop-filter:blur(4px);
+}
+
+.journal-modal-box{
+  position:relative;
+  width:min(900px,92vw);
+  max-height:90vh;
+  overflow:auto;
+  margin:5vh auto;
+  background:var(--paper);
+  border-radius:20px;
+  box-shadow:0 25px 80px rgba(0,0,0,.35);
+}
+
+.journal-modal-close{
+  position:absolute;
+  right:14px;
+  top:12px;
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:50%;
+  background:rgba(10,25,14,.85);
+  color:#fff;
+  font-size:25px;
+  line-height:1;
+  cursor:pointer;
+  z-index:3;
+}
+
+.journal-modal-photo{
+  width:100%;
+  height:360px;
+  background:#e2dfd3 center/cover no-repeat;
+}
+
+.journal-modal-content{
+  padding:25px 28px 30px;
+}
+
+.journal-modal-content h2{
+  font-size:30px;
+  margin:8px 0 12px;
+}
+
+.journal-modal-content p{
+  color:#62695f;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+
+.journal-modal-metrics{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  font-size:12px;
+  color:#6d7469;
+}
+
+@media(max-width:760px){
+  .journal-modal-box{
+    width:94vw;
+    margin:3vh auto;
+    max-height:94vh;
+  }
+
+  .journal-modal-photo{
+    height:260px;
+  }
+
+  .journal-modal-content{
+    padding:20px;
+  }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
@@ -318,11 +419,13 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
     <article class="card latest" id="latest-entry">
       <div class="latest-photo" id="latest-photo"><div class="photo-badge" id="latest-badge">—</div></div>
       <div class="latest-copy">
-        <div class="meta" id="latest-meta">FIELD UPDATE</div>
-        <h3 id="latest-title">Waiting for the first field update…</h3>
-        <p id="latest-note">Once a field entry is uploaded from the grove, it will appear here automatically.</p>
-        <button class="btn" id="latest-view-btn">◉ View Photos</button>
-      </div>
+  <div class="meta" id="latest-meta">FIELD UPDATE</div>
+  <h3 id="latest-title">Waiting for the first field update…</h3>
+  <p id="latest-note">Once a field entry is uploaded from the grove, it will appear here automatically.</p>
+
+  <div id="latest-photo-strip" class="photo-strip"></div>
+  <div id="latest-photo-count" class="photo-count"></div>
+</div>
     </article>
   </section>
 
@@ -412,6 +515,25 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
   <div class="footer-links"><span>Instagram</span><span>Privacy</span><span>Terms</span><span>Contact</span></div>
 </footer>
 
+  <!-- JOURNAL MODAL -->
+<div id="journal-modal" class="journal-modal" aria-hidden="true">
+  <div class="journal-modal-backdrop" onclick="closeJournalModal()"></div>
+
+  <div class="journal-modal-box">
+    <button class="journal-modal-close" onclick="closeJournalModal()" aria-label="Close">×</button>
+
+    <div id="journal-modal-photo" class="journal-modal-photo"></div>
+
+    <div class="journal-modal-content">
+      <div id="journal-modal-date" class="meta"></div>
+      <h2 id="journal-modal-title"></h2>
+      <p id="journal-modal-note"></p>
+
+      <div id="journal-modal-gallery" class="photo-strip"></div>
+      <div id="journal-modal-metrics" class="journal-modal-metrics"></div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -681,39 +803,160 @@ updateWxDate();
     return bits.join(" ");
   }
 
+  
   function entryNote(entry){
     return entry.note && entry.note.trim().length > 0 ? entry.note : autoSummary(entry);
   }
+function openJournalModal(entry){
+  var modal = document.getElementById('journal-modal');
+  if (!modal) return;
 
-  function renderLatestEntry(entry){
-    if (!entry){
-      document.getElementById('latest-title').textContent = "No field updates yet";
-      document.getElementById('latest-note').textContent = "Once a field entry is uploaded from the grove, it will appear here automatically.";
-      document.getElementById('latest-view-btn').style.display = 'none';
-      return;
-    }
-    var parts = formatDateParts(entry.created_at);
-    var photoCount = (entry.photo_paths || []).length;
+  var parts = formatDateParts(entry.created_at);
+  var photoPaths = entry.photo_paths || [];
 
-    document.getElementById('latest-badge').textContent = parts.badge + " · " + parts.time;
-    document.getElementById('latest-meta').textContent =
-      "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
-    document.getElementById('latest-title').textContent = entryTitle(entry);
-    document.getElementById('latest-note').textContent = entryNote(entry);
+  document.getElementById('journal-modal-date').textContent =
+    parts.badge + " · " + parts.time +
+    (entry.tree_id ? " · TREE " + entry.tree_id : "");
 
-    if (photoCount > 0){
-      var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
-      var photoEl = document.getElementById('latest-photo');
-      photoEl.style.backgroundImage = "url('" + firstUrl + "')";
-      photoEl.style.backgroundSize = "cover";
-      photoEl.style.backgroundPosition = "center";
-      var btn = document.getElementById('latest-view-btn');
-      btn.style.display = '';
-      btn.onclick = function(){ window.open(firstUrl, '_blank'); };
-    } else {
-      document.getElementById('latest-view-btn').style.display = 'none';
-    }
+  document.getElementById('journal-modal-title').textContent =
+    entryTitle(entry);
+
+  document.getElementById('journal-modal-note').textContent =
+    entryNote(entry);
+
+  var gallery = document.getElementById('journal-modal-gallery');
+  var mainPhoto = document.getElementById('journal-modal-photo');
+
+  gallery.innerHTML = "";
+
+  if (photoPaths.length > 0){
+    var firstUrl = publicPhotoUrl(photoPaths[0]);
+    mainPhoto.style.backgroundImage = "url('" + firstUrl + "')";
+
+    photoPaths.forEach(function(path){
+      var url = publicPhotoUrl(path);
+
+      var thumb = document.createElement('div');
+      thumb.className = 'photo-thumb';
+      thumb.style.backgroundImage = "url('" + url + "')";
+
+      thumb.onclick = function(){
+        mainPhoto.style.backgroundImage = "url('" + url + "')";
+      };
+
+      gallery.appendChild(thumb);
+    });
+  } else {
+    mainPhoto.style.backgroundImage = "none";
+    mainPhoto.style.backgroundColor = "#e2dfd3";
   }
+
+  var metrics = [];
+
+  if (entry.temperature_snapshot !== null &&
+      entry.temperature_snapshot !== undefined){
+    metrics.push("♨ " + Number(entry.temperature_snapshot).toFixed(1) + "°C");
+  }
+
+  if (entry.humidity_snapshot !== null &&
+      entry.humidity_snapshot !== undefined){
+    metrics.push("◯ " + Number(entry.humidity_snapshot).toFixed(0) + "%");
+  }
+
+  if (entry.rainfall_snapshot !== null &&
+      entry.rainfall_snapshot !== undefined){
+    metrics.push("💧 " + Number(entry.rainfall_snapshot).toFixed(1) + " mm rain");
+  }
+
+  metrics.push("▧ " + photoPaths.length +
+    " photograph" + (photoPaths.length === 1 ? "" : "s"));
+
+  document.getElementById('journal-modal-metrics').textContent =
+    metrics.join(" · ");
+
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+
+function closeJournalModal(){
+  var modal = document.getElementById('journal-modal');
+  if (!modal) return;
+
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeJournalModal();
+});
+function renderLatestEntry(entry){
+  if (!entry){
+    document.getElementById('latest-title').textContent = "No field updates yet";
+    document.getElementById('latest-note').textContent =
+      "Once a field entry is uploaded from the grove, it will appear here automatically.";
+    return;
+  }
+
+  var parts = formatDateParts(entry.created_at);
+  var photoCount = (entry.photo_paths || []).length;
+
+  document.getElementById('latest-badge').textContent =
+    parts.badge + " · " + parts.time;
+
+  document.getElementById('latest-meta').textContent =
+    "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
+
+  document.getElementById('latest-title').textContent =
+    entryTitle(entry);
+
+  document.getElementById('latest-note').textContent =
+    entryNote(entry);
+
+  var photoEl = document.getElementById('latest-photo');
+  var strip = document.getElementById('latest-photo-strip');
+  var countEl = document.getElementById('latest-photo-count');
+
+  strip.innerHTML = "";
+
+  if (photoCount > 0){
+    var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
+
+    photoEl.style.backgroundImage = "url('" + firstUrl + "')";
+    photoEl.style.backgroundSize = "cover";
+    photoEl.style.backgroundPosition = "center";
+
+    entry.photo_paths.forEach(function(path){
+      var url = publicPhotoUrl(path);
+
+      var thumb = document.createElement('div');
+      thumb.className = 'photo-thumb';
+      thumb.style.backgroundImage = "url('" + url + "')";
+
+      thumb.onclick = function(){
+        openJournalModal(entry);
+      };
+
+      strip.appendChild(thumb);
+    });
+
+    countEl.textContent =
+      photoCount + " photograph" + (photoCount === 1 ? "" : "s") +
+      " · scroll to explore";
+
+    photoEl.onclick = function(){
+      openJournalModal(entry);
+    };
+
+    photoEl.style.cursor = "pointer";
+
+  } else {
+    photoEl.style.backgroundImage = "";
+    strip.innerHTML = "";
+    countEl.textContent = "No photographs recorded";
+  }
+}
 
   function renderJournal(entries){
     var container = document.getElementById('journal-list');
@@ -742,13 +985,18 @@ updateWxDate();
       var noteText = entryNote(entry);
       var dateHtml = parts.isToday ? 'TODAY<br>' + parts.day + ' ' + parts.month : parts.day + ' ' + parts.month;
 
-      return '<div class="journal-item">' +
-        '<div class="date">' + dateHtml + '</div>' +
+return '<div class="journal-item" data-entry-index="' + entries.indexOf(entry) + '">' +
+  '<div class="date">' + dateHtml + '</div>' +
         '<div class="journal-thumb" style="' + thumbStyle + '"></div>' +
         '<div class="journal-text"><strong>' + entryTitle(entry) + '</strong><p>' + noteText + '</p></div>' +
         '<div class="journal-metrics">' + metrics.join(' · ') + '</div>' +
       '</div>';
     }).join('');
+    Array.from(container.querySelectorAll('.journal-item')).forEach(function(item, index){
+  item.onclick = function(){
+    openJournalModal(entries[index]);
+  };
+});
   }
 
   function renderRecentUpdates(entries){
