@@ -19,20 +19,13 @@
      auth.users.id
 
           ↓
-
      public.users.auth_user_id
-
-
-
    Wallet:
-
      optional wallet connected separately
 
      wallet disconnect NEVER logs member out
 
    ============================================================ */
-
-
 
 import {
 
@@ -55,25 +48,16 @@ import {
 } from "./src/reserveb";
 
 
-
 /* ============================================================
-
    TYPES
-
    ============================================================ */
 
 
-
 type AuthUser = {
-
   id: string;
-
-  email?: string | null;
-
+ email?: string | null;
   user_metadata?: Record<string, any>;
-
 };
-
 
 
 type Profile = {
@@ -118,7 +102,8 @@ const state: LiveState = {
 
 
 
-
+const INIT_FLAG = "__oliviumAuthInit";
+const AUTH_SUB_FLAG = "__oliviumAuthSubscribed";
 
 /* ============================================================
 
@@ -2995,6 +2980,8 @@ async function restoreSupabaseSession() {
 
 
 function installAuthListener() {
+  if ((window as any)[AUTH_SUB_FLAG]) return;
+  (window as any)[AUTH_SUB_FLAG] = true;
 
 
 
@@ -5315,23 +5302,18 @@ function bindPublicAuthButtons() {
 
 
 async function initLiveAuth() {
+  if ((window as any)[INIT_FLAG]) {
+    console.log("[OLIVIUM AUTH] Already initialised — skipping.");
+    return;
+  }
+  (window as any)[INIT_FLAG] = true;
 
-
-
-  console.log(
-
-    "[OLIVIUM AUTH] Initialising Supabase member authentication..."
-
-  );
-
-
+  console.log("[OLIVIUM AUTH] Initialising Supabase member authentication...");
 
 
 
   /* ----------------------------------------------------------
-
      Inject our missing frontend
-
      ---------------------------------------------------------- */
 
 
