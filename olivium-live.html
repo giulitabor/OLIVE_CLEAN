@@ -366,13 +366,13 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
 
 <body>
 <header class="topbar">
-  <a class="brand" href="#home">
+  <a class="brand" href="home.html">
     <span class="brand-mark">◢</span>
     <span class="brand-name">OLIVIUM</span>
     <span class="brand-tag">The living story of a Tuscan olive grove</span>
   </a>
   <nav class="nav">
-    <a class="active" href="#home">Home</a>
+    <a class="active" href="home.html">Home</a>
     <a href="#today">Today</a>
     <a href="#grove">The Grove</a>
     <a href="#journal">Journal</a>
@@ -645,70 +645,144 @@ function toggleMenu(){
     return { hot: hot, dry: dry, labels: labels };
   }
 
-  function render(row){
-    if (!row){
-      document.getElementById('wx-summary').textContent =
-        "No live weather data yet — waiting on the first reading from the station.";
-      document.getElementById('wx-temp').textContent = "—";
-      document.getElementById('wx-humidity').textContent = "—";
-      document.getElementById('wx-wind').textContent = "—";
-      document.getElementById('wx-wind-dir').textContent = "—";
-      document.getElementById('wx-rain').textContent = "—";
-      document.getElementById('wx-updated').textContent = "";
-      return;
-    }
+// ---- Grove Pulse state (populated by loadLatestWeather) ----
+var grovePulseState = {
+  weather: null,
+  rain7: null,       // cumulative rainfall last 7 days (mm)
+  rain30: null,      // cumulative rainfall last 30 days (mm)
+  hasFieldEntryToday: false
+};
 
-    document.getElementById('wx-temp').textContent = fmt(row.temperature, 1, "°C");
-    document.getElementById('wx-humidity').textContent = fmt(row.humidity, 0, "%");
-    document.getElementById('wx-wind').textContent = fmt(row.wind_speed, 0, " km/h");
-    document.getElementById('wx-wind-dir').textContent = toCompass(row.wind_direction) || "—";
-    document.getElementById('wx-rain').textContent = fmt(row.rainfall, 1, " mm");
+// ---- Rule helpers ----
+function treeConditionRule(rain7, rain30){
+  // Drought-stress indicator based on cumulative rainfall.
+  // Thresholds are conservative for a Tuscan olive grove in the growing season.
+  if (rain7 === null || rain30 === null){
+    return { label: "Unknown", dot: "yellow" };
+  }
+  if (rain30 < 5)      return { label: "Stressed",  dot: "red"    };
+  if (rain30 < 20)     return { label: "Fair",      dot: "yellow" };
+  if (rain30 < 60)     return { label: "Good",      dot: "green"  };
+  if (rain30 < 120)    return { label: "Excellent", dot: "green"  };
+  return               { label: "Waterlogged", dot: "yellow" };
+}
 
-    var cond = deriveConditions(row);
+function fieldActivityRule(hasEntryToday){
+  if (hasEntryToday) return { label: "Active today", dot: "green" };
+  return               { label: "No activity today", dot: "yellow" };
+}
+
+function rainStatusRule(weather){
+  if (!weather || weather.rainfall === null || weather.rainfall === undefined){
+    return { label: "Unknown", dot: "yellow" };
+  }
+  if (weather.rainfall <= 0)   return { label: "Dry",        dot: "yellow" };
+  if (weather.rainfall < 5)    return { label: "Light rain", dot: "green"  };
+  if (weather.rainfall < 20)   return { label: "Rain",       dot: "green"  };
+  return                       { label: "Heavy rain", dot: "green" };
+}
+
+// ---- Main render ----
+function render(){
+  var weather = grovePulseState.weather;
+  var rain7   = grovePulseState.rain7;
+  var rain30  = grovePulseState.rain30;
+  var hasEntryToday = grovePulseState.hasFieldEntryToday;
+
+  // ----- Hero weather cards -----
+  if (!weather){
+    document.getElementById('wx-summary').textContent =
+      "No live weather data yet — waiting on the first reading from the station.";
+    document.getElementById('wx-temp').textContent = "—";
+    document.getElementById('wx-humidity').textContent = "—";
+    document.getElementById('wx-wind').textContent = "—";
+    document.getElementById('wx-wind-dir').textContent = "—";
+    document.getElementById('wx-rain').textContent = "—";
+    document.getElementById('wx-updated').textContent = "";
+  } else {
+    document.getElementById('wx-temp').textContent = fmt(weather.temperature, 1, "°C");
+    document.getElementById('wx-humidity').textContent = fmt(weather.humidity, 0, "%");
+    document.getElementById('wx-wind').textContent = fmt(weather.wind_speed, 0, " km/h");
+    document.getElementById('wx-wind-dir').textContent = toCompass(weather.wind_direction) || "—";
+    document.getElementById('wx-rain').textContent = fmt(weather.rainfall, 1, " mm");
+
+    var cond = deriveConditions(weather);
     var summary = (cond.hot ? "A hot" : "A mild") + ", " + (cond.dry ? "dry" : "wet") +
       " day in the grove so far. " +
       (cond.dry && cond.hot ? "Worth keeping an eye on soil moisture." : "Conditions look comfortable for the trees.");
     document.getElementById('wx-summary').textContent = summary;
 
-    var soilEl = document.getElementById('wx-soil');
-    if (cond.dry){
-      soilEl.innerHTML = '<i class="dot yellow"></i> Dry';
-    } else {
-      soilEl.innerHTML = '<i class="dot green"></i> Moist';
+    if (weather.received_at){
+      document.getElementById('wx-updated').textContent = timeAgo(weather.received_at);
     }
+  }
 
-    var weatherEl = document.getElementById('wx-weather-status');
+  // ----- Grove Pulse panel -----
+  var treeCond   = treeConditionRule(rain7, rain30);
+  var rainStatus = rainStatusRule(weather);
+  var fieldAct   = fieldActivityRule(hasEntryToday);
+
+  var treeEl = document.querySelector('.pulse-row:nth-child(2) .status');
+  if (treeEl){
+    treeEl.innerHTML = '<i class="dot ' + treeCond.dot + '"></i> ' + treeCond.label;
+  }
+
+  var soilEl = document.getElementById('wx-soil');
+  if (soilEl){
+    soilEl.innerHTML = '<i class="dot ' + rainStatus.dot + '"></i> ' + rainStatus.label;
+  }
+
+  var weatherEl = document.getElementById('wx-weather-status');
+  if (weatherEl && weather){
+    var cond = deriveConditions(weather);
     weatherEl.innerHTML = '<i class="dot ' + (cond.hot ? 'yellow' : 'green') + '"></i> ' + cond.labels.join(' · ');
+  } else if (weatherEl){
+    weatherEl.innerHTML = '<i class="dot yellow"></i> Unknown';
+  }
 
-    document.getElementById('wx-note').textContent =
-      '"The grove is currently ' + cond.labels.join(', ').toLowerCase() + '. ' +
-      (cond.dry ? 'Continue monitoring for water stress.' : 'Soil conditions look healthy.') + '"';
+  var fieldEl = document.querySelector('.pulse-row:nth-child(5) .status');
+  if (fieldEl){
+    fieldEl.innerHTML = '<i class="dot ' + fieldAct.dot + '"></i> ' + fieldAct.label;
+  }
 
-    if (row.received_at){
-      document.getElementById('wx-updated').textContent = timeAgo(row.received_at);
+  // ----- Pulse note -----
+  var noteEl = document.getElementById('wx-note');
+  if (noteEl){
+    var noteBits = [];
+    if (rain30 !== null){
+      noteBits.push("Rain over the last 30 days: " + Number(rain30).toFixed(0) + " mm.");
     }
+    if (rain7 !== null){
+      noteBits.push("Last 7 days: " + Number(rain7).toFixed(0) + " mm.");
+    }
+    noteBits.push("Tree condition reads as “" + treeCond.label + "”.");
+    noteBits.push(hasEntryToday ? "A field entry was logged today." : "No field entry logged today.");
+    noteEl.textContent = '"' + noteBits.join(" ") + '"';
+  }
 
-    // Conditions panel (reuses the same latest reading)
+  // ----- Conditions card (reuses latest reading) -----
+  if (weather){
     var solarEl = document.getElementById('cond-solar');
     if (solarEl){
-      var solarDesc = row.solar_radiation === null || row.solar_radiation === undefined ? "" :
-        (row.solar_radiation >= 500 ? " · strong sunlight" : row.solar_radiation >= 150 ? " · partly sunny" : " · low light");
-      solarEl.textContent = fmt(row.solar_radiation, 0, " W/m²") + solarDesc;
+      var solarDesc = weather.solar_radiation === null || weather.solar_radiation === undefined ? "" :
+        (weather.solar_radiation >= 500 ? " · strong sunlight" : weather.solar_radiation >= 150 ? " · partly sunny" : " · low light");
+      solarEl.textContent = fmt(weather.solar_radiation, 0, " W/m²") + solarDesc;
     }
     var gustEl = document.getElementById('cond-wind-gust');
     if (gustEl){
-      var gustVal = (row.wind_gust !== null && row.wind_gust !== undefined) ? row.wind_gust : row.wind_speed;
-      gustEl.textContent = fmt(gustVal, 0, " km/h") + (toCompass(row.wind_direction) ? " · " + toCompass(row.wind_direction) : "");
+      var gustVal = (weather.wind_gust !== null && weather.wind_gust !== undefined) ? weather.wind_gust : weather.wind_speed;
+      gustEl.textContent = fmt(gustVal, 0, " km/h") + (toCompass(weather.wind_direction) ? " · " + toCompass(weather.wind_direction) : "");
     }
     var rainCondEl = document.getElementById('cond-rainfall');
     if (rainCondEl){
-      rainCondEl.textContent = fmt(row.rainfall, 1, " mm") + " today";
+      rainCondEl.textContent = fmt(weather.rainfall, 1, " mm") + " today";
     }
     var captionEl = document.getElementById('conditions-caption');
-    if (captionEl && row.received_at){
-      captionEl.textContent = "Live reading from the station, " + timeAgo(row.received_at).toLowerCase() + ".";
+    if (captionEl && weather.received_at){
+      captionEl.textContent = "Live reading from the station, " + timeAgo(weather.received_at).toLowerCase() + ".";
     }
   }
+}
 
   // ---------- Hero date (Rome timezone, no duplicates) ----------
   function updateWxDate(){
