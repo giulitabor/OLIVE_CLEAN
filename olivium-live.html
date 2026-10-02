@@ -560,16 +560,23 @@ function toggleMenu(){
 <!-- === Live weather data (Supabase) === -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <script>
 (function(){
+
   var SUPABASE_URL = "https://kqfqryeptkbvlkekocpx.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_OT4DPbehnS1epTUXbd5pYg_Tdv2-He-";
   var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ---------- Rome timezone helpers ----------
+  // =========================================================
+  // ROME TIMEZONE HELPERS
+  // =========================================================
+
   var ROME_TZ = 'Europe/Rome';
+
   function romeDateParts(date){
     var d = date || new Date();
+
     var fmt = new Intl.DateTimeFormat('en-GB', {
       timeZone: ROME_TZ,
       weekday: 'long',
@@ -577,299 +584,1072 @@ function toggleMenu(){
       month: 'long',
       year: 'numeric'
     });
+
     var parts = fmt.formatToParts(d);
     var out = {};
-    parts.forEach(function(p){ out[p.type] = p.value; });
+
+    parts.forEach(function(p){
+      out[p.type] = p.value;
+    });
+
     return out;
   }
+
   function romeDateString(date){
     var p = romeDateParts(date);
-    return p.weekday + ' · ' + p.day + ' ' + p.month + ' ' + p.year;
+
+    return p.weekday +
+      ' · ' +
+      p.day +
+      ' ' +
+      p.month +
+      ' ' +
+      p.year;
   }
+
   function romeNow(){
-    // Returns a Date object whose local getters reflect Rome time.
     var now = new Date();
-    var romeStr = now.toLocaleString('en-US', { timeZone: ROME_TZ });
+    var romeStr = now.toLocaleString('en-US', {
+      timeZone: ROME_TZ
+    });
+
     return new Date(romeStr);
   }
+
   function romeMonth(date){
     var d = date || new Date();
-    var parts = new Intl.DateTimeFormat('en-GB', { timeZone: ROME_TZ, month: 'numeric' }).formatToParts(d);
-    var m = parts.find(function(p){ return p.type === 'month'; });
-    return m ? (parseInt(m.value, 10) - 1) : d.getMonth(); // 0-indexed
+
+    var parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: ROME_TZ,
+      month: 'numeric'
+    }).formatToParts(d);
+
+    var m = parts.find(function(p){
+      return p.type === 'month';
+    });
+
+    return m
+      ? parseInt(m.value, 10) - 1
+      : d.getMonth();
   }
+
   function romeYear(date){
     var d = date || new Date();
-    var parts = new Intl.DateTimeFormat('en-GB', { timeZone: ROME_TZ, year: 'numeric' }).formatToParts(d);
-    var y = parts.find(function(p){ return p.type === 'year'; });
-    return y ? parseInt(y.value, 10) : d.getFullYear();
+
+    var parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: ROME_TZ,
+      year: 'numeric'
+    }).formatToParts(d);
+
+    var y = parts.find(function(p){
+      return p.type === 'year';
+    });
+
+    return y
+      ? parseInt(y.value, 10)
+      : d.getFullYear();
   }
+
   function romeDateOnly(date){
     var d = date || new Date();
-    var s = d.toLocaleDateString('en-CA', { timeZone: ROME_TZ }); // YYYY-MM-DD
+
+    var s = d.toLocaleDateString('en-CA', {
+      timeZone: ROME_TZ
+    });
+
     return new Date(s + 'T00:00:00');
   }
 
-  var COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  function romeDateKey(date){
+    return date.toLocaleDateString('en-CA', {
+      timeZone: ROME_TZ
+    });
+  }
+
+  // =========================================================
+  // GENERAL HELPERS
+  // =========================================================
+
+  var COMPASS = [
+    "N","NNE","NE","ENE",
+    "E","ESE","SE","SSE",
+    "S","SSW","SW","WSW",
+    "W","WNW","NW","NNW"
+  ];
+
   function toCompass(deg){
-    if (deg === null || deg === undefined || isNaN(deg)) return "";
-    var idx = Math.round(deg / 22.5) % 16;
+    if (
+      deg === null ||
+      deg === undefined ||
+      isNaN(deg)
+    ){
+      return "";
+    }
+
+    var idx = Math.round(Number(deg) / 22.5) % 16;
+
     return COMPASS[idx];
   }
 
   function fmt(value, decimals, unit){
-    if (value === null || value === undefined || isNaN(value)) return "—";
+    if (
+      value === null ||
+      value === undefined ||
+      isNaN(value)
+    ){
+      return "—";
+    }
+
     return Number(value).toFixed(decimals) + (unit || "");
   }
 
   function timeAgo(iso){
+    if (!iso) return "";
+
     var diffMs = Date.now() - new Date(iso).getTime();
+
+    if (!isFinite(diffMs)) return "";
+
     var mins = Math.round(diffMs / 60000);
+
     if (mins < 1) return "Updated just now";
+
     if (mins === 1) return "Updated 1 minute ago";
-    if (mins < 60) return "Updated " + mins + " minutes ago";
+
+    if (mins < 60){
+      return "Updated " + mins + " minutes ago";
+    }
+
     var hrs = Math.round(mins / 60);
+
     if (hrs === 1) return "Updated 1 hour ago";
+
     return "Updated " + hrs + " hours ago";
   }
 
+  // =========================================================
+  // WEATHER CONDITION LOGIC
+  // =========================================================
+
   function deriveConditions(row){
-    var hot = row.temperature !== null && row.temperature >= 28;
-    var dry = row.rainfall !== null && row.rainfall <= 0;
-    var sunny = row.solar_radiation !== null && row.solar_radiation >= 300;
+
+    if (!row){
+      return {
+        hot: false,
+        dry: true,
+        sunny: false,
+        labels: ["UNKNOWN"]
+      };
+    }
+
+    var temperature = Number(row.temperature);
+    var rainfall = Number(row.rainfall);
+    var solar = Number(row.solar_radiation);
+
+    var hot =
+      row.temperature !== null &&
+      row.temperature !== undefined &&
+      !isNaN(temperature) &&
+      temperature >= 28;
+
+    var dry =
+      row.rainfall !== null &&
+      row.rainfall !== undefined &&
+      !isNaN(rainfall) &&
+      rainfall <= 0;
+
+    var sunny =
+      row.solar_radiation !== null &&
+      row.solar_radiation !== undefined &&
+      !isNaN(solar) &&
+      solar >= 300;
+
     var labels = [];
+
     labels.push(hot ? "HOT" : "MILD");
     labels.push(dry ? "DRY" : "WET");
-    if (row.solar_radiation !== null) labels.push(sunny ? "SUNNY" : "OVERCAST");
-    labels.push((row.rainfall !== null && row.rainfall > 0) ? (row.rainfall + "mm RAIN") : "NO RAIN");
-    return { hot: hot, dry: dry, labels: labels };
+
+    if (
+      row.solar_radiation !== null &&
+      row.solar_radiation !== undefined &&
+      !isNaN(solar)
+    ){
+      labels.push(sunny ? "SUNNY" : "OVERCAST");
+    }
+
+    if (
+      row.rainfall !== null &&
+      row.rainfall !== undefined &&
+      !isNaN(rainfall) &&
+      rainfall > 0
+    ){
+      labels.push(Number(rainfall).toFixed(1) + "mm RAIN");
+    } else {
+      labels.push("NO RAIN");
+    }
+
+    return {
+      hot: hot,
+      dry: dry,
+      sunny: sunny,
+      labels: labels
+    };
   }
 
-// ---- Grove Pulse state (populated by loadLatestWeather) ----
-var grovePulseState = {
-  weather: null,
-  rain7: null,       // cumulative rainfall last 7 days (mm)
-  rain30: null,      // cumulative rainfall last 30 days (mm)
-  hasFieldEntryToday: false
-};
+  // =========================================================
+  // GROVE PULSE STATE
+  // =========================================================
 
-// ---- Rule helpers ----
-function treeConditionRule(rain7, rain30){
-  // Drought-stress indicator based on cumulative rainfall.
-  // Thresholds are conservative for a Tuscan olive grove in the growing season.
-  if (rain7 === null || rain30 === null){
-    return { label: "Unknown", dot: "yellow" };
+  var grovePulseState = {
+    weather: null,
+
+    // Cumulative rainfall calculated from daily maxima.
+    rain7: null,
+    rain30: null,
+
+    hasFieldEntryToday: false
+  };
+
+  // =========================================================
+  // TREE CONDITION
+  // =========================================================
+
+  function treeConditionRule(rain7, rain30){
+
+    if (
+      rain7 === null ||
+      rain30 === null ||
+      rain7 === undefined ||
+      rain30 === undefined
+    ){
+      return {
+        label: "Unknown",
+        dot: "yellow"
+      };
+    }
+
+    if (rain30 < 5){
+      return {
+        label: "Stressed",
+        dot: "red"
+      };
+    }
+
+    if (rain30 < 20){
+      return {
+        label: "Fair",
+        dot: "yellow"
+      };
+    }
+
+    if (rain30 < 60){
+      return {
+        label: "Good",
+        dot: "green"
+      };
+    }
+
+    if (rain30 < 120){
+      return {
+        label: "Excellent",
+        dot: "green"
+      };
+    }
+
+    return {
+      label: "Waterlogged",
+      dot: "yellow"
+    };
   }
-  if (rain30 < 5)      return { label: "Stressed",  dot: "red"    };
-  if (rain30 < 20)     return { label: "Fair",      dot: "yellow" };
-  if (rain30 < 60)     return { label: "Good",      dot: "green"  };
-  if (rain30 < 120)    return { label: "Excellent", dot: "green"  };
-  return               { label: "Waterlogged", dot: "yellow" };
-}
 
-function fieldActivityRule(hasEntryToday){
-  if (hasEntryToday) return { label: "Active today", dot: "green" };
-  return               { label: "No activity today", dot: "yellow" };
-}
+  // =========================================================
+  // FIELD ACTIVITY
+  // =========================================================
 
-function rainStatusRule(weather){
-  if (!weather || weather.rainfall === null || weather.rainfall === undefined){
-    return { label: "Unknown", dot: "yellow" };
+  function fieldActivityRule(hasEntryToday){
+
+    if (hasEntryToday){
+      return {
+        label: "Active today",
+        dot: "green"
+      };
+    }
+
+    return {
+      label: "No activity today",
+      dot: "yellow"
+    };
   }
-  if (weather.rainfall <= 0)   return { label: "Dry",        dot: "yellow" };
-  if (weather.rainfall < 5)    return { label: "Light rain", dot: "green"  };
-  if (weather.rainfall < 20)   return { label: "Rain",       dot: "green"  };
-  return                       { label: "Heavy rain", dot: "green" };
-}
 
-// ---- Main render ----
-function render(){
-  var weather = grovePulseState.weather;
-  var rain7   = grovePulseState.rain7;
-  var rain30  = grovePulseState.rain30;
-  var hasEntryToday = grovePulseState.hasFieldEntryToday;
+  // =========================================================
+  // RAIN STATUS
+  // =========================================================
 
-  // ----- Hero weather cards -----
-  if (!weather){
-    document.getElementById('wx-summary').textContent =
-      "No live weather data yet — waiting on the first reading from the station.";
-    document.getElementById('wx-temp').textContent = "—";
-    document.getElementById('wx-humidity').textContent = "—";
-    document.getElementById('wx-wind').textContent = "—";
-    document.getElementById('wx-wind-dir').textContent = "—";
-    document.getElementById('wx-rain').textContent = "—";
-    document.getElementById('wx-updated').textContent = "";
-  } else {
-    document.getElementById('wx-temp').textContent = fmt(weather.temperature, 1, "°C");
-    document.getElementById('wx-humidity').textContent = fmt(weather.humidity, 0, "%");
-    document.getElementById('wx-wind').textContent = fmt(weather.wind_speed, 0, " km/h");
-    document.getElementById('wx-wind-dir').textContent = toCompass(weather.wind_direction) || "—";
-    document.getElementById('wx-rain').textContent = fmt(weather.rainfall, 1, " mm");
+  function rainStatusRule(weather){
 
-    var cond = deriveConditions(weather);
-    var summary = (cond.hot ? "A hot" : "A mild") + ", " + (cond.dry ? "dry" : "wet") +
-      " day in the grove so far. " +
-      (cond.dry && cond.hot ? "Worth keeping an eye on soil moisture." : "Conditions look comfortable for the trees.");
-    document.getElementById('wx-summary').textContent = summary;
+    if (
+      !weather ||
+      weather.rainfall === null ||
+      weather.rainfall === undefined ||
+      isNaN(Number(weather.rainfall))
+    ){
+      return {
+        label: "Unknown",
+        dot: "yellow"
+      };
+    }
 
-    if (weather.received_at){
-      document.getElementById('wx-updated').textContent = timeAgo(weather.received_at);
+    var rain = Number(weather.rainfall);
+
+    if (rain <= 0){
+      return {
+        label: "Dry",
+        dot: "yellow"
+      };
+    }
+
+    if (rain < 5){
+      return {
+        label: "Light rain",
+        dot: "green"
+      };
+    }
+
+    if (rain < 20){
+      return {
+        label: "Rain",
+        dot: "green"
+      };
+    }
+
+    return {
+      label: "Heavy rain",
+      dot: "green"
+    };
+  }
+
+  // =========================================================
+  // MAIN WEATHER RENDER
+  // IMPORTANT: render(weatherRow) now accepts the Supabase row
+  // =========================================================
+
+  function render(weatherRow){
+
+    /*
+     * THIS IS THE IMPORTANT FIX.
+     *
+     * loadLatestWeather() calls:
+     *
+     *     render(row);
+     *
+     * The old render() ignored row completely.
+     *
+     * We now store it in grovePulseState.weather.
+     */
+
+    if (weatherRow !== undefined){
+      grovePulseState.weather = weatherRow;
+    }
+
+    var weather = grovePulseState.weather;
+    var rain7 = grovePulseState.rain7;
+    var rain30 = grovePulseState.rain30;
+    var hasEntryToday = grovePulseState.hasFieldEntryToday;
+
+    // =======================================================
+    // HERO WEATHER CARDS
+    // =======================================================
+
+    if (!weather){
+
+      document.getElementById('wx-summary').textContent =
+        "No live weather data yet — waiting on the first reading from the station.";
+
+      document.getElementById('wx-temp').textContent = "—";
+      document.getElementById('wx-humidity').textContent = "—";
+      document.getElementById('wx-wind').textContent = "—";
+      document.getElementById('wx-wind-dir').textContent = "—";
+      document.getElementById('wx-rain').textContent = "—";
+      document.getElementById('wx-updated').textContent = "";
+
+    } else {
+
+      document.getElementById('wx-temp').textContent =
+        fmt(weather.temperature, 1, "°C");
+
+      document.getElementById('wx-humidity').textContent =
+        fmt(weather.humidity, 0, "%");
+
+      document.getElementById('wx-wind').textContent =
+        fmt(weather.wind_speed, 0, " km/h");
+
+      document.getElementById('wx-wind-dir').textContent =
+        toCompass(weather.wind_direction) || "—";
+
+      document.getElementById('wx-rain').textContent =
+        fmt(weather.rainfall, 1, " mm");
+
+      var cond = deriveConditions(weather);
+
+      var summary =
+        (cond.hot ? "A hot" : "A mild") +
+        ", " +
+        (cond.dry ? "dry" : "wet") +
+        " day in the grove so far. " +
+        (
+          cond.dry && cond.hot
+            ? "Worth keeping an eye on soil moisture."
+            : "Conditions look comfortable for the trees."
+        );
+
+      document.getElementById('wx-summary').textContent =
+        summary;
+
+      if (weather.received_at){
+
+        document.getElementById('wx-updated').textContent =
+          timeAgo(weather.received_at);
+
+      } else {
+
+        document.getElementById('wx-updated').textContent =
+          "Live station reading";
+      }
+    }
+
+    // =======================================================
+    // GROVE PULSE
+    // =======================================================
+
+    var treeCond =
+      treeConditionRule(rain7, rain30);
+
+    var rainStatus =
+      rainStatusRule(weather);
+
+    var fieldAct =
+      fieldActivityRule(hasEntryToday);
+
+    // Tree Condition is the FIRST .pulse-row.
+    var pulseRows =
+      document.querySelectorAll('.pulse-row');
+
+    if (pulseRows.length >= 1){
+
+      var treeEl =
+        pulseRows[0].querySelector('.status');
+
+      if (treeEl){
+        treeEl.innerHTML =
+          '<i class="dot ' +
+          treeCond.dot +
+          '"></i> ' +
+          treeCond.label;
+      }
+    }
+
+    // Rain Status
+    var soilEl =
+      document.getElementById('wx-soil');
+
+    if (soilEl){
+
+      soilEl.innerHTML =
+        '<i class="dot ' +
+        rainStatus.dot +
+        '"></i> ' +
+        rainStatus.label;
+    }
+
+    // Weather
+    var weatherEl =
+      document.getElementById('wx-weather-status');
+
+    if (weatherEl && weather){
+
+      var weatherCond =
+        deriveConditions(weather);
+
+      weatherEl.innerHTML =
+        '<i class="dot ' +
+        (weatherCond.hot ? 'yellow' : 'green') +
+        '"></i> ' +
+        weatherCond.labels.join(' · ');
+
+    } else if (weatherEl){
+
+      weatherEl.innerHTML =
+        '<i class="dot yellow"></i> Unknown';
+    }
+
+    // Field Activity is the FOURTH .pulse-row.
+    if (pulseRows.length >= 4){
+
+      var fieldEl =
+        pulseRows[3].querySelector('.status');
+
+      if (fieldEl){
+
+        fieldEl.innerHTML =
+          '<i class="dot ' +
+          fieldAct.dot +
+          '"></i> ' +
+          fieldAct.label;
+      }
+    }
+
+    // =======================================================
+    // PULSE NOTE
+    // =======================================================
+
+    var noteEl =
+      document.getElementById('wx-note');
+
+    if (noteEl){
+
+      var noteBits = [];
+
+      if (rain30 !== null){
+
+        noteBits.push(
+          "Rain over the last 30 days: " +
+          Number(rain30).toFixed(0) +
+          " mm."
+        );
+      }
+
+      if (rain7 !== null){
+
+        noteBits.push(
+          "Last 7 days: " +
+          Number(rain7).toFixed(0) +
+          " mm."
+        );
+      }
+
+      noteBits.push(
+        "Tree condition reads as “" +
+        treeCond.label +
+        "”."
+      );
+
+      noteBits.push(
+        hasEntryToday
+          ? "A field entry was logged today."
+          : "No field entry logged today."
+      );
+
+      noteEl.textContent =
+        '"' + noteBits.join(" ") + '"';
+    }
+
+    // =======================================================
+    // CONDITIONS CARD
+    // =======================================================
+
+    if (weather){
+
+      var solarEl =
+        document.getElementById('cond-solar');
+
+      if (solarEl){
+
+        var solarDesc = "";
+
+        if (
+          weather.solar_radiation !== null &&
+          weather.solar_radiation !== undefined &&
+          !isNaN(Number(weather.solar_radiation))
+        ){
+
+          var solar =
+            Number(weather.solar_radiation);
+
+          solarDesc =
+            solar >= 500
+              ? " · strong sunlight"
+              : solar >= 150
+                ? " · partly sunny"
+                : " · low light";
+        }
+
+        solarEl.textContent =
+          fmt(
+            weather.solar_radiation,
+            0,
+            " W/m²"
+          ) + solarDesc;
+      }
+
+      var gustEl =
+        document.getElementById('cond-wind-gust');
+
+      if (gustEl){
+
+        var gustVal =
+          (
+            weather.wind_gust !== null &&
+            weather.wind_gust !== undefined
+          )
+            ? weather.wind_gust
+            : weather.wind_speed;
+
+        var compass =
+          toCompass(weather.wind_direction);
+
+        gustEl.textContent =
+          fmt(gustVal, 0, " km/h") +
+          (
+            compass
+              ? " · " + compass
+              : ""
+          );
+      }
+
+      var rainCondEl =
+        document.getElementById('cond-rainfall');
+
+      if (rainCondEl){
+
+        rainCondEl.textContent =
+          fmt(weather.rainfall, 1, " mm") +
+          " today";
+      }
+
+      var captionEl =
+        document.getElementById('conditions-caption');
+
+      if (captionEl && weather.received_at){
+
+        captionEl.textContent =
+          "Live reading from the station, " +
+          timeAgo(weather.received_at).toLowerCase() +
+          ".";
+      }
     }
   }
 
-  // ----- Grove Pulse panel -----
-  var treeCond   = treeConditionRule(rain7, rain30);
-  var rainStatus = rainStatusRule(weather);
-  var fieldAct   = fieldActivityRule(hasEntryToday);
+  // =========================================================
+  // HERO DATE
+  // =========================================================
 
-  var treeEl = document.querySelector('.pulse-row:nth-child(2) .status');
-  if (treeEl){
-    treeEl.innerHTML = '<i class="dot ' + treeCond.dot + '"></i> ' + treeCond.label;
-  }
-
-  var soilEl = document.getElementById('wx-soil');
-  if (soilEl){
-    soilEl.innerHTML = '<i class="dot ' + rainStatus.dot + '"></i> ' + rainStatus.label;
-  }
-
-  var weatherEl = document.getElementById('wx-weather-status');
-  if (weatherEl && weather){
-    var cond = deriveConditions(weather);
-    weatherEl.innerHTML = '<i class="dot ' + (cond.hot ? 'yellow' : 'green') + '"></i> ' + cond.labels.join(' · ');
-  } else if (weatherEl){
-    weatherEl.innerHTML = '<i class="dot yellow"></i> Unknown';
-  }
-
-  var fieldEl = document.querySelector('.pulse-row:nth-child(5) .status');
-  if (fieldEl){
-    fieldEl.innerHTML = '<i class="dot ' + fieldAct.dot + '"></i> ' + fieldAct.label;
-  }
-
-  // ----- Pulse note -----
-  var noteEl = document.getElementById('wx-note');
-  if (noteEl){
-    var noteBits = [];
-    if (rain30 !== null){
-      noteBits.push("Rain over the last 30 days: " + Number(rain30).toFixed(0) + " mm.");
-    }
-    if (rain7 !== null){
-      noteBits.push("Last 7 days: " + Number(rain7).toFixed(0) + " mm.");
-    }
-    noteBits.push("Tree condition reads as “" + treeCond.label + "”.");
-    noteBits.push(hasEntryToday ? "A field entry was logged today." : "No field entry logged today.");
-    noteEl.textContent = '"' + noteBits.join(" ") + '"';
-  }
-
-  // ----- Conditions card (reuses latest reading) -----
-  if (weather){
-    var solarEl = document.getElementById('cond-solar');
-    if (solarEl){
-      var solarDesc = weather.solar_radiation === null || weather.solar_radiation === undefined ? "" :
-        (weather.solar_radiation >= 500 ? " · strong sunlight" : weather.solar_radiation >= 150 ? " · partly sunny" : " · low light");
-      solarEl.textContent = fmt(weather.solar_radiation, 0, " W/m²") + solarDesc;
-    }
-    var gustEl = document.getElementById('cond-wind-gust');
-    if (gustEl){
-      var gustVal = (weather.wind_gust !== null && weather.wind_gust !== undefined) ? weather.wind_gust : weather.wind_speed;
-      gustEl.textContent = fmt(gustVal, 0, " km/h") + (toCompass(weather.wind_direction) ? " · " + toCompass(weather.wind_direction) : "");
-    }
-    var rainCondEl = document.getElementById('cond-rainfall');
-    if (rainCondEl){
-      rainCondEl.textContent = fmt(weather.rainfall, 1, " mm") + " today";
-    }
-    var captionEl = document.getElementById('conditions-caption');
-    if (captionEl && weather.received_at){
-      captionEl.textContent = "Live reading from the station, " + timeAgo(weather.received_at).toLowerCase() + ".";
-    }
-  }
-}
-
-  // ---------- Hero date (Rome timezone, no duplicates) ----------
   function updateWxDate(){
-    document.getElementById('wx-date').textContent = romeDateString();
-  }
-  updateWxDate();
-  setInterval(updateWxDate, 60000);
 
-  async function loadLatestWeather(){
+    var el =
+      document.getElementById('wx-date');
+
+    if (!el) return;
+
+    el.textContent =
+      romeDateString();
+  }
+
+  updateWxDate();
+
+  setInterval(
+    updateWxDate,
+    60000
+  );
+
+  // =========================================================
+  // LOAD RAINFALL HISTORY
+  //
+  // Ecowitt-style rainfall fields are commonly cumulative
+  // for the current day. We therefore take the MAX rainfall
+  // reading for each Rome calendar day, then sum those daily
+  // totals.
+  //
+  // This avoids adding the same day's cumulative rainfall
+  // hundreds of times.
+  // =========================================================
+
+  async function loadRainfallHistory(){
+
     try {
-      var res = await client
-        .from('weather_data')
-        .select('*')
-        .order('received_at', { ascending: false })
-        .limit(1);
+
+      var now = new Date();
+
+      var start30 =
+        new Date(
+          now.getTime() -
+          (30 * 86400000)
+        );
+
+      var res =
+        await client
+          .from('weather_data')
+          .select('received_at,rainfall')
+          .gte(
+            'received_at',
+            start30.toISOString()
+          )
+          .order(
+            'received_at',
+            { ascending: true }
+          );
 
       if (res.error){
-        console.error('Supabase read error:', res.error);
-        document.getElementById('wx-summary').textContent =
-          "Couldn't load live weather data right now.";
+
+        console.error(
+          'Rainfall history error:',
+          res.error
+        );
+
+        grovePulseState.rain7 = null;
+        grovePulseState.rain30 = null;
+
+        render();
+
         return;
       }
-      var row = (res.data && res.data.length) ? res.data[0] : null;
-      render(row);
+
+      var daily = {};
+
+      (res.data || []).forEach(function(row){
+
+        if (
+          !row ||
+          !row.received_at ||
+          row.rainfall === null ||
+          row.rainfall === undefined
+        ){
+          return;
+        }
+
+        var rainfall =
+          Number(row.rainfall);
+
+        if (
+          !isFinite(rainfall) ||
+          rainfall < 0
+        ){
+          return;
+        }
+
+        var key =
+          romeDateKey(
+            new Date(row.received_at)
+          );
+
+        if (
+          daily[key] === undefined ||
+          rainfall > daily[key]
+        ){
+          daily[key] = rainfall;
+        }
+      });
+
+      var todayKey =
+        romeDateKey(new Date());
+
+      var rain7 = 0;
+      var rain30 = 0;
+
+      Object.keys(daily).forEach(function(key){
+
+        var day =
+          new Date(key + 'T00:00:00');
+
+        var today =
+          romeDateOnly(new Date());
+
+        var diffDays =
+          Math.floor(
+            (
+              today.getTime() -
+              day.getTime()
+            ) / 86400000
+          );
+
+        if (
+          diffDays >= 0 &&
+          diffDays < 30
+        ){
+          rain30 += daily[key];
+        }
+
+        if (
+          diffDays >= 0 &&
+          diffDays < 7
+        ){
+          rain7 += daily[key];
+        }
+      });
+
+      /*
+       * Only use the values when we actually have rainfall
+       * observations. This prevents "0 mm" from pretending
+       * there is a complete rainfall history.
+       */
+
+      var rainfallDays =
+        Object.keys(daily).length;
+
+      if (rainfallDays > 0){
+
+        grovePulseState.rain30 =
+          Number(rain30);
+
+        grovePulseState.rain7 =
+          Number(rain7);
+
+      } else {
+
+        grovePulseState.rain30 = null;
+        grovePulseState.rain7 = null;
+      }
+
+      render();
+
     } catch (err){
-      console.error('Weather fetch failed:', err);
+
+      console.error(
+        'Rainfall history failed:',
+        err
+      );
+
+      grovePulseState.rain7 = null;
+      grovePulseState.rain30 = null;
+
+      render();
     }
   }
 
-  loadLatestWeather();
-  setInterval(loadLatestWeather, 60000);
+  // =========================================================
+  // LOAD LATEST WEATHER
+  //
+  // IMPORTANT:
+  // render(row) now correctly stores row in the state.
+  // =========================================================
 
-  // ---------------------------------------------------------
-  // Random hero image from github.com/kyngrick/olivium_photos
-  // ---------------------------------------------------------
-  var PHOTOS_REPO = "kyngrick/olivium_photos";
-  var IMAGE_EXT = /\.(jpe?g|png|webp|gif)$/i;
+  async function loadLatestWeather(){
 
-  async function loadRandomHeroImage(){
     try {
-      var repoRes = await fetch("https://api.github.com/repos/" + PHOTOS_REPO);
-      if (!repoRes.ok) throw new Error("Repo lookup failed: " + repoRes.status);
-      var repoInfo = await repoRes.json();
-      var branch = repoInfo.default_branch || "main";
 
-      var treeRes = await fetch(
-        "https://api.github.com/repos/" + PHOTOS_REPO + "/git/trees/" + branch + "?recursive=1"
-      );
-      if (!treeRes.ok) throw new Error("Tree lookup failed: " + treeRes.status);
-      var treeData = await treeRes.json();
+      var res =
+        await client
+          .from('weather_data')
+          .select('*')
+          .order(
+            'received_at',
+            { ascending: false }
+          )
+          .limit(1);
 
-      var images = (treeData.tree || [])
-        .filter(function(item){ return item.type === "blob" && IMAGE_EXT.test(item.path); })
-        .map(function(item){ return item.path; });
+      if (res.error){
 
-      if (images.length === 0){
-        console.warn("No images found in " + PHOTOS_REPO + " — keeping default hero image.");
+        console.error(
+          'Supabase weather read error:',
+          res.error
+        );
+
+        document.getElementById(
+          'wx-summary'
+        ).textContent =
+          "Couldn't load live weather data right now.";
+
         return;
       }
 
-      var pick = images[Math.floor(Math.random() * images.length)];
-      var rawUrl = "https://raw.githubusercontent.com/" + PHOTOS_REPO + "/" + branch + "/" + pick;
+      var row =
+        (
+          res.data &&
+          res.data.length
+        )
+          ? res.data[0]
+          : null;
 
-      var hero = document.getElementById('home');
-      if (hero){
-        hero.style.backgroundImage =
-          "linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%), url('" + rawUrl + "')";
+      /*
+       * THIS IS THE CRITICAL FIX:
+       *
+       * Before:
+       *     render(row)
+       *
+       * but render() ignored row.
+       *
+       * Now render(weatherRow) stores it.
+       */
+
+      render(row);
+
+      // Update rainfall history as well.
+      await loadRainfallHistory();
+
+    } catch (err){
+
+      console.error(
+        'Weather fetch failed:',
+        err
+      );
+    }
+  }
+
+  // =========================================================
+  // INITIAL WEATHER LOAD
+  // =========================================================
+
+  loadLatestWeather();
+
+  setInterval(
+    loadLatestWeather,
+    60000
+  );
+
+  // =========================================================
+  // RANDOM HERO IMAGE
+  // =========================================================
+
+  var PHOTOS_REPO =
+    "kyngrick/olivium_photos";
+
+  var IMAGE_EXT =
+    /\.(jpe?g|png|webp|gif)$/i;
+
+  async function loadRandomHeroImage(){
+
+    try {
+
+      var repoRes =
+        await fetch(
+          "https://api.github.com/repos/" +
+          PHOTOS_REPO
+        );
+
+      if (!repoRes.ok){
+
+        throw new Error(
+          "Repo lookup failed: " +
+          repoRes.status
+        );
       }
-    } catch (err) {
-      console.warn("Random hero image failed, keeping default:", err);
+
+      var repoInfo =
+        await repoRes.json();
+
+      var branch =
+        repoInfo.default_branch ||
+        "main";
+
+      var treeRes =
+        await fetch(
+          "https://api.github.com/repos/" +
+          PHOTOS_REPO +
+          "/git/trees/" +
+          branch +
+          "?recursive=1"
+        );
+
+      if (!treeRes.ok){
+
+        throw new Error(
+          "Tree lookup failed: " +
+          treeRes.status
+        );
+      }
+
+      var treeData =
+        await treeRes.json();
+
+      var images =
+        (treeData.tree || [])
+          .filter(function(item){
+
+            return (
+              item.type === "blob" &&
+              IMAGE_EXT.test(item.path)
+            );
+          })
+          .map(function(item){
+
+            return item.path;
+          });
+
+      if (images.length === 0){
+
+        console.warn(
+          "No images found in " +
+          PHOTOS_REPO +
+          " — keeping default hero image."
+        );
+
+        return;
+      }
+
+      var pick =
+        images[
+          Math.floor(
+            Math.random() *
+            images.length
+          )
+        ];
+
+      var rawUrl =
+        "https://raw.githubusercontent.com/" +
+        PHOTOS_REPO +
+        "/" +
+        branch +
+        "/" +
+        pick;
+
+      var hero =
+        document.getElementById('home');
+
+      if (hero){
+
+        hero.style.backgroundImage =
+          "linear-gradient(" +
+          "90deg," +
+          "rgba(8,22,11,.76) 0%," +
+          "rgba(8,22,11,.45) 52%," +
+          "rgba(8,22,11,.65) 100%" +
+          "),url('" +
+          rawUrl +
+          "')";
+
+      }
+
+    } catch (err){
+
+      console.warn(
+        "Random hero image failed, keeping default:",
+        err
+      );
     }
   }
 
   loadRandomHeroImage();
 
-  // ---------------------------------------------------------
-  // Field entries: Latest from the Grove + Grove Journal
-  // ---------------------------------------------------------
-  var BUCKET = "photos_olivium";
+  // =========================================================
+  // FIELD ENTRIES
+  // =========================================================
+
+  var BUCKET =
+    "photos_olivium";
 
   function publicPhotoUrl(path){
-    var res = client.storage.from(BUCKET).getPublicUrl(path);
-    return res && res.data ? res.data.publicUrl : "";
+
+    var res =
+      client.storage
+        .from(BUCKET)
+        .getPublicUrl(path);
+
+    return (
+      res &&
+      res.data
+    )
+      ? res.data.publicUrl
+      : "";
   }
 
   function escapeHtml(str){
-    if (str === null || str === undefined) return "";
+
+    if (
+      str === null ||
+      str === undefined
+    ){
+      return "";
+    }
+
     return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -879,454 +1659,1333 @@ function render(){
   }
 
   function formatDateParts(iso){
-    var d = new Date(iso);
-    var todayRome = romeDateOnly(new Date());
-    var entryRome = romeDateOnly(d);
-    var isToday = entryRome.getTime() === todayRome.getTime();
-    var day = entryRome.getDate();
-    var month = entryRome.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-    var time = d.toLocaleTimeString('en-GB', {
-      timeZone: ROME_TZ,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-    return { isToday: isToday, day: day, month: month, time: time, badge: (isToday ? "TODAY" : day + " " + month) };
+
+    var d =
+      new Date(iso);
+
+    var todayRome =
+      romeDateOnly(new Date());
+
+    var entryRome =
+      romeDateOnly(d);
+
+    var isToday =
+      entryRome.getTime() ===
+      todayRome.getTime();
+
+    var day =
+      entryRome.getDate();
+
+    var month =
+      entryRome.toLocaleString(
+        'en-US',
+        { month: 'short' }
+      ).toUpperCase();
+
+    var time =
+      d.toLocaleTimeString(
+        'en-GB',
+        {
+          timeZone: ROME_TZ,
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }
+      );
+
+    return {
+      isToday: isToday,
+      day: day,
+      month: month,
+      time: time,
+      badge:
+        isToday
+          ? "TODAY"
+          : day + " " + month
+    };
   }
 
   function entryTitle(entry){
+
     if (entry.note){
-      var firstSentence = entry.note.split(/[.!\n]/)[0].trim();
-      if (firstSentence.length > 0 && firstSentence.length <= 60) return firstSentence;
-      if (firstSentence.length > 60) return firstSentence.slice(0, 57) + "…";
+
+      var firstSentence =
+        entry.note
+          .split(/[.!\n]/)[0]
+          .trim();
+
+      if (
+        firstSentence.length > 0 &&
+        firstSentence.length <= 60
+      ){
+        return firstSentence;
+      }
+
+      if (firstSentence.length > 60){
+
+        return (
+          firstSentence.slice(0, 57) +
+          "…"
+        );
+      }
     }
+
     return autoTitle(entry);
   }
 
   function autoTitle(entry){
-    var t = entry.temperature_snapshot;
-    if (t !== null && t !== undefined){
-      if (t >= 30) return "A hot day in the grove";
-      if (t >= 24) return "A warm inspection";
-      if (t <= 12) return "A cool day in the grove";
+
+    var t =
+      entry.temperature_snapshot;
+
+    if (
+      t !== null &&
+      t !== undefined
+    ){
+
+      if (t >= 30){
+        return "A hot day in the grove";
+      }
+
+      if (t >= 24){
+        return "A warm inspection";
+      }
+
+      if (t <= 12){
+        return "A cool day in the grove";
+      }
     }
-    var photoCount = (entry.photo_paths || []).length;
-    return photoCount > 0 ? "Field inspection" : "Grove update";
+
+    var photoCount =
+      (entry.photo_paths || []).length;
+
+    return photoCount > 0
+      ? "Field inspection"
+      : "Grove update";
   }
 
   function autoSummary(entry){
-    var bits = [];
-    var t = entry.temperature_snapshot, h = entry.humidity_snapshot, r = entry.rainfall_snapshot;
-    var photoCount = (entry.photo_paths || []).length;
 
-    if (t !== null && t !== undefined){
-      bits.push((t >= 28 ? "A hot" : t <= 14 ? "A cool" : "A mild") + ", " +
-        ((r !== null && r > 0) ? "wet" : "dry") + " day in the grove (" + Number(t).toFixed(1) + "°C" +
-        (h !== null && h !== undefined ? ", " + Number(h).toFixed(0) + "% humidity" : "") + ").");
+    var bits = [];
+
+    var t =
+      entry.temperature_snapshot;
+
+    var h =
+      entry.humidity_snapshot;
+
+    var r =
+      entry.rainfall_snapshot;
+
+    var photoCount =
+      (entry.photo_paths || []).length;
+
+    if (
+      t !== null &&
+      t !== undefined
+    ){
+
+      bits.push(
+        (
+          t >= 28
+            ? "A hot"
+            : t <= 14
+              ? "A cool"
+              : "A mild"
+        ) +
+        ", " +
+        (
+          r !== null && r > 0
+            ? "wet"
+            : "dry"
+        ) +
+        " day in the grove (" +
+        Number(t).toFixed(1) +
+        "°C" +
+        (
+          h !== null &&
+          h !== undefined
+            ? ", " +
+              Number(h).toFixed(0) +
+              "% humidity"
+            : ""
+        ) +
+        ")."
+      );
     }
+
     if (photoCount > 0){
-      bits.push(photoCount + " photograph" + (photoCount === 1 ? "" : "s") + " recorded during today's inspection.");
+
+      bits.push(
+        photoCount +
+        " photograph" +
+        (
+          photoCount === 1
+            ? ""
+            : "s"
+        ) +
+        " recorded during today's inspection."
+      );
     }
-    if (bits.length === 0) return "Field update from the grove.";
+
+    if (bits.length === 0){
+
+      return "Field update from the grove.";
+    }
+
     return bits.join(" ");
   }
 
   function entryNote(entry){
-    return entry.note && entry.note.trim().length > 0 ? entry.note : autoSummary(entry);
+
+    return (
+      entry.note &&
+      entry.note.trim().length > 0
+    )
+      ? entry.note
+      : autoSummary(entry);
   }
 
+  // =========================================================
+  // JOURNAL MODAL
+  // =========================================================
+
   function openJournalModal(entry){
-    var modal = document.getElementById('journal-modal');
+
+    var modal =
+      document.getElementById(
+        'journal-modal'
+      );
+
     if (!modal) return;
 
-    var parts = formatDateParts(entry.created_at);
-    var photoPaths = entry.photo_paths || [];
+    var parts =
+      formatDateParts(
+        entry.created_at
+      );
 
-    document.getElementById('journal-modal-date').textContent =
-      parts.badge + " · " + parts.time +
-      (entry.tree_id ? " · TREE " + entry.tree_id : "");
+    var photoPaths =
+      entry.photo_paths || [];
 
-    document.getElementById('journal-modal-title').textContent =
+    document.getElementById(
+      'journal-modal-date'
+    ).textContent =
+      parts.badge +
+      " · " +
+      parts.time +
+      (
+        entry.tree_id
+          ? " · TREE " + entry.tree_id
+          : ""
+      );
+
+    document.getElementById(
+      'journal-modal-title'
+    ).textContent =
       entryTitle(entry);
 
-    document.getElementById('journal-modal-note').textContent =
+    document.getElementById(
+      'journal-modal-note'
+    ).textContent =
       entryNote(entry);
 
-    var gallery = document.getElementById('journal-modal-gallery');
-    var mainPhoto = document.getElementById('journal-modal-photo');
+    var gallery =
+      document.getElementById(
+        'journal-modal-gallery'
+      );
+
+    var mainPhoto =
+      document.getElementById(
+        'journal-modal-photo'
+      );
 
     gallery.innerHTML = "";
 
     if (photoPaths.length > 0){
-      var firstUrl = publicPhotoUrl(photoPaths[0]);
-      mainPhoto.style.backgroundImage = "url('" + firstUrl + "')";
+
+      var firstUrl =
+        publicPhotoUrl(
+          photoPaths[0]
+        );
+
+      mainPhoto.style.backgroundImage =
+        "url('" + firstUrl + "')";
 
       photoPaths.forEach(function(path){
-        var url = publicPhotoUrl(path);
 
-        var thumb = document.createElement('div');
-        thumb.className = 'photo-thumb';
-        thumb.style.backgroundImage = "url('" + url + "')";
+        var url =
+          publicPhotoUrl(path);
 
-        thumb.onclick = function(){
-          mainPhoto.style.backgroundImage = "url('" + url + "')";
-        };
+        var thumb =
+          document.createElement('div');
+
+        thumb.className =
+          'photo-thumb';
+
+        thumb.style.backgroundImage =
+          "url('" + url + "')";
+
+        thumb.onclick =
+          function(){
+
+            mainPhoto.style.backgroundImage =
+              "url('" + url + "')";
+          };
 
         gallery.appendChild(thumb);
       });
+
     } else {
-      mainPhoto.style.backgroundImage = "none";
-      mainPhoto.style.backgroundColor = "#e2dfd3";
+
+      mainPhoto.style.backgroundImage =
+        "none";
+
+      mainPhoto.style.backgroundColor =
+        "#e2dfd3";
     }
 
     var metrics = [];
 
-    if (entry.temperature_snapshot !== null &&
-        entry.temperature_snapshot !== undefined){
-      metrics.push("♨ " + Number(entry.temperature_snapshot).toFixed(1) + "°C");
+    if (
+      entry.temperature_snapshot !== null &&
+      entry.temperature_snapshot !== undefined
+    ){
+
+      metrics.push(
+        "♨ " +
+        Number(
+          entry.temperature_snapshot
+        ).toFixed(1) +
+        "°C"
+      );
     }
 
-    if (entry.humidity_snapshot !== null &&
-        entry.humidity_snapshot !== undefined){
-      metrics.push("◯ " + Number(entry.humidity_snapshot).toFixed(0) + "%");
+    if (
+      entry.humidity_snapshot !== null &&
+      entry.humidity_snapshot !== undefined
+    ){
+
+      metrics.push(
+        "◯ " +
+        Number(
+          entry.humidity_snapshot
+        ).toFixed(0) +
+        "%"
+      );
     }
 
-    if (entry.rainfall_snapshot !== null &&
-        entry.rainfall_snapshot !== undefined){
-      metrics.push("💧 " + Number(entry.rainfall_snapshot).toFixed(1) + " mm rain");
+    if (
+      entry.rainfall_snapshot !== null &&
+      entry.rainfall_snapshot !== undefined
+    ){
+
+      metrics.push(
+        "💧 " +
+        Number(
+          entry.rainfall_snapshot
+        ).toFixed(1) +
+        " mm rain"
+      );
     }
 
-    metrics.push("▧ " + photoPaths.length +
-      " photograph" + (photoPaths.length === 1 ? "" : "s"));
+    metrics.push(
+      "▧ " +
+      photoPaths.length +
+      " photograph" +
+      (
+        photoPaths.length === 1
+          ? ""
+          : "s"
+      )
+    );
 
-    document.getElementById('journal-modal-metrics').textContent =
+    document.getElementById(
+      'journal-modal-metrics'
+    ).textContent =
       metrics.join(" · ");
 
     modal.classList.add('open');
-    modal.setAttribute('aria-hidden','false');
-    document.body.style.overflow='hidden';
+
+    modal.setAttribute(
+      'aria-hidden',
+      'false'
+    );
+
+    document.body.style.overflow =
+      'hidden';
   }
 
   function closeJournalModal(){
-    var modal = document.getElementById('journal-modal');
+
+    var modal =
+      document.getElementById(
+        'journal-modal'
+      );
+
     if (!modal) return;
 
     modal.classList.remove('open');
-    modal.setAttribute('aria-hidden','true');
-    document.body.style.overflow='';
+
+    modal.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+    document.body.style.overflow =
+      '';
   }
 
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') closeJournalModal();
-  });
+  document.addEventListener(
+    'keydown',
+    function(e){
+
+      if (e.key === 'Escape'){
+        closeJournalModal();
+      }
+    }
+  );
+
+  // =========================================================
+  // LATEST ENTRY
+  // =========================================================
 
   function renderLatestEntry(entry){
+
     if (!entry){
-      document.getElementById('latest-title').textContent = "No field updates yet";
-      document.getElementById('latest-note').textContent =
+
+      document.getElementById(
+        'latest-title'
+      ).textContent =
+        "No field updates yet";
+
+      document.getElementById(
+        'latest-note'
+      ).textContent =
         "Once a field entry is uploaded from the grove, it will appear here automatically.";
+
       return;
     }
 
-    var parts = formatDateParts(entry.created_at);
-    var photoCount = (entry.photo_paths || []).length;
+    var parts =
+      formatDateParts(
+        entry.created_at
+      );
 
-    document.getElementById('latest-badge').textContent =
-      parts.badge + " · " + parts.time;
+    var photoCount =
+      (entry.photo_paths || []).length;
 
-    document.getElementById('latest-meta').textContent =
-      "FIELD UPDATE" + (entry.tree_id ? " · " + entry.tree_id : "");
+    document.getElementById(
+      'latest-badge'
+    ).textContent =
+      parts.badge +
+      " · " +
+      parts.time;
 
-    document.getElementById('latest-title').textContent =
+    document.getElementById(
+      'latest-meta'
+    ).textContent =
+      "FIELD UPDATE" +
+      (
+        entry.tree_id
+          ? " · " + entry.tree_id
+          : ""
+      );
+
+    document.getElementById(
+      'latest-title'
+    ).textContent =
       entryTitle(entry);
 
-    document.getElementById('latest-note').textContent =
+    document.getElementById(
+      'latest-note'
+    ).textContent =
       entryNote(entry);
 
-    var photoEl = document.getElementById('latest-photo');
-    var strip = document.getElementById('latest-photo-strip');
-    var countEl = document.getElementById('latest-photo-count');
+    var photoEl =
+      document.getElementById(
+        'latest-photo'
+      );
+
+    var strip =
+      document.getElementById(
+        'latest-photo-strip'
+      );
+
+    var countEl =
+      document.getElementById(
+        'latest-photo-count'
+      );
 
     strip.innerHTML = "";
 
     if (photoCount > 0){
-      var firstUrl = publicPhotoUrl(entry.photo_paths[0]);
 
-      photoEl.style.backgroundImage = "url('" + firstUrl + "')";
-      photoEl.style.backgroundSize = "cover";
-      photoEl.style.backgroundPosition = "center";
+      var firstUrl =
+        publicPhotoUrl(
+          entry.photo_paths[0]
+        );
 
-      entry.photo_paths.forEach(function(path){
-        var url = publicPhotoUrl(path);
+      photoEl.style.backgroundImage =
+        "url('" + firstUrl + "')";
 
-        var thumb = document.createElement('div');
-        thumb.className = 'photo-thumb';
-        thumb.style.backgroundImage = "url('" + url + "')";
+      photoEl.style.backgroundSize =
+        "cover";
 
-        thumb.onclick = function(){
+      photoEl.style.backgroundPosition =
+        "center";
+
+      entry.photo_paths.forEach(
+        function(path){
+
+          var url =
+            publicPhotoUrl(path);
+
+          var thumb =
+            document.createElement('div');
+
+          thumb.className =
+            'photo-thumb';
+
+          thumb.style.backgroundImage =
+            "url('" + url + "')";
+
+          thumb.onclick =
+            function(){
+              openJournalModal(entry);
+            };
+
+          strip.appendChild(thumb);
+        }
+      );
+
+      countEl.textContent =
+        photoCount +
+        " photograph" +
+        (
+          photoCount === 1
+            ? ""
+            : "s"
+        ) +
+        " · scroll to explore";
+
+      photoEl.onclick =
+        function(){
           openJournalModal(entry);
         };
 
-        strip.appendChild(thumb);
-      });
-
-      countEl.textContent =
-        photoCount + " photograph" + (photoCount === 1 ? "" : "s") +
-        " · scroll to explore";
-
-      photoEl.onclick = function(){
-        openJournalModal(entry);
-      };
-
-      photoEl.style.cursor = "pointer";
+      photoEl.style.cursor =
+        "pointer";
 
     } else {
-      photoEl.style.backgroundImage = "";
-      strip.innerHTML = "";
-      countEl.textContent = "No photographs recorded";
+
+      photoEl.style.backgroundImage =
+        "";
+
+      strip.innerHTML =
+        "";
+
+      countEl.textContent =
+        "No photographs recorded";
     }
   }
 
+  // =========================================================
+  // JOURNAL
+  // =========================================================
+
   function renderJournal(entries){
-    var container = document.getElementById('journal-list');
-    if (!entries || entries.length === 0){
-      container.innerHTML = '<div style="padding:14px 0;color:#6d7469;font-size:13px">No journal entries yet — upload a field update to get started.</div>';
+
+    var container =
+      document.getElementById(
+        'journal-list'
+      );
+
+    if (
+      !entries ||
+      entries.length === 0
+    ){
+
+      container.innerHTML =
+        '<div style="padding:14px 0;color:#6d7469;font-size:13px">' +
+        'No journal entries yet — upload a field update to get started.' +
+        '</div>';
+
       return;
     }
 
-    container.innerHTML = entries.map(function(entry, idx){
-      var parts = formatDateParts(entry.created_at);
-      var photoCount = (entry.photo_paths || []).length;
-      var thumbUrl = photoCount > 0 ? publicPhotoUrl(entry.photo_paths[0]) : "";
-      var thumbStyle = thumbUrl
-        ? 'background-image:url(\'' + thumbUrl + '\');background-size:cover;background-position:center'
-        : 'background:#e2dfd3';
+    container.innerHTML =
+      entries.map(
+        function(entry, idx){
 
-      var metrics = [];
-      if (entry.temperature_snapshot !== null && entry.temperature_snapshot !== undefined){
-        metrics.push('♨ ' + Number(entry.temperature_snapshot).toFixed(1) + '°C');
-      }
-      if (entry.humidity_snapshot !== null && entry.humidity_snapshot !== undefined){
-        metrics.push('◯ ' + Number(entry.humidity_snapshot).toFixed(0) + '%');
-      }
-      metrics.push('▧ ' + photoCount + ' photo' + (photoCount === 1 ? '' : 's'));
+          var parts =
+            formatDateParts(
+              entry.created_at
+            );
 
-      var noteText = entryNote(entry);
-      var dateHtml = parts.isToday ? 'TODAY<br>' + parts.day + ' ' + parts.month : parts.day + ' ' + parts.month;
+          var photoCount =
+            (entry.photo_paths || []).length;
 
-      return '<div class="journal-item" role="button" tabindex="0" data-entry-index="' + idx + '" aria-label="Open journal entry: ' + escapeHtml(entryTitle(entry)) + '">' +
-        '<div class="date">' + dateHtml + '</div>' +
-        '<div class="journal-thumb" style="' + thumbStyle + '"></div>' +
-        '<div class="journal-text"><strong>' + escapeHtml(entryTitle(entry)) + '</strong><p>' + escapeHtml(noteText) + '</p></div>' +
-        '<div class="journal-metrics">' + metrics.join(' · ') + '</div>' +
-      '</div>';
-    }).join('');
+          var thumbUrl =
+            photoCount > 0
+              ? publicPhotoUrl(
+                  entry.photo_paths[0]
+                )
+              : "";
 
-    Array.from(container.querySelectorAll('.journal-item')).forEach(function(item){
-      var idx = parseInt(item.getAttribute('data-entry-index'), 10);
-      item.onclick = function(){
-        openJournalModal(entries[idx]);
-      };
-      item.onkeydown = function(e){
-        if (e.key === 'Enter' || e.key === ' '){
-          e.preventDefault();
-          openJournalModal(entries[idx]);
+          var thumbStyle =
+            thumbUrl
+              ? "background-image:url('" +
+                thumbUrl +
+                "');background-size:cover;background-position:center"
+              : "background:#e2dfd3";
+
+          var metrics = [];
+
+          if (
+            entry.temperature_snapshot !== null &&
+            entry.temperature_snapshot !== undefined
+          ){
+
+            metrics.push(
+              "♨ " +
+              Number(
+                entry.temperature_snapshot
+              ).toFixed(1) +
+              "°C"
+            );
+          }
+
+          if (
+            entry.humidity_snapshot !== null &&
+            entry.humidity_snapshot !== undefined
+          ){
+
+            metrics.push(
+              "◯ " +
+              Number(
+                entry.humidity_snapshot
+              ).toFixed(0) +
+              "%"
+            );
+          }
+
+          metrics.push(
+            "▧ " +
+            photoCount +
+            " photo" +
+            (
+              photoCount === 1
+                ? ""
+                : "s"
+            )
+          );
+
+          var noteText =
+            entryNote(entry);
+
+          var dateHtml =
+            parts.isToday
+              ? "TODAY<br>" +
+                parts.day +
+                " " +
+                parts.month
+              : parts.day +
+                " " +
+                parts.month;
+
+          return (
+            '<div class="journal-item" role="button" tabindex="0" data-entry-index="' +
+            idx +
+            '" aria-label="Open journal entry: ' +
+            escapeHtml(
+              entryTitle(entry)
+            ) +
+            '">' +
+
+            '<div class="date">' +
+            dateHtml +
+            '</div>' +
+
+            '<div class="journal-thumb" style="' +
+            thumbStyle +
+            '"></div>' +
+
+            '<div class="journal-text">' +
+            '<strong>' +
+            escapeHtml(
+              entryTitle(entry)
+            ) +
+            '</strong>' +
+
+            '<p>' +
+            escapeHtml(noteText) +
+            '</p>' +
+
+            '</div>' +
+
+            '<div class="journal-metrics">' +
+            metrics.join(' · ') +
+            '</div>' +
+
+            '</div>'
+          );
         }
-      };
+      ).join('');
+
+    Array.from(
+      container.querySelectorAll(
+        '.journal-item'
+      )
+    ).forEach(function(item){
+
+      var idx =
+        parseInt(
+          item.getAttribute(
+            'data-entry-index'
+          ),
+          10
+        );
+
+      item.onclick =
+        function(){
+          openJournalModal(
+            entries[idx]
+          );
+        };
+
+      item.onkeydown =
+        function(e){
+
+          if (
+            e.key === 'Enter' ||
+            e.key === ' '
+          ){
+
+            e.preventDefault();
+
+            openJournalModal(
+              entries[idx]
+            );
+          }
+        };
     });
   }
 
+  // =========================================================
+  // RECENT UPDATES
+  // =========================================================
+
   function renderRecentUpdates(entries){
-    var container = document.getElementById('recent-updates-list');
+
+    var container =
+      document.getElementById(
+        'recent-updates-list'
+      );
+
     if (!container) return;
-    if (!entries || entries.length === 0){
-      container.innerHTML = '<div style="padding:8px 0;color:#6d7469;font-size:13px">No updates yet.</div>';
+
+    if (
+      !entries ||
+      entries.length === 0
+    ){
+
+      container.innerHTML =
+        '<div style="padding:8px 0;color:#6d7469;font-size:13px">' +
+        'No updates yet.' +
+        '</div>';
+
       return;
     }
-    container.innerHTML = entries.slice(0, 4).map(function(entry){
-      var parts = formatDateParts(entry.created_at);
-      var photoCount = (entry.photo_paths || []).length;
-      var thumbUrl = photoCount > 0 ? publicPhotoUrl(entry.photo_paths[0]) : "";
-      var thumbStyle = thumbUrl
-        ? 'background-image:url(\'' + thumbUrl + '\');background-size:cover;background-position:center'
-        : 'background:#e2dfd3';
-      return '<div class="update">' +
-        '<div class="thumb" style="' + thumbStyle + '"></div>' +
-        '<div><strong>' + escapeHtml(parts.badge) + ' · ' + escapeHtml(parts.time) + '</strong>' +
-        '<p>' + escapeHtml(entryTitle(entry)) + '<br>' + photoCount + ' photograph' + (photoCount === 1 ? '' : 's') + '</p></div>' +
-      '</div>';
-    }).join('');
+
+    container.innerHTML =
+      entries.slice(0, 4)
+        .map(function(entry){
+
+          var parts =
+            formatDateParts(
+              entry.created_at
+            );
+
+          var photoCount =
+            (entry.photo_paths || []).length;
+
+          var thumbUrl =
+            photoCount > 0
+              ? publicPhotoUrl(
+                  entry.photo_paths[0]
+                )
+              : "";
+
+          var thumbStyle =
+            thumbUrl
+              ? "background-image:url('" +
+                thumbUrl +
+                "');background-size:cover;background-position:center"
+              : "background:#e2dfd3";
+
+          return (
+            '<div class="update">' +
+
+            '<div class="thumb" style="' +
+            thumbStyle +
+            '"></div>' +
+
+            '<div>' +
+
+            '<strong>' +
+            escapeHtml(parts.badge) +
+            ' · ' +
+            escapeHtml(parts.time) +
+            '</strong>' +
+
+            '<p>' +
+            escapeHtml(
+              entryTitle(entry)
+            ) +
+            '<br>' +
+            photoCount +
+            ' photograph' +
+            (
+              photoCount === 1
+                ? ''
+                : 's'
+            ) +
+            '</p>' +
+
+            '</div>' +
+
+            '</div>'
+          );
+        })
+        .join('');
   }
 
-  // ---------------------------------------------------------
-  // Season stage + harvest countdown (Rome timezone)
-  // ---------------------------------------------------------
+  // =========================================================
+  // SEASON
+  // =========================================================
+
   var SEASON_STAGES = [
-    { month: 0,  name: "Pruning",               icon: "✂️" },
-    { month: 1,  name: "Flowering preparation",  icon: "🌱" },
-    { month: 2,  name: "Spring growth",          icon: "🌿" },
-    { month: 3,  name: "Flowering",              icon: "🌼" },
-    { month: 4,  name: "Fruit development",      icon: "🫒" },
-    { month: 5,  name: "Summer heat",            icon: "☀️" },
-    { month: 6,  name: "Ripening begins",        icon: "🌡️" },
-    { month: 7,  name: "Ripening",               icon: "🌡️" },
-    { month: 8,  name: "Harvest preparation",    icon: "🧺" },
-    { month: 9,  name: "Harvest",                icon: "🌾" },
-    { month: 10, name: "Harvest & milling",      icon: "🫒" },
-    { month: 11, name: "Dormancy & rest",        icon: "❄️" }
+
+    {
+      month: 0,
+      name: "Pruning",
+      icon: "✂️"
+    },
+
+    {
+      month: 1,
+      name: "Flowering preparation",
+      icon: "🌱"
+    },
+
+    {
+      month: 2,
+      name: "Spring growth",
+      icon: "🌿"
+    },
+
+    {
+      month: 3,
+      name: "Flowering",
+      icon: "🌼"
+    },
+
+    {
+      month: 4,
+      name: "Fruit development",
+      icon: "🫒"
+    },
+
+    {
+      month: 5,
+      name: "Summer heat",
+      icon: "☀️"
+    },
+
+    {
+      month: 6,
+      name: "Ripening begins",
+      icon: "🌡️"
+    },
+
+    {
+      month: 7,
+      name: "Ripening",
+      icon: "🌡️"
+    },
+
+    {
+      month: 8,
+      name: "Harvest preparation",
+      icon: "🧺"
+    },
+
+    {
+      month: 9,
+      name: "Harvest",
+      icon: "🌾"
+    },
+
+    {
+      month: 10,
+      name: "Harvest & milling",
+      icon: "🫒"
+    },
+
+    {
+      month: 11,
+      name: "Dormancy & rest",
+      icon: "❄️"
+    }
   ];
-  var HARVEST_START_MONTH = 9; // October (0-indexed)
+
+  var HARVEST_START_MONTH = 9;
   var HARVEST_START_DAY = 1;
 
   function renderSeasonStage(){
+
     var now = new Date();
-    var month = romeMonth(now);
-    var year = romeYear(now);
 
-    var nameEl = document.getElementById('season-stage-name');
-    var countdownEl = document.getElementById('season-harvest-countdown');
+    var month =
+      romeMonth(now);
 
-    if (!nameEl || !countdownEl) return;
+    var year =
+      romeYear(now);
 
-    // October: harvest underway
+    var nameEl =
+      document.getElementById(
+        'season-stage-name'
+      );
+
+    var countdownEl =
+      document.getElementById(
+        'season-harvest-countdown'
+      );
+
+    if (
+      !nameEl ||
+      !countdownEl
+    ){
+      return;
+    }
+
     if (month === 9){
-      nameEl.textContent = "🧺 HARVEST UNDERWAY";
-      countdownEl.textContent = "🌾 The grove is being harvested";
+
+      nameEl.textContent =
+        "🧺 HARVEST UNDERWAY";
+
+      countdownEl.textContent =
+        "🌾 The grove is being harvested";
+
       return;
     }
 
-    // November: harvest & milling
     if (month === 10){
-      nameEl.textContent = "🫒 HARVEST & MILLING";
-      countdownEl.textContent = "🌿 Oil production and settling";
+
+      nameEl.textContent =
+        "🫒 HARVEST & MILLING";
+
+      countdownEl.textContent =
+        "🌿 Oil production and settling";
+
       return;
     }
 
-    var stage = SEASON_STAGES[month];
-    nameEl.textContent = stage.icon + " " + stage.name.toUpperCase();
+    var stage =
+      SEASON_STAGES[month];
 
-    // Compute days until next October 1 (Rome date, ignoring time)
-    var todayRome = romeDateOnly(now);
-    var harvestDate = new Date(year, HARVEST_START_MONTH, HARVEST_START_DAY);
-    if (todayRome.getTime() >= harvestDate.getTime()){
-      harvestDate = new Date(year + 1, HARVEST_START_MONTH, HARVEST_START_DAY);
+    nameEl.textContent =
+      stage.icon +
+      " " +
+      stage.name.toUpperCase();
+
+    var todayRome =
+      romeDateOnly(now);
+
+    var harvestDate =
+      new Date(
+        year,
+        HARVEST_START_MONTH,
+        HARVEST_START_DAY
+      );
+
+    if (
+      todayRome.getTime() >=
+      harvestDate.getTime()
+    ){
+
+      harvestDate =
+        new Date(
+          year + 1,
+          HARVEST_START_MONTH,
+          HARVEST_START_DAY
+        );
     }
-    var daysLeft = Math.ceil((harvestDate - todayRome) / 86400000);
-    countdownEl.textContent = "Harvest in " + daysLeft + " day" + (daysLeft === 1 ? "" : "s");
+
+    var daysLeft =
+      Math.ceil(
+        (
+          harvestDate -
+          todayRome
+        ) / 86400000
+      );
+
+    countdownEl.textContent =
+      "Harvest in " +
+      daysLeft +
+      " day" +
+      (
+        daysLeft === 1
+          ? ""
+          : "s"
+      );
   }
 
   function renderSeasonTimeline(){
-    var container = document.getElementById('season-timeline');
+
+    var container =
+      document.getElementById(
+        'season-timeline'
+      );
+
     if (!container) return;
-    var currentMonth = romeMonth(new Date());
-    container.innerHTML = SEASON_STAGES.map(function(stage, idx){
-      var isCurrent = idx === currentMonth;
-      var monthLabel = new Date(2026, idx, 1).toLocaleString('en-US', { month: 'short' }).toUpperCase();
-      return '<div style="flex:0 0 auto;min-width:88px;text-align:center;padding:12px 8px;border-radius:10px;' +
-        (isCurrent ? 'background:#17301c;color:#fff' : 'background:#f4f2e6;color:#5f665d') + '">' +
-        '<div style="font-size:20px">' + stage.icon + '</div>' +
-        '<div style="font-size:11px;font-weight:800;letter-spacing:.4px;margin-top:6px">' + monthLabel + '</div>' +
-        '<div style="font-size:10px;margin-top:3px;opacity:.85">' + stage.name + '</div>' +
-      '</div>';
-    }).join('');
+
+    var currentMonth =
+      romeMonth(new Date());
+
+    container.innerHTML =
+      SEASON_STAGES.map(
+        function(stage, idx){
+
+          var isCurrent =
+            idx === currentMonth;
+
+          var monthLabel =
+            new Date(
+              2026,
+              idx,
+              1
+            ).toLocaleString(
+              'en-US',
+              { month: 'short' }
+            ).toUpperCase();
+
+          return (
+            '<div style="flex:0 0 auto;min-width:88px;text-align:center;padding:12px 8px;border-radius:10px;' +
+            (
+              isCurrent
+                ? 'background:#17301c;color:#fff'
+                : 'background:#f4f2e6;color:#5f665d'
+            ) +
+            '">' +
+
+            '<div style="font-size:20px">' +
+            stage.icon +
+            '</div>' +
+
+            '<div style="font-size:11px;font-weight:800;letter-spacing:.4px;margin-top:6px">' +
+            monthLabel +
+            '</div>' +
+
+            '<div style="font-size:10px;margin-top:3px;opacity:.85">' +
+            stage.name +
+            '</div>' +
+
+            '</div>'
+          );
+        }
+      ).join('');
   }
 
-  // ---------------------------------------------------------
-  // Season stats: Days Observed, Field Updates, Photographs,
-  // Rainfall — limited to 2026 season (Jan 1 – Dec 31, 2026)
-  // ---------------------------------------------------------
+  // =========================================================
+  // SEASON STATS
+  // =========================================================
+
   async function loadSeasonStats(){
+
     try {
-      var seasonStart = '2026-01-01T00:00:00+01:00';
-      var seasonEnd   = '2026-12-31T23:59:59+01:00';
 
-      // Weather: earliest 2026 reading + rainfall sum within 2026
-      var weatherAgg = await client
-        .from('weather_data')
-        .select('received_at, rainfall')
-        .gte('received_at', seasonStart)
-        .lte('received_at', seasonEnd);
+      var seasonStart =
+        '2026-01-01T00:00:00+01:00';
 
-      if (!weatherAgg.error && weatherAgg.data){
-        var rows = weatherAgg.data;
+      var seasonEnd =
+        '2026-12-31T23:59:59+01:00';
+
+      var weatherAgg =
+        await client
+          .from('weather_data')
+          .select(
+            'received_at,rainfall'
+          )
+          .gte(
+            'received_at',
+            seasonStart
+          )
+          .lte(
+            'received_at',
+            seasonEnd
+          );
+
+      if (
+        !weatherAgg.error &&
+        weatherAgg.data
+      ){
+
+        var rows =
+          weatherAgg.data;
+
         if (rows.length > 0){
-          var earliest = rows.reduce(function(min, r){
-            return (!min || r.received_at < min) ? r.received_at : min;
-          }, null);
+
+          var earliest =
+            rows.reduce(
+              function(min, r){
+
+                return (
+                  !min ||
+                  r.received_at < min
+                )
+                  ? r.received_at
+                  : min;
+              },
+              null
+            );
+
           if (earliest){
-            var days = Math.floor((Date.now() - new Date(earliest).getTime()) / 86400000) + 1;
-            document.getElementById('stat-days-observed').textContent = days;
+
+            var days =
+              Math.floor(
+                (
+                  Date.now() -
+                  new Date(
+                    earliest
+                  ).getTime()
+                ) / 86400000
+              ) + 1;
+
+            document.getElementById(
+              'stat-days-observed'
+            ).textContent =
+              days;
           }
-          var totalRain = rows.reduce(function(sum, r){
-            return sum + (Number(r.rainfall) || 0);
-          }, 0);
-          document.getElementById('stat-rainfall').textContent = totalRain.toFixed(0) + ' mm';
+
+          /*
+           * Avoid multiplying a daily cumulative rainfall
+           * reading by the number of station readings.
+           */
+
+          var dailyRain = {};
+
+          rows.forEach(function(r){
+
+            if (
+              !r.received_at ||
+              r.rainfall === null ||
+              r.rainfall === undefined
+            ){
+              return;
+            }
+
+            var rain =
+              Number(r.rainfall);
+
+            if (
+              !isFinite(rain) ||
+              rain < 0
+            ){
+              return;
+            }
+
+            var key =
+              romeDateKey(
+                new Date(
+                  r.received_at
+                )
+              );
+
+            if (
+              dailyRain[key] === undefined ||
+              rain > dailyRain[key]
+            ){
+
+              dailyRain[key] =
+                rain;
+            }
+          });
+
+          var totalRain =
+            Object.keys(
+              dailyRain
+            ).reduce(
+              function(sum, key){
+
+                return (
+                  sum +
+                  dailyRain[key]
+                );
+              },
+              0
+            );
+
+          document.getElementById(
+            'stat-rainfall'
+          ).textContent =
+            totalRain.toFixed(0) +
+            ' mm';
         }
       }
 
-      // Field entries within 2026
-      var updatesCount = await client
-        .from('field_entries')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', seasonStart)
-        .lte('created_at', seasonEnd);
+      // =====================================================
+      // FIELD ENTRIES COUNT
+      // =====================================================
 
-      if (!updatesCount.error && updatesCount.count !== null){
-        document.getElementById('stat-field-updates').textContent = updatesCount.count;
+      var updatesCount =
+        await client
+          .from('field_entries')
+          .select(
+            '*',
+            {
+              count: 'exact',
+              head: true
+            }
+          )
+          .gte(
+            'created_at',
+            seasonStart
+          )
+          .lte(
+            'created_at',
+            seasonEnd
+          );
+
+      if (
+        !updatesCount.error &&
+        updatesCount.count !== null
+      ){
+
+        document.getElementById(
+          'stat-field-updates'
+        ).textContent =
+          updatesCount.count;
       }
 
-      // Photos within 2026 field entries
-      var photoRows = await client
-        .from('field_entries')
-        .select('photo_paths')
-        .gte('created_at', seasonStart)
-        .lte('created_at', seasonEnd);
+      // =====================================================
+      // PHOTO COUNT
+      // =====================================================
 
-      if (!photoRows.error && photoRows.data){
-        var totalPhotos = photoRows.data.reduce(function(sum, r){
-          return sum + ((r.photo_paths || []).length);
-        }, 0);
-        document.getElementById('stat-photographs').textContent = totalPhotos.toLocaleString();
+      var photoRows =
+        await client
+          .from('field_entries')
+          .select('photo_paths')
+          .gte(
+            'created_at',
+            seasonStart
+          )
+          .lte(
+            'created_at',
+            seasonEnd
+          );
+
+      if (
+        !photoRows.error &&
+        photoRows.data
+      ){
+
+        var totalPhotos =
+          photoRows.data.reduce(
+            function(sum, r){
+
+              return (
+                sum +
+                (
+                  r.photo_paths || []
+                ).length
+              );
+            },
+            0
+          );
+
+        document.getElementById(
+          'stat-photographs'
+        ).textContent =
+          totalPhotos.toLocaleString();
       }
+
     } catch (err){
-      console.error('Season stats failed:', err);
+
+      console.error(
+        'Season stats failed:',
+        err
+      );
     }
   }
 
   renderSeasonStage();
   renderSeasonTimeline();
   loadSeasonStats();
-  setInterval(function(){
-    renderSeasonStage();
-    renderSeasonTimeline();
-    loadSeasonStats();
-  }, 60000);
 
-  // ---------------------------------------------------------
-  // Grove map (up to 1000 GPS-validated entries)
-  // ---------------------------------------------------------
+  setInterval(
+    function(){
+
+      renderSeasonStage();
+      renderSeasonTimeline();
+      loadSeasonStats();
+
+    },
+    60000
+  );
+
+  // =========================================================
+  // GROVE MAP
+  // =========================================================
+
   var groveMap = null;
   var groveMapMarkers = [];
 
   function ensureGroveMap(){
-    if (groveMap) return groveMap;
 
-    var el = document.getElementById('grove-map');
-    if (!el || typeof L === 'undefined') return null;
+    if (groveMap){
+      return groveMap;
+    }
 
-    var GROVE_CENTER = [43.10052, 10.55912];
+    var el =
+      document.getElementById(
+        'grove-map'
+      );
 
-    groveMap = L.map(el, {
-      zoomControl: false,
-      scrollWheelZoom: false
-    }).setView(GROVE_CENTER, 17);
+    if (
+      !el ||
+      typeof L === 'undefined'
+    ){
+      return null;
+    }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 20,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
-    }).addTo(groveMap);
+    var GROVE_CENTER =
+      [43.10052, 10.55912];
 
-    L.marker(GROVE_CENTER)
+    groveMap =
+      L.map(
+        el,
+        {
+          zoomControl: false,
+          scrollWheelZoom: false
+        }
+      ).setView(
+        GROVE_CENTER,
+        17
+      );
+
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        maxZoom: 20,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+      }
+    ).addTo(groveMap);
+
+    L.marker(
+      GROVE_CENTER
+    )
       .addTo(groveMap)
       .bindPopup(
         '<strong>OLIVIUM GROVE</strong><br>' +
@@ -1337,76 +2996,247 @@ function render(){
     return groveMap;
   }
 
-  function isValidLat(v){ return typeof v === 'number' && !isNaN(v) && v >= -90 && v <= 90; }
-  function isValidLng(v){ return typeof v === 'number' && !isNaN(v) && v >= -180 && v <= 180; }
+  function isValidLat(v){
+
+    return (
+      typeof v === 'number' &&
+      !isNaN(v) &&
+      v >= -90 &&
+      v <= 90
+    );
+  }
+
+  function isValidLng(v){
+
+    return (
+      typeof v === 'number' &&
+      !isNaN(v) &&
+      v >= -180 &&
+      v <= 180
+    );
+  }
 
   function renderGroveMap(entries){
-    var map = ensureGroveMap();
+
+    var map =
+      ensureGroveMap();
+
     if (!map) return;
 
-    groveMapMarkers.forEach(function(m){ map.removeLayer(m); });
+    groveMapMarkers.forEach(
+      function(m){
+        map.removeLayer(m);
+      }
+    );
+
     groveMapMarkers = [];
 
-    var pinned = entries.filter(function(e){
-      return isValidLat(e.gps_lat) && isValidLng(e.gps_lng);
-    });
+    var pinned =
+      entries.filter(
+        function(e){
 
-    document.getElementById('map-pin-count').textContent = pinned.length;
+          return (
+            isValidLat(e.gps_lat) &&
+            isValidLng(e.gps_lng)
+          );
+        }
+      );
 
-    if (pinned.length === 0) return;
+    var countEl =
+      document.getElementById(
+        'map-pin-count'
+      );
+
+    if (countEl){
+
+      countEl.textContent =
+        pinned.length;
+    }
+
+    if (pinned.length === 0){
+      return;
+    }
 
     var bounds = [];
-    pinned.forEach(function(entry){
-      var latlng = [entry.gps_lat, entry.gps_lng];
-      bounds.push(latlng);
-      var marker = L.circleMarker(latlng, {
-        radius: 7,
-        color: '#5b6e28',
-        weight: 2,
-        fillColor: '#e1d66f',
-        fillOpacity: 0.9
-      }).addTo(map);
 
-      var parts = formatDateParts(entry.created_at);
-      var popupHtml = '<strong>' + escapeHtml(entryTitle(entry)) + '</strong><br>' +
-        escapeHtml(parts.badge) + ' · ' + escapeHtml(parts.time) +
-        (entry.tree_id ? '<br>Tree ' + escapeHtml(entry.tree_id) : '');
-      marker.bindPopup(popupHtml);
-      groveMapMarkers.push(marker);
-    });
+    pinned.forEach(
+      function(entry){
+
+        var latlng =
+          [
+            entry.gps_lat,
+            entry.gps_lng
+          ];
+
+        bounds.push(latlng);
+
+        var marker =
+          L.circleMarker(
+            latlng,
+            {
+              radius: 7,
+              color: '#5b6e28',
+              weight: 2,
+              fillColor: '#e1d66f',
+              fillOpacity: 0.9
+            }
+          ).addTo(map);
+
+        var parts =
+          formatDateParts(
+            entry.created_at
+          );
+
+        var popupHtml =
+          '<strong>' +
+          escapeHtml(
+            entryTitle(entry)
+          ) +
+          '</strong><br>' +
+
+          escapeHtml(
+            parts.badge
+          ) +
+          ' · ' +
+          escapeHtml(
+            parts.time
+          ) +
+
+          (
+            entry.tree_id
+              ? '<br>Tree ' +
+                escapeHtml(
+                  entry.tree_id
+                )
+              : ''
+          );
+
+        marker.bindPopup(
+          popupHtml
+        );
+
+        groveMapMarkers.push(
+          marker
+        );
+      }
+    );
 
     if (bounds.length === 1){
-      map.setView(bounds[0], 16);
+
+      map.setView(
+        bounds[0],
+        16
+      );
+
     } else {
-      map.fitBounds(bounds, { padding: [24, 24] });
+
+      map.fitBounds(
+        bounds,
+        {
+          padding: [24, 24]
+        }
+      );
     }
   }
 
+  // =========================================================
+  // FIELD ENTRY LOADER
+  //
+  // Also updates Grove Pulse's "Field Activity".
+  // =========================================================
+
   async function loadFieldEntries(){
+
     try {
-      var res = await client
-        .from('field_entries')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
+
+      var res =
+        await client
+          .from('field_entries')
+          .select('*')
+          .order(
+            'created_at',
+            {
+              ascending: false
+            }
+          )
+          .limit(1000);
 
       if (res.error){
-        console.error('Supabase field_entries read error:', res.error);
+
+        console.error(
+          'Supabase field_entries read error:',
+          res.error
+        );
+
         return;
       }
 
-      var entries = res.data || [];
-      renderLatestEntry(entries[0]);
-      renderJournal(entries);
-      renderGroveMap(entries);
-      renderRecentUpdates(entries);
+      var entries =
+        res.data || [];
+
+      // -----------------------------------------------
+      // Determine whether there was a field entry today
+      // in Rome.
+      // -----------------------------------------------
+
+      var todayRome =
+        romeDateKey(
+          new Date()
+        );
+
+      grovePulseState.hasFieldEntryToday =
+        entries.some(
+          function(entry){
+
+            if (!entry.created_at){
+              return false;
+            }
+
+            return (
+              romeDateKey(
+                new Date(
+                  entry.created_at
+                )
+              ) === todayRome
+            );
+          }
+        );
+
+      // Re-render Pulse after field activity changes.
+      render();
+
+      renderLatestEntry(
+        entries[0]
+      );
+
+      renderJournal(
+        entries
+      );
+
+      renderGroveMap(
+        entries
+      );
+
+      renderRecentUpdates(
+        entries
+      );
+
     } catch (err){
-      console.error('Field entries fetch failed:', err);
+
+      console.error(
+        'Field entries fetch failed:',
+        err
+      );
     }
   }
 
   loadFieldEntries();
-  setInterval(loadFieldEntries, 60000);
+
+  setInterval(
+    loadFieldEntries,
+    60000
+  );
+
 })();
 </script>
 </body>
