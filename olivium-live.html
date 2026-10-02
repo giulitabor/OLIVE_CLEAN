@@ -1505,117 +1505,98 @@ function toggleMenu(){
   var IMAGE_EXT =
     /\.(jpe?g|png|webp|gif)$/i;
 
-  async function loadRandomHeroImage(){
+// ---------------------------------------------------------
+// Random hero image
+//   1. Prefer photos that appear in the journal (field_entries.photo_paths)
+//   2. Fall back to a random image from github.com/kyngrick/olivium_photos
+//   3. Fall back to the default Unsplash hero
+// ---------------------------------------------------------
+var PHOTOS_REPO = "kyngrick/olivium_photos";
+var IMAGE_EXT = /\.(jpe?g|png|webp|gif)$/i;
 
-    try {
+function setHeroBackground(url){
+  var hero = document.getElementById('home');
+  if (!hero) return;
+  hero.style.backgroundImage =
+    "linear-gradient(90deg,rgba(8,22,11,.76) 0%,rgba(8,22,11,.45) 52%,rgba(8,22,11,.65) 100%), url('" + url + "')";
+}
 
-      var repoRes =
-        await fetch(
-          "https://api.github.com/repos/" +
-          PHOTOS_REPO
-        );
+// --- Source 1: journal photos ---
+async function pickJournalPhotoUrl(){
+  try {
+    var res = await client
+      .from('field_entries')
+      .select('photo_paths')
+      .order('created_at', { ascending: false })
+      .limit(200); // look back over recent entries
 
-      if (!repoRes.ok){
+    if (res.error || !res.data || res.data.length === 0) return null;
 
-        throw new Error(
-          "Repo lookup failed: " +
-          repoRes.status
-        );
-      }
+    // Flatten every photo path from every entry
+    var allPaths = [];
+    res.data.forEach(function(entry){
+      (entry.photo_paths || []).forEach(function(p){
+        if (p) allPaths.push(p);
+      });
+    });
 
-      var repoInfo =
-        await repoRes.json();
+    if (allPaths.length === 0) return null;
 
-      var branch =
-        repoInfo.default_branch ||
-        "main";
-
-      var treeRes =
-        await fetch(
-          "https://api.github.com/repos/" +
-          PHOTOS_REPO +
-          "/git/trees/" +
-          branch +
-          "?recursive=1"
-        );
-
-      if (!treeRes.ok){
-
-        throw new Error(
-          "Tree lookup failed: " +
-          treeRes.status
-        );
-      }
-
-      var treeData =
-        await treeRes.json();
-
-      var images =
-        (treeData.tree || [])
-          .filter(function(item){
-
-            return (
-              item.type === "blob" &&
-              IMAGE_EXT.test(item.path)
-            );
-          })
-          .map(function(item){
-
-            return item.path;
-          });
-
-      if (images.length === 0){
-
-        console.warn(
-          "No images found in " +
-          PHOTOS_REPO +
-          " — keeping default hero image."
-        );
-
-        return;
-      }
-
-      var pick =
-        images[
-          Math.floor(
-            Math.random() *
-            images.length
-          )
-        ];
-
-      var rawUrl =
-        "https://raw.githubusercontent.com/" +
-        PHOTOS_REPO +
-        "/" +
-        branch +
-        "/" +
-        pick;
-
-      var hero =
-        document.getElementById('home');
-
-      if (hero){
-
-        hero.style.backgroundImage =
-          "linear-gradient(" +
-          "90deg," +
-          "rgba(8,22,11,.76) 0%," +
-          "rgba(8,22,11,.45) 52%," +
-          "rgba(8,22,11,.65) 100%" +
-          "),url('" +
-          rawUrl +
-          "')";
-
-      }
-
-    } catch (err){
-
-      console.warn(
-        "Random hero image failed, keeping default:",
-        err
-      );
-    }
+    var pick = allPaths[Math.floor(Math.random() * allPaths.length)];
+    return publicPhotoUrl(pick);
+  } catch (err){
+    console.warn("Journal photo lookup failed:", err);
+    return null;
   }
+}
+
+// --- Source 2: GitHub repo fallback ---
+async function pickRepoPhotoUrl(){
+  try {
+    var repoRes = await fetch("https://api.github.com/repos/" + PHOTOS_REPO);
+    if (!repoRes.ok) throw new Error("Repo lookup failed: " + repoRes.status);
+    var repoInfo = await repoRes.json();
+    var branch = repoInfo.default_branch || "main";
+
+    var treeRes = await fetch(
+      "https://api.github.com/repos/" + PHOTOS_REPO + "/git/trees/" + branch + "?recursive=1"
+    );
+    if (!treeRes.ok) throw new Error("Tree lookup failed: " + treeRes.status);
+    var treeData = await treeRes.json();
+
+    var images = (treeData.tree || [])
+      .filter(function(item){ return item.type === "blob" && IMAGE_EXT.test(item.path); })
+      .map(function(item){ return item.path; });
+
+    if (images.length === 0) return null;
+
+    var pick = images[Math.floor(Math.random() * images.length)];
+    return "https://raw.githubusercontent.com/" + PHOTOS_REPO + "/" + branch + "/" + pick;
+  } catch (err){
+    console.warn("Repo photo lookup failed:", err);
+    return null;
+  }
+}
+
+// --- Orchestrator ---
+async function loadRandomHeroImage(){
+  // 1. Try the journal first — real photos from the grove
+  var journalUrl = await pickJournalPhotoUrl();
+  if (journalUrl){
+    setHeroBackground(journalUrl);
+    return;
+  }
+
+  // 2. Fall back to the GitHub photo repo
+  var repoUrl = await pickRepoPhotoUrl();
+  if (repoUrl){
+    setHeroBackground(repoUrl);
+    return;
+  }
+
+  // 3. Keep the default Unsplash hero already set in the markup
+  console.warn("No journal or repo photos available — keeping default hero image.");
+}
 
   loadRandomHeroImage();
 
