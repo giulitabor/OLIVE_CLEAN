@@ -246,7 +246,7 @@ main{width:92%;max-width:1400px;margin:30px auto 60px}
   <div class="hero-inner">
     <div id="today">
       <div class="eyebrow">TODAY AT OLIVIUM</div>
-      <h1 id="wx-date">Friday · 21 August 2026</h1>
+<h1 id="wx-date"></h1>
       <p class="hero-copy" id="wx-summary">A warm and sunny day in the grove. Conditions are stable and the trees look healthy after the recent heat.</p>
 
       <div class="weather-grid">
@@ -493,7 +493,20 @@ function toggleMenu(){
       captionEl.textContent = "Live reading from the station, " + timeAgo(row.received_at).toLowerCase() + ".";
     }
   }
+function updateWxDate(){
+  var now = new Date();
+  var weekday = now.toLocaleDateString('en-GB', {weekday:'long'});
+  var day = now.getDate();
+  var month = now.toLocaleDateString('en-GB', {month:'long'});
+  var year = now.getFullYear();
 
+  document.getElementById('wx-date').textContent =
+    weekday + ' · ' + day + ' ' + month + ' ' + year;
+}
+
+updateWxDate();
+
+updateWxDate();
   async function loadLatestWeather(){
     try {
       var res = await client
