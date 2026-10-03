@@ -135,15 +135,15 @@
       {
         id: "HV-2026-01",
         date: "2026-10-01",
-        olivesKg: 1380,
-        oilPercent: null,
-        oilLiters: null,
-        status: "AT THE MILL · AWAITING PRESSING",
+        olivesKg: 1318,
+        oilPercent: 12.51,
+        oilKg: 164.9,
+        status: "PRESSED & VERIFIED",
         treeTypes: "Moraiolo, Leccino, Frantoio, Coritano",
-        pressTime: "Awaiting pressing",
-        frantoioName: "Pressing pending",
+        pressTime: "First Pressing (Completed)",
+        frantoioName: "Frantoio del Casale",
         frantoioLocation: "https://maps.app.goo.gl/m4BNLCSKVn3kPpiX6",
-        notes: "First harvest of the 2026 season. 1,380 kg of olives have been harvested from the grove and delivered to the mill. Awaiting pressing and final oil yield.",
+        notes: "First harvest of the 2026 season. 1,318 kg of olives pressed yielding 164.9 kg of extra virgin olive oil (12.51% yield).",
         downloadPdfUrl: "#",
         downloadCsvUrl: "#",
         downloadReportUrl: "#"
@@ -153,7 +153,8 @@
         date: "2024-10-15",
         olivesKg: 1280,
         oilPercent: 18.3,
-        oilLiters: 234.2,
+        oilKg: 234.2,
+        status: "PRESSED & VERIFIED",
         treeTypes: "Moraiolo, Leccino, Frantoio, Coritano",
         pressTime: "09:30 AM - 12:15 PM",
         frantoioName: "Frantoio del Casale",
@@ -221,7 +222,7 @@
               </h3>
             </div>
             <span class="badge-oil text-xs px-2 py-1 rounded-full font-bold">
-              ${log.oilPercent !== null && log.oilPercent !== undefined ? log.oilPercent + '% oil' : log.status}
+              ${log.oilPercent !== null && log.oilPercent !== undefined ? log.oilPercent + '% yield' : log.status}
             </span>
           </div>
 
@@ -232,8 +233,8 @@
               <span class="font-semibold text-lg">${log.olivesKg ? log.olivesKg.toLocaleString() + ' kg' : 'N/A'}</span>
             </div>
             <div>
-              <span class="text-stone-400 block text-[10px] uppercase">Oil yield</span>
-              <span class="font-semibold text-lg">${log.oilLiters !== null && log.oilLiters !== undefined ? log.oilLiters.toFixed(1) + ' L' : 'N/A'}</span>
+              <span class="text-stone-400 block text-[10px] uppercase">Oil Yield</span>
+              <span class="font-semibold text-lg">${log.oilKg !== null && log.oilKg !== undefined ? log.oilKg.toFixed(1) + ' kg' : 'N/A'}</span>
             </div>
           </div>
 
@@ -389,9 +390,9 @@
         if(fromDate) currentLogs = currentLogs.filter(l => l.date >= fromDate);
         if(toDate) currentLogs = currentLogs.filter(l => l.date <= toDate);
         if(currentLogs.length === 0) { alert('No logs to export.'); return; }
-        let csvRows = [["ID","Date","Olives (kg)","Oil %","Oil Liters","Tree Types","Press Time","Frantoio Name","Frantoio Location","Notes"]];
+        let csvRows = [["ID","Date","Olives (kg)","Yield %","Oil Yield (kg)","Tree Types","Press Time","Frantoio Name","Frantoio Location","Notes"]];
         currentLogs.forEach(l => {
-          csvRows.push([l.id, l.date, l.olivesKg, l.oilPercent, l.oilLiters, l.treeTypes, l.pressTime, l.frantoioName, l.frantoioLocation, l.notes]);
+          csvRows.push([l.id, l.date, l.olivesKg, l.oilPercent, l.oilKg, l.treeTypes, l.pressTime, l.frantoioName, l.frantoioLocation, l.notes]);
         });
         const csvContent = csvRows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob([csvContent], {type: "text/csv"});
