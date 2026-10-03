@@ -4971,7 +4971,7 @@ function bindWalletButton() {
 
   );
 
-}
+
 
 
 
