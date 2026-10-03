@@ -6,6 +6,8 @@
   <title>Olivium Private | Harvest Logs</title>
   <!-- Tailwind CSS + Font Awesome (for icons & download) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- jsPDF CDN for client-side PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <!-- Custom override for font & fine-tuning -->
   <style>
@@ -63,7 +65,7 @@
       </div>
       <!-- Desktop Menu -->
       <div class="hidden md:flex items-center gap-8 text-[10px] font-bold tracking-[0.2em]">
-        <a href="#" class="hover:text-[#C5A059] text-stone-400">DASHBOARD</a>
+        <a href="#" id="dashboardNavDesk" class="hover:text-[#C5A059] text-stone-400">DASHBOARD</a>
         <a href="https://toscagialla.com" target="_blank" class="text-[#C5A059]">VILLA TOUR</a>
         <a href="#" class="hover:text-[#C5A059] text-stone-400 active-nav-link border-b border-[#C5A059]/40 text-[#C5A059]">HARVEST LOG</a>
       </div>
@@ -144,9 +146,9 @@
         frantoioName: "Frantoio del Casale",
         frantoioLocation: "https://maps.app.goo.gl/m4BNLCSKVn3kPpiX6",
         notes: "First harvest of the 2026 season. 1,318 kg of olives pressed yielding 164.9 kg of extra virgin olive oil (12.51% yield).",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
+        labAcidity: "Coming Soon",
+        labPeroxide: "Coming Soon",
+        labPolyphenols: "Coming Soon"
       },
       {
         id: "HV-101",
@@ -160,11 +162,212 @@
         frantoioName: "Frantoio del Casale",
         frantoioLocation: "https://maps.app.goo.gl/m4BNLCSKVn3kPpiX6",
         notes: "Early harvest, intense green fruitiness",
-        downloadPdfUrl: "#",
-        downloadCsvUrl: "#",
-        downloadReportUrl: "#"
+        labAcidity: "< 0.18%",
+        labPeroxide: "4.2 meq O2/kg",
+        labPolyphenols: "520 mg/kg"
       }
     ];
+
+    // ------------- DYNAMIC GENERATORS (jsPDF / CSV / Full Report) -------------
+
+    // 1. PDF Certificate Generator
+    function generatePDFReport(log) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Header Banner
+      doc.setFillColor(10, 12, 15);
+      doc.rect(0, 0, 210, 35, 'F');
+      
+      doc.setTextColor(197, 160, 89);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("OLIVIUM TOSCAGIALLA ESTATE", 15, 18);
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(220, 220, 220);
+      doc.text("OFFICIAL HARVEST & EXTRACTION CERTIFICATE", 15, 26);
+
+      // Metadata Line
+      doc.setTextColor(40, 40, 40);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Document ID: ${log.id}`, 15, 45);
+      doc.text(`Harvest Date: ${log.date}`, 110, 45);
+      doc.text(`Status: ${log.status}`, 15, 52);
+
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(197, 160, 89);
+      doc.line(15, 57, 195, 57);
+
+      // Section 1: Harvest & Extraction
+      doc.setFontSize(12);
+      doc.setTextColor(197, 160, 89);
+      doc.text("1. HARVEST & EXTRACTION METRICS", 15, 68);
+
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "normal");
+
+      const approxLiters = (log.oilKg / 0.915).toFixed(1);
+
+      doc.text(`Total Olives Harvested: ${log.olivesKg.toLocaleString()} kg`, 15, 78);
+      doc.text(`Net Oil Extracted: ${log.oilKg} kg (~${approxLiters} Liters)`, 15, 86);
+      doc.text(`Extraction Yield Rate: ${log.oilPercent}%`, 15, 94);
+      doc.text(`Tree Cultivars: ${log.treeTypes}`, 15, 102);
+
+      // Section 2: Mill & Frantoio Details
+      doc.setFontSize(12);
+      doc.setTextColor(197, 160, 89);
+      doc.setFont("helvetica", "bold");
+      doc.text("2. FRANTOIO MILL TELEMETRY", 15, 118);
+
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Facility Name: ${log.frantoioName}`, 15, 128);
+      doc.text(`Press Schedule: ${log.pressTime}`, 15, 136);
+      doc.text(`Extraction Method: Cold Extraction (Continuous Cycle < 27°C)`, 15, 144);
+
+      // Section 3: Chemical & Lab Levels
+      doc.setFontSize(12);
+      doc.setTextColor(197, 160, 89);
+      doc.setFont("helvetica", "bold");
+      doc.text("3. CHEMICAL LAB READINGS", 15, 160);
+
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Free Fatty Acid % (Acidity) : ${log.labAcidity}`, 15, 170);
+      doc.text(`Peroxide Value               : ${log.labPeroxide}`, 15, 178);
+      doc.text(`Polyphenol Content           : ${log.labPolyphenols}`, 15, 186);
+
+      // Section 4: Notes
+      doc.setFontSize(12);
+      doc.setTextColor(197, 160, 89);
+      doc.setFont("helvetica", "bold");
+      doc.text("4. ESTATE NOTES", 15, 202);
+
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.setFont("helvetica", "italic");
+      const splitNotes = doc.splitTextToSize(log.notes, 180);
+      doc.text(splitNotes, 15, 210);
+
+      // Footer Verification
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(200, 200, 200);
+      doc.line(15, 260, 195, 260);
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(120, 120, 120);
+      doc.text("VERIFIED BY OLIVIUM PRIVATE ESTATE MANAGEMENT • TOSCAGIALLA VAULT", 15, 268);
+
+      doc.save(`Olivium_Certificate_${log.id}.pdf`);
+    }
+
+    // 2. CSV Exporter
+    function downloadSingleCSV(log) {
+      const approxLiters = (log.oilKg / 0.915).toFixed(1);
+      const rows = [
+        ["Log ID", "Date", "Olives (kg)", "Oil Yield (kg)", "Yield %", "Approx Liters", "Tree Varieties", "Press Time", "Frantoio", "Acidity", "Peroxides", "Polyphenols", "Notes"],
+        [log.id, log.date, log.olivesKg, log.oilKg, log.oilPercent, approxLiters, log.treeTypes, log.pressTime, log.frantoioName, log.labAcidity, log.labPeroxide, log.labPolyphenols, log.notes]
+      ];
+
+      const csvContent = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Olivium_Data_${log.id}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // 3. Full Report Generator (.txt file)
+    function downloadFullReport(log) {
+      const approxLiters = (log.oilKg / 0.915).toFixed(1);
+      const reportText = `================================================================================
+                 OLIVIUM ESTATE — COMPREHENSIVE HARVEST REPORT
+================================================================================
+
+1. BATCH SUMMARY
+--------------------------------------------------------------------------------
+- Batch Reference      : ${log.id}
+- Date of Harvest      : ${log.date}
+- Gross Olive Weight   : ${log.olivesKg} kg
+- Total Oil Extracted  : ${log.oilKg} kg
+- Extraction Yield     : ${log.oilPercent}%
+- Equivalent Volume    : ~${approxLiters} Liters (@ 0.915 kg/L density)
+- Processing Status    : ${log.status}
+
+2. BOTANICAL PROFILE
+--------------------------------------------------------------------------------
+- Tree Varieties       : ${log.treeTypes}
+- Harvest Method       : Hand-assisted pneumatic rakes with ground netting
+- Ripening Index       : Early-season green / turning color
+
+3. FRANTOIO EXTRACTION TELEMETRY
+--------------------------------------------------------------------------------
+- Milling Facility     : ${log.frantoioName}
+- Location Map         : ${log.frantoioLocation}
+- Pressing Schedule    : ${log.pressTime}
+- Process Temp         : Continuous Cold Extraction (< 27°C)
+
+4. LABORATORY CHEMICAL ANALYSIS
+--------------------------------------------------------------------------------
+- Free Fatty Acid (%)  : ${log.labAcidity}
+- Peroxide Index       : ${log.labPeroxide}
+- Total Polyphenols    : ${log.labPolyphenols}
+
+5. FIELD NOTES & OBSERVATIONS
+--------------------------------------------------------------------------------
+${log.notes}
+
+================================================================================
+                       END OF COMPREHENSIVE REPORT
+================================================================================`;
+
+      const blob = new Blob([reportText], { type: "text/plain;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Olivium_FullReport_${log.id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ---------- ATTACH EVENT LISTENERS INSIDE RENDER CARDS ----------
+    function attachDownloadHandlers() {
+      document.querySelectorAll('.btn-pdf-download').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const logId = btn.getAttribute('data-id');
+          const log = harvestLogs.find(l => l.id === logId);
+          if(log) generatePDFReport(log);
+        });
+      });
+
+      document.querySelectorAll('.btn-csv-download').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const logId = btn.getAttribute('data-id');
+          const log = harvestLogs.find(l => l.id === logId);
+          if(log) downloadSingleCSV(log);
+        });
+      });
+
+      document.querySelectorAll('.btn-report-download').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const logId = btn.getAttribute('data-id');
+          const log = harvestLogs.find(l => l.id === logId);
+          if(log) downloadFullReport(log);
+        });
+      });
+    }
 
     // helper: format date YYYY-MM-DD to readable "Oct 15, 2024"
     function formatDate(isoDate) {
@@ -172,11 +375,9 @@
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    // get active filter values
     let fromDate = null;
     let toDate = null;
 
-    // references
     const gridContainer = document.getElementById('harvestGrid');
     const emptyMsgDiv = document.getElementById('emptyMsg');
     const totalLogsSpan = document.getElementById('totalLogsCount');
@@ -194,7 +395,6 @@
       if (toDate) {
         filtered = filtered.filter(log => log.date <= toDate);
       }
-      // sort by date descending (newest first)
       filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
       renderHarvestCards(filtered);
       totalLogsSpan.innerText = filtered.length;
@@ -205,7 +405,7 @@
       }
     }
 
-    // render cards with null-safe checks for oil metrics
+    // render cards with null-safe checks
     function renderHarvestCards(logs) {
       if(!gridContainer) return;
       if(logs.length === 0) {
@@ -265,21 +465,21 @@
 
           <!-- DOWNLOAD LINKS -->
           <div class="flex flex-wrap gap-2 mt-2 pt-1">
-            <a href="${log.downloadPdfUrl}" class="download-link inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition"><i class="fas fa-file-pdf text-red-400"></i> PDF Log</a>
-            <a href="${log.downloadCsvUrl}" class="download-link inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition"><i class="fas fa-file-csv text-green-400"></i> CSV Data</a>
-            <a href="${log.downloadReportUrl}" class="download-link inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition"><i class="fas fa-download text-[#C5A059]"></i> Full Report</a>
+            <button data-id="${log.id}" class="btn-pdf-download inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition">
+              <i class="fas fa-file-pdf text-red-400"></i> PDF Log
+            </button>
+            <button data-id="${log.id}" class="btn-csv-download inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition">
+              <i class="fas fa-file-csv text-green-400"></i> CSV Data
+            </button>
+            <button data-id="${log.id}" class="btn-report-download inline-flex items-center gap-1 text-[10px] font-bold bg-white/5 hover:bg-[#C5A059]/20 border border-white/10 rounded-full py-1.5 px-3 transition">
+              <i class="fas fa-download text-[#C5A059]"></i> Full Report
+            </button>
           </div>
         </div>
       `).join('');
 
-      document.querySelectorAll('.download-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          if(link.getAttribute('href') === '#') {
-            e.preventDefault();
-            alert('📄 [Demo] Harvest document download would be generated. In production, PDF/CSV exports available for members.');
-          }
-        });
-      });
+      // Attach download button listeners after DOM insertion
+      attachDownloadHandlers();
     }
 
     // ---------- FILTER HANDLERS ----------
@@ -316,14 +516,19 @@
       if(navTierLabel) navTierLabel.innerText = tier;
       if(navIdentityDisplay) navIdentityDisplay.innerText = memberName;
       if(isConnected) {
-        if(connectBtn) connectBtn.innerText = "Connected ✓";
+        if(connectBtn) {
+          connectBtn.innerText = "Connected ✓";
+          connectBtn.classList.add('bg-[#2b5e2b]', 'opacity-90');
+          connectBtn.classList.remove('bg-[#5a7a2b]');
+        }
         if(mobileConnectBtn) mobileConnectBtn.innerText = "Connected ✓";
-        if(connectBtn) connectBtn.classList.add('bg-[#2b5e2b]', 'opacity-90');
       } else {
-        if(connectBtn) connectBtn.innerText = "Connect";
+        if(connectBtn) {
+          connectBtn.innerText = "Connect";
+          connectBtn.classList.remove('bg-[#2b5e2b]', 'opacity-90');
+          connectBtn.classList.add('bg-[#5a7a2b]');
+        }
         if(mobileConnectBtn) mobileConnectBtn.innerText = "Connect Profile";
-        if(connectBtn) connectBtn.classList.remove('bg-[#2b5e2b]');
-        if(connectBtn) connectBtn.classList.add('bg-[#5a7a2b]');
       }
     }
 
@@ -358,16 +563,9 @@
           mobileMenuDiv.classList.add('hidden');
         });
       });
-      const mobileConnect = document.getElementById('mobileConnectBtn');
-      if(mobileConnect) {
-        mobileConnect.addEventListener('click', () => {
-          connectHandler();
-          mobileMenuDiv.classList.add('hidden');
-        });
-      }
     }
 
-    const dashboardLinkDesk = document.querySelector('nav .hidden.md\\:flex a:first-child');
+    const dashboardLinkDesk = document.getElementById('dashboardNavDesk');
     if(dashboardLinkDesk) {
       dashboardLinkDesk.addEventListener('click', (e) => {
         e.preventDefault();
@@ -378,9 +576,9 @@
     // Initial render
     filterAndRender();
 
-    // Extra export CSV feature
-    const headerExtra = document.querySelector('.flex.flex-col.md\\:flex-row.justify-between');
-    if(headerExtra && !document.getElementById('extraExportBtn')) {
+    // Export visible logs (CSV) button
+    const filterContainer = document.querySelector('.flex.flex-wrap.gap-3.items-center');
+    if(filterContainer && !document.getElementById('extraExportBtn')) {
       const exportBtn = document.createElement('button');
       exportBtn.id = 'extraExportBtn';
       exportBtn.className = 'text-[10px] border border-white/20 rounded-lg px-4 py-2 hover:bg-white/5 flex items-center gap-2';
@@ -403,8 +601,7 @@
         a.click();
         URL.revokeObjectURL(url);
       });
-      const filterContainer = document.querySelector('.flex.flex-wrap.gap-3.items-center');
-      if(filterContainer) filterContainer.appendChild(exportBtn);
+      filterContainer.appendChild(exportBtn);
     }
   </script>
 </body>
